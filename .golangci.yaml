@@ -1,0 +1,63 @@
+version: "2"
+
+run:
+  concurrency: 4
+  modules-download-mode: readonly
+  issues-exit-code: 2
+  allow-parallel-runners: true
+
+output:
+  formats:
+    tab:
+      path: stdout
+
+linters:
+  default: all
+  disable:
+    - exhaustruct
+    - wsl
+    - noinlineerr
+
+  settings:
+    depguard:
+      rules:
+        main:
+          list-mode: lax
+          allow:
+            - $gostd
+          deny:
+            - pkg: math/rand$
+              desc: use math/rand/v2
+            - pkg: github.com/pkg/errors
+              desc: Should be replaced by standard lib errors package
+
+    ireturn:
+      allow:
+        - anon
+        - error
+        - empty
+        - stdlib
+        - pluginapi.Plugin
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+    - goimports
+    - golines
+
+  settings:
+    gci:
+      custom-order: true
+      sections:
+        - standard
+        - default
+        - prefix(github.com/abgeo/maroid)
+
+    gofmt:
+      rewrite-rules:
+        - pattern: 'interface{}'
+          replacement: 'any'
+        - pattern: 'a[b:len(a)]'
+          replacement: 'a[b:]'
