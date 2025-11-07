@@ -3,10 +3,12 @@ package depresolver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"sync"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/robfig/cron/v3"
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
@@ -17,6 +19,8 @@ import (
 type Resolver interface {
 	Config() *config.Config
 	Logger() *slog.Logger
+	Database() (*sqlx.DB, error)
+	CloseDatabase() error
 	Cron() *cron.Cron
 	Close(ctx context.Context) error
 }
@@ -30,6 +34,12 @@ type Container struct {
 	cron struct {
 		once     sync.Once
 		instance *cron.Cron
+	}
+
+	database struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *sqlx.DB
 	}
 }
 
@@ -66,5 +76,11 @@ func (c *Container) Logger() *slog.Logger {
 
 // Close gracefully shuts down managed dependencies.
 func (c *Container) Close(_ context.Context) error {
-	return nil
+	var errList []error
+
+	errList = append(errList,
+		c.CloseDatabase(),
+	)
+
+	return errors.Join(errList...)
 }
