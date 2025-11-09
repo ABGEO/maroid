@@ -1,6 +1,14 @@
 package pluginapi
 
-import "strings"
+import (
+	"fmt"
+	"regexp"
+	"strings"
+)
+
+var pluginIDRegex = regexp.MustCompile(
+	`^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*$`,
+)
 
 // PluginID represents a parsed plugin identifier.
 type PluginID struct {
@@ -8,19 +16,25 @@ type PluginID struct {
 	Name      string
 }
 
-// ParsePluginID splits a plugin ID (e.g. "dev.maroid.foo")
+// NewPluginIDFromString splits a plugin ID (e.g. "dev.maroid.foo")
 // into a PluginID struct with Namespace ("dev.maroid")
 // and Name ("foo").
-func ParsePluginID(id string) PluginID {
-	const minParts = 2
-
-	parts := strings.Split(id, ".")
-	if len(parts) < minParts {
-		return PluginID{Name: id}
+func NewPluginIDFromString(rawID string) *PluginID {
+	if !pluginIDRegex.MatchString(rawID) {
+		return nil
 	}
 
-	return PluginID{
-		Namespace: strings.Join(parts[:len(parts)-1], "."),
-		Name:      parts[len(parts)-1],
+	lastDot := strings.LastIndex(rawID, ".")
+	if lastDot == -1 {
+		return &PluginID{Name: rawID}
 	}
+
+	return &PluginID{
+		Namespace: rawID[:lastDot],
+		Name:      rawID[lastDot+1:],
+	}
+}
+
+func (i *PluginID) String() string {
+	return fmt.Sprintf("%s.%s", i.Namespace, i.Name)
 }

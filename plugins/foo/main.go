@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginconfig"
+	"github.com/abgeo/maroid/plugins/foo/db"
 )
 
 type FooPlugin struct {
@@ -20,9 +22,10 @@ type FooPlugin struct {
 }
 
 var (
-	_ pluginapi.Plugin        = &FooPlugin{}
-	_ pluginapi.CommandPlugin = &FooPlugin{}
-	_ pluginapi.CronPlugin    = &FooPlugin{}
+	_ pluginapi.Plugin          = &FooPlugin{}
+	_ pluginapi.CommandPlugin   = &FooPlugin{}
+	_ pluginapi.CronPlugin      = &FooPlugin{}
+	_ pluginapi.MigrationPlugin = &FooPlugin{}
 )
 
 // New creates a plugin instance.
@@ -42,7 +45,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 	plg.logger = host.Logger().With(
 		slog.String("component", "plugin"),
-		slog.String("plugin", plg.Meta().ID),
+		slog.String("plugin", plg.Meta().ID.String()),
 		slog.String("plugin-version", plg.Meta().Version),
 		slog.String("plugin-api-version", plg.Meta().APIVersion),
 	)
@@ -52,7 +55,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *FooPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:         "dev.maroid.foo",
+		ID:         pluginapi.NewPluginIDFromString("dev.maroid.foo"),
 		Version:    "0.1.0",
 		APIVersion: pluginapi.APIVersion,
 	}
@@ -88,4 +91,13 @@ func (p *FooPlugin) RegisterCrons(scheduler *cron.Cron) error {
 	}
 
 	return nil
+}
+
+func (p *FooPlugin) Migrations() (fs.FS, error) {
+	migrationsFS, err := fs.Sub(db.Migrations, "migrations")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get migration FS: %w", err)
+	}
+
+	return migrationsFS, nil
 }

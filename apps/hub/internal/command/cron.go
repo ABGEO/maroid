@@ -7,11 +7,12 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
 
+	"github.com/abgeo/maroid/apps/hub/internal/appctx"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // NewCronCmd creates and returns a Cobra command that starts scheduled cron jobs.
-func NewCronCmd(appCtx *AppContext) *cobra.Command {
+func NewCronCmd(appCtx *appctx.AppContext) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cron",
 		Short: "Start scheduled cron jobs for all registered plugins",
@@ -55,7 +56,10 @@ func registerCrons(logger *slog.Logger, plugins []pluginapi.Plugin, scheduler *c
 				return fmt.Errorf("plugin %s failed to register cron: %w", plg.Meta().ID, err)
 			}
 
-			logger.Info("cron jobs have been registered", slog.String("plugin", plg.Meta().ID))
+			logger.Info(
+				"cron jobs have been registered",
+				slog.String("plugin", plg.Meta().ID.String()),
+			)
 		}
 	}
 

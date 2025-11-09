@@ -64,8 +64,8 @@ func openConstructor(path string) (pluginapi.Constructor, error) {
 func validatePlugin(plg pluginapi.Plugin) error {
 	meta := plg.Meta()
 
-	if meta.ID == "" {
-		return errs.ErrMissingPluginID
+	if meta.ID == nil {
+		return errs.ErrInvalidPluginID
 	}
 
 	if meta.APIVersion != pluginapi.APIVersion {

@@ -3,6 +3,8 @@
 package pluginapi
 
 import (
+	"io/fs"
+
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
 )
@@ -36,4 +38,10 @@ type CommandPlugin interface {
 type CronPlugin interface {
 	Plugin
 	RegisterCrons(scheduler *cron.Cron) error
+}
+
+// MigrationPlugin is a plugin that can provide database migrations.
+type MigrationPlugin interface {
+	Plugin
+	Migrations() (fs.FS, error)
 }

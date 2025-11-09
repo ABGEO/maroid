@@ -2,7 +2,7 @@ package pluginapi
 
 // Metadata contains basic information about a plugin.
 type Metadata struct {
-	ID         string
+	ID         *PluginID
 	Version    string
 	APIVersion string
 }

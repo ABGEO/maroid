@@ -5,10 +5,13 @@ import (
 	"context"
 	"fmt"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/spf13/cobra"
 
+	"github.com/abgeo/maroid/apps/hub/internal/appctx"
+	"github.com/abgeo/maroid/apps/hub/internal/command/migrate"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/host"
@@ -16,15 +19,8 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
-// AppContext holds application-wide dependencies.
-type AppContext struct {
-	DepResolver depresolver.Resolver
-	PluginHost  pluginapi.Host
-	Plugins     []pluginapi.Plugin
-}
-
 // NewRootCmd creates and returns the root Cobra command.
-func NewRootCmd(appCtx *AppContext) *cobra.Command {
+func NewRootCmd(appCtx *appctx.AppContext) *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "maroid",
 	}
@@ -59,7 +55,7 @@ func Execute() error {
 	return nil
 }
 
-func createAppContext() (*AppContext, error) {
+func createAppContext() (*appctx.AppContext, error) {
 	depResolver, err := depresolver.NewResolver()
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize dependency resolver: %w", err)
@@ -78,7 +74,7 @@ func createAppContext() (*AppContext, error) {
 		return nil, err
 	}
 
-	return &AppContext{
+	return &appctx.AppContext{
 		DepResolver: depResolver,
 		PluginHost:  pluginHost,
 		Plugins:     plugins,
@@ -91,6 +87,7 @@ func loadPlugins(
 ) ([]pluginapi.Plugin, error) {
 	plugins := make([]pluginapi.Plugin, 0, len(cfg.Plugins))
 
+	// @todo: validate if plugin is already loaded.
 	for _, pluginCfg := range cfg.Plugins {
 		if !pluginCfg.Enabled {
 			continue
@@ -107,9 +104,10 @@ func loadPlugins(
 	return plugins, nil
 }
 
-func registerSubcommands(appCtx *AppContext, parentCmd *cobra.Command) {
+func registerSubcommands(appCtx *appctx.AppContext, parentCmd *cobra.Command) {
 	commands := []*cobra.Command{
 		NewCronCmd(appCtx),
+		migrate.NewCmd(appCtx),
 	}
 	commands = append(commands, getPluginCommands(appCtx.Plugins)...)
 	parentCmd.AddCommand(commands...)
@@ -130,15 +128,11 @@ func getPluginCommands(plugins []pluginapi.Plugin) []*cobra.Command {
 		}
 
 		meta := plg.Meta()
-		id := pluginapi.ParsePluginID(meta.ID)
-
+		id := meta.ID
 		cmd := &cobra.Command{
-			Use:   id.Name,
-			Short: "Commands provided by plugin " + meta.ID,
-			Long: fmt.Sprintf(
-				"Commands registered by plugin %s (version: %s).",
-				meta.ID, meta.Version,
-			),
+			Use:   formatPluginRootCommand(id),
+			Short: fmt.Sprintf("Commands provided by plugin %s", id),
+			Long:  fmt.Sprintf("Commands registered by plugin %s (version: %s).", id, meta.Version),
 		}
 
 		cmd.AddCommand(pluginCommands...)
@@ -146,4 +140,14 @@ func getPluginCommands(plugins []pluginapi.Plugin) []*cobra.Command {
 	}
 
 	return commands
+}
+
+func formatPluginRootCommand(pluginID *pluginapi.PluginID) string {
+	normalizeDotsToDashes := func(segment string) string {
+		return strings.ReplaceAll(segment, ".", "-")
+	}
+
+	return fmt.Sprintf("%s:%s",
+		normalizeDotsToDashes(pluginID.Namespace),
+		normalizeDotsToDashes(pluginID.Name))
 }
