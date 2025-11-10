@@ -4,6 +4,5 @@ use (
 	./apps/hub
 	./libs/pluginapi
 	./libs/pluginconfig
-	./plugins/foo
 	./plugins/tbilisi-energy
 )
