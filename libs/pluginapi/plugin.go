@@ -5,7 +5,6 @@ package pluginapi
 import (
 	"io/fs"
 
-	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
 )
 
@@ -32,12 +31,6 @@ type RoutePlugin interface {
 type CommandPlugin interface {
 	Plugin
 	RegisterCommands() []*cobra.Command
-}
-
-// CronPlugin is a plugin that can register scheduled cron jobs.
-type CronPlugin interface {
-	Plugin
-	RegisterCrons(scheduler *cron.Cron) error
 }
 
 // MigrationPlugin is a plugin that can provide database migrations.

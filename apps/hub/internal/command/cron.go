@@ -51,15 +51,32 @@ func NewCronCmd(appCtx *appctx.AppContext) *cobra.Command {
 func registerCrons(logger *slog.Logger, plugins []pluginapi.Plugin, scheduler *cron.Cron) error {
 	for _, plg := range plugins {
 		if plg, ok := plg.(pluginapi.CronPlugin); ok {
-			err := plg.RegisterCrons(scheduler)
+			jobs, err := plg.CronJobs()
 			if err != nil {
-				return fmt.Errorf("plugin %s failed to register cron: %w", plg.Meta().ID, err)
+				return fmt.Errorf("plugin %s failed to provide cron jobs: %w", plg.Meta().ID, err)
 			}
 
-			logger.Info(
-				"cron jobs have been registered",
-				slog.String("plugin", plg.Meta().ID.String()),
-			)
+			for _, job := range jobs {
+				jobMeta := job.Meta()
+
+				entryID, err := scheduler.AddJob(jobMeta.Schedule, job)
+				if err != nil {
+					return fmt.Errorf(
+						"plugin %s failed to register job %s: %w",
+						plg.Meta().ID,
+						jobMeta.ID,
+						err,
+					)
+				}
+
+				logger.Info(
+					"cron job has been registered",
+					slog.String("plugin", plg.Meta().ID.String()),
+					slog.String("job-id", jobMeta.ID),
+					slog.Int("job-entry-id", int(entryID)),
+					slog.String("schedule", jobMeta.Schedule),
+				)
+			}
 		}
 	}
 

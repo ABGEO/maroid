@@ -73,12 +73,12 @@ func New(cfgFile string) (*Config, error) {
 		viper.EnvKeyReplacer(strings.NewReplacer(".", "*", "-", "*")),
 	)
 
+	defaults.SetDefaults(cfg)
+
 	err := setConfigFile(cfgFile, viperInstance)
 	if err != nil {
 		return nil, err
 	}
-
-	defaults.SetDefaults(cfg)
 
 	viperInstance.SetEnvPrefix("MAROID")
 	viperInstance.AutomaticEnv()
