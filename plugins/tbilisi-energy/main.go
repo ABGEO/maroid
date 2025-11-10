@@ -3,11 +3,13 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"log/slog"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/config"
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/db"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/job"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/service"
 )
@@ -19,8 +21,9 @@ type TbilisiEnergyPlugin struct {
 }
 
 var (
-	_ pluginapi.Plugin     = &TbilisiEnergyPlugin{}
-	_ pluginapi.CronPlugin = &TbilisiEnergyPlugin{}
+	_ pluginapi.Plugin          = &TbilisiEnergyPlugin{}
+	_ pluginapi.CronPlugin      = &TbilisiEnergyPlugin{}
+	_ pluginapi.MigrationPlugin = &TbilisiEnergyPlugin{}
 )
 
 // New creates a plugin instance.
@@ -59,4 +62,13 @@ func (p *TbilisiEnergyPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 	return []pluginapi.CronJob{
 		job.NewTransactionsCollector(p.config, p.logger, p.apiClientSvc),
 	}, nil
+}
+
+func (p *TbilisiEnergyPlugin) Migrations() (fs.FS, error) {
+	migrationsFS, err := fs.Sub(db.Migrations, "migrations")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get migration FS: %w", err)
+	}
+
+	return migrationsFS, nil
 }

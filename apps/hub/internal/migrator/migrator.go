@@ -14,6 +14,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx" // The PostgreSQL driver for migrate
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/db"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
@@ -21,11 +22,18 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
+// Migration target constants define which components should have their database migrations executed.
+const (
+	TargetCore = "core"
+	TargetAll  = "all"
+)
+
 // Migrator is responsible for running database migrations for core and plugin components.
 type Migrator struct {
-	config  *config.Config
-	logger  *slog.Logger
-	plugins []pluginapi.Plugin
+	config   *config.Config
+	logger   *slog.Logger
+	database *sqlx.DB
+	plugins  []pluginapi.Plugin
 }
 
 type migrationPlan struct {
@@ -34,13 +42,19 @@ type migrationPlan struct {
 }
 
 // New creates a new Migrator instance.
-func New(cfg *config.Config, logger *slog.Logger, plugins []pluginapi.Plugin) *Migrator {
+func New(
+	cfg *config.Config,
+	logger *slog.Logger,
+	database *sqlx.DB,
+	plugins []pluginapi.Plugin,
+) *Migrator {
 	return &Migrator{
 		config: cfg,
 		logger: logger.With(
 			slog.String("component", "migrator"),
 		),
-		plugins: plugins,
+		database: database,
+		plugins:  plugins,
 	}
 }
 
@@ -57,7 +71,14 @@ func (m *Migrator) Up(target string) error {
 			slog.String("migration-component", component),
 		)
 
-		if err := m.migrateComponent(component, plan.filesystems[component]); err != nil {
+		if component != TargetCore {
+			schema := buildSchemaName(component)
+			if err = m.ensureSchema(schema); err != nil {
+				return err
+			}
+		}
+
+		if err = m.migrateComponent(component, plan.filesystems[component]); err != nil {
 			return err
 		}
 	}
@@ -65,8 +86,24 @@ func (m *Migrator) Up(target string) error {
 	return nil
 }
 
+func (m *Migrator) ensureSchema(schema string) error {
+	query := fmt.Sprintf(`CREATE SCHEMA IF NOT EXISTS "%s"`, schema)
+
+	_, err := m.database.Exec(query)
+	if err != nil {
+		return fmt.Errorf("failed to ensure schema %q: %w", schema, err)
+	}
+
+	return nil
+}
+
 func (m *Migrator) migrateComponent(component string, filesystem fs.FS) error {
-	instance, err := m.newMigrateInstance(filesystem, buildTableName(component))
+	schema := "public"
+	if component != TargetCore {
+		schema = buildSchemaName(component)
+	}
+
+	instance, err := m.newMigrateInstance(filesystem, schema)
 	if err != nil {
 		return err
 	}
@@ -85,10 +122,10 @@ func (m *Migrator) buildMigrationPlan(target string) (*migrationPlan, error) {
 		return nil, err
 	}
 
-	if target == "core" {
+	if target == TargetCore {
 		return &migrationPlan{
-			filesystems: map[string]fs.FS{"core": coreFS},
-			order:       []string{"core"},
+			filesystems: map[string]fs.FS{TargetCore: coreFS},
+			order:       []string{TargetCore},
 		}, nil
 	}
 
@@ -100,12 +137,12 @@ func (m *Migrator) buildMigrationPlan(target string) (*migrationPlan, error) {
 	pluginIDs := slices.Collect(maps.Keys(pluginFS))
 
 	switch target {
-	case "all":
-		pluginFS["core"] = coreFS
+	case TargetAll:
+		pluginFS[TargetCore] = coreFS
 
 		return &migrationPlan{
 			filesystems: pluginFS,
-			order:       append([]string{"core"}, pluginIDs...),
+			order:       append([]string{TargetCore}, pluginIDs...),
 		}, nil
 
 	default:
@@ -153,14 +190,19 @@ func (m *Migrator) collectPluginFilesystems() (map[string]fs.FS, error) {
 
 func (m *Migrator) newMigrateInstance(
 	filesystem fs.FS,
-	tableName string,
+	schema string,
 ) (*migrate.Migrate, error) {
 	source, err := iofs.New(filesystem, ".")
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize migrations IOFS: %w", err)
 	}
 
-	dsn := m.config.Database.DSN() + "?x-migrations-table=" + tableName
+	dsn := fmt.Sprintf(
+		`%s?x-migrations-table-quoted=true&x-migrations-table="%s"."schema_migrations"&options=-csearch_path%%3D%s,public`,
+		m.config.Database.DSN(),
+		schema,
+		schema,
+	)
 
 	instance, err := migrate.NewWithSourceInstance("iofs", source, dsn)
 	if err != nil {
@@ -170,8 +212,8 @@ func (m *Migrator) newMigrateInstance(
 	return instance, nil
 }
 
-func buildTableName(component string) string {
-	normalized := strings.ReplaceAll(component, ".", "_")
+func buildSchemaName(component string) string {
+	replacer := strings.NewReplacer(".", "_", "-", "_")
 
-	return normalized + "_schema_migrations"
+	return replacer.Replace(component)
 }

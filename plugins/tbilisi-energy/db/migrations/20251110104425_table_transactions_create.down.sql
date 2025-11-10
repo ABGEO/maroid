@@ -1,5 +1,5 @@
 BEGIN;
 
-DROP TABLE IF EXISTS dev_maroid_tbilisi_energy.Transactions;
+DROP TABLE IF EXISTS transactions;
 
 COMMIT;

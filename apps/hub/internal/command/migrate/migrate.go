@@ -3,6 +3,8 @@
 package migrate
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/abgeo/maroid/apps/hub/internal/appctx"
@@ -24,12 +26,20 @@ func NewCmd(appCtx *appctx.AppContext) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Commands to migrate the database",
-		PersistentPreRun: func(_ *cobra.Command, _ []string) {
+		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
+			database, err := cmdCtx.DepResolver.Database()
+			if err != nil {
+				return fmt.Errorf("failed to resolve database: %w", err)
+			}
+
 			cmdCtx.migrator = migrator.New(
 				cmdCtx.DepResolver.Config(),
 				cmdCtx.DepResolver.Logger(),
+				database,
 				cmdCtx.Plugins,
 			)
+
+			return nil
 		},
 	}
 
