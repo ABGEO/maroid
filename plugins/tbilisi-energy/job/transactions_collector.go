@@ -1,13 +1,17 @@
 package job
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"time"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/config"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/dto"
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/repository"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/service"
 )
 
@@ -15,6 +19,7 @@ import (
 type TransactionsCollector struct {
 	config       *config.Config
 	logger       *slog.Logger
+	db           *pluginapi.PluginDB
 	apiClientSvc service.APIClientService
 }
 
@@ -24,10 +29,12 @@ var _ pluginapi.CronJob = &TransactionsCollector{}
 func NewTransactionsCollector(
 	config *config.Config,
 	logger *slog.Logger,
+	db *pluginapi.PluginDB,
 	apiClientSvc service.APIClientService,
 ) *TransactionsCollector {
 	instance := &TransactionsCollector{
 		config:       config,
+		db:           db,
 		apiClientSvc: apiClientSvc,
 	}
 
@@ -40,69 +47,127 @@ func NewTransactionsCollector(
 }
 
 // Meta returns the TransactionsCollector metadata.
-func (j *TransactionsCollector) Meta() pluginapi.CronJobMeta {
+func (i *TransactionsCollector) Meta() pluginapi.CronJobMeta {
 	return pluginapi.CronJobMeta{
 		ID:       "transactions_collector",
-		Schedule: j.config.CronSchedule.TransactionsCollector,
+		Schedule: i.config.CronSchedule.TransactionsCollector,
 	}
 }
 
 // Run executes the job.
-func (j *TransactionsCollector) Run() {
-	err := j.doRun()
-	if err != nil {
-		j.logger.Error("job execution failed", slog.Any("error", err))
+func (i *TransactionsCollector) Run(ctx context.Context) error {
+	if err := i.authenticate(); err != nil {
+		return err
 	}
+
+	transactions, err := i.fetchTransactions()
+	if err != nil {
+		return err
+	}
+
+	if err = i.storeTransactions(ctx, transactions); err != nil {
+		return err
+	}
+
+	i.logger.Info("transaction collection completed successfully")
+
+	return nil
 }
 
-func (j *TransactionsCollector) doRun() error {
-	token, err := j.apiClientSvc.Authenticate(j.config.Username, j.config.Password)
+func (i *TransactionsCollector) authenticate() error {
+	token, err := i.apiClientSvc.Authenticate(i.config.Username, i.config.Password)
 	if err != nil {
-		return fmt.Errorf("failed to authenticate: %w", err)
+		return fmt.Errorf("authentication failed: %w", err)
 	}
 
-	j.apiClientSvc.SetAuthToken(token)
+	i.apiClientSvc.SetAuthToken(token)
 
-	start, end := transactionsPeriod()
+	i.logger.Info("API authentication successful")
 
-	transactions, err := j.apiClientSvc.GetTransactions(dto.TransactionsRequest{
-		CustomerNumber: j.config.CustomerNumber,
-		DateFrom:       start.Format(`2006-01-02`),
-		DateTo:         end.Format(`2006-01-02`),
+	return nil
+}
+
+func (i *TransactionsCollector) fetchTransactions() ([]dto.Transaction, error) {
+	startDate, endDate := getPreviousMonthPeriod()
+	dateFrom := startDate.Format("2006-01-02")
+	dateTo := endDate.Format("2006-01-02")
+
+	i.logger.Info(
+		"fetching transactions",
+		slog.String("date-from", dateFrom),
+		slog.String("date-to", dateTo),
+		slog.String("customer-number", i.config.CustomerNumber),
+	)
+
+	transactions, err := i.apiClientSvc.GetTransactions(dto.TransactionsRequest{
+		CustomerNumber: i.config.CustomerNumber,
+		DateFrom:       dateFrom,
+		DateTo:         dateTo,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to fetch transactions: %w", err)
+		return nil, fmt.Errorf("failed to fetch transactions from API: %w", err)
 	}
 
+	i.logger.Info(
+		"transactions fetched successfully",
+		slog.Int("transaction-count", len(transactions)),
+	)
+
+	return transactions, nil
+}
+
+func (i *TransactionsCollector) storeTransactions(
+	ctx context.Context,
+	transactions []dto.Transaction,
+) error {
+	if len(transactions) == 0 {
+		i.logger.Info("no transactions to store")
+
+		return nil
+	}
+
+	err := i.db.WithTx(ctx, func(tx *sqlx.Tx) error {
+		return i.insertTransactionsInTx(ctx, tx, transactions)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to store transactions in database: %w", err)
+	}
+
+	i.logger.Info("transactions stored successfully")
+
+	return nil
+}
+
+func (i *TransactionsCollector) insertTransactionsInTx(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	transactions []dto.Transaction,
+) error {
+	transactionTypeRepo := repository.NewTransactionType(tx)
+	transactionRepo := repository.NewTransaction(tx)
+
 	for _, transaction := range transactions {
-		j.logger.Info(
-			"transaction processed",
-			slog.String("operation-date", transaction.OperationDate),
-			slog.String("operation-name", transaction.OperationName),
-			slog.Float64("meter-reading", transaction.MeterReading),
-			slog.Float64("amount", transaction.Amount),
-			slog.Float64("consumption", transaction.Consumption),
-			slog.Float64("balance", transaction.Balance),
-		)
+		transactionEntity := transaction.MapToModel()
+
+		if err := transactionTypeRepo.Insert(ctx, transactionEntity.Type); err != nil {
+			return fmt.Errorf("failed to insert transaction type: %w", err)
+		}
+
+		if err := transactionRepo.Insert(ctx, &transactionEntity); err != nil {
+			return fmt.Errorf("failed to insert transaction: %w", err)
+		}
 	}
 
 	return nil
 }
 
-func transactionsPeriod() (time.Time, time.Time) {
+func getPreviousMonthPeriod() (time.Time, time.Time) {
 	now := time.Now()
-	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	location := now.Location()
+
+	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, location)
 	lastMonthEnd := firstOfMonth.AddDate(0, 0, -1)
-	lastMonthStart := time.Date(
-		lastMonthEnd.Year(),
-		lastMonthEnd.Month(),
-		1,
-		0,
-		0,
-		0,
-		0,
-		now.Location(),
-	)
+	lastMonthStart := time.Date(lastMonthEnd.Year(), lastMonthEnd.Month(), 1, 0, 0, 0, 0, location)
 
 	return lastMonthStart, lastMonthEnd
 }

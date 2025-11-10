@@ -39,6 +39,14 @@ linters:
         - stdlib
         - pluginapi.Plugin
 
+    varnamelen:
+      min-name-length: 2
+      ignore-names:
+        - i
+      ignore-type-assert-ok: true
+      ignore-map-index-ok: true
+      ignore-chan-recv-ok: true
+
 formatters:
   enable:
     - gci

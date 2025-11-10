@@ -1,5 +1,14 @@
 package dto
 
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"time"
+
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/model"
+)
+
 // TransactionsRequest represents a request to fetch transactions for a customer.
 type TransactionsRequest struct {
 	CustomerNumber string `json:"customerNumber"`
@@ -53,4 +62,46 @@ type Transaction struct {
 	OperationDateString    string  `json:"operDateString"`
 	BillingDocumentURL     string  `json:"billDocPath"`
 	MeterPhotoURL          string  `json:"meterPhotoPath"`
+}
+
+// Hash computes a unique SHA-256 hash for the Transaction instance.
+func (d *Transaction) Hash() string {
+	data := fmt.Sprintf(
+		"%f|%f|%f|%f|%d|%s|%s|%d|%s",
+		d.Consumption,
+		d.Amount,
+		d.MeterReading,
+		d.Balance,
+		d.OperationID,
+		d.OperationName,
+		d.OperationDate,
+		d.OperationDateTimestamp,
+		d.OperationDateString,
+	)
+	hash := sha256.Sum256([]byte(data))
+
+	return hex.EncodeToString(hash[:])
+}
+
+// MapToModel converts the external Transaction representation into a
+// model.Transaction entity suitable for persistence.
+func (d *Transaction) MapToModel() model.Transaction {
+	instance := model.Transaction{
+		Hash:               d.Hash(),
+		Consumption:        d.Consumption,
+		Amount:             d.Amount,
+		MeterReading:       d.MeterReading,
+		Balance:            d.Balance,
+		BillingDocumentURL: d.BillingDocumentURL,
+		MeterPhotoURL:      d.MeterPhotoURL,
+		TransactionTypeID:  d.OperationID,
+		Type: &model.TransactionType{
+			ID:   d.OperationID,
+			Name: d.OperationName,
+		},
+	}
+
+	instance.Date, _ = time.Parse(`2006-01-02T15:04:05-07:00`, d.OperationDate+"+04:00")
+
+	return instance
 }

@@ -143,11 +143,9 @@ func getPluginCommands(plugins []pluginapi.Plugin) []*cobra.Command {
 }
 
 func formatPluginRootCommand(pluginID *pluginapi.PluginID) string {
-	normalizeDotsToDashes := func(segment string) string {
-		return strings.ReplaceAll(segment, ".", "-")
-	}
+	replacer := strings.NewReplacer(".", "_", "-", "_")
 
 	return fmt.Sprintf("%s:%s",
-		normalizeDotsToDashes(pluginID.Namespace),
-		normalizeDotsToDashes(pluginID.Name))
+		replacer.Replace(pluginID.Namespace),
+		replacer.Replace(pluginID.Name))
 }

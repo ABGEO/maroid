@@ -3,8 +3,6 @@
 package pluginapi
 
 import (
-	"io/fs"
-
 	"github.com/spf13/cobra"
 )
 
@@ -31,10 +29,4 @@ type RoutePlugin interface {
 type CommandPlugin interface {
 	Plugin
 	RegisterCommands() []*cobra.Command
-}
-
-// MigrationPlugin is a plugin that can provide database migrations.
-type MigrationPlugin interface {
-	Plugin
-	Migrations() (fs.FS, error)
 }

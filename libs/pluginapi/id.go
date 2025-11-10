@@ -16,10 +16,10 @@ type PluginID struct {
 	Name      string
 }
 
-// NewPluginIDFromString splits a plugin ID (e.g. "dev.maroid.foo")
+// ParsePluginID splits a plugin ID (e.g. "dev.maroid.foo")
 // into a PluginID struct with Namespace ("dev.maroid")
 // and Name ("foo").
-func NewPluginIDFromString(rawID string) *PluginID {
+func ParsePluginID(rawID string) *PluginID {
 	if !pluginIDRegex.MatchString(rawID) {
 		return nil
 	}
@@ -37,4 +37,16 @@ func NewPluginIDFromString(rawID string) *PluginID {
 
 func (i *PluginID) String() string {
 	return fmt.Sprintf("%s.%s", i.Namespace, i.Name)
+}
+
+// ToSafeName converts the plugin ID to a safe string by replacing dots and hyphens
+// with the specified separator. Useful for creating filesystem-safe or URL-safe names.
+//
+// Example:
+//
+//	id.ToSafeName("_") // "dev_maroid_foo"
+func (i *PluginID) ToSafeName(separator string) string {
+	replacer := strings.NewReplacer(".", separator, "-", separator)
+
+	return replacer.Replace(i.String())
 }

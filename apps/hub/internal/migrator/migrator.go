@@ -9,7 +9,6 @@ import (
 	"log/slog"
 	"maps"
 	"slices"
-	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx" // The PostgreSQL driver for migrate
@@ -213,7 +212,5 @@ func (m *Migrator) newMigrateInstance(
 }
 
 func buildSchemaName(component string) string {
-	replacer := strings.NewReplacer(".", "_", "-", "_")
-
-	return replacer.Replace(component)
+	return pluginapi.ParsePluginID(component).ToSafeName("_")
 }

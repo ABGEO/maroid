@@ -3,7 +3,7 @@ package config
 
 // CronSchedule defines the cron schedule configuration for different jobs.
 type CronSchedule struct {
-	TransactionsCollector string `default:"* * * * *" mapstructure:"transactions_collector" validate:"cron"`
+	TransactionsCollector string `default:"0 10 1 * *" mapstructure:"transactions_collector" validate:"cron"`
 }
 
 // Config represents the root plugin configuration.

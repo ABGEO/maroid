@@ -17,6 +17,7 @@ import (
 type TbilisiEnergyPlugin struct {
 	config       *config.Config
 	logger       *slog.Logger
+	db           *pluginapi.PluginDB
 	apiClientSvc service.APIClientService
 }
 
@@ -32,14 +33,22 @@ var (
 var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (pluginapi.Plugin, error) {
 	pluginConfig := new(config.Config)
 
-	if err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig); err != nil {
+	err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig)
+	if err != nil {
 		return nil, fmt.Errorf("failed to validate config: %w", err)
+	}
+
+	database, err := host.Database()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get host database instance: %w", err)
 	}
 
 	plg := &TbilisiEnergyPlugin{
 		config:       pluginConfig,
 		apiClientSvc: service.NewAPIClient(pluginConfig),
 	}
+
+	plg.db = pluginapi.NewPluginDB(database, plg.Meta().ID)
 
 	plg.logger = host.Logger().With(
 		slog.String("plugin", plg.Meta().ID.String()),
@@ -52,7 +61,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *TbilisiEnergyPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:         pluginapi.NewPluginIDFromString("dev.maroid.tbilisi-energy"),
+		ID:         pluginapi.ParsePluginID("dev.maroid.tbilisi-energy"),
 		Version:    "0.1.0",
 		APIVersion: pluginapi.APIVersion,
 	}
@@ -60,7 +69,7 @@ func (p *TbilisiEnergyPlugin) Meta() pluginapi.Metadata {
 
 func (p *TbilisiEnergyPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 	return []pluginapi.CronJob{
-		job.NewTransactionsCollector(p.config, p.logger, p.apiClientSvc),
+		job.NewTransactionsCollector(p.config, p.logger, p.db, p.apiClientSvc),
 	}, nil
 }
 

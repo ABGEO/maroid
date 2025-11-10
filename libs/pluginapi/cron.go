@@ -1,6 +1,6 @@
 package pluginapi
 
-import "github.com/robfig/cron/v3"
+import "context"
 
 // CronJobMeta represents the CronJob metadata.
 type CronJobMeta struct {
@@ -17,5 +17,5 @@ type CronPlugin interface {
 // CronJob represents a scheduled task that can be run by a cron scheduler.
 type CronJob interface {
 	Meta() CronJobMeta
-	cron.Job
+	Run(ctx context.Context) error
 }

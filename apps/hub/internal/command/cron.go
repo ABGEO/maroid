@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 
@@ -26,7 +27,7 @@ func NewCronCmd(appCtx *appctx.AppContext) *cobra.Command {
 				slog.String("command", "cron"),
 			)
 
-			err := registerCrons(logger, appCtx.Plugins, cronInstance)
+			err := registerCronJobs(logger, appCtx.Plugins, cronInstance)
 			if err != nil {
 				return err
 			}
@@ -48,37 +49,89 @@ func NewCronCmd(appCtx *appctx.AppContext) *cobra.Command {
 	return cmd
 }
 
-func registerCrons(logger *slog.Logger, plugins []pluginapi.Plugin, scheduler *cron.Cron) error {
-	for _, plg := range plugins {
-		if plg, ok := plg.(pluginapi.CronPlugin); ok {
-			jobs, err := plg.CronJobs()
-			if err != nil {
-				return fmt.Errorf("plugin %s failed to provide cron jobs: %w", plg.Meta().ID, err)
-			}
+func registerCronJobs(logger *slog.Logger, plugins []pluginapi.Plugin, scheduler *cron.Cron) error {
+	for _, plugin := range plugins {
+		cronPlugin, isCronPlugin := plugin.(pluginapi.CronPlugin)
+		if !isCronPlugin {
+			continue
+		}
 
-			for _, job := range jobs {
-				jobMeta := job.Meta()
-
-				entryID, err := scheduler.AddJob(jobMeta.Schedule, job)
-				if err != nil {
-					return fmt.Errorf(
-						"plugin %s failed to register job %s: %w",
-						plg.Meta().ID,
-						jobMeta.ID,
-						err,
-					)
-				}
-
-				logger.Info(
-					"cron job has been registered",
-					slog.String("plugin", plg.Meta().ID.String()),
-					slog.String("job-id", jobMeta.ID),
-					slog.Int("job-entry-id", int(entryID)),
-					slog.String("schedule", jobMeta.Schedule),
-				)
-			}
+		if err := registerPluginCronJobs(logger, cronPlugin, scheduler); err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+func registerPluginCronJobs(
+	logger *slog.Logger,
+	plugin pluginapi.CronPlugin,
+	scheduler *cron.Cron,
+) error {
+	pluginID := plugin.Meta().ID
+
+	jobs, err := plugin.CronJobs()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve cron jobs from plugin %s: %w", pluginID, err)
+	}
+
+	for _, job := range jobs {
+		if err = registerCronJob(logger, pluginID, job, scheduler); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func registerCronJob(
+	logger *slog.Logger,
+	pluginID *pluginapi.PluginID,
+	job pluginapi.CronJob,
+	scheduler *cron.Cron,
+) error {
+	jobMeta := job.Meta()
+
+	logger = logger.With(
+		slog.String("plugin_id", pluginID.String()),
+		slog.String("job_id", jobMeta.ID),
+	)
+
+	entryID, err := scheduler.AddFunc(jobMeta.Schedule, wrapCronJob(logger, job.Run))
+	if err != nil {
+		return fmt.Errorf(
+			"failed to schedule cron job %s for plugin %s: %w",
+			jobMeta.ID,
+			pluginID,
+			err,
+		)
+	}
+
+	logger.Info(
+		"cron job registered successfully",
+		slog.String("schedule", jobMeta.Schedule),
+		slog.Int("entry_id", int(entryID)),
+	)
+
+	return nil
+}
+
+func wrapCronJob(logger *slog.Logger, jobFunc func(ctx context.Context) error) func() {
+	return func() {
+		ctx := context.Background()
+
+		logger.Info("cron job execution started")
+
+		if err := jobFunc(ctx); err != nil {
+			logger.Error(
+				"cron job execution failed",
+				slog.Any("error", err),
+			)
+
+			return
+		}
+
+		logger.Info("cron job execution completed successfully")
+	}
 }
