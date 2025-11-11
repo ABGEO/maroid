@@ -6,6 +6,9 @@ import (
 )
 
 var (
+	// ErrPluginAlreadyRegistered indicates that a plugin with the same ID
+	// has already been loaded and registered.
+	ErrPluginAlreadyRegistered = errors.New("plugin: already registered")
 	// ErrInvalidPluginID indicates that a plugin configuration is missing its required ID, or it is not valid.
 	ErrInvalidPluginID = errors.New("plugin: ID is missing or invalid")
 	// ErrUnexpectedPluginSymbolType indicates that a plugin symbol has an unexpected type

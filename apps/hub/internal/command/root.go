@@ -14,6 +14,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/command/migrate"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
+	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -85,9 +86,11 @@ func loadPlugins(
 	cfg *config.Config,
 	pluginHost pluginapi.Host,
 ) ([]pluginapi.Plugin, error) {
-	plugins := make([]pluginapi.Plugin, 0, len(cfg.Plugins))
+	var (
+		plugins    = make([]pluginapi.Plugin, 0, len(cfg.Plugins))
+		registered = make(map[string]struct{}, len(cfg.Plugins))
+	)
 
-	// @todo: validate if plugin is already loaded.
 	for _, pluginCfg := range cfg.Plugins {
 		if !pluginCfg.Enabled {
 			continue
@@ -97,6 +100,13 @@ func loadPlugins(
 		if err != nil {
 			return nil, fmt.Errorf("failed to load plugin %s: %w", pluginCfg.Path, err)
 		}
+
+		id := plg.Meta().ID.String()
+		if _, ok := registered[id]; ok {
+			return nil, fmt.Errorf("%w: %s", errs.ErrPluginAlreadyRegistered, id)
+		}
+
+		registered[id] = struct{}{}
 
 		plugins = append(plugins, plg)
 	}
