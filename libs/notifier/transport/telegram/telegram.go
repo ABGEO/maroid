@@ -6,12 +6,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mymmrac/telego"
+	ta "github.com/mymmrac/telego/telegoapi"
 	tu "github.com/mymmrac/telego/telegoutil"
 
 	"github.com/abgeo/maroid/libs/notifier/registry"
@@ -21,6 +25,11 @@ import (
 const (
 	queryParamTopic = "x-topic"
 	queryParamDebug = "x-debug"
+
+	retryMaxAttempts  = 4
+	retryExponentBase = 2
+	retryStartDelay   = time.Millisecond * 10
+	retryMaxDelay     = time.Second
 )
 
 var (
@@ -117,7 +126,16 @@ func parseConfiguration(rawURL *url.URL) (*Config, error) {
 }
 
 func createBot(cfg *Config) (*telego.Bot, error) {
-	var options []telego.BotOption
+	options := []telego.BotOption{
+		telego.WithAPICaller(&ta.RetryCaller{
+			Caller:       ta.DefaultFastHTTPCaller,
+			MaxAttempts:  retryMaxAttempts,
+			ExponentBase: retryExponentBase,
+			StartDelay:   retryStartDelay,
+			MaxDelay:     retryMaxDelay,
+		}),
+	}
+
 	if cfg.Debug {
 		options = append(options, telego.WithDefaultDebugLogger())
 	}
@@ -153,12 +171,13 @@ func parseTopicID(raw string) (int, error) {
 }
 
 func (n *Notifier) sendTextMessage(ctx context.Context, msg notifierapi.Message) error {
-	_, err := n.client.SendMessage(ctx, &telego.SendMessageParams{
-		ChatID:          n.config.ChatID,
-		Text:            formatMessageText(msg),
-		MessageThreadID: n.config.ChatTopicID,
-		ParseMode:       telego.ModeHTML,
-	})
+	message := tu.Message(n.config.ChatID, formatMessageText(msg)).WithParseMode(telego.ModeHTML)
+
+	if n.config.ChatTopicID != 0 {
+		message.WithMessageThreadID(n.config.ChatTopicID)
+	}
+
+	_, err := n.client.SendMessage(ctx, message)
 	if err != nil {
 		return fmt.Errorf("failed to send message: %w", err)
 	}
@@ -167,28 +186,29 @@ func (n *Notifier) sendTextMessage(ctx context.Context, msg notifierapi.Message)
 }
 
 func (n *Notifier) sendSingleAttachment(ctx context.Context, msg notifierapi.Message) error {
-	attachment := n.normalizeAttachment(msg.Attachments[0])
+	attachment := normalizeAttachment(msg.Attachments[0])
+	file := tu.FileFromBytes(attachment.Content, attachment.Filename)
 	caption := formatMessageText(msg)
 
 	if isImage(attachment) {
-		return n.sendPhoto(ctx, attachment, caption)
+		return n.sendPhoto(ctx, file, caption)
 	}
 
-	return n.sendDocument(ctx, attachment, caption)
+	return n.sendDocument(ctx, file, caption)
 }
 
-func (n *Notifier) sendPhoto(
-	ctx context.Context,
-	attachment notifierapi.Attachment,
-	caption string,
-) error {
-	_, err := n.client.SendPhoto(ctx, &telego.SendPhotoParams{
-		ChatID:          n.config.ChatID,
-		Photo:           tu.FileFromBytes(attachment.Content, attachment.Filename),
-		Caption:         caption,
-		ParseMode:       telego.ModeHTML,
-		MessageThreadID: n.config.ChatTopicID,
-	})
+func (n *Notifier) sendPhoto(ctx context.Context, file telego.InputFile, caption string) error {
+	photo := tu.Photo(n.config.ChatID, file)
+
+	if caption != "" {
+		photo.WithCaption(caption).WithParseMode(telego.ModeHTML)
+	}
+
+	if n.config.ChatTopicID != 0 {
+		photo.WithMessageThreadID(n.config.ChatTopicID)
+	}
+
+	_, err := n.client.SendPhoto(ctx, photo)
 	if err != nil {
 		return fmt.Errorf("failed to send photo: %w", err)
 	}
@@ -196,18 +216,18 @@ func (n *Notifier) sendPhoto(
 	return nil
 }
 
-func (n *Notifier) sendDocument(
-	ctx context.Context,
-	attachment notifierapi.Attachment,
-	caption string,
-) error {
-	_, err := n.client.SendDocument(ctx, &telego.SendDocumentParams{
-		ChatID:          n.config.ChatID,
-		Document:        tu.FileFromBytes(attachment.Content, attachment.Filename),
-		Caption:         caption,
-		ParseMode:       telego.ModeHTML,
-		MessageThreadID: n.config.ChatTopicID,
-	})
+func (n *Notifier) sendDocument(ctx context.Context, file telego.InputFile, caption string) error {
+	document := tu.Document(n.config.ChatID, file)
+
+	if caption != "" {
+		document.WithCaption(caption).WithParseMode(telego.ModeHTML)
+	}
+
+	if n.config.ChatTopicID != 0 {
+		document.WithMessageThreadID(n.config.ChatTopicID)
+	}
+
+	_, err := n.client.SendDocument(ctx, document)
 	if err != nil {
 		return fmt.Errorf("failed to send document: %w", err)
 	}
@@ -215,32 +235,50 @@ func (n *Notifier) sendDocument(
 	return nil
 }
 
+func (n *Notifier) sendMediaGroup(
+	ctx context.Context,
+	media []telego.InputMedia,
+	caption string,
+) error {
+	if len(media) == 0 {
+		return nil
+	}
+
+	mediaGroup := tu.MediaGroup(n.config.ChatID, media...)
+
+	if caption != "" {
+		setMediaCaption(mediaGroup.Media[0], caption)
+	}
+
+	if n.config.ChatTopicID != 0 {
+		mediaGroup.WithMessageThreadID(n.config.ChatTopicID)
+	}
+
+	_, err := n.client.SendMediaGroup(ctx, mediaGroup)
+	if err != nil {
+		return fmt.Errorf("failed to send media group: %w", err)
+	}
+
+	return nil
+}
+
 func (n *Notifier) sendMultipleAttachments(ctx context.Context, msg notifierapi.Message) error {
-	photos, documents := n.groupAttachmentsByType(msg.Attachments)
+	grouped := n.groupAttachmentsByType(msg.Attachments)
+	text := formatMessageText(msg)
 
-	hasPhotos := len(photos) > 0
-	hasDocuments := len(documents) > 0
+	// Send text separately if we have mixed attachment types
+	if text != "" && len(slices.Collect(maps.Keys(grouped))) > 1 {
+		if err := n.sendTextMessage(ctx, msg); err != nil {
+			return err
+		}
 
-	// Single media type: send with caption
-	if hasPhotos && !hasDocuments {
-		return n.sendMediaGroupWithCaption(ctx, photos, formatMessageText(msg), "photo")
+		text = ""
 	}
 
-	if hasDocuments && !hasPhotos {
-		return n.sendMediaGroupWithCaption(ctx, documents, formatMessageText(msg), "document")
-	}
-
-	// Multiple media types: send text first, then groups separately
-	if err := n.sendTextMessage(ctx, msg); err != nil {
-		return err
-	}
-
-	if err := n.sendMediaGroup(ctx, photos, "photo"); err != nil {
-		return err
-	}
-
-	if err := n.sendMediaGroup(ctx, documents, "document"); err != nil {
-		return err
+	for _, mediaList := range grouped {
+		if err := n.sendMediaGroup(ctx, mediaList, text); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -248,123 +286,58 @@ func (n *Notifier) sendMultipleAttachments(ctx context.Context, msg notifierapi.
 
 func (n *Notifier) groupAttachmentsByType(
 	attachments []notifierapi.Attachment,
-) ([]telego.InputMedia, []telego.InputMedia) {
-	var (
-		photos    []telego.InputMedia
-		documents []telego.InputMedia
-	)
+) map[string][]telego.InputMedia {
+	grouped := make(map[string][]telego.InputMedia)
 
 	for _, attachment := range attachments {
-		attachment = n.normalizeAttachment(attachment)
+		attachment = normalizeAttachment(attachment)
+		file := tu.FileFromBytes(attachment.Content, attachment.Filename)
 
 		if isImage(attachment) {
-			photos = append(photos, n.createPhotoMedia(attachment))
+			grouped["photos"] = append(grouped["photos"], tu.MediaPhoto(file))
 		} else {
-			documents = append(documents, n.createDocumentMedia(attachment))
+			grouped["documents"] = append(grouped["documents"], tu.MediaDocument(file))
 		}
 	}
 
-	return photos, documents
+	return grouped
 }
 
-func (n *Notifier) sendMediaGroup(
-	ctx context.Context,
-	media []telego.InputMedia,
-	mediaType string,
-) error {
-	if len(media) == 0 {
-		return nil
-	}
-
-	_, err := n.client.SendMediaGroup(ctx, &telego.SendMediaGroupParams{
-		ChatID:          n.config.ChatID,
-		Media:           media,
-		MessageThreadID: n.config.ChatTopicID,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to send %s media group: %w", mediaType, err)
-	}
-
-	return nil
-}
-
-func (n *Notifier) sendMediaGroupWithCaption(
-	ctx context.Context,
-	media []telego.InputMedia,
-	caption, mediaType string,
-) error {
-	if len(media) == 0 {
-		return nil
-	}
-
-	// Add caption to the first media item
-	switch firstMedia := media[0].(type) {
+func setMediaCaption(media telego.InputMedia, caption string) {
+	switch m := media.(type) {
 	case *telego.InputMediaPhoto:
-		firstMedia.Caption = caption
-		firstMedia.ParseMode = telego.ModeHTML
+		m.WithCaption(caption).WithParseMode(telego.ModeHTML)
 	case *telego.InputMediaDocument:
-		firstMedia.Caption = caption
-		firstMedia.ParseMode = telego.ModeHTML
-	}
-
-	_, err := n.client.SendMediaGroup(ctx, &telego.SendMediaGroupParams{
-		ChatID:          n.config.ChatID,
-		Media:           media,
-		MessageThreadID: n.config.ChatTopicID,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to send %s media group: %w", mediaType, err)
-	}
-
-	return nil
-}
-
-func (n *Notifier) normalizeAttachment(att notifierapi.Attachment) notifierapi.Attachment {
-	if att.MIMEType == "" {
-		att.MIMEType = http.DetectContentType(att.Content)
-	}
-
-	if att.Filename == "" {
-		att.Filename = "attachment"
-	}
-
-	return att
-}
-
-func isImage(attachment notifierapi.Attachment) bool {
-	return strings.HasPrefix(attachment.MIMEType, "image/")
-}
-
-func (n *Notifier) createPhotoMedia(attachment notifierapi.Attachment) *telego.InputMediaPhoto {
-	return &telego.InputMediaPhoto{
-		Type:  telego.MediaTypePhoto,
-		Media: tu.FileFromBytes(attachment.Content, attachment.Filename),
+		m.WithCaption(caption).WithParseMode(telego.ModeHTML)
 	}
 }
 
-func (n *Notifier) createDocumentMedia(
-	attachment notifierapi.Attachment,
-) *telego.InputMediaDocument {
-	return &telego.InputMediaDocument{
-		Type:  telego.MediaTypeDocument,
-		Media: tu.FileFromBytes(attachment.Content, attachment.Filename),
+func normalizeAttachment(attachments notifierapi.Attachment) notifierapi.Attachment {
+	if attachments.MIMEType == "" {
+		attachments.MIMEType = http.DetectContentType(attachments.Content)
 	}
+
+	if attachments.Filename == "" {
+		attachments.Filename = "attachment"
+	}
+
+	return attachments
+}
+
+func isImage(att notifierapi.Attachment) bool {
+	return strings.HasPrefix(att.MIMEType, "image/")
 }
 
 func formatMessageText(msg notifierapi.Message) string {
-	text := ""
+	var parts []string
 
 	if msg.Title != "" {
-		text += "<b>" + msg.Title + "</b>"
-	}
-
-	if msg.Title != "" && msg.Body != "" {
-		text += "\n"
+		parts = append(parts, "<b>"+msg.Title+"</b>")
 	}
 
 	if msg.Body != "" {
-		text += msg.Body
+		parts = append(parts, msg.Body)
 	}
 
-	return text
+	return strings.Join(parts, "\n")
 }
