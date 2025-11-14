@@ -1,8 +1,11 @@
 package service
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"resty.dev/v3"
@@ -15,8 +18,9 @@ import (
 // APIClientService defines the interface for interacting with the Tbilisi Energy API.
 type APIClientService interface {
 	SetAuthToken(token string)
-	Authenticate(username string, password string) (string, error)
-	GetTransactions(body dto.TransactionsRequest) ([]dto.Transaction, error)
+	Authenticate(ctx context.Context, username string, password string) (string, error)
+	GetTransactions(ctx context.Context, body dto.TransactionsRequest) ([]dto.Transaction, error)
+	DownloadFile(ctx context.Context, fileURL string) ([]byte, error)
 }
 
 // APIClient implements APIClientService.
@@ -46,10 +50,11 @@ func (s *APIClient) SetAuthToken(token string) {
 }
 
 // Authenticate authenticates the user and returns an authentication token.
-func (s *APIClient) Authenticate(username, password string) (string, error) {
+func (s *APIClient) Authenticate(ctx context.Context, username, password string) (string, error) {
 	var response dto.AuthResponse
 
 	resp, err := s.client.R().
+		SetContext(ctx).
 		SetResult(&response).
 		SetBody(map[string]string{
 			"userName":      username,
@@ -75,10 +80,14 @@ func (s *APIClient) Authenticate(username, password string) (string, error) {
 }
 
 // GetTransactions retrieves transactions based on the provided request parameters.
-func (s *APIClient) GetTransactions(body dto.TransactionsRequest) ([]dto.Transaction, error) {
+func (s *APIClient) GetTransactions(
+	ctx context.Context,
+	body dto.TransactionsRequest,
+) ([]dto.Transaction, error) {
 	var response dto.TransactionsResponse
 
 	resp, err := s.client.R().
+		SetContext(ctx).
 		SetResult(&response).
 		SetBody(body).
 		Post("/Customer/GetTransactions")
@@ -100,6 +109,34 @@ func (s *APIClient) GetTransactions(body dto.TransactionsRequest) ([]dto.Transac
 	}
 
 	return response.Transactions, nil
+}
+
+// DownloadFile downloads a file from the specified URL.
+func (s *APIClient) DownloadFile(ctx context.Context, fileURL string) ([]byte, error) {
+	fileURL = strings.TrimPrefix(fileURL, "api/")
+
+	resp, err := s.client.R().
+		SetContext(ctx).
+		SetDoNotParseResponse(true).
+		Get(fileURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download file: %w", err)
+	}
+
+	if err = extractHTTPError(resp); err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read body: %w", err)
+	}
+
+	return data, nil
 }
 
 func extractHTTPError(response *resty.Response) error {

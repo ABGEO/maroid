@@ -67,7 +67,7 @@ func (m *Migrator) Up(target string) error {
 	for _, component := range plan.order {
 		m.logger.Info(
 			"running migrations up",
-			slog.String("migration-component", component),
+			slog.String("migration_component", component),
 		)
 
 		if component != TargetCore {

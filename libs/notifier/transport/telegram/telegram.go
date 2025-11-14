@@ -339,5 +339,5 @@ func formatMessageText(msg notifierapi.Message) string {
 		parts = append(parts, msg.Body)
 	}
 
-	return strings.Join(parts, "\n")
+	return strings.Join(parts, "\n\n")
 }

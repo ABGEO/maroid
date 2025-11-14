@@ -1,6 +1,11 @@
 // Package config defines the configuration schema for the plugin.
 package config
 
+// Notification defines the notification settings.
+type Notification struct {
+	MonthlyBill bool `default:"true" mapstructure:"monthly_bill"`
+}
+
 // CronSchedule defines the cron schedule configuration for different jobs.
 type CronSchedule struct {
 	TransactionsCollector string `default:"0 10 1 * *" mapstructure:"transactions_collector" validate:"cron"`
@@ -13,4 +18,5 @@ type Config struct {
 	Password       string       `                               mapstructure:"password"        validate:"required"`
 	CustomerNumber string       `                               mapstructure:"customer_number" validate:"required"`
 	CronSchedule   CronSchedule `                               mapstructure:"cron_schedule"`
+	Notification   Notification
 }
