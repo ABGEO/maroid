@@ -4,6 +4,8 @@ import (
 	"log/slog"
 
 	"github.com/jmoiron/sqlx"
+
+	"github.com/abgeo/maroid/libs/notifierapi"
 )
 
 // Host represents the environment provided to a plugin by the host application.
@@ -11,4 +13,5 @@ import (
 type Host interface {
 	Logger() *slog.Logger
 	Database() (*sqlx.DB, error)
+	Notifier() (notifierapi.Dispatcher, error)
 }

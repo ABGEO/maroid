@@ -13,6 +13,8 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/logger"
+	"github.com/abgeo/maroid/libs/notifier/dispatcher"
+	"github.com/abgeo/maroid/libs/notifier/registry"
 )
 
 // Resolver defines an interface for resolving shared dependencies.
@@ -22,6 +24,8 @@ type Resolver interface {
 	Database() (*sqlx.DB, error)
 	CloseDatabase() error
 	Cron() *cron.Cron
+	NotifierRegistry() (*registry.SchemeRegistry, error)
+	NotifierDispatcher() (*dispatcher.ChannelDispatcher, error)
 	Close(ctx context.Context) error
 }
 
@@ -40,6 +44,18 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *sqlx.DB
+	}
+
+	notifierRegistry struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *registry.SchemeRegistry
+	}
+
+	notifierDispatcher struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *dispatcher.ChannelDispatcher
 	}
 }
 

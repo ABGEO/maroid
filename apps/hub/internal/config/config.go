@@ -14,8 +14,11 @@ import (
 	"github.com/mcuadros/go-defaults"
 	"github.com/spf13/viper"
 
+	"github.com/abgeo/maroid/libs/notifier"
 	"github.com/abgeo/maroid/libs/pluginconfig"
 )
+
+// @todo: move config objects to packages.
 
 // Logger defines logging configuration parameters.
 type Logger struct {
@@ -61,6 +64,7 @@ type Config struct {
 	Logger   Logger
 	Database Database
 	Server   Server
+	Notifier notifier.Config
 	Plugins  []pluginconfig.Config
 }
 

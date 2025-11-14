@@ -2,6 +2,8 @@ go 1.25.3
 
 use (
 	./apps/hub
+	./libs/notifier
+	./libs/notifierapi
 	./libs/pluginapi
 	./libs/pluginconfig
 	./plugins/tbilisi-energy

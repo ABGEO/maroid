@@ -38,6 +38,8 @@ linters:
         - empty
         - stdlib
         - pluginapi.Plugin
+        - notifierapi.Transport
+        - notifierapi.Dispatcher
 
     varnamelen:
       min-name-length: 2
