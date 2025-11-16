@@ -7,4 +7,5 @@ use (
 	./libs/pluginapi
 	./libs/pluginconfig
 	./plugins/tbilisi-energy
+	./plugins/telasi
 )
