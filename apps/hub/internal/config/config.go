@@ -74,7 +74,7 @@ type Config struct {
 func New(cfgFile string) (*Config, error) {
 	cfg := new(Config)
 	viperInstance := viper.NewWithOptions(
-		viper.EnvKeyReplacer(strings.NewReplacer(".", "*", "-", "*")),
+		viper.EnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")),
 	)
 
 	defaults.SetDefaults(cfg)
