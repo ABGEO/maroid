@@ -1,5 +1,7 @@
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
+github.com/abgeo/maroid/libs/notifierapi v0.0.0-20251116133638-a991fbf40fa0 h1:dgjyXpabSJhLkmGeUOd7Z/HNxvjFvjfzmwgoIgu6Azc=
+github.com/abgeo/maroid/libs/notifierapi v0.0.0-20251116133638-a991fbf40fa0/go.mod h1:BXFOLFfXm9zKrzDc4gchG2nAi4o26KydlNRL6CdGDQI=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
 github.com/go-sql-driver/mysql v1.8.1 h1:LedoTUt/eveggdHS9qUFC1EFSa8bU2+1pZjSRpvNJ1Y=
 github.com/go-sql-driver/mysql v1.8.1/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqwuVSjsCm7DZg=

@@ -2,7 +2,10 @@ module github.com/abgeo/maroid/libs/notifier
 
 go 1.25.4
 
-require github.com/mymmrac/telego v1.3.1
+require (
+	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20251116133638-a991fbf40fa0
+	github.com/mymmrac/telego v1.3.1
+)
 
 require (
 	github.com/andybalholm/brotli v1.2.0 // indirect
