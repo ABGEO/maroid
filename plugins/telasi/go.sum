@@ -6,8 +6,6 @@ github.com/abgeo/maroid/libs/pluginapi v0.0.0-20251116133638-a991fbf40fa0 h1:O1F
 github.com/abgeo/maroid/libs/pluginapi v0.0.0-20251116133638-a991fbf40fa0/go.mod h1:BFAGp7/rt2dwyYTRVjTqYqainzlpAn8DskUSEic1Odo=
 github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20251116133638-a991fbf40fa0 h1:Uyg2fch5hr5MIhfItf/5ili6xr/13AaH/QNKsnItx+8=
 github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20251116133638-a991fbf40fa0/go.mod h1:WHAgrmGMuSkK534bcKrEpQUMwN2CVm3u40gVXtBfRtE=
-github.com/abgeo/maroid/plugins/tbilisi-energy v0.0.0-20251116133638-a991fbf40fa0 h1:DD0HrhoJS1jNCYPHoHz28HH8C4xpkbagwX6H57MFoq0=
-github.com/abgeo/maroid/plugins/tbilisi-energy v0.0.0-20251116133638-a991fbf40fa0/go.mod h1:W9mD11e3WTMU8QBOq5Fgtlju2Vpk0PfRM5xg9LNCwuI=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

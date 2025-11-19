@@ -6,7 +6,6 @@ require (
 	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20251116133638-a991fbf40fa0
 	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20251116133638-a991fbf40fa0
 	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20251116133638-a991fbf40fa0
-	github.com/abgeo/maroid/plugins/tbilisi-energy v0.0.0-20251116133638-a991fbf40fa0
 	github.com/jmoiron/sqlx v1.4.0
 	resty.dev/v3 v3.0.0-beta.3
 )

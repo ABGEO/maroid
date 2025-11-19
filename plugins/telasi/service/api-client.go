@@ -8,7 +8,6 @@ import (
 
 	"resty.dev/v3"
 
-	"github.com/abgeo/maroid/plugins/tbilisi-energy/errs"
 	"github.com/abgeo/maroid/plugins/telasi/config"
 	"github.com/abgeo/maroid/plugins/telasi/dto"
 )
@@ -69,7 +68,7 @@ func (s *APIClient) Authenticate(
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		return "", fmt.Errorf("%w: returned %v", errs.ErrRequestFailed, resp.Error())
+		return "", fmt.Errorf("%w: returned %v", ErrRequestFailed, resp.Error())
 	}
 
 	return response.Token, nil
@@ -88,7 +87,7 @@ func (s *APIClient) GetCustomers(ctx context.Context) ([]dto.CustomerResponse, e
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("%w: returned %v", errs.ErrRequestFailed, resp.Error())
+		return nil, fmt.Errorf("%w: returned %v", ErrRequestFailed, resp.Error())
 	}
 
 	return response, nil
@@ -111,7 +110,7 @@ func (s *APIClient) GetBillingItems(
 	}
 
 	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("%w: returned %v", errs.ErrRequestFailed, resp.Error())
+		return nil, fmt.Errorf("%w: returned %v", ErrRequestFailed, resp.Error())
 	}
 
 	return response.List.Items, nil
