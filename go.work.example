@@ -6,6 +6,7 @@ use (
 	./libs/notifierapi
 	./libs/pluginapi
 	./libs/pluginconfig
+	./plugins/gwp
 	./plugins/tbilisi-energy
 	./plugins/telasi
 )
