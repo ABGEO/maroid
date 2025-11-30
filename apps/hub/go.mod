@@ -7,17 +7,22 @@ require (
 	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20251116133638-a991fbf40fa0
 	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20251116133638-a991fbf40fa0
 	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20251116133638-a991fbf40fa0
+	github.com/go-chi/chi/v5 v5.2.3
+	github.com/go-chi/render v1.0.3
 	github.com/go-playground/validator/v10 v10.28.0
 	github.com/golang-migrate/migrate/v4 v4.19.0
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/mcuadros/go-defaults v1.2.0
+	github.com/mymmrac/telego v1.3.1
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
+	golang.org/x/sync v0.17.0
 )
 
 require (
+	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.14.1 // indirect
@@ -46,7 +51,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lib/pq v1.10.9 // indirect
-	github.com/mymmrac/telego v1.3.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sagikazarmark/locafero v0.11.0 // indirect

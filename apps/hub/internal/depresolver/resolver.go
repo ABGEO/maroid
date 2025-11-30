@@ -6,26 +6,37 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"sync"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
+	"github.com/mymmrac/telego"
 	"github.com/robfig/cron/v3"
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/logger"
+	"github.com/abgeo/maroid/apps/hub/internal/telegram"
 	"github.com/abgeo/maroid/libs/notifier/dispatcher"
 	"github.com/abgeo/maroid/libs/notifier/registry"
 )
 
 // Resolver defines an interface for resolving shared dependencies.
+//
+//nolint:interfacebloat
 type Resolver interface {
 	Config() *config.Config
 	Logger() *slog.Logger
+	HTTPRouter() *chi.Mux
+	HTTPServer() (*http.Server, error)
+	CloseHTTPServer() error
 	Database() (*sqlx.DB, error)
 	CloseDatabase() error
 	Cron() *cron.Cron
 	NotifierRegistry() (*registry.SchemeRegistry, error)
 	NotifierDispatcher() (*dispatcher.ChannelDispatcher, error)
+	TelegramBot() (*telego.Bot, error)
+	TelegramUpdatesHandler() (*telegram.ChannelHandler, error)
 	Close(ctx context.Context) error
 }
 
@@ -46,6 +57,17 @@ type Container struct {
 		instance *sqlx.DB
 	}
 
+	httpRouter struct {
+		once     sync.Once
+		instance *chi.Mux
+	}
+
+	httpServer struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *http.Server
+	}
+
 	notifierRegistry struct {
 		mu       sync.Mutex
 		once     sync.Once
@@ -56,6 +78,18 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *dispatcher.ChannelDispatcher
+	}
+
+	telegramBot struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *telego.Bot
+	}
+
+	telegramUpdatesHandler struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *telegram.ChannelHandler
 	}
 }
 
@@ -96,6 +130,7 @@ func (c *Container) Close(_ context.Context) error {
 
 	errList = append(errList,
 		c.CloseDatabase(),
+		c.CloseHTTPServer(),
 	)
 
 	return errors.Join(errList...)

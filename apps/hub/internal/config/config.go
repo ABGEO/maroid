@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mcuadros/go-defaults"
@@ -48,13 +49,31 @@ func (c *Database) DSN() string {
 
 // Server defines HTTP server configuration parameters.
 type Server struct {
+	Hostname   string `validate:"fqdn"`
 	ListenAddr string `default:"0.0.0.0" mapstructure:"address" validate:"ip"`
 	Port       string `default:"8000"                           validate:"min=1,max=65535"`
+
+	ReadTimeout       time.Duration `default:"15s"  mapstructure:"read_timeout"`
+	ReadHeaderTimeout time.Duration `default:"5s"   mapstructure:"read_header_timeout"`
+	WriteTimeout      time.Duration `default:"15s"  mapstructure:"write_timeout"`
+	IdleTimeout       time.Duration `default:"120s" mapstructure:"idle_timeout"`
 }
 
 // Address returns the full server address in host:port format.
 func (c *Server) Address() string {
 	return net.JoinHostPort(c.ListenAddr, c.Port)
+}
+
+// Telegram defines Telegram integration configuration parameters.
+type Telegram struct {
+	Token   string `validate:"required"`
+	Debug   bool   `                    default:"false"`
+	Setup   bool   `                    default:"true"`
+	Webhook struct {
+		Path            string   `default:"/telegram/webhook"`
+		AllowedNetworks []string `mapstructure:"allowed_networks" validate:"required"`
+		AllowedUsers    []int64  `mapstructure:"allowed_users"    validate:"required"`
+	}
 }
 
 // Config represents the main application configuration.
@@ -64,6 +83,7 @@ type Config struct {
 	Logger   Logger
 	Database Database
 	Server   Server
+	Telegram Telegram
 	Notifier notifier.Config
 	Plugins  []pluginconfig.Config
 }

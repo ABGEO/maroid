@@ -1,7 +1,9 @@
 package migrate
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -17,10 +19,21 @@ func NewUpCmd(appCtx *migrateContext) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "up",
 		Short: "Apply all up migrations",
-		RunE: func(_ *cobra.Command, _ []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			const timeout = 10 * time.Second
+
+			ctx := cmd.Context()
+
 			err := appCtx.migrator.Up(flags.target)
 			if err != nil {
 				return fmt.Errorf("failed to apply migrations: %w", err)
+			}
+
+			depCloseCtx, depCloseCancel := context.WithTimeout(context.WithoutCancel(ctx), timeout)
+			defer depCloseCancel()
+
+			if err := appCtx.DepResolver.Close(depCloseCtx); err != nil {
+				return fmt.Errorf("failed to close dependencies: %w", err)
 			}
 
 			return nil

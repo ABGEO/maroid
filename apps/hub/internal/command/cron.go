@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
@@ -18,6 +19,8 @@ func NewCronCmd(appCtx *appctx.AppContext) *cobra.Command {
 		Use:   "cron",
 		Short: "Start scheduled cron jobs for all registered plugins",
 		RunE: func(cmd *cobra.Command, _ []string) error {
+			const timeout = 10 * time.Second
+
 			ctx := cmd.Context()
 
 			depResolver := appCtx.DepResolver
@@ -41,6 +44,13 @@ func NewCronCmd(appCtx *appctx.AppContext) *cobra.Command {
 			doneCtx := cronInstance.Stop()
 			<-doneCtx.Done()
 			logger.Info("all cron jobs have stopped")
+
+			depCloseCtx, depCloseCancel := context.WithTimeout(context.WithoutCancel(ctx), timeout)
+			defer depCloseCancel()
+
+			if err := depResolver.Close(depCloseCtx); err != nil {
+				return fmt.Errorf("failed to close dependencies: %w", err)
+			}
 
 			return nil
 		},

@@ -48,6 +48,9 @@ linters:
       ignore-type-assert-ok: true
       ignore-map-index-ok: true
       ignore-chan-recv-ok: true
+      ignore-decls:
+        - w http.ResponseWriter
+        - r *http.Request
 
 formatters:
   enable:

@@ -12,6 +12,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/appctx"
 	"github.com/abgeo/maroid/apps/hub/internal/command/migrate"
+	"github.com/abgeo/maroid/apps/hub/internal/command/serve"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
@@ -118,6 +119,7 @@ func registerSubcommands(appCtx *appctx.AppContext, parentCmd *cobra.Command) {
 	commands := []*cobra.Command{
 		NewCronCmd(appCtx),
 		migrate.NewCmd(appCtx),
+		serve.NewCmd(appCtx),
 	}
 	commands = append(commands, getPluginCommands(appCtx.Plugins)...)
 	parentCmd.AddCommand(commands...)
