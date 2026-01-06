@@ -50,8 +50,8 @@ func (c *Database) DSN() string {
 // Server defines HTTP server configuration parameters.
 type Server struct {
 	Hostname   string `validate:"fqdn"`
-	ListenAddr string `default:"0.0.0.0" mapstructure:"address" validate:"ip"`
-	Port       string `default:"8000"                           validate:"min=1,max=65535"`
+	ListenAddr string `validate:"ip"              default:"0.0.0.0" mapstructure:"address"`
+	Port       string `validate:"min=1,max=65535" default:"8000"`
 
 	ReadTimeout       time.Duration `default:"15s"  mapstructure:"read_timeout"`
 	ReadHeaderTimeout time.Duration `default:"5s"   mapstructure:"read_header_timeout"`

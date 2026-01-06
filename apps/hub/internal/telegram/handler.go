@@ -12,22 +12,31 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 )
 
 // UpdatesHandler represents a handler for Telegram updates.
 type UpdatesHandler interface {
-	BotHandler() *th.BotHandler
-	Handle() error
+	AddCommands(commands ...command.Command)
+	Handle(ctx context.Context) error
 	Stop(ctx context.Context) error
 }
 
 // ChannelHandler is an implementation of UpdatesHandler that handles Telegram updates via webhooks.
 type ChannelHandler struct {
+	cfg    *config.Config
 	bot    *telego.Bot
 	logger *slog.Logger
+	router chi.Router
 
 	updates    <-chan telego.Update
+	commands   []command.Command
 	botHandler *th.BotHandler
+}
+
+type commandScope struct {
+	scope    telego.BotCommandScope
+	commands []telego.BotCommand
 }
 
 var _ UpdatesHandler = (*ChannelHandler)(nil)
@@ -39,50 +48,64 @@ func NewUpdatesHandler(
 	bot *telego.Bot,
 	router chi.Router,
 ) (*ChannelHandler, error) {
-	var webhookOptions []telego.WebhookOption
+	var (
+		err            error
+		webhookOptions []telego.WebhookOption
+	)
 
 	ctx := context.Background()
 
-	if cfg.Telegram.Setup {
-		webhookOptions = append(
-			webhookOptions,
-			telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
-				URL:         cfg.Server.Hostname + cfg.Telegram.Webhook.Path,
-				SecretToken: bot.SecretToken(),
-			}),
-		)
-	}
+	// @todo: uncomment after https://github.com/mymmrac/telego/issues/328 is resolved.
+	// if cfg.Telegram.Setup {
+	//	webhookOptions = append(
+	//		webhookOptions,
+	//		telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
+	//			URL:         cfg.Server.Hostname + cfg.Telegram.Webhook.Path,
+	//			SecretToken: bot.SecretToken(),
+	//		}),
+	//	)
+	//}
 
-	webhookHandler := getWebhookHandler(router, cfg.Telegram.Webhook.Path, bot.SecretToken())
-
-	updates, err := bot.UpdatesViaWebhook(ctx, webhookHandler, webhookOptions...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create telegram updates via webhook: %w", err)
-	}
-
-	botHandler, err := th.NewBotHandler(bot, updates)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create telegram bot handler: %w", err)
-	}
-
-	return &ChannelHandler{
+	handlerInstance := &ChannelHandler{
+		cfg: cfg,
 		bot: bot,
 		logger: logger.With(
 			slog.String("component", "telegram-updates-handler"),
 		),
-		updates:    updates,
-		botHandler: botHandler,
-	}, nil
+		router: router,
+	}
+
+	handlerInstance.updates, err = bot.UpdatesViaWebhook(
+		ctx,
+		handlerInstance.getWebhookHandler(),
+		webhookOptions...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create telegram updates via webhook: %w", err)
+	}
+
+	handlerInstance.botHandler, err = th.NewBotHandler(bot, handlerInstance.updates)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create telegram bot handler: %w", err)
+	}
+
+	return handlerInstance, nil
 }
 
-// BotHandler returns the underlying BotHandler.
-func (h *ChannelHandler) BotHandler() *th.BotHandler {
-	return h.botHandler
+// AddCommands adds commands to the handler.
+func (h *ChannelHandler) AddCommands(commands ...command.Command) {
+	h.commands = append(h.commands, commands...)
 }
 
 // Handle starts handling Telegram updates.
-func (h *ChannelHandler) Handle() error {
-	err := h.botHandler.Start()
+func (h *ChannelHandler) Handle(ctx context.Context) error {
+	h.registerHandlers()
+
+	err := h.setCommands(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = h.botHandler.Start()
 	if err != nil {
 		return fmt.Errorf("failed to start telegram bot handler: %w", err)
 	}
@@ -100,16 +123,12 @@ func (h *ChannelHandler) Stop(ctx context.Context) error {
 	return nil
 }
 
-func getWebhookHandler(
-	router chi.Router,
-	pattern string,
-	token string,
-) func(handler telego.WebhookHandler) error {
+func (h *ChannelHandler) getWebhookHandler() func(handler telego.WebhookHandler) error {
 	return func(handler telego.WebhookHandler) error {
-		router.Post(pattern, func(w http.ResponseWriter, r *http.Request) {
+		h.router.Post(h.cfg.Telegram.Webhook.Path, func(w http.ResponseWriter, r *http.Request) {
 			defer func() { _ = r.Body.Close() }()
 
-			if r.Header.Get(telego.WebhookSecretTokenHeader) != token {
+			if r.Header.Get(telego.WebhookSecretTokenHeader) != h.bot.SecretToken() {
 				w.WriteHeader(http.StatusUnauthorized)
 
 				return
@@ -133,4 +152,83 @@ func getWebhookHandler(
 
 		return nil
 	}
+}
+
+func (h *ChannelHandler) registerHandlers() {
+	unknownCommand := command.NewUnknown(h.bot)
+
+	for _, cmd := range h.commands {
+		cmdName := cmd.Command().Command
+
+		h.botHandler.Handle(wrapCommandHandler(cmd), th.CommandEqual(cmdName))
+		h.logger.Info("command handler has been registered", slog.String("command", cmdName))
+	}
+
+	h.botHandler.Handle(unknownCommand.Handle, th.AnyCommand())
+}
+
+func wrapCommandHandler(cmd command.Command) func(ctx *th.Context, update telego.Update) error {
+	return func(ctx *th.Context, update telego.Update) error {
+		// @todo: log command execution attempt.
+		err := cmd.Validate(update)
+		if err != nil {
+			// @todo: send message
+			return fmt.Errorf("command validation failed: %w", err)
+		}
+
+		err = cmd.Handle(ctx, update)
+		if err != nil {
+			// @todo: send message
+			return fmt.Errorf("command handling failed: %w", err)
+		}
+
+		return nil
+	}
+}
+
+func (h *ChannelHandler) setCommands(ctx context.Context) error {
+	if !h.cfg.Telegram.Setup {
+		return nil
+	}
+
+	return h.applyCommandsToScopes(ctx, h.groupCommandsByScope())
+}
+
+func (h *ChannelHandler) groupCommandsByScope() map[string]*commandScope {
+	commandsByScope := make(map[string]*commandScope)
+
+	for _, cmd := range h.commands {
+		scope := cmd.Scope()
+		scopeType := scope.ScopeType()
+
+		cs, exists := commandsByScope[scopeType]
+		if !exists {
+			cs = &commandScope{
+				scope:    scope,
+				commands: make([]telego.BotCommand, 0),
+			}
+			commandsByScope[scopeType] = cs
+		}
+
+		cs.commands = append(cs.commands, cmd.Command())
+	}
+
+	return commandsByScope
+}
+
+func (h *ChannelHandler) applyCommandsToScopes(
+	ctx context.Context,
+	commandsByScope map[string]*commandScope,
+) error {
+	for _, cs := range commandsByScope {
+		err := h.bot.SetMyCommands(ctx, &telego.SetMyCommandsParams{
+			Commands: cs.commands,
+			Scope:    cs.scope,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to set bot commands for scope %T: %w", cs.scope, err)
+		}
+	}
+
+	return nil
 }

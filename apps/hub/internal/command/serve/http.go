@@ -89,7 +89,7 @@ func startServices(
 			slog.String("webhook", cfg.Telegram.Webhook.Path),
 		)
 
-		err := uh.Handle()
+		err := uh.Handle(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to handle telegram updates: %w", err)
 		}

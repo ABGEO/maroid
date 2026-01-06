@@ -7,6 +7,7 @@ import (
 	"github.com/mymmrac/telego"
 
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
+	tgcommand "github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 )
 
 // TelegramBot initializes and returns the Telegram bot instance.
@@ -58,5 +59,16 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 		return nil, fmt.Errorf("failed to initialize telegram updates handler: %w", err)
 	}
 
+	c.telegramUpdatesHandler.instance.AddCommands(c.getTelegramCommands()...)
+
 	return c.telegramUpdatesHandler.instance, nil
+}
+
+func (c *Container) getTelegramCommands() []tgcommand.Command {
+	bot, _ := c.TelegramBot()
+
+	return []tgcommand.Command{
+		tgcommand.NewHelp(bot),
+		tgcommand.NewStart(bot),
+	}
 }

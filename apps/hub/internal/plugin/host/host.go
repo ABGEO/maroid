@@ -52,3 +52,12 @@ func (h *Host) Notifier() (notifierapi.Dispatcher, error) {
 
 	return instance, nil
 }
+
+// func (h *Host) TelegramBot() (telegram.Bot, error) {
+//	bot, err := h.depResolver.TelegramBot()
+//	if err != nil {
+//		return nil, fmt.Errorf("failed to resolve telegram bot: %w", err)
+//	}
+//
+//	return &telegram.telegramBotWrapper{bot: bot}, nil
+//}

@@ -29,6 +29,7 @@ func NewBot(cfg *config.Config) (*telego.Bot, error) {
 		}),
 	}
 
+	// @todo: setup normal logging.
 	if cfg.Telegram.Debug {
 		options = append(options, telego.WithDefaultDebugLogger())
 	}
