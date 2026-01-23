@@ -134,7 +134,7 @@ func getPluginCommands(plugins []pluginapi.Plugin) []*cobra.Command {
 			continue
 		}
 
-		pluginCommands := cmdPlugin.RegisterCommands()
+		pluginCommands := cmdPlugin.Commands()
 		if len(pluginCommands) == 0 {
 			continue
 		}

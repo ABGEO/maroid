@@ -6,16 +6,16 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
+
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // Start represents the start command.
 type Start struct {
-	DummyCommand
-
 	bot *telego.Bot
 }
 
-var _ Command = (*Start)(nil)
+var _ pluginapi.TelegramCommand = (*Start)(nil)
 
 // NewStart creates a new Start command.
 func NewStart(bot *telego.Bot) *Start {
@@ -24,12 +24,17 @@ func NewStart(bot *telego.Bot) *Start {
 	}
 }
 
-// Command returns the bot command definition.
-func (c *Start) Command() telego.BotCommand {
-	return telego.BotCommand{
+// Meta returns the metadata for the command.
+func (c *Start) Meta() pluginapi.TelegramCommandMeta {
+	return pluginapi.TelegramCommandMeta{
 		Command:     "start",
 		Description: "Start interacting with the bot",
 	}
+}
+
+// Validate checks if the update is valid for this command.
+func (c *Start) Validate(_ telego.Update) error {
+	return nil
 }
 
 // Handle processes the start command.

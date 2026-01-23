@@ -40,6 +40,7 @@ linters:
         - pluginapi.Plugin
         - notifierapi.Transport
         - notifierapi.Dispatcher
+        - pluginapi.TelegramBot
 
     varnamelen:
       min-name-length: 2

@@ -6,16 +6,16 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
+
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // Help represents the help command.
 type Help struct {
-	DummyCommand
-
 	bot *telego.Bot
 }
 
-var _ Command = (*Help)(nil)
+var _ pluginapi.TelegramCommand = (*Help)(nil)
 
 // NewHelp creates a new Help command.
 func NewHelp(bot *telego.Bot) *Help {
@@ -24,12 +24,17 @@ func NewHelp(bot *telego.Bot) *Help {
 	}
 }
 
-// Command returns the bot command definition.
-func (c *Help) Command() telego.BotCommand {
-	return telego.BotCommand{
+// Meta returns the metadata for the command.
+func (c *Help) Meta() pluginapi.TelegramCommandMeta {
+	return pluginapi.TelegramCommandMeta{
 		Command:     "help",
 		Description: "Show help information",
 	}
+}
+
+// Validate checks if the update is valid for this command.
+func (c *Help) Validate(_ telego.Update) error {
+	return nil
 }
 
 // Handle processes the help command.

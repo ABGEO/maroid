@@ -14,4 +14,5 @@ type Host interface {
 	Logger() *slog.Logger
 	Database() (*sqlx.DB, error)
 	Notifier() (notifierapi.Dispatcher, error)
+	TelegramBot() (TelegramBot, error)
 }

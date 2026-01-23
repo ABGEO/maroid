@@ -6,16 +6,16 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
+
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // Unknown represents the unknown command.
 type Unknown struct {
-	DummyCommand
-
 	bot *telego.Bot
 }
 
-var _ Command = (*Unknown)(nil)
+var _ pluginapi.TelegramCommand = (*Unknown)(nil)
 
 // NewUnknown creates a new Unknown command.
 func NewUnknown(bot *telego.Bot) *Unknown {
@@ -24,10 +24,15 @@ func NewUnknown(bot *telego.Bot) *Unknown {
 	}
 }
 
-// Command returns the bot command definition.
-func (c *Unknown) Command() telego.BotCommand {
+// Meta returns the metadata for the command.
+func (c *Unknown) Meta() pluginapi.TelegramCommandMeta {
 	// Unknown command does not need to be registered.
-	return telego.BotCommand{}
+	return pluginapi.TelegramCommandMeta{}
+}
+
+// Validate checks if the update is valid for this command.
+func (c *Unknown) Validate(_ telego.Update) error {
+	return nil
 }
 
 // Handle processes the unknown command.

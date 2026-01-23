@@ -8,6 +8,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
 	tgcommand "github.com/abgeo/maroid/apps/hub/internal/telegram/command"
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // TelegramBot initializes and returns the Telegram bot instance.
@@ -64,10 +65,10 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 	return c.telegramUpdatesHandler.instance, nil
 }
 
-func (c *Container) getTelegramCommands() []tgcommand.Command {
+func (c *Container) getTelegramCommands() []pluginapi.TelegramCommand {
 	bot, _ := c.TelegramBot()
 
-	return []tgcommand.Command{
+	return []pluginapi.TelegramCommand{
 		tgcommand.NewHelp(bot),
 		tgcommand.NewStart(bot),
 	}

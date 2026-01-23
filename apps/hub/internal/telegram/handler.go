@@ -10,14 +10,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
+	tu "github.com/mymmrac/telego/telegoutil"
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/command"
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // UpdatesHandler represents a handler for Telegram updates.
 type UpdatesHandler interface {
-	AddCommands(commands ...command.Command)
+	AddCommands(commands ...pluginapi.TelegramCommand)
 	Handle(ctx context.Context) error
 	Stop(ctx context.Context) error
 }
@@ -30,7 +32,7 @@ type ChannelHandler struct {
 	router chi.Router
 
 	updates    <-chan telego.Update
-	commands   []command.Command
+	commands   []pluginapi.TelegramCommand
 	botHandler *th.BotHandler
 }
 
@@ -92,7 +94,7 @@ func NewUpdatesHandler(
 }
 
 // AddCommands adds commands to the handler.
-func (h *ChannelHandler) AddCommands(commands ...command.Command) {
+func (h *ChannelHandler) AddCommands(commands ...pluginapi.TelegramCommand) {
 	h.commands = append(h.commands, commands...)
 }
 
@@ -158,7 +160,7 @@ func (h *ChannelHandler) registerHandlers() {
 	unknownCommand := command.NewUnknown(h.bot)
 
 	for _, cmd := range h.commands {
-		cmdName := cmd.Command().Command
+		cmdName := cmd.Meta().Command
 
 		h.botHandler.Handle(wrapCommandHandler(cmd), th.CommandEqual(cmdName))
 		h.logger.Info("command handler has been registered", slog.String("command", cmdName))
@@ -167,7 +169,9 @@ func (h *ChannelHandler) registerHandlers() {
 	h.botHandler.Handle(unknownCommand.Handle, th.AnyCommand())
 }
 
-func wrapCommandHandler(cmd command.Command) func(ctx *th.Context, update telego.Update) error {
+func wrapCommandHandler(
+	cmd pluginapi.TelegramCommand,
+) func(ctx *th.Context, update telego.Update) error {
 	return func(ctx *th.Context, update telego.Update) error {
 		// @todo: log command execution attempt.
 		err := cmd.Validate(update)
@@ -198,7 +202,13 @@ func (h *ChannelHandler) groupCommandsByScope() map[string]*commandScope {
 	commandsByScope := make(map[string]*commandScope)
 
 	for _, cmd := range h.commands {
-		scope := cmd.Scope()
+		meta := cmd.Meta()
+		scope := meta.Scope
+
+		if scope == nil {
+			scope = tu.ScopeDefault()
+		}
+
 		scopeType := scope.ScopeType()
 
 		cs, exists := commandsByScope[scopeType]
@@ -210,7 +220,10 @@ func (h *ChannelHandler) groupCommandsByScope() map[string]*commandScope {
 			commandsByScope[scopeType] = cs
 		}
 
-		cs.commands = append(cs.commands, cmd.Command())
+		cs.commands = append(cs.commands, telego.BotCommand{
+			Command:     meta.Command,
+			Description: meta.Description,
+		})
 	}
 
 	return commandsByScope

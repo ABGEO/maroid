@@ -53,11 +53,12 @@ func (h *Host) Notifier() (notifierapi.Dispatcher, error) {
 	return instance, nil
 }
 
-// func (h *Host) TelegramBot() (telegram.Bot, error) {
-//	bot, err := h.depResolver.TelegramBot()
-//	if err != nil {
-//		return nil, fmt.Errorf("failed to resolve telegram bot: %w", err)
-//	}
-//
-//	return &telegram.telegramBotWrapper{bot: bot}, nil
-//}
+// TelegramBot returns the wrapped Telegram bot instance from the dependency container.
+func (h *Host) TelegramBot() (pluginapi.TelegramBot, error) {
+	bot, err := h.depResolver.TelegramBot()
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve telegram bot: %w", err)
+	}
+
+	return &telegramBotWrapper{bot: bot}, nil
+}

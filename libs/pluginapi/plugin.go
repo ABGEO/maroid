@@ -22,11 +22,11 @@ type Plugin interface {
 // RoutePlugin is a plugin that can register HTTP routes.
 type RoutePlugin interface {
 	Plugin
-	RegisterRoutes() error
+	Routes() ([]any, error)
 }
 
 // CommandPlugin is a plugin that can register CLI commands.
 type CommandPlugin interface {
 	Plugin
-	RegisterCommands() []*cobra.Command
+	Commands() []*cobra.Command
 }
