@@ -57,16 +57,15 @@ func NewUpdatesHandler(
 
 	ctx := context.Background()
 
-	// @todo: uncomment after https://github.com/mymmrac/telego/issues/328 is resolved.
-	// if cfg.Telegram.Setup {
-	//	webhookOptions = append(
-	//		webhookOptions,
-	//		telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
-	//			URL:         cfg.Server.Hostname + cfg.Telegram.Webhook.Path,
-	//			SecretToken: bot.SecretToken(),
-	//		}),
-	//	)
-	//}
+	if cfg.Telegram.Setup {
+		webhookOptions = append(
+			webhookOptions,
+			telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
+				URL:         cfg.Server.Hostname + cfg.Telegram.Webhook.Path,
+				SecretToken: bot.SecretToken(),
+			}),
+		)
+	}
 
 	handlerInstance := &ChannelHandler{
 		cfg: cfg,
