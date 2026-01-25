@@ -6,6 +6,7 @@ import (
 
 	"github.com/mymmrac/telego"
 
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
 	tgcommand "github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -41,7 +42,14 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 	c.telegramUpdatesHandler.once.Do(func() {
 		bot, botErr := c.TelegramBot()
 		if botErr != nil {
-			err = fmt.Errorf("failed to get telegram bot: %w", botErr)
+			err = botErr
+
+			return
+		}
+
+		commandsRegistry, regErr := c.TelegramCommandRegistry()
+		if regErr != nil {
+			err = regErr
 
 			return
 		}
@@ -51,6 +59,7 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 			c.Logger(),
 			bot,
 			c.HTTPRouter(),
+			commandsRegistry,
 		)
 	})
 
@@ -60,16 +69,49 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 		return nil, fmt.Errorf("failed to initialize telegram updates handler: %w", err)
 	}
 
-	c.telegramUpdatesHandler.instance.AddCommands(c.getTelegramCommands()...)
-
 	return c.telegramUpdatesHandler.instance, nil
 }
 
-func (c *Container) getTelegramCommands() []pluginapi.TelegramCommand {
-	bot, _ := c.TelegramBot()
+// TelegramCommandRegistry initializes and returns the Telegram command registry.
+func (c *Container) TelegramCommandRegistry() (*registry.TelegramCommandRegistry, error) {
+	c.telegramCommandRegistry.mu.Lock()
+	defer c.telegramCommandRegistry.mu.Unlock()
+
+	var err error
+
+	c.telegramCommandRegistry.once.Do(func() {
+		c.telegramCommandRegistry.instance = registry.NewTelegramCommandRegistry()
+
+		commands, cmdErr := c.getTelegramCommands()
+		if err != nil {
+			err = cmdErr
+		}
+
+		regErr := c.telegramCommandRegistry.instance.Register(commands...)
+		if regErr != nil {
+			err = regErr
+
+			return
+		}
+	})
+
+	if err != nil {
+		c.telegramCommandRegistry.once = sync.Once{}
+
+		return nil, fmt.Errorf("failed to initialize telegram commands registry: %w", err)
+	}
+
+	return c.telegramCommandRegistry.instance, nil
+}
+
+func (c *Container) getTelegramCommands() ([]pluginapi.TelegramCommand, error) {
+	bot, err := c.TelegramBot()
+	if err != nil {
+		return nil, err
+	}
 
 	return []pluginapi.TelegramCommand{
 		tgcommand.NewHelp(bot),
 		tgcommand.NewStart(bot),
-	}
+	}, nil
 }

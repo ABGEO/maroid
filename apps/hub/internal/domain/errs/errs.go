@@ -9,6 +9,8 @@ var (
 	// ErrPluginAlreadyRegistered indicates that a plugin with the same ID
 	// has already been loaded and registered.
 	ErrPluginAlreadyRegistered = errors.New("plugin: already registered")
+	// ErrPluginCapabilityNotSupported indicates that a plugin capability is not supported.
+	ErrPluginCapabilityNotSupported = errors.New("plugin: capability not supported")
 	// ErrInvalidPluginID indicates that a plugin configuration is missing its required ID, or it is not valid.
 	ErrInvalidPluginID = errors.New("plugin: ID is missing or invalid")
 	// ErrUnexpectedPluginSymbolType indicates that a plugin symbol has an unexpected type
@@ -19,4 +21,12 @@ var (
 	ErrIncompatiblePluginAPIVersion = errors.New("plugin: incompatible API version")
 	// ErrUnknownMigrationTarget is returned when a migration target is not recognized.
 	ErrUnknownMigrationTarget = errors.New("unknown migration target")
+	// ErrCommandAlreadyRegistered indicates that a command has already been registered.
+	ErrCommandAlreadyRegistered = errors.New("command: already registered")
+	// ErrMigrationSourceAlreadyRegistered indicates that a migration source has already been registered.
+	ErrMigrationSourceAlreadyRegistered = errors.New("migration: source already registered")
+	// ErrTelegramCommandAlreadyRegistered indicates that a telegram command has already been registered.
+	ErrTelegramCommandAlreadyRegistered = errors.New("telegram command: already registered")
+	// ErrCronAlreadyRegistered indicates that a cron job has already been registered.
+	ErrCronAlreadyRegistered = errors.New("cron: already registered")
 )

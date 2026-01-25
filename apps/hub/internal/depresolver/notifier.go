@@ -9,7 +9,7 @@ import (
 	"github.com/abgeo/maroid/libs/notifier/transport/telegram"
 )
 
-// NotifierRegistry returns the notifier registry instance.
+// NotifierRegistry initializes and returns the notifier registry instance.
 func (c *Container) NotifierRegistry() (*registry.SchemeRegistry, error) {
 	c.notifierRegistry.mu.Lock()
 	defer c.notifierRegistry.mu.Unlock()
@@ -30,7 +30,7 @@ func (c *Container) NotifierRegistry() (*registry.SchemeRegistry, error) {
 	return c.notifierRegistry.instance, nil
 }
 
-// NotifierDispatcher returns the notifier dispatcher instance.
+// NotifierDispatcher initializes and returns the notifier dispatcher instance.
 func (c *Container) NotifierDispatcher() (*dispatcher.ChannelDispatcher, error) {
 	c.notifierDispatcher.mu.Lock()
 	defer c.notifierDispatcher.mu.Unlock()

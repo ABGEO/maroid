@@ -6,12 +6,9 @@ package appctx
 
 import (
 	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
-	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // AppContext holds application-wide dependencies.
 type AppContext struct {
 	DepResolver depresolver.Resolver
-	PluginHost  pluginapi.Host
-	Plugins     []pluginapi.Plugin
 }

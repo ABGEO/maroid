@@ -27,17 +27,12 @@ func NewCmd(appCtx *appctx.AppContext) *cobra.Command {
 		Use:   "migrate",
 		Short: "Commands to migrate the database",
 		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-			database, err := cmdCtx.DepResolver.Database()
-			if err != nil {
-				return fmt.Errorf("failed to resolve database: %w", err)
-			}
+			var err error
 
-			cmdCtx.migrator = migrator.New(
-				cmdCtx.DepResolver.Config(),
-				cmdCtx.DepResolver.Logger(),
-				database,
-				cmdCtx.Plugins,
-			)
+			cmdCtx.migrator, err = cmdCtx.DepResolver.Migrator()
+			if err != nil {
+				return fmt.Errorf("failed to resolve database migrator: %w", err)
+			}
 
 			return nil
 		},

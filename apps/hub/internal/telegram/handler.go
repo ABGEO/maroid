@@ -13,26 +13,26 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // UpdatesHandler represents a handler for Telegram updates.
 type UpdatesHandler interface {
-	AddCommands(commands ...pluginapi.TelegramCommand)
 	Handle(ctx context.Context) error
 	Stop(ctx context.Context) error
 }
 
 // ChannelHandler is an implementation of UpdatesHandler that handles Telegram updates via webhooks.
 type ChannelHandler struct {
-	cfg    *config.Config
-	bot    *telego.Bot
-	logger *slog.Logger
-	router chi.Router
+	cfg              *config.Config
+	bot              *telego.Bot
+	logger           *slog.Logger
+	router           chi.Router
+	commandsRegistry *registry.TelegramCommandRegistry
 
 	updates    <-chan telego.Update
-	commands   []pluginapi.TelegramCommand
 	botHandler *th.BotHandler
 }
 
@@ -49,6 +49,7 @@ func NewUpdatesHandler(
 	logger *slog.Logger,
 	bot *telego.Bot,
 	router chi.Router,
+	commandsRegistry *registry.TelegramCommandRegistry,
 ) (*ChannelHandler, error) {
 	var (
 		err            error
@@ -73,7 +74,8 @@ func NewUpdatesHandler(
 		logger: logger.With(
 			slog.String("component", "telegram-updates-handler"),
 		),
-		router: router,
+		router:           router,
+		commandsRegistry: commandsRegistry,
 	}
 
 	handlerInstance.updates, err = bot.UpdatesViaWebhook(
@@ -90,11 +92,6 @@ func NewUpdatesHandler(
 	}
 
 	return handlerInstance, nil
-}
-
-// AddCommands adds commands to the handler.
-func (h *ChannelHandler) AddCommands(commands ...pluginapi.TelegramCommand) {
-	h.commands = append(h.commands, commands...)
 }
 
 // Handle starts handling Telegram updates.
@@ -158,7 +155,7 @@ func (h *ChannelHandler) getWebhookHandler() func(handler telego.WebhookHandler)
 func (h *ChannelHandler) registerHandlers() {
 	unknownCommand := command.NewUnknown(h.bot)
 
-	for _, cmd := range h.commands {
+	for _, cmd := range h.commandsRegistry.All() {
 		cmdName := cmd.Meta().Command
 
 		h.botHandler.Handle(wrapCommandHandler(cmd), th.CommandEqual(cmdName))
@@ -200,7 +197,7 @@ func (h *ChannelHandler) setCommands(ctx context.Context) error {
 func (h *ChannelHandler) groupCommandsByScope() map[string]*commandScope {
 	commandsByScope := make(map[string]*commandScope)
 
-	for _, cmd := range h.commands {
+	for _, cmd := range h.commandsRegistry.All() {
 		meta := cmd.Meta()
 		scope := meta.Scope
 

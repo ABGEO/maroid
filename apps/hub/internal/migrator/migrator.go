@@ -18,6 +18,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/db"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -29,10 +30,10 @@ const (
 
 // Migrator is responsible for running database migrations for core and plugin components.
 type Migrator struct {
-	config   *config.Config
-	logger   *slog.Logger
-	database *sqlx.DB
-	plugins  []pluginapi.Plugin
+	config            *config.Config
+	logger            *slog.Logger
+	database          *sqlx.DB
+	migrationRegistry *registry.MigrationRegistry
 }
 
 type migrationPlan struct {
@@ -45,15 +46,15 @@ func New(
 	cfg *config.Config,
 	logger *slog.Logger,
 	database *sqlx.DB,
-	plugins []pluginapi.Plugin,
+	migrationRegistry *registry.MigrationRegistry,
 ) *Migrator {
 	return &Migrator{
 		config: cfg,
 		logger: logger.With(
 			slog.String("component", "migrator"),
 		),
-		database: database,
-		plugins:  plugins,
+		database:          database,
+		migrationRegistry: migrationRegistry,
 	}
 }
 
@@ -128,11 +129,7 @@ func (m *Migrator) buildMigrationPlan(target string) (*migrationPlan, error) {
 		}, nil
 	}
 
-	pluginFS, err := m.collectPluginFilesystems()
-	if err != nil {
-		return nil, err
-	}
-
+	pluginFS := m.migrationRegistry.All()
 	pluginIDs := slices.Collect(maps.Keys(pluginFS))
 
 	switch target {
@@ -163,28 +160,6 @@ func (m *Migrator) getCoreFilesystem() (fs.FS, error) {
 	}
 
 	return coreFS, nil
-}
-
-func (m *Migrator) collectPluginFilesystems() (map[string]fs.FS, error) {
-	filesystems := make(map[string]fs.FS)
-
-	for _, plugin := range m.plugins {
-		pluginID := plugin.Meta().ID.String()
-
-		migrationPlugin, ok := plugin.(pluginapi.MigrationPlugin)
-		if !ok {
-			continue
-		}
-
-		filesystem, err := migrationPlugin.Migrations()
-		if err != nil {
-			return nil, fmt.Errorf("failed to read migrations for plugin %s: %w", pluginID, err)
-		}
-
-		filesystems[pluginID] = filesystem
-	}
-
-	return filesystems, nil
 }
 
 func (m *Migrator) newMigrateInstance(

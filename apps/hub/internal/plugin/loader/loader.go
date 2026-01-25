@@ -6,6 +6,8 @@ import (
 	"plugin"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/plugin/registrar"
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -13,24 +15,80 @@ import (
 // expected in each plugin.
 const ConstructorSymbol = "New"
 
-// LoadPlugin opens, initializes, and validates a plugin from the given path.
+// Loader is responsible for loading and registering plugins.
+type Loader struct {
+	host pluginapi.Host
+
+	plugins    map[string]pluginapi.Plugin
+	registrars []registrar.Registrar
+}
+
+// New creates a new Loader.
+func New(
+	host pluginapi.Host,
+	commandRegistry *registry.CommandRegistry,
+	cronRegistry *registry.CronRegistry,
+	migrationRegistry *registry.MigrationRegistry,
+	telegramCommandRegistry *registry.TelegramCommandRegistry,
+) *Loader {
+	return &Loader{
+		host:    host,
+		plugins: make(map[string]pluginapi.Plugin),
+		registrars: []registrar.Registrar{
+			registrar.NewCommandRegistrar(commandRegistry),
+			registrar.NewCronRegistrar(cronRegistry),
+			registrar.NewMigrationRegistrar(migrationRegistry),
+			registrar.NewTelegramCommandRegistrar(telegramCommandRegistry),
+		},
+	}
+}
+
+// Load opens, initializes, and validates a plugin from the given path.
 // It uses the provided host and configuration map for plugin initialization.
-func LoadPlugin(path string, host pluginapi.Host, cfg map[string]any) (pluginapi.Plugin, error) {
+// Loaded plugins are registered and their capabilities are set up.
+func (r *Loader) Load(path string, cfg map[string]any) error {
 	constructor, err := openConstructor(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	plg, err := constructor(host, cfg)
+	plg, err := constructor(r.host, cfg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if err = validatePlugin(plg); err != nil {
-		return nil, err
+		return err
 	}
 
-	return plg, nil
+	id := plg.Meta().ID.String()
+
+	if _, exists := r.plugins[id]; exists {
+		return fmt.Errorf("%w: %s", errs.ErrPluginAlreadyRegistered, id)
+	}
+
+	if err = r.registerCapabilities(plg); err != nil {
+		return err
+	}
+
+	r.plugins[id] = plg
+
+	return nil
+}
+
+func (r *Loader) registerCapabilities(plg pluginapi.Plugin) error {
+	for _, reg := range r.registrars {
+		if !reg.Supports(plg) {
+			continue
+		}
+
+		if err := reg.Register(plg); err != nil {
+			return fmt.Errorf("failed to register capabilities for plugin %s via %s: %w",
+				plg.Meta().ID, reg.Name(), err)
+		}
+	}
+
+	return nil
 }
 
 func openConstructor(path string) (pluginapi.Constructor, error) {

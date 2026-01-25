@@ -14,8 +14,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/appctx"
 	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
-	tgcommand "github.com/abgeo/maroid/apps/hub/internal/telegram/command"
-	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 const shutdownTimeout = 10 * time.Second
@@ -38,7 +36,7 @@ func NewHTTPCmd(appCtx *appctx.AppContext) *cobra.Command {
 				slog.String("command", "serve http"),
 			)
 
-			return startServices(cmd.Context(), appCtx.DepResolver, appCtx.Plugins, logger)
+			return startServices(cmd.Context(), appCtx.DepResolver, logger)
 		},
 	}
 
@@ -51,7 +49,6 @@ func NewHTTPCmd(appCtx *appctx.AppContext) *cobra.Command {
 func startServices(
 	ctx context.Context,
 	depResolver depresolver.Resolver,
-	plugins []pluginapi.Plugin,
 	logger *slog.Logger,
 ) error {
 	srv, err := depResolver.HTTPServer()
@@ -68,11 +65,6 @@ func startServices(
 	errGroup, ctx := errgroup.WithContext(ctx)
 
 	// @todo: register plugin-provided handler.
-
-	err = registerTelegramCommands(plugins, uh)
-	if err != nil {
-		return err
-	}
 
 	errGroup.Go(func() error {
 		logger.InfoContext(ctx, "starting HTTP server",
@@ -113,38 +105,6 @@ func startServices(
 	err = errGroup.Wait()
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return fmt.Errorf("services errored: %w", err)
-	}
-
-	return nil
-}
-
-func registerTelegramCommands(
-	plugins []pluginapi.Plugin,
-	updatesHandler *telegram.ChannelHandler,
-) error {
-	for _, plugin := range plugins {
-		pluginID := plugin.Meta().ID
-
-		telegramCommandPlugin, isTelegramCommandPlugin := plugin.(pluginapi.TelegramCommandPlugin)
-		if !isTelegramCommandPlugin {
-			continue
-		}
-
-		commands, err := telegramCommandPlugin.TelegramCommands()
-		if err != nil {
-			return fmt.Errorf(
-				"failed to get telegram commands from plugin %s: %w",
-				pluginID.String(),
-				err,
-			)
-		}
-
-		wrappedCommands := make([]pluginapi.TelegramCommand, 0, len(commands))
-		for _, cmd := range commands {
-			wrappedCommands = append(wrappedCommands, tgcommand.NewWrapper(cmd, pluginID))
-		}
-
-		updatesHandler.AddCommands(wrappedCommands...)
 	}
 
 	return nil

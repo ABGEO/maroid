@@ -7,9 +7,10 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/database"
+	"github.com/abgeo/maroid/apps/hub/internal/migrator"
 )
 
-// Database returns the database instance.
+// Database initializes and returns the database instance.
 func (c *Container) Database() (*sqlx.DB, error) {
 	c.database.mu.Lock()
 	defer c.database.mu.Unlock()
@@ -41,4 +42,43 @@ func (c *Container) CloseDatabase() error {
 	}
 
 	return nil
+}
+
+// Migrator initializes and returns the database migrator instance.
+func (c *Container) Migrator() (*migrator.Migrator, error) {
+	c.migrator.mu.Lock()
+	defer c.migrator.mu.Unlock()
+
+	var err error
+
+	c.migrator.once.Do(func() {
+		db, dbErr := c.Database()
+		if dbErr != nil {
+			err = dbErr
+
+			return
+		}
+
+		migrationRegistry, migrationRegistryErr := c.MigrationRegistry()
+		if migrationRegistryErr != nil {
+			err = migrationRegistryErr
+
+			return
+		}
+
+		c.migrator.instance = migrator.New(
+			c.Config(),
+			c.Logger(),
+			db,
+			migrationRegistry,
+		)
+	})
+
+	if err != nil {
+		c.migrator.once = sync.Once{}
+
+		return nil, fmt.Errorf("failed to initialize database migrator: %w", err)
+	}
+
+	return c.migrator.instance, nil
 }

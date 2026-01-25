@@ -16,9 +16,13 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/logger"
+	"github.com/abgeo/maroid/apps/hub/internal/migrator"
+	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
+	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
 	"github.com/abgeo/maroid/libs/notifier/dispatcher"
-	"github.com/abgeo/maroid/libs/notifier/registry"
+	notifierregistry "github.com/abgeo/maroid/libs/notifier/registry"
 )
 
 // Resolver defines an interface for resolving shared dependencies.
@@ -32,8 +36,15 @@ type Resolver interface {
 	CloseHTTPServer() error
 	Database() (*sqlx.DB, error)
 	CloseDatabase() error
+	Migrator() (*migrator.Migrator, error)
+	PluginHost() (*pluginhost.Host, error)
+	PluginLoader() (*pluginloader.Loader, error)
+	CommandRegistry() (*registry.CommandRegistry, error)
+	CronRegistry() (*registry.CronRegistry, error)
+	MigrationRegistry() (*registry.MigrationRegistry, error)
+	TelegramCommandRegistry() (*registry.TelegramCommandRegistry, error)
 	Cron() *cron.Cron
-	NotifierRegistry() (*registry.SchemeRegistry, error)
+	NotifierRegistry() (*notifierregistry.SchemeRegistry, error)
 	NotifierDispatcher() (*dispatcher.ChannelDispatcher, error)
 	TelegramBot() (*telego.Bot, error)
 	TelegramUpdatesHandler() (*telegram.ChannelHandler, error)
@@ -57,6 +68,12 @@ type Container struct {
 		instance *sqlx.DB
 	}
 
+	migrator struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *migrator.Migrator
+	}
+
 	httpRouter struct {
 		once     sync.Once
 		instance *chi.Mux
@@ -68,10 +85,46 @@ type Container struct {
 		instance *http.Server
 	}
 
+	pluginHost struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *pluginhost.Host
+	}
+
+	pluginLoader struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *pluginloader.Loader
+	}
+
+	commandRegistry struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *registry.CommandRegistry
+	}
+
+	cronRegistry struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *registry.CronRegistry
+	}
+
+	migrationRegistry struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *registry.MigrationRegistry
+	}
+
+	telegramCommandRegistry struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *registry.TelegramCommandRegistry
+	}
+
 	notifierRegistry struct {
 		mu       sync.Mutex
 		once     sync.Once
-		instance *registry.SchemeRegistry
+		instance *notifierregistry.SchemeRegistry
 	}
 
 	notifierDispatcher struct {
