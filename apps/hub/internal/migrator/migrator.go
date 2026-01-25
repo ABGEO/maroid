@@ -15,7 +15,6 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jmoiron/sqlx"
 
-	"github.com/abgeo/maroid/apps/hub/db"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
@@ -117,49 +116,34 @@ func (m *Migrator) migrateComponent(component string, filesystem fs.FS) error {
 }
 
 func (m *Migrator) buildMigrationPlan(target string) (*migrationPlan, error) {
-	coreFS, err := m.getCoreFilesystem()
-	if err != nil {
-		return nil, err
+	migrations := m.migrationRegistry.All()
+	plan := &migrationPlan{
+		filesystems: migrations,
+		order:       slices.Collect(maps.Keys(migrations)),
 	}
-
-	if target == TargetCore {
-		return &migrationPlan{
-			filesystems: map[string]fs.FS{TargetCore: coreFS},
-			order:       []string{TargetCore},
-		}, nil
-	}
-
-	pluginFS := m.migrationRegistry.All()
-	pluginIDs := slices.Collect(maps.Keys(pluginFS))
 
 	switch target {
-	case TargetAll:
-		pluginFS[TargetCore] = coreFS
+	case TargetCore:
+		plan.order = []string{TargetCore}
 
-		return &migrationPlan{
-			filesystems: pluginFS,
-			order:       append([]string{TargetCore}, pluginIDs...),
-		}, nil
+		return plan, nil
+
+	case TargetAll:
+		return plan, nil
 
 	default:
-		if slices.Contains(pluginIDs, target) {
-			return &migrationPlan{
-				filesystems: pluginFS,
-				order:       []string{target},
-			}, nil
+		if _, exists := migrations[target]; !exists {
+			return nil, fmt.Errorf(
+				"%w: invalid plugin ID %s",
+				errs.ErrUnknownMigrationTarget,
+				target,
+			)
 		}
 
-		return nil, fmt.Errorf("%w: invalid plugin ID %s", errs.ErrUnknownMigrationTarget, target)
-	}
-}
+		plan.order = []string{target}
 
-func (m *Migrator) getCoreFilesystem() (fs.FS, error) {
-	coreFS, err := fs.Sub(db.GetMigrationsFS(), "migrations")
-	if err != nil {
-		return nil, fmt.Errorf("failed to access core migrations: %w", err)
+		return plan, nil
 	}
-
-	return coreFS, nil
 }
 
 func (m *Migrator) newMigrateInstance(

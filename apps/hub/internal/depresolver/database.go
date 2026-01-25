@@ -2,12 +2,15 @@ package depresolver
 
 import (
 	"fmt"
+	"io/fs"
 	"sync"
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/apps/hub/db"
 	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/migrator"
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 )
 
 // Database initializes and returns the database instance.
@@ -44,6 +47,35 @@ func (c *Container) CloseDatabase() error {
 	return nil
 }
 
+// MigrationRegistry initializes and returns the migration registry instance.
+func (c *Container) MigrationRegistry() (*registry.MigrationRegistry, error) {
+	c.migrationRegistry.mu.Lock()
+	defer c.migrationRegistry.mu.Unlock()
+
+	var err error
+
+	c.migrationRegistry.once.Do(func() {
+		c.migrationRegistry.instance = registry.NewMigrationRegistry()
+
+		coreFS, fsErr := getCoreMigrationFS()
+		if fsErr != nil {
+			err = fsErr
+
+			return
+		}
+
+		err = c.migrationRegistry.instance.Register(migrator.TargetCore, coreFS)
+	})
+
+	if err != nil {
+		c.migrationRegistry.once = sync.Once{}
+
+		return nil, fmt.Errorf("failed to initialize migration registry: %w", err)
+	}
+
+	return c.migrationRegistry.instance, nil
+}
+
 // Migrator initializes and returns the database migrator instance.
 func (c *Container) Migrator() (*migrator.Migrator, error) {
 	c.migrator.mu.Lock()
@@ -52,7 +84,7 @@ func (c *Container) Migrator() (*migrator.Migrator, error) {
 	var err error
 
 	c.migrator.once.Do(func() {
-		db, dbErr := c.Database()
+		dbInstance, dbErr := c.Database()
 		if dbErr != nil {
 			err = dbErr
 
@@ -69,7 +101,7 @@ func (c *Container) Migrator() (*migrator.Migrator, error) {
 		c.migrator.instance = migrator.New(
 			c.Config(),
 			c.Logger(),
-			db,
+			dbInstance,
 			migrationRegistry,
 		)
 	})
@@ -81,4 +113,13 @@ func (c *Container) Migrator() (*migrator.Migrator, error) {
 	}
 
 	return c.migrator.instance, nil
+}
+
+func getCoreMigrationFS() (fs.FS, error) {
+	coreFS, err := fs.Sub(db.GetMigrationsFS(), "migrations")
+	if err != nil {
+		return nil, fmt.Errorf("failed to access core migrations: %w", err)
+	}
+
+	return coreFS, nil
 }
