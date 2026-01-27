@@ -41,7 +41,11 @@ func (c *Start) Validate(_ telego.Update) error {
 func (c *Start) Handle(ctx *th.Context, update telego.Update) error {
 	message := tu.Message(
 		tu.ID(update.Message.Chat.ID),
-		"// Some start message goes here",
+		`
+Hello there 👋! I’m Maroid, your assistant for automating tasks.
+
+Type /help to see what I can do and get started 🚀
+`,
 	).WithMessageThreadID(update.Message.MessageThreadID)
 
 	if update.Message.DirectMessagesTopic != nil {

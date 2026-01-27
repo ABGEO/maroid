@@ -82,7 +82,7 @@ func (c *Container) TelegramCommandRegistry() (*registry.TelegramCommandRegistry
 	c.telegramCommandRegistry.once.Do(func() {
 		c.telegramCommandRegistry.instance = registry.NewTelegramCommandRegistry()
 
-		commands, cmdErr := c.getTelegramCommands()
+		commands, cmdErr := c.getTelegramCommands(c.telegramCommandRegistry.instance)
 		if err != nil {
 			err = cmdErr
 		}
@@ -104,14 +104,16 @@ func (c *Container) TelegramCommandRegistry() (*registry.TelegramCommandRegistry
 	return c.telegramCommandRegistry.instance, nil
 }
 
-func (c *Container) getTelegramCommands() ([]pluginapi.TelegramCommand, error) {
+func (c *Container) getTelegramCommands(
+	commandRegistry *registry.TelegramCommandRegistry,
+) ([]pluginapi.TelegramCommand, error) {
 	bot, err := c.TelegramBot()
 	if err != nil {
 		return nil, err
 	}
 
 	return []pluginapi.TelegramCommand{
-		tgcommand.NewHelp(bot),
+		tgcommand.NewHelp(bot, commandRegistry),
 		tgcommand.NewStart(bot),
 	}, nil
 }
