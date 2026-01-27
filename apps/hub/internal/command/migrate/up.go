@@ -1,39 +1,36 @@
 package migrate
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
+
+	"github.com/abgeo/maroid/apps/hub/internal/migrator"
 )
 
-type upFlags struct {
+// UpCommand represents s command for running database up migrations.
+type UpCommand struct {
+	migrator *migrator.Migrator
+
 	target string
 }
 
-// NewUpCmd returns a new Cobra command for running database up migrations.
-func NewUpCmd(appCtx *migrateContext) *cobra.Command {
-	flags := upFlags{}
+// NewUpCommand creates a new UpCommand.
+func NewUpCommand(migrator *migrator.Migrator) *UpCommand {
+	return &UpCommand{
+		migrator: migrator,
+	}
+}
 
+// Command initializes and returns the Cobra command.
+func (c *UpCommand) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "up",
 		Short: "Apply all up migrations",
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			const timeout = 10 * time.Second
-
-			ctx := cmd.Context()
-
-			err := appCtx.migrator.Up(flags.target)
+		RunE: func(_ *cobra.Command, _ []string) error {
+			err := c.migrator.Up(c.target)
 			if err != nil {
 				return fmt.Errorf("failed to apply migrations: %w", err)
-			}
-
-			depCloseCtx, depCloseCancel := context.WithTimeout(context.WithoutCancel(ctx), timeout)
-			defer depCloseCancel()
-
-			if err := appCtx.DepResolver.Close(depCloseCtx); err != nil {
-				return fmt.Errorf("failed to close dependencies: %w", err)
 			}
 
 			return nil
@@ -41,7 +38,7 @@ func NewUpCmd(appCtx *migrateContext) *cobra.Command {
 	}
 
 	cmd.Flags().
-		StringVarP(&flags.target, "target", "t", "all", "Migration target: all, core, or {plugin-id}")
+		StringVarP(&c.target, "target", "t", "all", "Migration target: all, core, or {plugin-id}")
 
 	return cmd
 }

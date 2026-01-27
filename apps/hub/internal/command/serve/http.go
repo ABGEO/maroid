@@ -11,69 +11,71 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/abgeo/maroid/apps/hub/internal/appctx"
-	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
+	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
 )
 
 const shutdownTimeout = 10 * time.Second
 
-type httpFlags struct {
+// HTTPCommand represents a command for running HTTP Server.
+type HTTPCommand struct {
+	cfg                    *config.Config
+	logger                 *slog.Logger
+	server                 *http.Server
+	telegramUpdatesHandler telegram.UpdatesHandler
+
 	address string
 	port    string
 }
 
-// NewHTTPCmd returns a new Cobra command for running HTTP Server.
-func NewHTTPCmd(appCtx *appctx.AppContext) *cobra.Command {
-	flags := httpFlags{}
+// NewHTTPCommand creates a new HTTPCommand.
+func NewHTTPCommand(
+	cfg *config.Config,
+	logger *slog.Logger,
+	server *http.Server,
+	telegramUpdatesHandler telegram.UpdatesHandler,
+) *HTTPCommand {
+	return &HTTPCommand{
+		cfg: cfg,
+		logger: logger.With(
+			slog.String("component", "command"),
+			slog.String("command", "serve http"),
+		),
+		server:                 server,
+		telegramUpdatesHandler: telegramUpdatesHandler,
+	}
+}
 
+// Command initializes and returns the Cobra command.
+func (c *HTTPCommand) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "http",
 		Short: "Run HTTP server",
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			logger := appCtx.DepResolver.Logger().With(
-				slog.String("component", "command"),
-				slog.String("command", "serve http"),
-			)
-
-			return startServices(cmd.Context(), appCtx.DepResolver, logger)
+			return c.startServices(cmd.Context())
 		},
 	}
 
-	cmd.Flags().StringVarP(&flags.address, "address", "a", "0.0.0.0", "Server address")
-	cmd.Flags().StringVarP(&flags.port, "port", "p", "8080", "Server port")
+	// @todo: use
+	cmd.Flags().StringVarP(&c.address, "address", "a", "0.0.0.0", "Server address")
+	cmd.Flags().StringVarP(&c.port, "port", "p", "8080", "Server port")
 
 	return cmd
 }
 
-func startServices(
-	ctx context.Context,
-	depResolver depresolver.Resolver,
-	logger *slog.Logger,
-) error {
-	srv, err := depResolver.HTTPServer()
-	if err != nil {
-		return fmt.Errorf("failed to resolve HTTP Server: %w", err)
-	}
-
-	uh, err := depResolver.TelegramUpdatesHandler()
-	if err != nil {
-		return fmt.Errorf("failed to resolve telegram updates handler: %w", err)
-	}
-
-	cfg := depResolver.Config()
+func (c *HTTPCommand) startServices(ctx context.Context) error {
 	errGroup, ctx := errgroup.WithContext(ctx)
 
 	// @todo: register plugin-provided handler.
 
 	errGroup.Go(func() error {
-		logger.InfoContext(ctx, "starting HTTP server",
-			slog.String("address", cfg.Server.ListenAddr),
-			slog.String("port", cfg.Server.Port),
+		c.logger.InfoContext(ctx, "starting HTTP server",
+			slog.String("address", c.cfg.Server.ListenAddr),
+			slog.String("port", c.cfg.Server.Port),
 		)
 
 		// @todo: listen TLS if configured.
-		err := srv.ListenAndServe()
+		err := c.server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			return fmt.Errorf("failed to listen and serve: %w", err)
 		}
@@ -82,13 +84,13 @@ func startServices(
 	})
 
 	errGroup.Go(func() error {
-		logger.InfoContext(
+		c.logger.InfoContext(
 			ctx,
 			"starting telegram updates handler",
-			slog.String("webhook", cfg.Telegram.Webhook.Path),
+			slog.String("webhook", c.cfg.Telegram.Webhook.Path),
 		)
 
-		err := uh.Handle(ctx)
+		err := c.telegramUpdatesHandler.Handle(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to handle telegram updates: %w", err)
 		}
@@ -98,11 +100,13 @@ func startServices(
 
 	go func() {
 		<-ctx.Done()
-		logger.Info("termination signal received")
-		shutdownServices(context.WithoutCancel(ctx), depResolver, logger, srv, uh)
+		c.logger.Info("termination signal received")
+
+		c.shutdownStep(ctx, "stopping telegram updates handler", c.telegramUpdatesHandler.Stop)
+		c.shutdownStep(ctx, "shutting down HTTP server", c.server.Shutdown)
 	}()
 
-	err = errGroup.Wait()
+	err := errGroup.Wait()
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return fmt.Errorf("services errored: %w", err)
 	}
@@ -110,31 +114,18 @@ func startServices(
 	return nil
 }
 
-func shutdownServices(
+func (c *HTTPCommand) shutdownStep(
 	ctx context.Context,
-	depResolver depresolver.Resolver,
-	logger *slog.Logger,
-	srv *http.Server,
-	uh telegram.UpdatesHandler,
-) {
-	shutdownStep(ctx, logger, "stopping telegram updates handler", uh.Stop)
-	shutdownStep(ctx, logger, "shutting down HTTP server", srv.Shutdown)
-	shutdownStep(ctx, logger, "closing dependencies", depResolver.Close)
-}
-
-func shutdownStep(
-	ctx context.Context,
-	logger *slog.Logger,
 	title string,
 	step func(ctx context.Context) error,
 ) {
 	ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
 	defer cancel()
 
-	logger.InfoContext(ctx, title)
+	c.logger.InfoContext(ctx, title)
 
 	if err := step(ctx); err != nil {
-		logger.ErrorContext(
+		c.logger.ErrorContext(
 			ctx,
 			"shutdown step failed",
 			slog.String("step", title),

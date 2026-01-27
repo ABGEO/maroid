@@ -57,7 +57,7 @@ func (r *TelegramCommandRegistrar) Register(plugin pluginapi.Plugin) error {
 
 	wrappedCommands := make([]pluginapi.TelegramCommand, 0, len(commands))
 	for _, cmd := range commands {
-		wrappedCommands = append(wrappedCommands, tgcommand.NewWrapper(cmd, plugin.Meta().ID))
+		wrappedCommands = append(wrappedCommands, tgcommand.NewWrapper(cmd, id))
 	}
 
 	err = r.registry.Register(wrappedCommands...)

@@ -3,43 +3,32 @@
 package migrate
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
-	"github.com/abgeo/maroid/apps/hub/internal/appctx"
 	"github.com/abgeo/maroid/apps/hub/internal/migrator"
 )
 
-type migrateContext struct {
-	*appctx.AppContext
-
+// Command represents a command for managing database migrations.
+type Command struct {
 	migrator *migrator.Migrator
 }
 
-// NewCmd returns a new Cobra command for managing database migrations.
-func NewCmd(appCtx *appctx.AppContext) *cobra.Command {
-	cmdCtx := &migrateContext{
-		AppContext: appCtx,
+// New creates a new Command.
+func New(migrator *migrator.Migrator) *Command {
+	return &Command{
+		migrator: migrator,
 	}
+}
 
+// Command initializes and returns the Cobra command.
+func (c *Command) Command() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Commands to migrate the database",
-		PersistentPreRunE: func(_ *cobra.Command, _ []string) error {
-			var err error
-
-			cmdCtx.migrator, err = cmdCtx.DepResolver.Migrator()
-			if err != nil {
-				return fmt.Errorf("failed to resolve database migrator: %w", err)
-			}
-
-			return nil
-		},
 	}
 
 	cmd.AddCommand(
-		NewUpCmd(cmdCtx),
+		NewUpCommand(c.migrator).Command(),
 	)
 
 	return cmd
