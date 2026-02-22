@@ -21,6 +21,7 @@ import (
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
+	"github.com/abgeo/maroid/apps/hub/internal/telegram/conversation"
 	"github.com/abgeo/maroid/libs/notifier/dispatcher"
 	notifierregistry "github.com/abgeo/maroid/libs/notifier/registry"
 )
@@ -43,6 +44,7 @@ type Resolver interface {
 	CronRegistry() (*registry.CronRegistry, error)
 	MigrationRegistry() (*registry.MigrationRegistry, error)
 	TelegramCommandRegistry() (*registry.TelegramCommandRegistry, error)
+	TelegramConversationRegistry() (*registry.TelegramConversationRegistry, error)
 	Cron() *cron.Cron
 	NotifierRegistry() (*notifierregistry.SchemeRegistry, error)
 	NotifierDispatcher() (*dispatcher.ChannelDispatcher, error)
@@ -121,6 +123,12 @@ type Container struct {
 		instance *registry.TelegramCommandRegistry
 	}
 
+	telegramConversationRegistry struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *registry.TelegramConversationRegistry
+	}
+
 	notifierRegistry struct {
 		mu       sync.Mutex
 		once     sync.Once
@@ -143,6 +151,12 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *telegram.ChannelHandler
+	}
+
+	telegramConversationEngine struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *conversation.Engine
 	}
 }
 

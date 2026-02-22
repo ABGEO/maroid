@@ -16,6 +16,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
 
 // UpdatesHandler represents a handler for Telegram updates.
@@ -26,11 +27,12 @@ type UpdatesHandler interface {
 
 // ChannelHandler is an implementation of UpdatesHandler that handles Telegram updates via webhooks.
 type ChannelHandler struct {
-	cfg              *config.Config
-	bot              *telego.Bot
-	logger           *slog.Logger
-	router           chi.Router
-	commandsRegistry *registry.TelegramCommandRegistry
+	cfg                        *config.Config
+	bot                        *telego.Bot
+	logger                     *slog.Logger
+	router                     chi.Router
+	commandsRegistry           *registry.TelegramCommandRegistry
+	telegramConversationEngine conversation.Engine
 
 	updates    <-chan telego.Update
 	botHandler *th.BotHandler
@@ -50,6 +52,7 @@ func NewUpdatesHandler(
 	bot *telego.Bot,
 	router chi.Router,
 	commandsRegistry *registry.TelegramCommandRegistry,
+	telegramConversationEngine conversation.Engine,
 ) (*ChannelHandler, error) {
 	var (
 		err            error
@@ -74,8 +77,9 @@ func NewUpdatesHandler(
 		logger: logger.With(
 			slog.String("component", "telegram-updates-handler"),
 		),
-		router:           router,
-		commandsRegistry: commandsRegistry,
+		router:                     router,
+		commandsRegistry:           commandsRegistry,
+		telegramConversationEngine: telegramConversationEngine,
 	}
 
 	handlerInstance.updates, err = bot.UpdatesViaWebhook(
@@ -102,6 +106,10 @@ func (h *ChannelHandler) Handle(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	h.botHandler.Handle(func(_ *th.Context, update telego.Update) error {
+		return h.telegramConversationEngine.HandleMessage(update)
+	})
 
 	err = h.botHandler.Start()
 	if err != nil {

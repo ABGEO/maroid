@@ -29,4 +29,8 @@ var (
 	ErrTelegramCommandAlreadyRegistered = errors.New("telegram command: already registered")
 	// ErrCronAlreadyRegistered indicates that a cron job has already been registered.
 	ErrCronAlreadyRegistered = errors.New("cron: already registered")
+	// ErrTelegramConversationNotFound indicates that a telegram conversation was not found.
+	ErrTelegramConversationNotFound = errors.New("telegram conversation: not found")
+	// ErrTelegramConversationStepNotFound indicates that a step within a telegram conversation was not found.
+	ErrTelegramConversationStepNotFound = errors.New("telegram conversation: step not found")
 )

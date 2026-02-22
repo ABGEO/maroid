@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/notifierapi"
+	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
 
 // Host represents the environment provided to a plugin by the host application.
@@ -15,4 +16,5 @@ type Host interface {
 	Database() (*sqlx.DB, error)
 	Notifier() (notifierapi.Dispatcher, error)
 	TelegramBot() (TelegramBot, error)
+	TelegramConversationEngine() conversation.Engine
 }

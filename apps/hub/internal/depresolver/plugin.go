@@ -37,11 +37,19 @@ func (c *Container) PluginHost() (*pluginhost.Host, error) {
 			return
 		}
 
+		telegramConversationEngine, telegramConversationEngineErr := c.TelegramConversationEngine()
+		if err != nil {
+			err = telegramConversationEngineErr
+
+			return
+		}
+
 		c.pluginHost.instance, err = pluginhost.New(
 			c.Logger(),
 			db,
 			notifier,
 			telegramBot,
+			telegramConversationEngine,
 		)
 	})
 
@@ -62,48 +70,7 @@ func (c *Container) PluginLoader() (*pluginloader.Loader, error) {
 	var err error
 
 	c.pluginLoader.once.Do(func() {
-		pluginHost, pluginHostErr := c.PluginHost()
-		if pluginHostErr != nil {
-			err = pluginHostErr
-
-			return
-		}
-
-		commandRegistry, commandRegistryErr := c.CommandRegistry()
-		if commandRegistryErr != nil {
-			err = commandRegistryErr
-
-			return
-		}
-
-		cronRegistry, cronRegistryErr := c.CronRegistry()
-		if cronRegistryErr != nil {
-			err = cronRegistryErr
-
-			return
-		}
-
-		migrationRegistry, migrationRegistryErr := c.MigrationRegistry()
-		if migrationRegistryErr != nil {
-			err = migrationRegistryErr
-
-			return
-		}
-
-		telegramCommandRegistry, telegramCommandRegistryErr := c.TelegramCommandRegistry()
-		if telegramCommandRegistryErr != nil {
-			err = telegramCommandRegistryErr
-
-			return
-		}
-
-		c.pluginLoader.instance = pluginloader.New(
-			pluginHost,
-			commandRegistry,
-			cronRegistry,
-			migrationRegistry,
-			telegramCommandRegistry,
-		)
+		c.pluginLoader.instance, err = c.buildPluginLoader()
 	})
 
 	if err != nil {
@@ -113,4 +80,45 @@ func (c *Container) PluginLoader() (*pluginloader.Loader, error) {
 	}
 
 	return c.pluginLoader.instance, nil
+}
+
+func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
+	pluginHost, err := c.PluginHost()
+	if err != nil {
+		return nil, err
+	}
+
+	commandRegistry, err := c.CommandRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	cronRegistry, err := c.CronRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	migrationRegistry, err := c.MigrationRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	telegramCommandRegistry, err := c.TelegramCommandRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	telegramConversationRegistry, err := c.TelegramConversationRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	return pluginloader.New(
+		pluginHost,
+		commandRegistry,
+		cronRegistry,
+		migrationRegistry,
+		telegramCommandRegistry,
+		telegramConversationRegistry,
+	), nil
 }

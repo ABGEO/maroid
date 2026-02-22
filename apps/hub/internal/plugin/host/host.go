@@ -10,15 +10,17 @@ import (
 
 	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
 
 // Host represents a plugin host that provides plugins with access
 // to application dependencies.
 type Host struct {
-	logger      *slog.Logger
-	database    *sqlx.DB
-	notifier    notifierapi.Dispatcher
-	telegramBot *telego.Bot
+	logger                     *slog.Logger
+	database                   *sqlx.DB
+	notifier                   notifierapi.Dispatcher
+	telegramBot                *telego.Bot
+	telegramConversationEngine conversation.Engine
 }
 
 var _ pluginapi.Host = (*Host)(nil)
@@ -29,12 +31,14 @@ func New(
 	database *sqlx.DB,
 	notifier notifierapi.Dispatcher,
 	telegramBot *telego.Bot,
+	telegramConversationEngine conversation.Engine,
 ) (*Host, error) {
 	return &Host{
-		logger:      logger,
-		database:    database,
-		notifier:    notifier,
-		telegramBot: telegramBot,
+		logger:                     logger,
+		database:                   database,
+		notifier:                   notifier,
+		telegramBot:                telegramBot,
+		telegramConversationEngine: telegramConversationEngine,
 	}, nil
 }
 
@@ -56,4 +60,11 @@ func (h *Host) Notifier() (notifierapi.Dispatcher, error) {
 // TelegramBot returns the wrapped Telegram bot instance from the dependency container.
 func (h *Host) TelegramBot() (pluginapi.TelegramBot, error) {
 	return &telegramBotWrapper{bot: h.telegramBot}, nil
+}
+
+// TelegramConversationEngine returns the Telegram conversation engine instance from the dependency container.
+//
+//nolint:ireturn
+func (h *Host) TelegramConversationEngine() conversation.Engine {
+	return h.telegramConversationEngine
 }

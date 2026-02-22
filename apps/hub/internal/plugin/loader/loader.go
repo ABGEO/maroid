@@ -30,6 +30,7 @@ func New(
 	cronRegistry *registry.CronRegistry,
 	migrationRegistry *registry.MigrationRegistry,
 	telegramCommandRegistry *registry.TelegramCommandRegistry,
+	telegramConversationRegistry *registry.TelegramConversationRegistry,
 ) *Loader {
 	return &Loader{
 		host:    host,
@@ -39,6 +40,7 @@ func New(
 			registrar.NewCronRegistrar(cronRegistry),
 			registrar.NewMigrationRegistrar(migrationRegistry),
 			registrar.NewTelegramCommandRegistrar(telegramCommandRegistry),
+			registrar.NewTelegramConversationRegistrar(telegramConversationRegistry),
 		},
 	}
 }
