@@ -10,7 +10,7 @@ require (
 )
 
 require (
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20251116133638-a991fbf40fa0 // indirect
+	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260222145842-e96078aa38ef // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
 	github.com/bytedance/sonic v1.15.0 // indirect

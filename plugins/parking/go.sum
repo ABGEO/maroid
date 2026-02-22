@@ -1,7 +1,7 @@
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
-github.com/abgeo/maroid/libs/notifierapi v0.0.0-20251116133638-a991fbf40fa0 h1:dgjyXpabSJhLkmGeUOd7Z/HNxvjFvjfzmwgoIgu6Azc=
-github.com/abgeo/maroid/libs/notifierapi v0.0.0-20251116133638-a991fbf40fa0/go.mod h1:BXFOLFfXm9zKrzDc4gchG2nAi4o26KydlNRL6CdGDQI=
+github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260222145842-e96078aa38ef h1:VLeKTs9f2z1hTIiAacwh/qk7dwBdnY0qK1m6JMfDqcI=
+github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260222145842-e96078aa38ef/go.mod h1:BXFOLFfXm9zKrzDc4gchG2nAi4o26KydlNRL6CdGDQI=
 github.com/abgeo/maroid/libs/pluginapi v0.0.0-20260222145842-e96078aa38ef h1:ek8ot04aMPnfct/OU/1ldLWidAzK00I+a2wuO1FAem4=
 github.com/abgeo/maroid/libs/pluginapi v0.0.0-20260222145842-e96078aa38ef/go.mod h1:AigZIeUjryNo02vkD+LZgA9vM6webrmqepQvIuZR/0I=
 github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20260222145842-e96078aa38ef h1:RTmxPba5cnieIEsfRLvmV7KnULzFucbD6nE3KHeQoFs=

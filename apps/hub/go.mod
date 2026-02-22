@@ -3,10 +3,10 @@ module github.com/abgeo/maroid/apps/hub
 go 1.26.0
 
 require (
-	github.com/abgeo/maroid/libs/notifier v0.0.0-20251116133638-a991fbf40fa0
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20251116133638-a991fbf40fa0
+	github.com/abgeo/maroid/libs/notifier v0.0.0-20260222145842-e96078aa38ef
+	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260222145842-e96078aa38ef
 	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20260222145842-e96078aa38ef
-	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20251116133638-a991fbf40fa0
+	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20260222145842-e96078aa38ef
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-chi/render v1.0.3
 	github.com/go-playground/validator/v10 v10.28.0
