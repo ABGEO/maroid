@@ -44,6 +44,6 @@ type TelegramCommand interface {
 	Meta() TelegramCommandMeta
 	// Validate checks if the update is valid for this command.
 	Validate(update telego.Update) error
-	// Handle processes the help command.
+	// Handle processes the command.
 	Handle(ctx *th.Context, update telego.Update) error
 }
