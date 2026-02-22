@@ -1,6 +1,6 @@
 module github.com/abgeo/maroid/plugins/telasi
 
-go 1.25.5
+go 1.26.0
 
 require (
 	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20251116133638-a991fbf40fa0
