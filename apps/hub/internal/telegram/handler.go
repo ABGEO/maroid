@@ -13,9 +13,10 @@ import (
 	tu "github.com/mymmrac/telego/telegoutil"
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/middleware"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/command"
-	"github.com/abgeo/maroid/apps/hub/internal/telegram/middleware"
+	telegrammiddleware "github.com/abgeo/maroid/apps/hub/internal/telegram/middleware"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
@@ -34,6 +35,7 @@ type ChannelHandler struct {
 	router                     chi.Router
 	commandsRegistry           *registry.TelegramCommandRegistry
 	telegramConversationEngine conversation.Engine
+	allowedNetworksMiddleware  func(http.Handler) http.Handler
 
 	updates    <-chan telego.Update
 	botHandler *th.BotHandler
@@ -60,6 +62,18 @@ func NewUpdatesHandler(
 		webhookOptions []telego.WebhookOption
 	)
 
+	logger = logger.With(
+		slog.String("component", "telegram-updates-handler"),
+	)
+
+	allowedNetworksMiddleware, err := middleware.AllowedNetworks(
+		logger,
+		cfg.Telegram.Webhook.AllowedNetworks,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("initializing allowed networks middleware: %w", err)
+	}
+
 	ctx := context.Background()
 
 	if cfg.Telegram.Setup {
@@ -73,14 +87,13 @@ func NewUpdatesHandler(
 	}
 
 	handlerInstance := &ChannelHandler{
-		cfg: cfg,
-		bot: bot,
-		logger: logger.With(
-			slog.String("component", "telegram-updates-handler"),
-		),
+		cfg:                        cfg,
+		bot:                        bot,
+		logger:                     logger,
 		router:                     router,
 		commandsRegistry:           commandsRegistry,
 		telegramConversationEngine: telegramConversationEngine,
+		allowedNetworksMiddleware:  allowedNetworksMiddleware,
 	}
 
 	handlerInstance.updates, err = bot.UpdatesViaWebhook(
@@ -101,7 +114,7 @@ func NewUpdatesHandler(
 
 // Handle starts handling Telegram updates.
 func (h *ChannelHandler) Handle(ctx context.Context) error {
-	h.botHandler.Use(middleware.AllowedUsers(h.logger, h.cfg.Telegram.Webhook.AllowedUsers))
+	h.botHandler.Use(telegrammiddleware.AllowedUsers(h.logger, h.cfg.Telegram.Webhook.AllowedUsers))
 	h.registerHandlers()
 
 	err := h.setCommands(ctx)
@@ -133,30 +146,31 @@ func (h *ChannelHandler) Stop(ctx context.Context) error {
 
 func (h *ChannelHandler) getWebhookHandler() func(handler telego.WebhookHandler) error {
 	return func(handler telego.WebhookHandler) error {
-		h.router.Post(h.cfg.Telegram.Webhook.Path, func(w http.ResponseWriter, r *http.Request) {
-			defer func() { _ = r.Body.Close() }()
+		h.router.With(h.allowedNetworksMiddleware).
+			Post(h.cfg.Telegram.Webhook.Path, func(w http.ResponseWriter, r *http.Request) {
+				defer func() { _ = r.Body.Close() }()
 
-			if r.Header.Get(telego.WebhookSecretTokenHeader) != h.bot.SecretToken() {
-				w.WriteHeader(http.StatusUnauthorized)
+				if r.Header.Get(telego.WebhookSecretTokenHeader) != h.bot.SecretToken() {
+					w.WriteHeader(http.StatusUnauthorized)
 
-				return
-			}
+					return
+				}
 
-			data, err := io.ReadAll(r.Body)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				data, err := io.ReadAll(r.Body)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
 
-				return
-			}
+					return
+				}
 
-			if err = handler(r.Context(), data); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				if err = handler(r.Context(), data); err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
 
-				return
-			}
+					return
+				}
 
-			w.WriteHeader(http.StatusOK)
-		})
+				w.WriteHeader(http.StatusOK)
+			})
 
 		return nil
 	}
