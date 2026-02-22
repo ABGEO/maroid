@@ -8,6 +8,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	telegramupdate "github.com/abgeo/maroid/apps/hub/internal/telegram/update"
 	telegramconversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
 
@@ -35,7 +36,7 @@ func NewEngine(
 // and triggers the appropriate step handlers.
 // If there is no active conversation for the user, it simply returns without doing anything.
 func (e *Engine) HandleMessage(update telego.Update) error {
-	userID := strconv.FormatInt(sentFrom(update).ID, 10)
+	userID := strconv.FormatInt(telegramupdate.SentFrom(update).ID, 10)
 
 	state, _ := e.Store.Get(userID)
 	if state == nil {
@@ -100,7 +101,7 @@ func (e *Engine) HandleMessage(update telego.Update) error {
 // Start initiates a new conversation for the user based on the provided conversation ID
 // and the incoming Telegram update.
 func (e *Engine) Start(update telego.Update, conversationID string) error {
-	userID := strconv.FormatInt(sentFrom(update).ID, 10)
+	userID := strconv.FormatInt(telegramupdate.SentFrom(update).ID, 10)
 
 	convo := e.Registry.Get(conversationID)
 	if convo == nil {
@@ -137,25 +138,4 @@ func (e *Engine) Start(update telego.Update, conversationID string) error {
 	}
 
 	return nil
-}
-
-func sentFrom(update telego.Update) *telego.User {
-	switch {
-	case update.Message != nil:
-		return update.Message.From
-	case update.EditedMessage != nil:
-		return update.EditedMessage.From
-	case update.InlineQuery != nil:
-		return &update.InlineQuery.From
-	case update.ChosenInlineResult != nil:
-		return &update.ChosenInlineResult.From
-	case update.CallbackQuery != nil:
-		return &update.CallbackQuery.From
-	case update.ShippingQuery != nil:
-		return &update.ShippingQuery.From
-	case update.PreCheckoutQuery != nil:
-		return &update.PreCheckoutQuery.From
-	default:
-		return nil
-	}
 }

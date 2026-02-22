@@ -67,7 +67,7 @@ func (c *Help) buildHelpMessage() string {
 
 	for _, cmd := range c.commandRegistry.All() {
 		meta := cmd.Meta()
-		textBuilder.WriteString(fmt.Sprintf("/%s - %s\n", meta.Command, meta.Description))
+		fmt.Fprintf(&textBuilder, "/%s - %s\n", meta.Command, meta.Description)
 	}
 
 	return textBuilder.String()

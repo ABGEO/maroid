@@ -15,6 +15,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/command"
+	"github.com/abgeo/maroid/apps/hub/internal/telegram/middleware"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
@@ -100,6 +101,7 @@ func NewUpdatesHandler(
 
 // Handle starts handling Telegram updates.
 func (h *ChannelHandler) Handle(ctx context.Context) error {
+	h.botHandler.Use(middleware.AllowedUsers(h.logger, h.cfg.Telegram.Webhook.AllowedUsers))
 	h.registerHandlers()
 
 	err := h.setCommands(ctx)
