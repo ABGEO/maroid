@@ -7,6 +7,7 @@ use (
 	./libs/pluginapi
 	./libs/pluginconfig
 	./plugins/gwp
+	./plugins/jasmine
 	./plugins/parking
 	./plugins/pensions
 	./plugins/tbilisi-energy
