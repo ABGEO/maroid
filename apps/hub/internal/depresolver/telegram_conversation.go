@@ -39,6 +39,7 @@ func (c *Container) TelegramConversationEngine() (*conversation.Engine, error) {
 			telegramConversationRegistry,
 			// @todo: move to persistent store.
 			conversation.NewMemoryStore(),
+			c.Logger(),
 		)
 	})
 

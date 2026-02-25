@@ -2,6 +2,7 @@ package conversation
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 
 	"github.com/mymmrac/telego"
@@ -15,8 +16,9 @@ import (
 // Engine is responsible for managing Telegram conversations, including handling incoming messages
 // and starting new conversations.
 type Engine struct {
-	Registry *registry.TelegramConversationRegistry
-	Store    telegramconversationapi.Store
+	registry *registry.TelegramConversationRegistry
+	store    telegramconversationapi.Store
+	logger   *slog.Logger
 }
 
 var _ telegramconversationapi.Engine = (*Engine)(nil)
@@ -25,10 +27,12 @@ var _ telegramconversationapi.Engine = (*Engine)(nil)
 func NewEngine(
 	registry *registry.TelegramConversationRegistry,
 	store telegramconversationapi.Store,
+	logger *slog.Logger,
 ) *Engine {
 	return &Engine{
-		Registry: registry,
-		Store:    store,
+		registry: registry,
+		store:    store,
+		logger:   logger,
 	}
 }
 
@@ -38,12 +42,12 @@ func NewEngine(
 func (e *Engine) HandleMessage(update telego.Update) error {
 	userID := strconv.FormatInt(telegramupdate.SentFrom(update).ID, 10)
 
-	state, _ := e.Store.Get(userID)
+	state, _ := e.store.Get(userID)
 	if state == nil {
 		return nil // no active conversation
 	}
 
-	convo := e.Registry.Get(state.ConversationID)
+	convo := e.registry.Get(state.ConversationID)
 	if convo == nil {
 		return fmt.Errorf(
 			"getting conversation %s: %w",
@@ -52,7 +56,7 @@ func (e *Engine) HandleMessage(update telego.Update) error {
 		)
 	}
 
-	step := e.Registry.Step(state.ConversationID, state.StepID)
+	step := e.registry.Step(state.ConversationID, state.StepID)
 	if step == nil {
 		return fmt.Errorf(
 			"getting step %s for conversation %s: %w",
@@ -70,12 +74,19 @@ func (e *Engine) HandleMessage(update telego.Update) error {
 
 	next, err := step.OnMessage(ctx, update)
 	if err != nil {
-		// @todo: handle error (e.g., log it, send an error message to the user, etc.)
+		e.logger.Error(
+			"processing conversation step failed",
+			slog.String("conversation_id", state.ConversationID),
+			slog.String("step_id", state.StepID),
+			slog.String("user_id", userID),
+			slog.Any("error", err),
+		)
+
 		return nil //nolint:nilerr
 	}
 
 	if next == "" {
-		if err = e.Store.Clear(userID); err != nil {
+		if err = e.store.Clear(userID); err != nil {
 			return fmt.Errorf("clearing conversation state: %w", err)
 		}
 
@@ -85,7 +96,7 @@ func (e *Engine) HandleMessage(update telego.Update) error {
 	state.StepID = next
 	state.Data = ctx.Data
 
-	err = e.Store.Save(state)
+	err = e.store.Save(state)
 	if err != nil {
 		return fmt.Errorf("storing conversation state: %w", err)
 	}
@@ -103,7 +114,7 @@ func (e *Engine) HandleMessage(update telego.Update) error {
 func (e *Engine) Start(update telego.Update, conversationID string) error {
 	userID := strconv.FormatInt(telegramupdate.SentFrom(update).ID, 10)
 
-	convo := e.Registry.Get(conversationID)
+	convo := e.registry.Get(conversationID)
 	if convo == nil {
 		return fmt.Errorf(
 			"getting conversation %s: %w",
@@ -121,7 +132,7 @@ func (e *Engine) Start(update telego.Update, conversationID string) error {
 		Data:           map[string]any{},
 	}
 
-	err := e.Store.Save(state)
+	err := e.store.Save(state)
 	if err != nil {
 		return fmt.Errorf("storing conversation state: %w", err)
 	}
