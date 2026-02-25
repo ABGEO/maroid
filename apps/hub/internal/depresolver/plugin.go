@@ -38,7 +38,7 @@ func (c *Container) PluginHost() (*pluginhost.Host, error) {
 		}
 
 		telegramConversationEngine, telegramConversationEngineErr := c.TelegramConversationEngine()
-		if err != nil {
+		if telegramConversationEngineErr != nil {
 			err = telegramConversationEngineErr
 
 			return
@@ -113,6 +113,11 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		return nil, err
 	}
 
+	mqttSubscriberRegistry, err := c.MQTTSubscriberRegistry()
+	if err != nil {
+		return nil, err
+	}
+
 	return pluginloader.New(
 		pluginHost,
 		commandRegistry,
@@ -120,5 +125,6 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		migrationRegistry,
 		telegramCommandRegistry,
 		telegramConversationRegistry,
+		mqttSubscriberRegistry,
 	), nil
 }

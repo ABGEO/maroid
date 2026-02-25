@@ -33,4 +33,12 @@ var (
 	ErrTelegramConversationNotFound = errors.New("telegram conversation: not found")
 	// ErrTelegramConversationStepNotFound indicates that a step within a telegram conversation was not found.
 	ErrTelegramConversationStepNotFound = errors.New("telegram conversation: step not found")
+	// ErrMQTTSubscriberAlreadyRegistered indicates that an MQTT subscriber has already been registered for a topic.
+	ErrMQTTSubscriberAlreadyRegistered = errors.New("mqtt subscriber: already registered for topic")
+	// ErrInvalidMQTTTopic indicates that an MQTT subscriber topic is invalid.
+	ErrInvalidMQTTTopic = errors.New("mqtt subscriber: invalid topic")
+	// ErrMQTTBrokerNotConfigured indicates that MQTT subscribers are registered but no broker is configured.
+	ErrMQTTBrokerNotConfigured = errors.New("mqtt: broker not configured")
+	// ErrUnknownWorkerType indicates that a requested worker type is not registered.
+	ErrUnknownWorkerType = errors.New("worker: unknown type")
 )

@@ -45,6 +45,7 @@ type Resolver interface {
 	MigrationRegistry() (*registry.MigrationRegistry, error)
 	TelegramCommandRegistry() (*registry.TelegramCommandRegistry, error)
 	TelegramConversationRegistry() (*registry.TelegramConversationRegistry, error)
+	MQTTSubscriberRegistry() (*registry.MQTTSubscriberRegistry, error)
 	Cron() *cron.Cron
 	NotifierRegistry() (*notifierregistry.SchemeRegistry, error)
 	NotifierDispatcher() (*dispatcher.ChannelDispatcher, error)
@@ -127,6 +128,12 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *registry.TelegramConversationRegistry
+	}
+
+	mqttSubscriberRegistry struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *registry.MQTTSubscriberRegistry
 	}
 
 	notifierRegistry struct {

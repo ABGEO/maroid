@@ -31,6 +31,7 @@ func New(
 	migrationRegistry *registry.MigrationRegistry,
 	telegramCommandRegistry *registry.TelegramCommandRegistry,
 	telegramConversationRegistry *registry.TelegramConversationRegistry,
+	mqttSubscriberRegistry *registry.MQTTSubscriberRegistry,
 ) *Loader {
 	return &Loader{
 		host:    host,
@@ -41,6 +42,7 @@ func New(
 			registrar.NewMigrationRegistrar(migrationRegistry),
 			registrar.NewTelegramCommandRegistrar(telegramCommandRegistry),
 			registrar.NewTelegramConversationRegistrar(telegramConversationRegistry),
+			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry),
 		},
 	}
 }

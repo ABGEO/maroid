@@ -2,6 +2,8 @@ package registry
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -36,10 +38,5 @@ func (r *TelegramCommandRegistry) Register(commands ...pluginapi.TelegramCommand
 
 // All returns all registered Telegram commands.
 func (r *TelegramCommandRegistry) All() []pluginapi.TelegramCommand {
-	out := make([]pluginapi.TelegramCommand, 0, len(r.commands))
-	for _, cmd := range r.commands {
-		out = append(out, cmd)
-	}
-
-	return out
+	return slices.Collect(maps.Values(r.commands))
 }

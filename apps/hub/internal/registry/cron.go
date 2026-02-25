@@ -2,6 +2,8 @@ package registry
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -36,10 +38,5 @@ func (r *CronRegistry) Register(jobs ...pluginapi.CronJob) error {
 
 // All returns all registered cron jobs.
 func (r *CronRegistry) All() []pluginapi.CronJob {
-	out := make([]pluginapi.CronJob, 0, len(r.jobs))
-	for _, job := range r.jobs {
-		out = append(out, job)
-	}
-
-	return out
+	return slices.Collect(maps.Values(r.jobs))
 }

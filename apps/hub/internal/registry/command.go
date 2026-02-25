@@ -2,6 +2,8 @@ package registry
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/spf13/cobra"
 
@@ -35,10 +37,5 @@ func (r *CommandRegistry) Register(commands ...*cobra.Command) error {
 
 // All returns all registered cobra commands.
 func (r *CommandRegistry) All() []*cobra.Command {
-	out := make([]*cobra.Command, 0, len(r.commands))
-	for _, cmd := range r.commands {
-		out = append(out, cmd)
-	}
-
-	return out
+	return slices.Collect(maps.Values(r.commands))
 }

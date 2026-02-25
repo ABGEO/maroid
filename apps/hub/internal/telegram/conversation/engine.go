@@ -82,7 +82,7 @@ func (e *Engine) HandleMessage(update telego.Update) error {
 			slog.Any("error", err),
 		)
 
-		return nil //nolint:nilerr
+		return nil
 	}
 
 	if next == "" {

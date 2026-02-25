@@ -64,6 +64,18 @@ func (c *Server) Address() string {
 	return net.JoinHostPort(c.ListenAddr, c.Port)
 }
 
+// MQTT defines MQTT broker configuration parameters.
+// All fields are optional; the broker is only required when MQTT subscriber plugins are loaded.
+type MQTT struct {
+	Broker            string
+	User              string
+	Password          string
+	ClientIDPrefix    string        `default:"maroid" mapstructure:"client_id_prefix"`
+	SharedGroup       string        `default:"maroid" mapstructure:"shared_group"`
+	ConnectTimeout    time.Duration `default:"5s"     mapstructure:"connect_timeout"`
+	DisconnectQuiesce uint          `default:"250"    mapstructure:"disconnect_quiesce"`
+}
+
 // Telegram defines Telegram integration configuration parameters.
 type Telegram struct {
 	Token   string `validate:"required"`
@@ -83,6 +95,7 @@ type Config struct {
 	Logger   Logger
 	Database Database
 	Server   Server
+	MQTT     MQTT
 	Telegram Telegram
 	Notifier notifier.Config
 	Plugins  []pluginconfig.Config

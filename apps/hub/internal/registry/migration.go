@@ -3,6 +3,7 @@ package registry
 import (
 	"fmt"
 	"io/fs"
+	"maps"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 )
@@ -30,7 +31,11 @@ func (r *MigrationRegistry) Register(source string, migration fs.FS) error {
 	return nil
 }
 
-// All returns all registered migration sources.
+// All returns a copy of all registered migration sources.
 func (r *MigrationRegistry) All() map[string]fs.FS {
-	return r.migrations
+	out := make(map[string]fs.FS, len(r.migrations))
+
+	maps.Copy(out, r.migrations)
+
+	return out
 }

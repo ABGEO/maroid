@@ -10,6 +10,7 @@ import (
 	migratecommand "github.com/abgeo/maroid/apps/hub/internal/command/migrate"
 	servecommand "github.com/abgeo/maroid/apps/hub/internal/command/serve"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/worker"
 )
 
 // CommandRegistry initializes and returns the command registry instance.
@@ -42,12 +43,6 @@ func (c *Container) CommandRegistry() (*registry.CommandRegistry, error) {
 func (c *Container) getCommands() ([]*cobra.Command, error) {
 	cfg := c.Config()
 	logger := c.Logger()
-	cron := c.Cron()
-
-	cronRegistry, err := c.CronRegistry()
-	if err != nil {
-		return nil, err
-	}
 
 	migrator, err := c.Migrator()
 	if err != nil {
@@ -64,7 +59,12 @@ func (c *Container) getCommands() ([]*cobra.Command, error) {
 		return nil, err
 	}
 
-	cronCmd := command.NewCronCommand(logger, cron, cronRegistry)
+	workers, err := c.getWorkers()
+	if err != nil {
+		return nil, err
+	}
+
+	workerCmd := command.NewWorkerCommand(logger, workers)
 	migrateCmd := migratecommand.New(migrator)
 	serveCmd := servecommand.New(
 		cfg,
@@ -74,8 +74,29 @@ func (c *Container) getCommands() ([]*cobra.Command, error) {
 	)
 
 	return []*cobra.Command{
-		cronCmd.Command(),
+		workerCmd.Command(),
 		migrateCmd.Command(),
 		serveCmd.Command(),
+	}, nil
+}
+
+func (c *Container) getWorkers() ([]worker.Worker, error) {
+	cfg := c.Config()
+	logger := c.Logger()
+	cronScheduler := c.Cron()
+
+	cronRegistry, err := c.CronRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	mqttSubscriberRegistry, err := c.MQTTSubscriberRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	return []worker.Worker{
+		worker.NewCronWorker(logger, cronScheduler, cronRegistry),
+		worker.NewMQTTWorker(logger, cfg, mqttSubscriberRegistry),
 	}, nil
 }
