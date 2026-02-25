@@ -31,7 +31,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 	err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to validate config: %w", err)
+		return nil, fmt.Errorf("validating config: %w", err)
 	}
 
 	plg := &GWPPlugin{

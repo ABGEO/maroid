@@ -114,7 +114,7 @@ func (j *ContributionsCollector) fetchContributions(
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch contributions from API: %w", err)
+		return nil, fmt.Errorf("fetching contributions from API: %w", err)
 	}
 
 	j.logger.Info(
@@ -139,7 +139,7 @@ func (j *ContributionsCollector) storeContributions(
 		return j.insertContributionsInTx(ctx, tx, contributions)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to store contributions in database: %w", err)
+		return fmt.Errorf("storing contributions in database: %w", err)
 	}
 
 	j.logger.Info("contributions stored successfully")
@@ -160,12 +160,12 @@ func (j *ContributionsCollector) insertContributionsInTx(
 
 		if contributionEntity.Organization != nil {
 			if err := organizationRepo.Insert(ctx, contributionEntity.Organization); err != nil {
-				return fmt.Errorf("failed to insert organization: %w", err)
+				return fmt.Errorf("inserting organization: %w", err)
 			}
 		}
 
 		if err := contributionRepo.Insert(ctx, &contributionEntity); err != nil {
-			return fmt.Errorf("failed to insert contribution: %w", err)
+			return fmt.Errorf("inserting contribution: %w", err)
 		}
 	}
 

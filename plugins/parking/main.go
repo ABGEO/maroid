@@ -35,12 +35,12 @@ var (
 var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (pluginapi.Plugin, error) {
 	pluginConfig := new(config.Config)
 	if err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig); err != nil {
-		return nil, fmt.Errorf("failed to validate config: %w", err)
+		return nil, fmt.Errorf("validating config: %w", err)
 	}
 
 	telegramBot, err := host.TelegramBot()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get host telegram bot instance: %w", err)
+		return nil, fmt.Errorf("getting host telegram bot instance: %w", err)
 	}
 
 	plg := &ParkingPlugin{

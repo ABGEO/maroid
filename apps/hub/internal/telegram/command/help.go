@@ -6,7 +6,6 @@ import (
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
-	tu "github.com/mymmrac/telego/telegoutil"
 
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -43,21 +42,7 @@ func (c *Help) Validate(_ telego.Update) error {
 
 // Handle processes the help command.
 func (c *Help) Handle(ctx *th.Context, update telego.Update) error {
-	message := tu.Message(
-		tu.ID(update.Message.Chat.ID),
-		c.buildHelpMessage(),
-	).WithMessageThreadID(update.Message.MessageThreadID)
-
-	if update.Message.DirectMessagesTopic != nil {
-		message.WithDirectMessagesTopicID(int(update.Message.DirectMessagesTopic.TopicID))
-	}
-
-	_, err := c.bot.SendMessage(ctx, message)
-	if err != nil {
-		return fmt.Errorf("failed to send message: %w", err)
-	}
-
-	return nil
+	return sendMessage(c.bot, ctx, update, c.buildHelpMessage())
 }
 
 func (c *Help) buildHelpMessage() string {
@@ -67,7 +52,7 @@ func (c *Help) buildHelpMessage() string {
 
 	for _, cmd := range c.commandRegistry.All() {
 		meta := cmd.Meta()
-		fmt.Fprintf(&textBuilder, "/%s - %s\n", meta.Command, meta.Description)
+		textBuilder.WriteString(fmt.Sprintf("/%s - %s\n", meta.Command, meta.Description))
 	}
 
 	return textBuilder.String()

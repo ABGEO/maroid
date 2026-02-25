@@ -16,7 +16,7 @@ import (
 func New(cfg *config.Config) (*sqlx.DB, error) {
 	db, err := sqlx.Connect("pgx", cfg.Database.DSN())
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, fmt.Errorf("connecting to database: %w", err)
 	}
 
 	return db, nil

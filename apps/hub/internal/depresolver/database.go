@@ -27,7 +27,7 @@ func (c *Container) Database() (*sqlx.DB, error) {
 	if err != nil {
 		c.database.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize database: %w", err)
+		return nil, fmt.Errorf("initializing database: %w", err)
 	}
 
 	return c.database.instance, nil
@@ -41,7 +41,7 @@ func (c *Container) CloseDatabase() error {
 
 	err := c.database.instance.Close()
 	if err != nil {
-		return fmt.Errorf("failed to close database connection: %w", err)
+		return fmt.Errorf("closing database connection: %w", err)
 	}
 
 	return nil
@@ -70,7 +70,7 @@ func (c *Container) MigrationRegistry() (*registry.MigrationRegistry, error) {
 	if err != nil {
 		c.migrationRegistry.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize migration registry: %w", err)
+		return nil, fmt.Errorf("initializing migration registry: %w", err)
 	}
 
 	return c.migrationRegistry.instance, nil
@@ -109,7 +109,7 @@ func (c *Container) Migrator() (*migrator.Migrator, error) {
 	if err != nil {
 		c.migrator.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize database migrator: %w", err)
+		return nil, fmt.Errorf("initializing database migrator: %w", err)
 	}
 
 	return c.migrator.instance, nil
@@ -118,7 +118,7 @@ func (c *Container) Migrator() (*migrator.Migrator, error) {
 func getCoreMigrationFS() (fs.FS, error) {
 	coreFS, err := fs.Sub(db.GetMigrationsFS(), "migrations")
 	if err != nil {
-		return nil, fmt.Errorf("failed to access core migrations: %w", err)
+		return nil, fmt.Errorf("accessing core migrations: %w", err)
 	}
 
 	return coreFS, nil

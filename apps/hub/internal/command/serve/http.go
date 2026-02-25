@@ -77,7 +77,7 @@ func (c *HTTPCommand) startServices(ctx context.Context) error {
 		// @todo: listen TLS if configured.
 		err := c.server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			return fmt.Errorf("failed to listen and serve: %w", err)
+			return fmt.Errorf("listening and serving: %w", err)
 		}
 
 		return nil
@@ -92,7 +92,7 @@ func (c *HTTPCommand) startServices(ctx context.Context) error {
 
 		err := c.telegramUpdatesHandler.Handle(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to handle telegram updates: %w", err)
+			return fmt.Errorf("handling telegram updates: %w", err)
 		}
 
 		return nil
@@ -119,7 +119,7 @@ func (c *HTTPCommand) shutdownStep(
 	title string,
 	step func(ctx context.Context) error,
 ) {
-	ctx, cancel := context.WithTimeout(ctx, shutdownTimeout)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownTimeout)
 	defer cancel()
 
 	c.logger.InfoContext(ctx, title)

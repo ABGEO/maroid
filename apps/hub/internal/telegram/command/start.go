@@ -1,11 +1,8 @@
 package command
 
 import (
-	"fmt"
-
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
-	tu "github.com/mymmrac/telego/telegoutil"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
@@ -39,23 +36,7 @@ func (c *Start) Validate(_ telego.Update) error {
 
 // Handle processes the start command.
 func (c *Start) Handle(ctx *th.Context, update telego.Update) error {
-	message := tu.Message(
-		tu.ID(update.Message.Chat.ID),
-		`
-Hello there 👋! I’m Maroid, your assistant for automating tasks.
+	return sendMessage(c.bot, ctx, update, `Hello there 👋! I’m Maroid, your assistant for automating tasks.
 
-Type /help to see what I can do and get started 🚀
-`,
-	).WithMessageThreadID(update.Message.MessageThreadID)
-
-	if update.Message.DirectMessagesTopic != nil {
-		message.WithDirectMessagesTopicID(int(update.Message.DirectMessagesTopic.TopicID))
-	}
-
-	_, err := c.bot.SendMessage(ctx, message)
-	if err != nil {
-		return fmt.Errorf("failed to send message: %w", err)
-	}
-
-	return nil
+Type /help to see what I can do and get started 🚀`)
 }

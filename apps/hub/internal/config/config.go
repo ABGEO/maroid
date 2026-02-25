@@ -123,17 +123,17 @@ func New(cfgFile string) (*Config, error) {
 	if err = viperInstance.ReadInConfig(); err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
 		if !errors.As(err, &configFileNotFoundError) {
-			return nil, fmt.Errorf("failed to read config: %w", err)
+			return nil, fmt.Errorf("reading config: %w", err)
 		}
 	}
 
 	if err = viperInstance.Unmarshal(cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+		return nil, fmt.Errorf("unmarshaling config: %w", err)
 	}
 
 	validate := validator.New()
 	if err = validate.Struct(cfg); err != nil {
-		return nil, fmt.Errorf("failed to validate config: %w", err)
+		return nil, fmt.Errorf("validating config: %w", err)
 	}
 
 	return cfg, nil
@@ -148,7 +148,7 @@ func setConfigFile(cfgFile string, viperInstance *viper.Viper) error {
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("failed to detect home directory: %w", err)
+		return fmt.Errorf("detecting home directory: %w", err)
 	}
 
 	viperInstance.AddConfigPath(".")

@@ -119,7 +119,7 @@ func (j *TransactionsCollector) fetchTransactions(ctx context.Context) ([]dto.Tr
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch transactions from API: %w", err)
+		return nil, fmt.Errorf("fetching transactions from API: %w", err)
 	}
 
 	j.logger.Info(
@@ -144,7 +144,7 @@ func (j *TransactionsCollector) storeTransactions(
 		return j.insertTransactionsInTx(ctx, tx, transactions)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to store transactions in database: %w", err)
+		return fmt.Errorf("storing transactions in database: %w", err)
 	}
 
 	j.logger.Info("transactions stored successfully")
@@ -164,11 +164,11 @@ func (j *TransactionsCollector) insertTransactionsInTx(
 		transactionEntity := transaction.MapToModel()
 
 		if err := transactionTypeRepo.Insert(ctx, transactionEntity.Type); err != nil {
-			return fmt.Errorf("failed to insert transaction type: %w", err)
+			return fmt.Errorf("inserting transaction type: %w", err)
 		}
 
 		if err := transactionRepo.Insert(ctx, &transactionEntity); err != nil {
-			return fmt.Errorf("failed to insert transaction: %w", err)
+			return fmt.Errorf("inserting transaction: %w", err)
 		}
 	}
 
@@ -226,7 +226,7 @@ func (j *TransactionsCollector) sendUtilityBillNotification(
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("failed to send utility bill notification: %w", err)
+		return fmt.Errorf("sending utility bill notification: %w", err)
 	}
 
 	return nil
@@ -269,7 +269,7 @@ func (j *TransactionsCollector) buildBillingDocumentAttachment(
 
 	content, err := j.apiClientSvc.DownloadFile(ctx, transaction.BillingDocumentURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to download billing document: %w", err)
+		return nil, fmt.Errorf("downloading billing document: %w", err)
 	}
 
 	return &notifierapi.Attachment{
@@ -289,7 +289,7 @@ func (j *TransactionsCollector) buildMeterPhotoAttachment(
 
 	content, err := j.apiClientSvc.DownloadFile(ctx, transaction.MeterPhotoURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to download meter photo: %w", err)
+		return nil, fmt.Errorf("downloading meter photo: %w", err)
 	}
 
 	return &notifierapi.Attachment{

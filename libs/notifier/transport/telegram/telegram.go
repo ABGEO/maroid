@@ -79,7 +79,7 @@ func New(rawURL *url.URL) (notifierapi.Transport, error) {
 // Register registers the Telegram notifier with the given registry.
 func Register(reg registry.Registry) error {
 	if err := reg.Register("telegram", New); err != nil {
-		return fmt.Errorf("failed to register telegram notifier: %w", err)
+		return fmt.Errorf("registering telegram notifier: %w", err)
 	}
 
 	return nil
@@ -142,7 +142,7 @@ func createBot(cfg *Config) (*telego.Bot, error) {
 
 	bot, err := telego.NewBot(cfg.Token, options...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize telegram bot: %w", err)
+		return nil, fmt.Errorf("initializing telegram bot: %w", err)
 	}
 
 	return bot, nil
@@ -179,7 +179,7 @@ func (n *Notifier) sendTextMessage(ctx context.Context, msg notifierapi.Message)
 
 	_, err := n.client.SendMessage(ctx, message)
 	if err != nil {
-		return fmt.Errorf("failed to send message: %w", err)
+		return fmt.Errorf("sending message: %w", err)
 	}
 
 	return nil
@@ -210,7 +210,7 @@ func (n *Notifier) sendPhoto(ctx context.Context, file telego.InputFile, caption
 
 	_, err := n.client.SendPhoto(ctx, photo)
 	if err != nil {
-		return fmt.Errorf("failed to send photo: %w", err)
+		return fmt.Errorf("sending photo: %w", err)
 	}
 
 	return nil
@@ -229,7 +229,7 @@ func (n *Notifier) sendDocument(ctx context.Context, file telego.InputFile, capt
 
 	_, err := n.client.SendDocument(ctx, document)
 	if err != nil {
-		return fmt.Errorf("failed to send document: %w", err)
+		return fmt.Errorf("sending document: %w", err)
 	}
 
 	return nil
@@ -256,7 +256,7 @@ func (n *Notifier) sendMediaGroup(
 
 	_, err := n.client.SendMediaGroup(ctx, mediaGroup)
 	if err != nil {
-		return fmt.Errorf("failed to send media group: %w", err)
+		return fmt.Errorf("sending media group: %w", err)
 	}
 
 	return nil

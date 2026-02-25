@@ -24,7 +24,7 @@ func (c *Container) NotifierRegistry() (*registry.SchemeRegistry, error) {
 	if err != nil {
 		c.notifierRegistry.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize notifier registry: %w", err)
+		return nil, fmt.Errorf("initializing notifier registry: %w", err)
 	}
 
 	return c.notifierRegistry.instance, nil
@@ -55,7 +55,7 @@ func (c *Container) NotifierDispatcher() (*dispatcher.ChannelDispatcher, error) 
 	if err != nil {
 		c.notifierDispatcher.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize notifier dispatcher: %w", err)
+		return nil, fmt.Errorf("initializing notifier dispatcher: %w", err)
 	}
 
 	return c.notifierDispatcher.instance, nil

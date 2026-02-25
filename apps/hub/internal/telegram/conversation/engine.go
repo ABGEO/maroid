@@ -39,6 +39,8 @@ func NewEngine(
 // HandleMessage processes an incoming Telegram update, updates the conversation state accordingly,
 // and triggers the appropriate step handlers.
 // If there is no active conversation for the user, it simply returns without doing anything.
+//
+//nolint:funlen // sequential conversation state machine; splitting would obscure the flow
 func (e *Engine) HandleMessage(update telego.Update) error {
 	userID := strconv.FormatInt(telegramupdate.SentFrom(update).ID, 10)
 
@@ -101,7 +103,17 @@ func (e *Engine) HandleMessage(update telego.Update) error {
 		return fmt.Errorf("storing conversation state: %w", err)
 	}
 
-	err = convo.Steps()[next].OnEnter(ctx, update)
+	nextStep := e.registry.Step(state.ConversationID, next)
+	if nextStep == nil {
+		return fmt.Errorf(
+			"getting step %s for conversation %s: %w",
+			next,
+			state.ConversationID,
+			errs.ErrTelegramConversationStepNotFound,
+		)
+	}
+
+	err = nextStep.OnEnter(ctx, update)
 	if err != nil {
 		return fmt.Errorf("entering step %s: %w", next, err)
 	}
@@ -143,7 +155,17 @@ func (e *Engine) Start(update telego.Update, conversationID string) error {
 		Data:           state.Data,
 	}
 
-	err = convo.Steps()[entry].OnEnter(ctx, update)
+	entryStep := e.registry.Step(conversationID, entry)
+	if entryStep == nil {
+		return fmt.Errorf(
+			"getting step %s for conversation %s: %w",
+			entry,
+			conversationID,
+			errs.ErrTelegramConversationStepNotFound,
+		)
+	}
+
+	err = entryStep.OnEnter(ctx, update)
 	if err != nil {
 		return fmt.Errorf("entering step %s: %w", entry, err)
 	}

@@ -36,7 +36,7 @@ func NewBot(cfg *config.Config) (*telego.Bot, error) {
 
 	bot, err := telego.NewBot(cfg.Telegram.Token, options...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize Telego Bot: %w", err)
+		return nil, fmt.Errorf("initializing Telego Bot: %w", err)
 	}
 
 	return bot, nil

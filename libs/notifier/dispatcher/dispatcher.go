@@ -148,7 +148,7 @@ func buildTransports(
 
 		transport, err := reg.New(cfg.URL)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create transport %q: %w", name, err)
+			return nil, fmt.Errorf("creating transport %q: %w", name, err)
 		}
 
 		logger.Debug("transport created", "transport", name)

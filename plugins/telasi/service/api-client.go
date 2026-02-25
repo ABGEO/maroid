@@ -64,7 +64,7 @@ func (s *APIClient) Authenticate(
 		}).
 		Post("/telasiCustomers/login")
 	if err != nil {
-		return "", fmt.Errorf("failed to send authentication request: %w", err)
+		return "", fmt.Errorf("sending authentication request: %w", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
@@ -88,7 +88,7 @@ func (s *APIClient) GetCustomers(ctx context.Context) ([]dto.CustomerResponse, e
 		SetResult(&response).
 		Post("/telasiCustomers/info/getCustomers")
 	if err != nil {
-		return nil, fmt.Errorf("failed to send customers request request: %w", err)
+		return nil, fmt.Errorf("sending customers request: %w", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
@@ -116,7 +116,7 @@ func (s *APIClient) GetBillingItems(
 		SetBody(body).
 		Post("/telasiCustomers/info/getBillingItems")
 	if err != nil {
-		return nil, fmt.Errorf("failed to send billing items request: %w", err)
+		return nil, fmt.Errorf("sending billing items request: %w", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {

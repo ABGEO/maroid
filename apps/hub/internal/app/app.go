@@ -27,17 +27,17 @@ type Application struct {
 func New() (*Application, error) {
 	depResolver, err := depresolver.NewResolver()
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize dependency resolver: %w", err)
+		return nil, fmt.Errorf("initializing dependency resolver: %w", err)
 	}
 
 	pluginLoader, err := depResolver.PluginLoader()
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve plugin loader: %w", err)
+		return nil, fmt.Errorf("resolving plugin loader: %w", err)
 	}
 
 	commandRegistry, err := depResolver.CommandRegistry()
 	if err != nil {
-		return nil, fmt.Errorf("failed to resolve command registry: %w", err)
+		return nil, fmt.Errorf("resolving command registry: %w", err)
 	}
 
 	return &Application{
@@ -62,7 +62,7 @@ func (a *Application) Run(ctx context.Context) error {
 	rootCmd.AddCommand(a.commandRegistry.All()...)
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
-		return fmt.Errorf("failed to execute root command: %w", err)
+		return fmt.Errorf("executing root command: %w", err)
 	}
 
 	return nil
@@ -75,7 +75,7 @@ func (a *Application) loadPlugins() error {
 		}
 
 		if err := a.pluginLoader.Load(pluginCfg.Path, pluginCfg.Config); err != nil {
-			return fmt.Errorf("failed to load plugin %s: %w", pluginCfg.Path, err)
+			return fmt.Errorf("loading plugin %s: %w", pluginCfg.Path, err)
 		}
 	}
 
@@ -89,7 +89,7 @@ func (a *Application) cleanup(ctx context.Context) error {
 	defer cancel()
 
 	if err := a.resolver.Close(cleanupCtx); err != nil {
-		return fmt.Errorf("failed to close dependencies: %w", err)
+		return fmt.Errorf("closing dependencies: %w", err)
 	}
 
 	return nil

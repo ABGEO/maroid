@@ -106,7 +106,7 @@ func (j *ReadingsCollector) fetchCustomers(
 
 	customers, err := j.apiClientSvc.GetCustomers(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch customers from API: %w", err)
+		return nil, fmt.Errorf("fetching customers from API: %w", err)
 	}
 
 	return customers, nil
@@ -117,7 +117,7 @@ func (j *ReadingsCollector) fetchReadings(ctx context.Context) ([]dto.ReadingRes
 
 	readings, err := j.apiClientSvc.GetReadings(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch readings from API: %w", err)
+		return nil, fmt.Errorf("fetching readings from API: %w", err)
 	}
 
 	return readings, nil

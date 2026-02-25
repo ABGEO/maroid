@@ -107,7 +107,6 @@ type Container struct {
 	}
 
 	cronRegistry struct {
-		mu       sync.Mutex
 		once     sync.Once
 		instance *registry.CronRegistry
 	}
@@ -131,7 +130,6 @@ type Container struct {
 	}
 
 	mqttSubscriberRegistry struct {
-		mu       sync.Mutex
 		once     sync.Once
 		instance *registry.MQTTSubscriberRegistry
 	}
@@ -174,12 +172,12 @@ var _ Resolver = (*Container)(nil)
 func NewResolver() (*Container, error) {
 	cfg, err := config.New("")
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w", err)
+		return nil, fmt.Errorf("loading config: %w", err)
 	}
 
 	loggerInstance, err := logger.New(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize logger: %w", err)
+		return nil, fmt.Errorf("initializing logger: %w", err)
 	}
 
 	return &Container{

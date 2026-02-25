@@ -46,7 +46,7 @@ func (c *Container) TelegramConversationEngine() (*conversation.Engine, error) {
 	if err != nil {
 		c.telegramConversationEngine.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize telegram bot: %w", err)
+		return nil, fmt.Errorf("initializing telegram conversation engine: %w", err)
 	}
 
 	return c.telegramConversationEngine.instance, nil

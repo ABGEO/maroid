@@ -25,11 +25,11 @@ func DecodeAndValidateConfig(cfg any, pluginConfig any) error {
 	defaults.SetDefaults(pluginConfig)
 
 	if err := mapstructure.Decode(cfg, &pluginConfig); err != nil {
-		return fmt.Errorf("failed to decode config: %w", err)
+		return fmt.Errorf("decoding config: %w", err)
 	}
 
 	if err := validate.Struct(pluginConfig); err != nil {
-		return fmt.Errorf("failed to validate config: %w", err)
+		return fmt.Errorf("validating config: %w", err)
 	}
 
 	return nil

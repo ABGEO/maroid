@@ -64,7 +64,7 @@ func (s *APIClient) Authenticate(
 		}).
 		Put("/customer")
 	if err != nil {
-		return "", fmt.Errorf("failed to send authentication request: %w", err)
+		return "", fmt.Errorf("sending authentication request: %w", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
@@ -94,7 +94,7 @@ func (s *APIClient) GetCustomers(
 		SetResult(&response).
 		Get("/customer/ListCustomers")
 	if err != nil {
-		return nil, fmt.Errorf("failed to send readings request: %w", err)
+		return nil, fmt.Errorf("sending readings request: %w", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
@@ -124,7 +124,7 @@ func (s *APIClient) GetReadings(
 		SetResult(&response).
 		Get("/RecordDisplay")
 	if err != nil {
-		return nil, fmt.Errorf("failed to send readings request: %w", err)
+		return nil, fmt.Errorf("sending readings request: %w", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {

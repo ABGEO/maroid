@@ -25,13 +25,11 @@ func AllowedUsers(logger *slog.Logger, allowedUsers []int64) th.Handler {
 		}
 
 		if !slices.Contains(allowedUsers, user.ID) {
-			if user != nil {
-				logger.Warn(
-					"unauthorized access attempt",
-					slog.Int64("user_id", user.ID),
-					slog.String("username", user.Username),
-				)
-			}
+			logger.Warn(
+				"unauthorized access attempt",
+				slog.Int64("user_id", user.ID),
+				slog.String("username", user.Username),
+			)
 
 			return nil
 		}

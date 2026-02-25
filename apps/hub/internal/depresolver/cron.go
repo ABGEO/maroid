@@ -1,9 +1,6 @@
 package depresolver
 
 import (
-	"fmt"
-	"sync"
-
 	"github.com/robfig/cron/v3"
 
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
@@ -28,20 +25,9 @@ func (c *Container) Cron() *cron.Cron {
 
 // CronRegistry initializes and returns the cron registry instance.
 func (c *Container) CronRegistry() (*registry.CronRegistry, error) {
-	c.cronRegistry.mu.Lock()
-	defer c.cronRegistry.mu.Unlock()
-
-	var err error
-
 	c.cronRegistry.once.Do(func() {
 		c.cronRegistry.instance = registry.NewCronRegistry()
 	})
-
-	if err != nil {
-		c.cronRegistry.once = sync.Once{}
-
-		return nil, fmt.Errorf("failed to initialize cron registry: %w", err)
-	}
 
 	return c.cronRegistry.instance, nil
 }

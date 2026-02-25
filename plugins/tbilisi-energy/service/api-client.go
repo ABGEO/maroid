@@ -65,7 +65,7 @@ func (s *APIClient) Authenticate(ctx context.Context, username, password string)
 		}).
 		Post("/Users/Authenticate")
 	if err != nil {
-		return "", fmt.Errorf("failed to send authentication request: %w", err)
+		return "", fmt.Errorf("sending authentication request: %w", err)
 	}
 
 	if err = extractHTTPError(resp); err != nil {
@@ -92,7 +92,7 @@ func (s *APIClient) GetTransactions(
 		SetBody(body).
 		Post("/Customer/GetTransactions")
 	if err != nil {
-		return nil, fmt.Errorf("failed to send transactions request: %w", err)
+		return nil, fmt.Errorf("sending transactions request: %w", err)
 	}
 
 	if err = extractHTTPError(resp); err != nil {
@@ -120,7 +120,7 @@ func (s *APIClient) DownloadFile(ctx context.Context, fileURL string) ([]byte, e
 		SetDoNotParseResponse(true).
 		Get(fileURL)
 	if err != nil {
-		return nil, fmt.Errorf("failed to download file: %w", err)
+		return nil, fmt.Errorf("downloading file: %w", err)
 	}
 
 	if err = extractHTTPError(resp); err != nil {
@@ -133,7 +133,7 @@ func (s *APIClient) DownloadFile(ctx context.Context, fileURL string) ([]byte, e
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read body: %w", err)
+		return nil, fmt.Errorf("reading body: %w", err)
 	}
 
 	return data, nil

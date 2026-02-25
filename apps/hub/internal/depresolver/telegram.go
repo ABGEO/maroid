@@ -26,7 +26,7 @@ func (c *Container) TelegramBot() (*telego.Bot, error) {
 	if err != nil {
 		c.telegramBot.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize telegram bot: %w", err)
+		return nil, fmt.Errorf("initializing telegram bot: %w", err)
 	}
 
 	return c.telegramBot.instance, nil
@@ -55,7 +55,7 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 		}
 
 		telegramConversationEngine, telegramConversationEngineErr := c.TelegramConversationEngine()
-		if err != nil {
+		if telegramConversationEngineErr != nil {
 			err = telegramConversationEngineErr
 
 			return
@@ -74,7 +74,7 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 	if err != nil {
 		c.telegramUpdatesHandler.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize telegram updates handler: %w", err)
+		return nil, fmt.Errorf("initializing telegram updates handler: %w", err)
 	}
 
 	return c.telegramUpdatesHandler.instance, nil
@@ -91,8 +91,10 @@ func (c *Container) TelegramCommandRegistry() (*registry.TelegramCommandRegistry
 		c.telegramCommandRegistry.instance = registry.NewTelegramCommandRegistry()
 
 		commands, cmdErr := c.getTelegramCommands(c.telegramCommandRegistry.instance)
-		if err != nil {
+		if cmdErr != nil {
 			err = cmdErr
+
+			return
 		}
 
 		regErr := c.telegramCommandRegistry.instance.Register(commands...)
@@ -106,7 +108,7 @@ func (c *Container) TelegramCommandRegistry() (*registry.TelegramCommandRegistry
 	if err != nil {
 		c.telegramCommandRegistry.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize telegram commands registry: %w", err)
+		return nil, fmt.Errorf("initializing telegram commands registry: %w", err)
 	}
 
 	return c.telegramCommandRegistry.instance, nil

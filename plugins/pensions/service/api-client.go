@@ -69,7 +69,7 @@ func (s *APIClient) Authenticate(
 		}).
 		Post("/v1/auth/participant-auth")
 	if err != nil {
-		return "", fmt.Errorf("failed to send authentication request: %w", err)
+		return "", fmt.Errorf("sending authentication request: %w", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
@@ -99,7 +99,7 @@ func (s *APIClient) GetParticipantInfo(
 		SetResult(&response).
 		Get("/v2/contributions/participant/get")
 	if err != nil {
-		return nil, fmt.Errorf("failed to send participant info request: %w", err)
+		return nil, fmt.Errorf("sending participant info request: %w", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
@@ -127,7 +127,7 @@ func (s *APIClient) GetContributions(
 		SetQueryParams(query.ToQueryParams()).
 		Get("/v1/fbo/contributions")
 	if err != nil {
-		return nil, fmt.Errorf("failed to send contributions request: %w", err)
+		return nil, fmt.Errorf("sending contributions request: %w", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {

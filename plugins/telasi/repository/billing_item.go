@@ -42,7 +42,7 @@ func (r *BillingItem) Insert(ctx context.Context, entity *model.BillingItem) err
 
 	_, err := r.tx.NamedExecContext(ctx, query, entity)
 	if err != nil {
-		return fmt.Errorf("failed to insert BillingItem: %w", err)
+		return fmt.Errorf("inserting BillingItem: %w", err)
 	}
 
 	return nil

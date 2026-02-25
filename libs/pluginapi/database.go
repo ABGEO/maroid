@@ -33,7 +33,7 @@ func NewPluginDB(db *sqlx.DB, pluginID *PluginID) *PluginDB {
 func (p *PluginDB) WithTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	tx, err := p.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
+		return fmt.Errorf("beginning transaction: %w", err)
 	}
 
 	defer func() { _ = tx.Rollback() }()
@@ -43,7 +43,7 @@ func (p *PluginDB) WithTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 		fmt.Sprintf("SET search_path TO %s, public", p.pluginID.ToSafeName("_")),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to set search path: %w", err)
+		return fmt.Errorf("setting search path: %w", err)
 	}
 
 	if err = fn(tx); err != nil {
@@ -52,7 +52,7 @@ func (p *PluginDB) WithTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 
 	err = tx.Commit()
 	if err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
+		return fmt.Errorf("committing transaction: %w", err)
 	}
 
 	return nil

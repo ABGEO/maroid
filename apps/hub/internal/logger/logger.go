@@ -28,7 +28,7 @@ func parseLogLevel(rawLevel string) (slog.Level, error) {
 
 	err := level.UnmarshalText([]byte(rawLevel))
 	if err != nil {
-		return level, fmt.Errorf("failed to parse log level: %w", err)
+		return level, fmt.Errorf("parsing log level: %w", err)
 	}
 
 	return level, nil

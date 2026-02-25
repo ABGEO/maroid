@@ -36,7 +36,7 @@ func (r *Organization) Insert(ctx context.Context, entity *model.Organization) e
 
 	_, err := r.tx.NamedExecContext(ctx, query, entity)
 	if err != nil {
-		return fmt.Errorf("failed to insert Organization: %w", err)
+		return fmt.Errorf("inserting Organization: %w", err)
 	}
 
 	return nil

@@ -24,8 +24,10 @@ func (c *Container) CommandRegistry() (*registry.CommandRegistry, error) {
 		c.commandRegistry.instance = registry.NewCommandRegistry()
 
 		commands, cmdErr := c.getCommands()
-		if err != nil {
+		if cmdErr != nil {
 			err = cmdErr
+
+			return
 		}
 
 		err = c.commandRegistry.instance.Register(commands...)
@@ -34,7 +36,7 @@ func (c *Container) CommandRegistry() (*registry.CommandRegistry, error) {
 	if err != nil {
 		c.commandRegistry.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize command registry: %w", err)
+		return nil, fmt.Errorf("initializing command registry: %w", err)
 	}
 
 	return c.commandRegistry.instance, nil

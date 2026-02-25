@@ -42,7 +42,7 @@ func (r *Contribution) Insert(ctx context.Context, entity *model.Contribution) e
 
 	_, err := r.tx.NamedExecContext(ctx, query, entity)
 	if err != nil {
-		return fmt.Errorf("failed to insert Contribution: %w", err)
+		return fmt.Errorf("inserting Contribution: %w", err)
 	}
 
 	return nil

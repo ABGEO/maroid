@@ -30,7 +30,7 @@ func (c *UpCommand) Command() *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 			err := c.migrator.Up(c.target)
 			if err != nil {
-				return fmt.Errorf("failed to apply migrations: %w", err)
+				return fmt.Errorf("applying migrations: %w", err)
 			}
 
 			return nil

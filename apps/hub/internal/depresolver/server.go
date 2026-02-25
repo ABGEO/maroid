@@ -36,7 +36,7 @@ func (c *Container) HTTPServer() (*http.Server, error) {
 	if err != nil {
 		c.httpServer.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize HTTP server: %w", err)
+		return nil, fmt.Errorf("initializing HTTP server: %w", err)
 	}
 
 	return c.httpServer.instance, nil
@@ -50,7 +50,7 @@ func (c *Container) CloseHTTPServer() error {
 
 	err := c.httpServer.instance.Close()
 	if err != nil {
-		return fmt.Errorf("failed to close HTTP Server: %w", err)
+		return fmt.Errorf("closing HTTP Server: %w", err)
 	}
 
 	return nil

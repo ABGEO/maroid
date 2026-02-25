@@ -56,7 +56,7 @@ func (c *Container) PluginHost() (*pluginhost.Host, error) {
 	if err != nil {
 		c.pluginHost.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize plugin host: %w", err)
+		return nil, fmt.Errorf("initializing plugin host: %w", err)
 	}
 
 	return c.pluginHost.instance, nil
@@ -76,7 +76,7 @@ func (c *Container) PluginLoader() (*pluginloader.Loader, error) {
 	if err != nil {
 		c.pluginLoader.once = sync.Once{}
 
-		return nil, fmt.Errorf("failed to initialize plugin registry: %w", err)
+		return nil, fmt.Errorf("initializing plugin loader: %w", err)
 	}
 
 	return c.pluginLoader.instance, nil

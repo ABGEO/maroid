@@ -64,7 +64,7 @@ func (r *CommandRegistrar) Register(plugin pluginapi.Plugin) error {
 
 	err := r.registry.Register(cmd)
 	if err != nil {
-		return fmt.Errorf("failed to register commands for plugin %s: %w", id, err)
+		return fmt.Errorf("registering commands for plugin %s: %w", id, err)
 	}
 
 	return nil

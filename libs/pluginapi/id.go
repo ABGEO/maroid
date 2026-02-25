@@ -36,6 +36,10 @@ func ParsePluginID(rawID string) *PluginID {
 }
 
 func (i *PluginID) String() string {
+	if i.Namespace == "" {
+		return i.Name
+	}
+
 	return fmt.Sprintf("%s.%s", i.Namespace, i.Name)
 }
 

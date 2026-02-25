@@ -41,6 +41,7 @@ linters:
         - notifierapi.Transport
         - notifierapi.Dispatcher
         - pluginapi.TelegramBot
+        - paho.mqtt.golang.Client
 
     varnamelen:
       min-name-length: 2

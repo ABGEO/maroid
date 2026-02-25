@@ -86,7 +86,7 @@ func (s *APIClient) GetParkingLots(
 		Get("/business-parking/parking/place/for-screen")
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to send parking lots request: %w", err,
+			"sending parking lots request: %w", err,
 		)
 	}
 
@@ -119,7 +119,7 @@ func (s *APIClient) GetParkingPlace(
 		Get("/parking/place/zone/{zone}/place/{number}")
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to send parking place request: %w", err,
+			"sending parking place request: %w", err,
 		)
 	}
 
@@ -151,7 +151,7 @@ func (s *APIClient) StartParking(
 		SetBody(body).
 		Post("/parking")
 	if err != nil {
-		return nil, fmt.Errorf("failed to send start parking request: %w", err)
+		return nil, fmt.Errorf("sending start parking request: %w", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {
@@ -179,7 +179,7 @@ func (s *APIClient) GetActiveSession(
 		Get("/parking")
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to send active session request: %w", err,
+			"sending active session request: %w", err,
 		)
 	}
 
@@ -209,7 +209,7 @@ func (s *APIClient) StopParking(
 		Delete("/parking/{id}")
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to send stop parking request: %w", err,
+			"sending stop parking request: %w", err,
 		)
 	}
 
@@ -236,7 +236,7 @@ func (s *APIClient) GetPerson(
 		SetResult(&response).
 		Get("/parking/person/check")
 	if err != nil {
-		return nil, fmt.Errorf("failed to send person request: %w", err)
+		return nil, fmt.Errorf("sending person request: %w", err)
 	}
 
 	if resp.StatusCode() != http.StatusOK {

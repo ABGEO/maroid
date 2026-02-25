@@ -116,7 +116,7 @@ func (j *BillingItemsCollector) fetchBillingItems(ctx context.Context) ([]dto.Bi
 		},
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch billing items from API: %w", err)
+		return nil, fmt.Errorf("fetching billing items from API: %w", err)
 	}
 
 	j.logger.Info(
@@ -141,7 +141,7 @@ func (j *BillingItemsCollector) storeBillingItems(
 		return j.insertBillingItemsInTx(ctx, tx, billingItems)
 	})
 	if err != nil {
-		return fmt.Errorf("failed to store billing items in database: %w", err)
+		return fmt.Errorf("storing billing items in database: %w", err)
 	}
 
 	j.logger.Info("billing items stored successfully")
@@ -160,7 +160,7 @@ func (j *BillingItemsCollector) insertBillingItemsInTx(
 		billingItemEntity := billingItem.MapToModel()
 
 		if err := billingItemRepo.Insert(ctx, &billingItemEntity); err != nil {
-			return fmt.Errorf("failed to insert billing item: %w", err)
+			return fmt.Errorf("inserting billing item: %w", err)
 		}
 	}
 
@@ -201,7 +201,7 @@ func (j *BillingItemsCollector) sendUtilityBillNotification(
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("failed to send utility bill notification: %w", err)
+		return fmt.Errorf("sending utility bill notification: %w", err)
 	}
 
 	return nil

@@ -42,7 +42,7 @@ func (r *Transaction) Insert(ctx context.Context, entity *model.Transaction) err
 
 	_, err := r.tx.NamedExecContext(ctx, query, entity)
 	if err != nil {
-		return fmt.Errorf("failed to insert Transaction: %w", err)
+		return fmt.Errorf("inserting Transaction: %w", err)
 	}
 
 	return nil

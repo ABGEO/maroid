@@ -52,7 +52,7 @@ func (r *TelegramCommandRegistrar) Register(plugin pluginapi.Plugin) error {
 
 	commands, err := telegramPlugin.TelegramCommands()
 	if err != nil {
-		return fmt.Errorf("failed to retrieve telegram commands for plugin %s: %w", id, err)
+		return fmt.Errorf("retrieving telegram commands for plugin %s: %w", id, err)
 	}
 
 	wrappedCommands := make([]pluginapi.TelegramCommand, 0, len(commands))
@@ -62,7 +62,7 @@ func (r *TelegramCommandRegistrar) Register(plugin pluginapi.Plugin) error {
 
 	err = r.registry.Register(wrappedCommands...)
 	if err != nil {
-		return fmt.Errorf("failed to register telegram commands for plugin %s: %w", id, err)
+		return fmt.Errorf("registering telegram commands for plugin %s: %w", id, err)
 	}
 
 	return nil

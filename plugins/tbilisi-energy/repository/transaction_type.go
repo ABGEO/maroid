@@ -36,7 +36,7 @@ func (r *TransactionType) Insert(ctx context.Context, entity *model.TransactionT
 
 	_, err := r.tx.NamedExecContext(ctx, query, entity)
 	if err != nil {
-		return fmt.Errorf("failed to insert TransactionType: %w", err)
+		return fmt.Errorf("inserting TransactionType: %w", err)
 	}
 
 	return nil

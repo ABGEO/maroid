@@ -90,7 +90,7 @@ func (m *Migrator) ensureSchema(schema string) error {
 
 	_, err := m.database.Exec(query)
 	if err != nil {
-		return fmt.Errorf("failed to ensure schema %q: %w", schema, err)
+		return fmt.Errorf("ensuring schema %q: %w", schema, err)
 	}
 
 	return nil
@@ -109,7 +109,7 @@ func (m *Migrator) migrateComponent(component string, filesystem fs.FS) error {
 
 	err = instance.Up()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		return fmt.Errorf("failed to run up migrations: %w", err)
+		return fmt.Errorf("running up migrations: %w", err)
 	}
 
 	return nil
@@ -152,7 +152,7 @@ func (m *Migrator) newMigrateInstance(
 ) (*migrate.Migrate, error) {
 	source, err := iofs.New(filesystem, ".")
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize migrations IOFS: %w", err)
+		return nil, fmt.Errorf("initializing migrations IOFS: %w", err)
 	}
 
 	dsn := fmt.Sprintf(
@@ -164,7 +164,7 @@ func (m *Migrator) newMigrateInstance(
 
 	instance, err := migrate.NewWithSourceInstance("iofs", source, dsn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize migrator: %w", err)
+		return nil, fmt.Errorf("initializing migrator: %w", err)
 	}
 
 	return instance, nil

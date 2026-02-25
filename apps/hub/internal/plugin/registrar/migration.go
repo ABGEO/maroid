@@ -49,12 +49,12 @@ func (r *MigrationRegistrar) Register(plugin pluginapi.Plugin) error {
 
 	migrations, err := migrationPlugin.Migrations()
 	if err != nil {
-		return fmt.Errorf("failed to retrieve migrations for plugin %s: %w", id, err)
+		return fmt.Errorf("retrieving migrations for plugin %s: %w", id, err)
 	}
 
 	err = r.registry.Register(plugin.Meta().ID.String(), migrations)
 	if err != nil {
-		return fmt.Errorf("failed to register migrations for plugin %s: %w", id, err)
+		return fmt.Errorf("registering migrations for plugin %s: %w", id, err)
 	}
 
 	return nil

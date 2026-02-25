@@ -101,12 +101,12 @@ func NewUpdatesHandler(
 		handlerInstance.getWebhookHandler(),
 		webhookOptions...)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create telegram updates via webhook: %w", err)
+		return nil, fmt.Errorf("creating telegram updates via webhook: %w", err)
 	}
 
 	handlerInstance.botHandler, err = th.NewBotHandler(bot, handlerInstance.updates)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create telegram bot handler: %w", err)
+		return nil, fmt.Errorf("creating telegram bot handler: %w", err)
 	}
 
 	return handlerInstance, nil
@@ -128,7 +128,7 @@ func (h *ChannelHandler) Handle(ctx context.Context) error {
 
 	err = h.botHandler.Start()
 	if err != nil {
-		return fmt.Errorf("failed to start telegram bot handler: %w", err)
+		return fmt.Errorf("starting telegram bot handler: %w", err)
 	}
 
 	return nil
@@ -138,7 +138,7 @@ func (h *ChannelHandler) Handle(ctx context.Context) error {
 func (h *ChannelHandler) Stop(ctx context.Context) error {
 	err := h.botHandler.StopWithContext(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to stop telegram bot handler: %w", err)
+		return fmt.Errorf("stopping telegram bot handler: %w", err)
 	}
 
 	return nil
@@ -259,7 +259,7 @@ func (h *ChannelHandler) applyCommandsToScopes(
 			Scope:    cs.scope,
 		})
 		if err != nil {
-			return fmt.Errorf("failed to set bot commands for scope %T: %w", cs.scope, err)
+			return fmt.Errorf("setting bot commands for scope %T: %w", cs.scope, err)
 		}
 	}
 

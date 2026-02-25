@@ -87,7 +87,7 @@ func (r *Loader) registerCapabilities(plg pluginapi.Plugin) error {
 		}
 
 		if err := reg.Register(plg); err != nil {
-			return fmt.Errorf("failed to register capabilities for plugin %s via %s: %w",
+			return fmt.Errorf("registering capabilities for plugin %s via %s: %w",
 				plg.Meta().ID, reg.Name(), err)
 		}
 	}

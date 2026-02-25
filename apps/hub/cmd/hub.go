@@ -26,12 +26,12 @@ func run() error {
 
 	application, err := app.New()
 	if err != nil {
-		return fmt.Errorf("failed to initialize application: %w", err)
+		return fmt.Errorf("initializing application: %w", err)
 	}
 
 	err = application.Run(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to run application: %w", err)
+		return fmt.Errorf("running application: %w", err)
 	}
 
 	return nil

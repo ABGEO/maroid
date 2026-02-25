@@ -37,17 +37,17 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 	err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to validate config: %w", err)
+		return nil, fmt.Errorf("validating config: %w", err)
 	}
 
 	database, err := host.Database()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get host database instance: %w", err)
+		return nil, fmt.Errorf("getting host database instance: %w", err)
 	}
 
 	notifierInstance, err := host.Notifier()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get host notifier instance: %w", err)
+		return nil, fmt.Errorf("getting host notifier instance: %w", err)
 	}
 
 	plg := &PensionsPlugin{
@@ -84,7 +84,7 @@ func (p *PensionsPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 func (p *PensionsPlugin) Migrations() (fs.FS, error) {
 	migrationsFS, err := fs.Sub(db.Migrations, "migrations")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get migration FS: %w", err)
+		return nil, fmt.Errorf("getting migration FS: %w", err)
 	}
 
 	return migrationsFS, nil

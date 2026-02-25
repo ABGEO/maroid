@@ -50,7 +50,7 @@ func (r *MQTTSubscriberRegistrar) Register(plugin pluginapi.Plugin) error {
 
 	subscribers, err := mqttPlugin.MQTTSubscribers()
 	if err != nil {
-		return fmt.Errorf("failed to retrieve MQTT subscribers for plugin %s: %w", id, err)
+		return fmt.Errorf("retrieving MQTT subscribers for plugin %s: %w", id, err)
 	}
 
 	for _, sub := range subscribers {
@@ -64,7 +64,7 @@ func (r *MQTTSubscriberRegistrar) Register(plugin pluginapi.Plugin) error {
 
 		if err = r.registry.Register(effectiveTopic, sub); err != nil {
 			return fmt.Errorf(
-				"failed to register MQTT subscriber %s for plugin %s: %w",
+				"registering MQTT subscriber %s for plugin %s: %w",
 				meta.ID,
 				id,
 				err,
