@@ -38,6 +38,9 @@ func (s *AskLocation) OnEnter(
 			tu.KeyboardButton("Share my location").WithRequestLocation(),
 		),
 		tu.KeyboardRow(
+			tu.KeyboardButton("Enter manually"),
+		),
+		tu.KeyboardRow(
 			tu.KeyboardButton("Cancel"),
 		),
 	).WithResizeKeyboard().WithOneTimeKeyboard()
@@ -72,7 +75,7 @@ func (s *AskLocation) OnMessage(
 	ctx *conversationapi.Context,
 	update telego.Update,
 ) (string, error) {
-	if update.Message == nil || update.Message.Location == nil {
+	if update.Message == nil {
 		return stepAskLocation, nil
 	}
 
@@ -93,8 +96,63 @@ func (s *AskLocation) OnMessage(
 		return "", nil
 	}
 
+	if update.Message.Text == "Enter manually" {
+		sent, err := s.sendEnterManuallyPrompt(update)
+		if err != nil {
+			return "", err
+		}
+
+		ctx.Data["ctrl_msg_id"] = sent.MessageID
+		ctx.Data["ctrl_chat_id"] = sent.Chat.ID
+
+		return stepEnterLot, nil
+	}
+
+	if update.Message.Location == nil {
+		return stepAskLocation, nil
+	}
+
 	ctx.Data["latitude"] = update.Message.Location.Latitude
 	ctx.Data["longitude"] = update.Message.Location.Longitude
 
 	return stepSelectLot, nil
+}
+
+func (s *AskLocation) sendEnterManuallyPrompt(update telego.Update) (*telego.Message, error) {
+	dismiss := tu.Message(
+		tu.ID(update.Message.Chat.ID),
+		"Entering parking lot number manually.",
+	).
+		WithMessageThreadID(update.Message.MessageThreadID).
+		WithReplyMarkup(tu.ReplyKeyboardRemove())
+
+	if update.Message.DirectMessagesTopic != nil {
+		dismiss.WithDirectMessagesTopicID(
+			int(update.Message.DirectMessagesTopic.TopicID),
+		)
+	}
+
+	if _, err := s.telegramBot.SendMessage(context.Background(), dismiss); err != nil {
+		return nil, fmt.Errorf("dismissing reply keyboard: %w", err)
+	}
+
+	ctrl := tu.Message(
+		tu.ID(update.Message.Chat.ID),
+		"Loading...",
+	).
+		WithMessageThreadID(update.Message.MessageThreadID).
+		WithReplyMarkup(cancelKeyboard())
+
+	if update.Message.DirectMessagesTopic != nil {
+		ctrl.WithDirectMessagesTopicID(
+			int(update.Message.DirectMessagesTopic.TopicID),
+		)
+	}
+
+	sent, err := s.telegramBot.SendMessage(context.Background(), ctrl)
+	if err != nil {
+		return nil, fmt.Errorf("sending enter manually prompt: %w", err)
+	}
+
+	return sent, nil
 }
