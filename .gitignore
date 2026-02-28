@@ -24,3 +24,6 @@ go.work
 go.work.sum
 
 config.yaml
+.env
+
+docker-compose.override.yaml
