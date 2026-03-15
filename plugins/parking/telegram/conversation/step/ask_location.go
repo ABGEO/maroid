@@ -56,7 +56,7 @@ func (s *AskLocation) OnEnter(
 
 	if update.Message.DirectMessagesTopic != nil {
 		message.WithDirectMessagesTopicID(
-			int(update.Message.DirectMessagesTopic.TopicID),
+			update.Message.DirectMessagesTopic.TopicID,
 		)
 	}
 
@@ -128,7 +128,7 @@ func (s *AskLocation) sendEnterManuallyPrompt(update telego.Update) (*telego.Mes
 
 	if update.Message.DirectMessagesTopic != nil {
 		dismiss.WithDirectMessagesTopicID(
-			int(update.Message.DirectMessagesTopic.TopicID),
+			update.Message.DirectMessagesTopic.TopicID,
 		)
 	}
 
@@ -145,7 +145,7 @@ func (s *AskLocation) sendEnterManuallyPrompt(update telego.Update) (*telego.Mes
 
 	if update.Message.DirectMessagesTopic != nil {
 		ctrl.WithDirectMessagesTopicID(
-			int(update.Message.DirectMessagesTopic.TopicID),
+			update.Message.DirectMessagesTopic.TopicID,
 		)
 	}
 

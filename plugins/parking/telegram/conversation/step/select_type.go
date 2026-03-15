@@ -127,7 +127,7 @@ func (s *SelectType) sendNewCtrlMessage(
 
 	if update.Message.DirectMessagesTopic != nil {
 		msg.WithDirectMessagesTopicID(
-			int(update.Message.DirectMessagesTopic.TopicID),
+			update.Message.DirectMessagesTopic.TopicID,
 		)
 	}
 

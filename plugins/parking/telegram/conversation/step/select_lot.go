@@ -126,7 +126,7 @@ func (s *SelectLot) dismissReplyKeyboard(
 
 	if update.Message.DirectMessagesTopic != nil {
 		msg.WithDirectMessagesTopicID(
-			int(update.Message.DirectMessagesTopic.TopicID),
+			update.Message.DirectMessagesTopic.TopicID,
 		)
 	}
 
@@ -198,7 +198,7 @@ func (s *SelectLot) sendLotSelection(
 
 	if update.Message.DirectMessagesTopic != nil {
 		msg.WithDirectMessagesTopicID(
-			int(update.Message.DirectMessagesTopic.TopicID),
+			update.Message.DirectMessagesTopic.TopicID,
 		)
 	}
 

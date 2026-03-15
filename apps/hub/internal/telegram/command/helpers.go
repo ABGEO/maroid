@@ -17,7 +17,7 @@ func sendMessage(bot *telego.Bot, ctx *th.Context, update telego.Update, text st
 	).WithMessageThreadID(update.Message.MessageThreadID)
 
 	if update.Message.DirectMessagesTopic != nil {
-		message.WithDirectMessagesTopicID(int(update.Message.DirectMessagesTopic.TopicID))
+		message.WithDirectMessagesTopicID(update.Message.DirectMessagesTopic.TopicID)
 	}
 
 	if _, err := bot.SendMessage(ctx, message); err != nil {

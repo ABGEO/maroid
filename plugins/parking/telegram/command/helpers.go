@@ -20,7 +20,7 @@ func sendMessage(bot pluginapi.TelegramBot, update telego.Update, text string) e
 
 	if update.Message.DirectMessagesTopic != nil {
 		msg.WithDirectMessagesTopicID(
-			int(update.Message.DirectMessagesTopic.TopicID),
+			update.Message.DirectMessagesTopic.TopicID,
 		)
 	}
 
