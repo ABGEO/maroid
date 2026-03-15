@@ -36,6 +36,13 @@ func (r *TelegramCommandRegistry) Register(commands ...pluginapi.TelegramCommand
 	return nil
 }
 
+// Get returns a command by name, or nil if not found.
+func (r *TelegramCommandRegistry) Get(name string) (pluginapi.TelegramCommand, bool) {
+	cmd, ok := r.commands[name]
+
+	return cmd, ok
+}
+
 // All returns all registered Telegram commands.
 func (r *TelegramCommandRegistry) All() []pluginapi.TelegramCommand {
 	return slices.Collect(maps.Values(r.commands))

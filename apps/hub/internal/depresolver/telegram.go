@@ -124,6 +124,6 @@ func (c *Container) getTelegramCommands(
 
 	return []pluginapi.TelegramCommand{
 		tgcommand.NewHelp(bot, commandRegistry),
-		tgcommand.NewStart(bot),
+		tgcommand.NewStart(bot, commandRegistry),
 	}, nil
 }
