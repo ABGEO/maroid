@@ -50,7 +50,7 @@ type ActiveSession struct {
 	Difference         int        `json:"difference"`
 	ParkingType        string     `json:"parkingType"`
 	IncludeFreeParking bool       `json:"includeFreeParking"`
-	FixedAmount        int        `json:"fixedAmount"`
+	FixedAmount        float64    `json:"fixedAmount"`
 	ParkingPlace       ParkingLot `json:"parkingPlace"`
 	StartDate          string     `json:"startDate"`
 	EndDate            *string    `json:"endDate"`

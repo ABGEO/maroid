@@ -111,9 +111,12 @@ func validateStart(person *dto.Person, session *dto.ActiveSession) string {
 		)
 	}
 
-	if person.BalanceAmount <= 0 {
-		return "Your balance is <b>0 GEL</b>." +
-			"\n\nPlease top up before starting a parking session."
+	if person.BalanceAmount < 1 {
+		return fmt.Sprintf(
+			"Your balance is <b>%f GEL</b>."+
+				"\n\nPlease top up before starting a parking session.",
+			person.BalanceAmount,
+		)
 	}
 
 	return ""
