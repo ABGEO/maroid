@@ -16,7 +16,6 @@ import (
 
 // Parking is a Telegram command that allows users to start a parking session.
 type Parking struct {
-	bot                        pluginapi.TelegramBot
 	telegramConversationEngine conversation.Engine
 	apiClientSvc               service.APIClientService
 }
@@ -25,12 +24,10 @@ var _ pluginapi.TelegramCommand = (*Parking)(nil)
 
 // NewParking creates a new Parking.
 func NewParking(
-	bot pluginapi.TelegramBot,
 	telegramConversationEngine conversation.Engine,
 	apiClientSvc service.APIClientService,
 ) *Parking {
 	return &Parking{
-		bot:                        bot,
 		telegramConversationEngine: telegramConversationEngine,
 		apiClientSvc:               apiClientSvc,
 	}
@@ -57,7 +54,7 @@ func (c *Parking) Handle(ctx *th.Context, update telego.Update) error {
 	}
 
 	if msg := validateStart(person, session); msg != "" {
-		return sendMessage(c.bot, update, msg)
+		return sendMessage(ctx, update, msg)
 	}
 
 	if err = c.telegramConversationEngine.Start(update, "start_parking"); err != nil {

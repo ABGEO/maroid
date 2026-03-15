@@ -12,7 +12,6 @@ import (
 
 // Stop is a Telegram command that allows users to stop their active parking session.
 type Stop struct {
-	bot          pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
 }
 
@@ -20,11 +19,9 @@ var _ pluginapi.TelegramCommand = (*Stop)(nil)
 
 // NewStop creates a new Stop.
 func NewStop(
-	bot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
 ) *Stop {
 	return &Stop{
-		bot:          bot,
 		apiClientSvc: apiClientSvc,
 	}
 }
@@ -50,7 +47,7 @@ func (c *Stop) Handle(ctx *th.Context, update telego.Update) error {
 	}
 
 	if session == nil {
-		return sendMessage(c.bot, update, "No active parking session to stop.")
+		return sendMessage(ctx, update, "No active parking session to stop.")
 	}
 
 	stopped, err := c.apiClientSvc.StopParking(ctx.Context(), session.ID)
@@ -70,5 +67,5 @@ func (c *Stop) Handle(ctx *th.Context, update telego.Update) error {
 		ptrOr(stopped.EndDate, "unknown"),
 	)
 
-	return sendMessage(c.bot, update, text)
+	return sendMessage(ctx, update, text)
 }

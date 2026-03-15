@@ -42,7 +42,7 @@ func (c *Help) Validate(_ telego.Update) error {
 
 // Handle processes the help command.
 func (c *Help) Handle(ctx *th.Context, update telego.Update) error {
-	return sendMessage(c.bot, ctx, update, c.buildHelpMessage())
+	return sendMessage(ctx, update, c.buildHelpMessage())
 }
 
 func (c *Help) buildHelpMessage() string {
@@ -52,7 +52,7 @@ func (c *Help) buildHelpMessage() string {
 
 	for _, cmd := range c.commandRegistry.All() {
 		meta := cmd.Meta()
-		textBuilder.WriteString(fmt.Sprintf("/%s - %s\n", meta.Command, meta.Description))
+		fmt.Fprintf(&textBuilder, "/%s - %s\n", meta.Command, meta.Description)
 	}
 
 	return textBuilder.String()

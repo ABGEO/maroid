@@ -1,16 +1,14 @@
 package command
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/mymmrac/telego"
+	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
-
-	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
-func sendMessage(bot pluginapi.TelegramBot, update telego.Update, text string) error {
+func sendMessage(ctx *th.Context, update telego.Update, text string) error {
 	msg := tu.Message(
 		tu.ID(update.Message.Chat.ID),
 		text,
@@ -24,7 +22,7 @@ func sendMessage(bot pluginapi.TelegramBot, update telego.Update, text string) e
 		)
 	}
 
-	if _, err := bot.SendMessage(context.Background(), msg); err != nil {
+	if _, err := ctx.Bot().SendMessage(ctx, msg); err != nil {
 		return fmt.Errorf("sending message: %w", err)
 	}
 

@@ -10,7 +10,7 @@ import (
 
 // sendMessage sends a text message to the chat from the given update,
 // respecting message thread and direct messages topic IDs.
-func sendMessage(bot *telego.Bot, ctx *th.Context, update telego.Update, text string) error {
+func sendMessage(ctx *th.Context, update telego.Update, text string) error {
 	message := tu.Message(
 		tu.ID(update.Message.Chat.ID),
 		text,
@@ -20,7 +20,7 @@ func sendMessage(bot *telego.Bot, ctx *th.Context, update telego.Update, text st
 		message.WithDirectMessagesTopicID(update.Message.DirectMessagesTopic.TopicID)
 	}
 
-	if _, err := bot.SendMessage(ctx, message); err != nil {
+	if _, err := ctx.Bot().SendMessage(ctx, message); err != nil {
 		return fmt.Errorf("sending message: %w", err)
 	}
 

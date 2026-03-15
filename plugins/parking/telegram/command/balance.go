@@ -12,7 +12,6 @@ import (
 
 // Balance is a Telegram command that allows users to check their parking balance and daily free parking left.
 type Balance struct {
-	bot          pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
 }
 
@@ -20,11 +19,9 @@ var _ pluginapi.TelegramCommand = (*Balance)(nil)
 
 // NewBalance creates a new Balance.
 func NewBalance(
-	bot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
 ) *Balance {
 	return &Balance{
-		bot:          bot,
 		apiClientSvc: apiClientSvc,
 	}
 }
@@ -59,5 +56,5 @@ func (c *Balance) Handle(ctx *th.Context, update telego.Update) error {
 		person.DailyFreeParkingLeft,
 	)
 
-	return sendMessage(c.bot, update, text)
+	return sendMessage(ctx, update, text)
 }

@@ -34,5 +34,5 @@ func (c *Unknown) Validate(_ telego.Update) error {
 
 // Handle processes the unknown command.
 func (c *Unknown) Handle(ctx *th.Context, update telego.Update) error {
-	return sendMessage(c.bot, ctx, update, "❓ Unknown command. Type /help to see what I can do.")
+	return sendMessage(ctx, update, "❓ Unknown command. Type /help to see what I can do.")
 }

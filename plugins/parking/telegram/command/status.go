@@ -14,7 +14,6 @@ import (
 
 // Status is a Telegram command that allows users to check the status of their active parking session.
 type Status struct {
-	bot          pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
 }
 
@@ -22,11 +21,9 @@ var _ pluginapi.TelegramCommand = (*Status)(nil)
 
 // NewStatus creates a new Status.
 func NewStatus(
-	bot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
 ) *Status {
 	return &Status{
-		bot:          bot,
 		apiClientSvc: apiClientSvc,
 	}
 }
@@ -52,7 +49,7 @@ func (c *Status) Handle(ctx *th.Context, update telego.Update) error {
 	}
 
 	if session == nil {
-		return sendMessage(c.bot, update, "No active parking session.")
+		return sendMessage(ctx, update, "No active parking session.")
 	}
 
 	elapsed := formatElapsed(session.StartDate)
@@ -69,7 +66,7 @@ func (c *Status) Handle(ctx *th.Context, update telego.Update) error {
 		elapsed,
 	)
 
-	return sendMessage(c.bot, update, text)
+	return sendMessage(ctx, update, text)
 }
 
 func formatElapsed(startDate string) string {

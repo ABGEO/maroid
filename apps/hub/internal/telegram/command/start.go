@@ -3,26 +3,24 @@ package command
 import (
 	"strings"
 
-	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // Start represents the start command.
 type Start struct {
-	bot             *telego.Bot
 	commandRegistry *registry.TelegramCommandRegistry
 }
 
 var _ pluginapi.TelegramCommand = (*Start)(nil)
 
 // NewStart creates a new Start command.
-func NewStart(bot *telego.Bot, commandRegistry *registry.TelegramCommandRegistry) *Start {
+func NewStart(commandRegistry *registry.TelegramCommandRegistry) *Start {
 	return &Start{
-		bot:             bot,
 		commandRegistry: commandRegistry,
 	}
 }
@@ -47,7 +45,7 @@ func (c *Start) Handle(ctx *th.Context, update telego.Update) error {
 		return c.processArguments(ctx, update, args)
 	}
 
-	return sendMessage(c.bot, ctx, update, `Hello there 👋! I’m Maroid, your assistant for automating tasks.
+	return sendMessage(ctx, update, `Hello there 👋! I’m Maroid, your assistant for automating tasks.
 
 Type /help to see what I can do and get started 🚀`)
 }
@@ -56,7 +54,6 @@ func (c *Start) processArguments(ctx *th.Context, update telego.Update, args []s
 	cmd, ok := c.commandRegistry.Get(args[0])
 	if !ok {
 		return sendMessage(
-			ctx.Bot(),
 			ctx,
 			update,
 			"Sorry, I couldn't recognize the command you provided.\nPlease type /help to see the list of available commands.",
@@ -67,7 +64,7 @@ func (c *Start) processArguments(ctx *th.Context, update telego.Update, args []s
 	update.Message.Text = "/" + strings.Join(args, " ")
 
 	if err := cmd.Validate(update); err != nil {
-		return sendMessage(ctx.Bot(), ctx, update, err.Error())
+		return sendMessage(ctx, update, err.Error())
 	}
 
 	return cmd.Handle(ctx, update)

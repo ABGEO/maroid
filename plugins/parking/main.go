@@ -69,10 +69,10 @@ func (p *ParkingPlugin) Meta() pluginapi.Metadata {
 
 func (p *ParkingPlugin) TelegramCommands() ([]pluginapi.TelegramCommand, error) {
 	return []pluginapi.TelegramCommand{
-		command.NewParking(p.telegramBot, p.telegramConversationEngine, p.apiClientSvc),
-		command.NewBalance(p.telegramBot, p.apiClientSvc),
-		command.NewStatus(p.telegramBot, p.apiClientSvc),
-		command.NewStop(p.telegramBot, p.apiClientSvc),
+		command.NewParking(p.telegramConversationEngine, p.apiClientSvc),
+		command.NewBalance(p.apiClientSvc),
+		command.NewStatus(p.apiClientSvc),
+		command.NewStop(p.apiClientSvc),
 	}, nil
 }
 
