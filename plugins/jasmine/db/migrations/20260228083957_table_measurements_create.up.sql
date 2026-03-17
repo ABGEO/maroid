@@ -1,3 +1,5 @@
+BEGIN;
+
 CREATE TABLE IF NOT EXISTS measurements
 (
     time        TIMESTAMPTZ      NOT NULL,
@@ -7,3 +9,5 @@ CREATE TABLE IF NOT EXISTS measurements
 ) WITH (tsdb.hypertable);
 
 CREATE INDEX idx_plant_metric_time ON measurements (plant_id, metric_type, time DESC);
+
+COMMIT;

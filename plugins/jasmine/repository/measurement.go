@@ -29,8 +29,8 @@ func NewMeasurement(tx *sqlx.Tx) *Measurement {
 // Insert persists a new Measurement record.
 func (r *Measurement) Insert(ctx context.Context, entity *model.Measurement) error {
 	query := `
-		INSERT INTO measurements (time, plant_id, metric_type, value)
-		VALUES (:time, :plant_id, :metric_type, :value);
+		INSERT INTO measurements (time, source_type, source_id, metric_type, value)
+		VALUES (:time, :source_type, :source_id, :metric_type, :value);
 	`
 
 	_, err := r.tx.NamedExecContext(ctx, query, entity)

@@ -39,8 +39,9 @@ func NewMeasurementSubscriber(logger *slog.Logger, db *pluginapi.PluginDB) *Meas
 // Meta returns the subscriber metadata.
 func (s *MeasurementSubscriber) Meta() pluginapi.MQTTSubscriberMeta {
 	return pluginapi.MQTTSubscriberMeta{
-		ID:    "measurement",
-		Topic: "plant/+/measurement/+",
+		ID: "measurement",
+		// {source_type}/{source_id}/measurement/{metric_type}
+		Topic: "+/+/measurement/+",
 		QoS:   1,
 	}
 }
@@ -48,8 +49,14 @@ func (s *MeasurementSubscriber) Meta() pluginapi.MQTTSubscriberMeta {
 // Handle processes an incoming measurement message.
 func (s *MeasurementSubscriber) Handle(ctx context.Context, topic string, payload []byte) error {
 	parts := strings.Split(topic, "/")
+	source := parts[0]
+	sourceID := parts[1]
 	metricType := parts[3]
-	plantID := parts[1]
+
+	sourceType, err := model.ParseSourceType(source)
+	if err != nil {
+		return fmt.Errorf("parsing source type: %w", err)
+	}
 
 	var reading sensorReading
 	if err := json.Unmarshal(payload, &reading); err != nil {
@@ -58,18 +65,20 @@ func (s *MeasurementSubscriber) Handle(ctx context.Context, topic string, payloa
 
 	s.logger.Info(
 		"measurement received",
-		slog.String("plant_id", plantID),
+		slog.String("source_type", string(sourceType)),
+		slog.String("source_id", sourceID),
 		slog.String("metric_type", metricType),
 		slog.Float64("value", reading.Value),
 		slog.Time("time", reading.Time),
 	)
 
-	err := s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
+	err = s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
 		repo := repository.NewMeasurement(tx)
 
 		return repo.Insert(ctx, &model.Measurement{
 			Time:       reading.Time,
-			PlantID:    plantID,
+			SourceType: sourceType,
+			SourceID:   sourceID,
 			MetricType: metricType,
 			Value:      reading.Value,
 		})
