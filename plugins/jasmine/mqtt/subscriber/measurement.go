@@ -73,6 +73,10 @@ func (s *MeasurementSubscriber) Handle(ctx context.Context, topic string, payloa
 	)
 
 	err = s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
+		if err := s.validateSource(ctx, tx, sourceType, sourceID); err != nil {
+			return err
+		}
+
 		repo := repository.NewMeasurement(tx)
 
 		return repo.Insert(ctx, &model.Measurement{
@@ -85,6 +89,22 @@ func (s *MeasurementSubscriber) Handle(ctx context.Context, topic string, payloa
 	})
 	if err != nil {
 		return fmt.Errorf("saving measurement: %w", err)
+	}
+
+	return nil
+}
+
+// validateSource checks that the source entity exists in the database.
+func (s *MeasurementSubscriber) validateSource(ctx context.Context, tx *sqlx.Tx, sourceType model.SourceType, sourceID string) error {
+	switch sourceType {
+	case model.SourceTypePlant:
+		if _, err := repository.NewPlant(tx).GetByID(ctx, sourceID); err != nil {
+			return fmt.Errorf("validating plant %q: %w", sourceID, err)
+		}
+	case model.SourceTypeEnvironment:
+		if _, err := repository.NewEnvironment(tx).GetByID(ctx, sourceID); err != nil {
+			return fmt.Errorf("validating environment %q: %w", sourceID, err)
+		}
 	}
 
 	return nil
