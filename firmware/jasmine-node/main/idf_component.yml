@@ -1,0 +1,5 @@
+dependencies:
+  idf:
+    version: '>=4.1.0'
+  espressif/bh1750: ^2.0.0
+  esp-idf-lib/dht: ^1.2.0

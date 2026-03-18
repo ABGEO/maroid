@@ -1,0 +1,207 @@
+menu "WIFI Configuration"
+
+    config ESP_WIFI_SSID
+        string "WiFi SSID"
+        default "myssid"
+        help
+            SSID (network name) for the example to connect to.
+
+    config ESP_WIFI_PASSWORD
+        string "WiFi Password"
+        default "mypassword"
+        help
+            WiFi password (WPA or WPA2) for the example to use.
+
+    choice ESP_WIFI_SAE_MODE
+        prompt "WPA3 SAE mode selection"
+        default ESP_STATION_EXAMPLE_WPA3_SAE_PWE_BOTH
+        help
+            Select mode for SAE as Hunt and Peck, H2E or both.
+        config ESP_STATION_EXAMPLE_WPA3_SAE_PWE_HUNT_AND_PECK
+            bool "HUNT AND PECK"
+        config ESP_STATION_EXAMPLE_WPA3_SAE_PWE_HASH_TO_ELEMENT
+            bool "H2E"
+            depends on ESP_WIFI_ENABLE_SAE_H2E
+        config ESP_STATION_EXAMPLE_WPA3_SAE_PWE_BOTH
+            bool "BOTH"
+            depends on ESP_WIFI_ENABLE_SAE_H2E
+    endchoice
+
+    config ESP_WIFI_PW_ID
+        string "PASSWORD IDENTIFIER"
+        depends on  ESP_STATION_EXAMPLE_WPA3_SAE_PWE_HASH_TO_ELEMENT|| ESP_STATION_EXAMPLE_WPA3_SAE_PWE_BOTH
+        default ""
+        help
+            password identifier for SAE H2E
+
+    config ESP_MAXIMUM_RETRY
+        int "Maximum retry"
+        default 5
+        help
+            Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+    choice ESP_WIFI_SCAN_AUTH_MODE_THRESHOLD
+        prompt "WiFi Scan auth mode threshold"
+        default ESP_WIFI_AUTH_WPA2_PSK
+        help
+            The weakest authmode to accept in the scan mode.
+            This value defaults to ESP_WIFI_AUTH_WPA2_PSK in case password is present and ESP_WIFI_AUTH_OPEN is used.
+            Please select ESP_WIFI_AUTH_WEP/ESP_WIFI_AUTH_WPA_PSK in case AP is operating in WEP/WPA mode.
+
+        config ESP_WIFI_AUTH_OPEN
+            bool "OPEN"
+        config ESP_WIFI_AUTH_WEP
+            bool "WEP"
+        config ESP_WIFI_AUTH_WPA_PSK
+            bool "WPA PSK"
+        config ESP_WIFI_AUTH_WPA2_PSK
+            bool "WPA2 PSK"
+        config ESP_WIFI_AUTH_WPA_WPA2_PSK
+            bool "WPA/WPA2 PSK"
+        config ESP_WIFI_AUTH_WPA3_PSK
+            bool "WPA3 PSK"
+        config ESP_WIFI_AUTH_WPA2_WPA3_PSK
+            bool "WPA2/WPA3 PSK"
+        config ESP_WIFI_AUTH_WAPI_PSK
+            bool "WAPI PSK"
+    endchoice
+
+endmenu
+
+menu "SNTP Configuration"
+
+    config SNTP_TIME_SERVER
+        string "SNTP server"
+        default "pool.ntp.org"
+        help
+            Hostname of the main SNTP server.
+
+endmenu
+
+menu "MQTT Configuration"
+
+    config MQTT_BROKER_URL
+        string "Broker URL"
+        default "mqtt://mqtt.maroid.dev"
+        help
+            URL of the broker to connect to
+
+    config MQTT_USERNAME
+        string "MQTT username"
+        help
+            Username for MQTT broker authentication.
+
+    config MQTT_PASSWORD
+        string "MQTT password"
+        help
+            Password for MQTT broker authentication.
+
+endmenu
+
+menu "Node Configuration"
+
+    choice NODE_TYPE
+        prompt "Node type"
+        default NODE_TYPE_PLANT
+        help
+            Select the type of sensor node. Affects MQTT topic hierarchy
+            so the backend knows which entity type to create.
+
+        config NODE_TYPE_ENVIRONMENT
+            bool "Environment"
+            help
+                Environment node monitors a room or outdoor area.
+                Default sensors: BH1750 (light), DHT (temperature/humidity).
+
+        config NODE_TYPE_PLANT
+            bool "Plant"
+            help
+                Plant node monitors a specific plant.
+                Default sensor: soil moisture.
+    endchoice
+
+    config NODE_ID
+        string "Node ID"
+        default "N001"
+        help
+            Unique identifier for this node.
+            Used in MQTT topics and as a suffix for the MQTT client ID.
+
+    config SLEEP_DURATION_SEC
+        int "Deep sleep duration (seconds)"
+        default 60
+        range 1 3600
+        help
+            Duration to stay in deep sleep between sensor readings.
+
+endmenu
+
+menu "Sensor Configuration"
+
+    config SENSOR_BH1750_ENABLED
+        bool "Enable BH1750 light sensor"
+        default y if NODE_TYPE_ENVIRONMENT
+        default n if NODE_TYPE_PLANT
+        help
+            Enable the BH1750 ambient light sensor (I2C).
+
+    menu "BH1750 Configuration"
+        visible if SENSOR_BH1750_ENABLED
+
+        config I2C_MASTER_SCL_IO
+            int "I2C master SCL GPIO number"
+            default 18
+            help
+                GPIO number used for I2C master clock line (SCL).
+
+        config I2C_MASTER_SDA_IO
+            int "I2C master SDA GPIO number"
+            default 19
+            help
+                GPIO number used for I2C master data line (SDA).
+
+    endmenu
+
+    config SENSOR_DHT_ENABLED
+        bool "Enable DHT temperature/humidity sensor"
+        default y if NODE_TYPE_ENVIRONMENT
+        default n if NODE_TYPE_PLANT
+        help
+            Enable the DHT/AM2301 temperature and humidity sensor (GPIO).
+
+    menu "DHT Configuration"
+        visible if SENSOR_DHT_ENABLED
+
+        config DHT_DATA_GPIO
+            int "DHT sensor data GPIO number"
+            default 23
+            help
+                GPIO number used for DHT sensor data line.
+
+    endmenu
+
+    config SENSOR_SOIL_MOISTURE_ENABLED
+        bool "Enable soil moisture sensor"
+        default n if NODE_TYPE_ENVIRONMENT
+        default y if NODE_TYPE_PLANT
+        help
+            Enable the capacitive soil moisture sensor (ADC).
+
+    menu "Soil Moisture Configuration"
+        visible if SENSOR_SOIL_MOISTURE_ENABLED
+
+        config SOIL_MOISTURE_ADC1_CH
+            int "ADC1 Channel"
+            default 6
+
+        config SOIL_MOISTURE_MIN_THRESHOLD
+            int "Value Min Threshold"
+            default 0
+
+        config SOIL_MOISTURE_MAX_THRESHOLD
+            int "Value Max Threshold"
+            default 4096
+
+    endmenu
+
+endmenu
