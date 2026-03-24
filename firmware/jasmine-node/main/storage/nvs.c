@@ -1,3 +1,4 @@
+#include "nvs.h"
 #include "nvs_flash.h"
 
 esp_err_t nvs_setup(void) {

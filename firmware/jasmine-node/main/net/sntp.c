@@ -29,20 +29,18 @@ esp_err_t sntp_setup(void) {
   esp_err_t err = esp_netif_sntp_init(&config);
   if (err != ESP_OK) {
     vEventGroupDelete(s_sntp_event_group);
-
     return err;
   }
 
   esp_err_t wait_err = event_wait(s_sntp_event_group, SNTP_SYNCED_BIT,
                                   pdMS_TO_TICKS(SNTP_SYNC_TIMEOUT_MS), TAG);
   vEventGroupDelete(s_sntp_event_group);
+  esp_netif_sntp_deinit();
 
   if (wait_err != ESP_OK) {
-    esp_netif_sntp_deinit();
-
     return wait_err;
   }
 
-  ESP_LOGI(TAG, "SNTP initialized");
+  ESP_LOGI(TAG, "SNTP synchronized");
   return ESP_OK;
 }

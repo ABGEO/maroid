@@ -67,11 +67,26 @@ esp_err_t mqtt_start(esp_mqtt_client_handle_t *out_client) {
                                  NULL);
   esp_mqtt_client_start(client);
 
-  ESP_LOGI(TAG, "Waiting for MQTT connection...");
-  esp_err_t err = event_wait(s_mqtt_event_group, MQTT_CONNECTED_BIT,
-                             pdMS_TO_TICKS(MQTT_CONNECT_TIMEOUT_MS), TAG);
+  esp_err_t err = ESP_ERR_TIMEOUT;
+  for (int attempt = 1; attempt <= CONFIG_MQTT_CONNECT_RETRIES; attempt++) {
+    ESP_LOGI(TAG, "Waiting for MQTT connection (attempt %d/%d)...", attempt,
+             CONFIG_MQTT_CONNECT_RETRIES);
+    err = event_wait(s_mqtt_event_group, MQTT_CONNECTED_BIT,
+                     pdMS_TO_TICKS(MQTT_CONNECT_TIMEOUT_MS), TAG);
+    if (err == ESP_OK) {
+      break;
+    }
+    if (attempt < CONFIG_MQTT_CONNECT_RETRIES) {
+      ESP_LOGW(TAG, "MQTT connect attempt %d failed, retrying...", attempt);
+    }
+  }
+
   if (err != ESP_OK) {
+    ESP_LOGE(TAG, "MQTT connection failed after %d attempts",
+             CONFIG_MQTT_CONNECT_RETRIES);
     esp_mqtt_client_destroy(client);
+    vEventGroupDelete(s_mqtt_event_group);
+    s_mqtt_event_group = NULL;
     return err;
   }
 
@@ -91,6 +106,8 @@ esp_err_t mqtt_wait_published(void) {
 void mqtt_stop(esp_mqtt_client_handle_t client) {
   esp_mqtt_client_stop(client);
   esp_mqtt_client_destroy(client);
+  vEventGroupDelete(s_mqtt_event_group);
+  s_mqtt_event_group = NULL;
 }
 
 int mqtt_send_reading(esp_mqtt_client_handle_t client, const char *reading_type,
@@ -102,7 +119,7 @@ int mqtt_send_reading(esp_mqtt_client_handle_t client, const char *reading_type,
   char strftime_buf[64];
 
   time(&now);
-  localtime_r(&now, &timeinfo);
+  gmtime_r(&now, &timeinfo);
   strftime(strftime_buf, sizeof(strftime_buf), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
 
   int n = snprintf(reading_buf, sizeof(reading_buf),
