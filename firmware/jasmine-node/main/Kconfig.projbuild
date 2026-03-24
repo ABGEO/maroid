@@ -155,13 +155,44 @@ menu "Sensor Configuration"
             int "ADC1 Channel"
             default 6
 
-        config SOIL_MOISTURE_MIN_THRESHOLD
-            int "Value Min Threshold"
-            default 0
+        config SOIL_MOISTURE_SAMPLE_COUNT
+            int "Number of ADC samples to average"
+            default 64
+            help
+                Number of ADC readings to take and average per measurement cycle.
 
-        config SOIL_MOISTURE_MAX_THRESHOLD
-            int "Value Max Threshold"
-            default 4096
+        config SOIL_MOISTURE_SAMPLE_DELAY_MS
+            int "Delay between samples (ms)"
+            default 2
+            help
+                Milliseconds to wait between consecutive ADC samples.
+                Reduces noise coupling. Set to 0 to disable.
+
+        config SOIL_MOISTURE_VALID_MIN
+            int "Minimum valid raw ADC value"
+            default 0
+            help
+                Raw ADC readings below this value are discarded as invalid.
+
+        config SOIL_MOISTURE_VALID_MAX
+            int "Maximum valid raw ADC value"
+            default 4095
+            help
+                Raw ADC readings above this value are discarded as invalid.
+
+        config SOIL_MOISTURE_CAL_AIR_VALUE
+            int "Calibration: dry air ADC reading (0% moisture)"
+            default 3000
+            help
+                Raw ADC value when sensor is in dry air. Calibrate by reading
+                the raw value with the sensor exposed to air.
+
+        config SOIL_MOISTURE_CAL_WATER_VALUE
+            int "Calibration: water ADC reading (100% moisture)"
+            default 1000
+            help
+                Raw ADC value when sensor is submerged in water. Calibrate by
+                reading the raw value with the sensor in water.
 
     endmenu
 
