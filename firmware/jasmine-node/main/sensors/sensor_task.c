@@ -7,7 +7,7 @@
 #include "freertos/task.h"
 
 #define SENSOR_MAX_COUNT 12
-#define SENSOR_WAIT_TIMEOUT_MS 30000
+#define SENSOR_WAIT_TIMEOUT_MS 60000
 
 static const char *TAG = "sensor_task";
 

@@ -196,4 +196,74 @@ menu "Sensor Configuration"
 
     endmenu
 
+    config SENSOR_MQ135_ENABLED
+        bool "Enable MQ-135 air quality sensor"
+        default n
+        help
+            Enable the MQ-135 gas sensor for CO2 measurement (ADC).
+
+    menu "MQ-135 Configuration"
+        visible if SENSOR_MQ135_ENABLED
+
+        config MQ135_ADC1_CH
+            int "ADC1 Channel"
+            default 7
+
+        config MQ135_SAMPLE_COUNT
+            int "Number of ADC samples to average"
+            default 64
+            help
+                Number of ADC readings to take and average per measurement cycle.
+
+        config MQ135_SAMPLE_DELAY_MS
+            int "Delay between samples (ms)"
+            default 2
+            help
+                Milliseconds to wait between consecutive ADC samples.
+                Reduces noise coupling. Set to 0 to disable.
+
+        config MQ135_VALID_MIN
+            int "Minimum valid raw ADC value"
+            default 0
+            help
+                Raw ADC readings below this value are discarded as invalid.
+
+        config MQ135_VALID_MAX
+            int "Maximum valid raw ADC value"
+            default 4095
+            help
+                Raw ADC readings above this value are discarded as invalid.
+
+        config MQ135_PREHEAT_MS
+            int "Sensor preheat delay (ms)"
+            default 30000
+            help
+                Warmup delay before first reading after power-on.
+                MQ-135 needs time to stabilize. 30000 (30s) is a practical
+                minimum for trend monitoring from cold start.
+
+        config MQ135_RL_KOHM_X100
+            int "Load resistance RL (kOhm x100)"
+            default 100
+            help
+                Load resistance on the MQ-135 module in kOhm multiplied by 100.
+                Example: 1.0 kOhm = 100, 10.0 kOhm = 1000.
+                Check your module's PCB for the actual value.
+
+        config MQ135_R0_X100
+            int "Calibrated R0 (x100)"
+            default 1000
+            help
+                Baseline sensor resistance in clean air, multiplied by 100.
+                Example: 10.0 = 1000. Must be calibrated: power sensor in
+                clean air for 24-48h, compute R0 = RS / 3.6.
+
+        config MQ135_VOLTAGE_REF_MV
+            int "ADC reference voltage (mV)"
+            default 3300
+            help
+                ADC reference voltage in millivolts. 3300 for standard ESP32.
+
+    endmenu
+
 endmenu

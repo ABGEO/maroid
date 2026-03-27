@@ -16,7 +16,7 @@
 #include "i2c.h"
 #endif
 
-#ifdef CONFIG_SENSOR_SOIL_MOISTURE_ENABLED
+#if defined(CONFIG_SENSOR_SOIL_MOISTURE_ENABLED) || defined(CONFIG_SENSOR_MQ135_ENABLED)
 #include "adc.h"
 #endif
 
@@ -36,11 +36,18 @@ void app_main(void) {
   sensor_registry_bh1750_ctx()->i2c_bus = i2c_bus;
 #endif
 
-#ifdef CONFIG_SENSOR_SOIL_MOISTURE_ENABLED
+#if defined(CONFIG_SENSOR_SOIL_MOISTURE_ENABLED) || defined(CONFIG_SENSOR_MQ135_ENABLED)
   adc_oneshot_unit_handle_t adc1_handle;
   ESP_ERROR_CHECK(adc_oneshot_unit_init(&adc1_handle));
   ESP_LOGI(TAG, "ADC initialized");
+
+#ifdef CONFIG_SENSOR_SOIL_MOISTURE_ENABLED
   sensor_registry_soil_moisture_ctx()->adc_handle = adc1_handle;
+#endif
+
+#ifdef CONFIG_SENSOR_MQ135_ENABLED
+  sensor_registry_mq135_ctx()->adc_handle = adc1_handle;
+#endif
 #endif
 
   esp_mqtt_client_handle_t mqtt_client;

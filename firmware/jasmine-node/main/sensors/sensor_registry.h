@@ -34,3 +34,8 @@ dht_ctx_t *sensor_registry_dht_ctx(void);
 #include "soil_moisture_sensor.h"
 soil_moisture_ctx_t *sensor_registry_soil_moisture_ctx(void);
 #endif
+
+#ifdef CONFIG_SENSOR_MQ135_ENABLED
+#include "mq135_sensor.h"
+mq135_ctx_t *sensor_registry_mq135_ctx(void);
+#endif

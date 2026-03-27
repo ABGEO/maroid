@@ -12,6 +12,10 @@ static dht_ctx_t s_dht_ctx;
 static soil_moisture_ctx_t s_soil_moisture_ctx;
 #endif
 
+#ifdef CONFIG_SENSOR_MQ135_ENABLED
+static mq135_ctx_t s_mq135_ctx;
+#endif
+
 static const sensor_descriptor_t s_sensors[] = {
 #ifdef CONFIG_SENSOR_BH1750_ENABLED
     {
@@ -43,6 +47,16 @@ static const sensor_descriptor_t s_sensors[] = {
         .stack_size = 4096,
     },
 #endif
+#ifdef CONFIG_SENSOR_MQ135_ENABLED
+    {
+        .name = "mq135",
+        .init = mq135_sensor_init,
+        .read = mq135_sensor_read,
+        .cleanup = NULL,
+        .ctx = &s_mq135_ctx,
+        .stack_size = 8192,
+    },
+#endif
 };
 
 #define SENSOR_COUNT (sizeof(s_sensors) / sizeof(s_sensors[0]))
@@ -66,4 +80,8 @@ dht_ctx_t *sensor_registry_dht_ctx(void) { return &s_dht_ctx; }
 soil_moisture_ctx_t *sensor_registry_soil_moisture_ctx(void) {
   return &s_soil_moisture_ctx;
 }
+#endif
+
+#ifdef CONFIG_SENSOR_MQ135_ENABLED
+mq135_ctx_t *sensor_registry_mq135_ctx(void) { return &s_mq135_ctx; }
 #endif
