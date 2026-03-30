@@ -5,20 +5,20 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/abgeo/maroid/apps/hub/internal/migrator"
+	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
 )
 
 // UpCommand represents s command for running database up migrations.
 type UpCommand struct {
-	migrator *migrator.Migrator
+	depResolver depresolver.Resolver
 
 	target string
 }
 
 // NewUpCommand creates a new UpCommand.
-func NewUpCommand(migrator *migrator.Migrator) *UpCommand {
+func NewUpCommand(depResolver depresolver.Resolver) *UpCommand {
 	return &UpCommand{
-		migrator: migrator,
+		depResolver: depResolver,
 	}
 }
 
@@ -28,7 +28,12 @@ func (c *UpCommand) Command() *cobra.Command {
 		Use:   "up",
 		Short: "Apply all up migrations",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			err := c.migrator.Up(c.target)
+			migrator, err := c.depResolver.Migrator()
+			if err != nil {
+				return fmt.Errorf("resolving migrator: %w", err)
+			}
+
+			err = migrator.Up(c.target)
 			if err != nil {
 				return fmt.Errorf("applying migrations: %w", err)
 			}

@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/worker"
 )
@@ -20,20 +21,21 @@ const workerShutdownTimeout = 10 * time.Second
 
 // WorkerCommand represents the command that runs background workers.
 type WorkerCommand struct {
-	logger  *slog.Logger
-	workers []worker.Worker
+	depResolver depresolver.Resolver
+	logger      *slog.Logger
 
 	selectedWorkers []string
+	workers         []worker.Worker
 }
 
 // NewWorkerCommand creates a new WorkerCommand.
-func NewWorkerCommand(logger *slog.Logger, workers []worker.Worker) *WorkerCommand {
+func NewWorkerCommand(depResolver depresolver.Resolver) *WorkerCommand {
 	return &WorkerCommand{
-		logger: logger.With(
+		depResolver: depResolver,
+		logger: depResolver.Logger().With(
 			slog.String("component", "command"),
 			slog.String("command", "worker"),
 		),
-		workers: workers,
 	}
 }
 
@@ -62,6 +64,13 @@ func (c *WorkerCommand) Command() *cobra.Command {
 }
 
 func (c *WorkerCommand) prepare() error {
+	var err error
+
+	c.workers, err = c.getWorkers()
+	if err != nil {
+		return err
+	}
+
 	if len(c.selectedWorkers) > 0 {
 		filtered, err := c.filterWorkers(c.selectedWorkers)
 		if err != nil {
@@ -80,6 +89,26 @@ func (c *WorkerCommand) prepare() error {
 	}
 
 	return nil
+}
+
+func (c *WorkerCommand) getWorkers() ([]worker.Worker, error) {
+	cfg := c.depResolver.Config()
+	cronScheduler := c.depResolver.Cron()
+
+	cronRegistry, err := c.depResolver.CronRegistry()
+	if err != nil {
+		return nil, fmt.Errorf("resolving cron registry: %w", err)
+	}
+
+	mqttSubscriberRegistry, err := c.depResolver.MQTTSubscriberRegistry()
+	if err != nil {
+		return nil, fmt.Errorf("resolving MQTT subscriber registry: %w", err)
+	}
+
+	return []worker.Worker{
+		worker.NewCronWorker(c.logger, cronScheduler, cronRegistry),
+		worker.NewMQTTWorker(c.logger, cfg, mqttSubscriberRegistry),
+	}, nil
 }
 
 func (c *WorkerCommand) filterWorkers(names []string) ([]worker.Worker, error) {

@@ -2,35 +2,20 @@
 package serve
 
 import (
-	"log/slog"
-	"net/http"
-
 	"github.com/spf13/cobra"
 
-	"github.com/abgeo/maroid/apps/hub/internal/config"
-	"github.com/abgeo/maroid/apps/hub/internal/telegram"
+	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
 )
 
 // Command represents a command for running servers.
 type Command struct {
-	cfg                    *config.Config
-	logger                 *slog.Logger
-	server                 *http.Server
-	telegramUpdatesHandler telegram.UpdatesHandler
+	depResolver depresolver.Resolver
 }
 
 // New creates a new Command.
-func New(
-	cfg *config.Config,
-	logger *slog.Logger,
-	server *http.Server,
-	telegramUpdatesHandler telegram.UpdatesHandler,
-) *Command {
+func New(depResolver depresolver.Resolver) *Command {
 	return &Command{
-		cfg:                    cfg,
-		logger:                 logger,
-		server:                 server,
-		telegramUpdatesHandler: telegramUpdatesHandler,
+		depResolver: depResolver,
 	}
 }
 
@@ -41,15 +26,8 @@ func (c *Command) Command() *cobra.Command {
 		Short: "Run servers",
 	}
 
-	httpCommand := NewHTTPCommand(
-		c.cfg,
-		c.logger,
-		c.server,
-		c.telegramUpdatesHandler,
-	)
-
 	cmd.AddCommand(
-		httpCommand.Command(),
+		NewHTTPCommand(c.depResolver).Command(),
 	)
 
 	return cmd

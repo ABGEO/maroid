@@ -12,15 +12,13 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
-	"github.com/abgeo/maroid/apps/hub/internal/registry"
 )
 
 // Application represents the main application.
 type Application struct {
-	resolver        depresolver.Resolver
-	pluginLoader    *pluginloader.Loader
-	commandRegistry *registry.CommandRegistry
-	cfg             *config.Config
+	resolver     depresolver.Resolver
+	pluginLoader *pluginloader.Loader
+	cfg          *config.Config
 }
 
 // New creates a new Application.
@@ -35,16 +33,10 @@ func New() (*Application, error) {
 		return nil, fmt.Errorf("resolving plugin loader: %w", err)
 	}
 
-	commandRegistry, err := depResolver.CommandRegistry()
-	if err != nil {
-		return nil, fmt.Errorf("resolving command registry: %w", err)
-	}
-
 	return &Application{
-		resolver:        depResolver,
-		pluginLoader:    pluginLoader,
-		commandRegistry: commandRegistry,
-		cfg:             depResolver.Config(),
+		resolver:     depResolver,
+		pluginLoader: pluginLoader,
+		cfg:          depResolver.Config(),
 	}, nil
 }
 
@@ -54,12 +46,15 @@ func (a *Application) Run(ctx context.Context) error {
 		return err
 	}
 
-	rootCmd := command.New().Command()
+	rootCommand, err := command.New(a.resolver)
+	if err != nil {
+		return fmt.Errorf("initializing root command: %w", err)
+	}
+
+	rootCmd := rootCommand.Command()
 	rootCmd.PersistentPostRunE = func(_ *cobra.Command, _ []string) error {
 		return a.cleanup(context.WithoutCancel(ctx))
 	}
-
-	rootCmd.AddCommand(a.commandRegistry.All()...)
 
 	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		return fmt.Errorf("executing root command: %w", err)

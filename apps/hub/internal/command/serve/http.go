@@ -12,37 +12,30 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
-	"github.com/abgeo/maroid/apps/hub/internal/telegram"
+	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
 )
 
 const shutdownTimeout = 10 * time.Second
 
 // HTTPCommand represents a command for running HTTP Server.
 type HTTPCommand struct {
-	cfg                    *config.Config
-	logger                 *slog.Logger
-	server                 *http.Server
-	telegramUpdatesHandler telegram.UpdatesHandler
+	depResolver depresolver.Resolver
+	cfg         *config.Config
+	logger      *slog.Logger
 
 	address string
 	port    string
 }
 
 // NewHTTPCommand creates a new HTTPCommand.
-func NewHTTPCommand(
-	cfg *config.Config,
-	logger *slog.Logger,
-	server *http.Server,
-	telegramUpdatesHandler telegram.UpdatesHandler,
-) *HTTPCommand {
+func NewHTTPCommand(depResolver depresolver.Resolver) *HTTPCommand {
 	return &HTTPCommand{
-		cfg: cfg,
-		logger: logger.With(
+		depResolver: depResolver,
+		cfg:         depResolver.Config(),
+		logger: depResolver.Logger().With(
 			slog.String("component", "command"),
 			slog.String("command", "serve http"),
 		),
-		server:                 server,
-		telegramUpdatesHandler: telegramUpdatesHandler,
 	}
 }
 
@@ -66,7 +59,15 @@ func (c *HTTPCommand) Command() *cobra.Command {
 func (c *HTTPCommand) startServices(ctx context.Context) error {
 	errGroup, ctx := errgroup.WithContext(ctx)
 
-	// @todo: register plugin-provided handler.
+	server, err := c.depResolver.HTTPServer()
+	if err != nil {
+		return fmt.Errorf("resolving HTTP server: %w", err)
+	}
+
+	telegramUpdatesHandler, err := c.depResolver.TelegramUpdatesHandler()
+	if err != nil {
+		return fmt.Errorf("resolving Telegram updates handler: %w", err)
+	}
 
 	errGroup.Go(func() error {
 		c.logger.InfoContext(ctx, "starting HTTP server",
@@ -75,7 +76,7 @@ func (c *HTTPCommand) startServices(ctx context.Context) error {
 		)
 
 		// @todo: listen TLS if configured.
-		err := c.server.ListenAndServe()
+		err = server.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			return fmt.Errorf("listening and serving: %w", err)
 		}
@@ -90,7 +91,7 @@ func (c *HTTPCommand) startServices(ctx context.Context) error {
 			slog.String("webhook", c.cfg.Telegram.Webhook.Path),
 		)
 
-		err := c.telegramUpdatesHandler.Handle(ctx)
+		err = telegramUpdatesHandler.Handle(ctx)
 		if err != nil {
 			return fmt.Errorf("handling telegram updates: %w", err)
 		}
@@ -102,11 +103,11 @@ func (c *HTTPCommand) startServices(ctx context.Context) error {
 		<-ctx.Done()
 		c.logger.Info("termination signal received")
 
-		c.shutdownStep(ctx, "stopping telegram updates handler", c.telegramUpdatesHandler.Stop)
-		c.shutdownStep(ctx, "shutting down HTTP server", c.server.Shutdown)
+		c.shutdownStep(ctx, "stopping telegram updates handler", telegramUpdatesHandler.Stop)
+		c.shutdownStep(ctx, "shutting down HTTP server", server.Shutdown)
 	}()
 
-	err := errGroup.Wait()
+	err = errGroup.Wait()
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return fmt.Errorf("services errored: %w", err)
 	}

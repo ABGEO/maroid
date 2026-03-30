@@ -37,6 +37,8 @@ func (r *TelegramCommandRegistry) Register(commands ...pluginapi.TelegramCommand
 }
 
 // Get returns a command by name, or nil if not found.
+//
+//nolint:ireturn
 func (r *TelegramCommandRegistry) Get(name string) (pluginapi.TelegramCommand, bool) {
 	cmd, ok := r.commands[name]
 
