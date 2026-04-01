@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/render"
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
@@ -19,10 +19,14 @@ const (
 	stateCookieName    = "maroid_oauth_state"
 	nonceCookieName    = "maroid_oauth_nonce"
 	verifierCookieName = "maroid_oauth_verifier"
+	redirectCookieName = "maroid_oauth_redirect"
 	oauthCookieMaxAge  = 5 * 60 // 5 minutes in seconds
 )
 
-var errInvalidQueryParameter = errors.New("invalid query parameter")
+var (
+	errInvalidQueryParameter = errors.New("invalid query parameter")
+	errInvalidRedirectCookie = errors.New("invalid redirect cookie value")
+)
 
 // AuthHandler represents the Auth handler interface.
 type AuthHandler interface {
@@ -70,14 +74,21 @@ func (h *Auth) Register(router chi.Router) {
 
 // Initiate starts the OIDC flow.
 func (h *Auth) Initiate(w http.ResponseWriter, r *http.Request) error {
+	redirect := r.URL.Query().Get("redirect")
+	if !validateRedirect(redirect, h.cfg.Auth.AllowedRedirects) {
+		http.Error(w, "Missing or invalid 'redirect' parameter", http.StatusBadRequest)
+
+		return fmt.Errorf("%w: missing or invalid redirect parameter", errInvalidQueryParameter)
+	}
+
 	result, err := h.oidcFlow.Initiate()
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, map[string]string{"error": "internal server error"})
+		redirectWithError(w, r, redirect)
 
 		return fmt.Errorf("initiating OIDC flow: %w", err)
 	}
 
+	setOAuthCookie(w, r, redirectCookieName, redirect)
 	setOAuthCookie(w, r, stateCookieName, result.State)
 	setOAuthCookie(w, r, nonceCookieName, result.Nonce)
 	setOAuthCookie(w, r, verifierCookieName, result.Verifier)
@@ -87,10 +98,31 @@ func (h *Auth) Initiate(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// Callback completes the OIDC flow, verifies the ID token, and returns a signed JWT.
+// Callback completes the OIDC flow, verifies the ID token, and redirects with a signed JWT.
 func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
+	redirectCookie, err := r.Cookie(redirectCookieName)
+	if err != nil {
+		http.Error(w, "Missing or invalid 'redirect' parameter", http.StatusBadRequest)
+
+		return fmt.Errorf("retrieving redirect cookie: %w", err)
+	}
+
+	redirect := redirectCookie.Value
+
+	clearOAuthCookie(w, r, redirectCookieName)
+
+	// The redirect URL is stored in an HTTP-only cookie to prevent tampering.
+	// We still need to validate it against the allowed list to prevent open redirect vulnerabilities.
+	if !validateRedirect(redirect, h.cfg.Auth.AllowedRedirects) {
+		http.Error(w, "Missing or invalid 'redirect' parameter", http.StatusBadRequest)
+
+		return errInvalidRedirectCookie
+	}
+
 	idClaims, err := h.processOIDCCallback(w, r)
 	if err != nil {
+		redirectWithError(w, r, redirect)
+
 		return err
 	}
 
@@ -103,16 +135,12 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 		Picture:  idClaims.Picture,
 	})
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, map[string]string{"error": "internal server error"})
+		redirectWithError(w, r, redirect)
 
 		return fmt.Errorf("signing JWT: %w", err)
 	}
 
-	render.JSON(w, r, map[string]string{
-		"type":  "Bearer",
-		"token": token,
-	})
+	redirectWithToken(w, r, redirect, token)
 
 	return nil
 }
@@ -121,19 +149,19 @@ func (h *Auth) processOIDCCallback(
 	w http.ResponseWriter,
 	r *http.Request,
 ) (*auth.IDTokenClaims, error) {
-	stateCookie, err := requireOAuthCookie(w, r, stateCookieName)
+	stateCookie, err := r.Cookie(stateCookieName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("retrieving cookie: %s: %w", stateCookieName, err)
 	}
 
-	nonceCookie, err := requireOAuthCookie(w, r, nonceCookieName)
+	nonceCookie, err := r.Cookie(nonceCookieName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("retrieving cookie: %s: %w", nonceCookieName, err)
 	}
 
-	verifierCookie, err := requireOAuthCookie(w, r, verifierCookieName)
+	verifierCookie, err := r.Cookie(verifierCookieName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("retrieving cookie: %s: %w", verifierCookieName, err)
 	}
 
 	clearOAuthCookie(w, r, stateCookieName)
@@ -141,35 +169,43 @@ func (h *Auth) processOIDCCallback(
 	clearOAuthCookie(w, r, verifierCookieName)
 
 	state := r.URL.Query().Get("state")
-	if state == "" || state != stateCookie {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{"error": "invalid request"})
-
+	if state == "" || state != stateCookie.Value {
 		return nil, fmt.Errorf(
 			"%w: state mismatch: got %q, expected %q",
 			errInvalidQueryParameter,
 			state,
-			stateCookie,
+			stateCookie.Value,
 		)
 	}
 
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{"error": "invalid request"})
-
 		return nil, fmt.Errorf("%w: missing code query parameter", errInvalidQueryParameter)
 	}
 
-	idClaims, err := h.oidcFlow.Verify(r.Context(), code, nonceCookie, verifierCookie)
+	idClaims, err := h.oidcFlow.Verify(r.Context(), code, nonceCookie.Value, verifierCookie.Value)
 	if err != nil {
-		render.Status(r, http.StatusUnauthorized)
-		render.JSON(w, r, map[string]string{"error": "authentication failed"})
-
 		return nil, fmt.Errorf("verifying OIDC flow: %w", err)
 	}
 
 	return idClaims, nil
+}
+
+func redirectWithError(w http.ResponseWriter, r *http.Request, target string) {
+	redirectURL, _ := url.Parse(target)
+
+	queryParams := redirectURL.Query()
+	queryParams.Set("error", "auth_failed")
+	redirectURL.RawQuery = queryParams.Encode()
+
+	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
+}
+
+func redirectWithToken(w http.ResponseWriter, r *http.Request, target string, token string) {
+	redirectURL, _ := url.Parse(target)
+	redirectURL.Fragment = "token=" + token
+
+	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
 }
 
 func setOAuthCookie(w http.ResponseWriter, r *http.Request, name string, value string) {
@@ -184,18 +220,6 @@ func setOAuthCookie(w http.ResponseWriter, r *http.Request, name string, value s
 	})
 }
 
-func requireOAuthCookie(w http.ResponseWriter, r *http.Request, name string) (string, error) {
-	cookie, err := r.Cookie(name)
-	if err != nil {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{"error": "invalid request"})
-
-		return "", fmt.Errorf("retrieving cookie: %s: %w", name, err)
-	}
-
-	return cookie.Value, nil
-}
-
 func clearOAuthCookie(w http.ResponseWriter, r *http.Request, name string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     name,
@@ -207,4 +231,27 @@ func clearOAuthCookie(w http.ResponseWriter, r *http.Request, name string) {
 		SameSite: http.SameSiteLaxMode,
 		Expires:  time.Unix(0, 0),
 	})
+}
+
+func validateRedirect(redirect string, allowed []string) bool {
+	parsed, err := url.Parse(redirect)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return false
+	}
+
+	redirectOrigin := parsed.Scheme + "://" + parsed.Host
+
+	for _, rawAllowed := range allowed {
+		parsedAllowed, err := url.Parse(rawAllowed)
+		if err != nil {
+			continue
+		}
+
+		allowedOrigin := parsedAllowed.Scheme + "://" + parsedAllowed.Host
+		if redirectOrigin == allowedOrigin {
+			return true
+		}
+	}
+
+	return false
 }

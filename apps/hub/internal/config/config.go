@@ -64,6 +64,11 @@ func (c *Server) Address() string {
 	return net.JoinHostPort(c.ListenAddr, c.Port)
 }
 
+// Auth defines general authentication configuration parameters.
+type Auth struct {
+	AllowedRedirects []string `mapstructure:"allowed_redirects" validate:"required,min=1,dive,url"`
+}
+
 // JWT defines JWT authentication configuration parameters.
 type JWT struct {
 	Issuer      string        `default:"https://hub.maroid.dev" mapstructure:"issuer"       validate:"required,url"`
@@ -112,6 +117,7 @@ type Config struct {
 	Database Database
 	Server   Server
 	JWT      JWT
+	Auth     Auth
 	OIDC     OIDC
 	MQTT     MQTT
 	Telegram Telegram
