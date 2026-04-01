@@ -64,6 +64,22 @@ func (c *Server) Address() string {
 	return net.JoinHostPort(c.ListenAddr, c.Port)
 }
 
+// JWT defines JWT authentication configuration parameters.
+type JWT struct {
+	Issuer      string        `default:"https://hub.maroid.dev" mapstructure:"issuer"       validate:"required,url"`
+	PrivateKey  string        `                                 mapstructure:"private_key"  validate:"required"`
+	PublicKey   string        `                                 mapstructure:"public_key"   validate:"required"`
+	TokenExpiry time.Duration `default:"168h"                   mapstructure:"token_expiry"`
+}
+
+// OIDC defines OpenID Connect configuration parameters for authentication.
+type OIDC struct {
+	Issuer       string `default:"https://oauth.telegram.org" mapstructure:"issuer"        validate:"required,url"`
+	ClientID     string `                                     mapstructure:"client_id"     validate:"required"`
+	ClientSecret string `                                     mapstructure:"client_secret" validate:"required"`
+	RedirectURI  string `                                     mapstructure:"redirect_uri"  validate:"required"`
+}
+
 // MQTT defines MQTT broker configuration parameters.
 // All fields are optional; the broker is only required when MQTT subscriber plugins are loaded.
 type MQTT struct {
@@ -95,6 +111,8 @@ type Config struct {
 	Logger   Logger
 	Database Database
 	Server   Server
+	JWT      JWT
+	OIDC     OIDC
 	MQTT     MQTT
 	Telegram Telegram
 	Notifier notifier.Config

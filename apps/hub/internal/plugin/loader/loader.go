@@ -29,9 +29,9 @@ func New(
 	commandRegistry *registry.CommandRegistry,
 	cronRegistry *registry.CronRegistry,
 	migrationRegistry *registry.MigrationRegistry,
+	mqttSubscriberRegistry *registry.MQTTSubscriberRegistry,
 	telegramCommandRegistry *registry.TelegramCommandRegistry,
 	telegramConversationRegistry *registry.TelegramConversationRegistry,
-	mqttSubscriberRegistry *registry.MQTTSubscriberRegistry,
 ) *Loader {
 	return &Loader{
 		host:    host,
@@ -40,9 +40,9 @@ func New(
 			registrar.NewCommandRegistrar(commandRegistry),
 			registrar.NewCronRegistrar(cronRegistry),
 			registrar.NewMigrationRegistrar(migrationRegistry),
+			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry),
 			registrar.NewTelegramCommandRegistrar(telegramCommandRegistry),
 			registrar.NewTelegramConversationRegistrar(telegramConversationRegistry),
-			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry),
 		},
 	}
 }

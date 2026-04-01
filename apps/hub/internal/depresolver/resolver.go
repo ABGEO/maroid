@@ -14,6 +14,7 @@ import (
 	"github.com/mymmrac/telego"
 	"github.com/robfig/cron/v3"
 
+	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/logger"
 	"github.com/abgeo/maroid/apps/hub/internal/migrator"
@@ -32,7 +33,7 @@ import (
 type Resolver interface {
 	Config() *config.Config
 	Logger() *slog.Logger
-	HTTPRouter() *chi.Mux
+	HTTPRouter() (*chi.Mux, error)
 	HTTPServer() (*http.Server, error)
 	CloseHTTPServer() error
 	Database() (*sqlx.DB, error)
@@ -40,6 +41,9 @@ type Resolver interface {
 	Migrator() (*migrator.Migrator, error)
 	PluginHost() (*pluginhost.Host, error)
 	PluginLoader() (*pluginloader.Loader, error)
+	JWTService() (*auth.JWTService, error)
+	OIDCService() (*auth.OIDCService, error)
+	OIDCFlow() (*auth.OIDCFlow, error)
 	CommandRegistry() (*registry.CommandRegistry, error)
 	CronRegistry() (*registry.CronRegistry, error)
 	MigrationRegistry() (*registry.MigrationRegistry, error)
@@ -78,6 +82,7 @@ type Container struct {
 	}
 
 	httpRouter struct {
+		mu       sync.Mutex
 		once     sync.Once
 		instance *chi.Mux
 	}
@@ -100,8 +105,25 @@ type Container struct {
 		instance *pluginloader.Loader
 	}
 
-	commandRegistry struct {
+	oidcService struct {
 		mu       sync.Mutex
+		once     sync.Once
+		instance *auth.OIDCService
+	}
+
+	oidcFlow struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *auth.OIDCFlow
+	}
+
+	jwtService struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *auth.JWTService
+	}
+
+	commandRegistry struct {
 		once     sync.Once
 		instance *registry.CommandRegistry
 	}

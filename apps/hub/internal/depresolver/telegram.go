@@ -61,11 +61,18 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 			return
 		}
 
+		router, routerErr := c.HTTPRouter()
+		if routerErr != nil {
+			err = routerErr
+
+			return
+		}
+
 		c.telegramUpdatesHandler.instance, err = telegram.NewUpdatesHandler(
 			c.Config(),
 			c.Logger(),
 			bot,
-			c.HTTPRouter(),
+			router,
 			commandsRegistry,
 			telegramConversationEngine,
 		)

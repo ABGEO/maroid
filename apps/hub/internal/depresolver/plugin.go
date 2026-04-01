@@ -103,6 +103,11 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		return nil, err
 	}
 
+	mqttSubscriberRegistry, err := c.MQTTSubscriberRegistry()
+	if err != nil {
+		return nil, err
+	}
+
 	telegramCommandRegistry, err := c.TelegramCommandRegistry()
 	if err != nil {
 		return nil, err
@@ -113,18 +118,13 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		return nil, err
 	}
 
-	mqttSubscriberRegistry, err := c.MQTTSubscriberRegistry()
-	if err != nil {
-		return nil, err
-	}
-
 	return pluginloader.New(
 		pluginHost,
 		commandRegistry,
 		cronRegistry,
 		migrationRegistry,
+		mqttSubscriberRegistry,
 		telegramCommandRegistry,
 		telegramConversationRegistry,
-		mqttSubscriberRegistry,
 	), nil
 }

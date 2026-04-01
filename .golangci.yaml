@@ -54,6 +54,13 @@ linters:
         - w http.ResponseWriter
         - r *http.Request
 
+  exclusions:
+    rules:
+      - path: apps/hub/internal/config/
+        text: "G117:"
+        linters:
+          - gosec
+
 formatters:
   enable:
     - gci
