@@ -11,6 +11,33 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/server"
 )
 
+// HandlerRegistry initializes and returns the handler registry.
+func (c *Container) HandlerRegistry() (*handler.Registry, error) {
+	c.handlerRegistry.mu.Lock()
+	defer c.handlerRegistry.mu.Unlock()
+
+	var err error
+
+	c.handlerRegistry.once.Do(func() {
+		c.handlerRegistry.instance = handler.NewRegistry()
+
+		regErr := c.registerHandlers(c.handlerRegistry.instance)
+		if regErr != nil {
+			err = regErr
+
+			return
+		}
+	})
+
+	if err != nil {
+		c.handlerRegistry.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing handler registry: %w", err)
+	}
+
+	return c.handlerRegistry.instance, nil
+}
+
 // HTTPRouter initializes and returns the HTTP router.
 func (c *Container) HTTPRouter() (*chi.Mux, error) {
 	c.httpRouter.mu.Lock()
@@ -21,14 +48,17 @@ func (c *Container) HTTPRouter() (*chi.Mux, error) {
 	c.httpRouter.once.Do(func() {
 		c.httpRouter.instance = server.NewHTTPRouter()
 
-		handlers, handlerErr := c.getHTTPHandlers()
-		if handlerErr != nil {
-			err = handlerErr
+		handlerRegistry, handlerRegistryErr := c.HandlerRegistry()
+		if handlerRegistryErr != nil {
+			err = handlerRegistryErr
 
 			return
 		}
 
-		handler.RegisterHandlers(c.httpRouter.instance, handlers...)
+		handler.RegisterHandlers(
+			c.httpRouter.instance,
+			handlerRegistry.All()...,
+		)
 	})
 
 	if err != nil {
@@ -81,15 +111,15 @@ func (c *Container) CloseHTTPServer() error {
 	return nil
 }
 
-func (c *Container) getHTTPHandlers() ([]handler.Handler, error) {
+func (c *Container) registerHandlers(reg *handler.Registry) error {
 	jwtSvc, err := c.JWTService()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	oidcFlow, err := c.OIDCFlow()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	authHandler := handler.NewAuth(
@@ -99,8 +129,15 @@ func (c *Container) getHTTPHandlers() ([]handler.Handler, error) {
 		oidcFlow,
 	)
 
-	return []handler.Handler{
-		authHandler,
-		handler.NewPing(c.Logger()),
-	}, nil
+	err = reg.Register("auth", authHandler)
+	if err != nil {
+		return fmt.Errorf("register auth handler: %w", err)
+	}
+
+	err = reg.Register("ping", handler.NewPing(c.Logger()))
+	if err != nil {
+		return fmt.Errorf("register ping handler: %w", err)
+	}
+
+	return nil
 }

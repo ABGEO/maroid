@@ -16,6 +16,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/logger"
 	"github.com/abgeo/maroid/apps/hub/internal/migrator"
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
@@ -50,6 +51,7 @@ type Resolver interface {
 	TelegramCommandRegistry() (*registry.TelegramCommandRegistry, error)
 	TelegramConversationRegistry() (*registry.TelegramConversationRegistry, error)
 	MQTTSubscriberRegistry() (*registry.MQTTSubscriberRegistry, error)
+	HandlerRegistry() (*handler.Registry, error)
 	Cron() *cron.Cron
 	NotifierRegistry() (*notifierregistry.SchemeRegistry, error)
 	NotifierDispatcher() (*dispatcher.ChannelDispatcher, error)
@@ -154,6 +156,12 @@ type Container struct {
 	mqttSubscriberRegistry struct {
 		once     sync.Once
 		instance *registry.MQTTSubscriberRegistry
+	}
+
+	handlerRegistry struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *handler.Registry
 	}
 
 	notifierRegistry struct {
