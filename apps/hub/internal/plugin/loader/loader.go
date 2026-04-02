@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"plugin"
 
+	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/registrar"
@@ -27,6 +29,8 @@ type Loader struct {
 // New creates a new Loader.
 func New(
 	host pluginapi.Host,
+	cfg *config.Config,
+	jwtSvc *auth.JWTService,
 	commandRegistry *registry.CommandRegistry,
 	cronRegistry *registry.CronRegistry,
 	handlerRegistry *handler.Registry,
@@ -43,7 +47,7 @@ func New(
 		registrars: []registrar.Registrar{
 			registrar.NewCommandRegistrar(commandRegistry),
 			registrar.NewCronRegistrar(cronRegistry),
-			registrar.NewHandlerRegistrar(logger, handlerRegistry),
+			registrar.NewHandlerRegistrar(logger, cfg, jwtSvc, handlerRegistry),
 			registrar.NewMigrationRegistrar(migrationRegistry),
 			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry),
 			registrar.NewTelegramCommandRegistrar(telegramCommandRegistry),

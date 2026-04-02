@@ -88,6 +88,13 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		return nil, err
 	}
 
+	cfg := c.Config()
+
+	jwtSvc, err := c.JWTService()
+	if err != nil {
+		return nil, err
+	}
+
 	commandRegistry, err := c.CommandRegistry()
 	if err != nil {
 		return nil, err
@@ -125,6 +132,8 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 
 	return pluginloader.New(
 		pluginHost,
+		cfg,
+		jwtSvc,
 		commandRegistry,
 		cronRegistry,
 		handlerRegistry,

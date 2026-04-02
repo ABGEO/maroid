@@ -99,13 +99,13 @@ type MQTT struct {
 
 // Telegram defines Telegram integration configuration parameters.
 type Telegram struct {
-	Token   string `validate:"required"`
-	Debug   bool   `                    default:"false"`
-	Setup   bool   `                    default:"true"`
-	Webhook struct {
+	Token        string  `validate:"required"`
+	Debug        bool    `                    default:"false"`
+	Setup        bool    `                    default:"true"`
+	AllowedUsers []int64 `validate:"required"                 mapstructure:"allowed_users"`
+	Webhook      struct {
 		Path            string   `default:"/telegram/webhook"`
 		AllowedNetworks []string `mapstructure:"allowed_networks" validate:"required"`
-		AllowedUsers    []int64  `mapstructure:"allowed_users"    validate:"required"`
 	}
 }
 

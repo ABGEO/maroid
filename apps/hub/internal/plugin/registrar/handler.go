@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -12,15 +14,24 @@ import (
 // HandlerRegistrar is responsible for registering plugin HTTP routes as handlers.
 type HandlerRegistrar struct {
 	logger   *slog.Logger
+	cfg      *config.Config
+	jwtSvc   *auth.JWTService
 	registry *handler.Registry
 }
 
 var _ Registrar = (*HandlerRegistrar)(nil)
 
 // NewHandlerRegistrar creates a new HandlerRegistrar.
-func NewHandlerRegistrar(logger *slog.Logger, reg *handler.Registry) *HandlerRegistrar {
+func NewHandlerRegistrar(
+	logger *slog.Logger,
+	cfg *config.Config,
+	jwtSvc *auth.JWTService,
+	reg *handler.Registry,
+) *HandlerRegistrar {
 	return &HandlerRegistrar{
 		logger:   logger,
+		cfg:      cfg,
+		jwtSvc:   jwtSvc,
 		registry: reg,
 	}
 }
@@ -55,7 +66,13 @@ func (r *HandlerRegistrar) Register(plugin pluginapi.Plugin) error {
 		return fmt.Errorf("retrieving routes for plugin %s: %w", id, err)
 	}
 
-	pluginHandler := handler.NewPluginWrapper(r.logger, id, routes)
+	pluginHandler := handler.NewPluginWrapper(
+		r.logger,
+		r.cfg,
+		r.jwtSvc,
+		id,
+		routes,
+	)
 
 	err = r.registry.Register(id.String(), pluginHandler)
 	if err != nil {

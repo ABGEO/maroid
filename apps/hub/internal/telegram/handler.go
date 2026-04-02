@@ -114,7 +114,7 @@ func NewUpdatesHandler(
 
 // Handle starts handling Telegram updates.
 func (h *ChannelHandler) Handle(ctx context.Context) error {
-	h.botHandler.Use(telegrammiddleware.AllowedUsers(h.logger, h.cfg.Telegram.Webhook.AllowedUsers))
+	h.botHandler.Use(telegrammiddleware.AllowedUsers(h.logger, h.cfg.Telegram.AllowedUsers))
 	h.registerHandlers()
 
 	err := h.setCommands(ctx)

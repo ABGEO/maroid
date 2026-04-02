@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"slices"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -26,6 +28,7 @@ const (
 var (
 	errInvalidQueryParameter = errors.New("invalid query parameter")
 	errInvalidRedirectCookie = errors.New("invalid redirect cookie value")
+	errUserIsNotAllowed      = errors.New("user is not allowed")
 )
 
 // AuthHandler represents the Auth handler interface.
@@ -124,6 +127,19 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 		redirectWithError(w, r, redirect)
 
 		return err
+	}
+
+	userID, err := strconv.ParseInt(idClaims.ID, 10, 64)
+	if err != nil {
+		redirectWithError(w, r, redirect)
+
+		return fmt.Errorf("invalid user id claims: %w", err)
+	}
+
+	if !slices.Contains(h.cfg.Telegram.AllowedUsers, userID) {
+		redirectWithError(w, r, redirect)
+
+		return fmt.Errorf("user %d is not allowed: %w", userID, errUserIsNotAllowed)
 	}
 
 	token, err := h.jwtSvc.Sign(auth.Claims{
