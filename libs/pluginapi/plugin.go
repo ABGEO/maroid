@@ -19,12 +19,6 @@ type Plugin interface {
 	Meta() Metadata
 }
 
-// RoutePlugin is a plugin that can register HTTP routes.
-type RoutePlugin interface {
-	Plugin
-	Routes() ([]any, error)
-}
-
 // CommandPlugin is a plugin that can register CLI commands.
 type CommandPlugin interface {
 	Plugin

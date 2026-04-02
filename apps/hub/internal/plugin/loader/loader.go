@@ -6,6 +6,7 @@ import (
 	"plugin"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/registrar"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -28,17 +29,21 @@ func New(
 	host pluginapi.Host,
 	commandRegistry *registry.CommandRegistry,
 	cronRegistry *registry.CronRegistry,
+	handlerRegistry *handler.Registry,
 	migrationRegistry *registry.MigrationRegistry,
 	mqttSubscriberRegistry *registry.MQTTSubscriberRegistry,
 	telegramCommandRegistry *registry.TelegramCommandRegistry,
 	telegramConversationRegistry *registry.TelegramConversationRegistry,
 ) *Loader {
+	logger := host.Logger()
+
 	return &Loader{
 		host:    host,
 		plugins: make(map[string]pluginapi.Plugin),
 		registrars: []registrar.Registrar{
 			registrar.NewCommandRegistrar(commandRegistry),
 			registrar.NewCronRegistrar(cronRegistry),
+			registrar.NewHandlerRegistrar(logger, handlerRegistry),
 			registrar.NewMigrationRegistrar(migrationRegistry),
 			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry),
 			registrar.NewTelegramCommandRegistrar(telegramCommandRegistry),

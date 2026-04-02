@@ -98,6 +98,11 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		return nil, err
 	}
 
+	handlerRegistry, err := c.HandlerRegistry()
+	if err != nil {
+		return nil, err
+	}
+
 	migrationRegistry, err := c.MigrationRegistry()
 	if err != nil {
 		return nil, err
@@ -122,6 +127,7 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		pluginHost,
 		commandRegistry,
 		cronRegistry,
+		handlerRegistry,
 		migrationRegistry,
 		mqttSubscriberRegistry,
 		telegramCommandRegistry,
