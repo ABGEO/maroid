@@ -11,6 +11,11 @@ import (
 	"github.com/go-chi/render"
 )
 
+const (
+	authTokenCookieName = "maroid_token"
+	authHeaderName      = "Authorization"
+)
+
 type contextKey string
 
 const (
@@ -32,15 +37,13 @@ func Middleware(
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			header := r.Header.Get("Authorization")
-			if header == "" {
-				logger.Info("missing Authorization header")
+			tokenString := tokenFromRequest(r)
+			if tokenString == "" {
+				logger.Warn("missing auth token")
 				sendAccessDeniedResponse(w, r)
 
 				return
 			}
-
-			tokenString := strings.TrimPrefix(header, "Bearer ")
 
 			claims, err := jwtService.Verify(tokenString)
 			if err != nil {
@@ -83,6 +86,20 @@ func Middleware(
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func tokenFromRequest(r *http.Request) string {
+	cookie, err := r.Cookie(authTokenCookieName)
+	if err == nil && cookie.Value != "" {
+		return cookie.Value
+	}
+
+	header := r.Header.Get(authHeaderName)
+	if header != "" {
+		return strings.TrimPrefix(header, "Bearer ")
+	}
+
+	return ""
 }
 
 func sendAccessDeniedResponse(w http.ResponseWriter, r *http.Request) {

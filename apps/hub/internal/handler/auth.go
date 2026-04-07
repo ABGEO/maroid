@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
@@ -18,11 +19,13 @@ import (
 )
 
 const (
-	stateCookieName    = "maroid_oauth_state"
-	nonceCookieName    = "maroid_oauth_nonce"
-	verifierCookieName = "maroid_oauth_verifier"
-	redirectCookieName = "maroid_oauth_redirect"
-	oauthCookieMaxAge  = 5 * 60 // 5 minutes in seconds
+	stateCookieName     = "maroid_oauth_state"
+	nonceCookieName     = "maroid_oauth_nonce"
+	verifierCookieName  = "maroid_oauth_verifier"
+	redirectCookieName  = "maroid_oauth_redirect"
+	authTokenCookieName = "maroid_token"
+	oauthCookieMaxAge   = 5 * 60           // 5 minutes in seconds
+	authTokenMaxAge     = 7 * 24 * 60 * 60 // 7 days in seconds
 )
 
 var (
@@ -71,8 +74,17 @@ func NewAuth(
 func (h *Auth) Register(router chi.Router) {
 	h.logger.Debug("registering routes")
 
-	router.Get("/auth", Wrap(h.logger, h.Initiate))
-	router.Get("/auth/callback", Wrap(h.logger, h.Callback))
+	router.Route("/auth", func(r chi.Router) {
+		r.Group(func(r chi.Router) {
+			r.Get("/", Wrap(h.logger, h.Initiate))
+			r.Get("/callback", Wrap(h.logger, h.Callback))
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(auth.Middleware(h.logger, h.jwtSvc, h.cfg.Telegram.AllowedUsers))
+			r.Get("/me", Wrap(h.logger, h.Me))
+		})
+	})
 }
 
 // Initiate starts the OIDC flow.
@@ -91,10 +103,10 @@ func (h *Auth) Initiate(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("initiating OIDC flow: %w", err)
 	}
 
-	setOAuthCookie(w, r, redirectCookieName, redirect)
-	setOAuthCookie(w, r, stateCookieName, result.State)
-	setOAuthCookie(w, r, nonceCookieName, result.Nonce)
-	setOAuthCookie(w, r, verifierCookieName, result.Verifier)
+	setOAuthCookie(w, redirectCookieName, redirect)
+	setOAuthCookie(w, stateCookieName, result.State)
+	setOAuthCookie(w, nonceCookieName, result.Nonce)
+	setOAuthCookie(w, verifierCookieName, result.Verifier)
 
 	http.Redirect(w, r, result.AuthURL, http.StatusFound)
 
@@ -112,7 +124,7 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 
 	redirect := redirectCookie.Value
 
-	clearOAuthCookie(w, r, redirectCookieName)
+	clearOAuthCookie(w, redirectCookieName)
 
 	// The redirect URL is stored in an HTTP-only cookie to prevent tampering.
 	// We still need to validate it against the allowed list to prevent open redirect vulnerabilities.
@@ -156,7 +168,19 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("signing JWT: %w", err)
 	}
 
-	redirectWithToken(w, r, redirect, token)
+	setAuthCookie(w, token)
+	http.Redirect(w, r, redirect, http.StatusFound)
+
+	return nil
+}
+
+func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
+	claims := auth.ClaimsFromContext(r.Context())
+
+	render.JSON(w, r, map[string]any{
+		"name":    claims.Name,
+		"picture": claims.Picture,
+	})
 
 	return nil
 }
@@ -180,9 +204,9 @@ func (h *Auth) processOIDCCallback(
 		return nil, fmt.Errorf("retrieving cookie: %s: %w", verifierCookieName, err)
 	}
 
-	clearOAuthCookie(w, r, stateCookieName)
-	clearOAuthCookie(w, r, nonceCookieName)
-	clearOAuthCookie(w, r, verifierCookieName)
+	clearOAuthCookie(w, stateCookieName)
+	clearOAuthCookie(w, nonceCookieName)
+	clearOAuthCookie(w, verifierCookieName)
 
 	state := r.URL.Query().Get("state")
 	if state == "" || state != stateCookie.Value {
@@ -217,35 +241,40 @@ func redirectWithError(w http.ResponseWriter, r *http.Request, target string) {
 	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
 }
 
-func redirectWithToken(w http.ResponseWriter, r *http.Request, target string, token string) {
-	redirectURL, _ := url.Parse(target)
-	redirectURL.Fragment = "token=" + token
-
-	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
-}
-
-func setOAuthCookie(w http.ResponseWriter, r *http.Request, name string, value string) {
+func setAuthCookie(w http.ResponseWriter, token string) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     name,
-		Value:    value,
-		Path:     "/auth/callback",
-		MaxAge:   oauthCookieMaxAge,
+		Name:     authTokenCookieName,
+		Value:    token,
+		Path:     "/",
+		MaxAge:   authTokenMaxAge,
 		HttpOnly: true,
-		Secure:   r.TLS != nil,
+		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 }
 
-func clearOAuthCookie(w http.ResponseWriter, r *http.Request, name string) {
+func setOAuthCookie(w http.ResponseWriter, name string, value string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     "/",
+		MaxAge:   oauthCookieMaxAge,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func clearOAuthCookie(w http.ResponseWriter, name string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     name,
 		Value:    "",
-		Path:     "/auth/callback",
+		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   r.TLS != nil,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   true,
 		Expires:  time.Unix(0, 0),
+		SameSite: http.SameSiteLaxMode,
 	})
 }
 
