@@ -1,0 +1,173 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap');
+
+@import 'tailwindcss';
+@plugin 'daisyui';
+
+@plugin 'daisyui/theme' {
+	name: 'maroid';
+	default: true;
+	prefersdark: false;
+	color-scheme: 'light';
+
+	--color-base-100: oklch(98.5% 0.006 230);
+	--color-base-200: oklch(95% 0.018 230);
+	--color-base-300: oklch(89% 0.028 230);
+	--color-base-content: oklch(24% 0.04 255);
+
+	--color-primary: oklch(38% 0.12 255);
+	--color-primary-content: oklch(97% 0.01 240);
+
+	--color-secondary: oklch(82% 0.08 230);
+	--color-secondary-content: oklch(28% 0.08 250);
+
+	--color-accent: oklch(58% 0.17 160);
+	--color-accent-content: oklch(97% 0.03 160);
+
+	--color-neutral: oklch(22% 0.02 255);
+	--color-neutral-content: oklch(97% 0.01 240);
+
+	--color-info: oklch(68% 0.12 230);
+	--color-info-content: oklch(25% 0.08 240);
+
+	--color-success: oklch(62% 0.16 158);
+	--color-success-content: oklch(97% 0.03 160);
+
+	--color-warning: oklch(80% 0.16 75);
+	--color-warning-content: oklch(32% 0.1 55);
+
+	--color-error: oklch(58% 0.2 25);
+	--color-error-content: oklch(97% 0.02 25);
+
+	--radius-selector: 0.5rem;
+	--radius-field: 0.375rem;
+	--radius-box: 0.625rem;
+
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+
+	--border: 1px;
+	--depth: 1;
+	--noise: 0;
+}
+
+@plugin 'daisyui/theme' {
+	name: 'maroid-dusk';
+	default: false;
+	prefersdark: true;
+	color-scheme: 'dark';
+
+	--color-base-100: oklch(18% 0.015 255);
+	--color-base-200: oklch(22% 0.018 255);
+	--color-base-300: oklch(28% 0.022 255);
+	--color-base-content: oklch(92% 0.015 230);
+
+	--color-primary: oklch(72% 0.13 235);
+	--color-primary-content: oklch(15% 0.03 255);
+
+	--color-secondary: oklch(55% 0.08 230);
+	--color-secondary-content: oklch(95% 0.02 230);
+
+	--color-accent: oklch(70% 0.17 160);
+	--color-accent-content: oklch(15% 0.04 160);
+
+	--color-neutral: oklch(92% 0.01 240);
+	--color-neutral-content: oklch(18% 0.02 255);
+
+	--color-info: oklch(72% 0.12 230);
+	--color-info-content: oklch(15% 0.05 240);
+
+	--color-success: oklch(68% 0.16 158);
+	--color-success-content: oklch(15% 0.04 160);
+
+	--color-warning: oklch(78% 0.16 75);
+	--color-warning-content: oklch(18% 0.08 55);
+
+	--color-error: oklch(68% 0.2 25);
+	--color-error-content: oklch(15% 0.05 25);
+
+	--radius-selector: 0.5rem;
+	--radius-field: 0.375rem;
+	--radius-box: 0.625rem;
+
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+
+	--border: 1px;
+	--depth: 1;
+	--noise: 0;
+}
+
+@theme {
+	--font-sans: 'Inter', system-ui, sans-serif;
+	--font-display: 'Fraunces', serif;
+	--font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+@layer base {
+	html,
+	body {
+		font-family: var(--font-sans);
+	}
+}
+
+@layer components {
+	.paper-bg {
+		background-image: radial-gradient(
+			circle at 1px 1px,
+			color-mix(in oklch, var(--color-base-content) 8%, transparent) 1px,
+			transparent 0
+		);
+		background-size: 24px 24px;
+	}
+}
+
+.drawer:has(> .drawer-toggle:not(:checked)) .drawer-side details[open] > ul {
+	display: none;
+}
+
+.drawer:has(> .drawer-toggle:not(:checked)) .drawer-side .menu details > summary::after {
+	display: none;
+}
+
+.drawer-side .menu {
+	--menu-active-bg: oklch(100% 0 0);
+	--menu-active-fg: oklch(22% 0.015 260);
+	--depth: 0;
+}
+
+.drawer-side .menu .menu-active {
+	font-weight: 500;
+	position: relative;
+	box-shadow:
+		inset 0 0 0 1px oklch(88% 0.01 75),
+		0 1px 0 oklch(92% 0.01 75);
+}
+
+[data-theme='maroid-dusk'] .drawer-side .menu {
+	--menu-active-bg: oklch(30% 0.022 255);
+	--menu-active-fg: var(--color-base-content);
+}
+[data-theme='maroid-dusk'] .drawer-side .menu .menu-active {
+	box-shadow:
+		inset 0 0 0 1px oklch(38% 0.025 255),
+		0 1px 0 oklch(12% 0.01 255);
+}
+
+.drawer-side .menu .menu-active::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 25%;
+	bottom: 25%;
+	width: 3px;
+	background: var(--color-primary);
+	border-radius: 2px;
+}
+
+.drawer-side .menu li > details > ul::before {
+	display: none;
+}
+
+.drawer-side .menu li > details > ul {
+	border-inline-start: 1px dashed var(--color-base-300);
+}
