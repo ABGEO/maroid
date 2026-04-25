@@ -174,9 +174,11 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// Me returns the authenticated user's information.
 func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
 	claims := auth.ClaimsFromContext(r.Context())
 
+	// @todo: create a structure for user data.
 	render.JSON(w, r, map[string]any{
 		"name":    claims.Name,
 		"picture": claims.Picture,

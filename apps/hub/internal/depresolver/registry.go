@@ -12,3 +12,12 @@ func (c *Container) CommandRegistry() (*registry.CommandRegistry, error) {
 
 	return c.commandRegistry.instance, nil
 }
+
+// UIRegistry initializes and returns the plugin UI registry.
+func (c *Container) UIRegistry() *registry.UIRegistry {
+	c.uiRegistry.once.Do(func() {
+		c.uiRegistry.instance = registry.NewUIRegistry()
+	})
+
+	return c.uiRegistry.instance
+}

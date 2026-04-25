@@ -53,6 +53,7 @@ type Resolver interface {
 	MQTTSubscriberRegistry() (*registry.MQTTSubscriberRegistry, error)
 	PluginRegistry() *registry.PluginRegistry
 	HandlerRegistry() (*handler.Registry, error)
+	UIRegistry() *registry.UIRegistry
 	Cron() *cron.Cron
 	NotifierRegistry() (*notifierregistry.SchemeRegistry, error)
 	NotifierDispatcher() (*dispatcher.ChannelDispatcher, error)
@@ -168,6 +169,11 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *handler.Registry
+	}
+
+	uiRegistry struct {
+		once     sync.Once
+		instance *registry.UIRegistry
 	}
 
 	notifierRegistry struct {

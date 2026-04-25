@@ -53,6 +53,7 @@ linters:
       ignore-decls:
         - w http.ResponseWriter
         - r *http.Request
+        - r chi.Router
 
   exclusions:
     rules:

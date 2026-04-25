@@ -38,6 +38,7 @@ func New(
 	pluginRegistry *registry.PluginRegistry,
 	telegramCommandRegistry *registry.TelegramCommandRegistry,
 	telegramConversationRegistry *registry.TelegramConversationRegistry,
+	uiRegistry *registry.UIRegistry,
 ) *Loader {
 	logger := host.Logger()
 
@@ -53,6 +54,7 @@ func New(
 			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry),
 			registrar.NewTelegramCommandRegistrar(telegramCommandRegistry),
 			registrar.NewTelegramConversationRegistrar(telegramConversationRegistry),
+			registrar.NewUIRegistrar(uiRegistry),
 		},
 	}
 }

@@ -47,6 +47,7 @@ func (c *Database) DSN() string {
 	)
 }
 
+// CORS defines Cross-Origin Resource Sharing configuration parameters.
 type CORS struct {
 	Enabled          bool          `default:"false"                       mapstructure:"enabled"           validate:"boolean"`
 	AllowOrigins     []string      `default:"[*]"                         mapstructure:"allow_origins"`

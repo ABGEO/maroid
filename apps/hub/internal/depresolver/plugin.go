@@ -154,5 +154,6 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		pluginRegistry,
 		telegramCommandRegistry,
 		telegramConversationRegistry,
+		c.UIRegistry(),
 	), nil
 }
