@@ -4,6 +4,18 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="text-scale" content="scale" />
+
+		<script>
+			(() => {
+				try {
+					const v = localStorage.getItem('maroid.theme');
+					if (v === 'maroid' || v === 'maroid-dusk') {
+						document.documentElement.setAttribute('data-theme', v);
+					}
+				} catch {}
+			})();
+		</script>
+
 		%sveltekit.head%
 	</head>
 

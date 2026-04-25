@@ -1,3 +1,18 @@
+<script lang="ts">
+	import { userState } from '$lib/state/user.svelte';
+	import { themeState, setTheme, type ThemePreference } from '$lib/state/theme.svelte';
+
+	const name = $derived(userState.user?.name ?? 'Maroid User');
+	const picture = $derived(userState.user?.picture ?? '');
+	const initial = $derived(name.charAt(0).toUpperCase());
+
+	const themes: { value: ThemePreference; label: string }[] = [
+		{ value: 'auto', label: 'Auto' },
+		{ value: 'maroid', label: 'Paper' },
+		{ value: 'maroid-dusk', label: 'Dusk' }
+	];
+</script>
+
 <div class="dropdown dropdown-end">
 	<div
 		tabindex="0"
@@ -5,12 +20,20 @@
 		class="hover:bg-base-200 flex cursor-pointer items-center gap-2 rounded-full py-1 pr-2 pl-1"
 	>
 		<div class="avatar">
-			<div class="ring-base-300 w-8 rounded-full ring-1">
-				<img alt="Esme Valverde" src="https://i.pravatar.cc/80?img=47" />
-			</div>
+			{#if picture}
+				<div class="ring-base-300 w-8 rounded-full ring-1">
+					<img alt={name} src={picture} />
+				</div>
+			{:else}
+				<div
+					class="bg-primary text-primary-content flex w-8 items-center justify-center rounded-full"
+				>
+					<span class="text-sm">{initial}</span>
+				</div>
+			{/if}
 		</div>
 		<div class="hidden pr-1 text-left leading-tight sm:block">
-			<div class="text-[12px] font-semibold">Esme Valverde</div>
+			<div class="text-[12px] font-semibold">{name}</div>
 			<div class="text-base-content/50 font-mono text-[10px]">self-hosted · home.hub</div>
 		</div>
 		<svg
@@ -34,13 +57,20 @@
 	>
 		<div class="bg-base-200/50 flex items-center gap-3 rounded-md p-3">
 			<div class="avatar">
-				<div class="ring-base-300 w-10 rounded-full ring-1">
-					<img src="https://i.pravatar.cc/80?img=47" alt="Esme Valverde" />
-				</div>
+				{#if picture}
+					<div class="ring-base-300 w-10 rounded-full ring-1">
+						<img src={picture} alt={name} />
+					</div>
+				{:else}
+					<div
+						class="bg-primary text-primary-content flex w-10 items-center justify-center rounded-full"
+					>
+						<span class="text-base">{initial}</span>
+					</div>
+				{/if}
 			</div>
 			<div class="min-w-0">
-				<div class="truncate text-sm font-semibold">Esme Valverde</div>
-				<div class="text-base-content/55 truncate font-mono text-[11px]">esme@valverde.studio</div>
+				<div class="truncate text-sm font-semibold">{name}</div>
 			</div>
 		</div>
 
@@ -87,28 +117,17 @@
 					Theme
 				</span>
 				<div class="join">
-					<input
-						type="radio"
-						name="theme-buttons"
-						class="btn btn-xs theme-controller join-item"
-						aria-label="Auto"
-						value="default"
-					/>
-					<input
-						type="radio"
-						name="theme-buttons"
-						checked
-						class="btn btn-xs theme-controller join-item"
-						aria-label="Paper"
-						value="maroid"
-					/>
-					<input
-						type="radio"
-						name="theme-buttons"
-						class="btn btn-xs theme-controller join-item"
-						aria-label="Dusk"
-						value="maroid-dusk"
-					/>
+					{#each themes as { value, label } (value)}
+						<input
+							type="radio"
+							name="theme-buttons"
+							class="btn btn-xs join-item"
+							aria-label={label}
+							{value}
+							checked={themeState.pref === value}
+							onchange={() => setTheme(value)}
+						/>
+					{/each}
 				</div>
 			</div>
 		</div>

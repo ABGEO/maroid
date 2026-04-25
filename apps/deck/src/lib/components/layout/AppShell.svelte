@@ -18,6 +18,7 @@
 
 		<main class="paper-bg min-w-0 flex-1 overflow-y-auto">
 			<div class="px-8 pt-5">
+				<!-- @todo: Implement complete breadcrumb generation and navigation -->
 				<div class="text-base-content/55 flex items-center gap-2 font-mono text-[11px]">
 					<span>/</span>
 					<a class="hover:text-base-content" href={resolve('/')}>hub</a>
