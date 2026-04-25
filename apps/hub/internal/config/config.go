@@ -48,13 +48,13 @@ func (c *Database) DSN() string {
 }
 
 type CORS struct {
-	Enabled          bool          `default:"false" mapstructure:"enabled"           validate:"boolean"`
-	AllowOrigins     []string      `default:"[*]"   mapstructure:"allow_origins"`
-	AllowMethods     []string      `default:"[*]"   mapstructure:"allow_methods"`
-	AllowHeaders     []string      `default:"[*]"   mapstructure:"allow_headers"`
-	ExposeHeaders    []string      `default:"[*]"   mapstructure:"expose_headers"`
-	AllowCredentials bool          `default:"false" mapstructure:"allow_credentials"`
-	MaxAge           time.Duration `default:"12h"   mapstructure:"max_age"`
+	Enabled          bool          `default:"false"                       mapstructure:"enabled"           validate:"boolean"`
+	AllowOrigins     []string      `default:"[*]"                         mapstructure:"allow_origins"`
+	AllowMethods     []string      `default:"[GET,POST,PATCH,PUT,DELETE]" mapstructure:"allow_methods"`
+	AllowHeaders     []string      `default:"[*]"                         mapstructure:"allow_headers"`
+	ExposeHeaders    []string      `default:"[*]"                         mapstructure:"expose_headers"`
+	AllowCredentials bool          `default:"false"                       mapstructure:"allow_credentials"`
+	MaxAge           time.Duration `default:"12h"                         mapstructure:"max_age"`
 }
 
 // Server defines HTTP server configuration parameters.
