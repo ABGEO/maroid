@@ -6,7 +6,17 @@ import (
 
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 )
+
+// PluginRegistry initializes and returns the plugin registry instance.
+func (c *Container) PluginRegistry() *registry.PluginRegistry {
+	c.pluginRegistry.once.Do(func() {
+		c.pluginRegistry.instance = registry.NewPluginRegistry()
+	})
+
+	return c.pluginRegistry.instance
+}
 
 // PluginHost initializes and returns the plugin host instance.
 func (c *Container) PluginHost() (*pluginhost.Host, error) {
@@ -120,6 +130,8 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		return nil, err
 	}
 
+	pluginRegistry := c.PluginRegistry()
+
 	telegramCommandRegistry, err := c.TelegramCommandRegistry()
 	if err != nil {
 		return nil, err
@@ -139,6 +151,7 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		handlerRegistry,
 		migrationRegistry,
 		mqttSubscriberRegistry,
+		pluginRegistry,
 		telegramCommandRegistry,
 		telegramConversationRegistry,
 	), nil

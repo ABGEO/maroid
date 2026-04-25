@@ -51,6 +51,7 @@ type Resolver interface {
 	TelegramCommandRegistry() (*registry.TelegramCommandRegistry, error)
 	TelegramConversationRegistry() (*registry.TelegramConversationRegistry, error)
 	MQTTSubscriberRegistry() (*registry.MQTTSubscriberRegistry, error)
+	PluginRegistry() *registry.PluginRegistry
 	HandlerRegistry() (*handler.Registry, error)
 	Cron() *cron.Cron
 	NotifierRegistry() (*notifierregistry.SchemeRegistry, error)
@@ -156,6 +157,11 @@ type Container struct {
 	mqttSubscriberRegistry struct {
 		once     sync.Once
 		instance *registry.MQTTSubscriberRegistry
+	}
+
+	pluginRegistry struct {
+		once     sync.Once
+		instance *registry.PluginRegistry
 	}
 
 	handlerRegistry struct {

@@ -22,7 +22,6 @@ const ConstructorSymbol = "New"
 type Loader struct {
 	host pluginapi.Host
 
-	plugins    map[string]pluginapi.Plugin
 	registrars []registrar.Registrar
 }
 
@@ -36,15 +35,17 @@ func New(
 	handlerRegistry *handler.Registry,
 	migrationRegistry *registry.MigrationRegistry,
 	mqttSubscriberRegistry *registry.MQTTSubscriberRegistry,
+	pluginRegistry *registry.PluginRegistry,
 	telegramCommandRegistry *registry.TelegramCommandRegistry,
 	telegramConversationRegistry *registry.TelegramConversationRegistry,
 ) *Loader {
 	logger := host.Logger()
 
 	return &Loader{
-		host:    host,
-		plugins: make(map[string]pluginapi.Plugin),
+		host: host,
+
 		registrars: []registrar.Registrar{
+			registrar.NewPluginRegistrar(pluginRegistry),
 			registrar.NewCommandRegistrar(commandRegistry),
 			registrar.NewCronRegistrar(cronRegistry),
 			registrar.NewHandlerRegistrar(logger, cfg, jwtSvc, handlerRegistry),
@@ -74,21 +75,14 @@ func (r *Loader) Load(path string, cfg map[string]any) error {
 		return err
 	}
 
-	id := plg.Meta().ID.String()
-
-	if _, exists := r.plugins[id]; exists {
-		return fmt.Errorf("%w: %s", errs.ErrPluginAlreadyRegistered, id)
-	}
-
 	if err = r.registerCapabilities(plg); err != nil {
 		return err
 	}
 
-	r.plugins[id] = plg
-
 	return nil
 }
 
+// @todo: move capabilities registration to the plugin registrar.
 func (r *Loader) registerCapabilities(plg pluginapi.Plugin) error {
 	for _, reg := range r.registrars {
 		if !reg.Supports(plg) {
