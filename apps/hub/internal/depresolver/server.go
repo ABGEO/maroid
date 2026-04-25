@@ -112,6 +112,11 @@ func (c *Container) CloseHTTPServer() error {
 }
 
 func (c *Container) registerHandlers(reg *handler.Registry) error {
+	cfg := c.Config()
+	logger := c.Logger()
+	pluginRegistry := c.PluginRegistry()
+	uiRegistry := c.UIRegistry()
+
 	jwtSvc, err := c.JWTService()
 	if err != nil {
 		return err
@@ -122,21 +127,22 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		return err
 	}
 
-	authHandler := handler.NewAuth(
-		c.Config(),
-		c.Logger(),
-		jwtSvc,
-		oidcFlow,
-	)
+	authHandler := handler.NewAuth(cfg, logger, jwtSvc, oidcFlow)
+	pluginHandler := handler.NewPlugin(cfg, logger, jwtSvc, pluginRegistry, uiRegistry)
 
 	err = reg.Register("auth", authHandler)
 	if err != nil {
 		return fmt.Errorf("register auth handler: %w", err)
 	}
 
-	err = reg.Register("ping", handler.NewPing(c.Logger()))
+	err = reg.Register("ping", handler.NewPing(logger))
 	if err != nil {
 		return fmt.Errorf("register ping handler: %w", err)
+	}
+
+	err = reg.Register("plugin", pluginHandler)
+	if err != nil {
+		return fmt.Errorf("register plugin handler: %w", err)
 	}
 
 	return nil
