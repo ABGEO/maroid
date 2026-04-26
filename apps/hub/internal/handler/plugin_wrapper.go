@@ -58,5 +58,5 @@ func (h *PluginWrapper) Register(router chi.Router) {
 }
 
 func (h *PluginWrapper) pathPrefix() string {
-	return "/plugins/" + h.pluginID.ToSafeName("-") + "/api"
+	return "/plugins/" + h.pluginID.String() + "/api"
 }

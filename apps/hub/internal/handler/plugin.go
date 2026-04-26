@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -55,10 +54,6 @@ func NewPlugin(
 }
 
 // @todo: move to dedicated package.
-type pluginsResponse struct {
-	Plugins []pluginEntry `json:"plugins"`
-}
-
 type pluginEntry struct {
 	ID      string                `json:"id"`
 	Version string                `json:"version"`
@@ -101,7 +96,7 @@ func (h *Plugin) List(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, pluginsResponse{Plugins: entries})
+	render.JSON(w, r, entries)
 
 	return nil
 }
@@ -109,9 +104,8 @@ func (h *Plugin) List(w http.ResponseWriter, r *http.Request) error {
 // UIAssets serves the static assets for a plugin's UI based on the plugin ID.
 func (h *Plugin) UIAssets(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
-	registryKey := strings.ReplaceAll(id, "-", ".")
 
-	entry, ok := h.uiRegistry.Get(registryKey)
+	entry, ok := h.uiRegistry.Get(id)
 	if !ok {
 		http.NotFound(w, r)
 
