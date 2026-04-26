@@ -1,61 +1,30 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-
-	type NavItem = { label: string; href: string };
-	type PluginGroupDef = {
-		name: string;
-		items: NavItem[];
-	};
+	import { pluginState } from '$lib/state/plugins.svelte';
 
 	function isActive(href: string) {
 		return page.url.pathname === href;
 	}
 
-	function groupIsOpen(items: NavItem[]) {
-		return items.some((i) => isActive(i.href));
+	function groupIsOpen(hrefs: string[]) {
+		return hrefs.some((h) => isActive(h));
 	}
 
 	function letterFromName(name: string) {
 		return name.charAt(0).toUpperCase();
 	}
 
+	// Generate a hue value from a string using a hash function.
+	// https://stackoverflow.com/a/15710692
 	function nameToHue(name: string) {
-		const code = letterFromName(name).charCodeAt(0);
-		const hue = (code - 65) * 137.508;
-
-		return hue % 360;
-	}
-
-	const pluginGroups: PluginGroupDef[] = [
-		{
-			name: 'Utilities',
-			items: [
-				{ label: 'Electricity', href: '/placeholder/utilities/electricity' },
-				{ label: 'Gas', href: '/placeholder/utilities/gas' },
-				{ label: 'Water', href: '/placeholder/utilities/water' },
-				{ label: 'Internet', href: '/placeholder/utilities/internet' }
-			]
-		},
-		{
-			name: 'Parking',
-			items: [
-				{ label: 'Active session', href: '/placeholder/parking/active' },
-				{ label: 'Vehicles', href: '/placeholder/parking/vehicles' },
-				{ label: 'History', href: '/placeholder/parking/history' },
-				{ label: 'Balance', href: '/placeholder/parking/balance' }
-			]
-		},
-		{
-			name: 'Jasmine',
-			items: [
-				{ label: 'Plants', href: '/placeholder/jasmine/plants' },
-				{ label: 'Environments', href: '/placeholder/jasmine/environments' },
-				{ label: 'Sensors', href: '/placeholder/jasmine/sensors' },
-				{ label: 'MQTT log', href: '/placeholder/jasmine/mqtt' }
-			]
+		let hash = 5381;
+		for (let i = 0; i < name.length; i++) {
+			hash = ((hash << 5) + hash + name.charCodeAt(i)) | 0;
 		}
-	];
+
+		return Math.abs(hash) % 360;
+	}
 </script>
 
 <aside
@@ -84,10 +53,7 @@
 				</a>
 			</li>
 			<li>
-				<a
-					href={resolve('/placeholder/services')}
-					class:menu-active={isActive(resolve('/placeholder/services'))}
-				>
+				<a href="#">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="16"
@@ -104,10 +70,7 @@
 				</a>
 			</li>
 			<li>
-				<a
-					href={resolve('/placeholder/alerts')}
-					class:menu-active={isActive(resolve('/placeholder/alerts'))}
-				>
+				<a href="#">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="16"
@@ -125,42 +88,59 @@
 					<span class="is-drawer-close:hidden">Alerts</span>
 				</a>
 			</li>
+			<!-- @todo: move to a dedicated component -->
 			<li
 				class="menu-title is-drawer-close:hidden text-base-content/45 font-mono text-[10px] tracking-widest uppercase"
 			>
 				Plugins
 			</li>
-			{#each pluginGroups as group (group.name)}
-				<li>
-					<details open={groupIsOpen(group.items)}>
-						<summary>
-							<span
-								class="grid h-4 w-4 shrink-0 place-items-center rounded font-mono text-[10px] font-semibold"
-								style="background:oklch(92% 0.04 {nameToHue(
-									group.name
-								)});color:oklch(40% 0.1 {nameToHue(group.name)})"
-							>
-								{letterFromName(group.name)}
-							</span>
-							<span class="is-drawer-close:hidden">{group.name}</span>
-						</summary>
-						<ul>
-							{#each group.items as item (item.href)}
-								<li>
-									<a href={resolve(item.href)} class:menu-active={isActive(resolve(item.href))}>
-										{item.label}
-									</a>
-								</li>
-							{/each}
-						</ul>
-					</details>
-				</li>
-			{/each}
+			{#if pluginState.status === 'idle' || pluginState.status === 'loading'}
+				{#each [0, 1, 2] as i (i)}
+					<li>
+						<div class="flex items-center gap-2 px-3 py-1.5">
+							<span class="skeleton h-4 w-4 shrink-0 rounded" aria-hidden="true"></span>
+							<span class="skeleton h-4 w-32" aria-hidden="true"></span>
+						</div>
+					</li>
+				{/each}
+			{:else if pluginState.status === 'ready'}
+				{#each pluginState.plugins.filter((p) => p.ui) as plugin (plugin.id)}
+					<li>
+						<details
+							open={groupIsOpen(plugin.ui!.routes.map((r) => `/plugin/${plugin.id}${r.path}`))}
+						>
+							<summary>
+								<span
+									class="grid h-4 w-4 shrink-0 place-items-center rounded font-mono text-[10px] font-semibold"
+									style="background:oklch(92% 0.04 {nameToHue(
+										plugin.ui!.name
+									)});color:oklch(40% 0.1 {nameToHue(plugin.ui!.name)})"
+								>
+									{letterFromName(plugin.ui!.name)}
+								</span>
+								<span class="is-drawer-close:hidden">{plugin.ui!.name}</span>
+							</summary>
+							<ul>
+								{#each plugin.ui!.routes as route (route.path)}
+									<li>
+										<a
+											href={`/plugin/${plugin.id}${route.path}`}
+											class:menu-active={isActive(`/plugin/${plugin.id}${route.path}`)}
+										>
+											{route.label}
+										</a>
+									</li>
+								{/each}
+							</ul>
+						</details>
+					</li>
+				{/each}
+			{/if}
 			<div
 				class="is-drawer-close:hidden border-base-300 mx-2 mt-2 rounded-md border border-dashed px-2 py-2"
 			>
 				<div class="text-base-content/50 font-mono text-[10px] leading-relaxed">
-					Your installed plugins will show up here.
+					Only plugins exposing a UI capability appear here.
 				</div>
 			</div>
 		</ul>

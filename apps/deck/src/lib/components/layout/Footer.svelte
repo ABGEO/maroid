@@ -1,3 +1,16 @@
+<script lang="ts">
+	import { pluginState } from '$lib/state/plugins.svelte';
+
+	const pluginsCountLabel = $derived.by(() => {
+		if (pluginState.status !== 'ready') {
+			return '- plugins running';
+		}
+
+		const pluginsCount = pluginState.plugins.length;
+		return `${pluginsCount} ${pluginsCount === 1 ? 'plugin' : 'plugins'} running`;
+	});
+</script>
+
 <footer
 	class="footer sm:footer-horizontal border-base-300 bg-base-100/90 text-base-content/55 fixed inset-x-0 bottom-0 z-50 flex h-10 items-center justify-between border-t px-4 font-mono text-[11px] backdrop-blur"
 >
@@ -15,7 +28,7 @@
 		<span class="hidden md:inline">·</span>
 		<span class="flex items-center gap-1.5">
 			<span class="bg-success h-1.5 w-1.5 rounded-full"></span>
-			8 plugins running
+			{pluginsCountLabel}
 		</span>
 	</aside>
 </footer>

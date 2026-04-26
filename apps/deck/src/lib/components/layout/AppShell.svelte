@@ -3,10 +3,18 @@
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
 
+	import { loadPlugins, pluginState } from '$lib/state/plugins.svelte';
+
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 
 	let { children } = $props();
+
+	$effect(() => {
+		if (pluginState.status === 'idle') {
+			loadPlugins();
+		}
+	});
 </script>
 
 <div class="drawer lg:drawer-open bg-base-100 text-base-content">
