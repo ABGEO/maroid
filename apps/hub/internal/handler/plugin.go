@@ -65,10 +65,16 @@ func (h *Plugin) Register(router chi.Router) {
 	h.logger.Debug("registering routes")
 
 	router.Route("/plugins", func(r chi.Router) {
-		r.Use(auth.Middleware(h.logger, h.jwtSvc, h.cfg.Telegram.AllowedUsers))
+		r.Group(func(r chi.Router) {
+			r.Use(auth.Middleware(h.logger, h.jwtSvc, h.cfg.Telegram.AllowedUsers))
 
-		r.Get("/", Wrap(h.logger, h.List))
-		r.Get("/{id}/ui/*", Wrap(h.logger, h.UIAssets))
+			r.Get("/", Wrap(h.logger, h.List))
+		})
+
+		// @todo: find a workaround to authenticate requests on FE.
+		r.Group(func(r chi.Router) {
+			r.Get("/{id}/ui/*", Wrap(h.logger, h.UIAssets))
+		})
 	})
 }
 
