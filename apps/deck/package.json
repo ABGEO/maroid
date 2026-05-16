@@ -1,5 +1,5 @@
 {
-	"name": "deck",
+	"name": "@maroid/deck",
 	"private": true,
 	"version": "0.0.1",
 	"type": "module",
@@ -36,6 +36,8 @@
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
+		"@module-federation/runtime": "^2.4.0",
+		"@module-federation/vite": "^1.15.5",
 		"daisyui": "^5.5.19"
 	}
 }
