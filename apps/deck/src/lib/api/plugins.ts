@@ -1,6 +1,6 @@
-import { get } from './client';
+import { client } from './client';
 import type { Plugin } from './types';
 
 export const plugins = {
-	list: (): Promise<Plugin[] | null> => get<Plugin[]>('/plugins')
+	list: (): Promise<Plugin[] | null> => client.get<Plugin[]>('/plugins')
 };

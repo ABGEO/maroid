@@ -5,13 +5,5 @@
     "deck:dev": "pnpm --filter @maroid/deck dev",
     "deck:build": "pnpm --filter @maroid/deck build",
     "deck:plugins:build": "pnpm --filter './plugins/*/ui' build"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ],
-    "ignoredBuiltDependencies": [
-      "inotify"
-    ]
   }
 }

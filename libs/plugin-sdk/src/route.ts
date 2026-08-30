@@ -1,5 +1,5 @@
 import { mount, unmount, type Component } from 'svelte';
-import type { RouteMounter } from './types.js';
+import type { RouteMounter } from './types';
 
 export function defineRoute<P extends Record<string, unknown> = Record<string, never>>(
   load: () => Promise<{ default: Component<P> }>,

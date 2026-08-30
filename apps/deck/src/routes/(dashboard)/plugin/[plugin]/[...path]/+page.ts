@@ -6,5 +6,5 @@ export const load: PageLoad = async ({ params }) => {
 	const { plugin, path = '' } = params;
 	const mount = await loadPluginMount(plugin, path);
 
-	return { mount };
+	return { mount, pluginId: plugin };
 };

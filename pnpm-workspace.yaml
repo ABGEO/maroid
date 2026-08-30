@@ -1,6 +1,7 @@
 packages:
   - "apps/deck"
+  - "libs/api-client"
   - "libs/plugin-sdk"
   - "plugins/*/ui"
-onlyBuiltDependencies:
-  - esbuild
+allowBuilds:
+  esbuild: false

@@ -36,6 +36,7 @@
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
+		"@maroid/api-client": "workspace:*",
 		"@maroid/plugin-sdk": "workspace:*",
 		"@module-federation/runtime": "^2.4.0",
 		"@module-federation/vite": "^1.15.5",

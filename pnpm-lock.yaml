@@ -10,6 +10,9 @@ importers:
 
   apps/deck:
     dependencies:
+      '@maroid/api-client':
+        specifier: workspace:*
+        version: link:../../libs/api-client
       '@maroid/plugin-sdk':
         specifier: workspace:*
         version: link:../../libs/plugin-sdk
@@ -84,7 +87,17 @@ importers:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)
 
+  libs/api-client:
+    devDependencies:
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   libs/plugin-sdk:
+    dependencies:
+      '@maroid/api-client':
+        specifier: workspace:*
+        version: link:../api-client
     devDependencies:
       '@sveltejs/package':
         specifier: ^2.0.0
@@ -826,6 +839,7 @@ packages:
   cron-parser@4.9.0:
     resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
     engines: {node: '>=12.0.0'}
+    deprecated: v4 is no longer maintained, upgrade to v5
 
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}

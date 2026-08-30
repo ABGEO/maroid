@@ -18,9 +18,3 @@ export interface Plugin {
 	version: string;
 	ui?: UIManifest;
 }
-
-export interface RequestOptions {
-	params?: Record<string, string | number | null | undefined>;
-	headers?: HeadersInit;
-	signal?: AbortSignal;
-}

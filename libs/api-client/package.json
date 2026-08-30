@@ -1,5 +1,5 @@
 {
-  "name": "@maroid/plugin-sdk",
+  "name": "@maroid/api-client",
   "version": "0.1.0",
   "type": "module",
   "exports": {
@@ -8,19 +8,10 @@
       "default": "./src/index.ts"
     }
   },
-  "dependencies": {
-    "@maroid/api-client": "workspace:*"
-  },
-  "peerDependencies": {
-    "svelte": "^5.0.0"
-  },
   "devDependencies": {
-    "@sveltejs/package": "^2.0.0",
-    "svelte": "^5.54.0",
     "typescript": "^5.9.3"
   },
   "scripts": {
-    "build": "svelte-package -i src",
     "check": "tsc --noEmit"
   }
 }
