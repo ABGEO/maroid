@@ -28,3 +28,5 @@ config.yaml
 .keys/
 
 docker-compose.override.yaml
+
+node_modules/

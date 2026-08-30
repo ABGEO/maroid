@@ -36,6 +36,7 @@
 		"vite": "^7.3.1"
 	},
 	"dependencies": {
+		"@maroid/plugin-sdk": "workspace:*",
 		"@module-federation/runtime": "^2.4.0",
 		"@module-federation/vite": "^1.15.5",
 		"daisyui": "^5.5.19"

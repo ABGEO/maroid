@@ -1,0 +1,6 @@
+packages:
+  - "apps/deck"
+  - "libs/plugin-sdk"
+  - "plugins/*/ui"
+onlyBuiltDependencies:
+  - esbuild

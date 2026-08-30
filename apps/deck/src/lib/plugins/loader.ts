@@ -2,11 +2,11 @@ import { browser } from '$app/environment';
 import { PUBLIC_HUB_BASE_URL } from '$env/static/public';
 
 import { loadRemote, registerRemotes } from '@module-federation/runtime';
+import type { RouteMounter } from '@maroid/plugin-sdk';
+
+export type { RouteCleanup, RouteMounter } from '@maroid/plugin-sdk';
 
 const HUB = PUBLIC_HUB_BASE_URL.replace(/\/+$/, '');
-
-export type RouteCleanup = () => void;
-export type RouteMounter = (target: HTMLElement) => RouteCleanup;
 
 type RouteManifest = Record<string, RouteMounter>;
 
