@@ -14,6 +14,8 @@ type EnvironmentRepository interface {
 	Insert(ctx context.Context, entity *model.Environment) error
 	GetByID(ctx context.Context, id string) (*model.Environment, error)
 	List(ctx context.Context) ([]model.Environment, error)
+	Update(ctx context.Context, entity *model.Environment) error
+	Delete(ctx context.Context, id string) error
 }
 
 // Environment is a SQL-based implementation of EnvironmentRepository.
@@ -28,14 +30,20 @@ func NewEnvironment(tx *sqlx.Tx) *Environment {
 	return &Environment{tx: tx}
 }
 
-// Insert persists a new Environment record.
+// Insert persists a new Environment record and refreshes the given entity with the stored values.
 func (r *Environment) Insert(ctx context.Context, entity *model.Environment) error {
 	query := `
 		INSERT INTO environments (id, name)
-		VALUES (:id, :name);
+		VALUES (:id, :name)
+		RETURNING created_at, updated_at;
 	`
 
-	_, err := r.tx.NamedExecContext(ctx, query, entity)
+	query, args, err := sqlx.Named(query, entity)
+	if err != nil {
+		return fmt.Errorf("binding Environment insert arguments: %w", err)
+	}
+
+	err = r.tx.GetContext(ctx, entity, r.tx.Rebind(query), args...)
 	if err != nil {
 		return fmt.Errorf("inserting Environment: %w", err)
 	}
@@ -67,4 +75,38 @@ func (r *Environment) List(ctx context.Context) ([]model.Environment, error) {
 	}
 
 	return entities, nil
+}
+
+// Update updates an existing Environment record and refreshes the given entity with the stored values.
+func (r *Environment) Update(ctx context.Context, entity *model.Environment) error {
+	query := `
+		UPDATE environments
+		SET name = :name
+		WHERE id = :id
+		RETURNING updated_at;
+	`
+
+	query, args, err := sqlx.Named(query, entity)
+	if err != nil {
+		return fmt.Errorf("binding Environment update arguments: %w", err)
+	}
+
+	err = r.tx.GetContext(ctx, entity, r.tx.Rebind(query), args...)
+	if err != nil {
+		return fmt.Errorf("updating Environment: %w", err)
+	}
+
+	return nil
+}
+
+// Delete removes an Environment record by its ID.
+func (r *Environment) Delete(ctx context.Context, id string) error {
+	query := `DELETE FROM environments WHERE id = $1;`
+
+	_, err := r.tx.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("deleting Environment: %w", err)
+	}
+
+	return nil
 }

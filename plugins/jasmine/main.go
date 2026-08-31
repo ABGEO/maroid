@@ -8,6 +8,7 @@ import (
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/jasmine/db"
+	jasminehandler "github.com/abgeo/maroid/plugins/jasmine/handler"
 	"github.com/abgeo/maroid/plugins/jasmine/mqtt/subscriber"
 )
 
@@ -20,6 +21,7 @@ var (
 	_ pluginapi.Plugin               = (*JasminePlugin)(nil)
 	_ pluginapi.MQTTSubscriberPlugin = (*JasminePlugin)(nil)
 	_ pluginapi.MigrationPlugin      = (*JasminePlugin)(nil)
+	_ pluginapi.RoutePlugin          = (*JasminePlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -65,4 +67,16 @@ func (p *JasminePlugin) Migrations() (fs.FS, error) {
 	}
 
 	return migrationsFS, nil
+}
+
+func (p *JasminePlugin) Routes() ([]pluginapi.Route, error) {
+	var routes []pluginapi.Route
+
+	envHandler := jasminehandler.NewEnvironmentHandler(p.logger, p.db)
+	plantHandler := jasminehandler.NewPlantHandler(p.logger, p.db)
+
+	routes = append(routes, envHandler.Routes()...)
+	routes = append(routes, plantHandler.Routes()...)
+
+	return routes, nil
 }
