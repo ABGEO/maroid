@@ -21,6 +21,7 @@ var (
 	_ pluginapi.Plugin               = (*JasminePlugin)(nil)
 	_ pluginapi.MQTTSubscriberPlugin = (*JasminePlugin)(nil)
 	_ pluginapi.MigrationPlugin      = (*JasminePlugin)(nil)
+	_ pluginapi.UIPlugin             = (*JasminePlugin)(nil)
 	_ pluginapi.RoutePlugin          = (*JasminePlugin)(nil)
 )
 
@@ -67,6 +68,23 @@ func (p *JasminePlugin) Migrations() (fs.FS, error) {
 	}
 
 	return migrationsFS, nil
+}
+
+func (p *JasminePlugin) UIManifest() (*pluginapi.UIManifest, error) {
+	assets, err := fs.Sub(uiAssets, "ui/dist")
+	if err != nil {
+		return nil, fmt.Errorf("getting UI manifest FS: %w", err)
+	}
+
+	return &pluginapi.UIManifest{
+		Name: "Jasmine",
+		Routes: []pluginapi.UIRoute{
+			{Path: "/plants", Label: "Plants"},
+			{Path: "/environments", Label: "Environments"},
+			{Path: "/environments/add", Label: "Add Environment"},
+		},
+		Assets: assets,
+	}, nil
 }
 
 func (p *JasminePlugin) Routes() ([]pluginapi.Route, error) {

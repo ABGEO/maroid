@@ -1,0 +1,137 @@
+{
+  "_attributes-ChaGsP-q.js": {
+    "file": "assets/attributes-ChaGsP-q.js",
+    "name": "attributes",
+    "imports": [
+      "src/entry.ts"
+    ]
+  },
+  "_each-Z9uETFJF.js": {
+    "file": "assets/each-Z9uETFJF.js",
+    "name": "each",
+    "imports": [
+      "src/entry.ts"
+    ]
+  },
+  "_index-DDlKbJxK.js": {
+    "file": "assets/index-DDlKbJxK.js",
+    "name": "index",
+    "imports": [
+      "src/entry.ts"
+    ]
+  },
+  "_preload-helper-BXl3LOEh.js": {
+    "file": "assets/preload-helper-BXl3LOEh.js",
+    "name": "preload-helper"
+  },
+  "src/entry.ts": {
+    "file": "assets/entry-BsuI3M7s.js",
+    "name": "entry",
+    "src": "src/entry.ts",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_preload-helper-BXl3LOEh.js"
+    ],
+    "dynamicImports": [
+      "src/pages/plants/Plants.svelte",
+      "src/pages/environments/Environments.svelte",
+      "src/pages/environments/Add.svelte"
+    ]
+  },
+  "src/pages/environments/Add.svelte": {
+    "file": "assets/Add-Ckht7IxX.js",
+    "name": "Add",
+    "src": "src/pages/environments/Add.svelte",
+    "isDynamicEntry": true,
+    "imports": [
+      "_index-DDlKbJxK.js",
+      "src/entry.ts",
+      "_attributes-ChaGsP-q.js",
+      "_preload-helper-BXl3LOEh.js"
+    ],
+    "css": [
+      "assets/Add-22EsgeeZ.css"
+    ]
+  },
+  "src/pages/environments/Environments.svelte": {
+    "file": "assets/Environments-hCEhpdj8.js",
+    "name": "Environments",
+    "src": "src/pages/environments/Environments.svelte",
+    "isDynamicEntry": true,
+    "imports": [
+      "_index-DDlKbJxK.js",
+      "src/entry.ts",
+      "_each-Z9uETFJF.js",
+      "_attributes-ChaGsP-q.js",
+      "_preload-helper-BXl3LOEh.js"
+    ],
+    "css": [
+      "assets/Environments-EtBZC9Pn.css"
+    ]
+  },
+  "src/pages/plants/Plants.svelte": {
+    "file": "assets/Plants-CX1Z_SSl.js",
+    "name": "Plants",
+    "src": "src/pages/plants/Plants.svelte",
+    "isDynamicEntry": true,
+    "imports": [
+      "_index-DDlKbJxK.js",
+      "src/entry.ts",
+      "_each-Z9uETFJF.js",
+      "_preload-helper-BXl3LOEh.js"
+    ],
+    "css": [
+      "assets/Plants-BjagcR_3.css"
+    ]
+  },
+  "virtual:mf-REMOTE_ENTRY_ID:__mfe_internal__dev_maroid_jasmine__remoteEntry_js": {
+    "file": "remoteEntry.js",
+    "name": "remoteEntry",
+    "src": "virtual:mf-REMOTE_ENTRY_ID:__mfe_internal__dev_maroid_jasmine__remoteEntry_js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_preload-helper-BXl3LOEh.js"
+    ],
+    "dynamicImports": [
+      "virtual:mf-localSharedImportMap:__mfe_internal__dev_mf_3_maroid_mf_3_jasmine",
+      "virtual:mf-exposes:__mfe_internal__dev_maroid_jasmine__remoteEntry_js"
+    ]
+  },
+  "virtual:mf-exposes:__mfe_internal__dev_maroid_jasmine__remoteEntry_js": {
+    "file": "assets/virtualExposes-BMxSPi-k.js",
+    "name": "virtualExposes",
+    "src": "virtual:mf-exposes:__mfe_internal__dev_maroid_jasmine__remoteEntry_js",
+    "isEntry": true,
+    "isDynamicEntry": true,
+    "imports": [
+      "_preload-helper-BXl3LOEh.js"
+    ],
+    "dynamicImports": [
+      "src/entry.ts"
+    ]
+  },
+  "virtual:mf-localSharedImportMap:__mfe_internal__dev_mf_3_maroid_mf_3_jasmine": {
+    "file": "assets/_virtual_mf-localSharedImportMap___mfe_internal__dev_mf_3_maroid_mf_3_jasmine-C4ew9Hcz.js",
+    "name": "_virtual_mf-localSharedImportMap___mfe_internal__dev_mf_3_maroid_mf_3_jasmine",
+    "src": "virtual:mf-localSharedImportMap:__mfe_internal__dev_mf_3_maroid_mf_3_jasmine",
+    "isDynamicEntry": true,
+    "imports": [
+      "virtual:mf-REMOTE_ENTRY_ID:__mfe_internal__dev_maroid_jasmine__remoteEntry_js",
+      "_preload-helper-BXl3LOEh.js"
+    ]
+  },
+  "virtual:mf:__mfe_internal__dev_mf_3_maroid_mf_3_jasmine__H_A_I__hostAutoInit__H_A_I__.js": {
+    "file": "assets/hostInit-DcJP1283.js",
+    "name": "hostInit",
+    "src": "virtual:mf:__mfe_internal__dev_mf_3_maroid_mf_3_jasmine__H_A_I__hostAutoInit__H_A_I__.js",
+    "isEntry": true,
+    "imports": [
+      "_preload-helper-BXl3LOEh.js"
+    ],
+    "dynamicImports": [
+      "virtual:mf-REMOTE_ENTRY_ID:__mfe_internal__dev_maroid_jasmine__remoteEntry_js"
+    ]
+  }
+}
