@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG GO_VERSION=1.26.0
+ARG GO_VERSION=1.26.7
 ARG DISTROLESS_VERSION=nonroot
 
 FROM golang:${GO_VERSION} AS builder
