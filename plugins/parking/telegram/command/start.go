@@ -57,7 +57,7 @@ func (c *Parking) Handle(ctx *th.Context, update telego.Update) error {
 		return sendMessage(ctx, update, msg)
 	}
 
-	if err = c.telegramConversationEngine.Start(update, "start_parking"); err != nil {
+	if err = c.telegramConversationEngine.Start(ctx, update, "start_parking"); err != nil {
 		return fmt.Errorf("starting parking conversation: %w", err)
 	}
 

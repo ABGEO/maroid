@@ -15,6 +15,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/middleware"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 	telegrammiddleware "github.com/abgeo/maroid/apps/hub/internal/telegram/middleware"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -35,6 +36,7 @@ type ChannelHandler struct {
 	router                     chi.Router
 	commandsRegistry           *registry.TelegramCommandRegistry
 	telegramConversationEngine conversation.Engine
+	userRepo                   repository.UserRepository
 	allowedNetworksMiddleware  func(http.Handler) http.Handler
 
 	updates    <-chan telego.Update
@@ -56,6 +58,7 @@ func NewUpdatesHandler(
 	router chi.Router,
 	commandsRegistry *registry.TelegramCommandRegistry,
 	telegramConversationEngine conversation.Engine,
+	userRepo repository.UserRepository,
 ) (*ChannelHandler, error) {
 	var (
 		err            error
@@ -93,6 +96,7 @@ func NewUpdatesHandler(
 		router:                     router,
 		commandsRegistry:           commandsRegistry,
 		telegramConversationEngine: telegramConversationEngine,
+		userRepo:                   userRepo,
 		allowedNetworksMiddleware:  allowedNetworksMiddleware,
 	}
 
@@ -114,7 +118,8 @@ func NewUpdatesHandler(
 
 // Handle starts handling Telegram updates.
 func (h *ChannelHandler) Handle(ctx context.Context) error {
-	h.botHandler.Use(telegrammiddleware.AllowedUsers(h.logger, h.cfg.Telegram.AllowedUsers))
+	//nolint:contextcheck // th.Context is the context of the update.
+	h.botHandler.Use(telegrammiddleware.ActingUser(h.logger, h.userRepo))
 	h.registerHandlers()
 
 	err := h.setCommands(ctx)
@@ -122,8 +127,9 @@ func (h *ChannelHandler) Handle(ctx context.Context) error {
 		return err
 	}
 
-	h.botHandler.Handle(func(_ *th.Context, update telego.Update) error {
-		return h.telegramConversationEngine.HandleMessage(update)
+	//nolint:contextcheck // th.Context is the context of the update.
+	h.botHandler.Handle(func(ctx *th.Context, update telego.Update) error {
+		return h.telegramConversationEngine.HandleMessage(ctx, update)
 	})
 
 	err = h.botHandler.Start()

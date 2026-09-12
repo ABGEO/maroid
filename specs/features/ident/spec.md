@@ -74,7 +74,7 @@ and the user record becomes the only allowlist.
 | `apps/hub/db/migrations/20251107142304_extension_uuid_ossp_create.*` | delete | `ADR-0001` drops the extension                             |
 | `apps/hub/internal/model/user.go`                           | create | `model.User`, `model.Status`, `model.Profile`, `model.ParseStatus` |
 | `apps/hub/internal/repository/user.go`                      | create | `repository.UserRepository`, `repository.User`                     |
-| `apps/hub/internal/auth/middleware.go`                      | change | `Middleware(logger, jwtService, users UserResolver)`               |
+| `apps/hub/internal/auth/middleware.go`                      | change | `Middleware(logger, jwtService, userRepo repository.UserRepository)` |
 | `apps/hub/internal/handler/auth.go`                         | change | The callback resolves the record and signs its identifier          |
 | `apps/hub/internal/handler/{plugin,plugin_wrapper}.go`      | change | The new middleware argument                                        |
 | `apps/hub/internal/config/config.go`                        | change | `Telegram.AllowedUsers` goes                                       |
@@ -82,7 +82,7 @@ and the user record becomes the only allowlist.
 | `apps/hub/internal/telegram/middleware/allowed_users.go`    | delete | `ActingUser` replaces it                                           |
 | `apps/hub/internal/telegram/handler.go`                     | change | The new middleware, and the context reaches the engine             |
 | `apps/hub/internal/telegram/conversation/engine.go`         | change | `HandleMessage(ctx, update)`, `Start(ctx, update, id)`             |
-| `apps/hub/internal/worker/cron.go`                          | change | `ActiveUserLister`, and the run for each user                      |
+| `apps/hub/internal/worker/cron.go`                          | change | The run for each user                                              |
 | `apps/hub/internal/command/worker.go`                       | change | Resolves the repository for the cron worker                        |
 | `apps/hub/internal/depresolver/{resolver,database,server,telegram,plugin}.go` | change | `UserRepository()` joins the `Resolver` interface, and each consumer receives it |
 | `libs/pluginapi/actinguser.go`                              | create | `ContextWithActingUser`, `ActingUserFromContext`                   |
@@ -113,10 +113,10 @@ type UserRepository interface {
 }
 ```
 
-Each consumer declares the narrow interface that it needs: `auth.UserResolver`
-holds `GetActiveByID`, `middleware.UserResolver` holds `GetActiveByTelegramID`,
-and `worker.ActiveUserLister` holds `ListActive`. A fake satisfies each one in a
-unit test.
+Every consumer takes `repository.UserRepository`, the one interface that
+`REP-002` puts beside the implementation. A unit test passes a fake that
+satisfies it, and the methods that the test does not reach report a missing
+record.
 
 ### 4.2 Data model
 

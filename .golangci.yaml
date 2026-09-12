@@ -15,6 +15,7 @@ linters:
   default: all
   disable:
     - exhaustruct
+    - exhaustruct_v5
     - wsl
     - noinlineerr
 
@@ -42,6 +43,7 @@ linters:
         - notifierapi.Dispatcher
         - pluginapi.TelegramBot
         - paho.mqtt.golang.Client
+        - repository.UserRepository
 
     varnamelen:
       min-name-length: 2

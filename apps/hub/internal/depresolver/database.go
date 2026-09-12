@@ -11,6 +11,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/migrator"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
 // Database initializes and returns the database instance.
@@ -45,6 +46,33 @@ func (c *Container) CloseDatabase() error {
 	}
 
 	return nil
+}
+
+// UserRepository initializes and returns the user repository instance.
+func (c *Container) UserRepository() (repository.UserRepository, error) {
+	c.userRepository.mu.Lock()
+	defer c.userRepository.mu.Unlock()
+
+	var err error
+
+	c.userRepository.once.Do(func() {
+		var dbInstance *sqlx.DB
+
+		dbInstance, err = c.Database()
+		if err != nil {
+			return
+		}
+
+		c.userRepository.instance = repository.NewUser(dbInstance)
+	})
+
+	if err != nil {
+		c.userRepository.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing user repository: %w", err)
+	}
+
+	return c.userRepository.instance, nil
 }
 
 // MigrationRegistry initializes and returns the migration registry instance.

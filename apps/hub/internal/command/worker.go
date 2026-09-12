@@ -105,8 +105,13 @@ func (c *WorkerCommand) getWorkers() ([]worker.Worker, error) {
 		return nil, fmt.Errorf("resolving MQTT subscriber registry: %w", err)
 	}
 
+	userRepo, err := c.depResolver.UserRepository()
+	if err != nil {
+		return nil, fmt.Errorf("resolving user repository: %w", err)
+	}
+
 	return []worker.Worker{
-		worker.NewCronWorker(c.logger, cronScheduler, cronRegistry),
+		worker.NewCronWorker(c.logger, cronScheduler, cronRegistry, userRepo),
 		worker.NewMQTTWorker(c.logger, cfg, mqttSubscriberRegistry),
 	}, nil
 }

@@ -1,0 +1,8 @@
+BEGIN;
+
+CREATE TABLE probe
+(
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7()
+);
+
+COMMIT;

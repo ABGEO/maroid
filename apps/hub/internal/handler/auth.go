@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"time"
 
@@ -16,6 +15,8 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
 const (
@@ -31,7 +32,6 @@ const (
 var (
 	errInvalidQueryParameter = errors.New("invalid query parameter")
 	errInvalidRedirectCookie = errors.New("invalid redirect cookie value")
-	errUserIsNotAllowed      = errors.New("user is not allowed")
 )
 
 // AuthHandler represents the Auth handler interface.
@@ -48,6 +48,7 @@ type Auth struct {
 	logger   *slog.Logger
 	jwtSvc   *auth.JWTService
 	oidcFlow *auth.OIDCFlow
+	userRepo repository.UserRepository
 }
 
 var _ AuthHandler = (*Auth)(nil)
@@ -58,6 +59,7 @@ func NewAuth(
 	logger *slog.Logger,
 	jwtSvc *auth.JWTService,
 	oidcFlow *auth.OIDCFlow,
+	userRepo repository.UserRepository,
 ) *Auth {
 	return &Auth{
 		cfg: cfg,
@@ -67,6 +69,7 @@ func NewAuth(
 		),
 		jwtSvc:   jwtSvc,
 		oidcFlow: oidcFlow,
+		userRepo: userRepo,
 	}
 }
 
@@ -81,7 +84,7 @@ func (h *Auth) Register(router chi.Router) {
 		})
 
 		r.Group(func(r chi.Router) {
-			r.Use(auth.Middleware(h.logger, h.jwtSvc, h.cfg.Telegram.AllowedUsers))
+			r.Use(auth.Middleware(h.logger, h.jwtSvc, h.userRepo))
 			r.Get("/me", Wrap(h.logger, h.Me))
 		})
 	})
@@ -141,22 +144,27 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	userID, err := strconv.ParseInt(idClaims.ID, 10, 64)
+	telegramID, err := strconv.ParseInt(idClaims.ID, 10, 64)
 	if err != nil {
 		redirectWithError(w, r, redirect)
 
 		return fmt.Errorf("invalid user id claims: %w", err)
 	}
 
-	if !slices.Contains(h.cfg.Telegram.AllowedUsers, userID) {
+	user, err := h.userRepo.SyncProfileByTelegramID(r.Context(), telegramID, model.Profile{
+		Username:    idClaims.Username,
+		DisplayName: idClaims.Name,
+		PictureURL:  idClaims.Picture,
+	})
+	if err != nil {
 		redirectWithError(w, r, redirect)
 
-		return fmt.Errorf("user %d is not allowed: %w", userID, errUserIsNotAllowed)
+		return fmt.Errorf("resolving the user record of %d: %w", telegramID, err)
 	}
 
 	token, err := h.jwtSvc.Sign(auth.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			Subject: idClaims.ID,
+			Subject: user.ID,
 		},
 		Name:     idClaims.Name,
 		Username: idClaims.Username,

@@ -2,19 +2,26 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
-	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/go-chi/render"
+	"github.com/google/uuid"
+
+	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 const (
 	authTokenCookieName = "maroid_token"
 	authHeaderName      = "Authorization"
 )
+
+var errMissingToken = errors.New("auth: the request carries no token")
 
 type contextKey string
 
@@ -24,11 +31,12 @@ const (
 	userIDKey       contextKey = "user_id"
 )
 
-// Middleware returns a HTTP middleware that enforces JWT authentication and user authorization.
+// Middleware returns a HTTP middleware that enforces JWT authentication and
+// resolves the acting user of the request.
 func Middleware(
 	logger *slog.Logger,
 	jwtService *JWTService,
-	allowedUsers []int64,
+	userRepo repository.UserRepository,
 ) func(http.Handler) http.Handler {
 	logger = logger.With(
 		slog.String("component", "middleware"),
@@ -38,41 +46,9 @@ func Middleware(
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tokenString := tokenFromRequest(r)
-			if tokenString == "" {
-				logger.Warn("missing auth token")
-				sendAccessDeniedResponse(w, r)
 
-				return
-			}
-
-			claims, err := jwtService.Verify(tokenString)
+			claims, user, err := resolve(r.Context(), logger, jwtService, userRepo, tokenString)
 			if err != nil {
-				logger.Error(
-					"invalid token",
-					slog.Any("error", err),
-				)
-				sendAccessDeniedResponse(w, r)
-
-				return
-			}
-
-			userID, err := strconv.ParseInt(claims.Subject, 10, 64)
-			if err != nil {
-				logger.Error(
-					"invalid subject claim in token",
-					slog.String("subject", claims.Subject),
-					slog.Any("error", err),
-				)
-				sendAccessDeniedResponse(w, r)
-
-				return
-			}
-
-			if !slices.Contains(allowedUsers, userID) {
-				logger.Info(
-					"user is not allowed",
-					slog.Int64("user_id", userID),
-				)
 				sendAccessDeniedResponse(w, r)
 
 				return
@@ -80,12 +56,60 @@ func Middleware(
 
 			ctx := r.Context()
 			ctx = context.WithValue(ctx, tokenContextKey, tokenString)
-			ctx = context.WithValue(ctx, userIDKey, userID)
+			ctx = context.WithValue(ctx, userIDKey, user.ID)
 			ctx = context.WithValue(ctx, claimsKey, claims)
+			ctx = pluginapi.ContextWithActingUser(ctx, user.ID)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// resolve reads the acting user of the request, and reports why it refused.
+func resolve(
+	ctx context.Context,
+	logger *slog.Logger,
+	jwtService *JWTService,
+	userRepo repository.UserRepository,
+	tokenString string,
+) (*Claims, *model.User, error) {
+	if tokenString == "" {
+		logger.WarnContext(ctx, "missing auth token")
+
+		return nil, nil, errMissingToken
+	}
+
+	claims, err := jwtService.Verify(tokenString)
+	if err != nil {
+		logger.ErrorContext(ctx, "invalid token", slog.Any("error", err))
+
+		return nil, nil, fmt.Errorf("verifying the token: %w", err)
+	}
+
+	if err = uuid.Validate(claims.Subject); err != nil {
+		logger.ErrorContext(
+			ctx,
+			"invalid subject claim in token",
+			slog.String("subject", claims.Subject),
+			slog.Any("error", err),
+		)
+
+		return nil, nil, fmt.Errorf("validating the subject claim: %w", err)
+	}
+
+	user, err := userRepo.GetActiveByID(ctx, claims.Subject)
+	if err != nil {
+		logger.InfoContext(
+			ctx,
+			"no active user record holds the subject",
+			slog.String("subject", claims.Subject),
+			slog.Any("error", err),
+		)
+
+		return nil, nil, fmt.Errorf("reading the user record: %w", err)
+	}
+
+	return claims, user, nil
 }
 
 func tokenFromRequest(r *http.Request) string {
@@ -121,9 +145,9 @@ func ClaimsFromContext(ctx context.Context) *Claims {
 	return claims
 }
 
-// UserIDFromContext retrieves the user ID from the context.
-func UserIDFromContext(ctx context.Context) int64 {
-	userID, _ := ctx.Value(userIDKey).(int64)
+// UserIDFromContext retrieves the Maroid user identifier from the context.
+func UserIDFromContext(ctx context.Context) string {
+	userID, _ := ctx.Value(userIDKey).(string)
 
 	return userID
 }

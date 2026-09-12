@@ -9,8 +9,8 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
-	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -24,9 +24,9 @@ type PluginHandler interface {
 
 // Plugin represents the plugin handler.
 type Plugin struct {
-	cfg            *config.Config
 	logger         *slog.Logger
 	jwtSvc         *auth.JWTService
+	userRepo       repository.UserRepository
 	pluginRegistry *registry.PluginRegistry
 	uiRegistry     *registry.UIRegistry
 }
@@ -35,19 +35,19 @@ var _ PluginHandler = (*Plugin)(nil)
 
 // NewPlugin creates a new Plugin handler.
 func NewPlugin(
-	cfg *config.Config,
 	logger *slog.Logger,
 	jwtSvc *auth.JWTService,
+	userRepo repository.UserRepository,
 	pluginRegistry *registry.PluginRegistry,
 	uiRegistry *registry.UIRegistry,
 ) *Plugin {
 	return &Plugin{
-		cfg: cfg,
 		logger: logger.With(
 			slog.String("component", "handler"),
 			slog.String("handler", "plugin"),
 		),
 		jwtSvc:         jwtSvc,
+		userRepo:       userRepo,
 		pluginRegistry: pluginRegistry,
 		uiRegistry:     uiRegistry,
 	}
@@ -66,7 +66,7 @@ func (h *Plugin) Register(router chi.Router) {
 
 	router.Route("/plugins", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(auth.Middleware(h.logger, h.jwtSvc, h.cfg.Telegram.AllowedUsers))
+			r.Use(auth.Middleware(h.logger, h.jwtSvc, h.userRepo))
 
 			r.Get("/", Wrap(h.logger, h.List))
 		})

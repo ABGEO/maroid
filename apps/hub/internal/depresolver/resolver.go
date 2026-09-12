@@ -22,6 +22,7 @@ import (
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/conversation"
 	"github.com/abgeo/maroid/libs/notifier/dispatcher"
@@ -39,6 +40,7 @@ type Resolver interface {
 	CloseHTTPServer() error
 	Database() (*sqlx.DB, error)
 	CloseDatabase() error
+	UserRepository() (repository.UserRepository, error)
 	Migrator() (*migrator.Migrator, error)
 	PluginHost() (*pluginhost.Host, error)
 	PluginLoader() (*pluginloader.Loader, error)
@@ -83,6 +85,12 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *migrator.Migrator
+	}
+
+	userRepository struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance repository.UserRepository
 	}
 
 	httpRouter struct {

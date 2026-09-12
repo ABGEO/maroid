@@ -8,6 +8,8 @@ import (
 	"github.com/robfig/cron/v3"
 
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // CronWorker runs registered cron jobs using the cron scheduler.
@@ -15,6 +17,7 @@ type CronWorker struct {
 	logger       *slog.Logger
 	scheduler    *cron.Cron
 	cronRegistry *registry.CronRegistry
+	userRepo     repository.UserRepository
 }
 
 var _ Worker = (*CronWorker)(nil)
@@ -24,6 +27,7 @@ func NewCronWorker(
 	logger *slog.Logger,
 	scheduler *cron.Cron,
 	cronRegistry *registry.CronRegistry,
+	userRepo repository.UserRepository,
 ) *CronWorker {
 	return &CronWorker{
 		logger: logger.With(
@@ -32,6 +36,7 @@ func NewCronWorker(
 		),
 		scheduler:    scheduler,
 		cronRegistry: cronRegistry,
+		userRepo:     userRepo,
 	}
 }
 
@@ -45,7 +50,7 @@ func (w *CronWorker) Prepare() error {
 
 		logger := w.logger.With(slog.String("job_id", meta.ID))
 
-		baseJob := cron.FuncJob(wrapCronJob(logger, job.Run))
+		baseJob := cron.FuncJob(w.wrapCronJob(logger, job))
 		skippingJob := cron.NewChain(cron.SkipIfStillRunning(cron.DiscardLogger)).Then(baseJob)
 
 		entryID, err := w.scheduler.AddJob(meta.Schedule, skippingJob)
@@ -95,18 +100,55 @@ func (w *CronWorker) Stop(ctx context.Context) error {
 	return nil
 }
 
-func wrapCronJob(logger *slog.Logger, jobFunc func(ctx context.Context) error) func() {
+func (w *CronWorker) wrapCronJob(logger *slog.Logger, job pluginapi.CronJob) func() {
 	return func() {
 		ctx := context.Background()
 
 		logger.InfoContext(ctx, "cron job execution started")
 
-		if err := jobFunc(ctx); err != nil {
+		if job.Meta().Scope == pluginapi.CronScopePerUser {
+			w.runForEachUser(ctx, logger, job)
+
+			return
+		}
+
+		if err := job.Run(ctx); err != nil {
 			logger.ErrorContext(ctx, "cron job execution failed", slog.Any("error", err))
 
 			return
 		}
 
 		logger.InfoContext(ctx, "cron job execution completed successfully")
+	}
+}
+
+// runForEachUser runs the job one time for each active user, with that user in
+// the context of the run.
+func (w *CronWorker) runForEachUser(
+	ctx context.Context,
+	logger *slog.Logger,
+	job pluginapi.CronJob,
+) {
+	users, err := w.userRepo.ListActive(ctx)
+	if err != nil {
+		logger.ErrorContext(ctx, "listing the active users failed", slog.Any("error", err))
+
+		return
+	}
+
+	for _, user := range users {
+		userLogger := logger.With(slog.String("user_id", user.ID))
+
+		if err := job.Run(pluginapi.ContextWithActingUser(ctx, user.ID)); err != nil {
+			userLogger.ErrorContext(
+				ctx,
+				"cron job execution failed",
+				slog.Any("error", err),
+			)
+
+			continue
+		}
+
+		userLogger.InfoContext(ctx, "cron job execution completed successfully")
 	}
 }

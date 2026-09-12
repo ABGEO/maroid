@@ -39,8 +39,8 @@ func (s *SelectType) OnEnter(
 
 	text := "Please choose how you want to start parking:"
 
-	// Coming from a text message (manual lot entry) — send a
-	// new message so the old control message stays in place.
+	// The update comes from a text message (a manual lot entry).
+	// Send a new message, so the old control message stays in place.
 	if update.Message != nil {
 		return s.sendNewCtrlMessage(ctx, update, text, keyboard)
 	}

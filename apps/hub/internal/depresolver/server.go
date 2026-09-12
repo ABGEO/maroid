@@ -62,7 +62,7 @@ func (c *Container) HTTPRouter() (*chi.Mux, error) {
 	})
 
 	if err != nil {
-		c.httpServer.once = sync.Once{}
+		c.httpRouter.once = sync.Once{}
 
 		return nil, fmt.Errorf("initializing HTTP router: %w", err)
 	}
@@ -127,8 +127,13 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		return err
 	}
 
-	authHandler := handler.NewAuth(cfg, logger, jwtSvc, oidcFlow)
-	pluginHandler := handler.NewPlugin(cfg, logger, jwtSvc, pluginRegistry, uiRegistry)
+	userRepo, err := c.UserRepository()
+	if err != nil {
+		return err
+	}
+
+	authHandler := handler.NewAuth(cfg, logger, jwtSvc, oidcFlow, userRepo)
+	pluginHandler := handler.NewPlugin(logger, jwtSvc, userRepo, pluginRegistry, uiRegistry)
 
 	err = reg.Register("auth", authHandler)
 	if err != nil {

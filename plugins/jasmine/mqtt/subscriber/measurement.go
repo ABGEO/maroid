@@ -95,7 +95,12 @@ func (s *MeasurementSubscriber) Handle(ctx context.Context, topic string, payloa
 }
 
 // validateSource checks that the source entity exists in the database.
-func (s *MeasurementSubscriber) validateSource(ctx context.Context, tx *sqlx.Tx, sourceType model.SourceType, sourceID string) error {
+func (s *MeasurementSubscriber) validateSource(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	sourceType model.SourceType,
+	sourceID string,
+) error {
 	switch sourceType {
 	case model.SourceTypePlant:
 		if _, err := repository.NewPlant(tx).GetByID(ctx, sourceID); err != nil {

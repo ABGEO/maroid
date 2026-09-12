@@ -6,15 +6,15 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
-	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // PluginWrapper is a handler that wraps plugin-provided HTTP routes and registers them under a specific path prefix.
 type PluginWrapper struct {
 	logger   *slog.Logger
-	cfg      *config.Config
 	jwtSvc   *auth.JWTService
+	userRepo repository.UserRepository
 	pluginID *pluginapi.PluginID
 	routes   []pluginapi.Route
 }
@@ -24,15 +24,15 @@ var _ Handler = (*PluginWrapper)(nil)
 // NewPluginWrapper creates a new PluginWrapper for the given plugin ID and routes.
 func NewPluginWrapper(
 	logger *slog.Logger,
-	cfg *config.Config,
 	jwtSvc *auth.JWTService,
+	userRepo repository.UserRepository,
 	pluginID *pluginapi.PluginID,
 	routes []pluginapi.Route,
 ) *PluginWrapper {
 	return &PluginWrapper{
 		logger:   logger,
-		cfg:      cfg,
 		jwtSvc:   jwtSvc,
+		userRepo: userRepo,
 		pluginID: pluginID,
 		routes:   routes,
 	}
@@ -49,7 +49,7 @@ func (h *PluginWrapper) Register(router chi.Router) {
 	logger.Debug("registering routes")
 
 	router.Route(h.pathPrefix(), func(r chi.Router) {
-		r.Use(auth.Middleware(h.logger, h.jwtSvc, h.cfg.Telegram.AllowedUsers))
+		r.Use(auth.Middleware(h.logger, h.jwtSvc, h.userRepo))
 
 		for _, route := range h.routes {
 			r.MethodFunc(route.Method, route.Pattern, route.Handler)

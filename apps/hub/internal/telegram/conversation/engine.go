@@ -1,6 +1,7 @@
 package conversation
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -41,7 +42,7 @@ func NewEngine(
 // If there is no active conversation for the user, it simply returns without doing anything.
 //
 //nolint:funlen // sequential conversation state machine; splitting would obscure the flow
-func (e *Engine) HandleMessage(update telego.Update) error {
+func (e *Engine) HandleMessage(ctx context.Context, update telego.Update) error {
 	userID := strconv.FormatInt(telegramupdate.SentFrom(update).ID, 10)
 
 	state, _ := e.store.Get(userID)
@@ -68,13 +69,14 @@ func (e *Engine) HandleMessage(update telego.Update) error {
 		)
 	}
 
-	ctx := &telegramconversationapi.Context{
+	conversationCtx := &telegramconversationapi.Context{
+		Context:        ctx,
 		UserID:         userID,
 		ConversationID: state.ConversationID,
 		Data:           state.Data,
 	}
 
-	next, err := step.OnMessage(ctx, update)
+	next, err := step.OnMessage(conversationCtx, update)
 	if err != nil {
 		e.logger.Error(
 			"processing conversation step failed",
@@ -96,7 +98,7 @@ func (e *Engine) HandleMessage(update telego.Update) error {
 	}
 
 	state.StepID = next
-	state.Data = ctx.Data
+	state.Data = conversationCtx.Data
 
 	err = e.store.Save(state)
 	if err != nil {
@@ -113,7 +115,7 @@ func (e *Engine) HandleMessage(update telego.Update) error {
 		)
 	}
 
-	err = nextStep.OnEnter(ctx, update)
+	err = nextStep.OnEnter(conversationCtx, update)
 	if err != nil {
 		return fmt.Errorf("entering step %s: %w", next, err)
 	}
@@ -123,7 +125,11 @@ func (e *Engine) HandleMessage(update telego.Update) error {
 
 // Start initiates a new conversation for the user based on the provided conversation ID
 // and the incoming Telegram update.
-func (e *Engine) Start(update telego.Update, conversationID string) error {
+func (e *Engine) Start(
+	ctx context.Context,
+	update telego.Update,
+	conversationID string,
+) error {
 	userID := strconv.FormatInt(telegramupdate.SentFrom(update).ID, 10)
 
 	convo := e.registry.Get(conversationID)
@@ -149,7 +155,8 @@ func (e *Engine) Start(update telego.Update, conversationID string) error {
 		return fmt.Errorf("storing conversation state: %w", err)
 	}
 
-	ctx := &telegramconversationapi.Context{
+	conversationCtx := &telegramconversationapi.Context{
+		Context:        ctx,
 		UserID:         userID,
 		ConversationID: conversationID,
 		Data:           state.Data,
@@ -165,7 +172,7 @@ func (e *Engine) Start(update telego.Update, conversationID string) error {
 		)
 	}
 
-	err = entryStep.OnEnter(ctx, update)
+	err = entryStep.OnEnter(conversationCtx, update)
 	if err != nil {
 		return fmt.Errorf("entering step %s: %w", entry, err)
 	}

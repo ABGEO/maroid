@@ -41,4 +41,8 @@ var (
 	ErrMQTTBrokerNotConfigured = errors.New("mqtt: broker not configured")
 	// ErrUnknownWorkerType indicates that a requested worker type is not registered.
 	ErrUnknownWorkerType = errors.New("worker: unknown type")
+	// ErrUnknownStatus indicates that a user record carries a status that OWN-002 does not allow.
+	ErrUnknownStatus = errors.New("user: unknown status")
+	// ErrUserNotFound indicates that no active user record holds the given identity.
+	ErrUserNotFound = errors.New("user: not found")
 )

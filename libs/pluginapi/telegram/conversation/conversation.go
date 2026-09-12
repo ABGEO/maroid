@@ -2,6 +2,7 @@
 package conversation
 
 import (
+	"context"
 	"time"
 
 	"github.com/mymmrac/telego"
@@ -18,8 +19,8 @@ type Conversation interface {
 // Engine defines the interface for managing conversations, including starting a conversation
 // and handling incoming messages.
 type Engine interface {
-	Start(update telego.Update, conversationID string) error
-	HandleMessage(update telego.Update) error
+	Start(ctx context.Context, update telego.Update, conversationID string) error
+	HandleMessage(ctx context.Context, update telego.Update) error
 }
 
 // Step represents a single step in a conversation, defining the behavior when entering the step
@@ -33,6 +34,9 @@ type Step interface {
 // Context represents the context of a conversation, including user and conversation identifiers
 // and any relevant data.
 type Context struct {
+	//nolint:containedctx // The step signature has no argument for it.
+	context.Context
+
 	UserID         string
 	ConversationID string
 	Data           map[string]any
