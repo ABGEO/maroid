@@ -20,10 +20,11 @@ import (
 )
 
 const (
-	stateCookieName     = "maroid_oauth_state"
-	nonceCookieName     = "maroid_oauth_nonce"
-	verifierCookieName  = "maroid_oauth_verifier"
-	redirectCookieName  = "maroid_oauth_redirect"
+	stateCookieName    = "maroid_oauth_state"
+	nonceCookieName    = "maroid_oauth_nonce"
+	verifierCookieName = "maroid_oauth_verifier"
+	redirectCookieName = "maroid_oauth_redirect"
+	//nolint:gosec // G101: this names the cookie, it holds no credential.
 	authTokenCookieName = "maroid_token"
 	oauthCookieMaxAge   = 5 * 60           // 5 minutes in seconds
 	authTokenMaxAge     = 7 * 24 * 60 * 60 // 7 days in seconds
@@ -177,6 +178,7 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	setAuthCookie(w, token)
+	//nolint:gosec // G710: validateRedirect already matched the target against the allowed list.
 	http.Redirect(w, r, redirect, http.StatusFound)
 
 	return nil
@@ -241,6 +243,8 @@ func (h *Auth) processOIDCCallback(
 	return idClaims, nil
 }
 
+// redirectWithError sends the caller back to the target with an error marker.
+// Every caller passes a target that validateRedirect already accepted.
 func redirectWithError(w http.ResponseWriter, r *http.Request, target string) {
 	redirectURL, _ := url.Parse(target)
 
@@ -248,6 +252,7 @@ func redirectWithError(w http.ResponseWriter, r *http.Request, target string) {
 	queryParams.Set("error", "auth_failed")
 	redirectURL.RawQuery = queryParams.Encode()
 
+	//nolint:gosec // G710: validateRedirect already matched the target against the allowed list.
 	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
 }
 

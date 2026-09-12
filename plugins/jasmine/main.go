@@ -88,13 +88,15 @@ func (p *JasminePlugin) UIManifest() (*pluginapi.UIManifest, error) {
 }
 
 func (p *JasminePlugin) Routes() ([]pluginapi.Route, error) {
-	var routes []pluginapi.Route
-
 	envHandler := jasminehandler.NewEnvironmentHandler(p.logger, p.db)
 	plantHandler := jasminehandler.NewPlantHandler(p.logger, p.db)
 
-	routes = append(routes, envHandler.Routes()...)
-	routes = append(routes, plantHandler.Routes()...)
+	envRoutes := envHandler.Routes()
+	plantRoutes := plantHandler.Routes()
+
+	routes := make([]pluginapi.Route, 0, len(envRoutes)+len(plantRoutes))
+	routes = append(routes, envRoutes...)
+	routes = append(routes, plantRoutes...)
 
 	return routes, nil
 }

@@ -248,12 +248,8 @@ func (c *Container) Logger() *slog.Logger {
 
 // Close gracefully shuts down managed dependencies.
 func (c *Container) Close(_ context.Context) error {
-	var errList []error
-
-	errList = append(errList,
+	return errors.Join(
 		c.CloseHTTPServer(),
 		c.CloseDatabase(),
 	)
-
-	return errors.Join(errList...)
 }

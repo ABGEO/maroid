@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	//nolint:gosec // G101: this names the cookie, it holds no credential.
 	authTokenCookieName = "maroid_token"
 	authHeaderName      = "Authorization"
 )

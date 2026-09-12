@@ -47,15 +47,5 @@ func (r *CronRegistrar) Register(plugin pluginapi.Plugin) error {
 		)
 	}
 
-	jobs, err := cronPlugin.CronJobs()
-	if err != nil {
-		return fmt.Errorf("retrieving cron jobs for plugin %s: %w", id, err)
-	}
-
-	err = r.registry.Register(jobs...)
-	if err != nil {
-		return fmt.Errorf("registering cron jobs for plugin %s: %w", id, err)
-	}
-
-	return nil
+	return registerItems(id, "cron jobs", cronPlugin.CronJobs, r.registry.Register)
 }

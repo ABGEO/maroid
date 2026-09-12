@@ -49,7 +49,7 @@ func (c *Database) DSN() string {
 
 // CORS defines Cross-Origin Resource Sharing configuration parameters.
 type CORS struct {
-	Enabled          bool          `default:"false"                       mapstructure:"enabled"           validate:"boolean"`
+	Enabled          bool          `default:"false"                       mapstructure:"enabled"`
 	AllowOrigins     []string      `default:"[*]"                         mapstructure:"allow_origins"`
 	AllowMethods     []string      `default:"[GET,POST,PATCH,PUT,DELETE]" mapstructure:"allow_methods"`
 	AllowHeaders     []string      `default:"[*]"                         mapstructure:"allow_headers"`
@@ -61,8 +61,8 @@ type CORS struct {
 // Server defines HTTP server configuration parameters.
 type Server struct {
 	Hostname   string `validate:"fqdn"`
-	ListenAddr string `validate:"ip"              default:"0.0.0.0" mapstructure:"address"`
-	Port       string `validate:"min=1,max=65535" default:"8000"`
+	ListenAddr string `default:"0.0.0.0" mapstructure:"address"     validate:"ip"`
+	Port       string `default:"8000"    validate:"min=1,max=65535"`
 
 	ReadTimeout       time.Duration `default:"15s"  mapstructure:"read_timeout"`
 	ReadHeaderTimeout time.Duration `default:"5s"   mapstructure:"read_header_timeout"`
@@ -83,17 +83,17 @@ type Auth struct {
 // JWT defines JWT authentication configuration parameters.
 type JWT struct {
 	Issuer      string        `default:"https://hub.maroid.dev" mapstructure:"issuer"       validate:"required,url"`
-	PrivateKey  string        `                                 mapstructure:"private_key"  validate:"required"`
-	PublicKey   string        `                                 mapstructure:"public_key"   validate:"required"`
+	PrivateKey  string        `mapstructure:"private_key"       validate:"required"`
+	PublicKey   string        `mapstructure:"public_key"        validate:"required"`
 	TokenExpiry time.Duration `default:"168h"                   mapstructure:"token_expiry"`
 }
 
 // OIDC defines OpenID Connect configuration parameters for authentication.
 type OIDC struct {
-	Issuer       string `default:"https://oauth.telegram.org" mapstructure:"issuer"        validate:"required,url"`
-	ClientID     string `                                     mapstructure:"client_id"     validate:"required"`
-	ClientSecret string `                                     mapstructure:"client_secret" validate:"required"`
-	RedirectURI  string `                                     mapstructure:"redirect_uri"  validate:"required"`
+	Issuer       string `default:"https://oauth.telegram.org" mapstructure:"issuer" validate:"required,url"`
+	ClientID     string `mapstructure:"client_id"             validate:"required"`
+	ClientSecret string `mapstructure:"client_secret"         validate:"required"`
+	RedirectURI  string `mapstructure:"redirect_uri"          validate:"required"`
 }
 
 // MQTT defines MQTT broker configuration parameters.
@@ -111,8 +111,8 @@ type MQTT struct {
 // Telegram defines Telegram integration configuration parameters.
 type Telegram struct {
 	Token   string `validate:"required"`
-	Debug   bool   `                    default:"false"`
-	Setup   bool   `                    default:"true"`
+	Debug   bool   `default:"false"`
+	Setup   bool   `default:"true"`
 	Webhook struct {
 		Path            string   `default:"/telegram/webhook"`
 		AllowedNetworks []string `mapstructure:"allowed_networks" validate:"required"`
@@ -156,8 +156,7 @@ func New(cfgFile string) (*Config, error) {
 	viperInstance.AutomaticEnv()
 
 	if err = viperInstance.ReadInConfig(); err != nil {
-		var configFileNotFoundError viper.ConfigFileNotFoundError
-		if !errors.As(err, &configFileNotFoundError) {
+		if _, ok := errors.AsType[viper.ConfigFileNotFoundError](err); !ok {
 			return nil, fmt.Errorf("reading config: %w", err)
 		}
 	}

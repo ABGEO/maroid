@@ -46,12 +46,14 @@ func (a *Application) Run(ctx context.Context) error {
 		return err
 	}
 
+	//nolint:contextcheck // cobra hands the context of ExecuteContext to cmd.Context().
 	rootCommand, err := command.New(a.resolver)
 	if err != nil {
 		return fmt.Errorf("initializing root command: %w", err)
 	}
 
 	rootCmd := rootCommand.Command()
+
 	rootCmd.PersistentPostRunE = func(_ *cobra.Command, _ []string) error {
 		return a.cleanup(context.WithoutCancel(ctx))
 	}

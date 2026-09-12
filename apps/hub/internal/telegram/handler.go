@@ -60,11 +60,6 @@ func NewUpdatesHandler(
 	telegramConversationEngine conversation.Engine,
 	userRepo repository.UserRepository,
 ) (*ChannelHandler, error) {
-	var (
-		err            error
-		webhookOptions []telego.WebhookOption
-	)
-
 	logger = logger.With(
 		slog.String("component", "telegram-updates-handler"),
 	)
@@ -78,16 +73,6 @@ func NewUpdatesHandler(
 	}
 
 	ctx := context.Background()
-
-	if cfg.Telegram.Setup {
-		webhookOptions = append(
-			webhookOptions,
-			telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
-				URL:         cfg.Server.Hostname + cfg.Telegram.Webhook.Path,
-				SecretToken: bot.SecretToken(),
-			}),
-		)
-	}
 
 	handlerInstance := &ChannelHandler{
 		cfg:                        cfg,
@@ -103,7 +88,7 @@ func NewUpdatesHandler(
 	handlerInstance.updates, err = bot.UpdatesViaWebhook(
 		ctx,
 		handlerInstance.getWebhookHandler(),
-		webhookOptions...)
+		webhookOptions(ctx, cfg, bot)...)
 	if err != nil {
 		return nil, fmt.Errorf("creating telegram updates via webhook: %w", err)
 	}
@@ -114,6 +99,23 @@ func NewUpdatesHandler(
 	}
 
 	return handlerInstance, nil
+}
+
+func webhookOptions(
+	ctx context.Context,
+	cfg *config.Config,
+	bot *telego.Bot,
+) []telego.WebhookOption {
+	if !cfg.Telegram.Setup {
+		return nil
+	}
+
+	return []telego.WebhookOption{
+		telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
+			URL:         cfg.Server.Hostname + cfg.Telegram.Webhook.Path,
+			SecretToken: bot.SecretToken(),
+		}),
+	}
 }
 
 // Handle starts handling Telegram updates.

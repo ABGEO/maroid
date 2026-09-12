@@ -49,15 +49,10 @@ func (r *TelegramConversationRegistrar) Register(plugin pluginapi.Plugin) error 
 		)
 	}
 
-	conversations, err := telegramConversationPlugin.TelegramConversations()
-	if err != nil {
-		return fmt.Errorf("retrieveing telegram conversations for plugin %s: %w", id, err)
-	}
-
-	err = r.registry.Register(conversations...)
-	if err != nil {
-		return fmt.Errorf("registering telegram conversations for plugin %s: %w", id, err)
-	}
-
-	return nil
+	return registerItems(
+		id,
+		"telegram conversations",
+		telegramConversationPlugin.TelegramConversations,
+		r.registry.Register,
+	)
 }

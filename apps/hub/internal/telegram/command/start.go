@@ -67,5 +67,5 @@ func (c *Start) processArguments(ctx *th.Context, update telego.Update, args []s
 		return sendMessage(ctx, update, err.Error())
 	}
 
-	return cmd.Handle(ctx, update)
+	return cmd.Handle(ctx, update) //nolint:wrapcheck
 }

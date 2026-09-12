@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -13,6 +15,11 @@ import (
 	"github.com/abgeo/maroid/plugins/jasmine/dto"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 	"github.com/abgeo/maroid/plugins/jasmine/repository"
+)
+
+const (
+	pathEnvironments    = "/environments"
+	pathEnvironmentByID = "/environments/{id}"
 )
 
 // EnvironmentHandler provides HTTP handlers for environment CRUD.
@@ -29,26 +36,24 @@ func NewEnvironmentHandler(logger *slog.Logger, db *pluginapi.PluginDB) *Environ
 // Routes returns the HTTP routes for environment management.
 func (h *EnvironmentHandler) Routes() []pluginapi.Route {
 	return []pluginapi.Route{
-		{Method: http.MethodGet, Pattern: "/environments", Handler: h.List},
-		{Method: http.MethodPost, Pattern: "/environments", Handler: h.Create},
-		{Method: http.MethodGet, Pattern: "/environments/{id}", Handler: h.GetByID},
-		{Method: http.MethodPut, Pattern: "/environments/{id}", Handler: h.Update},
-		{Method: http.MethodDelete, Pattern: "/environments/{id}", Handler: h.Delete},
+		{Method: http.MethodGet, Pattern: pathEnvironments, Handler: h.List},
+		{Method: http.MethodPost, Pattern: pathEnvironments, Handler: h.Create},
+		{Method: http.MethodGet, Pattern: pathEnvironmentByID, Handler: h.GetByID},
+		{Method: http.MethodPut, Pattern: pathEnvironmentByID, Handler: h.Update},
+		{Method: http.MethodDelete, Pattern: pathEnvironmentByID, Handler: h.Delete},
 	}
 }
 
 // List handles GET /environments.
 func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
-	var environments []model.Environment
-
-	err := h.db.WithTx(r.Context(), func(tx *sqlx.Tx) error {
-		repo := repository.NewEnvironment(tx)
-
-		var txErr error
-		environments, txErr = repo.List(r.Context())
-
-		return txErr
-	})
+	environments, err := fetchInTx(
+		r.Context(),
+		h.db,
+		"listing the environments",
+		func(ctx context.Context, tx *sqlx.Tx) ([]model.Environment, error) {
+			return repository.NewEnvironment(tx).List(ctx)
+		},
+	)
 	if err != nil {
 		h.logger.Error("failed to list environments", slog.Any("error", err))
 		render.Status(r, http.StatusInternalServerError)
@@ -63,18 +68,16 @@ func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // GetByID handles GET /environments/{id}.
 func (h *EnvironmentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	var env *model.Environment
-
 	id := chi.URLParam(r, "id")
 
-	err := h.db.WithTx(r.Context(), func(tx *sqlx.Tx) error {
-		repo := repository.NewEnvironment(tx)
-
-		var txErr error
-		env, txErr = repo.GetByID(r.Context(), id)
-
-		return txErr
-	})
+	env, err := fetchInTx(
+		r.Context(),
+		h.db,
+		"getting the environment "+id,
+		func(ctx context.Context, tx *sqlx.Tx) (*model.Environment, error) {
+			return repository.NewEnvironment(tx).GetByID(ctx, id)
+		},
+	)
 	if err != nil {
 		h.logger.Error("failed to get environment", slog.Any("error", err))
 		render.Status(r, http.StatusNotFound)
@@ -102,11 +105,14 @@ func (h *EnvironmentHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Name: req.Name,
 	}
 
-	err := h.db.WithTx(r.Context(), func(tx *sqlx.Tx) error {
-		repo := repository.NewEnvironment(tx)
-
-		return repo.Insert(r.Context(), env)
-	})
+	err := execInTx(
+		r.Context(),
+		h.db,
+		"inserting the environment",
+		func(ctx context.Context, tx *sqlx.Tx) error {
+			return repository.NewEnvironment(tx).Insert(ctx, env)
+		},
+	)
 	if err != nil {
 		h.logger.Error("failed to create environment", slog.Any("error", err))
 		render.Status(r, http.StatusInternalServerError)
@@ -131,26 +137,27 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var env *model.Environment
+	env, err := fetchInTx(
+		r.Context(),
+		h.db,
+		"updating the environment "+id,
+		func(ctx context.Context, tx *sqlx.Tx) (*model.Environment, error) {
+			repo := repository.NewEnvironment(tx)
 
-	err := h.db.WithTx(r.Context(), func(tx *sqlx.Tx) error {
-		repo := repository.NewEnvironment(tx)
+			existing, txErr := repo.GetByID(ctx, id)
+			if txErr != nil {
+				return nil, fmt.Errorf("getting the current record: %w", txErr)
+			}
 
-		existing, txErr := repo.GetByID(r.Context(), id)
-		if txErr != nil {
-			return txErr
-		}
+			existing.Name = req.Name
 
-		existing.Name = req.Name
+			if txErr = repo.Update(ctx, existing); txErr != nil {
+				return nil, fmt.Errorf("writing the record: %w", txErr)
+			}
 
-		if txErr = repo.Update(r.Context(), existing); txErr != nil {
-			return txErr
-		}
-
-		env = existing
-
-		return nil
-	})
+			return existing, nil
+		},
+	)
 	if err != nil {
 		h.logger.Error("failed to update environment", slog.Any("error", err))
 		render.Status(r, http.StatusInternalServerError)
@@ -167,11 +174,14 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *EnvironmentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	err := h.db.WithTx(r.Context(), func(tx *sqlx.Tx) error {
-		repo := repository.NewEnvironment(tx)
-
-		return repo.Delete(r.Context(), id)
-	})
+	err := execInTx(
+		r.Context(),
+		h.db,
+		"deleting the environment "+id,
+		func(ctx context.Context, tx *sqlx.Tx) error {
+			return repository.NewEnvironment(tx).Delete(ctx, id)
+		},
+	)
 	if err != nil {
 		h.logger.Error("failed to delete environment", slog.Any("error", err))
 		render.Status(r, http.StatusInternalServerError)

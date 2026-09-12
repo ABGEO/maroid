@@ -14,9 +14,9 @@ type CronSchedule struct {
 // Config represents the root plugin configuration.
 type Config struct {
 	BaseURL       string       `default:"https://app.telasi.ge/api" mapstructure:"base_url"`
-	Email         string       `                                    mapstructure:"email"          validate:"required"`
-	Password      string       `                                    mapstructure:"password"       validate:"required"`
-	AccountNumber string       `                                    mapstructure:"account_number" validate:"required"`
-	CronSchedule  CronSchedule `                                    mapstructure:"cron_schedule"`
+	Email         string       `mapstructure:"email"                validate:"required"`
+	Password      string       `mapstructure:"password"             validate:"required"`
+	AccountNumber string       `mapstructure:"account_number"       validate:"required"`
+	CronSchedule  CronSchedule `mapstructure:"cron_schedule"`
 	Notification  Notification
 }

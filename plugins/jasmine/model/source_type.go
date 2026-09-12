@@ -1,12 +1,18 @@
 package model
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/abgeo/maroid/plugins/jasmine/errs"
+)
 
 // SourceType represents the kind of entity producing measurements.
 type SourceType string
 
 const (
-	SourceTypePlant       SourceType = "plant"
+	// SourceTypePlant marks a measurement produced by a plant.
+	SourceTypePlant SourceType = "plant"
+	// SourceTypeEnvironment marks a measurement produced by an environment.
 	SourceTypeEnvironment SourceType = "environment"
 )
 
@@ -16,6 +22,6 @@ func ParseSourceType(s string) (SourceType, error) {
 	case SourceTypePlant, SourceTypeEnvironment:
 		return SourceType(s), nil
 	default:
-		return "", fmt.Errorf("unknown source type: %q", s)
+		return "", fmt.Errorf("%w: %q", errs.ErrUnknownSourceType, s)
 	}
 }

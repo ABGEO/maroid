@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -13,6 +15,11 @@ import (
 	"github.com/abgeo/maroid/plugins/jasmine/dto"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 	"github.com/abgeo/maroid/plugins/jasmine/repository"
+)
+
+const (
+	pathPlants    = "/plants"
+	pathPlantByID = "/plants/{id}"
 )
 
 // PlantHandler provides HTTP handlers for plant CRUD.
@@ -29,26 +36,24 @@ func NewPlantHandler(logger *slog.Logger, db *pluginapi.PluginDB) *PlantHandler 
 // Routes returns the HTTP routes for plant management.
 func (h *PlantHandler) Routes() []pluginapi.Route {
 	return []pluginapi.Route{
-		{Method: http.MethodGet, Pattern: "/plants", Handler: h.List},
-		{Method: http.MethodPost, Pattern: "/plants", Handler: h.Create},
-		{Method: http.MethodGet, Pattern: "/plants/{id}", Handler: h.GetByID},
-		{Method: http.MethodPut, Pattern: "/plants/{id}", Handler: h.Update},
-		{Method: http.MethodDelete, Pattern: "/plants/{id}", Handler: h.Delete},
+		{Method: http.MethodGet, Pattern: pathPlants, Handler: h.List},
+		{Method: http.MethodPost, Pattern: pathPlants, Handler: h.Create},
+		{Method: http.MethodGet, Pattern: pathPlantByID, Handler: h.GetByID},
+		{Method: http.MethodPut, Pattern: pathPlantByID, Handler: h.Update},
+		{Method: http.MethodDelete, Pattern: pathPlantByID, Handler: h.Delete},
 	}
 }
 
 // List handles GET /plants.
 func (h *PlantHandler) List(w http.ResponseWriter, r *http.Request) {
-	var plants []model.Plant
-
-	err := h.db.WithTx(r.Context(), func(tx *sqlx.Tx) error {
-		repo := repository.NewPlant(tx)
-
-		var txErr error
-		plants, txErr = repo.List(r.Context())
-
-		return txErr
-	})
+	plants, err := fetchInTx(
+		r.Context(),
+		h.db,
+		"listing the plants",
+		func(ctx context.Context, tx *sqlx.Tx) ([]model.Plant, error) {
+			return repository.NewPlant(tx).List(ctx)
+		},
+	)
 	if err != nil {
 		h.logger.Error("failed to list plants", slog.Any("error", err))
 		render.Status(r, http.StatusInternalServerError)
@@ -65,16 +70,14 @@ func (h *PlantHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *PlantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	var plant *model.Plant
-
-	err := h.db.WithTx(r.Context(), func(tx *sqlx.Tx) error {
-		repo := repository.NewPlant(tx)
-
-		var txErr error
-		plant, txErr = repo.GetByID(r.Context(), id)
-
-		return txErr
-	})
+	plant, err := fetchInTx(
+		r.Context(),
+		h.db,
+		"getting the plant "+id,
+		func(ctx context.Context, tx *sqlx.Tx) (*model.Plant, error) {
+			return repository.NewPlant(tx).GetByID(ctx, id)
+		},
+	)
 	if err != nil {
 		h.logger.Error("failed to get plant", slog.Any("error", err))
 		render.Status(r, http.StatusNotFound)
@@ -104,11 +107,14 @@ func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 		EnvironmentID: req.EnvironmentID,
 	}
 
-	err := h.db.WithTx(r.Context(), func(tx *sqlx.Tx) error {
-		repo := repository.NewPlant(tx)
-
-		return repo.Insert(r.Context(), plant)
-	})
+	err := execInTx(
+		r.Context(),
+		h.db,
+		"inserting the plant",
+		func(ctx context.Context, tx *sqlx.Tx) error {
+			return repository.NewPlant(tx).Insert(ctx, plant)
+		},
+	)
 	if err != nil {
 		h.logger.Error("failed to create plant", slog.Any("error", err))
 		render.Status(r, http.StatusInternalServerError)
@@ -133,28 +139,29 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var plant *model.Plant
+	plant, err := fetchInTx(
+		r.Context(),
+		h.db,
+		"updating the plant "+id,
+		func(ctx context.Context, tx *sqlx.Tx) (*model.Plant, error) {
+			repo := repository.NewPlant(tx)
 
-	err := h.db.WithTx(r.Context(), func(tx *sqlx.Tx) error {
-		repo := repository.NewPlant(tx)
+			existing, txErr := repo.GetByID(ctx, id)
+			if txErr != nil {
+				return nil, fmt.Errorf("getting the current record: %w", txErr)
+			}
 
-		existing, txErr := repo.GetByID(r.Context(), id)
-		if txErr != nil {
-			return txErr
-		}
+			existing.Name = req.Name
+			existing.Species = req.Species
+			existing.EnvironmentID = req.EnvironmentID
 
-		existing.Name = req.Name
-		existing.Species = req.Species
-		existing.EnvironmentID = req.EnvironmentID
+			if txErr = repo.Update(ctx, existing); txErr != nil {
+				return nil, fmt.Errorf("writing the record: %w", txErr)
+			}
 
-		if txErr = repo.Update(r.Context(), existing); txErr != nil {
-			return txErr
-		}
-
-		plant = existing
-
-		return nil
-	})
+			return existing, nil
+		},
+	)
 	if err != nil {
 		h.logger.Error("failed to update plant", slog.Any("error", err))
 		render.Status(r, http.StatusInternalServerError)
@@ -171,11 +178,14 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *PlantHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	err := h.db.WithTx(r.Context(), func(tx *sqlx.Tx) error {
-		repo := repository.NewPlant(tx)
-
-		return repo.Delete(r.Context(), id)
-	})
+	err := execInTx(
+		r.Context(),
+		h.db,
+		"deleting the plant "+id,
+		func(ctx context.Context, tx *sqlx.Tx) error {
+			return repository.NewPlant(tx).Delete(ctx, id)
+		},
+	)
 	if err != nil {
 		h.logger.Error("failed to delete plant", slog.Any("error", err))
 		render.Status(r, http.StatusInternalServerError)

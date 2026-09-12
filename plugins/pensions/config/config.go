@@ -9,7 +9,7 @@ type CronSchedule struct {
 // Config represents the root plugin configuration.
 type Config struct {
 	BaseURL      string       `default:"https://api7.pensions.ge/api" mapstructure:"base_url"`
-	Username     string       `                                       mapstructure:"username"      validate:"required"`
-	Password     string       `                                       mapstructure:"password"      validate:"required"`
-	CronSchedule CronSchedule `                                       mapstructure:"cron_schedule"`
+	Username     string       `mapstructure:"username"                validate:"required"`
+	Password     string       `mapstructure:"password"                validate:"required"`
+	CronSchedule CronSchedule `mapstructure:"cron_schedule"`
 }
