@@ -1,0 +1,118 @@
+# Copy this file to `specs/features/<key>/api.yaml`.
+# Describe every route that this feature adds or changes, and no other route.
+# A path holds the effective prefix that `API-004` gives. See `SPC-002`.
+openapi: 3.1.0
+
+info:
+  title: The name of the feature
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /plugins/{pluginId}/api/<resource>:
+    parameters:
+      - name: pluginId
+        in: path
+        required: true
+        description: The plugin identifier. See `API-004`.
+        schema:
+          type: string
+          examples: [dev.maroid.jasmine]
+    get:
+      operationId: list<Resource>
+      summary: List every <resource> of the acting user.
+      description: Realizes `<KEY>-FR-001`.
+      responses:
+        "200":
+          description: The list. It holds the records of the acting user only.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/<Resource>"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: create<Resource>
+      summary: Create one <resource> for the acting user.
+      description: Realizes `<KEY>-FR-002`. The session gives the owner. See `OWN-005`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/<Resource>Input"
+      responses:
+        "201":
+          description: The created record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/<Resource>"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          $ref: "#/components/responses/Invalid"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The token carries the Maroid user identifier. See `SEC-003`.
+
+  schemas:
+    <Resource>:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: A UUID version 7 that the application generates. See `DAT-009`.
+          readOnly: true
+
+    <Resource>Input:
+      type: object
+      required: []
+      properties: {}
+
+    Error:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: The reason for the failure. See `API-006`.
+
+  responses:
+    Unauthorized:
+      description: The request carries no active user record.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: >
+        The record does not exist, or it belongs to another user.
+        The two cases answer the same way.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Invalid:
+      description: The body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
