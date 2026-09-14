@@ -67,9 +67,10 @@ func NewPlugin(
 
 // @todo: move to dedicated package.
 type pluginEntry struct {
-	ID      string                `json:"id"`
-	Version string                `json:"version"`
-	UI      *pluginapi.UIManifest `json:"ui,omitempty"`
+	ID       string                `json:"id"`
+	Version  string                `json:"version"`
+	Settings bool                  `json:"settings"`
+	UI       *pluginapi.UIManifest `json:"ui,omitempty"`
 }
 
 // Register registers the plugin routes.
@@ -104,8 +105,9 @@ func (h *Plugin) List(w http.ResponseWriter, r *http.Request) error {
 		id := meta.ID
 
 		entry := pluginEntry{
-			ID:      id.String(),
-			Version: meta.Version,
+			ID:       id.String(),
+			Version:  meta.Version,
+			Settings: h.settingsSvc.Declares(id.String()),
 		}
 
 		// Add UI capability if present.

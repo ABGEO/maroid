@@ -19,7 +19,7 @@
 		get api() {
 			return api;
 		},
-		href: (path) => `/plugin/${data.pluginId}${path.startsWith('/') ? path : `/${path}`}`,
+		href: (path) => `/plugins/${data.pluginId}${path.startsWith('/') ? path : `/${path}`}`,
 		navigate: (path) => {
 			void goto(host.href(path));
 		}

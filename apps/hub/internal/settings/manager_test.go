@@ -253,7 +253,7 @@ func TestSaveStoresEveryDeclaredField(t *testing.T) {
 	require.NotContains(t, protected, valuePassword)
 }
 
-// PSET-SC-004: The read returns the value that is not a secret, and a mark for the
+// PSET-SC-004: The read returns the value that is not a secret, and the mask for the
 // secret field.
 func TestReadReturnsNoSecret(t *testing.T) {
 	t.Parallel()
@@ -269,7 +269,52 @@ func TestReadReturnsNoSecret(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, valueEmail, values[keyEmail])
-	require.Equal(t, map[string]any{"set": true}, values[keyPassword])
+	require.Equal(t, settings.SecretMask, values[keyPassword])
+	require.NotContains(t, values, keyAccount)
+}
+
+// PSET-SC-021: A save that returns the mask for a stored secret keeps that value.
+func TestSaveKeepsAStoredSecretThatTheInputMasks(t *testing.T) {
+	t.Parallel()
+
+	world := newWorld(t)
+	ctx := world.as(world.userA)
+
+	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
+		keyEmail: "first@example.com", keyPassword: valuePassword,
+	}))
+
+	protected := world.storedValue(t, world.userA, keyPassword)
+
+	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
+		keyEmail: "second@example.com", keyPassword: settings.SecretMask,
+	}))
+
+	require.Equal(t, protected, world.storedValue(t, world.userA, keyPassword))
+
+	values, err := world.manager.Settings(ctx, pluginapi.ParsePluginID(probeID))
+	require.NoError(t, err)
+	require.Equal(t, valuePassword, values[keyPassword])
+}
+
+// PSET-SC-022: A save that names the empty string for a field removes the stored value.
+func TestSaveRemovesAStoredValueThatTheInputEmpties(t *testing.T) {
+	t.Parallel()
+
+	world := newWorld(t)
+	ctx := world.as(world.userA)
+
+	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
+		keyEmail: valueEmail, keyPassword: valuePassword, keyAccount: "123456",
+	}))
+	require.Equal(t, "123456", world.storedValue(t, world.userA, keyAccount))
+
+	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
+		keyEmail: valueEmail, keyPassword: settings.SecretMask, keyAccount: "",
+	}))
+
+	values, err := world.manager.Read(ctx, probeID)
+	require.NoError(t, err)
 	require.NotContains(t, values, keyAccount)
 }
 

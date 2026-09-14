@@ -11,6 +11,19 @@
 		return hrefs.some((h) => isActive(h));
 	}
 
+	function routeHref(pluginId: string, path: string) {
+		return resolve('/(dashboard)/plugins/[plugin]/[...path]', {
+			plugin: pluginId,
+			path: path.replace(/^\//, '')
+		});
+	}
+
+	const uiPlugins = $derived(pluginState.plugins.filter((p) => p.ui));
+
+	const pluginsGroupIsOpen = $derived(
+		page.url.pathname === resolve('/plugins') || page.url.pathname.startsWith('/plugins/')
+	);
+
 	function letterFromName(name: string) {
 		return name.charAt(0).toUpperCase();
 	}
@@ -64,23 +77,6 @@
 						stroke-width="1.75"
 						class="shrink-0"
 					>
-						<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
-					</svg>
-					<span class="is-drawer-close:hidden">Services</span>
-				</a>
-			</li>
-			<li>
-				<a href="#">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						width="16"
-						height="16"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.75"
-						class="shrink-0"
-					>
 						<path d="M6 2h12l-1 7H7z" />
 						<path d="M12 9v8" />
 						<circle cx="12" cy="20" r="2" />
@@ -89,60 +85,78 @@
 				</a>
 			</li>
 			<!-- @todo: move to a dedicated component -->
-			<li
-				class="menu-title is-drawer-close:hidden text-base-content/45 font-mono text-[10px] tracking-widest uppercase"
-			>
-				Plugins
-			</li>
-			{#if pluginState.status === 'idle' || pluginState.status === 'loading'}
-				{#each [0, 1, 2] as i (i)}
-					<li>
-						<div class="flex items-center gap-2 px-3 py-1.5">
-							<span class="skeleton h-4 w-4 shrink-0 rounded" aria-hidden="true"></span>
-							<span class="skeleton h-4 w-32" aria-hidden="true"></span>
-						</div>
-					</li>
-				{/each}
-			{:else if pluginState.status === 'ready'}
-				{#each pluginState.plugins.filter((p) => p.ui) as plugin (plugin.id)}
-					<li>
-						<details
-							open={groupIsOpen(plugin.ui!.routes.map((r) => `/plugin/${plugin.id}${r.path}`))}
+			<li>
+				<details open={pluginsGroupIsOpen}>
+					<summary>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="1.75"
+							class="shrink-0"
 						>
-							<summary>
-								<span
-									class="grid h-4 w-4 shrink-0 place-items-center rounded font-mono text-[10px] font-semibold"
-									style="background:oklch(92% 0.04 {nameToHue(
-										plugin.ui!.name
-									)});color:oklch(40% 0.1 {nameToHue(plugin.ui!.name)})"
-								>
-									{letterFromName(plugin.ui!.name)}
-								</span>
-								<span class="is-drawer-close:hidden">{plugin.ui!.name}</span>
-							</summary>
-							<ul>
-								{#each plugin.ui!.routes as route (route.path)}
-									<li>
-										<a
-											href={`/plugin/${plugin.id}${route.path}`}
-											class:menu-active={isActive(`/plugin/${plugin.id}${route.path}`)}
-										>
-											{route.label}
-										</a>
-									</li>
-								{/each}
-							</ul>
-						</details>
-					</li>
-				{/each}
-			{/if}
-			<div
-				class="is-drawer-close:hidden border-base-300 mx-2 mt-2 rounded-md border border-dashed px-2 py-2"
-			>
-				<div class="text-base-content/50 font-mono text-[10px] leading-relaxed">
-					Only plugins exposing a UI capability appear here.
-				</div>
-			</div>
+							<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
+						</svg>
+						<span class="is-drawer-close:hidden">Plugins</span>
+					</summary>
+					<ul>
+						<li>
+							<a href={resolve('/plugins')} class:menu-active={isActive(resolve('/plugins'))}>
+								All plugins
+							</a>
+						</li>
+
+						{#if pluginState.status === 'idle' || pluginState.status === 'loading'}
+							{#each [0, 1, 2] as i (i)}
+								<li>
+									<div class="flex items-center gap-2 px-3 py-1.5">
+										<span class="skeleton h-4 w-4 shrink-0 rounded" aria-hidden="true"></span>
+										<span class="skeleton h-4 w-24" aria-hidden="true"></span>
+									</div>
+								</li>
+							{/each}
+						{:else if pluginState.status === 'ready'}
+							{#each uiPlugins as plugin (plugin.id)}
+								<li>
+									<details
+										open={groupIsOpen(plugin.ui!.routes.map((r) => routeHref(plugin.id, r.path)))}
+									>
+										<summary>
+											<span
+												class="grid h-4 w-4 shrink-0 place-items-center rounded font-mono text-[10px] font-semibold"
+												style="background:oklch(92% 0.04 {nameToHue(
+													plugin.ui!.name
+												)});color:oklch(40% 0.1 {nameToHue(plugin.ui!.name)})"
+											>
+												{letterFromName(plugin.ui!.name)}
+											</span>
+											<span class="is-drawer-close:hidden">{plugin.ui!.name}</span>
+										</summary>
+										<ul>
+											{#each plugin.ui!.routes as route (route.path)}
+												<li>
+													<a
+														href={resolve('/(dashboard)/plugins/[plugin]/[...path]', {
+															plugin: plugin.id,
+															path: route.path.replace(/^\//, '')
+														})}
+														class:menu-active={isActive(routeHref(plugin.id, route.path))}
+													>
+														{route.label}
+													</a>
+												</li>
+											{/each}
+										</ul>
+									</details>
+								</li>
+							{/each}
+						{/if}
+					</ul>
+				</details>
+			</li>
 		</ul>
 	</div>
 </aside>

@@ -69,8 +69,8 @@ holds the identifier of user A.
 
 **Given** user A stored an email and a password.
 **When** user A reads the settings of the probe plugin.
-**Then** the answer holds the email, it holds `{"set": true}` for the password, and it
-holds no value of the password in any form.
+**Then** the answer holds the email, it holds `******` for the password, it holds no
+member for `account_number`, and it holds no value of the password in any form.
 
 ## `PSET-SC-005`
 
@@ -233,6 +233,25 @@ three fields that are not secret.
 **When** a run reads the settings 100 times.
 **Then** the 95th percentile of the time from the call of the plugin to the return of
 the values is under 200 milliseconds.
+
+## `PSET-SC-021`
+
+**Verifies:** `PSET-FR-006`
+**Layer:** integration
+
+**Given** user A stored an email and a password.
+**When** user A saves a new email and the mask `******` for the password.
+**Then** the stored entry of the password does not change, and the read of the password
+returns the value that user A stored first.
+
+## `PSET-SC-022`
+
+**Verifies:** `PSET-FR-007`
+**Layer:** integration
+
+**Given** user A stored the optional field `account_number`.
+**When** user A saves that field with the empty string.
+**Then** the `fields` column holds no entry for `account_number`.
 
 ## Retired identifiers
 

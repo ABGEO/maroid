@@ -3,6 +3,8 @@
 @import 'tailwindcss';
 @plugin 'daisyui';
 
+@source '../node_modules/@sjsf/daisyui5-theme/dist';
+
 @plugin 'daisyui/theme' {
 	name: 'maroid';
 	default: true;

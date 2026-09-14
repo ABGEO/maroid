@@ -37,7 +37,7 @@ func (e *InvalidError) Error() string {
 
 // Validate reports each field of the input that the settings schema refuses.
 func Validate(schema *Schema, input map[string]any) error {
-	instance, err := asInstance(input)
+	instance, err := asInstance(schema, input)
 	if err != nil {
 		return err
 	}
@@ -58,12 +58,14 @@ func Validate(schema *Schema, input map[string]any) error {
 }
 
 // asInstance drops every field that the input removes, because a removal carries no
-// value for the schema to judge. See PSET-FR-007.
-func asInstance(input map[string]any) (any, error) {
+// value for the schema to judge. See PSET-FR-007. It drops a secret that carries the
+// mask for the same reason: that field keeps the value the row holds, and the mask is
+// not that value, so the rules of the field never judge it. See PSET-DD-010.
+func asInstance(schema *Schema, input map[string]any) (any, error) {
 	given := make(map[string]any, len(input))
 
 	for key, value := range input {
-		if value == nil {
+		if value == nil || keepsSecret(schema.Kinds[key], value) {
 			continue
 		}
 

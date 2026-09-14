@@ -15,8 +15,13 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
+// SecretMask stands for a secret that the row holds. Read returns it in place of every
+// stored secret, and Save reads it as the instruction to keep the stored value.
+const SecretMask = "******"
+
 // Service reads and writes the settings that one user stores for one plugin.
 type Service interface {
+	Declares(pluginID string) bool
 	Schema(pluginID string) (json.RawMessage, error)
 	Read(ctx context.Context, pluginID string) (map[string]any, error)
 	Settings(ctx context.Context, pluginID *pluginapi.PluginID) (map[string]any, error)
@@ -50,6 +55,13 @@ func NewManager(db *sqlx.DB, schemas SchemaSource, cipher secret.Cipher) *Manage
 	}
 }
 
+// Declares reports whether the plugin declares a settings schema.
+func (m *Manager) Declares(pluginID string) bool {
+	_, found := m.schemas.Get(pluginID)
+
+	return found
+}
+
 // Schema returns the settings schema that the plugin declares.
 func (m *Manager) Schema(pluginID string) (json.RawMessage, error) {
 	schema, err := m.schemaOf(pluginID)
@@ -78,7 +90,7 @@ func (m *Manager) Read(ctx context.Context, pluginID string) (map[string]any, er
 		entry, held := stored[key]
 
 		if kind == model.FieldKindSecret {
-			values[key] = map[string]any{"set": held}
+			values[key] = maskOf(held)
 
 			continue
 		}
@@ -191,7 +203,7 @@ func (m *Manager) resolve(
 ) (model.SettingEntry, bool, error) {
 	value, given := input[key]
 
-	if !given {
+	if !given || keepsSecret(kind, value) {
 		entry, held := stored[key]
 
 		return entry, held, nil
@@ -328,6 +340,21 @@ func storedFields(entity *model.PluginSettings) model.Fields {
 	}
 
 	return entity.Fields
+}
+
+// maskOf reports a secret field to the person who stored it. See PSET-FR-005.
+func maskOf(held bool) string {
+	if !held {
+		return ""
+	}
+
+	return SecretMask
+}
+
+// keepsSecret reports the value that a client read and sent back without a change.
+// It leaves the stored entry alone, exactly as an absent field does. See PSET-FR-006.
+func keepsSecret(kind model.FieldKind, value any) bool {
+	return kind == model.FieldKindSecret && value == SecretMask
 }
 
 // isEmpty reports a value that removes the stored entry of its field.

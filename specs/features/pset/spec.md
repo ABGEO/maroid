@@ -32,8 +32,8 @@ and a plugin reads the values of the acting user through `Host.Settings()`.
 | `PSET-FR-003`   | `PSET-DD-010`, Section 4.3, `PSET-SC-003`       |
 | `PSET-FR-004`   | `PSET-DD-010`, `PSET-SC-004`                    |
 | `PSET-FR-005`   | `PSET-DD-010`, `PSET-SC-004`                    |
-| `PSET-FR-006`   | `PSET-DD-010`, `PSET-SC-005`                    |
-| `PSET-FR-007`   | `PSET-DD-010`, `PSET-SC-006`                    |
+| `PSET-FR-006`   | `PSET-DD-010`, `PSET-SC-005`, `PSET-SC-021`     |
+| `PSET-FR-007`   | `PSET-DD-010`, `PSET-SC-006`, `PSET-SC-022`     |
 | `PSET-FR-008`   | Section 4.5, `PSET-SC-007`                      |
 | `PSET-FR-009`   | Section 4.5, `PSET-SC-007`                      |
 | `PSET-FR-010`   | `PSET-DD-008`, `PSET-SC-008`                    |
@@ -93,7 +93,7 @@ and a plugin reads the values of the acting user through `Host.Settings()`.
 | `apps/hub/internal/database/tx.go`                                  | create | `database.WithUserTx`                                                    |
 | `apps/hub/internal/openbao/{doc,client}.go`                         | create | `openbao.New`, which builds the client and logs in                       |
 | `apps/hub/internal/secret/{doc,cipher,transit}.go`                  | create | `secret.Cipher`, `secret.Transit`, `secret.Key`, `secret.UserKey`, `secret.UserKeyPrefix` |
-| `apps/hub/internal/settings/{doc,service,schema,validate}.go`       | create | `settings.Service`, `settings.Manager`, `settings.SchemaSource`, `settings.Schema`, `settings.Infer`, `settings.Validate`, `settings.InvalidError`, `settings.MaxValueLength` |
+| `apps/hub/internal/settings/{doc,service,schema,validate}.go`       | create | `settings.Service`, `settings.Manager`, `settings.SchemaSource`, `settings.Schema`, `settings.Infer`, `settings.Validate`, `settings.InvalidError`, `settings.MaxValueLength`, `settings.SecretMask` |
 | `apps/hub/internal/registry/settings.go`                            | create | `registry.SettingsRegistry`, `registry.SettingsEntry`                    |
 | `apps/hub/internal/plugin/registrar/settings.go`                    | create | `registrar.SettingsRegistrar`                                            |
 | `apps/hub/internal/handler/plugin.go`                               | change | `handler.Plugin` takes the settings service, and it owns every route under `/plugins` |
@@ -203,6 +203,12 @@ type InvalidError struct {
 func Validate(schema *Schema, input map[string]any) error
 
 // apps/hub/internal/settings/service.go
+
+// SecretMask stands for a secret that the row holds. Read returns it in place of every
+// stored secret, and Save reads it as the instruction to keep the stored value. It
+// holds the same six characters for every secret, so it tells the length of nothing.
+const SecretMask = "******"
+
 type Service interface {
     Schema(pluginID string) (json.RawMessage, error)
     Read(ctx context.Context, pluginID string) (map[string]any, error)
@@ -227,7 +233,7 @@ func NewPluginSettings(tx *sqlx.Tx) *PluginSettings
 func WithUserTx(ctx context.Context, db *sqlx.DB, fn func(*sqlx.Tx) error) error
 ```
 
-`Read` serves the route and returns a mark in place of each secret. `Settings` serves a
+`Read` serves the route and returns the mask in place of each secret. `Settings` serves a
 plugin and returns the plaintext. One method cannot do both, because the caller of one
 must never receive what the caller of the other needs.
 
@@ -519,13 +525,24 @@ review rule.
 ### `PSET-DD-010`
 
 **Realizes:** `PSET-FR-003` to `PSET-FR-007`
-**Decision:** `GET /plugins/{id}/settings` returns each value that is not a secret, and
-for a secret field it returns `{"set": true}` or `{"set": false}`. `PUT` takes the full
-object. A secret field that the body does not name keeps its stored value. A field whose
-body value is `null` loses its stored value.
-**Rationale:** The reader never holds a credential, so a reader that leaks leaks
-nothing. The omit rule lets a form save one changed field while the other credentials
-stay, and the form never needs to read them back to send them.
+**Decision:** `GET /plugins/{id}/settings` returns each value that is not a secret. For
+a secret field it returns the fixed mask `settings.SecretMask`, which is `******`, when
+the field holds a value, and the empty string when it holds none. `PUT` takes the full
+object. A secret field that the body does not name keeps its stored value, and so does
+one whose body value equals the mask. The mask stands for a value and is not one, so the
+save judges it against no rule of its field, and the length of the mask stays free of
+every limit that a plugin declares. A field whose body value is `null` or the empty
+string loses its stored value.
+**Rationale:** The answer is a valid instance of the schema that the plugin declares, so
+a form renders it from the schema alone and holds no rule of its own. The mask holds six
+characters for every secret, so it tells the length of nothing. A client that sends back
+what it read changes nothing, so the keep rule of `PSET-FR-006` holds for a client that
+omits the field and for one that returns it untouched.
+**Alternatives:** `{"set": true}` in place of the value. No value of a user can collide
+with it, and it is not a string, so it fails the schema of its own property and every
+reader needs a rule for it. The mask carries one cost in exchange: a user whose secret
+is the six characters of the mask cannot store it, because the save reads that value as
+the keep rule.
 **Alternatives:** Return the ciphertext. A reader then holds the material that the
 protection exists for. A route for each field. Four routes replace two, and a save of
 two fields stops halfway.

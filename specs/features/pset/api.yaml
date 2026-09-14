@@ -42,7 +42,7 @@ paths:
       summary: Read the settings of the acting user for the plugin.
       description: >
         Realizes `PSET-FR-004`, `PSET-FR-005`, and `PSET-FR-010`.
-        A secret field carries a mark and never its value.
+        A secret field carries the mask and never its value.
         A field that the current schema does not declare is absent.
       responses:
         "200":
@@ -61,8 +61,9 @@ paths:
       description: >
         Realizes `PSET-FR-003`, `PSET-FR-006`, `PSET-FR-007`, `PSET-FR-008`,
         `PSET-FR-009`, and `PSET-FR-011`.
-        A secret field that the body does not name keeps its stored value.
-        A field whose value is null loses its stored value.
+        A secret field that the body does not name keeps its stored value, and so does
+        one whose value is the mask.
+        A field whose value is null or the empty string loses its stored value.
         The session gives the owner of the row. See `OWN-005`.
       requestBody:
         required: true
@@ -141,31 +142,27 @@ components:
       description: >
         One member for each field that the current schema declares and the user stored.
         A text or a choice field carries a string, a switch field carries a boolean, and
-        a secret field carries the mark below.
+        a secret field carries the mask `******` when it holds a value, or the empty
+        string when it holds none. The mask holds the same six characters for every
+        secret, so it tells the length of nothing. The answer is a valid instance of the
+        schema that `getSettingsSchema` serves. See `PSET-DD-010`.
       additionalProperties:
         oneOf:
           - type: string
           - type: boolean
-          - $ref: "#/components/schemas/SecretMark"
       examples:
         - email: person@example.com
-          password:
-            set: true
+          password: "******"
+          account_number: ""
           notify: true
-
-    SecretMark:
-      type: object
-      required: [set]
-      properties:
-        set:
-          type: boolean
-          description: True when the field holds a stored value. The value never travels.
 
     SettingsInput:
       type: object
       description: >
-        One member for each field to store. A null removes the stored value of that
-        field. A secret field that this object does not name keeps its stored value.
+        One member for each field to store. A null or an empty string removes the stored
+        value of that field. A secret field that this object does not name keeps its
+        stored value, and so does one whose value is the mask `******`, so a client that
+        sends back what it read changes no secret.
       additionalProperties:
         oneOf:
           - type: string
