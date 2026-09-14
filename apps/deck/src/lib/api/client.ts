@@ -1,8 +1,8 @@
-import { PUBLIC_HUB_BASE_URL } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 
 import { createClient, type ApiClient } from '@maroid/api-client';
 
-const BASE_URL = PUBLIC_HUB_BASE_URL.replace(/\/+$/, '');
+const BASE_URL = (env.PUBLIC_HUB_BASE_URL ?? '').replace(/\/+$/, '');
 
 let isRedirecting = false;
 

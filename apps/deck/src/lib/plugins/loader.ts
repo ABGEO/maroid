@@ -1,16 +1,24 @@
 import { browser } from '$app/environment';
-import { PUBLIC_HUB_BASE_URL } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 
-import { loadRemote, registerRemotes } from '@module-federation/runtime';
+import { createInstance, getInstance, type ModuleFederation } from '@module-federation/runtime';
 import type { RouteMounter } from '@maroid/plugin-sdk';
 
 export type { RouteCleanup, RouteMounter } from '@maroid/plugin-sdk';
 
-const HUB = PUBLIC_HUB_BASE_URL.replace(/\/+$/, '');
+const HUB = (env.PUBLIC_HUB_BASE_URL ?? '').replace(/\/+$/, '');
 
 type RouteManifest = Record<string, RouteMounter>;
 
 const registered = new Set<string>();
+
+let host: ModuleFederation | null = null;
+
+function federation(): ModuleFederation {
+	host ??= getInstance() ?? createInstance({ name: 'deck_host', remotes: [] });
+
+	return host;
+}
 
 function sanitize(pluginId: string): string {
 	return pluginId.replace(/[^a-zA-Z0-9_]/g, '_');
@@ -26,7 +34,7 @@ function ensureRegistered(pluginId: string): string {
 		return name;
 	}
 
-	registerRemotes([
+	federation().registerRemotes([
 		{
 			name,
 			alias: name,
@@ -53,7 +61,7 @@ export async function loadPluginMount(pluginId: string, subpath: string): Promis
 
 	const name = ensureRegistered(pluginId);
 
-	const mod = await loadRemote<{ routes: unknown }>(`${name}/entry`);
+	const mod = await federation().loadRemote<{ routes: unknown }>(`${name}/entry`);
 	if (!mod || !isRouteManifest(mod.routes)) {
 		throw new Error(`Plugin "${pluginId}" entry did not export a routes manifest`);
 	}

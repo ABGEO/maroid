@@ -38,6 +38,6 @@ export function setTheme(next: ThemePreference): void {
 	try {
 		localStorage.setItem(STORAGE_KEY, next);
 	} catch {
-		// ignore — storage may be unavailable (private mode, etc.)
+		// Ignore the error. The storage is unavailable in a private window.
 	}
 }
