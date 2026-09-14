@@ -17,4 +17,5 @@ type Host interface {
 	Notifier() (notifierapi.Dispatcher, error)
 	TelegramBot() (TelegramBot, error)
 	TelegramConversationEngine() conversation.Engine
+	Settings() (SettingsProvider, error)
 }

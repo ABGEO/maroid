@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -9,10 +10,15 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
+
+// reasonKey names the member that carries the reason of a failure. See API-006.
+const reasonKey = "reason"
 
 // PluginHandler represents the Plugin handler interface.
 type PluginHandler interface {
@@ -20,6 +26,9 @@ type PluginHandler interface {
 
 	List(w http.ResponseWriter, r *http.Request) error
 	UIAssets(w http.ResponseWriter, r *http.Request) error
+	SettingsSchema(w http.ResponseWriter, r *http.Request) error
+	ReadSettings(w http.ResponseWriter, r *http.Request) error
+	SaveSettings(w http.ResponseWriter, r *http.Request) error
 }
 
 // Plugin represents the plugin handler.
@@ -29,6 +38,7 @@ type Plugin struct {
 	userRepo       repository.UserRepository
 	pluginRegistry *registry.PluginRegistry
 	uiRegistry     *registry.UIRegistry
+	settingsSvc    settings.Service
 }
 
 var _ PluginHandler = (*Plugin)(nil)
@@ -40,6 +50,7 @@ func NewPlugin(
 	userRepo repository.UserRepository,
 	pluginRegistry *registry.PluginRegistry,
 	uiRegistry *registry.UIRegistry,
+	settingsSvc settings.Service,
 ) *Plugin {
 	return &Plugin{
 		logger: logger.With(
@@ -50,6 +61,7 @@ func NewPlugin(
 		userRepo:       userRepo,
 		pluginRegistry: pluginRegistry,
 		uiRegistry:     uiRegistry,
+		settingsSvc:    settingsSvc,
 	}
 }
 
@@ -69,6 +81,9 @@ func (h *Plugin) Register(router chi.Router) {
 			r.Use(auth.Middleware(h.logger, h.jwtSvc, h.userRepo))
 
 			r.Get("/", Wrap(h.logger, h.List))
+			r.Get("/{id}/settings/schema", Wrap(h.logger, h.SettingsSchema))
+			r.Get("/{id}/settings", Wrap(h.logger, h.ReadSettings))
+			r.Put("/{id}/settings", Wrap(h.logger, h.SaveSettings))
 		})
 
 		// @todo: find a workaround to authenticate requests on FE.
@@ -124,6 +139,76 @@ func (h *Plugin) UIAssets(w http.ResponseWriter, r *http.Request) error {
 	)
 
 	fileServer.ServeHTTP(w, r)
+
+	return nil
+}
+
+// SettingsSchema returns the settings schema that the plugin declares.
+func (h *Plugin) SettingsSchema(w http.ResponseWriter, r *http.Request) error {
+	document, err := h.settingsSvc.Schema(chi.URLParam(r, "id"))
+	if err != nil {
+		return h.failSettings(w, r, err)
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, document)
+
+	return nil
+}
+
+// ReadSettings returns the settings that the acting user stored for the plugin.
+func (h *Plugin) ReadSettings(w http.ResponseWriter, r *http.Request) error {
+	values, err := h.settingsSvc.Read(r.Context(), chi.URLParam(r, "id"))
+	if err != nil {
+		return h.failSettings(w, r, err)
+	}
+
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, values)
+
+	return nil
+}
+
+// SaveSettings stores the settings of the acting user for the plugin.
+func (h *Plugin) SaveSettings(w http.ResponseWriter, r *http.Request) error {
+	var input map[string]any
+
+	if err := render.DecodeJSON(r.Body, &input); err != nil {
+		render.Status(r, http.StatusBadRequest)
+		render.JSON(w, r, map[string]string{reasonKey: "the body is not a JSON object"})
+
+		//nolint:nilerr // the handler answered the request, so Wrap must not log it.
+		return nil
+	}
+
+	if err := h.settingsSvc.Save(r.Context(), chi.URLParam(r, "id"), input); err != nil {
+		return h.failSettings(w, r, err)
+	}
+
+	render.NoContent(w, r)
+
+	return nil
+}
+
+// failSettings answers with the status that the failure carries.
+func (h *Plugin) failSettings(w http.ResponseWriter, r *http.Request, err error) error {
+	var invalid *settings.InvalidError
+
+	switch {
+	case errors.Is(err, errs.ErrSettingsSchemaNotFound):
+		render.Status(r, http.StatusNotFound)
+		render.JSON(w, r, map[string]any{reasonKey: "the plugin declares no settings"})
+	case errors.As(err, &invalid):
+		render.Status(r, http.StatusUnprocessableEntity)
+		render.JSON(w, r, map[string]any{
+			reasonKey: "the settings do not match the schema",
+			"fields":  invalid.Fields,
+		})
+	default:
+		h.logger.ErrorContext(r.Context(), "the settings request failed", slog.Any("error", err))
+		render.Status(r, http.StatusInternalServerError)
+		render.JSON(w, r, map[string]any{reasonKey: "the settings request failed"})
+	}
 
 	return nil
 }

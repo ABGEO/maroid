@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/mymmrac/telego"
+	"github.com/openbao/openbao/api/v2"
 	"github.com/robfig/cron/v3"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
@@ -23,6 +24,8 @@ import (
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/secret"
+	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/conversation"
 	"github.com/abgeo/maroid/libs/notifier/dispatcher"
@@ -41,6 +44,10 @@ type Resolver interface {
 	Database() (*sqlx.DB, error)
 	CloseDatabase() error
 	UserRepository() (repository.UserRepository, error)
+	OpenBaoClient() (*api.Client, error)
+	SecretCipher() (secret.Cipher, error)
+	SettingsRegistry() *registry.SettingsRegistry
+	SettingsService() (settings.Service, error)
 	Migrator() (*migrator.Migrator, error)
 	PluginHost() (*pluginhost.Host, error)
 	PluginLoader() (*pluginloader.Loader, error)
@@ -91,6 +98,29 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance repository.UserRepository
+	}
+
+	openBaoClient struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *api.Client
+	}
+
+	secretCipher struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance secret.Cipher
+	}
+
+	settingsRegistry struct {
+		once     sync.Once
+		instance *registry.SettingsRegistry
+	}
+
+	settingsService struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance settings.Service
 	}
 
 	httpRouter struct {

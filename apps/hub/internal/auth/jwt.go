@@ -16,8 +16,6 @@ import (
 var ErrJWTUnexpectedClaims = errors.New("jwt: unexpected claims type")
 
 // Claims represents the JWT claims.
-//
-//nolint:tagliatelle
 type Claims struct {
 	jwt.RegisteredClaims
 

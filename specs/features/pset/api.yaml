@@ -1,0 +1,233 @@
+# The routes that PSET adds. See `SPC-002`.
+openapi: 3.1.0
+
+info:
+  title: The settings of a user for a plugin
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /plugins/{pluginId}/settings/schema:
+    parameters:
+      - $ref: "#/components/parameters/PluginId"
+    get:
+      operationId: getSettingsSchema
+      summary: Read the settings schema that the plugin declares.
+      description: >
+        Realizes `PSET-FR-001` and `PSET-FR-002`.
+        The deck reads the kind of a field from the keywords of the property.
+      responses:
+        "200":
+          description: The schema. It holds no value of any user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsSchema"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NoSchema"
+
+  /plugins/{pluginId}/settings:
+    parameters:
+      - $ref: "#/components/parameters/PluginId"
+    get:
+      operationId: getSettings
+      summary: Read the settings of the acting user for the plugin.
+      description: >
+        Realizes `PSET-FR-004`, `PSET-FR-005`, and `PSET-FR-010`.
+        A secret field carries a mark and never its value.
+        A field that the current schema does not declare is absent.
+      responses:
+        "200":
+          description: The stored settings of the acting user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsValues"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NoSchema"
+    put:
+      operationId: saveSettings
+      summary: Store the settings of the acting user for the plugin.
+      description: >
+        Realizes `PSET-FR-003`, `PSET-FR-006`, `PSET-FR-007`, `PSET-FR-008`,
+        `PSET-FR-009`, and `PSET-FR-011`.
+        A secret field that the body does not name keeps its stored value.
+        A field whose value is null loses its stored value.
+        The session gives the owner of the row. See `OWN-005`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsInput"
+      responses:
+        "204":
+          description: The hub stored every declared field.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NoSchema"
+        "422":
+          $ref: "#/components/responses/Invalid"
+        "500":
+          $ref: "#/components/responses/ProtectionFailed"
+
+components:
+  parameters:
+    PluginId:
+      name: pluginId
+      in: path
+      required: true
+      description: The plugin identifier. See `PLG-003`.
+      schema:
+        type: string
+        examples: [dev.maroid.telasi]
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The token carries the Maroid user identifier. See `SEC-003`.
+
+  schemas:
+    SettingsSchema:
+      type: object
+      description: >
+        A JSON Schema document, draft 2020-12. The hub infers it from the struct that
+        the plugin declares. A property carries `title` for the label, `description`
+        for the help, `default`, and `maxLength`. A secret property carries
+        `"format": "password"` and `"writeOnly": true`. A choice property carries
+        `enum`. The document sets `additionalProperties` to false, and its `required`
+        array names every required field. See `PSET-DD-001`.
+      examples:
+        - $schema: https://json-schema.org/draft/2020-12/schema
+          type: object
+          additionalProperties: false
+          required: [email, password]
+          properties:
+            email:
+              type: string
+              title: Email
+              description: The address you sign in with
+              maxLength: 4096
+            password:
+              type: string
+              title: Password
+              format: password
+              writeOnly: true
+              maxLength: 4096
+            period:
+              type: string
+              title: Billing period
+              enum: [month, year]
+              default: month
+            notify:
+              type: boolean
+              title: Send me the monthly bill
+
+    SettingsValues:
+      type: object
+      description: >
+        One member for each field that the current schema declares and the user stored.
+        A text or a choice field carries a string, a switch field carries a boolean, and
+        a secret field carries the mark below.
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: boolean
+          - $ref: "#/components/schemas/SecretMark"
+      examples:
+        - email: person@example.com
+          password:
+            set: true
+          notify: true
+
+    SecretMark:
+      type: object
+      required: [set]
+      properties:
+        set:
+          type: boolean
+          description: True when the field holds a stored value. The value never travels.
+
+    SettingsInput:
+      type: object
+      description: >
+        One member for each field to store. A null removes the stored value of that
+        field. A secret field that this object does not name keeps its stored value.
+      additionalProperties:
+        oneOf:
+          - type: string
+          - type: boolean
+          - type: "null"
+      examples:
+        - email: person@example.com
+          password: the-new-credential
+          account_number: null
+
+    Error:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: The reason for the failure. See `API-006`.
+
+    ValidationError:
+      type: object
+      required: [reason, fields]
+      properties:
+        reason:
+          type: string
+        fields:
+          type: object
+          description: One member for each field that caused the rejection. See `PSET-FR-009`.
+          additionalProperties:
+            type: string
+          examples:
+            - password: the field is required
+              period: the value is not in the list
+
+  responses:
+    Unauthorized:
+      description: The request carries no active user record.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NoSchema:
+      description: >
+        The hub loaded no plugin with that identifier, or the plugin declares no
+        settings schema. The two cases answer the same way.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Invalid:
+      description: A value does not match the settings schema. The hub stored nothing.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+
+    ProtectionFailed:
+      description: >
+        The hub reached no key for the acting user, or the protection service refused
+        the call. The hub stored nothing.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"

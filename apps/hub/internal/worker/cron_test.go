@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"slices"
 	"sync"
 	"testing"
 
@@ -197,4 +198,87 @@ func TestPerUserJobRunsForNobodyWhenTheListFails(t *testing.T) {
 	fire(t, job, fakeUserRepo{users: nil, err: errJobFailed})
 
 	require.Empty(t, job.actingUsers())
+}
+
+// levelRecorder keeps the level of each log record.
+type levelRecorder struct {
+	mu     sync.Mutex
+	levels []slog.Level
+}
+
+func (h *levelRecorder) Enabled(context.Context, slog.Level) bool { return true }
+
+func (h *levelRecorder) Handle(_ context.Context, record slog.Record) error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	h.levels = append(h.levels, record.Level)
+
+	return nil
+}
+
+func (h *levelRecorder) WithAttrs([]slog.Attr) slog.Handler { return h }
+
+func (h *levelRecorder) WithGroup(string) slog.Handler { return h }
+
+func (h *levelRecorder) holds(level slog.Level) bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	return slices.Contains(h.levels, level)
+}
+
+// absentForFirstJob reports an absent settings record for the first user it runs for.
+type absentForFirstJob struct {
+	recordingJob
+}
+
+func (j *absentForFirstJob) Run(ctx context.Context) error {
+	first := len(j.actingUsers()) == 0
+
+	_ = j.recordingJob.Run(ctx)
+
+	if first {
+		return pluginapi.ErrSettingsAbsent
+	}
+
+	return nil
+}
+
+// PSET-SC-012: A job that ends because the acting user stored no settings writes no
+// record at the error level, and the worker runs the job for the next user.
+func TestPerUserJobReportsNoFailureWhenTheSettingsAreAbsent(t *testing.T) {
+	t.Parallel()
+
+	job := &absentForFirstJob{
+		recordingJob: recordingJob{
+			meta: pluginapi.CronJobMeta{
+				ID:       "absent-settings",
+				Schedule: everyMorning,
+				Scope:    pluginapi.CronScopePerUser,
+			},
+			err: nil,
+		},
+	}
+
+	recorder := &levelRecorder{}
+
+	registryInstance := registry.NewCronRegistry()
+	require.NoError(t, registryInstance.Register(job))
+
+	scheduler := cron.New()
+	instance := worker.NewCronWorker(
+		slog.New(recorder),
+		scheduler,
+		registryInstance,
+		twoActiveUsers(),
+	)
+	require.NoError(t, instance.Prepare())
+
+	entries := scheduler.Entries()
+	require.Len(t, entries, 1)
+	entries[0].Job.Run()
+
+	require.Equal(t, []string{idOfA, idOfB}, job.actingUsers())
+	require.False(t, recorder.holds(slog.LevelError), "a skip is not a failure")
 }

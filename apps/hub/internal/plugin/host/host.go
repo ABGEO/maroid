@@ -21,6 +21,7 @@ type Host struct {
 	notifier                   notifierapi.Dispatcher
 	telegramBot                *telego.Bot
 	telegramConversationEngine conversation.Engine
+	settings                   pluginapi.SettingsProvider
 }
 
 var _ pluginapi.Host = (*Host)(nil)
@@ -32,6 +33,7 @@ func New(
 	notifier notifierapi.Dispatcher,
 	telegramBot *telego.Bot,
 	telegramConversationEngine conversation.Engine,
+	settings pluginapi.SettingsProvider,
 ) (*Host, error) {
 	return &Host{
 		logger:                     logger,
@@ -39,6 +41,7 @@ func New(
 		notifier:                   notifier,
 		telegramBot:                telegramBot,
 		telegramConversationEngine: telegramConversationEngine,
+		settings:                   settings,
 	}, nil
 }
 
@@ -67,4 +70,9 @@ func (h *Host) TelegramBot() (pluginapi.TelegramBot, error) {
 //nolint:ireturn
 func (h *Host) TelegramConversationEngine() conversation.Engine {
 	return h.telegramConversationEngine
+}
+
+// Settings returns the settings provider from the dependency container.
+func (h *Host) Settings() (pluginapi.SettingsProvider, error) {
+	return h.settings, nil
 }

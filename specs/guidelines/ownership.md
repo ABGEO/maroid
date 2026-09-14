@@ -4,7 +4,7 @@ title: Record ownership
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-14
 scope: [apps/hub/, libs/pluginapi/, plugins/*/db/, plugins/*/repository/]
 related: [DAT, SEC, REP, TG, JOB, PLG]
 ---
@@ -84,7 +84,14 @@ _, err = tx.ExecContext(ctx, "SELECT set_config('app.user_id', $1, true)", userI
 ```
 
 The third argument keeps the setting inside the transaction, because the pool
-reuses the connection. `PluginDB.WithTx` is the only place that sets it. See `DAT-004`.
+reuses the connection.
+
+Two functions set it, and no other place does:
+
+| Function                | Sets it for                                      |
+| ----------------------- | ------------------------------------------------ |
+| `database.WithUserTx`   | The hub, on a table that `public` holds.         |
+| `PluginDB.WithTx`       | A plugin, with the search path. See `DAT-004`.   |
 
 ## OWN-008
 

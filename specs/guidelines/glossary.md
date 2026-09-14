@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-14
 related: [LNG]
 ---
 
@@ -37,6 +37,11 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-shared-table`  | shared table      | A table whose rows belong to no user. It carries no `user_id`.                                                    |
 | `GLO-scoped-record` | scoped record     | A record that belongs to exactly one user.                                                                        |
 | `GLO-shared-record` | shared record     | A record that belongs to no user. Every user reads it.                                                            |
+| `GLO-setting`       | setting           | One value that one user stores for one field of one plugin.                                                       |
+| `GLO-settings-schema` | settings schema | The list of the fields that one plugin declares.                                                                  |
+| `GLO-secret-field`  | secret field      | A field whose value Maroid returns to nobody after the user stores it.                                            |
+| `GLO-secret`        | secret            | The value of a secret field.                                                                                      |
+| `GLO-protection`    | protection        | The means that makes a secret unreadable to a reader of the database.                                             |
 
 ## Retired identifiers
 

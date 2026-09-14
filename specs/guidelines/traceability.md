@@ -4,7 +4,7 @@ title: Traceability
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-12
+updated: 2026-09-13
 scope: [specs/, code comments]
 related: [LNG, PRC, GIT]
 ---
@@ -44,7 +44,8 @@ A prefix of four or more characters is always a feature.
 
 A prefix uses uppercase letters and digits.
 A prefix names the capability, not the technology.
-A prefix is permanent. A retired prefix never repeats.
+A prefix becomes permanent when the owner approves the first document that uses it.
+A retired prefix never repeats.
 
 ## TRC-003
 
@@ -81,11 +82,15 @@ A counter belongs to one guideline file, or to one pair of `KEY` and `TYPE`.
 
 Allocate the next free number. Do not fill a gap.
 Find the next free number in the document and in its `Retired identifiers` section.
-Write the identifier one time. After that, the identifier is permanent.
+Write the identifier one time. The identifier becomes permanent when the owner
+approves the document. A draft renumbers freely.
 
 ## TRC-005
 
-An identifier never repeats. This rule has no exception.
+An approved identifier never repeats. This rule has no exception.
+
+A document with the status `draft` or `in-review` holds no approved identifier.
+It renumbers freely, and it writes no retired row.
 
 To remove an item:
 
@@ -217,7 +222,8 @@ related: [ARC, DAT, UI, BLD]
 
 ## The prefix register
 
-A prefix is permanent. A retired prefix never repeats.
+A prefix becomes permanent when the owner approves the first document that uses it.
+A retired prefix never repeats.
 Add a row before you create the file or the directory.
 
 ### Guideline identifiers, two to three characters
@@ -262,9 +268,10 @@ Add a row before you create the file or the directory.
 
 ### Feature keys, four to eight characters
 
-| Key     | Directory         | Feature                                     | Status   |
-| ------- | ----------------- | ------------------------------------------- | -------- |
-| `IDENT` | `features/ident/` | The user record and the ownership of a row. | Approved |
+| Key      | Directory          | Feature                                     | Status   |
+| -------- | ------------------ | ------------------------------------------- | -------- |
+| `IDENT`  | `features/ident/`  | The user record and the ownership of a row. | Approved |
+| `PSET`   | `features/pset/`   | The settings of a user for a plugin.        | Approved |
 
 ## Retired identifiers
 

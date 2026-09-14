@@ -55,12 +55,20 @@ func (c *Container) PluginHost() (*pluginhost.Host, error) {
 			return
 		}
 
+		settingsService, settingsServiceErr := c.SettingsService()
+		if settingsServiceErr != nil {
+			err = settingsServiceErr
+
+			return
+		}
+
 		c.pluginHost.instance, err = pluginhost.New(
 			c.Logger(),
 			db,
 			notifier,
 			telegramBot,
 			telegramConversationEngine,
+			settingsService,
 		)
 	})
 
@@ -127,6 +135,7 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		registries.telegramCommand,
 		registries.telegramConversation,
 		c.UIRegistry(),
+		c.SettingsRegistry(),
 	), nil
 }
 

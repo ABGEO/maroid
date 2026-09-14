@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -140,6 +141,12 @@ func (w *CronWorker) runForEachUser(
 		userLogger := logger.With(slog.String("user_id", user.ID))
 
 		if err := job.Run(pluginapi.ContextWithActingUser(ctx, user.ID)); err != nil {
+			if errors.Is(err, pluginapi.ErrSettingsAbsent) {
+				userLogger.InfoContext(ctx, "cron job skipped, the user stored no settings")
+
+				continue
+			}
+
 			userLogger.ErrorContext(
 				ctx,
 				"cron job execution failed",

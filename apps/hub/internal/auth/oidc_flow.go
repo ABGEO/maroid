@@ -23,8 +23,6 @@ type InitiateResult struct {
 }
 
 // IDTokenClaims represents claims extracted from an OIDC ID token.
-//
-//nolint:tagliatelle
 type IDTokenClaims struct {
 	Subject  string `json:"sub"`
 	ID       string `json:"id"`

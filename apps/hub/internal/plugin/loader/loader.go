@@ -39,6 +39,7 @@ func New(
 	telegramCommandRegistry *registry.TelegramCommandRegistry,
 	telegramConversationRegistry *registry.TelegramConversationRegistry,
 	uiRegistry *registry.UIRegistry,
+	settingsRegistry *registry.SettingsRegistry,
 ) *Loader {
 	logger := host.Logger()
 
@@ -55,6 +56,7 @@ func New(
 			registrar.NewTelegramCommandRegistrar(telegramCommandRegistry),
 			registrar.NewTelegramConversationRegistrar(telegramConversationRegistry),
 			registrar.NewUIRegistrar(uiRegistry),
+			registrar.NewSettingsRegistrar(settingsRegistry),
 		},
 	}
 }

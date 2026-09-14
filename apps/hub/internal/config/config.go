@@ -108,6 +108,14 @@ type MQTT struct {
 	DisconnectQuiesce uint          `default:"250"    mapstructure:"disconnect_quiesce"`
 }
 
+// OpenBao defines the connection to the OpenBao server.
+type OpenBao struct {
+	Address      string `validate:"required,url"`
+	RoleID       string `mapstructure:"role_id"   validate:"required"`
+	SecretID     string `mapstructure:"secret_id" validate:"required"`
+	TransitMount string `default:"transit"        mapstructure:"transit_mount"`
+}
+
 // Telegram defines Telegram integration configuration parameters.
 type Telegram struct {
 	Token   string `validate:"required"`
@@ -131,6 +139,7 @@ type Config struct {
 	Auth     Auth
 	OIDC     OIDC
 	MQTT     MQTT
+	OpenBao  OpenBao
 	Telegram Telegram
 	Notifier notifier.Config
 	Plugins  []pluginconfig.Config

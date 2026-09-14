@@ -45,4 +45,19 @@ var (
 	ErrUnknownStatus = errors.New("user: unknown status")
 	// ErrUserNotFound indicates that no active user record holds the given identity.
 	ErrUserNotFound = errors.New("user: not found")
+	// ErrInvalidSettingsModel indicates that a plugin declared a settings model that
+	// the hub cannot reflect into a schema.
+	ErrInvalidSettingsModel = errors.New("settings model: invalid")
+	// ErrSettingsSchemaAlreadyRegistered indicates that a settings schema has already
+	// been registered for a plugin.
+	ErrSettingsSchemaAlreadyRegistered = errors.New("settings schema: already registered")
+	// ErrSettingsSchemaNotFound indicates that no loaded plugin holds a settings
+	// schema under the given identifier.
+	ErrSettingsSchemaNotFound = errors.New("settings schema: not found")
+	// ErrProtectionUnavailable indicates that the service that protects a secret is
+	// unreachable, or that it answered with no usable data.
+	ErrProtectionUnavailable = errors.New("protection: unavailable")
+	// ErrUnsupportedFieldsSource indicates that the driver returned a type that the
+	// settings fields cannot decode.
+	ErrUnsupportedFieldsSource = errors.New("plugin settings: unsupported fields source")
 )

@@ -16,6 +16,7 @@ linters:
   disable:
     - exhaustruct
     - exhaustruct_v5
+    - gomodguard
     - wsl
     - noinlineerr
 
@@ -38,12 +39,23 @@ linters:
         - error
         - empty
         - stdlib
+        - generic
         - pluginapi.Plugin
         - notifierapi.Transport
         - notifierapi.Dispatcher
         - pluginapi.TelegramBot
         - paho.mqtt.golang.Client
         - repository.UserRepository
+        - secret.Cipher
+        - settings.Service
+        - pluginapi.SettingsProvider
+
+    tagliatelle:
+      case:
+        rules:
+          # A settings field keys its stored entry and its schema property, and both
+          # follow the snake case that every configuration key in Maroid uses.
+          json: snake
 
     varnamelen:
       min-name-length: 2
@@ -79,6 +91,9 @@ formatters:
         - standard
         - default
         - prefix(github.com/abgeo/maroid)
+
+    golines:
+      reformat-tags: false
 
     gofmt:
       rewrite-rules:

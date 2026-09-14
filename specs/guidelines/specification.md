@@ -4,7 +4,7 @@ title: The specification artifacts
 type: guideline
 status: active
 created: 2026-09-12
-updated: 2026-09-12
+updated: 2026-09-13
 scope: [specs/features/]
 related: [PRC, TRC, LNG, API, MQT, JOB, TG, CLI, NTF, CFG]
 ---
@@ -18,12 +18,13 @@ This guideline gives the files that carry the contract and the shape of each dec
 
 A feature directory holds these files and no other:
 
-| File                | Holds                                         | Present when                                |
-| ------------------- | --------------------------------------------- | ------------------------------------------- |
-| `requirements.md`   | Stage 1                                       | Always                                      |
-| `spec.md`           | Stage 2                                       | Always                                      |
-| `spec-<subject>.md` | One subject of the specification              | `spec.md` grows past the limit of `LNG-013` |
-| `api.yaml`          | The OpenAPI description of the routes it adds | The feature adds or changes an HTTP route   |
+| File                        | Holds                                         | Present when                                      |
+| --------------------------- | --------------------------------------------- | ------------------------------------------------- |
+| `requirements.md`           | Stage 1                                       | Always                                            |
+| `requirements-<subject>.md` | One subject of the requirements               | `requirements.md` passes the target of `LNG-013`  |
+| `spec.md`                   | Stage 2                                       | Always                                            |
+| `spec-<subject>.md`         | One subject of the specification              | `spec.md` passes the target of `LNG-013`          |
+| `api.yaml`                  | The OpenAPI description of the routes it adds | The feature adds or changes an HTTP route         |
 
 A file that is not markdown carries no frontmatter. See `TRC-008`.
 
