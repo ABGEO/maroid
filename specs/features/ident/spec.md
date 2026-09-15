@@ -4,7 +4,7 @@ title: The user record and the ownership of a row
 type: spec
 status: approved
 created: 2026-09-12
-updated: 2026-09-12
+updated: 2026-09-16
 approved_by: Temuri
 approved_on: 2026-09-12
 constrained_by: [OWN, DAT, SEC, TG, JOB, REP, PLG, API, CFG, PKG, TST]
@@ -25,7 +25,7 @@ and the user record becomes the only allowlist.
 
 | Requirement      | Where this specification realizes it                   |
 | ---------------- | ------------------------------------------------------ |
-| `IDENT-FR-001`   | Section 4.2, `IDENT-SC-011`                            |
+| `IDENT-FR-001`   | Section 4.2                                            |
 | `IDENT-FR-002`   | Section 4.3, Section 4.5, `IDENT-SC-006`, `IDENT-SC-007` |
 | `IDENT-FR-003`   | Section 4.2, `IDENT-DD-001`, `IDENT-SC-002`            |
 | `IDENT-FR-004`   | Section 4.2, `IDENT-SC-001`                            |
@@ -40,20 +40,19 @@ and the user record becomes the only allowlist.
 | `IDENT-NFR-002`  | `IDENT-DD-003`, `IDENT-SC-012`                         |
 | `IDENT-INV-001`  | Section 4.2                                            |
 | `IDENT-INV-002`  | `IDENT-DD-002`, `IDENT-DD-006`, `IDENT-SC-005`         |
-| `IDENT-INV-003`  | Section 4.2, `IDENT-SC-011`                            |
 
 ## 3. Guideline compliance
 
 | Rule       | Guideline        | How this specification obeys it                                                  |
 | ---------- | ---------------- | -------------------------------------------------------------------------------- |
-| `OWN-001`  | Record ownership | Section 4.2 creates `public.users` with the Telegram identifier as natural key.  |
+| `OWN-001`  | Record ownership | Section 4.2 creates `public.users`. `EXTID` adds `public.identities`, the natural key. |
 | `OWN-003`  | Record ownership | Section 4.4 resolves the acting user at each of the three entry points.          |
 | `OWN-005`  | Record ownership | Section 4.2 gives the `user_id` column that every scoped table carries.          |
 | `OWN-006`  | Record ownership | Section 4.2 gives the policy. `IDENT-DD-006` makes the policy apply to the hub.  |
 | `OWN-007`  | Record ownership | `IDENT-DD-002`. `PluginDB.WithTx` is the only place that sets `app.user_id`.     |
 | `DAT-004`  | Data             | `IDENT-DD-002` keeps the search path on the same statement.                      |
 | `DAT-009`  | Data             | `public.users.id` declares `DEFAULT uuidv7()`, and no Go code names it.          |
-| `SEC-003`  | Security         | `IDENT-DD-004`. The subject claim carries the record identifier.                 |
+| `SEC-003`  | Security         | `EXTID` maps `federated_claims` to the record. `ADR-0002` retired `IDENT-DD-004`. |
 | `SEC-004`  | Security         | `IDENT-DD-003`. The hub reads the record on each request, and the configuration loses its list. |
 | `TG-006`   | Telegram         | The conversation store keeps the Telegram identifier as its key.                |
 | `JOB-005`  | Jobs             | Section 4.3 adds `Scope` to `CronJobMeta`.                                        |
@@ -75,7 +74,7 @@ and the user record becomes the only allowlist.
 | `apps/hub/internal/model/user.go`                           | create | `model.User`, `model.Status`, `model.Profile`, `model.ParseStatus` |
 | `apps/hub/internal/repository/user.go`                      | create | `repository.UserRepository`, `repository.User`                     |
 | `apps/hub/internal/auth/middleware.go`                      | change | `Middleware(logger, jwtService, userRepo repository.UserRepository)` |
-| `apps/hub/internal/handler/auth.go`                         | change | The callback resolves the record and signs its identifier          |
+| `apps/hub/internal/handler/auth.go`                         | change | The callback resolves the record. `ADR-0002` took the signature away |
 | `apps/hub/internal/handler/{plugin,plugin_wrapper}.go`      | change | The new middleware argument                                        |
 | `apps/hub/internal/config/config.go`                        | change | `Telegram.AllowedUsers` goes                                       |
 | `apps/hub/internal/telegram/middleware/acting_user.go`      | create | `middleware.ActingUser`                                            |
@@ -104,14 +103,14 @@ func ActingUserFromContext(ctx context.Context) string
 
 // apps/hub/internal/repository/user.go
 type UserRepository interface {
-    GetActiveByID(ctx context.Context, id string) (*model.User, error)
-    GetActiveByTelegramID(ctx context.Context, telegramID int64) (*model.User, error)
+	GetActiveByID(ctx context.Context, id string) (*model.User, error)
     ListActive(ctx context.Context) ([]model.User, error)
-    SyncProfileByTelegramID(
-        ctx context.Context, telegramID int64, profile model.Profile,
-    ) (*model.User, error)
 }
 ```
+
+`ADR-0002` took the Telegram identifier off `public.users`, so
+`GetActiveByTelegramID` and `SyncProfileByTelegramID` go. `EXTID` gives the
+resolver that reads `public.identities` in their place.
 
 Every consumer takes `repository.UserRepository`, the one interface that
 `REP-002` puts beside the implementation. A unit test passes a fake that
@@ -122,7 +121,7 @@ record.
 
 | Table   | Schema   | Scope  | Migration                               | Realizes                                            |
 | ------- | -------- | ------ | --------------------------------------- | --------------------------------------------------- |
-| `users` | `public` | shared | `20260912143000_table_users_create.up.sql` | `IDENT-FR-001`, `IDENT-FR-011`, `IDENT-INV-003`  |
+| `users` | `public` | shared | `20260912143000_table_users_create.up.sql` | `IDENT-FR-001`, `IDENT-FR-011`                   |
 
 `users` is shared because it holds the owners themselves. `OWN-004` names it.
 
@@ -146,9 +145,12 @@ CREATE TRIGGER set_updated_at
 EXECUTE FUNCTION set_updated_at();
 ```
 
-The `UNIQUE` constraint on `telegram_id` realizes `IDENT-INV-003`. The `CHECK`
-constraint gives the two states that `OWN-002` allows. The three profile columns
-hold nothing at the insert, and the login fills them. See `IDENT-DD-005`.
+The `CHECK` constraint gives the two states that `OWN-002` allows.
+
+`telegram_id` and the three profile columns belong to the shape that `EXTID`
+replaces. That feature extracts one identity from `telegram_id`, splits
+`display_name` into `first_name` and `last_name`, then drops all four. The retired
+identifiers of this file name the two decisions that went with them.
 
 The owner creates a record with one statement, and blocks a person with one
 statement. The block keeps every record of that person, which realizes
@@ -158,6 +160,9 @@ statement. The block keeps every record of that person, which realizes
 INSERT INTO public.users (telegram_id) VALUES (123456789);
 UPDATE public.users SET status = 'blocked' WHERE telegram_id = 123456789;
 ```
+
+`EXTID-FR-010` replaces the insert with a command, because the first identity of a
+record needs an invitation. The block keeps its statement.
 
 **A scoped table.** This feature adds none, because `IDENT-FR-008` keeps every
 record that exists today shared, and the requirements put the plugins of today out
@@ -217,9 +222,9 @@ sequenceDiagram
     participant P as PostgreSQL
 
     C->>M: The request with the token
-    M->>M: Verify the token, read the subject claim
-    M->>R: GetActiveByID(subject)
-    R->>P: SELECT ... WHERE id = $1 AND status = 'active'
+        M->>M: Verify the token, read federated_claims
+    M->>R: Resolve the identity
+    R->>P: SELECT ... JOIN public.identities ... AND status = 'active'
     alt No row
         M-->>C: 401
     else One row
@@ -233,7 +238,8 @@ sequenceDiagram
 ```
 
 The Telegram update. `TG-006` keeps the Telegram identifier as the store key, and
-the acting user travels in the context beside it.
+the acting user travels in the context beside it. `EXTID` gives the resolver that
+both flows call.
 
 ```mermaid
 sequenceDiagram
@@ -244,7 +250,7 @@ sequenceDiagram
     participant S as Step
 
     T->>M: The update
-    M->>R: GetActiveByTelegramID(update sender)
+        M->>R: Resolve the Telegram identity of the sender
     Note over M: No row drops the update with one warning
     M->>E: ctx.WithContext(acting user), Next
     E->>S: OnMessage(conversation context, update)
@@ -264,9 +270,9 @@ The cron run of a job that declares `CronScopePerUser`:
 | Condition                                              | Behavior                                          | Message                            |
 | ------------------------------------------------------ | ------------------------------------------------- | ---------------------------------- |
 | The request carries no token                           | Status 401                                        | `access denied`                    |
-| The subject claim is not a UUID                        | Status 401, one error line in the log             | `invalid subject claim in token`   |
-| No active record holds that identifier                 | Status 401, one info line in the log              | `access denied`                    |
-| The login finds no active record for the Telegram identifier | Redirect with `error=auth_failed`           | `user is not allowed`              |
+| The token carries no `federated_claims` claim          | Status 401, one error line in the log             | `access denied`                    |
+| No identity names an active record                     | Status 401, one info line in the log              | `access denied`                    |
+| The login finds no identity for the external account   | Redirect with `error=auth_failed`. `EXTID-FR-002` gives the distinct reason. | `user is not allowed` |
 | The update sender holds no active record               | The update is dropped, one warning in the log     | `sender holds no active user record` |
 | A read names a row of another user                     | The row does not reach the handler. The handler answers as it answers a missing row: status 404. Realizes `IDENT-FR-006`. | `not found`  |
 | A write names a row of another user                    | The policy refuses it. `UPDATE` and `DELETE` change no row, and `INSERT` fails with `new row violates row-level security policy`. | The plugin answers 404. |
@@ -323,32 +329,6 @@ A cache with any lifetime breaks both. The read is one index scan on a unique
 10 millisecond budget of `IDENT-NFR-002`.
 **Alternatives:** A cache with a short lifetime. It holds a blocked person inside
 for the length of the lifetime, and it gives no measurable time back.
-
-### `IDENT-DD-004`
-
-**Realizes:** `SEC-003`, `IDENT-FR-002`
-**Decision:** The subject claim of the JWT carries the record identifier, not the
-Telegram identifier. Every token that exists today stops working.
-**Rationale:** `SEC-003` gives the rule. The middleware then reads the owner of the
-data straight from the token with no second lookup by Telegram identifier.
-A subject that does not parse as a UUID gets status 401, so an old token sends its
-holder to the login and one login replaces it.
-**Alternatives:** Keep the Telegram identifier in the subject and map it on each
-request. It contradicts `SEC-003` and adds nothing.
-
-### `IDENT-DD-005`
-
-**Realizes:** `IDENT-FR-001`
-**Decision:** `public.users` holds `username`, `display_name`, and `picture_url`.
-The login callback writes the three from the ID token claims `preferred_username`,
-`name`, and `picture`, in the same statement that resolves the record.
-**Rationale:** The owner reads a row and sees the person. The write costs one
-statement for each login, not one for each request, and it never touches `id` or
-`telegram_id`, so the record stays permanent as `IDENT-FR-001` demands.
-A person who only uses the bot keeps three empty columns, because the bot carries
-no login.
-**Alternatives:** A label that only the owner writes. Nothing keeps it correct.
-Identity columns alone. The owner then reads a bare number.
 
 ### `IDENT-DD-006`
 
@@ -442,7 +422,8 @@ for would then carry no automated proof.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `IDENT-SC-001` through `IDENT-SC-012`.
+`spec-scenarios.md` holds `IDENT-SC-001` through `IDENT-SC-012`, without
+`IDENT-SC-011`, which the retired identifiers name.
 
 ## 7. Build plan
 
@@ -451,8 +432,8 @@ for would then carry no automated proof.
 | 1   | Bump both images to PostgreSQL 18. Delete the `uuid-ossp` migration. `ADR-0001` is accepted and `DAT-008` and `DAT-009` carry it. | `DAT-009`    | [x]  |
 | 2   | Add `.docker/postgres/init.sh` with the role. Point `docker-compose.yaml` and `chart/values.yaml` at it. The owner recreates both databases. | `IDENT-DD-006`  | [x]  |
 | 3   | Build `libs/testdb` with `testcontainers-go`. Add `testify` to `apps/hub`.                                   | `IDENT-DD-009`                    | [x]  |
-| 4   | Write the migration for `public.users`.                                                                       | `IDENT-FR-001`, `IDENT-INV-003`   | [x]  |
-| 5   | Write `IDENT-SC-011`, then `model.User` and `repository.User`.                                                | `IDENT-FR-001`                    | [x]  |
+| 4   | Write the migration for `public.users`.                                                                       | `IDENT-FR-001`                    | [x]  |
+| 5   | Write `model.User` and `repository.User`.                                                                     | `IDENT-FR-001`                    | [x]  |
 | 6   | Write `IDENT-SC-001` to `IDENT-SC-005` and `IDENT-SC-010`, then the change in `PluginDB.WithTx` and `libs/pluginapi/actinguser.go`. | `IDENT-FR-003` to `IDENT-FR-006`, `IDENT-FR-008`, `IDENT-INV-001`, `IDENT-INV-002` | [x]  |
 | 7   | Write `IDENT-SC-006`, then the HTTP middleware and the three call sites that build it.                        | `IDENT-FR-002`                    | [x]  |
 | 8   | Change the login callback: resolve the record, sync the profile, sign the record identifier.                  | `IDENT-FR-002`, `SEC-003`         | [x]  |
@@ -469,11 +450,14 @@ superuser passes every test and isolates nothing.
 | Postponed                                                                | Reason and the condition that brings it back                                                                       |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
 | Scoping the tables of the plugins that exist today.                      | `IDENT-FR-008` keeps them shared. One feature for each plugin adds the column, the policy, and the migration.       |
-| The shape of `/auth/me`.                                                 | No requirement names it. The record now holds the profile, so a later feature can serve it from the record.         |
-| A command that creates or blocks a user record.                          | Open question 2 answers it: a SQL statement does the work.                                                           |
+| The shape of `/auth/me`.                                                 | `EXTID-FR-009` names it now, and `EXTID` gives the shape.                                                            |
+| A command that creates or blocks a user record.                          | `EXTID-FR-010` adds it, because the first identity of a record needs an invitation.                                  |
 | A cron job that declares `CronScopePerUser`.                             | Open question 1 answers it: the feature that moves plugin configuration to the user declares the first one.         |
 | Converting the identifier column of the existing plugin tables to `UUID`. | `ADR-0001` records the contradiction. One feature for each plugin converts it.                                      |
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID             | Retired    | Reason                                                                                      |
+| -------------- | ---------- | --------------------------------------------------------------------------------------------- |
+| `IDENT-DD-004` | 2026-09-15 | `ADR-0002` changed `SEC-003`. The subject of the token belongs to Dex. `EXTID` succeeds it. |
+| `IDENT-DD-005` | 2026-09-15 | `ADR-0002` moved the profile of a provider onto the identity. `EXTID` succeeds it.          |

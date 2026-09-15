@@ -4,7 +4,7 @@ title: The user record and the ownership of a row
 type: requirements
 status: approved
 created: 2026-09-11
-updated: 2026-09-12
+updated: 2026-09-15
 approved_by: Temuri
 approved_on: 2026-09-12
 constrained_by: [OWN, DAT, SEC, TG, JOB, REP, PLG]
@@ -125,17 +125,13 @@ A record names exactly one user, or it is a shared record.
 
 No unit of work reaches a scoped record without an acting user.
 
-### `IDENT-INV-003`
-
-One person holds one user record. Two records never carry the same Telegram identifier.
-
 ## 7. Constraints from the guidelines
 
 | Rule      | Guideline        | Effect on this feature                                              |
 | --------- | ---------------- | ------------------------------------------------------------------- |
 | `OWN-002` | Record ownership | The owner creates the record. It is active or blocked.              |
 | `OWN-006` | Record ownership | The isolation runs in the database and fails closed.                |
-| `SEC-003` | Security         | The token carries the Maroid user identifier.                       |
+| `SEC-003` | Security         | The token names an identity. The hub maps it to the record.         |
 | `SEC-004` | Security         | The user record is the allowlist. The configuration loses its list. |
 
 ## 8. Open questions
@@ -143,8 +139,10 @@ One person holds one user record. Two records never carry the same Telegram iden
 | #   | Question                                                                                                 | Owner  | Answer                                                                                                                                                      |
 | --- | -------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Which user owns the rows that the utility jobs collect, given that the credentials are global?           | Temuri | Nobody. Those records stay shared. A later feature moves the configuration of a plugin to the user, and then a job runs once for each user that enabled it. |
-| 2   | Does the owner create a user record with a command of the hub, or with a statement against the database? | Temuri | With a statement against the database. No provisioning command is needed yet.                                                                               |
+| 2   | Does the owner create a user record with a command of the hub, or with a statement against the database? | Temuri | With a statement against the database. `EXTID-FR-010` adds the command later, because the first identity needs an invitation.                               |
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID              | Retired    | Reason                                                                                         |
+| --------------- | ---------- | ------------------------------------------------------------------------------------------------ |
+| `IDENT-INV-003` | 2026-09-15 | `ADR-0002` took the Telegram identifier off `public.users`. `EXTID-INV-001` succeeds it.       |

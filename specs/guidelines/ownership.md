@@ -4,7 +4,7 @@ title: Record ownership
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-14
+updated: 2026-09-15
 scope: [apps/hub/, libs/pluginapi/, plugins/*/db/, plugins/*/repository/]
 related: [DAT, SEC, REP, TG, JOB, PLG]
 ---
@@ -16,8 +16,12 @@ the acting user, and the isolation between them. `GLO-user` defines a user.
 
 ## OWN-001
 
-The hub holds one record for each person, in the table `public.users`.
-The Telegram user identifier is the natural key. The record is permanent.
+The hub holds one record for each person, in the table `public.users`. The record
+is permanent, and it carries the name that the owner gave it.
+
+One row in `public.identities` binds one external account to one user record. That
+row is the natural key, and `SEC-003` reads it. One user record holds several of
+them. One external account belongs to at most one user record.
 
 ## OWN-002
 
@@ -29,11 +33,14 @@ because a delete orphans every row that names it. `SEC-004` is the gate.
 
 Every unit of work carries one acting user. Work without one reaches no scoped table.
 
-| Entry point       | Source of the acting user                      |
-| ----------------- | ---------------------------------------------- |
-| An HTTP request   | The subject claim of the token. See `SEC-003`. |
-| A Telegram update | The Telegram user identifier in the update.    |
-| A cron job        | The user that the job declares. See `OWN-009`. |
+| Entry point       | Source of the acting user                                            |
+| ----------------- | -------------------------------------------------------------------- |
+| An HTTP request   | The identity that `federated_claims` names. See `SEC-003`.           |
+| A Telegram update | The identity of the Telegram connector for the sender of the update. |
+| A cron job        | The user that the job declares. See `OWN-009`.                       |
+
+One resolver reads `public.identities` for the first two rows. A connector that
+arrives later adds no path.
 
 ## OWN-004
 

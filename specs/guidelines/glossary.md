@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-09-14
+updated: 2026-09-15
 related: [LNG]
 ---
 
@@ -31,7 +31,13 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-route-mounter` | route mounter     | A function in a remote. It renders one page of a plugin into an element of the deck.                              |
 | `GLO-notification`  | notification      | A message that Maroid sends to a person, through Telegram or through the deck.                                    |
 | `GLO-owner`         | owner             | The maintainer of the repository. The owner approves each stage.                                                  |
-| `GLO-user`          | user              | A person that Maroid serves. One row in `public.users`, keyed by the Telegram user identifier.                    |
+| `GLO-user`          | user              | A person that Maroid serves. One row in `public.users`. An identity binds it to an external account.              |
+| `GLO-identity`      | identity          | The binding of one external account to one user record. One row in `public.identities`.                          |
+| `GLO-provider`      | provider          | One account system that Dex federates. Telegram is one.                                                          |
+| `GLO-external-account` | external account | The account that one person holds at one provider.                                                            |
+| `GLO-invitation`    | invitation        | A grant that the owner issues. It lets one sign in create the first identity of one user record.                  |
+| `GLO-attach`        | attach            | The operation that creates an identity.                                                                          |
+| `GLO-detach`        | detach            | The operation that removes an identity.                                                                          |
 | `GLO-acting-user`   | acting user       | The user that one unit of work runs for. Every request, update, and job run has exactly one.                      |
 | `GLO-scoped-table`  | scoped table      | A table whose every row belongs to one user. It carries `user_id` and row level security.                         |
 | `GLO-shared-table`  | shared table      | A table whose rows belong to no user. It carries no `user_id`.                                                    |

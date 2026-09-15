@@ -3,7 +3,7 @@ title: Architecture decision records
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-09-12
+updated: 2026-09-15
 ---
 
 # Architecture decision records
@@ -41,6 +41,7 @@ The frontmatter holds the identifier.
 
 ## The index
 
-| ID         | Title                              | File                          | Status   | Date       | Rules that change  |
-| ---------- | ---------------------------------- | ----------------------------- | -------- | ---------- | ------------------ |
-| `ADR-0001` | PostgreSQL 18 and the native uuidv7 | `postgresql-18-and-uuidv7.md` | accepted | 2026-09-12 | `DAT-008`, `DAT-009` |
+| ID         | Title                               | File                                   | Status   | Date       | Rules that change                                                  |
+| ---------- | ----------------------------------- | -------------------------------------- | -------- | ---------- | ------------------------------------------------------------------ |
+| `ADR-0001` | PostgreSQL 18 and the native uuidv7 | `postgresql-18-and-uuidv7.md`          | accepted | 2026-09-12 | `DAT-008`, `DAT-009`                                               |
+| `ADR-0002` | Dex as the authorization server     | `dex-as-the-authorization-server.md`   | accepted | 2026-09-15 | `SEC-001`, `SEC-002`, `SEC-003`, `OWN-001`, `OWN-003`, `API-003`, `GLO-user` |

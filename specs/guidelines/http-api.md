@@ -4,7 +4,7 @@ title: The HTTP API
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-14
+updated: 2026-09-15
 scope: [apps/hub/internal/server/, apps/hub/internal/handler/, apps/hub/internal/middleware/]
 related: [ARC, PLG, SEC, UI]
 ---
@@ -25,16 +25,22 @@ CORS follows when `cors.enabled` is true.
 
 The path prefixes are fixed:
 
-| Prefix                    | Serves                              | Access                 |
-| ------------------------- | ----------------------------------- | ---------------------- |
-| `/auth`, `/auth/callback` | The login flow                      | Public                 |
-| `/auth/me`                | The current user                    | Authenticated          |
-| `/plugins`                | The list of loaded plugins          | Authenticated          |
-| `/plugins/{id}/api/*`     | The routes of a plugin              | Authenticated          |
-| `/plugins/{id}/settings*` | The settings of a user for a plugin | Authenticated          |
-| `/plugins/{id}/ui/*`      | The assets of a plugin              | Public. See `SEC-006`. |
-| `/telegram/webhook`       | The Telegram updates                | Network allowlist      |
-| `/ping`                   | The health check                    | Public                 |
+| Prefix                    | Serves                                    | Access                 |
+| ------------------------- | ----------------------------------------- | ---------------------- |
+| `/auth`, `/auth/callback` | The login flow                            | Public                 |
+| `/auth/invite`            | The redemption of an invitation           | Public                 |
+| `/auth/me`                | The current user and their identities     | Authenticated          |
+| `/auth/link`              | The start of an attach                    | Authenticated          |
+| `/auth/identities*`       | The external accounts of the current user | Authenticated          |
+| `/plugins`                | The list of loaded plugins                | Authenticated          |
+| `/plugins/{id}/api/*`     | The routes of a plugin                    | Authenticated          |
+| `/plugins/{id}/settings*` | The settings of a user for a plugin       | Authenticated          |
+| `/plugins/{id}/ui/*`      | The assets of a plugin                    | Public. See `SEC-006`. |
+| `/telegram/webhook`       | The Telegram updates                      | Network allowlist      |
+| `/ping`                   | The health check                          | Public                 |
+
+`/auth/callback` finishes a sign in, an attach, and a redemption. One client of Dex
+holds one redirect address, so one route finishes all three.
 
 ## API-004
 

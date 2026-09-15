@@ -1,0 +1,323 @@
+# The routes that EXTID adds or changes. See `SPC-002`.
+openapi: 3.1.0
+
+info:
+  title: External identities and the delegated sign in
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+paths:
+  /auth:
+    get:
+      operationId: startSignIn
+      summary: Start a sign in at the identity provider.
+      description: >
+        Realizes `EXTID-FR-001`.
+        The hub writes a flow row with the intent `sign_in`, then redirects to Dex.
+        The row holds the state, the nonce, the verifier, and the target.
+        See `EXTID-DD-001`.
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+        - $ref: "#/components/parameters/Redirect"
+      responses:
+        "302":
+          $ref: "#/components/responses/ToProvider"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /auth/link:
+    get:
+      operationId: startAttach
+      summary: Start an attach of a further external account to the acting user.
+      description: >
+        Realizes `EXTID-FR-004` and `EXTID-FR-006`.
+        The hub writes a flow row with the intent `attach` and the identifier of the
+        acting user. The callback reads that identifier from the row, never from the
+        request, so a rewritten cookie cannot move the attach.
+      parameters:
+        - name: provider
+          in: query
+          required: true
+          description: >
+            The identifier of the connector to attach. An attach names its provider,
+            because the person chose it before the request.
+          schema:
+            type: string
+        - $ref: "#/components/parameters/Redirect"
+      responses:
+        "302":
+          $ref: "#/components/responses/ToProvider"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/invite:
+    get:
+      operationId: redeemInvitation
+      summary: Start the redemption of an invitation.
+      description: >
+        Realizes `EXTID-FR-012`, `EXTID-FR-013`, and `EXTID-FR-014`.
+        The hub reads the invitation by the digest of the token. An invitation that is
+        absent, consumed, or expired ends the request before Dex. Otherwise the hub
+        writes a flow row with the intent `redeem` and redirects.
+      security: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          description: The token that `maroid user invite` printed. See `EXTID-DD-007`.
+          schema:
+            type: string
+      responses:
+        "302":
+          $ref: "#/components/responses/ToProvider"
+        "400":
+          $ref: "#/components/responses/InvalidInvitation"
+
+  /auth/callback:
+    get:
+      operationId: finishAuthFlow
+      summary: Finish a sign in, an attach, or a redemption.
+      description: >
+        Realizes `EXTID-FR-001`, `EXTID-FR-002`, `EXTID-FR-003`, `EXTID-FR-004`,
+        `EXTID-FR-005`, `EXTID-FR-012`, and `EXTID-FR-016`.
+        The hub reads the flow row by the state and consumes it, then exchanges the
+        code and verifies the token. The `intent` column of the row picks the branch.
+        See `EXTID-DD-004`.
+        A sign in that succeeds sets the cookie `maroid_token` and writes the profile
+        of the provider onto the identity.
+      security: []
+      parameters:
+        - name: state
+          in: query
+          required: true
+          description: The state that names the flow row.
+          schema:
+            type: string
+        - name: code
+          in: query
+          required: true
+          description: The authorization code of Dex.
+          schema:
+            type: string
+      responses:
+        "302":
+          description: >
+            The target of the flow row. A failure carries the query parameter `error`
+            with one of `no_identity`, `access_denied`, `identity_taken`, or
+            `auth_failed`. `EXTID-DD-013` gives the reason that `no_identity` stands
+            apart.
+          headers:
+            Location:
+              schema:
+                type: string
+            Set-Cookie:
+              description: >
+                `maroid_token` with the identity token of Dex, on a sign in and on a
+                redemption that succeeds. See `EXTID-DD-006`.
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      summary: Read the acting user and every provider that Maroid offers.
+      description: >
+        Realizes `EXTID-FR-009`.
+        The list holds one member for each provider in `auth.providers`, attached or
+        not. See `EXTID-DD-009`.
+      responses:
+        "200":
+          description: The acting user and the providers.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CurrentUser"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/identities/{provider}:
+    parameters:
+      - name: provider
+        in: path
+        required: true
+        description: The identifier of the connector in Dex.
+        schema:
+          type: string
+    delete:
+      operationId: detachIdentity
+      summary: Detach an external account from the acting user.
+      description: >
+        Realizes `EXTID-FR-007` and `EXTID-FR-008`.
+        The hub refuses to detach the last identity of a record, because nobody
+        reaches a record that holds none. See `EXTID-DD-003`.
+      responses:
+        "204":
+          description: The identity is gone.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NoIdentity"
+        "409":
+          $ref: "#/components/responses/LastIdentity"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        A token that Dex issued. The cookie `maroid_token` comes first, then this
+        header. See `SEC-005`.
+
+  parameters:
+    Provider:
+      name: provider
+      in: query
+      required: false
+      description: >
+        The identifier of the connector in Dex. The hub sends it as `connector_id`,
+        and `auth.providers` holds the list that it accepts. A request that names none
+        reaches the connector list of Dex, which is the page that a person picks from.
+      schema:
+        type: string
+    Redirect:
+      name: redirect
+      in: query
+      required: true
+      description: >
+        The address that the flow returns to. The hub refuses one that
+        `auth.allowed_redirects` does not hold.
+      schema:
+        type: string
+        format: uri
+
+  schemas:
+    CurrentUser:
+      type: object
+      required: [user, identities]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        identities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderState"
+
+    User:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        first_name:
+          type: ["string", "null"]
+          description: The owner sets it. No sign in changes it. See `EXTID-FR-015`.
+        last_name:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [active, blocked]
+
+    ProviderState:
+      type: object
+      required: [provider, name, attached]
+      description: >
+        One provider that Maroid offers. The four members below `attached` are present
+        only when `attached` is true.
+      properties:
+        provider:
+          type: string
+        name:
+          type: string
+          description: The text that the deck shows.
+        attached:
+          type: boolean
+        username:
+          type: ["string", "null"]
+        display_name:
+          type: ["string", "null"]
+        picture_url:
+          type: ["string", "null"]
+        attached_at:
+          type: string
+          format: date-time
+      examples:
+        - provider: telegram
+          name: Telegram
+          attached: true
+          username: ABGEO07
+          display_name: Temuri
+          picture_url: https://example.com/a.jpg
+          attached_at: 2026-09-15T10:00:00Z
+        - provider: cloud
+          name: ABGEO.cloud
+          attached: false
+
+    Error:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: The reason for the failure. See `API-006`.
+
+  responses:
+    ToProvider:
+      description: The redirect to Dex, with `connector_id` and the state.
+      headers:
+        Location:
+          schema:
+            type: string
+
+    BadRequest:
+      description: >
+        A parameter is absent, the target is not in `auth.allowed_redirects`, or the
+        state names no flow row.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Unauthorized:
+      description: The request carries no token, or no identity names an active record.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    InvalidInvitation:
+      description: >
+        The invitation is absent, consumed, or expired. The three cases answer the
+        same way.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NoIdentity:
+      description: No identity of the acting user names that provider.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    LastIdentity:
+      description: >
+        The identity is the last one of the record. `EXTID-INV-002` keeps it.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+security:
+  - bearerAuth: []

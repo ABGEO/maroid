@@ -4,7 +4,7 @@ title: The scenarios of the user record and the ownership of a row
 type: spec
 status: approved
 created: 2026-09-12
-updated: 2026-09-12
+updated: 2026-09-16
 approved_by: Temuri
 approved_on: 2026-09-12
 constrained_by: [TST, OWN, TRC]
@@ -93,7 +93,8 @@ stay in the table.
 **Layer:** integration
 
 **Given** a running hub and a person with no record.
-**When** one `INSERT` adds the record, and that person sends the next request.
+**When** the owner adds the record and its identity, and that person sends the next
+request.
 **Then** the request succeeds with no restart of the hub.
 
 ## `IDENT-SC-009`
@@ -117,15 +118,6 @@ policy.
 **When** user A reads it, and then user B reads it.
 **Then** both read every row.
 
-## `IDENT-SC-011`
-
-**Verifies:** `IDENT-FR-001`, `IDENT-INV-003`
-**Layer:** integration
-
-**Given** a record with the Telegram identifier 123456789.
-**When** a second insert names the same Telegram identifier.
-**Then** the unique constraint refuses it.
-
 ## `IDENT-SC-012`
 
 **Verifies:** `IDENT-NFR-002`
@@ -139,4 +131,6 @@ handler at the database is 10 milliseconds or less at the 95th percentile.
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID             | Retired    | Reason                                                                                    |
+| -------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| `IDENT-SC-011` | 2026-09-15 | It proves the unique constraint on `telegram_id`, which the migration of `EXTID` drops. `EXTID-SC-007` succeeds it. |

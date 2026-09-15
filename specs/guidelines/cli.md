@@ -4,9 +4,9 @@ title: The command line
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-15
 scope: [apps/hub/cmd/, apps/hub/internal/command/, apps/hub/internal/commander/]
-related: [LIF, PLG, JOB, ARC]
+related: [LIF, PLG, JOB, ARC, OWN]
 ---
 
 # The command line
@@ -21,6 +21,7 @@ The root command is `maroid`. The tree is:
 maroid serve http       The HTTP API and the Telegram webhook.
 maroid worker           The background workers. See JOB-004.
 maroid migrate up       The migrations. See DAT-005.
+maroid user invite      A user record and an invitation for it. See OWN-002.
 ```
 
 ## CLI-002

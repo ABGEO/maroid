@@ -4,8 +4,8 @@ title: Authentication and authorization
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
-scope: [apps/hub/internal/auth/, apps/hub/internal/middleware/, .keys/]
+updated: 2026-09-15
+scope: [apps/hub/internal/auth/, apps/hub/internal/middleware/]
 related: [ARC, API, TG, CFG, OWN]
 ---
 
@@ -13,29 +13,37 @@ related: [ARC, API, TG, CFG, OWN]
 
 ## SEC-001
 
-Identity comes from Telegram. The OIDC issuer is the Telegram OAuth service.
+Identity comes from Dex. Dex is the authorization server, and the hub is its
+consumer. Telegram is one connector of Dex, and it is not the only one.
 Maroid holds no password.
 
 Maroid holds a local user record, and that record owns the data. `OWN-001` gives it.
 The record carries no credential.
 
-**Why:** The household already has Telegram. A second account is a cost with no value.
-A row still needs an owner that a Telegram profile change cannot move.
+**Why:** One person holds several external accounts. A further connector costs one
+entry in the configuration of Dex, and no flow inside the hub.
 
 ## SEC-002
 
-The hub issues its own JWT after the OIDC callback.
-The algorithm is RS256. The hub signs with the RSA key pair that `jwt.private_key`
-and `jwt.public_key` name. The default lifetime is 168 hours.
+The hub signs no token. It verifies a token that Dex issued, against the JWKS of
+Dex, and it holds the key set in memory.
 
-Verification requires the RS256 method, the issuer, an issued-at claim, and an
-expiry claim.
+A verification checks the signature, the issuer, the audience, an issued-at claim,
+and an expiry claim. The audience is the client identifier of the hub.
+
+**Why:** One issuer means one verification path. The browser today and an agent
+later present a token of the same shape.
 
 ## SEC-003
 
-The subject claim of the JWT is the Maroid user identifier, as `OWN-001` gives it.
+The subject claim of the token belongs to Dex. The hub stores it nowhere.
 
-**Why:** The token names the owner of the data, with no mapping step.
+The hub reads the `federated_claims` claim. That claim names the connector and the
+user identifier at the upstream provider. One row in `public.identities` maps the
+pair to the Maroid user identifier.
+
+**Why:** The subject of Dex changes when the configuration of a connector changes.
+A stored subject then names nobody.
 
 ## SEC-004
 
