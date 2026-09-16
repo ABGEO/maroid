@@ -36,6 +36,7 @@ type AuthFlow struct {
 	Intent       Intent     `db:"intent"`
 	UserID       *string    `db:"user_id"`
 	InvitationID *string    `db:"invitation_id"`
+	BindingHash  []byte     `db:"binding_hash"`
 	Nonce        string     `db:"nonce"`
 	Verifier     string     `db:"verifier"`
 	Redirect     string     `db:"redirect"`

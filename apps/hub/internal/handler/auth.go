@@ -20,20 +20,17 @@ import (
 )
 
 const (
-	stateCookieName    = "maroid_oauth_state"
-	nonceCookieName    = "maroid_oauth_nonce"
-	verifierCookieName = "maroid_oauth_verifier"
-	redirectCookieName = "maroid_oauth_redirect"
 	//nolint:gosec // G101: this names the cookie, it holds no credential.
 	authTokenCookieName = "maroid_token"
-	oauthCookieMaxAge   = 5 * 60           // 5 minutes in seconds
-	authTokenMaxAge     = 7 * 24 * 60 * 60 // 7 days in seconds
+	// bindingCookieName holds the secret that binds one authorization flow to one
+	// browser. It grants nothing on its own: the row holds every authority, and
+	// this value only proves that the browser that finishes the flow started it.
+	bindingCookieName = "maroid_auth_binding"
+	authTokenMaxAge   = 7 * 24 * 60 * 60 // 7 days in seconds
+	bindingMaxAge     = 10 * 60          // 10 minutes in seconds, the lifetime of a flow
 )
 
-var (
-	errInvalidQueryParameter = errors.New("invalid query parameter")
-	errInvalidRedirectCookie = errors.New("invalid redirect cookie value")
-)
+var errInvalidQueryParameter = errors.New("invalid query parameter")
 
 // AuthHandler represents the Auth handler interface.
 type AuthHandler interface {
@@ -101,50 +98,57 @@ func (h *Auth) Register(router chi.Router) {
 func (h *Auth) Initiate(w http.ResponseWriter, r *http.Request) error {
 	redirect := r.URL.Query().Get("redirect")
 	if !validateRedirect(redirect, h.cfg.Auth.AllowedRedirects) {
-		http.Error(w, "Missing or invalid 'redirect' parameter", http.StatusBadRequest)
+		sendBadRequest(w, r, "missing or invalid redirect parameter")
 
 		return fmt.Errorf("%w: missing or invalid redirect parameter", errInvalidQueryParameter)
 	}
 
-	result, err := h.oidcFlow.Initiate()
+	authURL, binding, err := h.oidcFlow.Initiate(r.Context(), model.AuthFlow{
+		Intent:   model.IntentSignIn,
+		Redirect: redirect,
+	})
 	if err != nil {
 		redirectWithError(w, r, redirect)
 
 		return fmt.Errorf("initiating OIDC flow: %w", err)
 	}
 
-	setOAuthCookie(w, redirectCookieName, redirect)
-	setOAuthCookie(w, stateCookieName, result.State)
-	setOAuthCookie(w, nonceCookieName, result.Nonce)
-	setOAuthCookie(w, verifierCookieName, result.Verifier)
-
-	http.Redirect(w, r, result.AuthURL, http.StatusFound)
+	setBindingCookie(w, binding)
+	http.Redirect(w, r, authURL, http.StatusFound)
 
 	return nil
 }
 
 // Callback completes the OIDC flow, verifies the ID token, and redirects with a signed JWT.
 func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
-	redirectCookie, err := r.Cookie(redirectCookieName)
-	if err != nil {
-		http.Error(w, "Missing or invalid 'redirect' parameter", http.StatusBadRequest)
+	state := r.URL.Query().Get("state")
 
-		return fmt.Errorf("retrieving redirect cookie: %w", err)
+	binding := takeBindingCookie(w, r)
+
+	flow, err := h.oidcFlow.Consume(r.Context(), state, binding)
+	if err != nil && flow == nil {
+		sendBadRequest(w, r, "invalid state")
+
+		return fmt.Errorf("consuming the authorization flow: %w", err)
 	}
 
-	redirect := redirectCookie.Value
+	redirect := flow.Redirect
 
-	clearOAuthCookie(w, redirectCookieName)
-
-	// The redirect URL is stored in an HTTP-only cookie to prevent tampering.
-	// We still need to validate it against the allowed list to prevent open redirect vulnerabilities.
+	// The row holds the target, and a row cannot come from the browser. The list
+	// still applies, because the row outlives a change to the configuration.
 	if !validateRedirect(redirect, h.cfg.Auth.AllowedRedirects) {
-		http.Error(w, "Missing or invalid 'redirect' parameter", http.StatusBadRequest)
+		sendBadRequest(w, r, "missing or invalid redirect parameter")
 
-		return errInvalidRedirectCookie
+		return errInvalidQueryParameter
 	}
 
-	idClaims, err := h.processOIDCCallback(w, r)
+	if err != nil {
+		redirectWithError(w, r, redirect)
+
+		return fmt.Errorf("consuming the authorization flow: %w", err)
+	}
+
+	idClaims, err := h.processOIDCCallback(r, flow)
 	if err != nil {
 		redirectWithError(w, r, redirect)
 
@@ -216,44 +220,15 @@ func (h *Auth) resolveAndSync(
 }
 
 func (h *Auth) processOIDCCallback(
-	w http.ResponseWriter,
 	r *http.Request,
+	flow *model.AuthFlow,
 ) (*auth.IDTokenClaims, error) {
-	stateCookie, err := r.Cookie(stateCookieName)
-	if err != nil {
-		return nil, fmt.Errorf("retrieving cookie: %s: %w", stateCookieName, err)
-	}
-
-	nonceCookie, err := r.Cookie(nonceCookieName)
-	if err != nil {
-		return nil, fmt.Errorf("retrieving cookie: %s: %w", nonceCookieName, err)
-	}
-
-	verifierCookie, err := r.Cookie(verifierCookieName)
-	if err != nil {
-		return nil, fmt.Errorf("retrieving cookie: %s: %w", verifierCookieName, err)
-	}
-
-	clearOAuthCookie(w, stateCookieName)
-	clearOAuthCookie(w, nonceCookieName)
-	clearOAuthCookie(w, verifierCookieName)
-
-	state := r.URL.Query().Get("state")
-	if state == "" || state != stateCookie.Value {
-		return nil, fmt.Errorf(
-			"%w: state mismatch: got %q, expected %q",
-			errInvalidQueryParameter,
-			state,
-			stateCookie.Value,
-		)
-	}
-
 	code := r.URL.Query().Get("code")
 	if code == "" {
 		return nil, fmt.Errorf("%w: missing code query parameter", errInvalidQueryParameter)
 	}
 
-	idClaims, err := h.oidcFlow.Verify(r.Context(), code, nonceCookie.Value, verifierCookie.Value)
+	idClaims, err := h.oidcFlow.Verify(r.Context(), code, flow.Nonce, flow.Verifier)
 	if err != nil {
 		return nil, fmt.Errorf("verifying OIDC flow: %w", err)
 	}
@@ -274,6 +249,54 @@ func redirectWithError(w http.ResponseWriter, r *http.Request, target string) {
 	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
 }
 
+// takeBindingCookie reads the binding of this browser and clears it.
+//
+// The binding proves that this browser started the flow. A callback that carries
+// a valid state without it is a forged one, and finishing it would sign the holder
+// of this browser in as somebody else.
+func takeBindingCookie(w http.ResponseWriter, r *http.Request) string {
+	var binding string
+
+	if cookie, err := r.Cookie(bindingCookieName); err == nil {
+		binding = cookie.Value
+	}
+
+	clearBindingCookie(w)
+
+	return binding
+}
+
+func setBindingCookie(w http.ResponseWriter, binding string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     bindingCookieName,
+		Value:    binding,
+		Path:     "/",
+		MaxAge:   bindingMaxAge,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func clearBindingCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     bindingCookieName,
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		Expires:  time.Unix(0, 0),
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+// sendBadRequest answers with the JSON body that API-006 gives.
+func sendBadRequest(w http.ResponseWriter, r *http.Request, reason string) {
+	render.Status(r, http.StatusBadRequest)
+	render.JSON(w, r, map[string]string{"error": reason})
+}
+
 func setAuthCookie(w http.ResponseWriter, token string) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     authTokenCookieName,
@@ -282,31 +305,6 @@ func setAuthCookie(w http.ResponseWriter, token string) {
 		MaxAge:   authTokenMaxAge,
 		HttpOnly: true,
 		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-	})
-}
-
-func setOAuthCookie(w http.ResponseWriter, name string, value string) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     name,
-		Value:    value,
-		Path:     "/",
-		MaxAge:   oauthCookieMaxAge,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-	})
-}
-
-func clearOAuthCookie(w http.ResponseWriter, name string) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     name,
-		Value:    "",
-		Path:     "/",
-		MaxAge:   -1,
-		HttpOnly: true,
-		Secure:   true,
-		Expires:  time.Unix(0, 0),
 		SameSite: http.SameSiteLaxMode,
 	})
 }

@@ -12,8 +12,8 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 )
 
-const authFlowColumns = `id, state, intent, user_id, invitation_id, nonce, verifier,
-	redirect, provider, expires_at, consumed_at, created_at`
+const authFlowColumns = `id, state, intent, user_id, invitation_id, binding_hash, nonce,
+	verifier, redirect, provider, expires_at, consumed_at, created_at`
 
 // AuthFlowRepository defines the data access contract for an authorization flow.
 type AuthFlowRepository interface {
@@ -39,9 +39,10 @@ func (r *AuthFlow) Create(ctx context.Context, flow model.AuthFlow) (*model.Auth
 
 	query := `
 		INSERT INTO public.auth_flows
-			(state, intent, user_id, invitation_id, nonce, verifier, redirect, provider, expires_at)
-		VALUES (:state, :intent, :user_id, :invitation_id, :nonce, :verifier, :redirect,
-		        :provider, :expires_at)
+			(state, intent, user_id, invitation_id, binding_hash, nonce, verifier, redirect,
+			 provider, expires_at)
+		VALUES (:state, :intent, :user_id, :invitation_id, :binding_hash, :nonce, :verifier,
+		        :redirect, :provider, :expires_at)
 		RETURNING ` + authFlowColumns + `;`
 
 	statement, args, err := sqlx.Named(query, flow)

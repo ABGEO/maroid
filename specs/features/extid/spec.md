@@ -260,6 +260,9 @@ CREATE TABLE public.auth_flows
         CONSTRAINT auth_flows_intent_check CHECK (intent IN ('sign_in', 'attach', 'redeem')),
     user_id       UUID REFERENCES public.users (id) ON DELETE CASCADE,
     invitation_id UUID REFERENCES public.invitations (id) ON DELETE CASCADE,
+    -- EXTID-DD-001: The digest of a secret that only the browser that started
+    -- the flow holds. A state that leaks finishes the flow nowhere else.
+    binding_hash  BYTEA       NOT NULL,
     nonce         TEXT        NOT NULL,
     verifier      TEXT        NOT NULL,
     redirect      TEXT        NOT NULL,
@@ -406,6 +409,7 @@ gives the resolver that both callers hold.
 | No identity names the external account, at a sign in   | Redirect with `error=no_identity`. `EXTID-FR-002` demands the distinct reason | `no identity for the external account` |
 | The identity names a record that is not active         | Redirect with `error=access_denied`                             | `user is not allowed`          |
 | The state names no flow row, or the row is consumed    | Status 400                                                      | `invalid state`                |
+| The browser carries no matching binding cookie         | Status 400. The row is spent, and the person starts again       | `invalid state`                |
 | The flow row expired                                   | Redirect with `error=auth_failed`                               | `the authorization flow expired` |
 | The attach finds the account on another record         | Redirect with `error=identity_taken`. Both records stay unchanged | `the external account belongs to another user` |
 | The attach finds the account on the same record        | Redirect with no error. Nothing changes                         | None                           |
@@ -423,15 +427,23 @@ gives the resolver that both callers hold.
 **Decision:** The row in `public.auth_flows` holds the state, the nonce, the
 verifier, the target, and the identifier of the user. The four cookies
 `maroid_oauth_state`, `maroid_oauth_nonce`, `maroid_oauth_verifier`, and
-`maroid_oauth_redirect` go.
+`maroid_oauth_redirect` go. One cookie arrives: `maroid_auth_binding` carries a
+random secret, and the row holds its digest in `binding_hash`. The callback
+refuses a request whose cookie does not match the digest.
 **Rationale:** A cookie that names the user record is a value that the holder of the
 browser rewrites. A rewritten value attaches an external account to another person,
-which `EXTID-FR-005` and `EXTID-FR-006` both forbid. The state is the only value
-that travels through Dex, and the row behind it holds everything else. The database
-also gives the expiry and the single use that a cookie cannot enforce.
-**Alternatives:** A signed cookie. It needs a key, and `SEC-002` took the key
-material away. A cookie plus a check against the session. It still trusts a value
-that the browser sends.
+which `EXTID-FR-005` and `EXTID-FR-006` both forbid. The row therefore holds every
+authority, and the browser holds none.
+
+The binding is a separate matter, and the row alone cannot serve it. A state that
+the hub accepts from any browser is login CSRF: a person who holds a valid state
+finishes the flow in the browser of another, and the hub then signs the holder of
+that browser in as the person who started it. The binding cookie grants nothing by
+itself. It proves only that the browser that finishes the flow is the browser that
+started it, and `EXTID-DD-007` already uses the same digest for the same reason.
+**Alternatives:** The state in a cookie, compared with the state in the query. It
+works, and the state reaches a referrer and a log, so a leak of one leaks both. No
+binding at all. It leaves the sign in forgeable.
 
 ### `EXTID-DD-002`
 

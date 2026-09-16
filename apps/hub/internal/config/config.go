@@ -77,7 +77,8 @@ func (c *Server) Address() string {
 
 // Auth defines general authentication configuration parameters.
 type Auth struct {
-	AllowedRedirects []string `mapstructure:"allowed_redirects" validate:"required,min=1,dive,url"`
+	AllowedRedirects []string      `mapstructure:"allowed_redirects" validate:"required,min=1,dive,url"`
+	FlowTTL          time.Duration `default:"10m" mapstructure:"flow_ttl"`
 }
 
 // JWT defines JWT authentication configuration parameters.

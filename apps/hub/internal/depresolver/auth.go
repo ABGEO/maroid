@@ -43,7 +43,14 @@ func (c *Container) OIDCFlow() (*auth.OIDCFlow, error) {
 			return
 		}
 
-		c.oidcFlow.instance = auth.NewOIDCFlow(oidcSvc)
+		var flowRepo repository.AuthFlowRepository
+
+		flowRepo, err = c.AuthFlowRepository()
+		if err != nil {
+			return
+		}
+
+		c.oidcFlow.instance = auth.NewOIDCFlow(oidcSvc, flowRepo, c.Config().Auth.FlowTTL)
 	})
 
 	if err != nil {

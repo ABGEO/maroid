@@ -63,6 +63,14 @@ var (
 	// ErrAuthFlowNotFound indicates that no unconsumed authorization flow holds the
 	// given state.
 	ErrAuthFlowNotFound = errors.New("auth flow: not found")
+	// ErrAuthFlowBindingMismatch indicates that the browser that finished the
+	// authorization flow is not the browser that started it. A forged callback
+	// reaches this, and so does a browser that lost the cookie.
+	ErrAuthFlowBindingMismatch = errors.New("auth flow: the browser does not hold the binding")
+	// ErrAuthFlowExpired indicates that the authorization flow outlived
+	// auth.flow_ttl. The caller still holds the row, so it can report the failure
+	// at the target that the row names.
+	ErrAuthFlowExpired = errors.New("auth flow: expired")
 	// ErrInvalidSettingsModel indicates that a plugin declared a settings model that
 	// the hub cannot reflect into a schema.
 	ErrInvalidSettingsModel = errors.New("settings model: invalid")

@@ -3,24 +3,23 @@ package auth
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"golang.org/x/oauth2"
+
+	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
 // ErrRandomGeneration indicates that cryptographic random generation failed.
 var ErrRandomGeneration = errors.New("auth: random generation failed")
-
-// InitiateResult holds the values generated during OIDC flow initiation.
-type InitiateResult struct {
-	AuthURL  string
-	State    string
-	Nonce    string
-	Verifier string
-}
 
 // IDTokenClaims represents claims extracted from an OIDC ID token.
 type IDTokenClaims struct {
@@ -31,50 +30,107 @@ type IDTokenClaims struct {
 	Picture  string `json:"picture"`
 }
 
-// OIDCFlow orchestrates the OIDC authorization code + PKCE flow.
-// It is a stateless service, secrets are generated per call and returned
-// for the caller to persist.
+// OIDCFlow orchestrates the OIDC authorization code flow with PKCE.
+//
+// The row in public.auth_flows holds the state, the nonce, the
+// verifier, and the target. A cookie that carried them is a value that the holder
+// of the browser rewrites, and a rewritten value moves an attach to another
+// record. The caller of Initiate therefore never sees a secret.
 type OIDCFlow struct {
-	oidcSvc *OIDCService
+	oidcSvc  *OIDCService
+	flowRepo repository.AuthFlowRepository
+	flowTTL  time.Duration
 }
 
 // NewOIDCFlow creates a new OIDCFlow service.
-func NewOIDCFlow(oidcSvc *OIDCService) *OIDCFlow {
+func NewOIDCFlow(
+	oidcSvc *OIDCService,
+	flowRepo repository.AuthFlowRepository,
+	flowTTL time.Duration,
+) *OIDCFlow {
 	return &OIDCFlow{
-		oidcSvc: oidcSvc,
+		oidcSvc:  oidcSvc,
+		flowRepo: flowRepo,
+		flowTTL:  flowTTL,
 	}
 }
 
-// Initiate generates PKCE parameters, state, and nonce, then builds the
-// authorization URL. The caller is responsible for persisting the returned
-// values (typically in HTTP-only cookies).
-func (f *OIDCFlow) Initiate() (*InitiateResult, error) {
+// Initiate writes the authorization flow and returns the address of the provider
+// with the binding that the browser must present at the callback.
+//
+// The caller gives the intent, the target, and the record or the invitation that
+// the flow acts for. Initiate fills the state, the nonce, the verifier, and the
+// expiry, because those never leave the hub. The binding is the one value that
+// the caller puts in a cookie, and the row holds its digest alone.
+func (f *OIDCFlow) Initiate(ctx context.Context, flow model.AuthFlow) (string, string, error) {
 	const randomBytesCount = 16
 
 	state, err := generateRandomString(randomBytesCount)
 	if err != nil {
-		return nil, fmt.Errorf("generating state: %w", ErrRandomGeneration)
+		return "", "", fmt.Errorf("generating state: %w", ErrRandomGeneration)
 	}
 
 	nonce, err := generateRandomString(randomBytesCount)
 	if err != nil {
-		return nil, fmt.Errorf("generating nonce: %w", ErrRandomGeneration)
+		return "", "", fmt.Errorf("generating nonce: %w", ErrRandomGeneration)
 	}
 
-	verifier := oauth2.GenerateVerifier()
-	authURL := f.oidcSvc.AuthURL(state, nonce, verifier)
+	binding, err := generateRandomString(randomBytesCount)
+	if err != nil {
+		return "", "", fmt.Errorf("generating binding: %w", ErrRandomGeneration)
+	}
 
-	return &InitiateResult{
-		AuthURL:  authURL,
-		State:    state,
-		Nonce:    nonce,
-		Verifier: verifier,
-	}, nil
+	digest := sha256.Sum256([]byte(binding))
+
+	flow.State = state
+	flow.Nonce = nonce
+	flow.BindingHash = digest[:]
+	flow.Verifier = oauth2.GenerateVerifier()
+	flow.ExpiresAt = time.Now().Add(f.flowTTL)
+
+	if _, err = f.flowRepo.Create(ctx, flow); err != nil {
+		return "", "", fmt.Errorf("writing the authorization flow: %w", err)
+	}
+
+	return f.oidcSvc.AuthURL(flow.State, flow.Nonce, flow.Verifier), binding, nil
+}
+
+// Consume spends the flow that the state names and returns it.
+//
+// The binding comes from the cookie that Initiate handed the browser. A state
+// alone finishes nothing: without this check a person who holds a state finishes
+// the flow in any browser, which signs the holder of that browser in as somebody
+// else. The mismatch returns no row, because the request may be forged.
+//
+// An expired flow returns the row beside the error, because the caller reports
+// the failure at the target that the row names.
+func (f *OIDCFlow) Consume(
+	ctx context.Context,
+	state string,
+	binding string,
+) (*model.AuthFlow, error) {
+	flow, err := f.flowRepo.ConsumeByState(ctx, state)
+	if err != nil {
+		return nil, fmt.Errorf("consuming the authorization flow: %w", err)
+	}
+
+	digest := sha256.Sum256([]byte(binding))
+	if subtle.ConstantTimeCompare(digest[:], flow.BindingHash) != 1 {
+		return nil, fmt.Errorf(
+			"consuming the authorization flow: %w",
+			errs.ErrAuthFlowBindingMismatch,
+		)
+	}
+
+	if time.Now().After(flow.ExpiresAt) {
+		return flow, fmt.Errorf("consuming the authorization flow: %w", errs.ErrAuthFlowExpired)
+	}
+
+	return flow, nil
 }
 
 // Verify exchanges the authorization code for an OAuth2 token, verifies the
-// ID token, and extracts claims. The nonce and verifier must match those
-// generated during Initiate.
+// ID token, and extracts claims. The nonce and the verifier come from the flow row.
 func (f *OIDCFlow) Verify(
 	ctx context.Context,
 	code string,
@@ -88,7 +144,7 @@ func (f *OIDCFlow) Verify(
 
 	idToken, err := f.oidcSvc.VerifyIDToken(ctx, oauth2Token, nonce)
 	if err != nil {
-		return nil, fmt.Errorf("verifying ID token: %w", err)
+		return nil, fmt.Errorf("verifying id token: %w", err)
 	}
 
 	var claims IDTokenClaims
@@ -99,11 +155,11 @@ func (f *OIDCFlow) Verify(
 	return &claims, nil
 }
 
-func generateRandomString(nBytes int) (string, error) {
-	buf := make([]byte, nBytes)
-	if _, err := io.ReadFull(rand.Reader, buf); err != nil {
-		return "", fmt.Errorf("generating random bytes: %w", err)
+func generateRandomString(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := io.ReadFull(rand.Reader, bytes); err != nil {
+		return "", fmt.Errorf("reading random bytes: %w", err)
 	}
 
-	return base64.RawURLEncoding.EncodeToString(buf), nil
+	return base64.RawURLEncoding.EncodeToString(bytes), nil
 }

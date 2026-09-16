@@ -1,6 +1,7 @@
 package repository_test
 
 import (
+	"crypto/sha256"
 	"testing"
 	"time"
 
@@ -14,13 +15,18 @@ import (
 const flowTTL = 10 * time.Minute
 
 func signInFlow(state string) model.AuthFlow {
+	// EXTID-DD-001: The row carries the digest of the secret that the browser
+	// holds, so no flow exists without one.
+	digest := sha256.Sum256([]byte("binding-" + state))
+
 	return model.AuthFlow{
-		State:     state,
-		Intent:    model.IntentSignIn,
-		Nonce:     "nonce-" + state,
-		Verifier:  "verifier-" + state,
-		Redirect:  "http://maroid.localhost",
-		ExpiresAt: time.Now().Add(flowTTL),
+		State:       state,
+		Intent:      model.IntentSignIn,
+		BindingHash: digest[:],
+		Nonce:       "nonce-" + state,
+		Verifier:    "verifier-" + state,
+		Redirect:    "http://maroid.localhost",
+		ExpiresAt:   time.Now().Add(flowTTL),
 	}
 }
 
@@ -41,6 +47,7 @@ func TestAuthFlowConsumesOneTime(t *testing.T) {
 	consumed, err := flowRepo.ConsumeByState(ctx, "state-one")
 	require.NoError(t, err)
 	require.Equal(t, created.ID, consumed.ID)
+	require.NotEmpty(t, consumed.BindingHash, "the row returns the binding digest")
 	require.Equal(t, model.IntentSignIn, consumed.Intent)
 	require.NotNil(t, consumed.ConsumedAt)
 

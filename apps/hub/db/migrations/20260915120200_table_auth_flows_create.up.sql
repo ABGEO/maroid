@@ -8,6 +8,7 @@ CREATE TABLE public.auth_flows
         CONSTRAINT auth_flows_intent_check CHECK (intent IN ('sign_in', 'attach', 'redeem')),
     user_id       UUID REFERENCES public.users (id) ON DELETE CASCADE,
     invitation_id UUID REFERENCES public.invitations (id) ON DELETE CASCADE,
+    binding_hash  BYTEA       NOT NULL,
     nonce         TEXT        NOT NULL,
     verifier      TEXT        NOT NULL,
     redirect      TEXT        NOT NULL,
