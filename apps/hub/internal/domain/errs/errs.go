@@ -46,16 +46,16 @@ var (
 	// ErrUserNotFound indicates that no active user record holds the given identity.
 	ErrUserNotFound = errors.New("user: not found")
 	// ErrUnknownIntent indicates that an authorization flow carries an intent that
-	// EXTID-DD-004 does not name.
+	// Maroid does not recognize.
 	ErrUnknownIntent = errors.New("auth flow: unknown intent")
 	// ErrIdentityTaken indicates that the external account already holds an identity
-	// that names another user record. See EXTID-FR-005.
+	// that names another user record.
 	ErrIdentityTaken = errors.New("identity: the external account belongs to another user")
 	// ErrIdentityNotFound indicates that no identity of the user record names the
 	// given provider.
 	ErrIdentityNotFound = errors.New("identity: not found")
-	// ErrLastIdentity indicates that the identity is the last one of its user record,
-	// and EXTID-INV-002 keeps it.
+	// ErrLastIdentity indicates that the identity is the last one of its user
+	// record, so the detach refuses it.
 	ErrLastIdentity = errors.New("identity: the last external account cannot be detached")
 	// ErrInvitationNotValid indicates that the invitation is absent, consumed, or
 	// expired. The three cases answer the same way.

@@ -81,7 +81,6 @@ func authUnderTest(t *testing.T) *authFixture {
 		slog.New(slog.DiscardHandler),
 		auth.NewTokenVerifier(oidcSvc),
 		auth.NewOIDCFlow(oidcSvc, repository.NewAuthFlow(instance.DB), cfg.Auth.FlowTTL),
-		userRepo,
 		identityRepo,
 		auth.NewResolver(identityRepo),
 		invitationRepo,

@@ -1,5 +1,7 @@
 BEGIN;
 
+-- This table is shared: the redemption reads it before the acting user of the
+-- invited record exists.
 CREATE TABLE public.invitations
 (
     id          UUID        NOT NULL PRIMARY KEY DEFAULT uuidv7(),

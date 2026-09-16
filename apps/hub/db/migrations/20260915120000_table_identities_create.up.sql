@@ -1,5 +1,7 @@
 BEGIN;
 
+-- This table is shared: the resolver reads it to find the acting user, before
+-- one exists for the request.
 CREATE TABLE public.identities
 (
     id               UUID        NOT NULL PRIMARY KEY DEFAULT uuidv7(),

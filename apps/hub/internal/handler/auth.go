@@ -21,14 +21,12 @@ import (
 )
 
 const (
-	//nolint:gosec // G101: this names the cookie, it holds no credential.
-	authTokenCookieName = "maroid_token"
 	// bindingCookieName holds the secret that binds one authorization flow to one
 	// browser. It grants nothing on its own: the row holds every authority, and
 	// this value only proves that the browser that finishes the flow started it.
 	bindingCookieName = "maroid_auth_binding"
 	bindingMaxAge     = 10 * 60 // 10 minutes in seconds, the lifetime of a flow
-	// errorKey names the reason in a JSON failure. See API-006.
+	// errorKey names the reason in a JSON failure.
 	errorKey = "error"
 )
 
@@ -66,7 +64,6 @@ type Auth struct {
 	logger           *slog.Logger
 	verifier         auth.TokenVerifier
 	oidcFlow         *auth.OIDCFlow
-	userRepo         repository.UserRepository
 	identityRepo     repository.IdentityRepository
 	identityResolver auth.IdentityResolver
 	invitationRepo   repository.InvitationRepository
@@ -81,7 +78,6 @@ func NewAuth(
 	logger *slog.Logger,
 	verifier auth.TokenVerifier,
 	oidcFlow *auth.OIDCFlow,
-	userRepo repository.UserRepository,
 	identityRepo repository.IdentityRepository,
 	identityResolver auth.IdentityResolver,
 	invitationRepo repository.InvitationRepository,
@@ -95,7 +91,6 @@ func NewAuth(
 		),
 		verifier:         verifier,
 		oidcFlow:         oidcFlow,
-		userRepo:         userRepo,
 		identityRepo:     identityRepo,
 		identityResolver: identityResolver,
 		invitationRepo:   invitationRepo,
@@ -153,7 +148,8 @@ func (h *Auth) Initiate(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// Callback completes the OIDC flow, verifies the ID token, and redirects with a signed JWT.
+// Callback completes the OIDC flow, verifies the ID token, and finishes the
+// sign in, the attach, or the redemption that the flow row names.
 func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 	state := r.URL.Query().Get("state")
 
@@ -376,11 +372,6 @@ func (h *Auth) finishAttach(
 	claims *auth.Claims,
 ) error {
 	federated := claims.Federated
-	if federated.ConnectorID == "" || federated.UserID == "" {
-		redirectWithError(w, r, flow.Redirect)
-
-		return errMissingFederatedClaims
-	}
 
 	err := h.authSvc.Attach(
 		r.Context(),
@@ -421,11 +412,6 @@ func (h *Auth) finishRedeem(
 	rawToken string,
 ) error {
 	federated := claims.Federated
-	if federated.ConnectorID == "" || federated.UserID == "" {
-		redirectWithError(w, r, flow.Redirect)
-
-		return errMissingFederatedClaims
-	}
 
 	_, err := h.authSvc.Redeem(
 		r.Context(),
@@ -461,9 +447,6 @@ func (h *Auth) finishRedeem(
 // writes the profile that the provider gave onto that identity.
 func (h *Auth) resolveAndSync(ctx context.Context, claims *auth.Claims) (*model.User, error) {
 	federated := claims.Federated
-	if federated.ConnectorID == "" || federated.UserID == "" {
-		return nil, errMissingFederatedClaims
-	}
 
 	user, err := h.identityRepo.GetUserByProvider(ctx, federated.ConnectorID, federated.UserID)
 	if err != nil {
@@ -498,6 +481,8 @@ func signInReason(err error) string {
 	}
 }
 
+// processOIDCCallback exchanges the code, verifies the ID token, and confirms
+// that the claims carry the federated account that every intent needs.
 func (h *Auth) processOIDCCallback(
 	r *http.Request,
 	flow *model.AuthFlow,
@@ -510,6 +495,10 @@ func (h *Auth) processOIDCCallback(
 	rawToken, claims, err := h.oidcFlow.Verify(r.Context(), code, flow.Nonce, flow.Verifier)
 	if err != nil {
 		return "", nil, fmt.Errorf("verifying OIDC flow: %w", err)
+	}
+
+	if claims.Federated.ConnectorID == "" || claims.Federated.UserID == "" {
+		return "", nil, errMissingFederatedClaims
 	}
 
 	return rawToken, claims, nil
@@ -575,7 +564,7 @@ func clearBindingCookie(w http.ResponseWriter) {
 	})
 }
 
-// sendBadRequest answers with the JSON body that API-006 gives.
+// sendBadRequest answers with the JSON body of a bad request failure.
 func sendBadRequest(w http.ResponseWriter, r *http.Request, reason string) {
 	render.Status(r, http.StatusBadRequest)
 	render.JSON(w, r, map[string]string{errorKey: reason})
@@ -583,7 +572,7 @@ func sendBadRequest(w http.ResponseWriter, r *http.Request, reason string) {
 
 func setAuthCookie(w http.ResponseWriter, token string, ttl time.Duration) {
 	http.SetCookie(w, &http.Cookie{
-		Name:     authTokenCookieName,
+		Name:     auth.TokenCookieName,
 		Value:    token,
 		Path:     "/",
 		MaxAge:   int(ttl.Seconds()),

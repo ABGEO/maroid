@@ -7,7 +7,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
 )
 
-// Command represents the `user` branch of the command tree. See CLI-001.
+// Command represents the `user` branch of the command tree.
 type Command struct {
 	depResolver depresolver.Resolver
 }

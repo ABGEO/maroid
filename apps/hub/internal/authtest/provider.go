@@ -94,7 +94,7 @@ func StartProvider(t *testing.T) *Provider {
 	return dex
 }
 
-// KeyRequests reports how often the hub read the key set. EXTID-NFR-001 bounds it.
+// KeyRequests reports how often the hub read the key set.
 func (d *Provider) KeyRequests() int64 {
 	return d.keyRequests.Load()
 }

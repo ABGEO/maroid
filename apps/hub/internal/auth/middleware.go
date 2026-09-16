@@ -15,9 +15,10 @@ import (
 )
 
 const (
+	// TokenCookieName is the cookie that carries the token of Dex.
 	//nolint:gosec // G101: this names the cookie, it holds no credential.
-	authTokenCookieName = "maroid_token"
-	authHeaderName      = "Authorization"
+	TokenCookieName = "maroid_token"
+	authHeaderName  = "Authorization"
 )
 
 var (
@@ -118,7 +119,7 @@ func resolve(
 }
 
 func tokenFromRequest(r *http.Request) string {
-	cookie, err := r.Cookie(authTokenCookieName)
+	cookie, err := r.Cookie(TokenCookieName)
 	if err == nil && cookie.Value != "" {
 		return cookie.Value
 	}

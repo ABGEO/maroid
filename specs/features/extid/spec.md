@@ -139,6 +139,7 @@ type IdentityResolver interface {
 // apps/hub/internal/repository/identity.go
 type IdentityRepository interface {
     GetActiveUserByProvider(ctx context.Context, provider, providerUserID string) (*model.User, error)
+    GetUserByProvider(ctx context.Context, provider, providerUserID string) (*model.User, error)
     ListByUser(ctx context.Context, userID string) ([]model.Identity, error)
     Attach(ctx context.Context, tx *sqlx.Tx, userID, provider, providerUserID string, profile model.Profile) error
     SyncProfile(ctx context.Context, provider, providerUserID string, profile model.Profile) error
@@ -149,6 +150,11 @@ type IdentityRepository interface {
 `Attach` takes a transaction, because the redemption writes the identity and consumes
 the invitation together. `EXTID-DD-008` gives the reason. Every other method runs one
 statement on the request path, as `IDENT-DD-003` decided for the hub.
+
+`GetUserByProvider` reaches the same join with no status filter. The sign in needs it
+apart from `GetActiveUserByProvider`, because `EXTID-FR-002` demands that a blocked
+record answer differently from an external account that holds no identity at all, and
+a status filter in the query would make the two indistinguishable.
 
 ### 4.2 Data model
 

@@ -1,5 +1,7 @@
 BEGIN;
 
+-- This table is shared: the callback reads it before the acting user of the
+-- flow, if any, exists.
 CREATE TABLE public.auth_flows
 (
     id            UUID        NOT NULL PRIMARY KEY DEFAULT uuidv7(),
