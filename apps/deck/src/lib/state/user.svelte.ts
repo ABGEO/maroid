@@ -12,3 +12,10 @@ export async function loadUser(): Promise<void> {
 		userState.user = null;
 	}
 }
+
+/** The two names of the record, joined for display. Falls back when the owner set neither. */
+export function displayName(user: User | null): string {
+	const name = [user?.first_name, user?.last_name].filter(Boolean).join(' ');
+
+	return name || 'Maroid User';
+}

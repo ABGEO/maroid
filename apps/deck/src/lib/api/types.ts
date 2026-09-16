@@ -1,6 +1,9 @@
 export interface User {
-	name: string;
+	first_name: string | null;
+	last_name: string | null;
 	picture: string;
+	/** The connector that authenticated this session. */
+	provider: string;
 }
 
 export interface UIRoute {
@@ -18,6 +21,17 @@ export interface Plugin {
 	version: string;
 	settings: boolean;
 	ui?: UIManifest;
+}
+
+/** One provider that Maroid offers, attached to the acting user's record or not. */
+export interface ProviderIdentity {
+	provider: string;
+	name: string;
+	attached: boolean;
+	username?: string;
+	display_name?: string;
+	picture_url?: string;
+	attached_at?: string;
 }
 
 /** One property of a settings schema. The hub infers it from the struct of the plugin. */

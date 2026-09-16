@@ -10,6 +10,10 @@ function landingUrl(): string {
 	return `${window.location.origin}/auth/callback`;
 }
 
+function profileUrl(): string {
+	return `${window.location.origin}/profile`;
+}
+
 export function buildAuthUrl(): string {
 	return `${BASE_URL}/auth?redirect=${encodeURIComponent(landingUrl())}`;
 }
@@ -17,6 +21,11 @@ export function buildAuthUrl(): string {
 export function buildInviteUrl(token: string): string {
 	const query = new URLSearchParams({ token, redirect: landingUrl() });
 	return `${BASE_URL}/auth/invite?${query.toString()}`;
+}
+
+export function buildLinkUrl(provider: string): string {
+	const query = new URLSearchParams({ provider, redirect: profileUrl() });
+	return `${BASE_URL}/auth/link?${query.toString()}`;
 }
 
 function redirectToAuth(): void {

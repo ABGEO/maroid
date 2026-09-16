@@ -5,7 +5,7 @@
 
 	import type { PageProps } from './$types';
 	import { createPluginClient } from '$lib/api';
-	import { userState } from '$lib/state/user.svelte';
+	import { displayName, userState } from '$lib/state/user.svelte';
 
 	let { data }: PageProps = $props();
 	let target: HTMLElement | undefined = $state();
@@ -14,7 +14,9 @@
 
 	const host: PluginHost = {
 		get user() {
-			return userState.user;
+			const user = userState.user;
+
+			return user ? { name: displayName(user), picture: user.picture } : null;
 		},
 		get api() {
 			return api;

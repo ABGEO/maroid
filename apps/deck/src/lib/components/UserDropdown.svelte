@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { userState } from '$lib/state/user.svelte';
+	import { resolve } from '$app/paths';
+
+	import { displayName, userState } from '$lib/state/user.svelte';
 	import { themeState, setTheme, type ThemePreference } from '$lib/state/theme.svelte';
 
-	const name = $derived(userState.user?.name ?? 'Maroid User');
+	const name = $derived(displayName(userState.user));
 	const picture = $derived(userState.user?.picture ?? '');
 	const initial = $derived(name.charAt(0).toUpperCase());
 
@@ -76,7 +78,7 @@
 
 		<ul class="menu menu-sm mt-2 w-full">
 			<li>
-				<a>
+				<a href={resolve('/profile')}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="14"

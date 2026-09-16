@@ -1,4 +1,5 @@
 import { auth } from './auth';
+import { identities } from './identities';
 import { plugins } from './plugins';
 import { settings } from './settings';
 
@@ -9,6 +10,7 @@ export { SECRET_MASK } from './types';
 export type {
 	User,
 	Plugin,
+	ProviderIdentity,
 	UIManifest,
 	UIRoute,
 	SchemaProperty,
@@ -21,6 +23,7 @@ export type {
 
 export const api = {
 	auth,
+	identities,
 	plugins,
 	settings
 };
