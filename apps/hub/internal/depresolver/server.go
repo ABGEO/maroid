@@ -11,6 +11,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
 )
 
@@ -135,7 +136,12 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		return err
 	}
 
-	authHandler, err := c.buildAuthHandler(cfg, logger, verifier)
+	userRepo, err := c.UserRepository()
+	if err != nil {
+		return err
+	}
+
+	authHandler, err := c.buildAuthHandler(cfg, logger, verifier, userRepo)
 	if err != nil {
 		return err
 	}
@@ -167,6 +173,7 @@ func (c *Container) buildAuthHandler(
 	cfg *config.Config,
 	logger *slog.Logger,
 	verifier auth.TokenVerifier,
+	userRepo repository.UserRepository,
 ) (*handler.Auth, error) {
 	oidcFlow, err := c.OIDCFlow()
 	if err != nil {
@@ -198,6 +205,7 @@ func (c *Container) buildAuthHandler(
 		logger,
 		verifier,
 		oidcFlow,
+		userRepo,
 		identityRepo,
 		identityResolver,
 		invitationRepo,

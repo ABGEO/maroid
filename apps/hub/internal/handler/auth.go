@@ -64,6 +64,7 @@ type Auth struct {
 	logger           *slog.Logger
 	verifier         auth.TokenVerifier
 	oidcFlow         *auth.OIDCFlow
+	userRepo         repository.UserRepository
 	identityRepo     repository.IdentityRepository
 	identityResolver auth.IdentityResolver
 	invitationRepo   repository.InvitationRepository
@@ -78,6 +79,7 @@ func NewAuth(
 	logger *slog.Logger,
 	verifier auth.TokenVerifier,
 	oidcFlow *auth.OIDCFlow,
+	userRepo repository.UserRepository,
 	identityRepo repository.IdentityRepository,
 	identityResolver auth.IdentityResolver,
 	invitationRepo repository.InvitationRepository,
@@ -91,6 +93,7 @@ func NewAuth(
 		),
 		verifier:         verifier,
 		oidcFlow:         oidcFlow,
+		userRepo:         userRepo,
 		identityRepo:     identityRepo,
 		identityResolver: identityResolver,
 		invitationRepo:   invitationRepo,
@@ -351,14 +354,29 @@ func (h *Auth) Invite(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// Me returns the authenticated user's information.
+// meResponse is the body of GET /auth/me.
+type meResponse struct {
+	FirstName *string `json:"first_name"`
+	LastName  *string `json:"last_name"`
+	Picture   string  `json:"picture"`
+	Provider  string  `json:"provider"`
+}
+
+// Me returns the name of the acting user, the picture of the session, and the
+// provider that authenticated it.
 func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
 	claims := auth.ClaimsFromContext(r.Context())
 
-	// @todo: create a structure for user data.
-	render.JSON(w, r, map[string]any{
-		"name":    claims.Name,
-		"picture": claims.Picture,
+	user, err := h.userRepo.GetActiveByID(r.Context(), auth.UserIDFromContext(r.Context()))
+	if err != nil {
+		return fmt.Errorf("reading the acting user: %w", err)
+	}
+
+	render.JSON(w, r, meResponse{
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Picture:   claims.Picture,
+		Provider:  claims.Federated.ConnectorID,
 	})
 
 	return nil

@@ -81,6 +81,7 @@ func authUnderTest(t *testing.T) *authFixture {
 		slog.New(slog.DiscardHandler),
 		auth.NewTokenVerifier(oidcSvc),
 		auth.NewOIDCFlow(oidcSvc, repository.NewAuthFlow(instance.DB), cfg.Auth.FlowTTL),
+		userRepo,
 		identityRepo,
 		auth.NewResolver(identityRepo),
 		invitationRepo,
@@ -296,6 +297,72 @@ func TestTheListNeedsASession(t *testing.T) {
 	))
 
 	require.Equal(t, http.StatusUnauthorized, recorder.Code)
+}
+
+// /auth/me reports the two names of the record and the provider that
+// authenticated the session, so the deck can warn before a detach that would
+// sign the person out of their own request.
+func TestMeReportsTheNameAndTheProvider(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+	ctx := t.Context()
+
+	var userID string
+	require.NoError(t, fixture.database.Get(
+		&userID,
+		`INSERT INTO public.users (first_name, last_name) VALUES ($1, $2) RETURNING id;`,
+		"Temuri", "Takalandze",
+	))
+	require.NoError(t, fixture.service.Attach(
+		ctx, userID, auth.ProviderTelegram, "111", model.Profile{},
+	))
+
+	body := fixture.me(t, auth.ProviderTelegram, "111")
+
+	require.Equal(t, "Temuri", body["first_name"])
+	require.Equal(t, "Takalandze", body["last_name"])
+	require.Equal(t, auth.ProviderTelegram, body["provider"])
+}
+
+// A record that holds two identities signs in with either one, and each
+// session reports the provider that it actually used, not the other.
+func TestMeNamesTheProviderThatSignedIn(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+	ctx := t.Context()
+
+	userID := addUserRecord(t, fixture.database, "Temuri")
+	require.NoError(t, fixture.service.Attach(
+		ctx, userID, auth.ProviderTelegram, "111", model.Profile{},
+	))
+	require.NoError(t, fixture.service.Attach(
+		ctx, userID, providerCloud, "abc", model.Profile{},
+	))
+
+	require.Equal(
+		t, auth.ProviderTelegram, fixture.me(t, auth.ProviderTelegram, "111")["provider"],
+	)
+	require.Equal(t, providerCloud, fixture.me(t, providerCloud, "abc")["provider"])
+}
+
+// me reads /auth/me as the person that the external account names.
+func (f *authFixture) me(t *testing.T, connector string, accountID string) map[string]any {
+	t.Helper()
+
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/auth/me", nil)
+	request.Header.Set("Authorization", "Bearer "+f.provider.Sign(t, connector, accountID))
+
+	recorder := httptest.NewRecorder()
+	f.router.ServeHTTP(recorder, request)
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	var body map[string]any
+
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+
+	return body
 }
 
 // listIdentities reads the route as the person that the external account names.
