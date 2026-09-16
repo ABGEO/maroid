@@ -25,7 +25,7 @@ type InvitationRepository interface {
 		expiresAt time.Time,
 	) (*model.Invitation, error)
 	GetValidByTokenHash(ctx context.Context, tokenHash []byte) (*model.Invitation, error)
-	Consume(ctx context.Context, tx *sqlx.Tx, id string) error
+	Consume(ctx context.Context, tx *sqlx.Tx, id string) (*model.Invitation, error)
 }
 
 // Invitation is a SQL based implementation of InvitationRepository.
@@ -87,25 +87,26 @@ func (r *Invitation) GetValidByTokenHash(
 }
 
 // Consume spends the invitation.
-func (r *Invitation) Consume(ctx context.Context, tx *sqlx.Tx, id string) error {
+func (r *Invitation) Consume(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	id string,
+) (*model.Invitation, error) {
+	var entity model.Invitation
+
 	query := `
 		UPDATE public.invitations
 		SET consumed_at = NOW()
-		WHERE id = $1 AND consumed_at IS NULL AND expires_at > NOW();`
+		WHERE id = $1 AND consumed_at IS NULL AND expires_at > NOW()
+		RETURNING ` + invitationColumns + `;`
 
-	result, err := tx.ExecContext(ctx, query, id)
-	if err != nil {
-		return fmt.Errorf("consuming an Invitation: %w", err)
+	if err := tx.GetContext(ctx, &entity, query, id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("consuming an Invitation: %w", errs.ErrInvitationNotValid)
+		}
+
+		return nil, fmt.Errorf("consuming an Invitation: %w", err)
 	}
 
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("consuming an Invitation: %w", err)
-	}
-
-	if affected == 0 {
-		return fmt.Errorf("consuming an Invitation: %w", errs.ErrInvitationNotValid)
-	}
-
-	return nil
+	return &entity, nil
 }

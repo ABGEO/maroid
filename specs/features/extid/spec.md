@@ -33,9 +33,9 @@ identity for the HTTP path and for the Telegram path.
 | `EXTID-FR-007`  | Section 4.3, `EXTID-SC-009`                                     |
 | `EXTID-FR-008`  | Section 4.2, `EXTID-DD-003`, `EXTID-SC-010`, `EXTID-SC-022`     |
 | `EXTID-FR-009`  | Section 4.3, `EXTID-DD-009`, `EXTID-SC-011`                     |
-| `EXTID-FR-010`  | Section 4.3, `EXTID-DD-010`, `EXTID-SC-012`                     |
+| `EXTID-FR-010`  | Section 4.3, `EXTID-DD-010`, `EXTID-DD-015`, `EXTID-SC-012`     |
 | `EXTID-FR-011`  | Section 4.3, `EXTID-SC-013`                                     |
-| `EXTID-FR-012`  | Section 4.4, `EXTID-DD-008`, `EXTID-SC-014`                     |
+| `EXTID-FR-012`  | Section 4.4, `EXTID-DD-008`, `EXTID-DD-015`, `EXTID-SC-014`     |
 | `EXTID-FR-013`  | Section 4.2, `EXTID-DD-007`, `EXTID-DD-008`, `EXTID-SC-015`     |
 | `EXTID-FR-014`  | Section 4.2, `EXTID-SC-016`                                     |
 | `EXTID-FR-015`  | Section 4.2, `EXTID-DD-011`, `EXTID-SC-017`                     |
@@ -323,11 +323,20 @@ it builds today, and this feature adds no page to it. `/auth/invite` reads `toke
 
 | Command              | Flags                                             | Does                                                                  | Realizes                       |
 | -------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------- |
-| `maroid user invite` | `--first-name`, `--last-name`, `--user`, `--ttl` | Creates a user record and an invitation for it, then prints the address. | `EXTID-FR-010`, `EXTID-FR-011` |
+| `maroid user invite` | `--first-name`, `--last-name`, `--user`, `--ttl` | Creates a user record and an invitation for it, then prints the address of the deck. | `EXTID-FR-010`, `EXTID-FR-011` |
 
 `--user` names a record that exists, and it excludes `--first-name` and
 `--last-name`. `--ttl` defaults to the configured lifetime. `EXTID-DD-010` gives the
 transaction.
+
+The command prints an address of the deck, not of the hub. `auth.deck_url` gives the
+origin, and the address carries the token alone. `EXTID-DD-015` gives the reason and
+the two steps that follow it.
+
+**The target of a flow.** The deck names it, and no other party does. Every route
+that starts a flow requires `redirect` and refuses one that `auth.allowed_redirects`
+does not hold. The hub reports every outcome at that target with the query parameter
+`error`, and section 4.5 gives the closed set of reasons.
 
 **Configuration scheme.**
 
@@ -337,6 +346,7 @@ transaction.
 | `jwt.private_key`        | Removed           | None    | No     | `SEC-002`                       |
 | `jwt.public_key`         | Removed           | None    | No     | `SEC-002`                       |
 | `jwt.token_expiry`       | Removed           | None    | No     | `SEC-002`                       |
+| `auth.deck_url`          | String            | None    | No     | `EXTID-FR-010`                  |
 | `auth.providers`         | List of provider  | None    | No     | `EXTID-FR-009`                  |
 | `auth.invitation_ttl`    | Duration          | `72h`   | No     | `EXTID-FR-014`                  |
 | `auth.flow_ttl`          | Duration          | `10m`   | No     | `EXTID-FR-006`                  |
@@ -420,7 +430,8 @@ gives the resolver that both callers hold.
 | The attach finds the account on the same record        | Redirect with no error. Nothing changes                         | None                           |
 | The detach names the last identity                     | Status 409                                                      | `the last external account cannot be detached` |
 | The detach names a provider with no identity           | Status 404                                                      | `not found`                    |
-| The invitation is absent, consumed, or expired         | Status 400                                                      | `the invitation is not valid`  |
+| The invitation is absent, consumed, or expired         | Redirect to the target with `error=invitation_invalid`. The deck renders it | `the invitation is not valid` |
+| The target of the redemption is absent or not allowed  | Status 400. No target exists to report the failure at           | `missing or invalid redirect parameter` |
 | `maroid user invite` gets `--user` with a name flag    | The command returns an error before it writes                   | `--user excludes --first-name and --last-name` |
 | `maroid user invite` gets `--user` with no record      | The command returns an error                                    | `no user record holds that identifier` |
 
@@ -645,6 +656,31 @@ owner types a value that the database already holds. A change to
 `20260912143000_table_users_create.up.sql`. It rewrites a migration that a database
 already ran, so the checksum and the deployed schema disagree.
 
+### `EXTID-DD-015`
+
+**Realizes:** `EXTID-FR-010`, `EXTID-FR-012`
+**Decision:** `maroid user invite` prints an address of the deck, `/invite?token=...`.
+That page reads the token and moves the browser to `/auth/invite` of the hub, with
+its own origin as the target. The hub answers a valid invitation with the redirect
+to Dex, and an invalid one with a redirect back to the deck that carries
+`error=invitation_invalid`.
+**Rationale:** The person lands in the product, and the deck renders the failure of
+an expired or spent invitation. The command also stops choosing a target: the deck
+knows its own origin, so no flag and no default can be wrong.
+
+The page moves the browser instead of reading the answer of a request, because the
+binding of `EXTID-DD-001` travels in a cookie of the hub with `SameSite=Lax`. A
+browser accepts that cookie from a request of another site only on a top level
+navigation. The deck and the hub share a site in one deployment and not in
+another, and a dropped binding fails the callback. A redemption without the binding
+is worse than a failure: a person who holds a state finishes it in their own
+browser, and their external account binds to the invited record.
+**Alternatives:** The deck reads the address of Dex from a request and moves the
+browser to it. It needs the binding cookie as `SameSite=None; Secure`, so the hub
+needs HTTPS everywhere, including a workstation. The address of the hub in the
+printed text. Nothing renders a failure, and the command chooses a target that the
+deck already knows.
+
 ## 6. Scenarios
 
 `spec-scenarios.md` holds `EXTID-SC-001` through `EXTID-SC-024`.
@@ -665,7 +701,8 @@ already ran, so the checksum and the deployed schema disagree.
 | 10  | Write `EXTID-SC-011`, then `/auth/me` and `auth.providers`.                                       | `EXTID-FR-009`                   | [ ]  |
 | 11  | Write `EXTID-SC-017` and `EXTID-SC-018`, then the profile write of the sign in.                   | `EXTID-FR-015`, `EXTID-FR-016`   | [ ]  |
 | 12  | Remove the `JWT` block from the configuration. Set the token lifetime of Dex to seven days.       | `EXTID-NFR-002`                  | [ ]  |
-| 13  | Run `EXTID-SC-019` and `EXTID-SC-021` against the running hub.                                    | `EXTID-FR-017`, `EXTID-NFR-002`  | [ ]  |
+| 13  | Build the invite page of the deck. Point the command at it, and drop the target flag.             | `EXTID-DD-015`                   | [x]  |
+| 14  | Run `EXTID-SC-019` and `EXTID-SC-021` against the running hub.                                    | `EXTID-FR-017`, `EXTID-NFR-002`  | [ ]  |
 
 Step 5 changes no behavior that a person sees, because the hub still reads the same
 records. A failure in step 6 then names the flow row and nothing else.

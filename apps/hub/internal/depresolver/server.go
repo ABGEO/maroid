@@ -185,6 +185,11 @@ func (c *Container) buildAuthHandler(
 		return nil, err
 	}
 
+	invitationRepo, err := c.InvitationRepository()
+	if err != nil {
+		return nil, err
+	}
+
 	authSvc, err := c.AuthService()
 	if err != nil {
 		return nil, err
@@ -196,6 +201,14 @@ func (c *Container) buildAuthHandler(
 	}
 
 	return handler.NewAuth(
-		cfg, logger, verifier, oidcFlow, userRepo, identityRepo, identityResolver, authSvc,
+		cfg,
+		logger,
+		verifier,
+		oidcFlow,
+		userRepo,
+		identityRepo,
+		identityResolver,
+		invitationRepo,
+		authSvc,
 	), nil
 }

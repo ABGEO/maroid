@@ -80,6 +80,8 @@ type Auth struct {
 	AllowedRedirects []string      `mapstructure:"allowed_redirects" validate:"required,min=1,dive,url"`
 	FlowTTL          time.Duration `default:"10m"                    mapstructure:"flow_ttl"`
 	SessionTTL       time.Duration `default:"168h"                   mapstructure:"session_ttl"`
+	InvitationTTL    time.Duration `default:"72h"                    mapstructure:"invitation_ttl"`
+	DeckURL          string        `mapstructure:"deck_url" validate:"omitempty,url"`
 }
 
 // OIDC defines OpenID Connect configuration parameters for authentication.

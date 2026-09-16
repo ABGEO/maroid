@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -31,9 +32,20 @@ const (
 	errorKey = "error"
 )
 
+// The reasons that the hub reports at the target of a flow. Section 4.5 of the
+// specification gives each one, and the deck renders a message for each.
+const (
+	reasonAuthFailed        = "auth_failed"
+	reasonNoIdentity        = "no_identity"
+	reasonAccessDenied      = "access_denied"
+	reasonIdentityTaken     = "identity_taken"
+	reasonInvitationInvalid = "invitation_invalid"
+)
+
 var (
 	errInvalidQueryParameter  = errors.New("invalid query parameter")
 	errMissingFederatedClaims = errors.New("the token carries no federated claims")
+	errRecordNotActive        = errors.New("the user record is not active")
 )
 
 // AuthHandler represents the Auth handler interface.
@@ -44,6 +56,7 @@ type AuthHandler interface {
 	Callback(w http.ResponseWriter, r *http.Request) error
 	Link(w http.ResponseWriter, r *http.Request) error
 	Detach(w http.ResponseWriter, r *http.Request) error
+	Invite(w http.ResponseWriter, r *http.Request) error
 }
 
 // Auth represents the authentication handler.
@@ -55,6 +68,7 @@ type Auth struct {
 	userRepo         repository.UserRepository
 	identityRepo     repository.IdentityRepository
 	identityResolver auth.IdentityResolver
+	invitationRepo   repository.InvitationRepository
 	authSvc          *auth.Service
 }
 
@@ -69,6 +83,7 @@ func NewAuth(
 	userRepo repository.UserRepository,
 	identityRepo repository.IdentityRepository,
 	identityResolver auth.IdentityResolver,
+	invitationRepo repository.InvitationRepository,
 	authSvc *auth.Service,
 ) *Auth {
 	return &Auth{
@@ -82,6 +97,7 @@ func NewAuth(
 		userRepo:         userRepo,
 		identityRepo:     identityRepo,
 		identityResolver: identityResolver,
+		invitationRepo:   invitationRepo,
 		authSvc:          authSvc,
 	}
 }
@@ -94,6 +110,7 @@ func (h *Auth) Register(router chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Get("/", Wrap(h.logger, h.Initiate))
 			r.Get("/callback", Wrap(h.logger, h.Callback))
+			r.Get("/invite", Wrap(h.logger, h.Invite))
 		})
 
 		r.Group(func(r chi.Router) {
@@ -170,12 +187,16 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	if flow.Intent == model.IntentAttach {
+	switch flow.Intent {
+	case model.IntentAttach:
 		return h.finishAttach(w, r, flow, claims)
+	case model.IntentRedeem:
+		return h.finishRedeem(w, r, flow, claims, rawToken)
+	case model.IntentSignIn:
 	}
 
 	if _, err = h.resolveAndSync(r.Context(), claims); err != nil {
-		redirectWithError(w, r, redirect)
+		redirectWithReason(w, r, redirect, signInReason(err))
 
 		return err
 	}
@@ -247,6 +268,41 @@ func (h *Auth) Detach(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// Invite starts the redemption of an invitation.
+func (h *Auth) Invite(w http.ResponseWriter, r *http.Request) error {
+	redirect := r.URL.Query().Get("redirect")
+	if !validateRedirect(redirect, h.cfg.Auth.AllowedRedirects) {
+		sendBadRequest(w, r, "missing or invalid redirect parameter")
+
+		return fmt.Errorf("%w: missing or invalid redirect parameter", errInvalidQueryParameter)
+	}
+
+	digest := sha256.Sum256([]byte(r.URL.Query().Get("token")))
+
+	invitation, err := h.invitationRepo.GetValidByTokenHash(r.Context(), digest[:])
+	if err != nil {
+		redirectWithReason(w, r, redirect, reasonInvitationInvalid)
+
+		return fmt.Errorf("reading the invitation: %w", err)
+	}
+
+	authURL, binding, err := h.oidcFlow.Initiate(r.Context(), model.AuthFlow{
+		Intent:       model.IntentRedeem,
+		InvitationID: &invitation.ID,
+		Redirect:     redirect,
+	})
+	if err != nil {
+		redirectWithError(w, r, redirect)
+
+		return fmt.Errorf("initiating the redemption: %w", err)
+	}
+
+	setBindingCookie(w, binding)
+	http.Redirect(w, r, authURL, http.StatusFound)
+
+	return nil
+}
+
 // Me returns the authenticated user's information.
 func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
 	claims := auth.ClaimsFromContext(r.Context())
@@ -286,7 +342,7 @@ func (h *Auth) finishAttach(
 		},
 	)
 	if errors.Is(err, errs.ErrIdentityTaken) {
-		redirectWithReason(w, r, flow.Redirect, "identity_taken")
+		redirectWithReason(w, r, flow.Redirect, reasonIdentityTaken)
 
 		return nil
 	}
@@ -303,6 +359,52 @@ func (h *Auth) finishAttach(
 	return nil
 }
 
+// finishRedeem spends the invitation that the flow row names and signs the person
+// in with the identity that the redemption just wrote.
+func (h *Auth) finishRedeem(
+	w http.ResponseWriter,
+	r *http.Request,
+	flow *model.AuthFlow,
+	claims *auth.Claims,
+	rawToken string,
+) error {
+	federated := claims.Federated
+	if federated.ConnectorID == "" || federated.UserID == "" {
+		redirectWithError(w, r, flow.Redirect)
+
+		return errMissingFederatedClaims
+	}
+
+	_, err := h.authSvc.Redeem(
+		r.Context(),
+		*flow.InvitationID,
+		federated.ConnectorID,
+		federated.UserID,
+		model.Profile{
+			Username:    claims.Username,
+			DisplayName: claims.Name,
+			PictureURL:  claims.Picture,
+		},
+	)
+	if errors.Is(err, errs.ErrIdentityTaken) {
+		redirectWithReason(w, r, flow.Redirect, reasonIdentityTaken)
+
+		return nil
+	}
+
+	if err != nil {
+		redirectWithError(w, r, flow.Redirect)
+
+		return fmt.Errorf("redeeming the invitation: %w", err)
+	}
+
+	setAuthCookie(w, rawToken, h.cfg.Auth.SessionTTL)
+	//nolint:gosec // G710: validateRedirect already matched the target against the allowed list.
+	http.Redirect(w, r, flow.Redirect, http.StatusFound)
+
+	return nil
+}
+
 // resolveAndSync reads the user record that the external account names, then
 // writes the profile that the provider gave onto that identity.
 func (h *Auth) resolveAndSync(ctx context.Context, claims *auth.Claims) (*model.User, error) {
@@ -311,9 +413,13 @@ func (h *Auth) resolveAndSync(ctx context.Context, claims *auth.Claims) (*model.
 		return nil, errMissingFederatedClaims
 	}
 
-	user, err := h.identityResolver.ResolveByProvider(ctx, federated.ConnectorID, federated.UserID)
+	user, err := h.identityRepo.GetUserByProvider(ctx, federated.ConnectorID, federated.UserID)
 	if err != nil {
 		return nil, fmt.Errorf("resolving the user record of the external account: %w", err)
+	}
+
+	if user.Status != model.StatusActive {
+		return nil, fmt.Errorf("%w: %s", errRecordNotActive, user.ID)
 	}
 
 	err = h.identityRepo.SyncProfile(ctx, federated.ConnectorID, federated.UserID, model.Profile{
@@ -326,6 +432,18 @@ func (h *Auth) resolveAndSync(ctx context.Context, claims *auth.Claims) (*model.
 	}
 
 	return user, nil
+}
+
+// signInReason names the failure of a sign in at the target of the flow.
+func signInReason(err error) string {
+	switch {
+	case errors.Is(err, errs.ErrUserNotFound):
+		return reasonNoIdentity
+	case errors.Is(err, errRecordNotActive):
+		return reasonAccessDenied
+	default:
+		return reasonAuthFailed
+	}
 }
 
 func (h *Auth) processOIDCCallback(
@@ -347,7 +465,7 @@ func (h *Auth) processOIDCCallback(
 
 // redirectWithError sends the caller back to the target with an error marker.
 func redirectWithError(w http.ResponseWriter, r *http.Request, target string) {
-	redirectWithReason(w, r, target, "auth_failed")
+	redirectWithReason(w, r, target, reasonAuthFailed)
 }
 
 // redirectWithReason sends the caller back to the target with a named failure.

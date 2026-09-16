@@ -62,12 +62,15 @@ func TestInvitationConsumesOneTime(t *testing.T) {
 
 	tx, err := instance.DB.BeginTxx(ctx, nil)
 	require.NoError(t, err)
-	require.NoError(t, invitationRepo.Consume(ctx, tx, created.ID))
+	spent, err := invitationRepo.Consume(ctx, tx, created.ID)
+	require.NoError(t, err)
+	require.Equal(t, userID, spent.UserID, "the row names the record it grants")
 	require.NoError(t, tx.Commit())
 
 	tx, err = instance.DB.BeginTxx(ctx, nil)
 	require.NoError(t, err)
-	require.ErrorIs(t, invitationRepo.Consume(ctx, tx, created.ID), errs.ErrInvitationNotValid)
+	_, err = invitationRepo.Consume(ctx, tx, created.ID)
+	require.ErrorIs(t, err, errs.ErrInvitationNotValid)
 	require.NoError(t, tx.Rollback())
 
 	_, err = invitationRepo.GetValidByTokenHash(ctx, digest)
@@ -92,7 +95,8 @@ func TestExpiredInvitationGrantsNothing(t *testing.T) {
 
 	tx, err := instance.DB.BeginTxx(ctx, nil)
 	require.NoError(t, err)
-	require.ErrorIs(t, invitationRepo.Consume(ctx, tx, created.ID), errs.ErrInvitationNotValid)
+	_, err = invitationRepo.Consume(ctx, tx, created.ID)
+	require.ErrorIs(t, err, errs.ErrInvitationNotValid)
 	require.NoError(t, tx.Rollback())
 }
 

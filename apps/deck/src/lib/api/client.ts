@@ -6,9 +6,17 @@ const BASE_URL = (env.PUBLIC_HUB_BASE_URL ?? '').replace(/\/+$/, '');
 
 let isRedirecting = false;
 
+function landingUrl(): string {
+	return `${window.location.origin}/auth/callback`;
+}
+
 export function buildAuthUrl(): string {
-	const callbackUrl = `${window.location.origin}/auth/callback`;
-	return `${BASE_URL}/auth?redirect=${encodeURIComponent(callbackUrl)}`;
+	return `${BASE_URL}/auth?redirect=${encodeURIComponent(landingUrl())}`;
+}
+
+export function buildInviteUrl(token: string): string {
+	const query = new URLSearchParams({ token, redirect: landingUrl() });
+	return `${BASE_URL}/auth/invite?${query.toString()}`;
 }
 
 function redirectToAuth(): void {

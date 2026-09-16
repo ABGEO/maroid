@@ -9,6 +9,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/db"
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/authtest"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
@@ -29,7 +30,14 @@ func serviceUnderTest(t *testing.T) (*auth.Service, repository.IdentityRepositor
 
 	identityRepo := repository.NewIdentity(instance.DB)
 
-	return auth.NewService(instance.DB, identityRepo), identityRepo, instance.DB
+	service := auth.NewService(
+		instance.DB,
+		repository.NewUser(instance.DB),
+		identityRepo,
+		repository.NewInvitation(instance.DB),
+	)
+
+	return service, identityRepo, instance.DB
 }
 
 func addUser(t *testing.T, database *sqlx.DB, firstName string) string {
@@ -55,7 +63,7 @@ func TestAttachBindsASecondProvider(t *testing.T) {
 	userID := addUser(t, database, "Temuri")
 	require.NoError(t, service.Attach(ctx, userID, auth.ProviderTelegram, "111", model.Profile{}))
 	require.NoError(t, service.Attach(ctx, userID, providerCloud, "abc", model.Profile{
-		Username: handleOfA,
+		Username: authtest.HandleOfA,
 	}))
 
 	identities, err := identityRepo.ListByUser(ctx, userID)
@@ -80,7 +88,7 @@ func TestAttachOfAnAccountTheRecordHoldsChangesNothing(t *testing.T) {
 
 	userID := addUser(t, database, "Temuri")
 	require.NoError(t, service.Attach(ctx, userID, auth.ProviderTelegram, "111", model.Profile{
-		Username: handleOfA,
+		Username: authtest.HandleOfA,
 	}))
 
 	before, err := identityRepo.ListByUser(ctx, userID)
@@ -94,7 +102,7 @@ func TestAttachOfAnAccountTheRecordHoldsChangesNothing(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, after, 1, "the record still holds one identity at that provider")
 	require.Equal(t, before[0].ID, after[0].ID)
-	require.Equal(t, handleOfA, *after[0].Username, "nothing changed")
+	require.Equal(t, authtest.HandleOfA, *after[0].Username, "nothing changed")
 }
 
 // EXTID-SC-007: An account that names another record refuses the attach, and

@@ -134,6 +134,13 @@ func (c *Container) AuthService() (*auth.Service, error) {
 			return
 		}
 
+		var userRepo repository.UserRepository
+
+		userRepo, err = c.UserRepository()
+		if err != nil {
+			return
+		}
+
 		var identityRepo repository.IdentityRepository
 
 		identityRepo, err = c.IdentityRepository()
@@ -141,7 +148,16 @@ func (c *Container) AuthService() (*auth.Service, error) {
 			return
 		}
 
-		c.authService.instance = auth.NewService(dbInstance, identityRepo)
+		var invitationRepo repository.InvitationRepository
+
+		invitationRepo, err = c.InvitationRepository()
+		if err != nil {
+			return
+		}
+
+		c.authService.instance = auth.NewService(
+			dbInstance, userRepo, identityRepo, invitationRepo,
+		)
 	})
 
 	if err != nil {

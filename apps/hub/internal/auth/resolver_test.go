@@ -34,6 +34,14 @@ func (f *fakeIdentityRepository) GetActiveUserByProvider(
 	return f.user, f.err
 }
 
+func (f *fakeIdentityRepository) GetUserByProvider(
+	_ context.Context,
+	_ string,
+	_ string,
+) (*model.User, error) {
+	return f.user, f.err
+}
+
 func (f *fakeIdentityRepository) ListByUser(
 	_ context.Context,
 	_ string,

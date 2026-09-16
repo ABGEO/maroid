@@ -8,6 +8,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/robfig/cron/v3"
 	"github.com/stretchr/testify/require"
 
@@ -63,6 +64,12 @@ type fakeUserRepo struct {
 }
 
 var _ repository.UserRepository = (*fakeUserRepo)(nil)
+
+func (f fakeUserRepo) Create(
+	context.Context, *sqlx.Tx, string, string,
+) (*model.User, error) {
+	return nil, errs.ErrUserNotFound
+}
 
 func (f fakeUserRepo) ListActive(context.Context) ([]model.User, error) {
 	return f.users, f.err

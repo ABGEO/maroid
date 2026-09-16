@@ -27,6 +27,11 @@ type IdentityRepository interface {
 		provider string,
 		providerUserID string,
 	) (*model.User, error)
+	GetUserByProvider(
+		ctx context.Context,
+		provider string,
+		providerUserID string,
+	) (*model.User, error)
 	ListByUser(ctx context.Context, userID string) ([]model.Identity, error)
 	Attach(
 		ctx context.Context,
@@ -93,6 +98,36 @@ func (r *Identity) GetActiveUserByProvider(
 		}
 
 		return nil, fmt.Errorf("getting active User by the identity of %s: %w", provider, err)
+	}
+
+	return &entity, nil
+}
+
+// GetUserByProvider retrieves the user record that the external account names,
+// whatever its status.
+func (r *Identity) GetUserByProvider(
+	ctx context.Context,
+	provider string,
+	providerUserID string,
+) (*model.User, error) {
+	var entity model.User
+
+	query := `
+		SELECT ` + userColumnsOfU + `
+		FROM public.users u
+		JOIN public.identities i ON i.user_id = u.id
+		WHERE i.provider = $1 AND i.provider_user_id = $2;`
+
+	if err := r.db.GetContext(ctx, &entity, query, provider, providerUserID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf(
+				"getting the User of the identity of %s: %w",
+				provider,
+				errs.ErrUserNotFound,
+			)
+		}
+
+		return nil, fmt.Errorf("getting the User of the identity of %s: %w", provider, err)
 	}
 
 	return &entity, nil

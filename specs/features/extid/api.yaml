@@ -70,14 +70,25 @@ paths:
         - name: token
           in: query
           required: true
-          description: The token that `maroid user invite` printed. See `EXTID-DD-007`.
+          description: >
+            The token that the invite page of the deck read from its own address.
+            `maroid user invite` printed that address. See `EXTID-DD-007`.
           schema:
             type: string
+        - $ref: "#/components/parameters/Redirect"
       responses:
         "302":
-          $ref: "#/components/responses/ToProvider"
+          description: >
+            The redirect to Dex when the invitation is valid. An invitation that is
+            absent, consumed, or expired redirects to the target instead, with the
+            query parameter `error=invitation_invalid`. The deck renders that.
+            See `EXTID-DD-015`.
+          headers:
+            Location:
+              schema:
+                type: string
         "400":
-          $ref: "#/components/responses/InvalidInvitation"
+          $ref: "#/components/responses/NoTarget"
 
   /auth/callback:
     get:
@@ -295,10 +306,11 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
 
-    InvalidInvitation:
+    NoTarget:
       description: >
-        The invitation is absent, consumed, or expired. The three cases answer the
-        same way.
+        The target of the redemption is absent, or `auth.allowed_redirects` does not
+        hold it. No target exists to report the failure at, so this answers in the
+        body. Every other failure of this route redirects. See `EXTID-DD-015`.
       content:
         application/json:
           schema:

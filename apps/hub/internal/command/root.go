@@ -8,6 +8,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/command/migrate"
 	"github.com/abgeo/maroid/apps/hub/internal/command/serve"
+	"github.com/abgeo/maroid/apps/hub/internal/command/user"
 	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 )
@@ -27,6 +28,7 @@ func New(depResolver depresolver.Resolver) (*Command, error) {
 	err = commandRegistry.Register(
 		migrate.New(depResolver).Command(),
 		serve.New(depResolver).Command(),
+		user.New(depResolver).Command(),
 		NewWorkerCommand(depResolver).Command(),
 	)
 	if err != nil {

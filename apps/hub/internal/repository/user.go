@@ -25,6 +25,7 @@ const (
 type UserRepository interface {
 	GetActiveByID(ctx context.Context, id string) (*model.User, error)
 	ListActive(ctx context.Context) ([]model.User, error)
+	Create(ctx context.Context, tx *sqlx.Tx, firstName string, lastName string) (*model.User, error)
 }
 
 // User is a SQL based implementation of UserRepository.
@@ -64,6 +65,27 @@ func (r *User) ListActive(ctx context.Context) ([]model.User, error) {
 	}
 
 	return entities, nil
+}
+
+// Create writes one user record.
+func (r *User) Create(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	firstName string,
+	lastName string,
+) (*model.User, error) {
+	var entity model.User
+
+	query := `
+		INSERT INTO public.users (first_name, last_name)
+		VALUES (NULLIF($1, ''), NULLIF($2, ''))
+		RETURNING ` + userColumns + `;`
+
+	if err := tx.GetContext(ctx, &entity, query, firstName, lastName); err != nil {
+		return nil, fmt.Errorf("creating a User: %w", err)
+	}
+
+	return &entity, nil
 }
 
 func (r *User) get(

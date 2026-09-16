@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/authtest"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
@@ -50,12 +51,12 @@ func activeRecord() *model.User {
 	return &model.User{ID: recordID, Status: model.StatusActive}
 }
 
-func verifierFor(t *testing.T, dex *fakeDex) auth.TokenVerifier {
+func verifierFor(t *testing.T, dex *authtest.Provider) auth.TokenVerifier {
 	t.Helper()
 
 	cfg := &config.Config{}
 	cfg.OIDC.Issuer = dex.URL
-	cfg.OIDC.ClientID = clientID
+	cfg.OIDC.ClientID = authtest.ClientID
 	cfg.OIDC.ClientSecret = "secret"
 	cfg.OIDC.RedirectURI = "http://hub.maroid.localhost/auth/callback"
 
@@ -109,7 +110,7 @@ func recordActingUser(acting *string) http.Handler {
 func TestATokenOfDexCarriesTheActingUser(t *testing.T) {
 	t.Parallel()
 
-	dex := startFakeDex(t)
+	dex := authtest.StartProvider(t)
 	resolver := &fakeResolver{user: activeRecord()}
 
 	var acting string
@@ -133,7 +134,7 @@ func TestATokenOfDexCarriesTheActingUser(t *testing.T) {
 func TestABlockedRecordEndsALiveToken(t *testing.T) {
 	t.Parallel()
 
-	dex := startFakeDex(t)
+	dex := authtest.StartProvider(t)
 
 	recorder := serve(
 		t,
@@ -150,7 +151,7 @@ func TestABlockedRecordEndsALiveToken(t *testing.T) {
 func TestTheMiddlewareRefusesARequestWithNoToken(t *testing.T) {
 	t.Parallel()
 
-	dex := startFakeDex(t)
+	dex := authtest.StartProvider(t)
 
 	recorder := serve(t, verifierFor(t, dex), &fakeResolver{user: activeRecord()}, "", refuse(t))
 	require.Equal(t, http.StatusUnauthorized, recorder.Code)
@@ -161,8 +162,8 @@ func TestTheMiddlewareRefusesARequestWithNoToken(t *testing.T) {
 func TestTheMiddlewareRefusesATokenThatDexDidNotIssue(t *testing.T) {
 	t.Parallel()
 
-	dex := startFakeDex(t)
-	other := startFakeDex(t)
+	dex := authtest.StartProvider(t)
+	other := authtest.StartProvider(t)
 	verifier := verifierFor(t, dex)
 
 	cases := map[string]func() string{
@@ -198,7 +199,7 @@ func TestTheMiddlewareRefusesATokenThatDexDidNotIssue(t *testing.T) {
 func TestATokenWithNoFederatedClaimsIsRefused(t *testing.T) {
 	t.Parallel()
 
-	dex := startFakeDex(t)
+	dex := authtest.StartProvider(t)
 	resolver := &fakeResolver{user: activeRecord()}
 
 	claims := dex.Claims(auth.ProviderTelegram, account)
@@ -217,7 +218,7 @@ func TestTheVerifierReadsTheKeySetOnce(t *testing.T) {
 
 	const requests = 1000
 
-	dex := startFakeDex(t)
+	dex := authtest.StartProvider(t)
 	verifier := verifierFor(t, dex)
 	resolver := &fakeResolver{user: activeRecord()}
 	token := dex.Sign(t, auth.ProviderTelegram, account)
