@@ -30,7 +30,7 @@ properties decide the shape of this decision.
 
 | Property of Dex                                                                                      | Consequence for Maroid                                        |
 | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| A token carries the connector and the upstream user identifier in the `federated_claims` claim.      | One pair of values names one external account.                  |
+| A token carries the connector and the upstream user identifier in the `federated_claims` claim, and the request asks for the scope `federated:id` to get it. | One pair of values names one external account. A consumer that omits the scope resolves to nobody. |
 | The `sub` claim encodes the upstream user identifier and the connector, so `userIDKey` changes it.   | A row that joins on `sub` orphans when a connector changes.     |
 | A connector accepts every account that its upstream provider accepts.                                | Authentication at Dex is not permission at Maroid.              |
 

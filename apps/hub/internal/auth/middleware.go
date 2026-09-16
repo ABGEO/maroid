@@ -9,10 +9,8 @@ import (
 	"strings"
 
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 
 	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -22,7 +20,10 @@ const (
 	authHeaderName      = "Authorization"
 )
 
-var errMissingToken = errors.New("auth: the request carries no token")
+var (
+	errMissingToken          = errors.New("auth: the request carries no token")
+	errMissingFederatedClaim = errors.New("auth: the token carries no federated claims")
+)
 
 type contextKey string
 
@@ -32,12 +33,12 @@ const (
 	userIDKey       contextKey = "user_id"
 )
 
-// Middleware returns a HTTP middleware that enforces JWT authentication and
-// resolves the acting user of the request.
+// Middleware returns a HTTP middleware that verifies a access token and resolves
+// the acting user of the request.
 func Middleware(
 	logger *slog.Logger,
-	jwtService *JWTService,
-	userRepo repository.UserRepository,
+	verifier TokenVerifier,
+	resolver IdentityResolver,
 ) func(http.Handler) http.Handler {
 	logger = logger.With(
 		slog.String("component", "middleware"),
@@ -48,7 +49,7 @@ func Middleware(
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tokenString := tokenFromRequest(r)
 
-			claims, user, err := resolve(r.Context(), logger, jwtService, userRepo, tokenString)
+			claims, user, err := resolve(r.Context(), logger, verifier, resolver, tokenString)
 			if err != nil {
 				sendAccessDeniedResponse(w, r)
 
@@ -70,8 +71,8 @@ func Middleware(
 func resolve(
 	ctx context.Context,
 	logger *slog.Logger,
-	jwtService *JWTService,
-	userRepo repository.UserRepository,
+	verifier TokenVerifier,
+	resolver IdentityResolver,
 	tokenString string,
 ) (*Claims, *model.User, error) {
 	if tokenString == "" {
@@ -80,34 +81,37 @@ func resolve(
 		return nil, nil, errMissingToken
 	}
 
-	claims, err := jwtService.Verify(tokenString)
+	claims, err := verifier.Verify(ctx, tokenString)
 	if err != nil {
 		logger.ErrorContext(ctx, "invalid token", slog.Any("error", err))
 
 		return nil, nil, fmt.Errorf("verifying the token: %w", err)
 	}
 
-	if err = uuid.Validate(claims.Subject); err != nil {
+	if claims.Federated.ConnectorID == "" || claims.Federated.UserID == "" {
 		logger.ErrorContext(
 			ctx,
-			"invalid subject claim in token",
+			"the token carries no federated claims",
 			slog.String("subject", claims.Subject),
-			slog.Any("error", err),
 		)
 
-		return nil, nil, fmt.Errorf("validating the subject claim: %w", err)
+		return nil, nil, errMissingFederatedClaim
 	}
 
-	user, err := userRepo.GetActiveByID(ctx, claims.Subject)
+	user, err := resolver.ResolveByProvider(
+		ctx,
+		claims.Federated.ConnectorID,
+		claims.Federated.UserID,
+	)
 	if err != nil {
 		logger.InfoContext(
 			ctx,
-			"no active user record holds the subject",
-			slog.String("subject", claims.Subject),
+			"no active user record holds the external account",
+			slog.String("provider", claims.Federated.ConnectorID),
 			slog.Any("error", err),
 		)
 
-		return nil, nil, fmt.Errorf("reading the user record: %w", err)
+		return nil, nil, fmt.Errorf("resolving the identity: %w", err)
 	}
 
 	return claims, user, nil
@@ -132,14 +136,14 @@ func sendAccessDeniedResponse(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, map[string]string{"error": "access denied"})
 }
 
-// TokenFromContext retrieves the JWT token from the context.
+// TokenFromContext retrieves access token from the context.
 func TokenFromContext(ctx context.Context) string {
 	token, _ := ctx.Value(tokenContextKey).(string)
 
 	return token
 }
 
-// ClaimsFromContext retrieves the JWT claims from the context.
+// ClaimsFromContext retrieves the claims of the token from the context.
 func ClaimsFromContext(ctx context.Context) *Claims {
 	claims, _ := ctx.Value(claimsKey).(*Claims)
 

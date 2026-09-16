@@ -12,7 +12,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
@@ -34,8 +33,8 @@ type PluginHandler interface {
 // Plugin represents the plugin handler.
 type Plugin struct {
 	logger         *slog.Logger
-	jwtSvc         *auth.JWTService
-	userRepo       repository.UserRepository
+	verifier       auth.TokenVerifier
+	resolver       auth.IdentityResolver
 	pluginRegistry *registry.PluginRegistry
 	uiRegistry     *registry.UIRegistry
 	settingsSvc    settings.Service
@@ -46,8 +45,8 @@ var _ PluginHandler = (*Plugin)(nil)
 // NewPlugin creates a new Plugin handler.
 func NewPlugin(
 	logger *slog.Logger,
-	jwtSvc *auth.JWTService,
-	userRepo repository.UserRepository,
+	verifier auth.TokenVerifier,
+	resolver auth.IdentityResolver,
 	pluginRegistry *registry.PluginRegistry,
 	uiRegistry *registry.UIRegistry,
 	settingsSvc settings.Service,
@@ -57,8 +56,8 @@ func NewPlugin(
 			slog.String("component", "handler"),
 			slog.String("handler", "plugin"),
 		),
-		jwtSvc:         jwtSvc,
-		userRepo:       userRepo,
+		verifier:       verifier,
+		resolver:       resolver,
 		pluginRegistry: pluginRegistry,
 		uiRegistry:     uiRegistry,
 		settingsSvc:    settingsSvc,
@@ -79,7 +78,7 @@ func (h *Plugin) Register(router chi.Router) {
 
 	router.Route("/plugins", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(auth.Middleware(h.logger, h.jwtSvc, h.userRepo))
+			r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
 
 			r.Get("/", Wrap(h.logger, h.List))
 			r.Get("/{id}/settings/schema", Wrap(h.logger, h.SettingsSchema))

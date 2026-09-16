@@ -12,6 +12,10 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 )
 
+// ScopeFederatedID makes Dex put the connector and the upstream user identifier
+// in the `federated_claims` claim.
+const ScopeFederatedID = "federated:id"
+
 var (
 	// ErrNonceMismatch indicates that the OIDC nonce does not match the expected value.
 	ErrNonceMismatch = errors.New("oidc: nonce mismatch")
@@ -47,7 +51,7 @@ func NewOIDCService(cfg *config.Config) (*OIDCService, error) {
 		ClientSecret: cfg.OIDC.ClientSecret,
 		Endpoint:     provider.Endpoint(),
 		RedirectURL:  cfg.OIDC.RedirectURI,
-		Scopes:       []string{oidc.ScopeOpenID, "profile"},
+		Scopes:       []string{oidc.ScopeOpenID, oidc.ScopeProfile, ScopeFederatedID},
 	}
 	oidcConfig := &oidc.Config{
 		ClientID: cfg.OIDC.ClientID,
@@ -62,13 +66,27 @@ func NewOIDCService(cfg *config.Config) (*OIDCService, error) {
 	}, nil
 }
 
-// AuthURL generates the OIDC authentication URL with the specified state, nonce, and PKCE verifier.
-func (s *OIDCService) AuthURL(state string, nonce string, verifier string) string {
-	return s.oauth2Config.AuthCodeURL(
-		state,
+// Verifier returns the verifier of the provider. It holds the key set in memory.
+func (s *OIDCService) Verifier() *oidc.IDTokenVerifier {
+	return s.verifier
+}
+
+// AuthURL generates the OIDC authentication URL with the specified state, nonce,
+// and PKCE verifier.
+//
+// A provider names the connector of Dex. A request that names none reaches the
+// connector list of Dex, which is the page that a person picks from.
+func (s *OIDCService) AuthURL(state string, nonce string, verifier string, provider string) string {
+	options := []oauth2.AuthCodeOption{
 		oauth2.S256ChallengeOption(verifier),
 		oauth2.SetAuthURLParam("nonce", nonce),
-	)
+	}
+
+	if provider != "" {
+		options = append(options, oauth2.SetAuthURLParam("connector_id", provider))
+	}
+
+	return s.oauth2Config.AuthCodeURL(state, options...)
 }
 
 // Exchange exchanges the authorization code for an OAuth2 token, using the provided PKCE verifier.

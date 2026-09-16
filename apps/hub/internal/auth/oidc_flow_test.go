@@ -103,6 +103,17 @@ func TestInitiateWritesTheFlowAndKeepsTheSecrets(t *testing.T) {
 	state := parsed.Query().Get("state")
 	require.NotEmpty(t, state, "the address carries the state")
 	require.NotContains(t, authURL, binding, "the binding never travels in the address")
+
+	// Dex emits federated_claims for this scope alone. Without it every token
+	// verifies and resolves to nobody, because the pair that SEC-003 joins on is
+	// absent. The fake provider signs the claim whatever the request asks for, so
+	// this assertion is the only place that holds the hub to the scope.
+	require.Contains(
+		t,
+		parsed.Query().Get("scope"),
+		auth.ScopeFederatedID,
+		"the request asks for the claim that the resolution needs",
+	)
 	require.NotEmpty(t, parsed.Query().Get("nonce"))
 	require.NotEmpty(t, parsed.Query().Get("code_challenge"))
 	require.NotContains(t, authURL, "code_verifier", "the verifier never leaves the hub")

@@ -308,6 +308,11 @@ holds no identity of that record, or the identity is the last one.
 | `GET`    | `/auth/me`                    | Authenticated | `EXTID-FR-009`                   |
 | `DELETE` | `/auth/identities/{provider}` | Authenticated | `EXTID-FR-007`, `EXTID-FR-008`   |
 
+**The scopes of the authorization request.** The hub asks for `openid`, `profile`,
+and `federated:id`. Dex emits the `federated_claims` claim for the third scope
+alone, and `SEC-003` joins on that claim. A request that omits it gets a token that
+verifies and resolves to nobody.
+
 `/auth/link` requires the query parameter `provider`, because the person chose the
 provider before the request. `/auth` accepts it and does not require it. A sign in
 with no provider reaches the connector list of Dex. The deck therefore keeps the address that
@@ -404,7 +409,7 @@ gives the resolver that both callers hold.
 | Condition                                              | Behavior                                                      | Message                        |
 | ------------------------------------------------------ | --------------------------------------------------------------- | ------------------------------- |
 | The token is absent, or it fails the verification      | Status 401                                                      | `access denied`                |
-| The token carries no `federated_claims`                | Status 401, one error line in the log                           | `access denied`                |
+| The token carries no `federated_claims`                | Status 401, one error line in the log. The request asked for the wrong scopes | `access denied` |
 | No identity names the external account, at a request   | Status 401, one info line in the log                            | `access denied`                |
 | No identity names the external account, at a sign in   | Redirect with `error=no_identity`. `EXTID-FR-002` demands the distinct reason | `no identity for the external account` |
 | The identity names a record that is not active         | Redirect with `error=access_denied`                             | `user is not allowed`          |
@@ -672,7 +677,7 @@ records. A failure in step 6 then names the flow row and nothing else.
 | The page that shows the attached accounts.                      | `EXTID-FR-009` serves the data. One feature of the deck renders it. Only the two consumers of `/auth/me` change here, because the body under them changes. |
 | The renewal of a session.                                       | Open question 1 answers it. The lifetime that `EXTID-NFR-002` gives must hurt first.                        |
 | `Host.UserCapabilities` and the provider that carries a notification. | The requirements put both out of scope. It is a change to `libs/pluginapi`, so it takes its own feature. |
-| The scopes of a token and the MCP surface.                      | `ADR-0002` puts them after this feature.                                                                    |
+| The scopes of a token and the MCP surface.                      | `ADR-0002` puts them after this feature. An agent that reaches the hub must ask for `federated:id` as well, or its token resolves to nobody. |
 | A merge of two user records.                                    | The requirements put it out of scope. It reassigns every scoped row of two records.                         |
 | The removal of an expired flow row and an expired invitation.   | Neither row grants anything after its expiry. A cron job arrives when the count of the rows matters.        |
 

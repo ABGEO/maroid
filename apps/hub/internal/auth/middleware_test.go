@@ -2,188 +2,73 @@ package auth_test
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
-	"github.com/abgeo/maroid/apps/hub/internal/logger"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
-const recordID = "01998aa0-1111-7000-8000-000000000001"
+const (
+	recordID = "01998aa0-1111-7000-8000-000000000001"
+	account  = "722183546"
+)
 
-// fakeUserRepo answers with the record that the test gives, or with the error.
-// The methods that the test does not reach report a missing record.
-type fakeUserRepo struct {
-	user *model.User
-	err  error
+// fakeResolver answers with the record that the test gives, or with the error,
+// and it reports what the middleware asked for.
+type fakeResolver struct {
+	user           *model.User
+	err            error
+	gotProvider    string
+	gotProviderUID string
+	calls          int
 }
 
-var _ repository.UserRepository = (*fakeUserRepo)(nil)
+var _ auth.IdentityResolver = (*fakeResolver)(nil)
 
-func (f fakeUserRepo) GetActiveByID(context.Context, string) (*model.User, error) {
+func (f *fakeResolver) ResolveByProvider(
+	_ context.Context,
+	provider string,
+	providerUserID string,
+) (*model.User, error) {
+	f.calls++
+	f.gotProvider = provider
+	f.gotProviderUID = providerUserID
+
 	return f.user, f.err
 }
 
-func (f fakeUserRepo) ListActive(context.Context) ([]model.User, error) {
-	return nil, errs.ErrUserNotFound
-}
-
-func newJWTService(t *testing.T) *auth.JWTService {
-	t.Helper()
-
-	const bits = 2048
-
-	key, err := rsa.GenerateKey(rand.Reader, bits)
-	require.NoError(t, err)
-
-	dir := t.TempDir()
-	privatePath := filepath.Join(dir, "private.pem")
-	publicPath := filepath.Join(dir, "public.pem")
-
-	private := pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(key),
-	})
-	require.NoError(t, os.WriteFile(privatePath, private, 0o600))
-
-	publicBytes, err := x509.MarshalPKIXPublicKey(&key.PublicKey)
-	require.NoError(t, err)
-
-	public := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: publicBytes})
-	require.NoError(t, os.WriteFile(publicPath, public, 0o600))
-
-	service, err := auth.NewJWTService(&config.Config{
-		JWT: config.JWT{
-			Issuer:      "https://hub.maroid.test",
-			PrivateKey:  privatePath,
-			PublicKey:   publicPath,
-			TokenExpiry: time.Hour,
-		},
-	})
-	require.NoError(t, err)
-
-	return service
-}
-
-func newLogger(t *testing.T) *slog.Logger {
-	t.Helper()
-
-	instance, err := logger.New(&config.Config{
-		Logger: config.Logger{Level: "error", Format: "json"},
-	})
-	require.NoError(t, err)
-
-	return instance
-}
-
-// IDENT-SC-006: A request whose subject names no active record gets status 401,
-// and the next handler does not run.
-func TestMiddlewareRefusesAPersonWithNoActiveRecord(t *testing.T) {
-	t.Parallel()
-
-	service := newJWTService(t)
-
-	token, err := service.Sign(auth.Claims{
-		RegisteredClaims: jwt.RegisteredClaims{Subject: recordID},
-	})
-	require.NoError(t, err)
-
-	cases := map[string]struct {
-		token    string
-		userRepo fakeUserRepo
-	}{
-		"the request carries no token": {
-			token:    "",
-			userRepo: fakeUserRepo{user: activeRecord(), err: nil},
-		},
-		"no active record holds the subject": {
-			token:    token,
-			userRepo: fakeUserRepo{user: nil, err: errs.ErrUserNotFound},
-		},
-		"the subject claim is not a UUID": {
-			token:    signWithSubject(t, service, "722183546"),
-			userRepo: fakeUserRepo{user: activeRecord(), err: nil},
-		},
-	}
-
-	for name, testCase := range cases {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-
-			called := false
-			next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) { called = true })
-
-			recorder := serve(t, service, testCase.userRepo, testCase.token, next)
-
-			require.Equal(t, http.StatusUnauthorized, recorder.Code)
-			require.False(t, called, "the next handler must not run")
-		})
-	}
-}
-
-// IDENT-FR-003: The request that an active record carries reaches the data with
-// that record as the acting user.
-func TestMiddlewarePutsTheActingUserInTheContext(t *testing.T) {
-	t.Parallel()
-
-	service := newJWTService(t)
-
-	token, err := service.Sign(auth.Claims{
-		RegisteredClaims: jwt.RegisteredClaims{Subject: recordID},
-	})
-	require.NoError(t, err)
-
-	var acting string
-
-	next := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		acting = pluginapi.ActingUserFromContext(r.Context())
-	})
-
-	recorder := serve(t, service, fakeUserRepo{user: activeRecord(), err: nil}, token, next)
-
-	require.Equal(t, http.StatusOK, recorder.Code)
-	require.Equal(t, recordID, acting)
-}
-
 func activeRecord() *model.User {
-	return &model.User{
-		ID:     recordID,
-		Status: model.StatusActive,
-	}
+	return &model.User{ID: recordID, Status: model.StatusActive}
 }
 
-func signWithSubject(t *testing.T, service *auth.JWTService, subject string) string {
+func verifierFor(t *testing.T, dex *fakeDex) auth.TokenVerifier {
 	t.Helper()
 
-	token, err := service.Sign(auth.Claims{
-		RegisteredClaims: jwt.RegisteredClaims{Subject: subject},
-	})
+	cfg := &config.Config{}
+	cfg.OIDC.Issuer = dex.URL
+	cfg.OIDC.ClientID = clientID
+	cfg.OIDC.ClientSecret = "secret"
+	cfg.OIDC.RedirectURI = "http://hub.maroid.localhost/auth/callback"
+
+	service, err := auth.NewOIDCService(cfg)
 	require.NoError(t, err)
 
-	return token
+	return auth.NewTokenVerifier(service)
 }
 
 func serve(
 	t *testing.T,
-	service *auth.JWTService,
-	userRepo fakeUserRepo,
+	verifier auth.TokenVerifier,
+	resolver auth.IdentityResolver,
 	token string,
 	next http.Handler,
 ) *httptest.ResponseRecorder {
@@ -196,7 +81,154 @@ func serve(
 
 	recorder := httptest.NewRecorder()
 
-	auth.Middleware(newLogger(t), service, userRepo)(next).ServeHTTP(recorder, request)
+	auth.Middleware(slog.New(slog.DiscardHandler), verifier, resolver)(next).
+		ServeHTTP(recorder, request)
 
 	return recorder
+}
+
+// refuse fails the test when the middleware lets a request through.
+func refuse(t *testing.T) http.Handler {
+	t.Helper()
+
+	return http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		t.Error("the handler must not run")
+	})
+}
+
+func recordActingUser(acting *string) http.Handler {
+	return http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		*acting = pluginapi.ActingUserFromContext(r.Context())
+	})
+}
+
+// EXTID-SC-001: A token whose federated claims name an identity of U resolves to
+// U, and the handler runs for that record.
+// EXTID-SC-023: The HTTP entry point resolves through the same identity that the
+// bot resolves through. See EXTID-DD-012.
+func TestATokenOfDexCarriesTheActingUser(t *testing.T) {
+	t.Parallel()
+
+	dex := startFakeDex(t)
+	resolver := &fakeResolver{user: activeRecord()}
+
+	var acting string
+
+	recorder := serve(
+		t,
+		verifierFor(t, dex),
+		resolver,
+		dex.Sign(t, auth.ProviderTelegram, account),
+		recordActingUser(&acting),
+	)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Equal(t, recordID, acting)
+	require.Equal(t, auth.ProviderTelegram, resolver.gotProvider)
+	require.Equal(t, account, resolver.gotProviderUID)
+}
+
+// EXTID-SC-003: An identity that names a record which is not active reaches
+// nothing, so a block ends a live token within one request. See SEC-004.
+func TestABlockedRecordEndsALiveToken(t *testing.T) {
+	t.Parallel()
+
+	dex := startFakeDex(t)
+
+	recorder := serve(
+		t,
+		verifierFor(t, dex),
+		&fakeResolver{err: errs.ErrUserNotFound},
+		dex.Sign(t, auth.ProviderTelegram, account),
+		refuse(t),
+	)
+
+	require.Equal(t, http.StatusUnauthorized, recorder.Code)
+}
+
+// EXTID-FR-001: The hub accepts a token that Dex issued and nothing else.
+func TestTheMiddlewareRefusesARequestWithNoToken(t *testing.T) {
+	t.Parallel()
+
+	dex := startFakeDex(t)
+
+	recorder := serve(t, verifierFor(t, dex), &fakeResolver{user: activeRecord()}, "", refuse(t))
+	require.Equal(t, http.StatusUnauthorized, recorder.Code)
+}
+
+// SEC-002: The verification checks the signature, the issuer, the audience, and
+// the expiry. A token that fails any of the four reaches nothing.
+func TestTheMiddlewareRefusesATokenThatDexDidNotIssue(t *testing.T) {
+	t.Parallel()
+
+	dex := startFakeDex(t)
+	other := startFakeDex(t)
+	verifier := verifierFor(t, dex)
+
+	cases := map[string]func() string{
+		"a token of another issuer": func() string {
+			return other.Sign(t, auth.ProviderTelegram, account)
+		},
+		"a token for another audience": func() string {
+			claims := dex.Claims(auth.ProviderTelegram, account)
+			claims["aud"] = "another-client"
+
+			return dex.SignClaims(t, claims)
+		},
+		"a token that expired": func() string {
+			claims := dex.Claims(auth.ProviderTelegram, account)
+			claims["exp"] = time.Now().Add(-time.Hour).Unix()
+
+			return dex.SignClaims(t, claims)
+		},
+	}
+
+	for name, build := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			recorder := serve(t, verifier, &fakeResolver{user: activeRecord()}, build(), refuse(t))
+			require.Equal(t, http.StatusUnauthorized, recorder.Code)
+		})
+	}
+}
+
+// SEC-003: The hub joins on the federated claims. A token without them names no
+// external account, so it reaches nothing.
+func TestATokenWithNoFederatedClaimsIsRefused(t *testing.T) {
+	t.Parallel()
+
+	dex := startFakeDex(t)
+	resolver := &fakeResolver{user: activeRecord()}
+
+	claims := dex.Claims(auth.ProviderTelegram, account)
+	delete(claims, "federated_claims")
+
+	recorder := serve(t, verifierFor(t, dex), resolver, dex.SignClaims(t, claims), refuse(t))
+
+	require.Equal(t, http.StatusUnauthorized, recorder.Code)
+	require.Zero(t, resolver.calls, "the hub asks no question it cannot answer")
+}
+
+// EXTID-SC-020: Over 1000 requests that carry a valid token, at most one waits
+// for the identity provider. EXTID-NFR-001 gives the limit.
+func TestTheVerifierReadsTheKeySetOnce(t *testing.T) {
+	t.Parallel()
+
+	const requests = 1000
+
+	dex := startFakeDex(t)
+	verifier := verifierFor(t, dex)
+	resolver := &fakeResolver{user: activeRecord()}
+	token := dex.Sign(t, auth.ProviderTelegram, account)
+
+	var acting string
+
+	for range requests {
+		recorder := serve(t, verifier, resolver, token, recordActingUser(&acting))
+		require.Equal(t, http.StatusOK, recorder.Code)
+	}
+
+	require.Equal(t, requests, resolver.calls, "the record is read on every request")
+	require.LessOrEqual(t, dex.KeyRequests(), int64(1), "the key set is read once or never")
 }

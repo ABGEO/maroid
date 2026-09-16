@@ -79,14 +79,7 @@ func (c *Server) Address() string {
 type Auth struct {
 	AllowedRedirects []string      `mapstructure:"allowed_redirects" validate:"required,min=1,dive,url"`
 	FlowTTL          time.Duration `default:"10m" mapstructure:"flow_ttl"`
-}
-
-// JWT defines JWT authentication configuration parameters.
-type JWT struct {
-	Issuer      string        `default:"https://hub.maroid.dev" mapstructure:"issuer"       validate:"required,url"`
-	PrivateKey  string        `mapstructure:"private_key"       validate:"required"`
-	PublicKey   string        `mapstructure:"public_key"        validate:"required"`
-	TokenExpiry time.Duration `default:"168h"                   mapstructure:"token_expiry"`
+	SessionTTL       time.Duration `default:"168h" mapstructure:"session_ttl"`
 }
 
 // OIDC defines OpenID Connect configuration parameters for authentication.
@@ -136,7 +129,6 @@ type Config struct {
 	Database Database
 	Server   Server
 	CORS     CORS
-	JWT      JWT
 	Auth     Auth
 	OIDC     OIDC
 	MQTT     MQTT

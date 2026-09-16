@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
@@ -26,11 +25,13 @@ const (
 	// browser. It grants nothing on its own: the row holds every authority, and
 	// this value only proves that the browser that finishes the flow started it.
 	bindingCookieName = "maroid_auth_binding"
-	authTokenMaxAge   = 7 * 24 * 60 * 60 // 7 days in seconds
-	bindingMaxAge     = 10 * 60          // 10 minutes in seconds, the lifetime of a flow
+	bindingMaxAge     = 10 * 60 // 10 minutes in seconds, the lifetime of a flow
 )
 
-var errInvalidQueryParameter = errors.New("invalid query parameter")
+var (
+	errInvalidQueryParameter  = errors.New("invalid query parameter")
+	errMissingFederatedClaims = errors.New("the token carries no federated claims")
+)
 
 // AuthHandler represents the Auth handler interface.
 type AuthHandler interface {
@@ -44,7 +45,7 @@ type AuthHandler interface {
 type Auth struct {
 	cfg              *config.Config
 	logger           *slog.Logger
-	jwtSvc           *auth.JWTService
+	verifier         auth.TokenVerifier
 	oidcFlow         *auth.OIDCFlow
 	userRepo         repository.UserRepository
 	identityRepo     repository.IdentityRepository
@@ -57,7 +58,7 @@ var _ AuthHandler = (*Auth)(nil)
 func NewAuth(
 	cfg *config.Config,
 	logger *slog.Logger,
-	jwtSvc *auth.JWTService,
+	verifier auth.TokenVerifier,
 	oidcFlow *auth.OIDCFlow,
 	userRepo repository.UserRepository,
 	identityRepo repository.IdentityRepository,
@@ -69,7 +70,7 @@ func NewAuth(
 			slog.String("component", "handler"),
 			slog.String("handler", "auth"),
 		),
-		jwtSvc:           jwtSvc,
+		verifier:         verifier,
 		oidcFlow:         oidcFlow,
 		userRepo:         userRepo,
 		identityRepo:     identityRepo,
@@ -88,7 +89,7 @@ func (h *Auth) Register(router chi.Router) {
 		})
 
 		r.Group(func(r chi.Router) {
-			r.Use(auth.Middleware(h.logger, h.jwtSvc, h.userRepo))
+			r.Use(auth.Middleware(h.logger, h.verifier, h.identityResolver))
 			r.Get("/me", Wrap(h.logger, h.Me))
 		})
 	})
@@ -103,10 +104,14 @@ func (h *Auth) Initiate(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("%w: missing or invalid redirect parameter", errInvalidQueryParameter)
 	}
 
-	authURL, binding, err := h.oidcFlow.Initiate(r.Context(), model.AuthFlow{
-		Intent:   model.IntentSignIn,
-		Redirect: redirect,
-	})
+	// A sign in that names no provider reaches the connector list of Dex, which is
+	// the page that a person picks from.
+	flow := model.AuthFlow{Intent: model.IntentSignIn, Redirect: redirect}
+	if provider := r.URL.Query().Get("provider"); provider != "" {
+		flow.Provider = &provider
+	}
+
+	authURL, binding, err := h.oidcFlow.Initiate(r.Context(), flow)
 	if err != nil {
 		redirectWithError(w, r, redirect)
 
@@ -148,35 +153,20 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("consuming the authorization flow: %w", err)
 	}
 
-	idClaims, err := h.processOIDCCallback(r, flow)
+	rawToken, claims, err := h.processOIDCCallback(r, flow)
 	if err != nil {
 		redirectWithError(w, r, redirect)
 
 		return err
 	}
 
-	user, err := h.resolveAndSync(r.Context(), idClaims)
-	if err != nil {
+	if _, err = h.resolveAndSync(r.Context(), claims); err != nil {
 		redirectWithError(w, r, redirect)
 
 		return err
 	}
 
-	token, err := h.jwtSvc.Sign(auth.Claims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			Subject: user.ID,
-		},
-		Name:     idClaims.Name,
-		Username: idClaims.Username,
-		Picture:  idClaims.Picture,
-	})
-	if err != nil {
-		redirectWithError(w, r, redirect)
-
-		return fmt.Errorf("signing JWT: %w", err)
-	}
-
-	setAuthCookie(w, token)
+	setAuthCookie(w, rawToken, h.cfg.Auth.SessionTTL)
 	//nolint:gosec // G710: validateRedirect already matched the target against the allowed list.
 	http.Redirect(w, r, redirect, http.StatusFound)
 
@@ -198,19 +188,21 @@ func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
 
 // resolveAndSync reads the user record that the external account names, then
 // writes the profile that the provider gave onto that identity.
-func (h *Auth) resolveAndSync(
-	ctx context.Context,
-	idClaims *auth.IDTokenClaims,
-) (*model.User, error) {
-	user, err := h.identityResolver.ResolveByProvider(ctx, auth.ProviderTelegram, idClaims.ID)
-	if err != nil {
-		return nil, fmt.Errorf("resolving the user record of %s: %w", idClaims.ID, err)
+func (h *Auth) resolveAndSync(ctx context.Context, claims *auth.Claims) (*model.User, error) {
+	federated := claims.Federated
+	if federated.ConnectorID == "" || federated.UserID == "" {
+		return nil, errMissingFederatedClaims
 	}
 
-	err = h.identityRepo.SyncProfile(ctx, auth.ProviderTelegram, idClaims.ID, model.Profile{
-		Username:    idClaims.Username,
-		DisplayName: idClaims.Name,
-		PictureURL:  idClaims.Picture,
+	user, err := h.identityResolver.ResolveByProvider(ctx, federated.ConnectorID, federated.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("resolving the user record of the external account: %w", err)
+	}
+
+	err = h.identityRepo.SyncProfile(ctx, federated.ConnectorID, federated.UserID, model.Profile{
+		Username:    claims.Username,
+		DisplayName: claims.Name,
+		PictureURL:  claims.Picture,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("syncing the profile of the identity: %w", err)
@@ -222,18 +214,18 @@ func (h *Auth) resolveAndSync(
 func (h *Auth) processOIDCCallback(
 	r *http.Request,
 	flow *model.AuthFlow,
-) (*auth.IDTokenClaims, error) {
+) (string, *auth.Claims, error) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		return nil, fmt.Errorf("%w: missing code query parameter", errInvalidQueryParameter)
+		return "", nil, fmt.Errorf("%w: missing code query parameter", errInvalidQueryParameter)
 	}
 
-	idClaims, err := h.oidcFlow.Verify(r.Context(), code, flow.Nonce, flow.Verifier)
+	rawToken, claims, err := h.oidcFlow.Verify(r.Context(), code, flow.Nonce, flow.Verifier)
 	if err != nil {
-		return nil, fmt.Errorf("verifying OIDC flow: %w", err)
+		return "", nil, fmt.Errorf("verifying OIDC flow: %w", err)
 	}
 
-	return idClaims, nil
+	return rawToken, claims, nil
 }
 
 // redirectWithError sends the caller back to the target with an error marker.
@@ -297,12 +289,12 @@ func sendBadRequest(w http.ResponseWriter, r *http.Request, reason string) {
 	render.JSON(w, r, map[string]string{"error": reason})
 }
 
-func setAuthCookie(w http.ResponseWriter, token string) {
+func setAuthCookie(w http.ResponseWriter, token string, ttl time.Duration) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     authTokenCookieName,
 		Value:    token,
 		Path:     "/",
-		MaxAge:   authTokenMaxAge,
+		MaxAge:   int(ttl.Seconds()),
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,

@@ -55,7 +55,7 @@ type Resolver interface {
 	Migrator() (*migrator.Migrator, error)
 	PluginHost() (*pluginhost.Host, error)
 	PluginLoader() (*pluginloader.Loader, error)
-	JWTService() (*auth.JWTService, error)
+	TokenVerifier() (auth.TokenVerifier, error)
 	OIDCService() (*auth.OIDCService, error)
 	OIDCFlow() (*auth.OIDCFlow, error)
 	CommandRegistry() (*registry.CommandRegistry, error)
@@ -187,10 +187,10 @@ type Container struct {
 		instance *auth.OIDCFlow
 	}
 
-	jwtService struct {
+	tokenVerifier struct {
 		mu       sync.Mutex
 		once     sync.Once
-		instance *auth.JWTService
+		instance auth.TokenVerifier
 	}
 
 	commandRegistry struct {

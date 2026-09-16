@@ -107,12 +107,12 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		return nil, err
 	}
 
-	jwtSvc, err := c.JWTService()
+	verifier, err := c.TokenVerifier()
 	if err != nil {
 		return nil, err
 	}
 
-	userRepo, err := c.UserRepository()
+	identityResolver, err := c.IdentityResolver()
 	if err != nil {
 		return nil, err
 	}
@@ -124,8 +124,8 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 
 	return pluginloader.New(
 		pluginHost,
-		jwtSvc,
-		userRepo,
+		verifier,
+		identityResolver,
 		registries.command,
 		registries.cron,
 		registries.handler,

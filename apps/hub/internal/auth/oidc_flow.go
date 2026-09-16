@@ -21,15 +21,6 @@ import (
 // ErrRandomGeneration indicates that cryptographic random generation failed.
 var ErrRandomGeneration = errors.New("auth: random generation failed")
 
-// IDTokenClaims represents claims extracted from an OIDC ID token.
-type IDTokenClaims struct {
-	Subject  string `json:"sub"`
-	ID       string `json:"id"`
-	Username string `json:"preferred_username"`
-	Name     string `json:"name"`
-	Picture  string `json:"picture"`
-}
-
 // OIDCFlow orchestrates the OIDC authorization code flow with PKCE.
 //
 // The row in public.auth_flows holds the state, the nonce, the
@@ -92,7 +83,12 @@ func (f *OIDCFlow) Initiate(ctx context.Context, flow model.AuthFlow) (string, s
 		return "", "", fmt.Errorf("writing the authorization flow: %w", err)
 	}
 
-	return f.oidcSvc.AuthURL(flow.State, flow.Nonce, flow.Verifier), binding, nil
+	provider := ""
+	if flow.Provider != nil {
+		provider = *flow.Provider
+	}
+
+	return f.oidcSvc.AuthURL(flow.State, flow.Nonce, flow.Verifier, provider), binding, nil
 }
 
 // Consume spends the flow that the state names and returns it.
@@ -136,23 +132,28 @@ func (f *OIDCFlow) Verify(
 	code string,
 	nonce string,
 	verifier string,
-) (*IDTokenClaims, error) {
+) (string, *Claims, error) {
 	oauth2Token, err := f.oidcSvc.Exchange(ctx, code, verifier)
 	if err != nil {
-		return nil, fmt.Errorf("exchanging code: %w", err)
+		return "", nil, fmt.Errorf("exchanging code: %w", err)
 	}
 
 	idToken, err := f.oidcSvc.VerifyIDToken(ctx, oauth2Token, nonce)
 	if err != nil {
-		return nil, fmt.Errorf("verifying id token: %w", err)
+		return "", nil, fmt.Errorf("verifying id token: %w", err)
 	}
 
-	var claims IDTokenClaims
+	var claims Claims
 	if err = idToken.Claims(&claims); err != nil {
-		return nil, fmt.Errorf("extracting claims: %w", err)
+		return "", nil, fmt.Errorf("extracting claims: %w", err)
 	}
 
-	return &claims, nil
+	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
+	if !ok {
+		return "", nil, ErrMissingIDToken
+	}
+
+	return rawIDToken, &claims, nil
 }
 
 func generateRandomString(length int) (string, error) {

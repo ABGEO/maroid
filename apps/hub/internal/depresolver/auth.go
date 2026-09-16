@@ -62,24 +62,31 @@ func (c *Container) OIDCFlow() (*auth.OIDCFlow, error) {
 	return c.oidcFlow.instance, nil
 }
 
-// JWTService initializes and returns the JWT service instance.
-func (c *Container) JWTService() (*auth.JWTService, error) {
-	c.jwtService.mu.Lock()
-	defer c.jwtService.mu.Unlock()
+// TokenVerifier initializes and returns the verifier of a token of Dex.
+func (c *Container) TokenVerifier() (auth.TokenVerifier, error) {
+	c.tokenVerifier.mu.Lock()
+	defer c.tokenVerifier.mu.Unlock()
 
 	var err error
 
-	c.jwtService.once.Do(func() {
-		c.jwtService.instance, err = auth.NewJWTService(c.Config())
+	c.tokenVerifier.once.Do(func() {
+		var oidcSvc *auth.OIDCService
+
+		oidcSvc, err = c.OIDCService()
+		if err != nil {
+			return
+		}
+
+		c.tokenVerifier.instance = auth.NewTokenVerifier(oidcSvc)
 	})
 
 	if err != nil {
-		c.jwtService.once = sync.Once{}
+		c.tokenVerifier.once = sync.Once{}
 
-		return nil, fmt.Errorf("initializing JWT Service: %w", err)
+		return nil, fmt.Errorf("initializing token verifier: %w", err)
 	}
 
-	return c.jwtService.instance, nil
+	return c.tokenVerifier.instance, nil
 }
 
 // IdentityResolver initializes and returns the identity resolver instance.
