@@ -77,8 +77,7 @@ func (r *Identity) GetActiveUserByProvider(
 	var entity model.User
 
 	query := `
-		SELECT u.id, u.telegram_id, u.username, u.display_name, u.picture_url,
-		       u.status, u.created_at, u.updated_at
+		SELECT ` + userColumnsOfU + `
 		FROM public.users u
 		JOIN public.identities i ON i.user_id = u.id
 		WHERE i.provider = $1 AND i.provider_user_id = $2 AND u.status = $3;`

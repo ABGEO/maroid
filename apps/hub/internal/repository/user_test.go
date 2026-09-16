@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	telegramIDOfA = int64(111)
-	telegramIDOfB = int64(222)
+	nameOfA = "Temuri"
+	nameOfB = "Nino"
 )
 
 func startWithCoreMigrations(t *testing.T) *testdb.Instance {
@@ -31,48 +31,24 @@ func startWithCoreMigrations(t *testing.T) *testdb.Instance {
 	return instance
 }
 
-// IDENT-SC-011: A second record with the same Telegram identifier is rejected.
-func TestUserRecordHoldsOneTelegramIdentity(t *testing.T) {
-	t.Parallel()
-
-	instance := startWithCoreMigrations(t)
-
-	_, err := instance.DB.Exec(
-		`INSERT INTO public.users (telegram_id) VALUES ($1);`,
-		telegramIDOfA,
-	)
-	require.NoError(t, err)
-
-	_, err = instance.DB.Exec(
-		`INSERT INTO public.users (telegram_id) VALUES ($1);`,
-		telegramIDOfA,
-	)
-	require.ErrorContains(t, err, "users_telegram_id_key")
-}
-
-// IDENT-FR-001: The record carries an identifier that the database generates,
-// so the owner names only the Telegram identity. See DAT-009 and ADR-0001.
+// IDENT-FR-001: The record carries an identifier that the database generates.
+// See DAT-009 and ADR-0001. EXTID-FR-015 leaves both names to the owner.
 func TestUserRecordDefaults(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
 	userRepo := repository.NewUser(instance.DB)
 
-	_, err := instance.DB.Exec(
-		`INSERT INTO public.users (telegram_id) VALUES ($1);`,
-		telegramIDOfA,
-	)
-	require.NoError(t, err)
+	id := insertUser(t, instance, nameOfA)
 
-	user, err := userRepo.GetActiveByTelegramID(t.Context(), telegramIDOfA)
+	user, err := userRepo.GetActiveByID(t.Context(), id)
 	require.NoError(t, err)
 
 	require.NotEmpty(t, user.ID)
 	require.Equal(t, uint8(7), user.ID[14]-'0', "the identifier is a UUID version 7")
 	require.Equal(t, model.StatusActive, user.Status)
-	require.Nil(t, user.Username)
-	require.Nil(t, user.DisplayName)
-	require.Nil(t, user.PictureURL)
+	require.Equal(t, nameOfA, *user.FirstName)
+	require.Nil(t, user.LastName)
 	require.False(t, user.CreatedAt.IsZero())
 }
 
@@ -85,13 +61,16 @@ func TestBlockedUserIsNotActive(t *testing.T) {
 	userRepo := repository.NewUser(instance.DB)
 	ctx := t.Context()
 
-	_, err := instance.DB.Exec(
-		`INSERT INTO public.users (telegram_id, status) VALUES ($1, $2);`,
-		telegramIDOfB, model.StatusBlocked,
+	var id string
+
+	err := instance.DB.Get(
+		&id,
+		`INSERT INTO public.users (first_name, status) VALUES ($1, $2) RETURNING id;`,
+		nameOfB, model.StatusBlocked,
 	)
 	require.NoError(t, err)
 
-	_, err = userRepo.GetActiveByTelegramID(ctx, telegramIDOfB)
+	_, err = userRepo.GetActiveByID(ctx, id)
 	require.ErrorIs(t, err, errs.ErrUserNotFound)
 
 	active, err := userRepo.ListActive(ctx)
@@ -102,62 +81,6 @@ func TestBlockedUserIsNotActive(t *testing.T) {
 
 	require.NoError(t, instance.DB.Get(&count, `SELECT count(*) FROM public.users;`))
 	require.Equal(t, 1, count, "the record of a blocked person stays")
-}
-
-// IDENT-DD-005: The login writes the profile and touches no identity column.
-func TestSyncProfileKeepsTheRecord(t *testing.T) {
-	t.Parallel()
-
-	instance := startWithCoreMigrations(t)
-	userRepo := repository.NewUser(instance.DB)
-	ctx := t.Context()
-
-	_, err := instance.DB.Exec(
-		`INSERT INTO public.users (telegram_id) VALUES ($1);`,
-		telegramIDOfA,
-	)
-	require.NoError(t, err)
-
-	before, err := userRepo.GetActiveByTelegramID(ctx, telegramIDOfA)
-	require.NoError(t, err)
-
-	after, err := userRepo.SyncProfileByTelegramID(ctx, telegramIDOfA, model.Profile{
-		Username:    "abgeo",
-		DisplayName: "Temuri Takalandze",
-		PictureURL:  "https://example.com/picture.jpg",
-	})
-	require.NoError(t, err)
-
-	require.Equal(t, before.ID, after.ID, "the record is permanent")
-	require.Equal(t, before.TelegramID, after.TelegramID)
-	require.Equal(t, "abgeo", *after.Username)
-	require.Equal(t, "Temuri Takalandze", *after.DisplayName)
-	require.Equal(t, "https://example.com/picture.jpg", *after.PictureURL)
-
-	// An empty claim stores no value, so a later read finds nothing instead of "".
-	cleared, err := userRepo.SyncProfileByTelegramID(ctx, telegramIDOfA, model.Profile{
-		Username:    "",
-		DisplayName: "Temuri Takalandze",
-		PictureURL:  "",
-	})
-	require.NoError(t, err)
-	require.Nil(t, cleared.Username)
-	require.Nil(t, cleared.PictureURL)
-}
-
-// IDENT-FR-002: A person with no record reaches nothing, in the web shell and in the bot.
-func TestSyncProfileOfUnknownPersonFails(t *testing.T) {
-	t.Parallel()
-
-	instance := startWithCoreMigrations(t)
-	userRepo := repository.NewUser(instance.DB)
-
-	_, err := userRepo.SyncProfileByTelegramID(t.Context(), telegramIDOfB, model.Profile{
-		Username:    "stranger",
-		DisplayName: "Stranger",
-		PictureURL:  "",
-	})
-	require.ErrorIs(t, err, errs.ErrUserNotFound)
 }
 
 func TestGetActiveByIDOfUnknownRecord(t *testing.T) {

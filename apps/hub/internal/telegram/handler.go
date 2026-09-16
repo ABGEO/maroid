@@ -12,10 +12,10 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
 
+	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/middleware"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 	telegrammiddleware "github.com/abgeo/maroid/apps/hub/internal/telegram/middleware"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -36,7 +36,7 @@ type ChannelHandler struct {
 	router                     chi.Router
 	commandsRegistry           *registry.TelegramCommandRegistry
 	telegramConversationEngine conversation.Engine
-	userRepo                   repository.UserRepository
+	identityResolver           auth.IdentityResolver
 	allowedNetworksMiddleware  func(http.Handler) http.Handler
 
 	updates    <-chan telego.Update
@@ -58,7 +58,7 @@ func NewUpdatesHandler(
 	router chi.Router,
 	commandsRegistry *registry.TelegramCommandRegistry,
 	telegramConversationEngine conversation.Engine,
-	userRepo repository.UserRepository,
+	identityResolver auth.IdentityResolver,
 ) (*ChannelHandler, error) {
 	logger = logger.With(
 		slog.String("component", "telegram-updates-handler"),
@@ -81,7 +81,7 @@ func NewUpdatesHandler(
 		router:                     router,
 		commandsRegistry:           commandsRegistry,
 		telegramConversationEngine: telegramConversationEngine,
-		userRepo:                   userRepo,
+		identityResolver:           identityResolver,
 		allowedNetworksMiddleware:  allowedNetworksMiddleware,
 	}
 
@@ -121,7 +121,7 @@ func webhookOptions(
 // Handle starts handling Telegram updates.
 func (h *ChannelHandler) Handle(ctx context.Context) error {
 	//nolint:contextcheck // th.Context is the context of the update.
-	h.botHandler.Use(telegrammiddleware.ActingUser(h.logger, h.userRepo))
+	h.botHandler.Use(telegrammiddleware.ActingUser(h.logger, h.identityResolver))
 	h.registerHandlers()
 
 	err := h.setCommands(ctx)

@@ -48,7 +48,7 @@ func TestInvitationConsumesOneTime(t *testing.T) {
 	invitationRepo := repository.NewInvitation(instance.DB)
 	ctx := t.Context()
 
-	userID := insertUser(t, instance, telegramIDOfA)
+	userID := insertUser(t, instance, nameOfA)
 	created, digest := issue(
 		t, instance, invitationRepo, userID, "the-token", time.Now().Add(invitationTTL),
 	)
@@ -82,7 +82,7 @@ func TestExpiredInvitationGrantsNothing(t *testing.T) {
 	invitationRepo := repository.NewInvitation(instance.DB)
 	ctx := t.Context()
 
-	userID := insertUser(t, instance, telegramIDOfA)
+	userID := insertUser(t, instance, nameOfA)
 	created, digest := issue(
 		t, instance, invitationRepo, userID, "stale", time.Now().Add(-time.Minute),
 	)
@@ -104,7 +104,7 @@ func TestInvitationLookupNeedsTheDigest(t *testing.T) {
 	instance := startWithCoreMigrations(t)
 	invitationRepo := repository.NewInvitation(instance.DB)
 
-	userID := insertUser(t, instance, telegramIDOfA)
+	userID := insertUser(t, instance, nameOfA)
 	_, digest := issue(
 		t, instance, invitationRepo, userID, "the-token", time.Now().Add(invitationTTL),
 	)

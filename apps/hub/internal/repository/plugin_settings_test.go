@@ -19,21 +19,6 @@ const (
 	keyEmail      = "email"
 )
 
-func addUserRecord(t *testing.T, instance *testdb.Instance, telegramID int64) string {
-	t.Helper()
-
-	var id string
-
-	err := instance.DB.Get(
-		&id,
-		`INSERT INTO public.users (telegram_id) VALUES ($1) RETURNING id;`,
-		telegramID,
-	)
-	require.NoError(t, err)
-
-	return id
-}
-
 func storeFields(t *testing.T, instance *testdb.Instance, user string, fields model.Fields) {
 	t.Helper()
 
@@ -49,7 +34,7 @@ func TestUpsertCarriesTheActingUser(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	userA := addUserRecord(t, instance, telegramIDOfA)
+	userA := insertUser(t, instance, nameOfA)
 
 	storeFields(t, instance, userA, model.Fields{
 		keyEmail:   {Kind: model.FieldKindText, Value: "person@example.com"},
@@ -82,7 +67,7 @@ func TestUpsertReplacesTheRowOfThePair(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	userA := addUserRecord(t, instance, telegramIDOfA)
+	userA := insertUser(t, instance, nameOfA)
 
 	storeFields(t, instance, userA, model.Fields{
 		keyEmail: {Kind: model.FieldKindText, Value: "first@example.com"},
@@ -110,8 +95,8 @@ func TestGetReturnsNoRowOfAnotherUser(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	userA := addUserRecord(t, instance, telegramIDOfA)
-	userB := addUserRecord(t, instance, telegramIDOfB)
+	userA := insertUser(t, instance, nameOfA)
+	userB := insertUser(t, instance, nameOfB)
 
 	storeFields(t, instance, userB, model.Fields{
 		keyEmail: {Kind: model.FieldKindText, Value: "b@example.com"},

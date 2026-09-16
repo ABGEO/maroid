@@ -8,6 +8,9 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
+// ProviderTelegram is the connector of Dex that federates Telegram.
+const ProviderTelegram = "telegram"
+
 // IdentityResolver reads the user record that one external account names.
 type IdentityResolver interface {
 	ResolveByProvider(

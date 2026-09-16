@@ -29,12 +29,10 @@ func ParseStatus(value string) (Status, error) {
 
 // User is the record that owns every scoped row of one person.
 type User struct {
-	ID          string    `db:"id"`
-	TelegramID  int64     `db:"telegram_id"`
-	Username    *string   `db:"username"`
-	DisplayName *string   `db:"display_name"`
-	PictureURL  *string   `db:"picture_url"`
-	Status      Status    `db:"status"`
-	CreatedAt   time.Time `db:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"`
+	ID        string    `db:"id"`
+	FirstName *string   `db:"first_name"`
+	LastName  *string   `db:"last_name"`
+	Status    Status    `db:"status"`
+	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }

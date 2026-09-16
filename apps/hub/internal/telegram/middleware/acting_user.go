@@ -3,11 +3,12 @@ package middleware
 import (
 	"context"
 	"log/slog"
+	"strconv"
 
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	teleupdate "github.com/abgeo/maroid/apps/hub/internal/telegram/update"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
@@ -15,9 +16,9 @@ import (
 // ActingUser returns a middleware that drops an update from a person that holds
 // no active user record, and puts the acting user into the context of every
 // other update.
-func ActingUser(logger *slog.Logger, userRepo repository.UserRepository) th.Handler {
+func ActingUser(logger *slog.Logger, resolver auth.IdentityResolver) th.Handler {
 	return func(ctx *th.Context, update telego.Update) error {
-		actingUser, ok := resolveActingUser(ctx, logger, userRepo, update)
+		actingUser, ok := resolveActingUser(ctx, logger, resolver, update)
 		if !ok {
 			return nil
 		}
@@ -33,7 +34,7 @@ func ActingUser(logger *slog.Logger, userRepo repository.UserRepository) th.Hand
 func resolveActingUser(
 	ctx context.Context,
 	logger *slog.Logger,
-	userRepo repository.UserRepository,
+	resolver auth.IdentityResolver,
 	update telego.Update,
 ) (string, bool) {
 	sender := teleupdate.SentFrom(update)
@@ -47,7 +48,11 @@ func resolveActingUser(
 		return "", false
 	}
 
-	user, err := userRepo.GetActiveByTelegramID(ctx, sender.ID)
+	user, err := resolver.ResolveByProvider(
+		ctx,
+		auth.ProviderTelegram,
+		strconv.FormatInt(sender.ID, 10),
+	)
 	if err != nil {
 		logger.WarnContext(
 			ctx,

@@ -21,15 +21,15 @@ const (
 )
 
 // insertUser writes one user record and returns its identifier.
-func insertUser(t *testing.T, instance *testdb.Instance, telegramID int64) string {
+func insertUser(t *testing.T, instance *testdb.Instance, firstName string) string {
 	t.Helper()
 
 	var id string
 
 	err := instance.DB.Get(
 		&id,
-		`INSERT INTO public.users (telegram_id) VALUES ($1) RETURNING id;`,
-		telegramID,
+		`INSERT INTO public.users (first_name) VALUES ($1) RETURNING id;`,
+		firstName,
 	)
 	require.NoError(t, err)
 
@@ -63,8 +63,8 @@ func TestAttachRefusesAnAccountOfAnotherUser(t *testing.T) {
 	identityRepo := repository.NewIdentity(instance.DB)
 	ctx := t.Context()
 
-	userA := insertUser(t, instance, telegramIDOfA)
-	userB := insertUser(t, instance, telegramIDOfB)
+	userA := insertUser(t, instance, nameOfA)
+	userB := insertUser(t, instance, nameOfB)
 
 	attach(t, instance, identityRepo, userB, providerCloud, accountOfB)
 
@@ -99,7 +99,7 @@ func TestConcurrentDetachKeepsOneIdentity(t *testing.T) {
 	ctx := t.Context()
 
 	for round := range rounds {
-		userID := insertUser(t, instance, int64(round)+1)
+		userID := insertUser(t, instance, nameOfA)
 		attach(t, instance, identityRepo, userID, providerTelegram, strconv.Itoa(round)+"-a")
 		attach(t, instance, identityRepo, userID, providerCloud, strconv.Itoa(round)+"-b")
 
@@ -156,7 +156,7 @@ func TestDetachRefusesTheLastIdentity(t *testing.T) {
 	identityRepo := repository.NewIdentity(instance.DB)
 	ctx := t.Context()
 
-	userA := insertUser(t, instance, telegramIDOfA)
+	userA := insertUser(t, instance, nameOfA)
 	attach(t, instance, identityRepo, userA, providerTelegram, accountOfA)
 
 	require.ErrorIs(t, identityRepo.Detach(ctx, userA, providerTelegram), errs.ErrLastIdentity)
@@ -176,7 +176,7 @@ func TestGetActiveUserByProvider(t *testing.T) {
 	identityRepo := repository.NewIdentity(instance.DB)
 	ctx := t.Context()
 
-	userA := insertUser(t, instance, telegramIDOfA)
+	userA := insertUser(t, instance, nameOfA)
 	attach(t, instance, identityRepo, userA, providerTelegram, accountOfA)
 
 	user, err := identityRepo.GetActiveUserByProvider(ctx, providerTelegram, accountOfA)
@@ -204,7 +204,7 @@ func TestSyncProfileWritesTheIdentity(t *testing.T) {
 	identityRepo := repository.NewIdentity(instance.DB)
 	ctx := t.Context()
 
-	userA := insertUser(t, instance, telegramIDOfA)
+	userA := insertUser(t, instance, nameOfA)
 	attach(t, instance, identityRepo, userA, providerTelegram, accountOfA)
 
 	err := identityRepo.SyncProfile(ctx, providerTelegram, accountOfA, model.Profile{

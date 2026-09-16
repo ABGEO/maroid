@@ -137,7 +137,19 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		return err
 	}
 
-	authHandler := handler.NewAuth(cfg, logger, jwtSvc, oidcFlow, userRepo)
+	identityRepo, err := c.IdentityRepository()
+	if err != nil {
+		return err
+	}
+
+	identityResolver, err := c.IdentityResolver()
+	if err != nil {
+		return err
+	}
+
+	authHandler := handler.NewAuth(
+		cfg, logger, jwtSvc, oidcFlow, userRepo, identityRepo, identityResolver,
+	)
 	pluginHandler := handler.NewPlugin(
 		logger, jwtSvc, userRepo, pluginRegistry, uiRegistry, settingsSvc,
 	)

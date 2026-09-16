@@ -68,9 +68,9 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 			return
 		}
 
-		userRepo, userRepoErr := c.UserRepository()
-		if userRepoErr != nil {
-			err = userRepoErr
+		identityResolver, identityResolverErr := c.IdentityResolver()
+		if identityResolverErr != nil {
+			err = identityResolverErr
 
 			return
 		}
@@ -82,7 +82,7 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 			router,
 			commandsRegistry,
 			telegramConversationEngine,
-			userRepo,
+			identityResolver,
 		)
 	})
 

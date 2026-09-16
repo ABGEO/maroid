@@ -1,12 +1,12 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -45,11 +45,13 @@ type AuthHandler interface {
 
 // Auth represents the authentication handler.
 type Auth struct {
-	cfg      *config.Config
-	logger   *slog.Logger
-	jwtSvc   *auth.JWTService
-	oidcFlow *auth.OIDCFlow
-	userRepo repository.UserRepository
+	cfg              *config.Config
+	logger           *slog.Logger
+	jwtSvc           *auth.JWTService
+	oidcFlow         *auth.OIDCFlow
+	userRepo         repository.UserRepository
+	identityRepo     repository.IdentityRepository
+	identityResolver auth.IdentityResolver
 }
 
 var _ AuthHandler = (*Auth)(nil)
@@ -61,6 +63,8 @@ func NewAuth(
 	jwtSvc *auth.JWTService,
 	oidcFlow *auth.OIDCFlow,
 	userRepo repository.UserRepository,
+	identityRepo repository.IdentityRepository,
+	identityResolver auth.IdentityResolver,
 ) *Auth {
 	return &Auth{
 		cfg: cfg,
@@ -68,9 +72,11 @@ func NewAuth(
 			slog.String("component", "handler"),
 			slog.String("handler", "auth"),
 		),
-		jwtSvc:   jwtSvc,
-		oidcFlow: oidcFlow,
-		userRepo: userRepo,
+		jwtSvc:           jwtSvc,
+		oidcFlow:         oidcFlow,
+		userRepo:         userRepo,
+		identityRepo:     identityRepo,
+		identityResolver: identityResolver,
 	}
 }
 
@@ -145,22 +151,11 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	telegramID, err := strconv.ParseInt(idClaims.ID, 10, 64)
+	user, err := h.resolveAndSync(r.Context(), idClaims)
 	if err != nil {
 		redirectWithError(w, r, redirect)
 
-		return fmt.Errorf("invalid user id claims: %w", err)
-	}
-
-	user, err := h.userRepo.SyncProfileByTelegramID(r.Context(), telegramID, model.Profile{
-		Username:    idClaims.Username,
-		DisplayName: idClaims.Name,
-		PictureURL:  idClaims.Picture,
-	})
-	if err != nil {
-		redirectWithError(w, r, redirect)
-
-		return fmt.Errorf("resolving the user record of %d: %w", telegramID, err)
+		return err
 	}
 
 	token, err := h.jwtSvc.Sign(auth.Claims{
@@ -195,6 +190,29 @@ func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
 	})
 
 	return nil
+}
+
+// resolveAndSync reads the user record that the external account names, then
+// writes the profile that the provider gave onto that identity.
+func (h *Auth) resolveAndSync(
+	ctx context.Context,
+	idClaims *auth.IDTokenClaims,
+) (*model.User, error) {
+	user, err := h.identityResolver.ResolveByProvider(ctx, auth.ProviderTelegram, idClaims.ID)
+	if err != nil {
+		return nil, fmt.Errorf("resolving the user record of %s: %w", idClaims.ID, err)
+	}
+
+	err = h.identityRepo.SyncProfile(ctx, auth.ProviderTelegram, idClaims.ID, model.Profile{
+		Username:    idClaims.Username,
+		DisplayName: idClaims.Name,
+		PictureURL:  idClaims.Picture,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("syncing the profile of the identity: %w", err)
+	}
+
+	return user, nil
 }
 
 func (h *Auth) processOIDCCallback(

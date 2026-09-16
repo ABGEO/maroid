@@ -41,18 +41,8 @@ func (f fakeUserRepo) GetActiveByID(context.Context, string) (*model.User, error
 	return f.user, f.err
 }
 
-func (f fakeUserRepo) GetActiveByTelegramID(context.Context, int64) (*model.User, error) {
-	return f.user, f.err
-}
-
 func (f fakeUserRepo) ListActive(context.Context) ([]model.User, error) {
 	return nil, errs.ErrUserNotFound
-}
-
-func (f fakeUserRepo) SyncProfileByTelegramID(
-	context.Context, int64, model.Profile,
-) (*model.User, error) {
-	return f.user, f.err
 }
 
 func newJWTService(t *testing.T) *auth.JWTService {
@@ -174,9 +164,8 @@ func TestMiddlewarePutsTheActingUserInTheContext(t *testing.T) {
 
 func activeRecord() *model.User {
 	return &model.User{
-		ID:         recordID,
-		TelegramID: 722183546,
-		Status:     model.StatusActive,
+		ID:     recordID,
+		Status: model.StatusActive,
 	}
 }
 

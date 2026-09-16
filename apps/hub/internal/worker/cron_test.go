@@ -72,16 +72,6 @@ func (f fakeUserRepo) GetActiveByID(context.Context, string) (*model.User, error
 	return nil, errs.ErrUserNotFound
 }
 
-func (f fakeUserRepo) GetActiveByTelegramID(context.Context, int64) (*model.User, error) {
-	return nil, errs.ErrUserNotFound
-}
-
-func (f fakeUserRepo) SyncProfileByTelegramID(
-	context.Context, int64, model.Profile,
-) (*model.User, error) {
-	return nil, errs.ErrUserNotFound
-}
-
 func twoActiveUsers() fakeUserRepo {
 	return fakeUserRepo{
 		users: []model.User{{ID: idOfA}, {ID: idOfB}},

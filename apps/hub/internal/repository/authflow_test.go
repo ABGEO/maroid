@@ -60,7 +60,7 @@ func TestAuthFlowIntentNamesItsTarget(t *testing.T) {
 	flowRepo := repository.NewAuthFlow(instance.DB)
 	ctx := t.Context()
 
-	userID := insertUser(t, instance, telegramIDOfA)
+	userID := insertUser(t, instance, nameOfA)
 
 	attachFlow := signInFlow("state-attach")
 	attachFlow.Intent = model.IntentAttach

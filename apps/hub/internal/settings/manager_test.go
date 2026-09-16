@@ -57,8 +57,8 @@ func newWorld(t *testing.T) *world {
 	instance := startPostgres(t)
 	root := startBao(t)
 
-	userA := addUser(t, instance, 111)
-	userB := addUser(t, instance, 222)
+	userA := addUser(t, instance, "Temuri")
+	userB := addUser(t, instance, "Nino")
 
 	for _, user := range []string{userA, userB} {
 		_, err := root.Logical().WriteWithContext(
@@ -181,13 +181,13 @@ func generateSecretID(t *testing.T, root *api.Client) string {
 	return value
 }
 
-func addUser(t *testing.T, instance *testdb.Instance, telegramID int64) string {
+func addUser(t *testing.T, instance *testdb.Instance, firstName string) string {
 	t.Helper()
 
 	var id string
 
 	require.NoError(t, instance.DB.Get(
-		&id, `INSERT INTO public.users (telegram_id) VALUES ($1) RETURNING id;`, telegramID,
+		&id, `INSERT INTO public.users (first_name) VALUES ($1) RETURNING id;`, firstName,
 	))
 
 	return id
