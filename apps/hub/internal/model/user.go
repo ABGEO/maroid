@@ -1,4 +1,3 @@
-// Package model holds the domain entities of the hub.
 package model
 
 import (
@@ -26,13 +25,6 @@ func ParseStatus(value string) (Status, error) {
 	default:
 		return "", fmt.Errorf("%w: %q", errs.ErrUnknownStatus, value)
 	}
-}
-
-// Profile holds the Telegram profile of one person.
-type Profile struct {
-	Username    string `db:"username"`
-	DisplayName string `db:"display_name"`
-	PictureURL  string `db:"picture_url"`
 }
 
 // User is the record that owns every scoped row of one person.

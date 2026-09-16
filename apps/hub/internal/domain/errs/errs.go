@@ -45,6 +45,24 @@ var (
 	ErrUnknownStatus = errors.New("user: unknown status")
 	// ErrUserNotFound indicates that no active user record holds the given identity.
 	ErrUserNotFound = errors.New("user: not found")
+	// ErrUnknownIntent indicates that an authorization flow carries an intent that
+	// EXTID-DD-004 does not name.
+	ErrUnknownIntent = errors.New("auth flow: unknown intent")
+	// ErrIdentityTaken indicates that the external account already holds an identity
+	// that names another user record. See EXTID-FR-005.
+	ErrIdentityTaken = errors.New("identity: the external account belongs to another user")
+	// ErrIdentityNotFound indicates that no identity of the user record names the
+	// given provider.
+	ErrIdentityNotFound = errors.New("identity: not found")
+	// ErrLastIdentity indicates that the identity is the last one of its user record,
+	// and EXTID-INV-002 keeps it.
+	ErrLastIdentity = errors.New("identity: the last external account cannot be detached")
+	// ErrInvitationNotValid indicates that the invitation is absent, consumed, or
+	// expired. The three cases answer the same way.
+	ErrInvitationNotValid = errors.New("invitation: not valid")
+	// ErrAuthFlowNotFound indicates that no unconsumed authorization flow holds the
+	// given state.
+	ErrAuthFlowNotFound = errors.New("auth flow: not found")
 	// ErrInvalidSettingsModel indicates that a plugin declared a settings model that
 	// the hub cannot reflect into a schema.
 	ErrInvalidSettingsModel = errors.New("settings model: invalid")

@@ -46,6 +46,10 @@ linters:
         - pluginapi.TelegramBot
         - paho.mqtt.golang.Client
         - repository.UserRepository
+        - repository.IdentityRepository
+        - repository.InvitationRepository
+        - repository.AuthFlowRepository
+        - auth.IdentityResolver
         - secret.Cipher
         - settings.Service
         - pluginapi.SettingsProvider

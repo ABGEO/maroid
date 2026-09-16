@@ -44,6 +44,10 @@ type Resolver interface {
 	Database() (*sqlx.DB, error)
 	CloseDatabase() error
 	UserRepository() (repository.UserRepository, error)
+	IdentityRepository() (repository.IdentityRepository, error)
+	InvitationRepository() (repository.InvitationRepository, error)
+	AuthFlowRepository() (repository.AuthFlowRepository, error)
+	IdentityResolver() (auth.IdentityResolver, error)
 	OpenBaoClient() (*api.Client, error)
 	SecretCipher() (secret.Cipher, error)
 	SettingsRegistry() *registry.SettingsRegistry
@@ -98,6 +102,30 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance repository.UserRepository
+	}
+
+	identityRepository struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance repository.IdentityRepository
+	}
+
+	invitationRepository struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance repository.InvitationRepository
+	}
+
+	authFlowRepository struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance repository.AuthFlowRepository
+	}
+
+	identityResolver struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance auth.IdentityResolver
 	}
 
 	openBaoClient struct {

@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
 // OIDCService initializes and returns the OIDC service instance.
@@ -72,4 +73,31 @@ func (c *Container) JWTService() (*auth.JWTService, error) {
 	}
 
 	return c.jwtService.instance, nil
+}
+
+// IdentityResolver initializes and returns the identity resolver instance.
+func (c *Container) IdentityResolver() (auth.IdentityResolver, error) {
+	c.identityResolver.mu.Lock()
+	defer c.identityResolver.mu.Unlock()
+
+	var err error
+
+	c.identityResolver.once.Do(func() {
+		var identityRepo repository.IdentityRepository
+
+		identityRepo, err = c.IdentityRepository()
+		if err != nil {
+			return
+		}
+
+		c.identityResolver.instance = auth.NewResolver(identityRepo)
+	})
+
+	if err != nil {
+		c.identityResolver.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing identity resolver: %w", err)
+	}
+
+	return c.identityResolver.instance, nil
 }
