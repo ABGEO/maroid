@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	clientID = "hub"
-	keyID    = "the-signing-key"
+	clientID  = "hub"
+	keyID     = "the-signing-key"
+	handleOfA = "abgeo"
 )
 
 // fakeDex serves the discovery document and the key set that the hub reads, and
@@ -101,7 +102,7 @@ func (d *fakeDex) Claims(connector string, account string) jwt.MapClaims {
 			"user_id":      account,
 		},
 		"name":               "Temuri Takalandze",
-		"preferred_username": "abgeo",
+		"preferred_username": handleOfA,
 		"picture":            "https://example.com/a.jpg",
 	}
 }

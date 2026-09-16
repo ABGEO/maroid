@@ -2,12 +2,16 @@ package depresolver
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"sync"
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
 )
 
@@ -122,11 +126,6 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		return err
 	}
 
-	oidcFlow, err := c.OIDCFlow()
-	if err != nil {
-		return err
-	}
-
 	userRepo, err := c.UserRepository()
 	if err != nil {
 		return err
@@ -137,19 +136,16 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		return err
 	}
 
-	identityRepo, err := c.IdentityRepository()
-	if err != nil {
-		return err
-	}
-
 	identityResolver, err := c.IdentityResolver()
 	if err != nil {
 		return err
 	}
 
-	authHandler := handler.NewAuth(
-		cfg, logger, verifier, oidcFlow, userRepo, identityRepo, identityResolver,
-	)
+	authHandler, err := c.buildAuthHandler(cfg, logger, verifier, userRepo)
+	if err != nil {
+		return err
+	}
+
 	pluginHandler := handler.NewPlugin(
 		logger, verifier, identityResolver, pluginRegistry, uiRegistry, settingsSvc,
 	)
@@ -170,4 +166,36 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 	}
 
 	return nil
+}
+
+// buildAuthHandler resolves every dependency of the auth handler.
+func (c *Container) buildAuthHandler(
+	cfg *config.Config,
+	logger *slog.Logger,
+	verifier auth.TokenVerifier,
+	userRepo repository.UserRepository,
+) (*handler.Auth, error) {
+	oidcFlow, err := c.OIDCFlow()
+	if err != nil {
+		return nil, err
+	}
+
+	identityRepo, err := c.IdentityRepository()
+	if err != nil {
+		return nil, err
+	}
+
+	authSvc, err := c.AuthService()
+	if err != nil {
+		return nil, err
+	}
+
+	identityResolver, err := c.IdentityResolver()
+	if err != nil {
+		return nil, err
+	}
+
+	return handler.NewAuth(
+		cfg, logger, verifier, oidcFlow, userRepo, identityRepo, identityResolver, authSvc,
+	), nil
 }

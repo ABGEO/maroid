@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
@@ -114,4 +116,39 @@ func (c *Container) IdentityResolver() (auth.IdentityResolver, error) {
 	}
 
 	return c.identityResolver.instance, nil
+}
+
+// AuthService initializes and returns the service that changes the identities of
+// a user record.
+func (c *Container) AuthService() (*auth.Service, error) {
+	c.authService.mu.Lock()
+	defer c.authService.mu.Unlock()
+
+	var err error
+
+	c.authService.once.Do(func() {
+		var dbInstance *sqlx.DB
+
+		dbInstance, err = c.Database()
+		if err != nil {
+			return
+		}
+
+		var identityRepo repository.IdentityRepository
+
+		identityRepo, err = c.IdentityRepository()
+		if err != nil {
+			return
+		}
+
+		c.authService.instance = auth.NewService(dbInstance, identityRepo)
+	})
+
+	if err != nil {
+		c.authService.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing auth service: %w", err)
+	}
+
+	return c.authService.instance, nil
 }

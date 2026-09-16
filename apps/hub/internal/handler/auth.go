@@ -14,6 +14,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
@@ -26,6 +27,8 @@ const (
 	// this value only proves that the browser that finishes the flow started it.
 	bindingCookieName = "maroid_auth_binding"
 	bindingMaxAge     = 10 * 60 // 10 minutes in seconds, the lifetime of a flow
+	// errorKey names the reason in a JSON failure. See API-006.
+	errorKey = "error"
 )
 
 var (
@@ -39,6 +42,8 @@ type AuthHandler interface {
 
 	Initiate(w http.ResponseWriter, r *http.Request) error
 	Callback(w http.ResponseWriter, r *http.Request) error
+	Link(w http.ResponseWriter, r *http.Request) error
+	Detach(w http.ResponseWriter, r *http.Request) error
 }
 
 // Auth represents the authentication handler.
@@ -50,6 +55,7 @@ type Auth struct {
 	userRepo         repository.UserRepository
 	identityRepo     repository.IdentityRepository
 	identityResolver auth.IdentityResolver
+	authSvc          *auth.Service
 }
 
 var _ AuthHandler = (*Auth)(nil)
@@ -63,6 +69,7 @@ func NewAuth(
 	userRepo repository.UserRepository,
 	identityRepo repository.IdentityRepository,
 	identityResolver auth.IdentityResolver,
+	authSvc *auth.Service,
 ) *Auth {
 	return &Auth{
 		cfg: cfg,
@@ -75,6 +82,7 @@ func NewAuth(
 		userRepo:         userRepo,
 		identityRepo:     identityRepo,
 		identityResolver: identityResolver,
+		authSvc:          authSvc,
 	}
 }
 
@@ -91,6 +99,8 @@ func (h *Auth) Register(router chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(auth.Middleware(h.logger, h.verifier, h.identityResolver))
 			r.Get("/me", Wrap(h.logger, h.Me))
+			r.Get("/link", Wrap(h.logger, h.Link))
+			r.Delete("/identities/{provider}", Wrap(h.logger, h.Detach))
 		})
 	})
 }
@@ -160,6 +170,10 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
+	if flow.Intent == model.IntentAttach {
+		return h.finishAttach(w, r, flow, claims)
+	}
+
 	if _, err = h.resolveAndSync(r.Context(), claims); err != nil {
 		redirectWithError(w, r, redirect)
 
@@ -173,6 +187,66 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// Link starts an attach of a further external account to the acting user.
+func (h *Auth) Link(w http.ResponseWriter, r *http.Request) error {
+	redirect := r.URL.Query().Get("redirect")
+	if !validateRedirect(redirect, h.cfg.Auth.AllowedRedirects) {
+		sendBadRequest(w, r, "missing or invalid redirect parameter")
+
+		return fmt.Errorf("%w: missing or invalid redirect parameter", errInvalidQueryParameter)
+	}
+
+	provider := r.URL.Query().Get("provider")
+	if provider == "" {
+		sendBadRequest(w, r, "missing provider parameter")
+
+		return fmt.Errorf("%w: missing provider parameter", errInvalidQueryParameter)
+	}
+
+	userID := auth.UserIDFromContext(r.Context())
+
+	authURL, binding, err := h.oidcFlow.Initiate(r.Context(), model.AuthFlow{
+		Intent:   model.IntentAttach,
+		UserID:   &userID,
+		Provider: &provider,
+		Redirect: redirect,
+	})
+	if err != nil {
+		redirectWithError(w, r, redirect)
+
+		return fmt.Errorf("initiating the attach: %w", err)
+	}
+
+	setBindingCookie(w, binding)
+	http.Redirect(w, r, authURL, http.StatusFound)
+
+	return nil
+}
+
+// Detach removes an external account from the acting user.
+func (h *Auth) Detach(w http.ResponseWriter, r *http.Request) error {
+	provider := chi.URLParam(r, "provider")
+
+	err := h.authSvc.Detach(r.Context(), auth.UserIDFromContext(r.Context()), provider)
+
+	switch {
+	case err == nil:
+		render.NoContent(w, r)
+	case errors.Is(err, errs.ErrLastIdentity):
+		render.Status(r, http.StatusConflict)
+		render.JSON(w, r, map[string]string{
+			errorKey: "the last external account cannot be detached",
+		})
+	case errors.Is(err, errs.ErrIdentityNotFound):
+		render.Status(r, http.StatusNotFound)
+		render.JSON(w, r, map[string]string{errorKey: "not found"})
+	default:
+		return fmt.Errorf("detaching the external account: %w", err)
+	}
+
+	return nil
+}
+
 // Me returns the authenticated user's information.
 func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
 	claims := auth.ClaimsFromContext(r.Context())
@@ -182,6 +256,49 @@ func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
 		"name":    claims.Name,
 		"picture": claims.Picture,
 	})
+
+	return nil
+}
+
+// finishAttach binds the external account to the record that the flow row names.
+func (h *Auth) finishAttach(
+	w http.ResponseWriter,
+	r *http.Request,
+	flow *model.AuthFlow,
+	claims *auth.Claims,
+) error {
+	federated := claims.Federated
+	if federated.ConnectorID == "" || federated.UserID == "" {
+		redirectWithError(w, r, flow.Redirect)
+
+		return errMissingFederatedClaims
+	}
+
+	err := h.authSvc.Attach(
+		r.Context(),
+		*flow.UserID,
+		federated.ConnectorID,
+		federated.UserID,
+		model.Profile{
+			Username:    claims.Username,
+			DisplayName: claims.Name,
+			PictureURL:  claims.Picture,
+		},
+	)
+	if errors.Is(err, errs.ErrIdentityTaken) {
+		redirectWithReason(w, r, flow.Redirect, "identity_taken")
+
+		return nil
+	}
+
+	if err != nil {
+		redirectWithError(w, r, flow.Redirect)
+
+		return fmt.Errorf("attaching the external account: %w", err)
+	}
+
+	//nolint:gosec // G710: validateRedirect already matched the target against the allowed list.
+	http.Redirect(w, r, flow.Redirect, http.StatusFound)
 
 	return nil
 }
@@ -229,12 +346,17 @@ func (h *Auth) processOIDCCallback(
 }
 
 // redirectWithError sends the caller back to the target with an error marker.
-// Every caller passes a target that validateRedirect already accepted.
 func redirectWithError(w http.ResponseWriter, r *http.Request, target string) {
+	redirectWithReason(w, r, target, "auth_failed")
+}
+
+// redirectWithReason sends the caller back to the target with a named failure.
+// Every caller passes a target that validateRedirect already accepted.
+func redirectWithReason(w http.ResponseWriter, r *http.Request, target string, reason string) {
 	redirectURL, _ := url.Parse(target)
 
 	queryParams := redirectURL.Query()
-	queryParams.Set("error", "auth_failed")
+	queryParams.Set("error", reason)
 	redirectURL.RawQuery = queryParams.Encode()
 
 	//nolint:gosec // G710: validateRedirect already matched the target against the allowed list.
@@ -286,7 +408,7 @@ func clearBindingCookie(w http.ResponseWriter) {
 // sendBadRequest answers with the JSON body that API-006 gives.
 func sendBadRequest(w http.ResponseWriter, r *http.Request, reason string) {
 	render.Status(r, http.StatusBadRequest)
-	render.JSON(w, r, map[string]string{"error": reason})
+	render.JSON(w, r, map[string]string{errorKey: reason})
 }
 
 func setAuthCookie(w http.ResponseWriter, token string, ttl time.Duration) {

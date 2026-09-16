@@ -78,8 +78,8 @@ func (c *Server) Address() string {
 // Auth defines general authentication configuration parameters.
 type Auth struct {
 	AllowedRedirects []string      `mapstructure:"allowed_redirects" validate:"required,min=1,dive,url"`
-	FlowTTL          time.Duration `default:"10m" mapstructure:"flow_ttl"`
-	SessionTTL       time.Duration `default:"168h" mapstructure:"session_ttl"`
+	FlowTTL          time.Duration `default:"10m"                    mapstructure:"flow_ttl"`
+	SessionTTL       time.Duration `default:"168h"                   mapstructure:"session_ttl"`
 }
 
 // OIDC defines OpenID Connect configuration parameters for authentication.

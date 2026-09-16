@@ -48,6 +48,7 @@ type Resolver interface {
 	InvitationRepository() (repository.InvitationRepository, error)
 	AuthFlowRepository() (repository.AuthFlowRepository, error)
 	IdentityResolver() (auth.IdentityResolver, error)
+	AuthService() (*auth.Service, error)
 	OpenBaoClient() (*api.Client, error)
 	SecretCipher() (secret.Cipher, error)
 	SettingsRegistry() *registry.SettingsRegistry
@@ -126,6 +127,12 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance auth.IdentityResolver
+	}
+
+	authService struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *auth.Service
 	}
 
 	openBaoClient struct {
