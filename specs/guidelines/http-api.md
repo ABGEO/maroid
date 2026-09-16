@@ -4,7 +4,7 @@ title: The HTTP API
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-15
+updated: 2026-09-16
 scope: [apps/hub/internal/server/, apps/hub/internal/handler/, apps/hub/internal/middleware/]
 related: [ARC, PLG, SEC, UI]
 ---
@@ -29,7 +29,7 @@ The path prefixes are fixed:
 | ------------------------- | ----------------------------------------- | ---------------------- |
 | `/auth`, `/auth/callback` | The login flow                            | Public                 |
 | `/auth/invite`            | The redemption of an invitation           | Public                 |
-| `/auth/me`                | The current user and their identities     | Authenticated          |
+| `/auth/me`                | The current user                          | Authenticated          |
 | `/auth/link`              | The start of an attach                    | Authenticated          |
 | `/auth/identities*`       | The external accounts of the current user | Authenticated          |
 | `/plugins`                | The list of loaded plugins                | Authenticated          |

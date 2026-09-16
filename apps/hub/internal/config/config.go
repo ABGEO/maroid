@@ -75,13 +75,20 @@ func (c *Server) Address() string {
 	return net.JoinHostPort(c.ListenAddr, c.Port)
 }
 
+// Provider is one account system that Dex federates and that Maroid offers.
+type Provider struct {
+	ID   string `validate:"required"`
+	Name string `validate:"required"`
+}
+
 // Auth defines general authentication configuration parameters.
 type Auth struct {
 	AllowedRedirects []string      `mapstructure:"allowed_redirects" validate:"required,min=1,dive,url"`
 	FlowTTL          time.Duration `default:"10m"                    mapstructure:"flow_ttl"`
 	SessionTTL       time.Duration `default:"168h"                   mapstructure:"session_ttl"`
 	InvitationTTL    time.Duration `default:"72h"                    mapstructure:"invitation_ttl"`
-	DeckURL          string        `mapstructure:"deck_url" validate:"omitempty,url"`
+	DeckURL          string        `mapstructure:"deck_url"          validate:"omitempty,url"`
+	Providers        []Provider    `validate:"dive"`
 }
 
 // OIDC defines OpenID Connect configuration parameters for authentication.

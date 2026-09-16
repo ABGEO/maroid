@@ -55,6 +55,7 @@ type AuthHandler interface {
 	Initiate(w http.ResponseWriter, r *http.Request) error
 	Callback(w http.ResponseWriter, r *http.Request) error
 	Link(w http.ResponseWriter, r *http.Request) error
+	Identities(w http.ResponseWriter, r *http.Request) error
 	Detach(w http.ResponseWriter, r *http.Request) error
 	Invite(w http.ResponseWriter, r *http.Request) error
 }
@@ -117,6 +118,7 @@ func (h *Auth) Register(router chi.Router) {
 			r.Use(auth.Middleware(h.logger, h.verifier, h.identityResolver))
 			r.Get("/me", Wrap(h.logger, h.Me))
 			r.Get("/link", Wrap(h.logger, h.Link))
+			r.Get("/identities", Wrap(h.logger, h.Identities))
 			r.Delete("/identities/{provider}", Wrap(h.logger, h.Detach))
 		})
 	})
@@ -240,6 +242,56 @@ func (h *Auth) Link(w http.ResponseWriter, r *http.Request) error {
 
 	setBindingCookie(w, binding)
 	http.Redirect(w, r, authURL, http.StatusFound)
+
+	return nil
+}
+
+// providerState is one member of the list that `GET /auth/identities` returns.
+//
+// The four members below Attached carry the profile that the provider gave at the
+// last sign in with it, and they are absent when nothing is attached.
+type providerState struct {
+	Provider string `json:"provider"`
+	Name     string `json:"name"`
+	Attached bool   `json:"attached"`
+
+	Username    *string    `json:"username,omitempty"`
+	DisplayName *string    `json:"display_name,omitempty"`
+	PictureURL  *string    `json:"picture_url,omitempty"`
+	AttachedAt  *time.Time `json:"attached_at,omitempty"`
+}
+
+// Identities reports every provider that Maroid offers, attached or not.
+func (h *Auth) Identities(w http.ResponseWriter, r *http.Request) error {
+	identities, err := h.identityRepo.ListByUser(
+		r.Context(),
+		auth.UserIDFromContext(r.Context()),
+	)
+	if err != nil {
+		return fmt.Errorf("listing the identities of the acting user: %w", err)
+	}
+
+	attached := make(map[string]model.Identity, len(identities))
+	for _, identity := range identities {
+		attached[identity.Provider] = identity
+	}
+
+	states := make([]providerState, 0, len(h.cfg.Auth.Providers))
+	for _, provider := range h.cfg.Auth.Providers {
+		state := providerState{Provider: provider.ID, Name: provider.Name}
+
+		if identity, ok := attached[provider.ID]; ok {
+			state.Attached = true
+			state.Username = identity.Username
+			state.DisplayName = identity.DisplayName
+			state.PictureURL = identity.PictureURL
+			state.AttachedAt = &identity.CreatedAt
+		}
+
+		states = append(states, state)
+	}
+
+	render.JSON(w, r, states)
 
 	return nil
 }

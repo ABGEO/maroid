@@ -139,18 +139,42 @@ paths:
   /auth/me:
     get:
       operationId: getCurrentUser
-      summary: Read the acting user and every provider that Maroid offers.
+      summary: Read the person of the current session.
       description: >
-        Realizes `EXTID-FR-009`.
-        The list holds one member for each provider in `auth.providers`, attached or
-        not. See `EXTID-DD-009`.
+        The shape does not change with this feature, and the source of it does. The
+        two members come from the token of the session, which Dex issues now and the
+        hub issued before. `EXTID-DD-016` keeps the identities out of this body,
+        because the deck reads this route on every navigation.
       responses:
         "200":
-          description: The acting user and the providers.
+          description: The name and the picture that the token of the session carries.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/CurrentUser"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/identities:
+    get:
+      operationId: listIdentities
+      summary: Read every provider that Maroid offers, attached or not.
+      description: >
+        Realizes `EXTID-FR-009`.
+        The list holds one member for each provider in `auth.providers`, whether an
+        external account of that provider holds an identity of the acting user or
+        not. `EXTID-DD-009` gives the reason that the list lives in the
+        configuration, and `EXTID-DD-016` the reason that it lives apart from
+        `/auth/me`.
+      responses:
+        "200":
+          description: Every provider, in the order that the configuration holds.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProviderState"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -214,30 +238,22 @@ components:
   schemas:
     CurrentUser:
       type: object
-      required: [user, identities]
+      description: >
+        The person of the current session, as the token of that session names them.
+        The record of the user carries the two names that the owner set, and this
+        body carries neither yet. A later feature serves them.
       properties:
-        user:
-          $ref: "#/components/schemas/User"
-        identities:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProviderState"
-
-    User:
-      type: object
-      required: [id, status]
-      properties:
-        id:
+        name:
           type: string
-          format: uuid
-        first_name:
-          type: ["string", "null"]
-          description: The owner sets it. No sign in changes it. See `EXTID-FR-015`.
-        last_name:
-          type: ["string", "null"]
-        status:
+          description: The `name` claim of the token.
+        picture:
           type: string
-          enum: [active, blocked]
+          description: >
+            The `picture` claim of the token. It is empty when the provider gave
+            none, and the shell then draws the initials of the person.
+      examples:
+        - name: Temuri Takalandze
+          picture: https://example.com/a.jpg
 
     ProviderState:
       type: object

@@ -32,7 +32,7 @@ identity for the HTTP path and for the Telegram path.
 | `EXTID-FR-006`  | Section 4.2, `EXTID-DD-001`, `EXTID-SC-008`                     |
 | `EXTID-FR-007`  | Section 4.3, `EXTID-SC-009`                                     |
 | `EXTID-FR-008`  | Section 4.2, `EXTID-DD-003`, `EXTID-SC-010`, `EXTID-SC-022`     |
-| `EXTID-FR-009`  | Section 4.3, `EXTID-DD-009`, `EXTID-SC-011`                     |
+| `EXTID-FR-009`  | Section 4.3, `EXTID-DD-009`, `EXTID-DD-016`, `EXTID-SC-011`     |
 | `EXTID-FR-010`  | Section 4.3, `EXTID-DD-010`, `EXTID-DD-015`, `EXTID-SC-012`     |
 | `EXTID-FR-011`  | Section 4.3, `EXTID-SC-013`                                     |
 | `EXTID-FR-012`  | Section 4.4, `EXTID-DD-008`, `EXTID-DD-015`, `EXTID-SC-014`     |
@@ -109,8 +109,6 @@ and `GLO-user` for this specification.
 | `apps/hub/internal/domain/errs/errs.go`                | change | The sentinel errors of section 4.5                                    |
 | `.keys/`                                               | delete | The hub holds no key pair                                             |
 | `config.yaml`                                          | change | The `jwt` block goes. The `auth` block grows                          |
-| `apps/deck/src/lib/api/types.ts`                       | change | `User` follows the body of `/auth/me`                                 |
-| `apps/deck/src/lib/components/UserDropdown.svelte`     | change | Reads the name and the picture from the identity list                 |
 
 The signatures:
 
@@ -305,7 +303,8 @@ holds no identity of that record, or the identity is the last one.
 | `GET`    | `/auth/callback`              | Public        | `EXTID-FR-001`, `EXTID-FR-004`, `EXTID-FR-012` |
 | `GET`    | `/auth/invite`                | Public        | `EXTID-FR-012`                   |
 | `GET`    | `/auth/link`                  | Authenticated | `EXTID-FR-004`                   |
-| `GET`    | `/auth/me`                    | Authenticated | `EXTID-FR-009`                   |
+| `GET`    | `/auth/me`                    | Authenticated | The body does not change         |
+| `GET`    | `/auth/identities`            | Authenticated | `EXTID-FR-009`                   |
 | `DELETE` | `/auth/identities/{provider}` | Authenticated | `EXTID-FR-007`, `EXTID-FR-008`   |
 
 **The scopes of the authorization request.** The hub asks for `openid`, `profile`,
@@ -681,6 +680,24 @@ needs HTTPS everywhere, including a workstation. The address of the hub in the
 printed text. Nothing renders a failure, and the command chooses a target that the
 deck already knows.
 
+### `EXTID-DD-016`
+
+**Realizes:** `EXTID-FR-009`
+**Decision:** `GET /auth/identities` returns the list. `/auth/me` keeps the body it
+has, which holds the name and the picture of the token of the session. `api.yaml`
+describes that body, because the source of it changed with `SEC-002` even though the
+shape did not.
+**Rationale:** `/auth/me` is the probe of a session. The deck reads it on every
+navigation and sends a person to the sign in when it answers 401. A list of every
+provider on that path costs a payload that one page needs and every other page
+throws away. The collection also already holds a route: a person deletes a member at
+`/auth/identities/{provider}`, so the list belongs beside it. An attach or a detach
+then reads the list again and leaves the probe alone.
+**Alternatives:** The list inside `/auth/me`. One request serves the page of the
+settings, and every other navigation carries the list for nothing. A picture of the
+user on `/auth/me`. `EXTID-DD-011` picks no winner among the providers, so that
+needs a rule that no statement asks for.
+
 ## 6. Scenarios
 
 `spec-scenarios.md` holds `EXTID-SC-001` through `EXTID-SC-024`.
@@ -698,7 +715,7 @@ deck already knows.
 | 7   | Write `EXTID-SC-005`, `EXTID-SC-006`, and `EXTID-SC-008`, then `/auth/link`.                      | `EXTID-FR-004` to `EXTID-FR-006` | [ ]  |
 | 8   | Write `EXTID-SC-009` and `EXTID-SC-010`, then `DELETE /auth/identities/{provider}`.                | `EXTID-FR-007`, `EXTID-FR-008`   | [ ]  |
 | 9   | Write `EXTID-SC-012` to `EXTID-SC-016`, then `maroid user invite` and `/auth/invite`.              | `EXTID-FR-010` to `EXTID-FR-014` | [ ]  |
-| 10  | Write `EXTID-SC-011`, then `/auth/me` and `auth.providers`.                                       | `EXTID-FR-009`                   | [ ]  |
+| 10  | Write `EXTID-SC-011`, then `GET /auth/identities` and `auth.providers`.                           | `EXTID-FR-009`                   | [x]  |
 | 11  | Write `EXTID-SC-017` and `EXTID-SC-018`, then the profile write of the sign in.                   | `EXTID-FR-015`, `EXTID-FR-016`   | [ ]  |
 | 12  | Remove the `JWT` block from the configuration. Set the token lifetime of Dex to seven days.       | `EXTID-NFR-002`                  | [ ]  |
 | 13  | Build the invite page of the deck. Point the command at it, and drop the target flag.             | `EXTID-DD-015`                   | [x]  |
@@ -711,7 +728,8 @@ records. A failure in step 6 then names the flow row and nothing else.
 
 | Postponed                                                       | Reason and the condition that brings it back                                                              |
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| The page that shows the attached accounts.                      | `EXTID-FR-009` serves the data. One feature of the deck renders it. Only the two consumers of `/auth/me` change here, because the body under them changes. |
+| The page that shows the attached accounts.                      | `EXTID-FR-009` serves the data. One feature of the deck renders it.                                        |
+| An avatar in the web shell.                                     | `EXTID-DD-011` picks no picture, and the shell draws the initials of the two names. A feature that wants one states the rule that chooses it. |
 | The renewal of a session.                                       | Open question 1 answers it. The lifetime that `EXTID-NFR-002` gives must hurt first.                        |
 | `Host.UserCapabilities` and the provider that carries a notification. | The requirements put both out of scope. It is a change to `libs/pluginapi`, so it takes its own feature. |
 | The scopes of a token and the MCP surface.                      | `ADR-0002` puts them after this feature. An agent that reaches the hub must ask for `federated:id` as well, or its token resolves to nobody. |

@@ -1,6 +1,7 @@
 package handler_test
 
 import (
+	"encoding/json"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -58,6 +59,10 @@ func authUnderTest(t *testing.T) *authFixture {
 	cfg.Auth.AllowedRedirects = []string{shellTarget}
 	cfg.Auth.FlowTTL = flowLifetime
 	cfg.Auth.SessionTTL = sessionLifetime
+	cfg.Auth.Providers = []config.Provider{
+		{ID: auth.ProviderTelegram, Name: "Telegram"},
+		{ID: providerCloud, Name: "ABGEO.cloud"},
+	}
 	cfg.OIDC.Issuer = provider.URL
 	cfg.OIDC.ClientID = authtest.ClientID
 	cfg.OIDC.ClientSecret = "secret"
@@ -217,6 +222,105 @@ func TestTheRedemptionBindsTheFirstIdentity(t *testing.T) {
 		"error=invitation_invalid",
 		"the grant is spent, and the deck reads the reason",
 	)
+}
+
+// EXTID-SC-011: The list names every provider that the configuration holds. It
+// marks the one that the record attached, with the handle that provider gave, and
+// marks the other as not attached.
+// EXTID-FR-009: A provider that nobody attached appears, because the person picks
+// it from this list.
+func TestTheListNamesEveryProvider(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+	ctx := t.Context()
+
+	userID := addUserRecord(t, fixture.database, "Temuri")
+	require.NoError(t, fixture.service.Attach(
+		ctx,
+		userID,
+		auth.ProviderTelegram,
+		"111",
+		model.Profile{Username: "abgeo", DisplayName: "Temuri", PictureURL: "https://a/b.jpg"},
+	))
+
+	body := fixture.listIdentities(t, auth.ProviderTelegram, "111")
+	require.Len(t, body, 2, "the configuration holds two providers")
+
+	require.Equal(t, auth.ProviderTelegram, body[0]["provider"])
+	require.Equal(t, "Telegram", body[0]["name"], "the deck shows this text")
+	require.Equal(t, true, body[0]["attached"])
+	require.Equal(t, "abgeo", body[0]["username"])
+	require.Equal(t, "Temuri", body[0]["display_name"])
+	require.Equal(t, "https://a/b.jpg", body[0]["picture_url"])
+	require.NotEmpty(t, body[0]["attached_at"])
+
+	require.Equal(t, providerCloud, body[1]["provider"])
+	require.Equal(t, false, body[1]["attached"], "a provider that nobody attached appears")
+	require.Nil(t, body[1]["username"])
+	require.Nil(t, body[1]["picture_url"])
+}
+
+// EXTID-FR-009: The list belongs to the person that asks for it, and to no other.
+func TestTheListHoldsNothingOfAnotherRecord(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+	ctx := t.Context()
+
+	mine := addUserRecord(t, fixture.database, "Temuri")
+	theirs := addUserRecord(t, fixture.database, "Nino")
+
+	require.NoError(t, fixture.service.Attach(
+		ctx, mine, auth.ProviderTelegram, "111", model.Profile{},
+	))
+	require.NoError(t, fixture.service.Attach(
+		ctx, theirs, providerCloud, "abc", model.Profile{Username: "not-mine"},
+	))
+
+	body := fixture.listIdentities(t, auth.ProviderTelegram, "111")
+
+	require.Equal(t, true, body[0]["attached"], "my own provider")
+	require.Equal(t, false, body[1]["attached"], "the account of another record is not mine")
+	require.Nil(t, body[1]["username"])
+}
+
+// A request that carries no session reaches no list.
+func TestTheListNeedsASession(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+
+	recorder := httptest.NewRecorder()
+	fixture.router.ServeHTTP(recorder, httptest.NewRequestWithContext(
+		t.Context(), http.MethodGet, "/auth/identities", nil,
+	))
+
+	require.Equal(t, http.StatusUnauthorized, recorder.Code)
+}
+
+// listIdentities reads the route as the person that the external account names.
+func (f *authFixture) listIdentities(
+	t *testing.T,
+	connector string,
+	accountID string,
+) []map[string]any {
+	t.Helper()
+
+	request := httptest.NewRequestWithContext(
+		t.Context(), http.MethodGet, "/auth/identities", nil,
+	)
+	request.Header.Set("Authorization", "Bearer "+f.provider.Sign(t, connector, accountID))
+
+	recorder := httptest.NewRecorder()
+	f.router.ServeHTTP(recorder, request)
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	var body []map[string]any
+
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+
+	return body
 }
 
 // signIn drives a whole sign in and returns the recorder of the callback.

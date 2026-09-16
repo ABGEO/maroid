@@ -127,7 +127,7 @@ identity.
 
 **Given** `auth.providers` lists `telegram` and `cloud`, and U holds an identity at
 `telegram` only.
-**When** U reads `/auth/me`.
+**When** U reads `/auth/identities`.
 **Then** the body names both providers, marks `telegram` as attached with its handle,
 and marks `cloud` as not attached.
 
