@@ -4,7 +4,7 @@ title: The HTTP API
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-16
+updated: 2026-09-17
 scope: [apps/hub/internal/server/, apps/hub/internal/handler/, apps/hub/internal/middleware/]
 related: [ARC, PLG, SEC, UI]
 ---
@@ -38,6 +38,8 @@ The path prefixes are fixed:
 | `/plugins/{id}/ui/*`      | The assets of a plugin                    | Public. See `SEC-006`. |
 | `/telegram/webhook`       | The Telegram updates                      | Network allowlist      |
 | `/ping`                   | The health check                          | Public                 |
+| `/.well-known/oauth-protected-resource*` | The discovery of Dex for an MCP client | Public      |
+| `/mcp`                    | The Model Context Protocol tools          | Bearer, MCP audience   |
 
 `/auth/callback` finishes a sign in, an attach, and a redemption. One client of Dex
 holds one redirect address, so one route finishes all three.

@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-09-15
+updated: 2026-09-17
 related: [LNG]
 ---
 
@@ -33,6 +33,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-owner`         | owner             | The maintainer of the repository. The owner approves each stage.                                                  |
 | `GLO-user`          | user              | A person that Maroid serves. One row in `public.users`. An identity binds it to an external account.              |
 | `GLO-identity`      | identity          | The binding of one external account to one user record. One row in `public.identities`.                          |
+| `GLO-idp`           | IdP               | The external identity provider that authenticates every person for Maroid. Dex is the IdP today.                  |
 | `GLO-provider`      | provider          | One account system that Dex federates. Telegram is one.                                                          |
 | `GLO-external-account` | external account | The account that one person holds at one provider.                                                            |
 | `GLO-invitation`    | invitation        | A grant that the owner issues. It lets one sign in create the first identity of one user record.                  |
@@ -48,6 +49,8 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-secret-field`  | secret field      | A field whose value Maroid returns to nobody after the user stores it.                                            |
 | `GLO-secret`        | secret            | The value of a secret field.                                                                                      |
 | `GLO-protection`    | protection        | The means that makes a secret unreadable to a reader of the database.                                             |
+| `GLO-mcp-tool`      | MCP tool          | A function that Maroid exposes over the Model Context Protocol. An MCP client calls it by name and gets a result.  |
+| `GLO-mcp-client`    | MCP client        | The application that connects to the MCP server of the hub and calls an MCP tool.                                  |
 
 ## Retired identifiers
 

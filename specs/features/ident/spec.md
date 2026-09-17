@@ -4,7 +4,7 @@ title: The user record and the ownership of a row
 type: spec
 status: approved
 created: 2026-09-12
-updated: 2026-09-16
+updated: 2026-09-17
 approved_by: Temuri
 approved_on: 2026-09-12
 constrained_by: [OWN, DAT, SEC, TG, JOB, REP, PLG, API, CFG, PKG, TST]
@@ -46,7 +46,7 @@ and the user record becomes the only allowlist.
 | Rule       | Guideline        | How this specification obeys it                                                  |
 | ---------- | ---------------- | -------------------------------------------------------------------------------- |
 | `OWN-001`  | Record ownership | Section 4.2 creates `public.users`. `EXTID` adds `public.identities`, the natural key. |
-| `OWN-003`  | Record ownership | Section 4.4 resolves the acting user at each of the three entry points.          |
+| `OWN-003`  | Record ownership | Section 4.4 resolves the acting user at each of the four entry points.          |
 | `OWN-005`  | Record ownership | Section 4.2 gives the `user_id` column that every scoped table carries.          |
 | `OWN-006`  | Record ownership | Section 4.2 gives the policy. `IDENT-DD-006` makes the policy apply to the hub.  |
 | `OWN-007`  | Record ownership | `IDENT-DD-002`. `PluginDB.WithTx` is the only place that sets `app.user_id`.     |
@@ -255,6 +255,28 @@ sequenceDiagram
     M->>E: ctx.WithContext(acting user), Next
     E->>S: OnMessage(conversation context, update)
     S->>S: WithTx(ctx, fn) reaches the scoped table
+```
+
+The MCP tool call. `MCPHUB` gives the verifier, and it calls the same
+resolver the HTTP flow calls.
+
+```mermaid
+sequenceDiagram
+    participant C as MCP client
+    participant V as mcpserver.NewTokenVerifier
+    participant R as UserRepository
+    participant T as Tool handler
+
+    C->>V: POST /mcp, Authorization: Bearer <token>
+    V->>V: Verify the token against the key set of Dex,<br/>audience "mcp"
+    V->>R: Resolve the identity that federated_claims names
+    R->>R: SELECT ... JOIN public.identities ... AND status = 'active'
+    alt Verification fails, or no row
+        V-->>C: 401
+    else One row
+        V->>T: The call, the acting user in req.Extra.TokenInfo
+        T-->>C: 200, one JSON response
+    end
 ```
 
 The cron run of a job that declares `CronScopePerUser`:

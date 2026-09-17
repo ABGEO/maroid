@@ -4,7 +4,7 @@ title: External identities and the delegated sign in
 type: spec
 status: approved
 created: 2026-09-15
-updated: 2026-09-16
+updated: 2026-09-17
 approved_by: Temuri
 approved_on: 2026-09-16
 constrained_by: [OWN, SEC, API, TG, CLI, DAT, REP, PKG, CFG, GO, TST, LOG]
@@ -611,11 +611,12 @@ on the user record. It adds a column and a rule, and the owner can type a name.
 **Realizes:** `EXTID-FR-001`, `EXTID-FR-017`, `EXTID-INV-003`
 **Decision:** `auth.IdentityResolver` takes a provider and an external account
 identifier, and returns the active user record. The HTTP middleware and the Telegram
-middleware both hold it.
-**Rationale:** `OWN-003` names two entry points that resolve an identity, and one
-implementation keeps the two answers equal. `EXTID-FR-017` demands exactly that: the
-bot and the shell reach one record. A connector that arrives later reaches both
-entry points with no new code, which `SEC-001` now expects.
+middleware both hold it. `MCPHUB` gives a third caller, the token verifier of
+the MCP server.
+**Rationale:** `OWN-003` names three entry points that resolve an identity, and one
+implementation keeps every answer equal. `EXTID-FR-017` demands exactly that: the
+bot and the shell reach one record. A connector that arrives later reaches every
+entry point with no new code, which `SEC-001` now expects.
 **Alternatives:** A query in each middleware. The two drift, and a change to the
 status check reaches one of them. A resolution inside the repository of each caller.
 It repeats the join in two files.

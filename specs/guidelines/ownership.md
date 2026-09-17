@@ -4,7 +4,7 @@ title: Record ownership
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-15
+updated: 2026-09-17
 scope: [apps/hub/, libs/pluginapi/, plugins/*/db/, plugins/*/repository/]
 related: [DAT, SEC, REP, TG, JOB, PLG]
 ---
@@ -37,10 +37,11 @@ Every unit of work carries one acting user. Work without one reaches no scoped t
 | ----------------- | -------------------------------------------------------------------- |
 | An HTTP request   | The identity that `federated_claims` names. See `SEC-003`.           |
 | A Telegram update | The identity of the Telegram connector for the sender of the update. |
+| An MCP tool call  | The identity that `federated_claims` names, in the audience-checked token of an MCP client. See `SEC-002`, `SEC-003`. |
 | A cron job        | The user that the job declares. See `OWN-009`.                       |
 
-One resolver reads `public.identities` for the first two rows. A connector that
-arrives later adds no path.
+One resolver reads `public.identities` for a request and a tool call. A
+connector that arrives later adds no path.
 
 ## OWN-004
 
