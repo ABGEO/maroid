@@ -1,0 +1,25 @@
+{{ template "header.html" . }}
+
+<div class="card gate-card mt-2 shadow-md">
+  <div class="card-body gap-6">
+    {{ if .ShowConfirmation }}
+    <h2 class="font-display text-xl font-semibold">Logging Out</h2>
+    <div class="text-base-content/60 text-sm">Do you want to log out?</div>
+    <form method="post" action="{{ .ReqPath }}">
+      <button type="submit" class="btn btn-primary w-full">Log Out</button>
+    </form>
+    {{ else if .LoggedOut }}
+    <h2 class="font-display text-xl font-semibold">Logged Out</h2>
+    <div class="text-base-content/60 text-sm">You have been successfully logged out.</div>
+    {{ else }}
+    <h2 class="font-display text-xl font-semibold">Session Not Found</h2>
+    <div class="text-base-content/60 text-sm">No active session found.</div>
+    {{ end }}
+
+    {{ if .BackURL }}
+    <a href="{{ .BackURL }}" class="text-base-content/60 text-sm">&larr; Back to Application</a>
+    {{ end }}
+  </div>
+</div>
+
+{{ template "footer.html" . }}

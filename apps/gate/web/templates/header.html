@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html data-theme="maroid">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>{{ issuer }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url .ReqPath "static/main.css" }}" rel="stylesheet">
+    <link href="{{ url .ReqPath "theme/styles.css" }}" rel="stylesheet">
+    <link rel="icon" href="{{ url .ReqPath "theme/favicon.png" }}">
+  </head>
+
+  <body class="bg-base-100 paper-bg min-h-screen font-sans">
+    <div class="bg-base-100/90 border-base-300 fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-center border-b px-4 backdrop-blur">
+      <div class="flex items-center gap-2">
+        <img class="bg-base-300 h-9 w-9 rounded-full object-cover" src="{{ url .ReqPath logo }}">
+        <div class="leading-tight">
+          <div class="text-[15px] font-semibold tracking-tight">{{ issuer }}</div>
+          <div class="text-base-content/50 -mt-0.5 font-mono text-[10px]">gate · v0.1.0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mx-auto max-w-sm px-3 pt-20 pb-10">

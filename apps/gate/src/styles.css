@@ -1,0 +1,29 @@
+@import '@maroid/theme/maroid.css';
+
+@import 'tailwindcss';
+@plugin 'daisyui';
+
+@source '../web/templates';
+
+.gate-card {
+	background-color: color-mix(in oklch, var(--color-base-200) 40%, var(--color-base-100));
+}
+
+.gate-groups {
+	scrollbar-color: var(--color-base-300) transparent;
+	scrollbar-width: thin;
+}
+
+.gate-groups::-webkit-scrollbar {
+	width: 6px;
+}
+
+.gate-groups::-webkit-scrollbar-thumb {
+	background-color: var(--color-base-300);
+	border-radius: 3px;
+}
+
+.gate-groups--clipped {
+	mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
+	-webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 22px), transparent);
+}

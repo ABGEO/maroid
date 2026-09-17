@@ -1,0 +1,37 @@
+{{ template "header.html" . }}
+
+<div class="card gate-card mt-2 shadow-md">
+  <div class="card-body gap-6">
+    <h2 class="font-display text-xl font-semibold">Grant Access</h2>
+
+    <hr class="border-base-300">
+    <div>
+      {{ if .Scopes }}
+      <div class="text-base-content/60 text-sm">{{ .Client }} would like to:</div>
+      <ul class="text-base-content/60 mt-2 list-disc space-y-1 pl-5 text-sm">
+        {{ range $scope := .Scopes }}
+        <li>{{ $scope }}</li>
+        {{ end }}
+      </ul>
+      {{ else }}
+      <div class="text-base-content/60 text-sm">{{ .Client }} has not requested any personal information</div>
+      {{ end }}
+    </div>
+    <hr class="border-base-300">
+
+    <div class="flex flex-col gap-3">
+      <form method="post">
+        <input type="hidden" name="req" value="{{ .AuthReqID }}" />
+        <input type="hidden" name="approval" value="approve">
+        <button type="submit" class="btn btn-success w-full">Grant Access</button>
+      </form>
+      <form method="post">
+        <input type="hidden" name="req" value="{{ .AuthReqID }}" />
+        <input type="hidden" name="approval" value="rejected">
+        <button type="submit" class="btn w-full">Cancel</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{{ template "footer.html" . }}

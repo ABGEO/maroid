@@ -1,0 +1,18 @@
+{
+	"name": "@maroid/theme",
+	"version": "0.1.0",
+	"type": "module",
+	"exports": {
+		"./maroid.css": "./src/maroid.css",
+		"./maroid-dusk.css": "./src/maroid-dusk.css"
+	},
+	"scripts": {
+		"lint": "prettier --check ."
+	},
+	"dependencies": {
+		"daisyui": "^5.5.19"
+	},
+	"devDependencies": {
+		"prettier": "^3.8.1"
+	}
+}

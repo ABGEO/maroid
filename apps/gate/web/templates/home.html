@@ -1,0 +1,126 @@
+{{ template "header.html" . }}
+
+<div class="card gate-card mt-2 shadow-md">
+    <div class="card-body gap-6">
+        {{ if .LoggedIn }}
+        <div>
+            {{ if .Username }}<h2 class="text-[15px] font-semibold">{{ .Username }}</h2>{{ end }}
+            {{ if .Email }}
+            <div class="text-base-content/50 mt-0.5 text-xs">
+                {{ .Email }}
+                {{ if .EmailVerified }}<span class="whitespace-nowrap">(verified)</span>
+                {{ else }}<span class="text-base-content whitespace-nowrap">(not verified)</span>{{ end }}
+            </div>
+            {{ end }}
+        </div>
+
+        <dl class="border-base-300 border-t">
+            {{ if .ConnectorName }}
+            <div
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
+                <dt class="text-base-content/50">Signed in with</dt>
+                <dd>{{ .ConnectorName }}</dd>
+            </div>
+            {{ end }}
+            {{ if .SignedInISO }}
+            <div
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
+                <dt class="text-base-content/50">Signed in</dt>
+                <dd>
+                    <time datetime="{{ .SignedInISO }}">{{ .SignedInText }}</time>
+                </dd>
+            </div>
+            {{ end }}
+            {{ if .SessionExpiresISO }}
+            <div
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
+                <dt class="text-base-content/50">{{ if .SessionExpiryIsIdle }}Expires if idle{{ else }}Session ends{{
+                    end }}
+                </dt>
+                <dd>
+                    <time datetime="{{ .SessionExpiresISO }}">{{ .SessionExpiresText }}</time>
+                </dd>
+            </div>
+            {{ end }}
+            {{ if .IPAddress }}
+            <div
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
+                <dt class="text-base-content/50">Signed in from</dt>
+                <dd>{{ .IPAddress }}</dd>
+            </div>
+            {{ end }}
+            {{ if .Groups }}
+            <div
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
+                <dt id="groups-label" class="text-base-content/50">Groups <span class="tabular-nums opacity-75">{{ len .Groups
+            }}</span></dt>
+                <dd>
+                    <ul
+                            class="gate-groups max-h-[120px] list-none overflow-y-auto pr-0.5 leading-relaxed focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-primary"
+                            tabindex="0" aria-labelledby="groups-label">
+                        {{ range .Groups }}
+                        <li class="break-words">{{ . }}</li>
+                        {{ end }}
+                    </ul>
+                </dd>
+            </div>
+            {{ end }}
+            {{ if .UserAgent }}
+            <div
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
+                <dt class="text-base-content/50">Browser</dt>
+                <dd class="text-base-content/50 text-[11px] leading-relaxed">{{ .UserAgent }}</dd>
+            </div>
+            {{ end }}
+        </dl>
+
+        <div class="text-center">
+            <a href="{{ .LogoutURL }}" class="btn btn-primary w-full">Log out</a>
+        </div>
+        {{ else }}
+        <div class="text-center">
+            <h2 class="text-base font-semibold">Not signed in</h2>
+            <p class="text-base-content/50 mx-auto mt-1.5 max-w-[34ch] text-xs leading-relaxed">
+                This is the dex identity provider. Sign in from the application you want to use.
+            </p>
+        </div>
+        {{ end }}
+
+        <div class="border-base-300 border-t pt-4">
+            <a href="{{ .DiscoveryURL }}" class="text-primary text-xs underline underline-offset-2 hover:decoration-2">OpenID
+                configuration</a>
+        </div>
+    </div>
+</div>
+
+{{ if .LoggedIn }}
+<script>
+  (function () {
+    // A long group list is capped by CSS; fade its bottom edge so the cut is
+    // visible on platforms whose scrollbars only appear while scrolling. The
+    // fade tracks the scroll position — left up permanently it would dim the
+    // last group even once you had scrolled down to read it.
+    var groups = document.querySelector('.gate-groups');
+    if (groups) {
+      var syncFade = function () {
+        var more = groups.scrollTop + groups.clientHeight < groups.scrollHeight - 1;
+        groups.classList.toggle('gate-groups--clipped', more);
+      };
+      syncFade();
+      groups.addEventListener('scroll', syncFade, {passive: true});
+      // A narrower window wraps long group names onto more lines, so whether
+      // the list overflows is not settled once at load.
+      window.addEventListener('resize', syncFade, {passive: true});
+    }
+
+    // The server states these in UTC; restate them in the visitor's own zone.
+    document.querySelectorAll('time[datetime]').forEach(function (el) {
+      var date = new Date(el.getAttribute('datetime'));
+      if (isNaN(date.getTime())) return;
+      el.textContent = date.toLocaleString([], {dateStyle: 'medium', timeStyle: 'short'});
+    });
+  })();
+</script>
+{{ end }}
+
+{{ template "footer.html" . }}

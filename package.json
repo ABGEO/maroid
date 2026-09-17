@@ -4,6 +4,10 @@
   "scripts": {
     "deck:dev": "pnpm --filter @maroid/deck dev",
     "deck:build": "pnpm --filter @maroid/deck build",
-    "deck:plugins:build": "pnpm --filter './plugins/*/ui' build"
+    "deck:plugins:build": "pnpm --filter './plugins/*/ui' build",
+    "dex-ui:build": "pnpm --filter @maroid/dex-ui build",
+    "hub:serve": "go run ./apps/hub/cmd serve http",
+    "hub:migrate": "go run ./apps/hub/cmd migrate up",
+    "hub:plugin:build": "sh -c 'go build -buildmode=plugin -o build/plugins/$1.so ./plugins/$1' --"
   }
 }

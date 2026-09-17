@@ -1,0 +1,36 @@
+{{ template "header.html" . }}
+
+<div class="card gate-card mt-2 shadow-md">
+  <div class="card-body gap-6">
+    <h2 class="font-display text-xl font-semibold">Two-factor authentication</h2>
+    {{ if not (eq .QRCode "") }}
+    <p>Scan the QR code below using your authenticator app, then enter the code.</p>
+    <div class="text-center">
+      <img src="data:image/png;base64,{{ .QRCode }}" alt="QR code" width="200" height="200"/>
+    </div>
+    {{ else }}
+    <p>Enter the code from your authenticator app.</p>
+    <p class="font-display text-xl font-semibold">{{ .Issuer }}</p>
+    {{ end }}
+    <form method="post" action="{{ .PostURL }}" class="flex flex-col gap-4">
+      <div>
+        <label class="mb-1 block text-xs" for="totp">One-time code</label>
+        <input tabindex="1" required id="totp" name="totp" type="text"
+               inputmode="numeric" pattern="[0-9]*" maxlength="6"
+               autocomplete="one-time-code"
+               class="input w-full" placeholder="000000"
+               autofocus/>
+      </div>
+
+      {{ if .Invalid }}
+      <div id="login-error" class="alert alert-error alert-soft">
+        Invalid code. Please try again.
+      </div>
+      {{ end }}
+
+      <button tabindex="2" id="submit-login" type="submit" class="btn btn-primary w-full">Verify</button>
+    </form>
+  </div>
+</div>
+
+{{ template "footer.html" . }}

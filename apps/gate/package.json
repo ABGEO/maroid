@@ -1,0 +1,17 @@
+{
+	"name": "@maroid/gate",
+	"private": true,
+	"version": "0.0.1",
+	"type": "module",
+	"scripts": {
+		"build": "tailwindcss -i ./src/styles.css -o ./web/themes/light/styles.css --minify"
+	},
+	"dependencies": {
+		"@maroid/theme": "workspace:*"
+	},
+	"devDependencies": {
+		"@tailwindcss/cli": "^4.1.18",
+		"daisyui": "^5.5.19",
+		"tailwindcss": "^4.1.18"
+	}
+}

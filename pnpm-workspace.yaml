@@ -1,7 +1,10 @@
 packages:
   - "apps/deck"
+  - "apps/gate"
   - "libs/api-client"
   - "libs/plugin-sdk"
+  - "libs/theme"
   - "plugins/*/ui"
 allowBuilds:
+  '@parcel/watcher': false
   esbuild: false
