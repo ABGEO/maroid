@@ -4,7 +4,7 @@ title: Traceability
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-15
+updated: 2026-09-17
 scope: [specs/, code comments]
 related: [LNG, PRC, GIT]
 ---
@@ -273,6 +273,7 @@ Add a row before you create the file or the directory.
 | `IDENT` | `features/ident/` | The user record and the ownership of a row.    | Approved |
 | `PSET`  | `features/pset/`  | The settings of a user for a plugin.           | Approved |
 | `EXTID` | `features/extid/` | External identities and the delegated sign in. | Approved |
+| `THEMING` | `features/theming/` | The shared visual theme, and the identity provider's pages. | Approved |
 
 ## Retired identifiers
 

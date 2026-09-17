@@ -4,7 +4,7 @@ title: Build and release
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-17
 scope: [apps/, libs/, plugins/, .docker/, chart/]
 related: [ARC, PLG, UI, GO, TS]
 ---
@@ -28,6 +28,8 @@ Do not run a repository-wide script. Run the command for the artifact.
 | `libs/<name>` (Go)    | `cd libs/<name> && golangci-lint run ./...`                              | `cd libs/<name> && go build ./...`                                                     |
 | `libs/plugin-sdk`     | `pnpm --filter @maroid/plugin-sdk check`                                 | `pnpm --filter @maroid/plugin-sdk build`                                               |
 | `libs/api-client`     | `pnpm --filter @maroid/api-client check`                                 | None today.                                                                            |
+| `libs/theme`          | `pnpm --filter @maroid/theme lint`                                       | None today.                                                                            |
+| `apps/gate`           | None today. The build reports a type error.                              | `pnpm --filter @maroid/gate build`                                                     |
 
 **Why:** A repository-wide script hides which artifact failed. It also reports a
 failure in an artifact that the change did not touch.
