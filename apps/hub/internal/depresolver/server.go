@@ -116,56 +116,63 @@ func (c *Container) CloseHTTPServer() error {
 }
 
 func (c *Container) registerHandlers(reg *handler.Registry) error {
+	handlers, err := c.buildHandlers()
+	if err != nil {
+		return err
+	}
+
+	for id, one := range handlers {
+		if err = reg.Register(id, one); err != nil {
+			return fmt.Errorf("register %s handler: %w", id, err)
+		}
+	}
+
+	return nil
+}
+
+// buildHandlers resolves every handler of the HTTP API, keyed by its identifier.
+func (c *Container) buildHandlers() (map[string]handler.Handler, error) {
 	cfg := c.Config()
 	logger := c.Logger()
-	pluginRegistry := c.PluginRegistry()
-	uiRegistry := c.UIRegistry()
 
 	verifier, err := c.TokenVerifier()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	settingsSvc, err := c.SettingsService()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	identityResolver, err := c.IdentityResolver()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	userRepo, err := c.UserRepository()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	authHandler, err := c.buildAuthHandler(cfg, logger, verifier, userRepo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	pluginHandler := handler.NewPlugin(
-		logger, verifier, identityResolver, pluginRegistry, uiRegistry, settingsSvc,
-	)
-
-	err = reg.Register("auth", authHandler)
+	mcpHandler, err := c.buildMCPHandler(cfg, logger, identityResolver)
 	if err != nil {
-		return fmt.Errorf("register auth handler: %w", err)
+		return nil, err
 	}
 
-	err = reg.Register("ping", handler.NewPing(logger))
-	if err != nil {
-		return fmt.Errorf("register ping handler: %w", err)
-	}
-
-	err = reg.Register("plugin", pluginHandler)
-	if err != nil {
-		return fmt.Errorf("register plugin handler: %w", err)
-	}
-
-	return nil
+	return map[string]handler.Handler{
+		"auth": authHandler,
+		"ping": handler.NewPing(logger),
+		"plugin": handler.NewPlugin(
+			logger, verifier, identityResolver, c.PluginRegistry(), c.UIRegistry(), settingsSvc,
+		),
+		"mcp": mcpHandler,
+	}, nil
 }
 
 // buildAuthHandler resolves every dependency of the auth handler.
@@ -211,4 +218,23 @@ func (c *Container) buildAuthHandler(
 		invitationRepo,
 		authSvc,
 	), nil
+}
+
+// buildMCPHandler resolves every dependency of the Model Context Protocol handler.
+func (c *Container) buildMCPHandler(
+	cfg *config.Config,
+	logger *slog.Logger,
+	identityResolver auth.IdentityResolver,
+) (*handler.MCP, error) {
+	oidcSvc, err := c.OIDCService()
+	if err != nil {
+		return nil, err
+	}
+
+	toolRegistry, err := c.MCPToolRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	return handler.NewMCP(cfg, logger, oidcSvc, identityResolver, toolRegistry), nil
 }

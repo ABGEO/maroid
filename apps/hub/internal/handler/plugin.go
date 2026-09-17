@@ -13,7 +13,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
-	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // reasonKey names the member that carries the reason of a failure. See API-006.
@@ -64,14 +63,6 @@ func NewPlugin(
 	}
 }
 
-// @todo: move to dedicated package.
-type pluginEntry struct {
-	ID       string                `json:"id"`
-	Version  string                `json:"version"`
-	Settings bool                  `json:"settings"`
-	UI       *pluginapi.UIManifest `json:"ui,omitempty"`
-}
-
 // Register registers the plugin routes.
 func (h *Plugin) Register(router chi.Router) {
 	h.logger.Debug("registering routes")
@@ -96,29 +87,8 @@ func (h *Plugin) Register(router chi.Router) {
 // List returns a list of all registered plugins with their metadata and UI capabilities if available.
 func (h *Plugin) List(w http.ResponseWriter, r *http.Request) error {
 	// @todo: consider caching the data.
-	plugins := h.pluginRegistry.All()
-
-	entries := make([]pluginEntry, 0, len(plugins))
-	for _, plg := range plugins {
-		meta := plg.Meta()
-		id := meta.ID
-
-		entry := pluginEntry{
-			ID:       id.String(),
-			Version:  meta.Version,
-			Settings: h.settingsSvc.Declares(id.String()),
-		}
-
-		// Add UI capability if present.
-		if uiEntry, ok := h.uiRegistry.Get(id.String()); ok {
-			entry.UI = uiEntry.Manifest
-		}
-
-		entries = append(entries, entry)
-	}
-
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, entries)
+	render.JSON(w, r, registry.PluginEntries(h.pluginRegistry, h.uiRegistry, h.settingsSvc))
 
 	return nil
 }

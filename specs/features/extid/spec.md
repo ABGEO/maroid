@@ -4,7 +4,7 @@ title: External identities and the delegated sign in
 type: spec
 status: approved
 created: 2026-09-15
-updated: 2026-09-17
+updated: 2026-09-18
 approved_by: Temuri
 approved_on: 2026-09-16
 constrained_by: [OWN, SEC, API, TG, CLI, DAT, REP, PKG, CFG, GO, TST, LOG]
@@ -57,7 +57,7 @@ identity for the HTTP path and for the Telegram path.
 | `SEC-005` | Security         | `EXTID-DD-006`. The cookie `maroid_token` keeps its name and its place.                      |
 | `OWN-001` | Record ownership | Section 4.2 gives `public.identities`, the natural key.                                      |
 | `OWN-002` | Record ownership | `EXTID-DD-010`. The command of the owner creates the record. No sign in creates one.         |
-| `OWN-003` | Record ownership | `EXTID-DD-012`. One resolver serves the HTTP entry point and the Telegram entry point.       |
+| `OWN-003` | Record ownership | `EXTID-DD-012`. One resolver serves the HTTP entry point, the Telegram entry point, and the MCP tool call. |
 | `OWN-004` | Record ownership | Section 4.2 states the reason that each of the three tables is shared.                       |
 | `API-003` | HTTP API         | Section 4.3 uses the prefixes that the rule fixes, and adds none.                            |
 | `API-005` | HTTP API         | Each handler implements `handler.Handler` and returns an error.                              |

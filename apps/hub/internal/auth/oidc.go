@@ -71,6 +71,12 @@ func (s *OIDCService) Verifier() *oidc.IDTokenVerifier {
 	return s.verifier
 }
 
+// VerifierForClient returns a verifier that accepts a token whose audience names
+// the given client of Dex.
+func (s *OIDCService) VerifierForClient(clientID string) *oidc.IDTokenVerifier {
+	return s.provider.Verifier(&oidc.Config{ClientID: clientID})
+}
+
 // AuthURL generates the OIDC authentication URL with the specified state, nonce,
 // and PKCE verifier.
 //

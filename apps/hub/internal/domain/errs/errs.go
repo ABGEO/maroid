@@ -86,4 +86,7 @@ var (
 	// ErrUnsupportedFieldsSource indicates that the driver returned a type that the
 	// settings fields cannot decode.
 	ErrUnsupportedFieldsSource = errors.New("plugin settings: unsupported fields source")
+	// ErrMCPToolAlreadyRegistered indicates that a Model Context Protocol tool has
+	// already been registered under the same name.
+	ErrMCPToolAlreadyRegistered = errors.New("mcp tool: already registered")
 )

@@ -7,7 +7,7 @@ created: 2026-09-17
 updated: 2026-09-18
 approved_by: Temuri
 approved_on: 2026-09-18
-constrained_by: [SEC, OWN, API, ARC, PLG, LOG, GO, PKG]
+constrained_by: [SEC, OWN, API, ARC, PLG, LOG, GO, PKG, CFG]
 requirements: features/mcphub/requirements.md
 ---
 
@@ -51,6 +51,7 @@ tools: identity, plugin list, and connectivity.
 | `LOG-003` | Logging      | The logging middleware of the MCP server adds `component=middleware`, `middleware=mcp`, both already in use. |
 | `PLG-006` | Plugin model | `MCPHUB-DD-008` builds the registry now. A plugin's own tool still waits for its own interface and registrar. |
 | `PKG-001` | Package layout | `mcpserver/tools/` holds one file for each tool, the layout the table already gives `telegram/command/`. |
+| `CFG-003` | Configuration | `mcp.client_id` declares its default in a `default` tag and its check in a `validate` tag. `MCPHUB-DD-001` gives the field. |
 
 ## 4. Design
 
@@ -58,6 +59,7 @@ tools: identity, plugin list, and connectivity.
 
 | Path                                          | Change | Holds                                                                 |
 | ---------------------------------------------- | ------ | ---------------------------------------------------------------------- |
+| `apps/hub/internal/config/config.go`          | Change | The `MCP` section, the key `mcp.client_id`, default `mcp`.            |
 | `apps/hub/internal/registry/plugin_entry.go`  | Create | `PluginEntry`, `PluginEntries`                                        |
 | `apps/hub/internal/registry/mcp_tool.go`      | Create | `MCPTool`, `MCPToolRegistry`                                          |
 | `apps/hub/internal/domain/errs/errs.go`       | Change | Adds `ErrMCPToolAlreadyRegistered`.                                    |
@@ -133,10 +135,12 @@ that check. `MCPHUB-DD-008` gives the reason a registry exists this iteration.
 // apps/hub/internal/mcpserver/verifier.go
 
 // NewTokenVerifier builds a TokenVerifier that checks a bearer token against
-// the key set of the IdP, then resolves the acting user of the identity it names.
+// the key set of the IdP, with clientID as the audience, then resolves the
+// acting user of the identity it names.
 func NewTokenVerifier(
     oidcSvc *auth.OIDCService,
     resolver auth.IdentityResolver,
+    clientID string,
 ) mcpauth.TokenVerifier
 ```
 
@@ -252,9 +256,12 @@ between the MCP client and the IdP.
 **Realizes:** `MCPHUB-FR-002`, `MCPHUB-NFR-001`
 
 **Decision:** The verifier checks the token as a JWT against the key set of
-the IdP, with a verifier scoped to the client identifier "mcp"
-(`oidcSvc.VerifierForClient("mcp")`), the same mechanism `SEC-002` already
-gives an ID token.
+the IdP, with a verifier scoped to the client identifier that `mcp.client_id`
+holds (`oidcSvc.VerifierForClient(clientID)`), the same mechanism `SEC-002`
+already gives an ID token. The field defaults to `mcp`. It takes its own
+section, not a member of `oidc`, because `oidc` holds the client secret and
+the redirect address of the hub itself, and the MCP client is a public client
+that holds neither.
 
 **Rationale:** The IdP mints its access token the same way it mints an ID
 token, one signed JWT with the client as the audience. A local check against
@@ -268,6 +275,12 @@ the token, only what the hub decides to grant it. Introspection (`RFC 7662`,
 which the IdP exposes) gives the true expiry, but it needs the hub to hold
 its own client credentials with the IdP for the introspection call, a second
 secret this feature does not otherwise need.
+
+The client identifier as a literal in the code. One line shorter, and it forces
+a code change on a deployment whose IdP names that client anything else.
+`CFG-007` puts a value of the installation in the configuration, and section 3
+of the requirements already calls provisioning that client a deployment
+concern.
 
 ### `MCPHUB-DD-002`
 
@@ -480,18 +493,18 @@ a key that was not yet in memory.
 
 | #   | Step                                                                 | Realizes                         | Done |
 | --- | ----------------------------------------------------------------------- | ------------------------------------ | ---- |
-| 1   | Create `registry.PluginEntry` and `registry.PluginEntries`.         | `MCPHUB-FR-005`, `MCPHUB-DD-007`  | [ ]  |
-| 2   | Change `handler.Plugin.List` to call `registry.PluginEntries`. Delete the local `pluginEntry` type. | `MCPHUB-FR-005` | [ ]  |
-| 3   | Create `registry.MCPTool` and `registry.MCPToolRegistry`. Add `errs.ErrMCPToolAlreadyRegistered`. | `MCPHUB-DD-008` | [ ]  |
-| 4   | Add `github.com/modelcontextprotocol/go-sdk` to `apps/hub/go.mod`. Add `auth.OIDCService.VerifierForClient`. | `MCPHUB-DD-001` | [ ]  |
-| 5   | Create `mcpserver.NewTokenVerifier`: verifies against the IdP, resolves the acting user, rejects an inactive one. | `MCPHUB-FR-002`, `MCPHUB-FR-003`, `MCPHUB-DD-001`, `MCPHUB-DD-002` | [ ]  |
-| 6   | Create `loggingMiddleware` in `mcpserver/logging.go`, with `component=middleware`, `middleware=mcp`. | `LOG-003` | [ ]  |
-| 7   | Create `mcpserver/tools/whoami.go`, `plugins.go`, and `ping.go`, each with its own `New<Tool>` constructor, and `tools/doc.go`. | `MCPHUB-FR-004`, `MCPHUB-FR-005`, `MCPHUB-FR-006`, `MCPHUB-DD-006`, `MCPHUB-DD-008` | [ ]  |
-| 8   | Create `mcpserver.NewServer`, installing every tool of a `*registry.MCPToolRegistry`. | `MCPHUB-DD-008` | [ ]  |
-| 9   | Create `handler.MCP`: the discovery route at both paths, and `/mcp` with `Stateless`, `JSONResponse`, and `Logger` set. | `MCPHUB-FR-001`, `MCPHUB-DD-003`, `MCPHUB-DD-004`, `MCPHUB-DD-005` | [ ]  |
-| 10  | Create `depresolver.MCPToolRegistry()`. Change `depresolver.buildMCPHandler` to resolve `IdentityResolver` and `MCPToolRegistry()`, and pass both to `handler.NewMCP`. | `MCPHUB-DD-002`, `MCPHUB-DD-008` | [ ]  |
-| 11  | Write `api.yaml`.                                                    | `SPC-002`                        | [ ]  |
-| 12  | Add the MCP flow to `ident/spec.md` section 4.4, and raise the entry point counts in `ident/spec.md` and `extid/spec.md`. | `ADR-0003` | [ ]  |
+| 1   | Create `registry.PluginEntry` and `registry.PluginEntries`.         | `MCPHUB-FR-005`, `MCPHUB-DD-007`  | [x]  |
+| 2   | Change `handler.Plugin.List` to call `registry.PluginEntries`. Delete the local `pluginEntry` type. | `MCPHUB-FR-005` | [x]  |
+| 3   | Create `registry.MCPTool` and `registry.MCPToolRegistry`. Add `errs.ErrMCPToolAlreadyRegistered`. | `MCPHUB-DD-008` | [x]  |
+| 4   | Add `github.com/modelcontextprotocol/go-sdk` to `apps/hub/go.mod`. Add `auth.OIDCService.VerifierForClient` and the `MCP` configuration section. | `MCPHUB-DD-001` | [x]  |
+| 5   | Create `mcpserver.NewTokenVerifier`: verifies against the IdP, resolves the acting user, rejects an inactive one. | `MCPHUB-FR-002`, `MCPHUB-FR-003`, `MCPHUB-DD-001`, `MCPHUB-DD-002` | [x]  |
+| 6   | Create `loggingMiddleware` in `mcpserver/logging.go`, with `component=middleware`, `middleware=mcp`. | `LOG-003` | [x]  |
+| 7   | Create `mcpserver/tools/whoami.go`, `plugins.go`, and `ping.go`, each with its own `New<Tool>` constructor, and `tools/doc.go`. | `MCPHUB-FR-004`, `MCPHUB-FR-005`, `MCPHUB-FR-006`, `MCPHUB-DD-006`, `MCPHUB-DD-008` | [x]  |
+| 8   | Create `mcpserver.NewServer`, installing every tool of a `*registry.MCPToolRegistry`. | `MCPHUB-DD-008` | [x]  |
+| 9   | Create `handler.MCP`: the discovery route at both paths, and `/mcp` with `Stateless`, `JSONResponse`, and `Logger` set. | `MCPHUB-FR-001`, `MCPHUB-DD-003`, `MCPHUB-DD-004`, `MCPHUB-DD-005` | [x]  |
+| 10  | Create `depresolver.MCPToolRegistry()`. Change `depresolver.buildMCPHandler` to resolve `IdentityResolver` and `MCPToolRegistry()`, and pass both to `handler.NewMCP`. | `MCPHUB-DD-002`, `MCPHUB-DD-008` | [x]  |
+| 11  | Write `api.yaml`.                                                    | `SPC-002`                        | [x]  |
+| 12  | Add the MCP flow to `ident/spec.md` section 4.4, and raise the entry point counts in `ident/spec.md` and `extid/spec.md`. | `ADR-0003` | [x]  |
 
 ## 8. Out of scope for this specification
 

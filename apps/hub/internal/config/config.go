@@ -99,6 +99,11 @@ type OIDC struct {
 	RedirectURI  string `mapstructure:"redirect_uri"          validate:"required"`
 }
 
+// MCP defines the Model Context Protocol server of the hub.
+type MCP struct {
+	ClientID string `default:"mcp" mapstructure:"client_id" validate:"required"`
+}
+
 // MQTT defines MQTT broker configuration parameters.
 // All fields are optional; the broker is only required when MQTT subscriber plugins are loaded.
 type MQTT struct {
@@ -140,6 +145,7 @@ type Config struct {
 	CORS     CORS
 	Auth     Auth
 	OIDC     OIDC
+	MCP      MCP
 	MQTT     MQTT
 	OpenBao  OpenBao
 	Telegram Telegram
