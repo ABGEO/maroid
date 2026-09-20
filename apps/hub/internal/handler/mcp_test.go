@@ -20,6 +20,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
+	"github.com/abgeo/maroid/apps/hub/internal/mcpserver"
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver/tools"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
@@ -123,6 +124,21 @@ func hubUnderTest(
 ) *chi.Mux {
 	t.Helper()
 
+	return hubWithToolRegistry(t, resolver, dex, registry.NewMCPToolRegistry(), nil)
+}
+
+// hubWithToolRegistry mounts the handler the way app.Run does: it builds the
+// handler, then runs loadPlugins, then mounts the routes. A test registers the
+// tools of a plugin inside loadPlugins.
+func hubWithToolRegistry(
+	t *testing.T,
+	resolver auth.IdentityResolver,
+	dex *authtest.Provider,
+	toolRegistry *registry.MCPToolRegistry,
+	loadPlugins func(),
+) *chi.Mux {
+	t.Helper()
+
 	cfg := &config.Config{}
 	cfg.Server.Hostname = hubHostname
 	cfg.OIDC.Issuer = dex.URL
@@ -149,17 +165,24 @@ func hubUnderTest(
 
 	settingsSvc := &stubSettings{declared: map[string]bool{probeID: true}}
 
-	toolRegistry := registry.NewMCPToolRegistry()
 	require.NoError(t, toolRegistry.Register(
 		tools.NewWhoAmI(),
 		tools.NewListPlugins(pluginRegistry, uiRegistry, settingsSvc),
 		tools.NewPing(),
 	))
 
-	router := chi.NewRouter()
-	handler.RegisterHandlers(router, handler.NewMCP(
+	mcpHandler := handler.NewMCP(
 		cfg, slog.New(slog.DiscardHandler), oidcSvc, resolver, toolRegistry,
-	))
+	)
+
+	// app.Run loads every plugin between the build of the handler and the build
+	// of the router. A plugin registers its tools at this point.
+	if loadPlugins != nil {
+		loadPlugins()
+	}
+
+	router := chi.NewRouter()
+	handler.RegisterHandlers(router, mcpHandler)
 
 	return router
 }
@@ -246,6 +269,46 @@ func reasonOf(t *testing.T, recorder *httptest.ResponseRecorder) string {
 	require.NoError(t, err, recorder.Body.String())
 
 	return body.Reason
+}
+
+// MCPHUB-SC-008: A tool that a plugin registers reaches an MCP client.
+// MCPHUB-DD-015: depresolver builds the handler while it builds the plugin
+// loader, so the handler exists before any plugin registers a tool. HTTPRouter
+// calls Register after the load, and the server reads the registry there.
+func TestAToolThatAPluginRegistersReachesTheClient(t *testing.T) {
+	t.Parallel()
+
+	dex := authtest.StartProvider(t)
+	toolRegistry := registry.NewMCPToolRegistry()
+
+	router := hubWithToolRegistry(
+		t,
+		&stubResolver{user: activeRecord()},
+		dex,
+		toolRegistry,
+		func() {
+			late, err := mcpserver.NewPluginTool(
+				pluginapi.ParsePluginID(probeID),
+				pluginapi.NewTypedTool(
+					pluginapi.MCPToolMeta{Name: "late", Description: "From a plugin."},
+					func(_ context.Context, _ struct{}) (struct {
+						Answer string `json:"answer"`
+					}, error,
+					) {
+						return struct {
+							Answer string `json:"answer"`
+						}{Answer: "reached"}, nil
+					},
+				),
+			)
+			require.NoError(t, err)
+			require.NoError(t, toolRegistry.Register(late))
+		},
+	)
+
+	content := callTool(t, router, dex.SignClaims(t, mcpClaims(dex)), "dev_maroid_probe_late")
+
+	require.Equal(t, "reached", content["answer"])
 }
 
 // MCPHUB-SC-001: An MCP client that holds no token reads the discovery document,

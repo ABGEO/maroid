@@ -33,7 +33,7 @@ type MCP struct {
 	metadata     *oauthex.ProtectedResourceMetadata
 	tokenOptions *mcpauth.RequireBearerTokenOptions
 	verifier     mcpauth.TokenVerifier
-	server       *mcp.Server
+	toolRegistry *registry.MCPToolRegistry
 }
 
 var _ Handler = (*MCP)(nil)
@@ -69,8 +69,8 @@ func NewMCP(
 		tokenOptions: &mcpauth.RequireBearerTokenOptions{
 			ResourceMetadataURL: metadataURL,
 		},
-		verifier: mcpserver.NewTokenVerifier(oidcSvc, resolver, cfg.MCP.ClientID),
-		server:   mcpserver.NewServer(logger, toolRegistry),
+		verifier:     mcpserver.NewTokenVerifier(oidcSvc, resolver, cfg.MCP.ClientID),
+		toolRegistry: toolRegistry,
 	}
 }
 
@@ -78,13 +78,14 @@ func NewMCP(
 func (h *MCP) Register(router chi.Router) {
 	h.logger.Debug("registering routes")
 
+	server := mcpserver.NewServer(h.logger, h.toolRegistry)
 	discovery := mcpauth.ProtectedResourceMetadataHandler(h.metadata)
 
 	router.Method(http.MethodGet, discoveryPath, discovery)
 	router.Method(http.MethodGet, discoveryPath+mcpPath, discovery)
 
 	transport := mcp.NewStreamableHTTPHandler(
-		func(*http.Request) *mcp.Server { return h.server },
+		func(*http.Request) *mcp.Server { return server },
 		&mcp.StreamableHTTPOptions{
 			Stateless:                  true,
 			JSONResponse:               true,

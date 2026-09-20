@@ -55,6 +55,7 @@ One table for each surface. These columns are the minimum:
 | CLI command           | Command, Flags, Does, Realizes                     | `CLI-001`                       |
 | Notification channel  | Channel, Sent when, Realizes                       | `NTF-002`                       |
 | Configuration scheme  | Key, Type, Default, Secret, Realizes               | `CFG-003`, `CFG-006`            |
+| MCP tool              | Tool, Declared by, Annotations, Realizes           | `PLG-006`, `PLG-011`            |
 
 Delete a table that the feature does not need. Keep no empty heading. See `LNG-013`.
 

@@ -89,4 +89,7 @@ var (
 	// ErrMCPToolAlreadyRegistered indicates that a Model Context Protocol tool has
 	// already been registered under the same name.
 	ErrMCPToolAlreadyRegistered = errors.New("mcp tool: already registered")
+	// ErrInvalidMCPToolModel indicates that a plugin declared an input or an output
+	// model that the hub cannot reflect into a JSON schema.
+	ErrInvalidMCPToolModel = errors.New("mcp tool model: invalid")
 )

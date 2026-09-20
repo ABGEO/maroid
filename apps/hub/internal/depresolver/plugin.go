@@ -136,6 +136,7 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		registries.telegramConversation,
 		c.UIRegistry(),
 		c.SettingsRegistry(),
+		registries.mcpTool,
 	), nil
 }
 
@@ -148,6 +149,7 @@ type pluginRegistries struct {
 	mqttSubscriber       *registry.MQTTSubscriberRegistry
 	telegramCommand      *registry.TelegramCommandRegistry
 	telegramConversation *registry.TelegramConversationRegistry
+	mcpTool              *registry.MCPToolRegistry
 }
 
 func (c *Container) buildPluginRegistries() (*pluginRegistries, error) {
@@ -186,6 +188,11 @@ func (c *Container) buildPluginRegistries() (*pluginRegistries, error) {
 		return nil, err
 	}
 
+	mcpToolRegistry, err := c.MCPToolRegistry()
+	if err != nil {
+		return nil, err
+	}
+
 	return &pluginRegistries{
 		command:              commandRegistry,
 		cron:                 cronRegistry,
@@ -194,5 +201,6 @@ func (c *Container) buildPluginRegistries() (*pluginRegistries, error) {
 		mqttSubscriber:       mqttSubscriberRegistry,
 		telegramCommand:      telegramCommandRegistry,
 		telegramConversation: telegramConversationRegistry,
+		mcpTool:              mcpToolRegistry,
 	}, nil
 }

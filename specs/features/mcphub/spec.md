@@ -13,6 +13,10 @@ requirements: features/mcphub/requirements.md
 
 # Specification: The hub as a Model Context Protocol server
 
+This file holds the server, the transport, the discovery, and the verification.
+[`spec-plugin-tools.md`](spec-plugin-tools.md) holds the capability that lets a
+plugin declare a tool. `SPC-001` divides the two.
+
 ## 1. Summary
 
 The hub becomes a Model Context Protocol server. It serves discovery metadata
@@ -49,7 +53,7 @@ tools: identity, plugin list, and connectivity.
 | `OWN-003` | Record ownership | `MCPHUB-DD-002` resolves the acting user through the same `auth.IdentityResolver` an HTTP request uses. |
 | `OWN-007` | Record ownership | A tool that reaches a scoped table sets `app.user_id` through `pluginapi.ContextWithActingUser` before its first statement. No tool of this iteration does. |
 | `LOG-003` | Logging      | The logging middleware of the MCP server adds `component=middleware`, `middleware=mcp`, both already in use. |
-| `PLG-006` | Plugin model | `MCPHUB-DD-008` builds the registry now. A plugin's own tool still waits for its own interface and registrar. |
+| `PLG-006` | Plugin model | `MCPHUB-DD-008` builds the registry. `spec-plugin-tools.md` adds the interface and the registrar. |
 | `PKG-001` | Package layout | `mcpserver/tools/` holds one file for each tool, the layout the table already gives `telegram/command/`. |
 | `CFG-003` | Configuration | `mcp.client_id` declares its default in a `default` tag and its check in a `validate` tag. `MCPHUB-DD-001` gives the field. |
 
@@ -509,9 +513,8 @@ a key that was not yet in memory.
 ## 8. Out of scope for this specification
 
 - A plugin's own tool. `MCPHUB-DD-008` builds the registry that `PLG-006`
-  needs, but not the interface in `libs/pluginapi` and not the registrar in
-  `apps/hub/internal/plugin/registrar`. Returns when that iteration opens its
-  own requirements.
+  needs. [`spec-plugin-tools.md`](spec-plugin-tools.md) adds the interface in
+  `libs/pluginapi` and the registrar in `apps/hub/internal/plugin/registrar`.
 - Streaming a tool call. `MCPHUB-DD-003` postpones it. Returns when a tool
   needs to report progress, and the requirements name that tool.
 - A cache of the resolved user across calls. Each call resolves it fresh,

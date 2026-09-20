@@ -24,7 +24,7 @@ func NewServer(logger *slog.Logger, toolRegistry *registry.MCPToolRegistry) *mcp
 		Version: serverVersion,
 	}, &mcp.ServerOptions{Logger: logger})
 
-	server.AddReceivingMiddleware(loggingMiddleware(logger))
+	server.AddReceivingMiddleware(loggingMiddleware(logger), actingUserMiddleware())
 
 	for _, tool := range toolRegistry.All() {
 		tool.Install(server)

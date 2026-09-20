@@ -4,7 +4,7 @@ title: Package layout
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-20
 scope: [apps/hub/internal/, libs/, plugins/]
 related: [PLG, GO, REP, EXT]
 ---
@@ -26,6 +26,7 @@ A plugin uses this layout. Create a directory only when the plugin needs it.
 | `handler/`                    | The HTTP handlers. See `API-004`.                     |
 | `telegram/command/`           | The bot commands. See `TG-003`.                       |
 | `telegram/conversation/step/` | The conversation steps. See `TG-005`.                 |
+| `mcp/tool/`                   | The Model Context Protocol tools. See `PLG-006`.      |
 | `mqtt/subscriber/`            | The MQTT subscribers. See `MQT-001`.                  |
 | `db/migrations/`              | The migrations. See `DAT-006`.                        |
 | `errs/`                       | The sentinel errors of the plugin. See `GO-005`.      |
