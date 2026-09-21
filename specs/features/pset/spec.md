@@ -4,7 +4,7 @@ title: The settings of a user for a plugin
 type: spec
 status: approved
 created: 2026-09-14
-updated: 2026-09-14
+updated: 2026-09-21
 approved_by: Temuri
 approved_on: 2026-09-14
 constrained_by: [CFG, PLG, OWN, ARC, API, EXT, PRC, DAT, REP, PKG, LIF, DEP, LOG, JOB, TST, SPC]
@@ -108,7 +108,7 @@ and a plugin reads the values of the acting user through `Host.Settings()`.
 
 | `apps/hub/internal/domain/errs/errs.go`                             | change | `ErrSettingsSchemaNotFound`, `ErrSettingsSchemaAlreadyRegistered`, `ErrInvalidSettingsModel`, `ErrProtectionUnavailable`, `ErrUnsupportedFieldsSource` |
 | `apps/hub/go.mod`                                                   | change | `github.com/openbao/openbao/api/v2`, `.../api/auth/approle/v2`, `github.com/invopop/jsonschema`, `github.com/santhosh-tekuri/jsonschema/v6`, and `testcontainers-go` for the tests |
-| `.golangci.yaml`                                                    | change | `secret.Cipher`, `settings.Service`, and `pluginapi.SettingsProvider` join the `ireturn` allowlist. `tagliatelle` reads a `json` tag as snake case. |
+| `.golangci.yaml`                                                    | change | `secret.Cipher`, `settings.Service`, and `pluginapi.SettingsProvider` join the `ireturn` allowlist. `tagliatelle` reads a `json` tag as camel case. |
 | `specs/features/pset/api.yaml`                                      | create | The three routes. See `SPC-002`.                                         |
 | `specs/guidelines/ownership.md`                                     | change | `OWN-007`. See `PSET-DD-003`.                                            |
 

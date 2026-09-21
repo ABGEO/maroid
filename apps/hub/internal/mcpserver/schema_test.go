@@ -27,7 +27,6 @@ func TestInferSchemaReflectsTheModelOfATool(t *testing.T) {
 	var shape struct {
 		Type string `json:"type"`
 		// The member names are the keywords of JSON Schema, not names of the hub.
-		//nolint:tagliatelle
 		Properties map[string]struct {
 			Type      string `json:"type"`
 			MaxLength *int   `json:"maxLength"`

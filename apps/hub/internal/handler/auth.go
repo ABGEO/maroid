@@ -250,9 +250,9 @@ type providerState struct {
 	Attached bool   `json:"attached"`
 
 	Username    *string    `json:"username,omitempty"`
-	DisplayName *string    `json:"display_name,omitempty"`
-	PictureURL  *string    `json:"picture_url,omitempty"`
-	AttachedAt  *time.Time `json:"attached_at,omitempty"`
+	DisplayName *string    `json:"displayName,omitempty"`
+	PictureURL  *string    `json:"pictureUrl,omitempty"`
+	AttachedAt  *time.Time `json:"attachedAt,omitempty"`
 }
 
 // Identities reports every provider that Maroid offers, attached or not.
@@ -379,8 +379,8 @@ func (h *Auth) Logout(w http.ResponseWriter, r *http.Request) error {
 
 // meResponse is the body of GET /auth/me.
 type meResponse struct {
-	FirstName *string `json:"first_name"`
-	LastName  *string `json:"last_name"`
+	FirstName *string `json:"firstName"`
+	LastName  *string `json:"lastName"`
 	Picture   string  `json:"picture"`
 	Provider  string  `json:"provider"`
 }

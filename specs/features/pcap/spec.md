@@ -50,7 +50,7 @@ names what the hub loaded and never what a plugin merely implements.
 | `DEP-003` | Dependency resolution | `CapabilityRegistry` joins `Container` as one more registry that a registrar writes into.              |
 | `PKG-004` | Package layout     | The registry lives under `apps/hub/internal`. Nothing new is exported from the hub.                       |
 
-`.golangci.yaml` keeps `tagliatelle` at `json: snake`. `PCAP-DD-002` names each
+`.golangci.yaml` keeps `tagliatelle` at `json: camel`. `PCAP-DD-002` names each
 capability as a key of a Go map, which carries no struct tag, and section 4.3
 gives every item a single word field name, so no declaration of this feature
 meets that rule at all.
@@ -168,7 +168,7 @@ of `/plugins` do not change.
 | `telegramConversations`  | `[{ id, entry }]`                            | `TelegramConversationRegistrar`    | `PCAP-FR-004`                |
 | `mcpTools`               | `[{ name, description }]`                    | `MCPToolRegistrar`                 | `PCAP-FR-004`                |
 
-Every field name above is one word, so `tagliatelle` reads each of them as snake
+Every field name above is one word, so `tagliatelle` reads each of them as camel
 case already. See section 3.
 
 `api` carries the path that a client calls, which is the pattern of the plugin
@@ -234,15 +234,15 @@ answer whether one capability is present.
 are the ten that section 4.3 gives.
 
 **Rationale:** The owner chose camel case for a key that a browser reads. The
-name is a key of a Go map, so `tagliatelle` never reads it, and the rule of
-`.golangci.yaml` stays at snake case for every struct tag, which keeps the key of
-a stored settings field and of a schema property exactly as it is today. A name
-that followed a component of the hub would put `handler` in the report for the
-routes, and a rename of that registrar would then change the API with no sign.
+name is a key of a Go map, so `tagliatelle` never reads it. The rule of
+`.golangci.yaml` now gives every struct tag the same camel case, so one shape
+holds for a capability name, for a member of a response, and for the key of a
+schema property. A name that followed a component of the hub would put `handler`
+in the report for the routes, and a rename of that registrar would then change
+the API with no sign.
 
-**Alternatives:** Snake case, to match `first_name` and `created_at` elsewhere in
-the API. It matches what the deck parses today and reads further from the
-browser that consumes it. The name of the interface of the contract, such as
+**Alternatives:** Snake case, which every other key of the API carried when the
+owner made this decision. The name of the interface of the contract, such as
 `route` and `configurable`. A plugin author knows those names, and
 `ConfigurablePlugin` gives a poor key for the settings.
 
@@ -431,9 +431,9 @@ capability is absent from the map.
 ## 8. Out of scope for this specification
 
 - A capability of the hub itself. The report describes a plugin.
-- The conversion of every other JSON key of the hub to camel case. It renames a
-  stored settings key, so it needs its own change and a migration. `PCAP-DD-002`
-  leaves `tagliatelle` at snake case for that reason.
+- The conversion of every other JSON key of the hub to camel case. The owner
+  made it after this specification, and it renamed the key of a stored settings
+  field. `PCAP-DD-002` now matches every other key.
 - A second request that returns the items of one capability. The report carries
   them.
 

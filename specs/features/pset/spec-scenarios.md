@@ -4,7 +4,7 @@ title: The scenarios of the settings of a user for a plugin
 type: spec
 status: approved
 created: 2026-09-14
-updated: 2026-09-14
+updated: 2026-09-21
 approved_by: Temuri
 approved_on: 2026-09-14
 constrained_by: [TST, OWN, TRC]
@@ -24,7 +24,7 @@ user A and user B. The probe plugin declares this model:
 type UserSettings struct {
     Email         string `json:"email"          jsonschema:"title=Email,required"`
     Password      string `json:"password"       jsonschema:"title=Password,format=password,writeOnly=true,required"`
-    AccountNumber string `json:"account_number" jsonschema:"title=Account number"`
+    AccountNumber string `json:"accountNumber" jsonschema:"title=Account number"`
     Period        string `json:"period"         jsonschema:"title=Period,enum=month,enum=year"`
     Notify        bool   `json:"notify"         jsonschema:"title=Notify me"`
 }
@@ -70,7 +70,7 @@ holds the identifier of user A.
 **Given** user A stored an email and a password.
 **When** user A reads the settings of the probe plugin.
 **Then** the answer holds the email, it holds `******` for the password, it holds no
-member for `account_number`, and it holds no value of the password in any form.
+member for `accountNumber`, and it holds no value of the password in any form.
 
 ## `PSET-SC-005`
 
@@ -87,9 +87,9 @@ returns the value that user A stored first.
 **Verifies:** `PSET-FR-007`
 **Layer:** integration
 
-**Given** user A stored the optional field `account_number`.
+**Given** user A stored the optional field `accountNumber`.
 **When** user A saves that field with the value `null`.
-**Then** the `fields` column holds no entry for `account_number`.
+**Then** the `fields` column holds no entry for `accountNumber`.
 
 ## `PSET-SC-007`
 
@@ -249,9 +249,9 @@ returns the value that user A stored first.
 **Verifies:** `PSET-FR-007`
 **Layer:** integration
 
-**Given** user A stored the optional field `account_number`.
+**Given** user A stored the optional field `accountNumber`.
 **When** user A saves that field with the empty string.
-**Then** the `fields` column holds no entry for `account_number`.
+**Then** the `fields` column holds no entry for `accountNumber`.
 
 ## Retired identifiers
 

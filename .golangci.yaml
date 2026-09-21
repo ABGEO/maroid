@@ -58,9 +58,7 @@ linters:
     tagliatelle:
       case:
         rules:
-          # A settings field keys its stored entry and its schema property, and both
-          # follow the snake case that every configuration key in Maroid uses.
-          json: snake
+          json: camel
 
     varnamelen:
       min-name-length: 2

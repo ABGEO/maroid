@@ -120,7 +120,7 @@ type GetPluginSettingsInput struct {
 type GetPluginSettingsOutput struct {
     Plugin       string         `json:"plugin"`
     Schema       map[string]any `json:"schema"`
-    SecretFields []string       `json:"secret_fields"`
+    SecretFields []string       `json:"secretFields"`
     Values       map[string]any `json:"values"`
 }
 
@@ -140,7 +140,7 @@ type SavePluginSettingsInput struct {
 // SavePluginSettingsOutput reports the settings that the row holds after the save.
 type SavePluginSettingsOutput struct {
     Plugin       string         `json:"plugin"`
-    SecretFields []string       `json:"secret_fields"`
+    SecretFields []string       `json:"secretFields"`
     Values       map[string]any `json:"values"`
 }
 
@@ -233,13 +233,13 @@ result that no agent uses on its own.
 
 **Decision:** The result carries the JSON Schema document that
 `GET /plugins/{id}/settings/schema` serves, decoded into a `map[string]any`, and
-beside it `secret_fields`, the key of each secret field.
+beside it `secretFields`, the key of each secret field.
 
 **Rationale:** `PSET-DD-001` made the document the one contract of a settings
 schema, and a second shape of one fact drifts from it. The document already
 marks a secret with `"format": "password"` and `"writeOnly": true`, and an agent
 that reads those two keywords wrongly loses a call to the rejection that
-`MCPHUB-FR-019` gives. `secret_fields` names that fact outright, and it comes
+`MCPHUB-FR-019` gives. `secretFields` names that fact outright, and it comes
 from `settings.Schema.Kinds`, the same source the document comes from.
 
 **Alternatives:** A field list with an explicit kind for each field. Reads well,
@@ -311,7 +311,7 @@ line, and it sends the text of a validation library to an agent and to a log.
 **Given** a plugin declares a text field and a secret field, and the acting user
 stored a value for each.
 **When** an MCP client calls `get_plugin_settings` with that plugin.
-**Then** the result carries the schema document, `secret_fields` names the secret
+**Then** the result carries the schema document, `secretFields` names the secret
 field, and the values name the text and the mask.
 
 ### `MCPHUB-SC-018` (verifies `MCPHUB-FR-015`)

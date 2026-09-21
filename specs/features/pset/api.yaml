@@ -153,7 +153,7 @@ components:
       examples:
         - email: person@example.com
           password: "******"
-          account_number: ""
+          accountNumber: ""
           notify: true
 
     SettingsInput:
@@ -171,7 +171,7 @@ components:
       examples:
         - email: person@example.com
           password: the-new-credential
-          account_number: null
+          accountNumber: null
 
     Error:
       type: object

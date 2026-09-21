@@ -21,10 +21,10 @@ type GetPluginSettingsInput struct {
 // GetPluginSettingsOutput reports the settings schema of a plugin and the values
 // that the acting user stored for it.
 type GetPluginSettingsOutput struct {
-	Plugin       string         `json:"plugin"        jsonschema:"the plugin identifier"`
-	Schema       map[string]any `json:"schema"        jsonschema:"the JSON Schema of the fields"`
-	SecretFields []string       `json:"secret_fields" jsonschema:"the key of each secret field"`
-	Values       map[string]any `json:"values"        jsonschema:"the value of each stored field"`
+	Plugin       string         `json:"plugin"       jsonschema:"the plugin identifier"`
+	Schema       map[string]any `json:"schema"       jsonschema:"the JSON Schema of the fields"`
+	SecretFields []string       `json:"secretFields" jsonschema:"the key of each secret field"`
+	Values       map[string]any `json:"values"       jsonschema:"the value of each stored field"`
 }
 
 // getPluginSettings holds what the report reads.

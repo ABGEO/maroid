@@ -23,9 +23,9 @@ type SavePluginSettingsInput struct {
 
 // SavePluginSettingsOutput reports the settings that the row holds after the save.
 type SavePluginSettingsOutput struct {
-	Plugin       string         `json:"plugin"        jsonschema:"the plugin identifier"`
-	SecretFields []string       `json:"secret_fields" jsonschema:"the key of each secret field"`
-	Values       map[string]any `json:"values"        jsonschema:"the value of each stored field"`
+	Plugin       string         `json:"plugin"       jsonschema:"the plugin identifier"`
+	SecretFields []string       `json:"secretFields" jsonschema:"the key of each secret field"`
+	Values       map[string]any `json:"values"       jsonschema:"the value of each stored field"`
 }
 
 // savePluginSettings holds what the save reads and writes.

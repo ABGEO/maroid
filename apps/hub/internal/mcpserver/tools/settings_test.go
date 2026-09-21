@@ -326,7 +326,7 @@ func TestGetReportsTheSchemaTheSecretKeysAndTheValues(t *testing.T) {
 	))
 
 	require.Equal(t, probePluginID, result["plugin"])
-	require.Equal(t, []any{keyPassword}, result["secret_fields"])
+	require.Equal(t, []any{keyPassword}, result["secretFields"])
 	require.Equal(
 		t,
 		map[string]any{keyEmail: valueEmail, keyPassword: settings.SecretMask},

@@ -7,12 +7,16 @@ import (
 
 // FederatedClaims names the connector of Dex and the account at the upstream
 // provider.
+//
+//nolint:tagliatelle
 type FederatedClaims struct {
 	ConnectorID string `json:"connector_id"`
 	UserID      string `json:"user_id"`
 }
 
 // Claims are the claims of a token that Dex issued.
+//
+//nolint:tagliatelle
 type Claims struct {
 	Subject   string          `json:"sub"`
 	Name      string          `json:"name"`

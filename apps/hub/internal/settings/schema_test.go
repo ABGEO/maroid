@@ -13,7 +13,7 @@ import (
 const (
 	keyEmail    = "email"
 	keyPassword = "password"
-	keyAccount  = "account_number"
+	keyAccount  = "accountNumber"
 	keyPeriod   = "period"
 	keyNotify   = "notify"
 
@@ -24,11 +24,11 @@ const (
 
 // probeModel is the model that the scenarios of spec-scenarios.md declare.
 type probeModel struct {
-	Email         string `json:"email"          jsonschema:"title=Email,required"`
-	Password      string `json:"password"       jsonschema:"title=Password,format=password,writeOnly=true,required"`
-	AccountNumber string `json:"account_number" jsonschema:"title=Account number"`
-	Period        string `json:"period"         jsonschema:"title=Period,enum=month,enum=year"`
-	Notify        bool   `json:"notify"         jsonschema:"title=Notify me"`
+	Email         string `json:"email"         jsonschema:"title=Email,required"`
+	Password      string `json:"password"      jsonschema:"title=Password,format=password,writeOnly=true,required"`
+	AccountNumber string `json:"accountNumber" jsonschema:"title=Account number"`
+	Period        string `json:"period"        jsonschema:"title=Period,enum=month,enum=year"`
+	Notify        bool   `json:"notify"        jsonschema:"title=Notify me"`
 }
 
 // PSET-SC-002: The inferred document carries the kind of every field.

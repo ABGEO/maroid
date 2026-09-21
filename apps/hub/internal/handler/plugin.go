@@ -37,7 +37,7 @@ type Plugin struct {
 	pluginRegistry     *registry.PluginRegistry
 	uiRegistry         *registry.UIRegistry
 	capabilityRegistry *registry.CapabilityRegistry
-	settingsSvc settings.Service
+	settingsSvc        settings.Service
 }
 
 var _ PluginHandler = (*Plugin)(nil)
