@@ -15,6 +15,11 @@ import (
 	"github.com/abgeo/maroid/plugins/parking/telegram/conversation"
 )
 
+// pluginID names the plugin. The constructor needs it before Meta exists.
+//
+//nolint:gochecknoglobals
+var pluginID = pluginapi.ParsePluginID("dev.maroid.parking")
+
 type ParkingPlugin struct {
 	config                     *config.Config
 	logger                     *slog.Logger
@@ -25,6 +30,7 @@ type ParkingPlugin struct {
 
 var (
 	_ pluginapi.Plugin                     = (*ParkingPlugin)(nil)
+	_ pluginapi.ConfigurablePlugin         = (*ParkingPlugin)(nil)
 	_ pluginapi.TelegramCommandPlugin      = (*ParkingPlugin)(nil)
 	_ pluginapi.TelegramConversationPlugin = (*ParkingPlugin)(nil)
 )
@@ -43,11 +49,18 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host telegram bot instance: %w", err)
 	}
 
+	settingsProvider, err := host.Settings()
+	if err != nil {
+		return nil, fmt.Errorf("getting host settings provider: %w", err)
+	}
+
+	settings := pluginapi.NewPluginSettings(settingsProvider, pluginID)
+
 	plg := &ParkingPlugin{
 		config:                     pluginConfig,
 		telegramBot:                telegramBot,
 		telegramConversationEngine: host.TelegramConversationEngine(),
-		apiClientSvc:               service.NewAPIClient(pluginConfig),
+		apiClientSvc:               service.NewAPIClient(pluginConfig, settings),
 	}
 
 	plg.logger = host.Logger().With(
@@ -61,10 +74,14 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *ParkingPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:         pluginapi.ParsePluginID("dev.maroid.parking"),
+		ID:         pluginID,
 		Version:    "0.1.0",
 		APIVersion: pluginapi.APIVersion,
 	}
+}
+
+func (p *ParkingPlugin) SettingsModel() (any, error) {
+	return config.UserSettings{}, nil
 }
 
 func (p *ParkingPlugin) TelegramCommands() ([]pluginapi.TelegramCommand, error) {

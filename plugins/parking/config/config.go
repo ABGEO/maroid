@@ -3,7 +3,11 @@ package config
 
 // Config represents the root plugin configuration.
 type Config struct {
-	BaseURL   string `default:"https://api.municipal.gov.ge" mapstructure:"base_url"`
-	AuthToken string `mapstructure:"auth_token"              validate:"required"`
-	VehicleID int    `mapstructure:"vehicle_id"              validate:"required"`
+	BaseURL string `default:"https://api.municipal.gov.ge" mapstructure:"base_url"`
+}
+
+// UserSettings represents the fields that one user fills for the plugin.
+type UserSettings struct {
+	AuthToken string `json:"authToken" jsonschema:"title=Auth token,format=password,writeOnly=true,required"`
+	VehicleID string `json:"vehicleId" jsonschema:"title=Vehicle identifier,required"`
 }

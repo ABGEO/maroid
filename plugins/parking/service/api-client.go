@@ -10,6 +10,8 @@ import (
 
 	"resty.dev/v3"
 
+	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/parking/config"
 	"github.com/abgeo/maroid/plugins/parking/dto"
 )
@@ -42,17 +44,16 @@ type APIClientService interface {
 
 // APIClient implements APIClientService.
 type APIClient struct {
-	cfg    *config.Config
-	client *resty.Client
+	settings *pluginapi.PluginSettings
+	client   *resty.Client
 }
 
 var _ APIClientService = (*APIClient)(nil)
 
 // NewAPIClient creates a new APIClient.
-func NewAPIClient(cfg *config.Config) *APIClient {
+func NewAPIClient(cfg *config.Config, settings *pluginapi.PluginSettings) *APIClient {
 	client := resty.New().
 		SetBaseURL(cfg.BaseURL).
-		SetAuthToken(cfg.AuthToken).
 		SetError(map[string]any{}).
 		SetHeaders(map[string]string{
 			"Accept":       "*/*",
@@ -62,8 +63,8 @@ func NewAPIClient(cfg *config.Config) *APIClient {
 		})
 
 	return &APIClient{
-		cfg:    cfg,
-		client: client,
+		settings: settings,
+		client:   client,
 	}
 }
 
@@ -74,8 +75,12 @@ func (s *APIClient) GetParkingLots(
 ) ([]dto.ParkingLot, error) {
 	var response dto.APIResponse[[]dto.ParkingLot]
 
-	resp, err := s.client.R().
-		SetContext(ctx).
+	req, _, err := s.authorized(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := req.
 		SetResult(&response).
 		SetQueryParams(map[string]string{
 			"left":   fmt.Sprintf("%.14f", left),
@@ -109,8 +114,12 @@ func (s *APIClient) GetParkingPlace(
 ) (*dto.ParkingPlace, error) {
 	var response dto.APIResponse[dto.ParkingPlace]
 
-	resp, err := s.client.R().
-		SetContext(ctx).
+	req, _, err := s.authorized(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := req.
 		SetResult(&response).
 		SetPathParams(map[string]string{
 			"zone":   zone,
@@ -137,16 +146,25 @@ func (s *APIClient) StartParking(
 ) (*dto.ParkingSession, error) {
 	var response dto.APIResponse[dto.ParkingSession]
 
+	req, userSettings, err := s.authorized(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	vehicleID, err := strconv.Atoi(userSettings.VehicleID)
+	if err != nil {
+		return nil, fmt.Errorf("reading the vehicle identifier: %w", err)
+	}
+
 	body := dto.APIRequest[dto.StartParkingData]{
 		Data: dto.StartParkingData{
 			PlaceNo:   placeNo,
-			VehicleID: s.cfg.VehicleID,
+			VehicleID: vehicleID,
 			Type:      parkingType,
 		},
 	}
 
-	resp, err := s.client.R().
-		SetContext(ctx).
+	resp, err := req.
 		SetResult(&response).
 		SetBody(body).
 		Post("/parking")
@@ -173,8 +191,12 @@ func (s *APIClient) GetActiveSession(
 ) (*dto.ActiveSession, error) {
 	var response dto.APIResponse[*dto.ActiveSession]
 
-	resp, err := s.client.R().
-		SetContext(ctx).
+	req, _, err := s.authorized(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := req.
 		SetResult(&response).
 		Get("/parking")
 	if err != nil {
@@ -202,8 +224,12 @@ func (s *APIClient) StopParking(
 ) (*dto.ParkingSession, error) {
 	var response dto.APIResponse[dto.ParkingSession]
 
-	resp, err := s.client.R().
-		SetContext(ctx).
+	req, _, err := s.authorized(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := req.
 		SetResult(&response).
 		SetPathParam("id", strconv.Itoa(id)).
 		Delete("/parking/{id}")
@@ -231,8 +257,12 @@ func (s *APIClient) GetPerson(
 ) (*dto.Person, error) {
 	var response dto.APIResponse[dto.Person]
 
-	resp, err := s.client.R().
-		SetContext(ctx).
+	req, _, err := s.authorized(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := req.
 		SetResult(&response).
 		Get("/parking/person/check")
 	if err != nil {
@@ -249,4 +279,23 @@ func (s *APIClient) GetPerson(
 	}
 
 	return &response.Result.Data, nil
+}
+
+// authorized builds a request that carries the credential of the acting user, and
+// returns the settings that produced it. See PSET-FR-012.
+// It fails with pluginapi.ErrSettingsAbsent when the acting user stored no credential.
+func (s *APIClient) authorized(
+	ctx context.Context,
+) (*resty.Request, *config.UserSettings, error) {
+	values, err := s.settings.Get(ctx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("reading the settings of the acting user: %w", err)
+	}
+
+	userSettings := new(config.UserSettings)
+	if err = pluginconfig.DecodeAndValidateSettings(values, userSettings); err != nil {
+		return nil, nil, fmt.Errorf("decoding the settings of the acting user: %w", err)
+	}
+
+	return s.client.R().SetContext(ctx).SetAuthToken(userSettings.AuthToken), userSettings, nil
 }
