@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
+	import { api, signedOutUrl } from '$lib/api';
 	import { displayName, userState } from '$lib/state/user.svelte';
 	import { themeState, setTheme, type ThemePreference } from '$lib/state/theme.svelte';
 
@@ -13,6 +14,20 @@
 		{ value: 'maroid', label: 'Paper' },
 		{ value: 'maroid-dusk', label: 'Dusk' }
 	];
+
+	let signingOut = $state(false);
+
+	async function signOut(): Promise<void> {
+		signingOut = true;
+
+		try {
+			const result = await api.auth.logout(signedOutUrl());
+			window.location.href = result?.redirect ?? signedOutUrl();
+		} catch (error) {
+			console.error('Failed to sign out', error);
+			signingOut = false;
+		}
+	}
 </script>
 
 <div class="dropdown dropdown-end">
@@ -136,7 +151,7 @@
 
 		<ul class="menu menu-sm w-full">
 			<li>
-				<a class="text-error">
+				<button type="button" class="text-error" disabled={signingOut} onclick={signOut}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="14"
@@ -150,8 +165,8 @@
 						<path d="m16 17 5-5-5-5" />
 						<path d="M21 12H9" />
 					</svg>
-					Log out
-				</a>
+					Sign out
+				</button>
 			</li>
 		</ul>
 	</div>

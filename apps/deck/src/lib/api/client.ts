@@ -14,6 +14,10 @@ function profileUrl(): string {
 	return `${window.location.origin}/profile`;
 }
 
+export function signedOutUrl(): string {
+	return `${window.location.origin}/signed-out`;
+}
+
 export function buildAuthUrl(): string {
 	return `${BASE_URL}/auth?redirect=${encodeURIComponent(landingUrl())}`;
 }

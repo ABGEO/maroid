@@ -20,15 +20,8 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
-const (
-	// bindingCookieName holds the secret that binds one authorization flow to one
-	// browser. It grants nothing on its own: the row holds every authority, and
-	// this value only proves that the browser that finishes the flow started it.
-	bindingCookieName = "maroid_auth_binding"
-	bindingMaxAge     = 10 * 60 // 10 minutes in seconds, the lifetime of a flow
-	// errorKey names the reason in a JSON failure.
-	errorKey = "error"
-)
+// errorKey names the reason in a JSON failure.
+const errorKey = "error"
 
 // The reasons that the hub reports at the target of a flow. Section 4.5 of the
 // specification gives each one, and the deck renders a message for each.
@@ -56,6 +49,7 @@ type AuthHandler interface {
 	Identities(w http.ResponseWriter, r *http.Request) error
 	Detach(w http.ResponseWriter, r *http.Request) error
 	Invite(w http.ResponseWriter, r *http.Request) error
+	Logout(w http.ResponseWriter, r *http.Request) error
 }
 
 // Auth represents the authentication handler.
@@ -110,6 +104,7 @@ func (h *Auth) Register(router chi.Router) {
 			r.Get("/", Wrap(h.logger, h.Initiate))
 			r.Get("/callback", Wrap(h.logger, h.Callback))
 			r.Get("/invite", Wrap(h.logger, h.Invite))
+			r.Post("/logout", Wrap(h.logger, h.Logout))
 		})
 
 		r.Group(func(r chi.Router) {
@@ -145,7 +140,7 @@ func (h *Auth) Initiate(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("initiating OIDC flow: %w", err)
 	}
 
-	setBindingCookie(w, binding)
+	auth.SetBindingCookie(w, binding)
 	http.Redirect(w, r, authURL, http.StatusFound)
 
 	return nil
@@ -156,7 +151,7 @@ func (h *Auth) Initiate(w http.ResponseWriter, r *http.Request) error {
 func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 	state := r.URL.Query().Get("state")
 
-	binding := takeBindingCookie(w, r)
+	binding := auth.TakeBindingCookie(w, r)
 
 	flow, err := h.oidcFlow.Consume(r.Context(), state, binding)
 	if err != nil && flow == nil {
@@ -181,7 +176,7 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("consuming the authorization flow: %w", err)
 	}
 
-	rawToken, claims, err := h.processOIDCCallback(r, flow)
+	session, err := h.processOIDCCallback(r, flow)
 	if err != nil {
 		redirectWithError(w, r, redirect)
 
@@ -190,19 +185,19 @@ func (h *Auth) Callback(w http.ResponseWriter, r *http.Request) error {
 
 	switch flow.Intent {
 	case model.IntentAttach:
-		return h.finishAttach(w, r, flow, claims)
+		return h.finishAttach(w, r, flow, session.Claims)
 	case model.IntentRedeem:
-		return h.finishRedeem(w, r, flow, claims, rawToken)
+		return h.finishRedeem(w, r, flow, session)
 	case model.IntentSignIn:
 	}
 
-	if _, err = h.resolveAndSync(r.Context(), claims); err != nil {
+	if _, err = h.resolveAndSync(r.Context(), session.Claims); err != nil {
 		redirectWithReason(w, r, redirect, signInReason(err))
 
 		return err
 	}
 
-	setAuthCookie(w, rawToken, h.cfg.Auth.SessionTTL)
+	auth.SetSessionCookie(w, session.AccessToken, session.Expiry)
 	//nolint:gosec // G710: validateRedirect already matched the target against the allowed list.
 	http.Redirect(w, r, redirect, http.StatusFound)
 
@@ -239,7 +234,7 @@ func (h *Auth) Link(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("initiating the attach: %w", err)
 	}
 
-	setBindingCookie(w, binding)
+	auth.SetBindingCookie(w, binding)
 	http.Redirect(w, r, authURL, http.StatusFound)
 
 	return nil
@@ -348,8 +343,36 @@ func (h *Auth) Invite(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("initiating the redemption: %w", err)
 	}
 
-	setBindingCookie(w, binding)
+	auth.SetBindingCookie(w, binding)
 	http.Redirect(w, r, authURL, http.StatusFound)
+
+	return nil
+}
+
+// logoutResponse is the body of POST /auth/logout.
+type logoutResponse struct {
+	Redirect string `json:"redirect"`
+}
+
+// Logout ends the session of the person at Maroid.
+//
+// WEBSESS-FR-006: The route runs behind no access check, so a second call answers
+// as the first one did. The session at the IdP survives, so a sign in that follows
+// needs no question from that service.
+func (h *Auth) Logout(w http.ResponseWriter, r *http.Request) error {
+	target := r.URL.Query().Get("redirect")
+	if target == "" {
+		target = h.cfg.Auth.DeckURL
+	}
+
+	if !validateRedirect(target, h.cfg.Auth.AllowedRedirects) {
+		sendBadRequest(w, r, "missing or invalid redirect parameter")
+
+		return fmt.Errorf("%w: missing or invalid redirect parameter", errInvalidQueryParameter)
+	}
+
+	auth.ClearSessionCookie(w)
+	render.JSON(w, r, logoutResponse{Redirect: target})
 
 	return nil
 }
@@ -426,9 +449,9 @@ func (h *Auth) finishRedeem(
 	w http.ResponseWriter,
 	r *http.Request,
 	flow *model.AuthFlow,
-	claims *auth.Claims,
-	rawToken string,
+	session *auth.Session,
 ) error {
+	claims := session.Claims
 	federated := claims.Federated
 
 	_, err := h.authSvc.Redeem(
@@ -454,7 +477,7 @@ func (h *Auth) finishRedeem(
 		return fmt.Errorf("redeeming the invitation: %w", err)
 	}
 
-	setAuthCookie(w, rawToken, h.cfg.Auth.SessionTTL)
+	auth.SetSessionCookie(w, session.AccessToken, session.Expiry)
 	//nolint:gosec // G710: validateRedirect already matched the target against the allowed list.
 	http.Redirect(w, r, flow.Redirect, http.StatusFound)
 
@@ -504,22 +527,22 @@ func signInReason(err error) string {
 func (h *Auth) processOIDCCallback(
 	r *http.Request,
 	flow *model.AuthFlow,
-) (string, *auth.Claims, error) {
+) (*auth.Session, error) {
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		return "", nil, fmt.Errorf("%w: missing code query parameter", errInvalidQueryParameter)
+		return nil, fmt.Errorf("%w: missing code query parameter", errInvalidQueryParameter)
 	}
 
-	rawToken, claims, err := h.oidcFlow.Verify(r.Context(), code, flow.Nonce, flow.Verifier)
+	session, err := h.oidcFlow.Verify(r.Context(), code, flow.Nonce, flow.Verifier)
 	if err != nil {
-		return "", nil, fmt.Errorf("verifying OIDC flow: %w", err)
+		return nil, fmt.Errorf("verifying OIDC flow: %w", err)
 	}
 
-	if claims.Federated.ConnectorID == "" || claims.Federated.UserID == "" {
-		return "", nil, errMissingFederatedClaims
+	if session.Claims.Federated.ConnectorID == "" || session.Claims.Federated.UserID == "" {
+		return nil, errMissingFederatedClaims
 	}
 
-	return rawToken, claims, nil
+	return session, nil
 }
 
 // redirectWithError sends the caller back to the target with an error marker.
@@ -540,64 +563,10 @@ func redirectWithReason(w http.ResponseWriter, r *http.Request, target string, r
 	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
 }
 
-// takeBindingCookie reads the binding of this browser and clears it.
-//
-// The binding proves that this browser started the flow. A callback that carries
-// a valid state without it is a forged one, and finishing it would sign the holder
-// of this browser in as somebody else.
-func takeBindingCookie(w http.ResponseWriter, r *http.Request) string {
-	var binding string
-
-	if cookie, err := r.Cookie(bindingCookieName); err == nil {
-		binding = cookie.Value
-	}
-
-	clearBindingCookie(w)
-
-	return binding
-}
-
-func setBindingCookie(w http.ResponseWriter, binding string) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     bindingCookieName,
-		Value:    binding,
-		Path:     "/",
-		MaxAge:   bindingMaxAge,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-	})
-}
-
-func clearBindingCookie(w http.ResponseWriter) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     bindingCookieName,
-		Value:    "",
-		Path:     "/",
-		MaxAge:   -1,
-		HttpOnly: true,
-		Secure:   true,
-		Expires:  time.Unix(0, 0),
-		SameSite: http.SameSiteLaxMode,
-	})
-}
-
 // sendBadRequest answers with the JSON body of a bad request failure.
 func sendBadRequest(w http.ResponseWriter, r *http.Request, reason string) {
 	render.Status(r, http.StatusBadRequest)
 	render.JSON(w, r, map[string]string{errorKey: reason})
-}
-
-func setAuthCookie(w http.ResponseWriter, token string, ttl time.Duration) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     auth.TokenCookieName,
-		Value:    token,
-		Path:     "/",
-		MaxAge:   int(ttl.Seconds()),
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-	})
 }
 
 func validateRedirect(redirect string, allowed []string) bool {

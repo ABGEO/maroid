@@ -25,12 +25,11 @@ import (
 )
 
 const (
-	shellTarget     = "http://maroid.localhost"
-	providerCloud   = "cloud"
-	flowLifetime    = 10 * time.Minute
-	sessionLifetime = 168 * time.Hour
-	bindingCookie   = "maroid_auth_binding"
-	sessionCookie   = "maroid_token"
+	shellTarget   = "http://maroid.localhost"
+	providerCloud = "cloud"
+	flowLifetime  = 10 * time.Minute
+	bindingCookie = auth.BindingCookieName
+	sessionCookie = auth.SessionCookieName
 )
 
 type authFixture struct {
@@ -57,8 +56,8 @@ func authUnderTest(t *testing.T) *authFixture {
 
 	cfg := &config.Config{}
 	cfg.Auth.AllowedRedirects = []string{shellTarget}
+	cfg.Auth.DeckURL = shellTarget
 	cfg.Auth.FlowTTL = flowLifetime
-	cfg.Auth.SessionTTL = sessionLifetime
 	cfg.Auth.Providers = []config.Provider{
 		{ID: auth.ProviderTelegram, Name: "Telegram"},
 		{ID: providerCloud, Name: "ABGEO.cloud"},
@@ -122,9 +121,9 @@ func TestTheAttachLandsOnTheRecordThatStartedIt(t *testing.T) {
 
 	link := httptest.NewRequestWithContext(ctx, http.MethodGet,
 		"/auth/link?provider="+providerCloud+"&redirect="+url.QueryEscape(shellTarget), nil)
-	link.Header.Set("Authorization", "Bearer "+fixture.provider.Sign(
+	link.AddCookie(requestCookie(sessionCookie, fixture.provider.Sign(
 		t, auth.ProviderTelegram, "111",
-	))
+	)))
 
 	started := httptest.NewRecorder()
 	fixture.router.ServeHTTP(started, link)
@@ -138,14 +137,14 @@ func TestTheAttachLandsOnTheRecordThatStartedIt(t *testing.T) {
 	fixture.provider.IssueCode("the-code", claims)
 
 	// The callback is public. It carries a forged cookie that names the other
-	// record, and a token for the other record in the header.
+	// record, and a session cookie for the other record.
 	callback := httptest.NewRequestWithContext(ctx, http.MethodGet,
 		"/auth/callback?state="+state+"&code=the-code", nil)
 	callback.AddCookie(requestCookie(bindingCookie, binding))
 	callback.AddCookie(requestCookie("maroid_user_id", other))
-	callback.Header.Set("Authorization", "Bearer "+fixture.provider.Sign(
+	callback.AddCookie(requestCookie(sessionCookie, fixture.provider.Sign(
 		t, auth.ProviderTelegram, "222",
-	))
+	)))
 
 	finished := httptest.NewRecorder()
 	fixture.router.ServeHTTP(finished, callback)
@@ -352,7 +351,7 @@ func (f *authFixture) me(t *testing.T, connector string, accountID string) map[s
 	t.Helper()
 
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/auth/me", nil)
-	request.Header.Set("Authorization", "Bearer "+f.provider.Sign(t, connector, accountID))
+	request.AddCookie(requestCookie(sessionCookie, f.provider.Sign(t, connector, accountID)))
 
 	recorder := httptest.NewRecorder()
 	f.router.ServeHTTP(recorder, request)
@@ -376,7 +375,7 @@ func (f *authFixture) listIdentities(
 	request := httptest.NewRequestWithContext(
 		t.Context(), http.MethodGet, "/auth/identities", nil,
 	)
-	request.Header.Set("Authorization", "Bearer "+f.provider.Sign(t, connector, accountID))
+	request.AddCookie(requestCookie(sessionCookie, f.provider.Sign(t, connector, accountID)))
 
 	recorder := httptest.NewRecorder()
 	f.router.ServeHTTP(recorder, request)

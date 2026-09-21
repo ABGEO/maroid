@@ -77,7 +77,7 @@ func serve(
 
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/plugins", nil)
 	if token != "" {
-		request.Header.Set("Authorization", "Bearer "+token)
+		request.AddCookie(requestCookie(auth.SessionCookieName, token))
 	}
 
 	recorder := httptest.NewRecorder()
@@ -232,4 +232,75 @@ func TestTheVerifierReadsTheKeySetOnce(t *testing.T) {
 
 	require.Equal(t, requests, resolver.calls, "the record is read on every request")
 	require.LessOrEqual(t, dex.KeyRequests(), int64(1), "the key set is read once or never")
+}
+
+// WEBSESS-SC-006: A token in the Authorization header reaches nothing. SEC-005
+// gives the cookie as the one path of a web request.
+func TestABearerHeaderReachesNothing(t *testing.T) {
+	t.Parallel()
+
+	dex := authtest.StartProvider(t)
+	resolver := &fakeResolver{user: activeRecord()}
+
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/plugins", nil)
+	request.Header.Set("Authorization", "Bearer "+dex.Sign(t, auth.ProviderTelegram, account))
+
+	recorder := httptest.NewRecorder()
+
+	auth.Middleware(slog.New(slog.DiscardHandler), verifierFor(t, dex), resolver)(refuse(t)).
+		ServeHTTP(recorder, request)
+
+	require.Equal(t, http.StatusUnauthorized, recorder.Code)
+	require.Zero(t, resolver.calls, "the middleware resolves nobody")
+}
+
+// WEBSESS-SC-007: A request that carries the session cookie of one person and a
+// header that names another answers for the person that the cookie names.
+func TestTheCookieDecidesAgainstAHeader(t *testing.T) {
+	t.Parallel()
+
+	const otherAccount = "999"
+
+	dex := authtest.StartProvider(t)
+	resolver := &fakeResolver{user: activeRecord()}
+
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/plugins", nil)
+	request.AddCookie(requestCookie(
+		auth.SessionCookieName, dex.Sign(t, auth.ProviderTelegram, account),
+	))
+	request.Header.Set(
+		"Authorization",
+		"Bearer "+dex.Sign(t, auth.ProviderTelegram, otherAccount),
+	)
+
+	recorder := httptest.NewRecorder()
+
+	auth.Middleware(slog.New(slog.DiscardHandler), verifierFor(t, dex), resolver)(
+		http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}),
+	).ServeHTTP(recorder, request)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Equal(t, account, resolver.gotProviderUID, "the cookie names the acting user")
+}
+
+// WEBSESS-SC-013: A browser that holds the cookie of the old name reaches
+// nothing, even when the IdP still accepts the token inside it.
+func TestTheCookieOfTheOldNameGrantsNothing(t *testing.T) {
+	t.Parallel()
+
+	dex := authtest.StartProvider(t)
+	resolver := &fakeResolver{user: activeRecord()}
+
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/plugins", nil)
+	request.AddCookie(requestCookie(
+		"maroid_token", dex.Sign(t, auth.ProviderTelegram, account),
+	))
+
+	recorder := httptest.NewRecorder()
+
+	auth.Middleware(slog.New(slog.DiscardHandler), verifierFor(t, dex), resolver)(refuse(t)).
+		ServeHTTP(recorder, request)
+
+	require.Equal(t, http.StatusUnauthorized, recorder.Code)
+	require.Zero(t, resolver.calls, "the middleware resolves nobody")
 }

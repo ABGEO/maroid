@@ -5,9 +5,11 @@ package authtest
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -36,8 +38,9 @@ type Provider struct {
 	key         *rsa.PrivateKey
 	keyRequests atomic.Int64
 
-	mu    sync.Mutex
-	codes map[string]jwt.MapClaims
+	mu         sync.Mutex
+	codes      map[string]jwt.MapClaims
+	atHashSalt string
 }
 
 // StartProvider launches the provider and stops it when the test ends.
@@ -164,6 +167,15 @@ func (d *Provider) IssueCode(code string, claims jwt.MapClaims) {
 	d.codes[code] = claims
 }
 
+// BreakAccessTokenBinding makes the identity token carry an at_hash of another
+// value, so a test can prove that the hub refuses the exchange.
+func (d *Provider) BreakAccessTokenBinding() {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	d.atHashSalt = "another-value"
+}
+
 func (d *Provider) signWith(key *rsa.PrivateKey, claims jwt.MapClaims) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = keyID
@@ -176,11 +188,33 @@ func (d *Provider) signWith(key *rsa.PrivateKey, claims jwt.MapClaims) string {
 	return signed
 }
 
-// tokenHandler exchanges a registered code for the token that the test named.
+// accessTokenHash renders the at_hash claim of a token that RS256 signed: the
+// left half of the SHA-256 digest, in URL safe base64.
+func accessTokenHash(accessToken string) string {
+	sum := sha256.Sum256([]byte(accessToken))
+
+	return base64.RawURLEncoding.EncodeToString(sum[:len(sum)/2])
+}
+
+// copyClaims returns a claim set that a caller changes without touching the
+// registered one.
+func copyClaims(claims jwt.MapClaims) jwt.MapClaims {
+	copied := make(jwt.MapClaims, len(claims))
+	maps.Copy(copied, claims)
+
+	return copied
+}
+
+// tokenHandler exchanges a registered code for the tokens that the test named.
+//
+// The access token is a signed token of the same shape as the identity token,
+// the way Dex mints it, and the identity token carries the at_hash that binds the
+// two. WEBSESS-DD-003 reads that claim.
 func (d *Provider) tokenHandler(key *rsa.PrivateKey) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		d.mu.Lock()
 		claims, ok := d.codes[r.FormValue("code")]
+		salt := d.atHashSalt
 		d.mu.Unlock()
 
 		if !ok {
@@ -190,10 +224,20 @@ func (d *Provider) tokenHandler(key *rsa.PrivateKey) http.HandlerFunc {
 			return
 		}
 
+		// The nonce belongs to the identity token. It binds that token to one
+		// flow, and the access token carries no such binding.
+		accessClaims := copyClaims(claims)
+		delete(accessClaims, "nonce")
+		accessToken := d.signWith(key, accessClaims)
+
+		idClaims := copyClaims(claims)
+		idClaims["at_hash"] = accessTokenHash(accessToken + salt)
+
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = io.WriteString(w, fmt.Sprintf(
-			`{"access_token":"an-access-token","token_type":"bearer","id_token":%q}`,
-			d.signWith(key, claims),
+			`{"access_token":%q,"token_type":"bearer","expires_in":3600,"id_token":%q}`,
+			accessToken,
+			d.signWith(key, idClaims),
 		))
 	}
 }

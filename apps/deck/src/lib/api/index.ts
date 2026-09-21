@@ -5,10 +5,11 @@ import { settings } from './settings';
 
 export { ApiError } from '@maroid/api-client';
 export type { ApiClient, RequestOptions } from '@maroid/api-client';
-export { buildAuthUrl, createPluginClient } from './client';
+export { buildAuthUrl, createPluginClient, signedOutUrl } from './client';
 export { SECRET_MASK } from './types';
 export type {
 	User,
+	SignOut,
 	Plugin,
 	ProviderIdentity,
 	UIManifest,

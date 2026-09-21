@@ -6,19 +6,11 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strings"
 
 	"github.com/go-chi/render"
 
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/libs/pluginapi"
-)
-
-const (
-	// TokenCookieName is the cookie that carries the token of Dex.
-	//nolint:gosec // G101: this names the cookie, it holds no credential.
-	TokenCookieName = "maroid_token"
-	authHeaderName  = "Authorization"
 )
 
 var (
@@ -48,7 +40,7 @@ func Middleware(
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			tokenString := tokenFromRequest(r)
+			tokenString := SessionCookie(r)
 
 			claims, user, err := resolve(r.Context(), logger, verifier, resolver, tokenString)
 			if err != nil {
@@ -118,26 +110,12 @@ func resolve(
 	return claims, user, nil
 }
 
-func tokenFromRequest(r *http.Request) string {
-	cookie, err := r.Cookie(TokenCookieName)
-	if err == nil && cookie.Value != "" {
-		return cookie.Value
-	}
-
-	header := r.Header.Get(authHeaderName)
-	if header != "" {
-		return strings.TrimPrefix(header, "Bearer ")
-	}
-
-	return ""
-}
-
 func sendAccessDeniedResponse(w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusUnauthorized)
 	render.JSON(w, r, map[string]string{"error": "access denied"})
 }
 
-// TokenFromContext retrieves access token from the context.
+// TokenFromContext retrieves the access token from the context.
 func TokenFromContext(ctx context.Context) string {
 	token, _ := ctx.Value(tokenContextKey).(string)
 

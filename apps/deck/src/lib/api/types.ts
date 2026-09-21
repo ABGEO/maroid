@@ -6,6 +6,11 @@ export interface User {
 	provider: string;
 }
 
+/** The body of a sign out. It names the target that the browser goes to. */
+export interface SignOut {
+	redirect: string;
+}
+
 export interface UIRoute {
 	path: string;
 	label: string;

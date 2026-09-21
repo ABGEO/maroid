@@ -33,6 +33,14 @@ type OIDCFlow struct {
 	flowTTL  time.Duration
 }
 
+// Session is the credential that a finished flow produces, and the claims that
+// the IdP stated about the person.
+type Session struct {
+	AccessToken string
+	Expiry      time.Time
+	Claims      *Claims
+}
+
 // NewOIDCFlow creates a new OIDCFlow service.
 func NewOIDCFlow(
 	oidcSvc *OIDCService,
@@ -125,35 +133,42 @@ func (f *OIDCFlow) Consume(
 	return flow, nil
 }
 
-// Verify exchanges the authorization code for an OAuth2 token, verifies the
-// ID token, and extracts claims. The nonce and the verifier come from the flow row.
+// Verify exchanges the authorization code, verifies the identity token, and
+// returns the access token beside the claims. The nonce and the verifier come
+// from the flow row.
 func (f *OIDCFlow) Verify(
 	ctx context.Context,
 	code string,
 	nonce string,
 	verifier string,
-) (string, *Claims, error) {
+) (*Session, error) {
 	oauth2Token, err := f.oidcSvc.Exchange(ctx, code, verifier)
 	if err != nil {
-		return "", nil, fmt.Errorf("exchanging code: %w", err)
+		return nil, fmt.Errorf("exchanging code: %w", err)
 	}
 
 	idToken, err := f.oidcSvc.VerifyIDToken(ctx, oauth2Token, nonce)
 	if err != nil {
-		return "", nil, fmt.Errorf("verifying id token: %w", err)
+		return nil, fmt.Errorf("verifying id token: %w", err)
+	}
+
+	// at_hash binds the access token to the identity token that
+	// the hub just verified, so the value that reaches the cookie is the one the
+	// IdP minted for this exchange and not a value that arrived another way.
+	if err = idToken.VerifyAccessToken(oauth2Token.AccessToken); err != nil {
+		return nil, fmt.Errorf("binding the access token to the identity token: %w", err)
 	}
 
 	var claims Claims
 	if err = idToken.Claims(&claims); err != nil {
-		return "", nil, fmt.Errorf("extracting claims: %w", err)
+		return nil, fmt.Errorf("extracting claims: %w", err)
 	}
 
-	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
-	if !ok {
-		return "", nil, ErrMissingIDToken
-	}
-
-	return rawIDToken, &claims, nil
+	return &Session{
+		AccessToken: oauth2Token.AccessToken,
+		Expiry:      oauth2Token.Expiry,
+		Claims:      &claims,
+	}, nil
 }
 
 func generateRandomString(length int) (string, error) {
