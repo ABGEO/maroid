@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/jmoiron/sqlx"
 
@@ -23,6 +24,8 @@ const SecretMask = "******"
 type Service interface {
 	Declares(pluginID string) bool
 	Schema(pluginID string) (json.RawMessage, error)
+	SecretFields(pluginID string) ([]string, error)
+	ChangedSecrets(pluginID string, input map[string]any) ([]string, error)
 	Read(ctx context.Context, pluginID string) (map[string]any, error)
 	Settings(ctx context.Context, pluginID *pluginapi.PluginID) (map[string]any, error)
 	Save(ctx context.Context, pluginID string, input map[string]any) error
@@ -70,6 +73,51 @@ func (m *Manager) Schema(pluginID string) (json.RawMessage, error) {
 	}
 
 	return schema.Document, nil
+}
+
+// SecretFields names each secret field that the plugin declares, in one order.
+func (m *Manager) SecretFields(pluginID string) ([]string, error) {
+	schema, err := m.schemaOf(pluginID)
+	if err != nil {
+		return nil, err
+	}
+
+	fields := make([]string, 0, len(schema.Kinds))
+
+	for key, kind := range schema.Kinds {
+		if kind == model.FieldKindSecret {
+			fields = append(fields, key)
+		}
+	}
+
+	slices.Sort(fields)
+
+	return fields, nil
+}
+
+// ChangedSecrets names each secret field that the input changes, in one order.
+// A value that is the mask keeps the stored secret, so it changes nothing. A
+// value that is null or empty removes the stored secret, and that is a change.
+func (m *Manager) ChangedSecrets(pluginID string, input map[string]any) ([]string, error) {
+	schema, err := m.schemaOf(pluginID)
+	if err != nil {
+		return nil, err
+	}
+
+	changed := make([]string, 0, len(input))
+
+	for key, value := range input {
+		kind := schema.Kinds[key]
+		if kind != model.FieldKindSecret || keepsSecret(kind, value) {
+			continue
+		}
+
+		changed = append(changed, key)
+	}
+
+	slices.Sort(changed)
+
+	return changed, nil
 }
 
 // Read returns the settings of the acting user, for the person who stored them.

@@ -68,6 +68,14 @@ func (s *stubSettings) Schema(string) (json.RawMessage, error) {
 	return json.RawMessage(`{}`), nil
 }
 
+func (s *stubSettings) SecretFields(string) ([]string, error) {
+	return nil, nil
+}
+
+func (s *stubSettings) ChangedSecrets(string, map[string]any) ([]string, error) {
+	return nil, nil
+}
+
 func (s *stubSettings) Read(context.Context, string) (map[string]any, error) {
 	return map[string]any{}, nil
 }

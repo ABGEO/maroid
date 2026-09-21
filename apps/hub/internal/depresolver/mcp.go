@@ -6,6 +6,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver/tools"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/settings"
 )
 
 // MCPToolRegistry initializes and returns the registry of the Model Context
@@ -17,12 +18,21 @@ func (c *Container) MCPToolRegistry() (*registry.MCPToolRegistry, error) {
 	var err error
 
 	c.mcpToolRegistry.once.Do(func() {
+		var settingsSvc settings.Service
+
+		settingsSvc, err = c.SettingsService()
+		if err != nil {
+			return
+		}
+
 		c.mcpToolRegistry.instance = registry.NewMCPToolRegistry()
 
 		err = c.mcpToolRegistry.instance.Register(
 			tools.NewWhoAmI(),
 			tools.NewListPlugins(c.PluginRegistry(), c.CapabilityRegistry()),
 			tools.NewPing(),
+			tools.NewGetPluginSettings(c.Logger(), settingsSvc),
+			tools.NewSavePluginSettings(c.Logger(), settingsSvc),
 		)
 	})
 

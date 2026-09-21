@@ -11,9 +11,6 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
-// settingsPathFormat names the page where a person fills the settings of a plugin.
-const settingsPathFormat = "/plugins/%s/settings"
-
 // errSettingsAbsent is the text that an agent reads when the acting user filled
 // no settings for the plugin that holds the tool. The reason reaches a person
 // through the agent, so it names what to do next.
@@ -96,7 +93,7 @@ func reasonOf(pluginID *pluginapi.PluginID, err error) error {
 			"%w %s. Fill them at %s",
 			errSettingsAbsent,
 			pluginID,
-			fmt.Sprintf(settingsPathFormat, pluginID),
+			SettingsPath(pluginID.String()),
 		)
 	}
 
