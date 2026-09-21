@@ -15,7 +15,9 @@ requirements: features/mcphub/requirements.md
 
 This file holds the server, the transport, the discovery, and the verification.
 [`spec-plugin-tools.md`](spec-plugin-tools.md) holds the capability that lets a
-plugin declare a tool. `SPC-001` divides the two.
+plugin declare a tool. [`spec-settings-tools.md`](spec-settings-tools.md) holds
+the two tools that read and write the settings of a plugin. `SPC-001` divides
+them.
 
 ## 1. Summary
 

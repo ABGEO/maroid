@@ -4,13 +4,16 @@ title: The hub as a Model Context Protocol server
 type: requirements
 status: approved
 created: 2026-09-17
-updated: 2026-09-18
+updated: 2026-09-21
 approved_by: Temuri
 approved_on: 2026-09-18
 constrained_by: [SEC, OWN, API, ARC, PLG, LOG, DAT]
 ---
 
 # Requirements: The hub as a Model Context Protocol server
+
+[`requirements-settings.md`](requirements-settings.md) holds the settings of a
+plugin over the Model Context Protocol. `SPC-001` divides the two.
 
 ## 1. Problem
 
@@ -121,21 +124,20 @@ for.
 
 ### `MCPHUB-FR-005`
 
-The hub must report the identifier, the version, whether the plugin declares a
-settings schema, and the user interface manifest of each loaded plugin, when
-an MCP client calls the plugin list tool.
+The hub must report the identifier, the version, and the capabilities of every
+loaded plugin, when an MCP client calls the plugin list tool.
 
-**Why:** An agent that helps configure or diagnose Maroid needs to know which
-plugin runs. The report matches the one report of a loaded plugin that Maroid
-already gives, so the same fact does not gain a second shape.
+**Why:** An agent that configures or diagnoses Maroid needs to know which plugin
+runs. `PCAP-FR-001` and `PCAP-FR-002` give the shape of the capabilities, so the
+agent and the deck read one answer about one plugin.
 
 **Examples:**
 
 - Normal case: three plugins are loaded, and the report names all three, with
-  the settings flag and the user interface manifest of each.
+  the capabilities of each.
 - Limit case: no plugin is loaded. The report is an empty list, not an error.
-- Limit case: a plugin declares no user interface. The report names the
-  plugin, with no manifest.
+- Limit case: a plugin declares no capability. The report names the plugin, with
+  an empty set of capabilities.
 
 ### `MCPHUB-FR-006`
 
