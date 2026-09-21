@@ -31,6 +31,14 @@ export function uiOf(plugin: Plugin | undefined): UIManifest | undefined {
 	return plugin?.capabilities?.ui;
 }
 
+/**
+ * The name that the deck shows for a plugin. The manifest name wins, and the
+ * last part of the identifier answers when the plugin declares no user interface.
+ */
+export function displayNameOf(plugin: Plugin | undefined, pluginId: string): string {
+	return uiOf(plugin)?.name ?? pluginId.split('.').pop() ?? pluginId;
+}
+
 /** The label of one capability. */
 export function labelOf(name: CapabilityName): string {
 	return LABELS[name] ?? name;

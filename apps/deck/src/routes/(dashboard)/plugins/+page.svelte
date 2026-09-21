@@ -4,15 +4,17 @@
 	import { api, type Plugin } from '$lib/api';
 	import { pluginState } from '$lib/state/plugins.svelte';
 	import { fieldsOf, missingFields } from '$lib/settings/schema';
-	import { capabilitiesOf, countOf, hasCapability, labelOf, uiOf } from '$lib/plugins/capabilities';
+	import {
+		capabilitiesOf,
+		countOf,
+		displayNameOf,
+		hasCapability,
+		labelOf
+	} from '$lib/plugins/capabilities';
 
 	type Health = 'complete' | 'incomplete';
 
 	let health = $state<Record<string, Health>>({});
-
-	function displayName(plugin: Plugin): string {
-		return uiOf(plugin)?.name ?? plugin.id.split('.').pop() ?? plugin.id;
-	}
 
 	async function check(plugin: Plugin): Promise<void> {
 		try {
@@ -65,7 +67,7 @@
 				<li class="flex items-center gap-4 px-4 py-3">
 					<div class="min-w-0 flex-1">
 						<div class="flex items-center gap-2">
-							<span class="text-[15px] font-semibold">{displayName(plugin)}</span>
+							<span class="text-[15px] font-semibold">{displayNameOf(plugin, plugin.id)}</span>
 							<span class="badge badge-ghost badge-xs font-mono">v{plugin.version}</span>
 							{#if health[plugin.id] === 'incomplete'}
 								<span class="badge badge-warning badge-xs">Needs attention</span>

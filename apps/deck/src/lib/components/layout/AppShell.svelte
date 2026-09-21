@@ -1,12 +1,10 @@
 <script lang="ts">
+	import Breadcrumbs from '$lib/components/layout/Breadcrumbs.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
 
 	import { loadPlugins, pluginState } from '$lib/state/plugins.svelte';
-
-	import { resolve } from '$app/paths';
-	import { page } from '$app/state';
 
 	let { children } = $props();
 
@@ -26,13 +24,7 @@
 
 		<main class="paper-bg min-w-0 flex-1 overflow-y-auto">
 			<div class="px-8 pt-5">
-				<!-- @todo: Implement complete breadcrumb generation and navigation -->
-				<div class="text-base-content/55 flex items-center gap-2 font-mono text-[11px]">
-					<span>/</span>
-					<a class="hover:text-base-content" href={resolve('/')}>hub</a>
-					<span>/</span>
-					<span class="text-base-content">{page.params.path || 'placeholder'}</span>
-				</div>
+				<Breadcrumbs />
 			</div>
 
 			<section class="px-8 pt-8 pb-8">

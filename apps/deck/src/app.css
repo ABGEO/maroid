@@ -56,3 +56,34 @@
 .drawer-side .menu li > details > ul {
 	border-inline-start: 1px dashed var(--color-base-300);
 }
+
+.breadcrumbs > ul::before,
+.breadcrumbs > ul::after,
+.breadcrumbs > ul > li + *::before {
+	content: '/';
+	width: auto;
+	height: auto;
+	border: 0;
+	rotate: none;
+	opacity: 1;
+}
+
+.breadcrumbs > ul > li + *::before {
+	margin-inline: 0.5rem;
+}
+
+.breadcrumbs > ul::before {
+	margin-inline-end: 0.5rem;
+}
+
+.breadcrumbs > ul::after {
+	margin-inline-start: 0.5rem;
+}
+
+.breadcrumbs > ul > li > *:not(a) {
+	cursor: default;
+}
+
+.breadcrumbs > ul > li > *:hover {
+	text-decoration-line: none;
+}
