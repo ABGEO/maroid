@@ -4,7 +4,7 @@ title: Authentication and authorization
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-17
+updated: 2026-09-21
 scope: [apps/hub/internal/auth/, apps/hub/internal/middleware/]
 related: [ARC, API, TG, CFG, OWN]
 ---
@@ -57,8 +57,17 @@ The hub checks the record on each request, so a block ends a live token.
 
 ## SEC-005
 
-The token travels in the cookie `maroid_token`, or in the `Authorization` header
-with the `Bearer` prefix. The cookie comes first.
+The hub reads the credential of a web request from the session cookie. The hub
+reads no `Authorization` header on that path.
+
+The session cookie holds the access token that the IdP issued for the hub. It
+holds no identity token.
+
+`/mcp` is the one entry point that reads a bearer header. `API-003` names it, and
+`SEC-002` gives the verification.
+
+**Why:** One credential path needs no precedence rule. The attributes that
+`SEC-008` gives then hold for every request, because a cookie is the only path.
 
 ## SEC-006
 
@@ -71,6 +80,24 @@ in its bundle. Every request for data still passes `SEC-004`.
 
 The Telegram webhook accepts a request only from a network that
 `telegram.webhook.allowed_networks` holds. Other requests get status 403.
+
+## SEC-008
+
+Every cookie that the hub sets carries these attributes:
+
+| Attribute   | Value     |
+| ----------- | --------- |
+| Name prefix | `__Host-` |
+| `Secure`    | Set       |
+| `HttpOnly`  | Set       |
+| `Path`      | `/`       |
+| `Domain`    | Absent    |
+
+The name of a cookie is a constant in the code. The configuration does not hold it.
+
+**Why:** The hub and the deck answer at two hosts of one domain. Without the
+prefix a sibling host writes a cookie that the hub reads. A name that no
+deployment changes needs no check at the start.
 
 ## Retired identifiers
 

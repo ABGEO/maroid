@@ -1,0 +1,88 @@
+# The routes that WEBSESS adds or changes. See `SPC-002`.
+openapi: 3.1.0
+
+info:
+  title: The session of a person at the web shell
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+paths:
+  /auth/logout:
+    post:
+      operationId: signOut
+      summary: End the session of the acting person.
+      description: >
+        Realizes `WEBSESS-FR-006` and `WEBSESS-FR-007`.
+        The route runs behind no access check, so a second call answers as the
+        first one did. It clears the session cookie whether one arrived or not,
+        and it names the target that the browser goes to. The session at the
+        identity provider survives, so a sign in that follows needs no question
+        from that service. See `WEBSESS-DD-005`.
+      security: []
+      parameters:
+        - name: redirect
+          in: query
+          required: false
+          description: >
+            The target that the browser goes to. The hub matches its origin
+            against `auth.allowed_redirects`. A request that names none takes
+            `auth.deck_url`.
+          schema:
+            type: string
+            format: uri
+      responses:
+        "200":
+          description: >
+            The session ended. The body names the target. The header clears the
+            session cookie with the attributes that `SEC-008` gives and a
+            negative age, so the browser replaces the value it holds.
+          headers:
+            Set-Cookie:
+              description: >
+                `__Host-maroid_session` with an empty value and a negative age.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignOut"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  schemas:
+    SignOut:
+      type: object
+      required: [redirect]
+      properties:
+        redirect:
+          type: string
+          format: uri
+          description: The target that the browser goes to.
+      examples:
+        - redirect: "https://deck.example/signed-out"
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: The reason of the failure.
+
+  responses:
+    BadRequest:
+      description: >
+        The request names a target that `auth.allowed_redirects` does not hold.
+        The hub clears no cookie.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            invalidRedirect:
+              value:
+                error: "missing or invalid redirect parameter"

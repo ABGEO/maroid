@@ -42,7 +42,7 @@ identity for the HTTP path and for the Telegram path.
 | `EXTID-FR-016`  | Section 4.2, `EXTID-DD-011`, `EXTID-SC-018`                     |
 | `EXTID-FR-017`  | Section 4.2, Section 4.4, `EXTID-DD-012`, `EXTID-DD-014`, `EXTID-SC-019`, `EXTID-SC-024` |
 | `EXTID-NFR-001` | `EXTID-DD-005`, `EXTID-SC-020`                                  |
-| `EXTID-NFR-002` | `EXTID-DD-006`, `EXTID-SC-021`                                  |
+| `EXTID-NFR-002` | `EXTID-SC-021`. `ADR-0004` moved the decision to `WEBSESS`.     |
 | `EXTID-INV-001` | Section 4.2, `EXTID-DD-002`, `EXTID-SC-007`                     |
 | `EXTID-INV-002` | Section 4.2, `EXTID-DD-003`, `EXTID-SC-022`                     |
 | `EXTID-INV-003` | Section 4.4, `EXTID-DD-012`, `EXTID-SC-023`                     |
@@ -54,7 +54,7 @@ identity for the HTTP path and for the Telegram path.
 | `SEC-002` | Security         | `EXTID-DD-005`. The hub verifies against the JWKS of Dex and signs nothing.                 |
 | `SEC-003` | Security         | Section 4.4 reads `federated_claims` and resolves through `public.identities`.               |
 | `SEC-004` | Security         | Section 4.4 reads the user record on each request. The status decides.                       |
-| `SEC-005` | Security         | `EXTID-DD-006`. The cookie `maroid_token` keeps its name and its place.                      |
+| `SEC-005` | Security         | `ADR-0004` changed the rule. The cookie and the token it holds moved to `WEBSESS`.           |
 | `OWN-001` | Record ownership | Section 4.2 gives `public.identities`, the natural key.                                      |
 | `OWN-002` | Record ownership | `EXTID-DD-010`. The command of the owner creates the record. No sign in creates one.         |
 | `OWN-003` | Record ownership | `EXTID-DD-012`. One resolver serves the HTTP entry point, the Telegram entry point, and the MCP tool call. |
@@ -355,14 +355,14 @@ does not hold. The hub reports every outcome at that target with the query param
 | `auth.providers`         | List of provider  | None    | No     | `EXTID-FR-009`                  |
 | `auth.invitation_ttl`    | Duration          | `72h`   | No     | `EXTID-FR-014`                  |
 | `auth.flow_ttl`          | Duration          | `10m`   | No     | `EXTID-FR-006`                  |
-| `auth.session_ttl`       | Duration          | `168h`  | No     | `EXTID-NFR-002`                 |
+| `auth.session_ttl`       | Removed           | None    | No     | `EXTID-NFR-002`                 |
 
 A provider carries `id` and `name`. `id` is the identifier of the connector in Dex,
 and `name` is the text that the deck shows. `EXTID-DD-009` gives the reason that the
 list lives in the configuration.
 
-`auth.session_ttl` sets the lifetime of the cookie only. The token carries its own
-expiry, and `ADR-0002` binds the two to the same number.
+`auth.session_ttl` is gone. `ADR-0004` binds the lifetime of the cookie to the
+expiry of the token, so the IdP is the one control of it.
 
 ### 4.4 Flow
 
@@ -408,7 +408,7 @@ consumes the invitation, and writes the identity. `EXTID-DD-008` gives the order
 
 **The request.** The middleware runs on each request behind the authenticated group.
 
-1. Read the token from the cookie, then from the header. `SEC-005` fixes the order.
+1. Read the token from the session cookie. `SEC-005` gives no second path.
 2. Verify it with `TokenVerifier`. The verification checks the signature, the issuer,
    the audience, and the expiry.
 3. Read `federated_claims`. A token without it gets status 401.
@@ -519,21 +519,6 @@ demands.
 **Alternatives:** A key set that the hub fetches at the start. A rotation then breaks
 every request until a restart. A verification call to Dex for each request. It makes
 Dex a dependency of every read and fails `EXTID-NFR-001`.
-
-### `EXTID-DD-006`
-
-**Realizes:** `EXTID-NFR-002`, `SEC-005`
-**Decision:** The cookie `maroid_token` carries the identity token of Dex. The hub
-stores no refresh token and renews nothing. A person signs in again when the token
-expires.
-**Rationale:** Open question 1 of the requirements answers it. A renewal needs a
-store for the refresh token, and that store is a second credential at rest. The
-lifetime moves into Dex, and `ADR-0002` binds it to the seven days that
-`EXTID-NFR-002` gives. Revocation survives, because `SEC-004` reads the user record
-on each request and a blocked record ends a live token in one request.
-**Alternatives:** A refresh token in a session table. It adds a table, a rotation,
-and a second secret at rest, and no statement asks for it yet. A short token with a
-silent renewal in the deck. It adds a path in the deck that no requirement names.
 
 ### `EXTID-DD-007`
 
@@ -745,4 +730,6 @@ records. A failure in step 6 then names the flow row and nothing else.
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID             | Retired    | Reason                                                                                      |
+| -------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| `EXTID-DD-006` | 2026-09-21 | `ADR-0004` moved the credential to the access token and the cookie to the `__Host-` prefix. The successor is the specification of `WEBSESS`. |

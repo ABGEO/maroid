@@ -3,7 +3,7 @@ title: Architecture decision records
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-09-15
+updated: 2026-09-21
 ---
 
 # Architecture decision records
@@ -46,3 +46,4 @@ The frontmatter holds the identifier.
 | `ADR-0001` | PostgreSQL 18 and the native uuidv7 | `postgresql-18-and-uuidv7.md`          | accepted | 2026-09-12 | `DAT-008`, `DAT-009`                                               |
 | `ADR-0002` | Dex as the authorization server     | `dex-as-the-authorization-server.md`   | accepted | 2026-09-15 | `SEC-001`, `SEC-002`, `SEC-003`, `OWN-001`, `OWN-003`, `API-003`, `GLO-user` |
 | `ADR-0003` | An MCP tool call as a second entry point of Dex | `mcp-as-a-second-entry-point.md` | accepted | 2026-09-17 | `SEC-002`, `OWN-003` |
+| `ADR-0004` | The web credential travels in a host cookie | `the-web-credential-travels-in-a-host-cookie.md` | accepted | 2026-09-21 | `SEC-005`, `SEC-008`, `API-003` |

@@ -4,7 +4,7 @@ title: Traceability
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-17
+updated: 2026-09-21
 scope: [specs/, code comments]
 related: [LNG, PRC, GIT]
 ---
@@ -276,6 +276,7 @@ Add a row before you create the file or the directory.
 | `THEMING` | `features/theming/` | The shared visual theme, and the identity provider's pages. | Approved |
 | `MCPHUB` | `features/mcphub/` | The hub as a Model Context Protocol server. | Approved |
 | `PCAP`  | `features/pcap/`  | The capabilities that a plugin declares.       | Approved |
+| `WEBSESS` | `features/websess/` | The session of a person at the web shell. | Approved |
 
 ## Retired identifiers
 

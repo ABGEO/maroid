@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-09-17
+updated: 2026-09-21
 related: [LNG]
 ---
 
@@ -39,6 +39,12 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-invitation`    | invitation        | A grant that the owner issues. It lets one sign in create the first identity of one user record.                  |
 | `GLO-attach`        | attach            | The operation that creates an identity.                                                                          |
 | `GLO-detach`        | detach            | The operation that removes an identity.                                                                          |
+| `GLO-session`       | session           | The period from one sign in of a person at the deck to the end of it.                                            |
+| `GLO-sign-in`       | sign in           | The operation that starts a session.                                                                             |
+| `GLO-sign-out`      | sign out          | The operation that ends a session.                                                                               |
+| `GLO-session-cookie` | session cookie   | The cookie that carries the credential of a session.                                                             |
+| `GLO-access-token`  | access token      | The value that the IdP issues for a call to Maroid.                                                              |
+| `GLO-identity-token` | identity token   | The value that the IdP issues to describe a person to the client that signed them in.                            |
 | `GLO-acting-user`   | acting user       | The user that one unit of work runs for. Every request, update, and job run has exactly one.                      |
 | `GLO-scoped-table`  | scoped table      | A table whose every row belongs to one user. It carries `user_id` and row level security.                         |
 | `GLO-shared-table`  | shared table      | A table whose rows belong to no user. It carries no `user_id`.                                                    |

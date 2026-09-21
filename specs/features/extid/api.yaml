@@ -100,7 +100,7 @@ paths:
         The hub reads the flow row by the state and consumes it, then exchanges the
         code and verifies the token. The `intent` column of the row picks the branch.
         See `EXTID-DD-004`.
-        A sign in that succeeds sets the cookie `maroid_token` and writes the profile
+        A sign in that succeeds sets the session cookie and writes the profile
         of the provider onto the identity.
       security: []
       parameters:
@@ -129,8 +129,9 @@ paths:
                 type: string
             Set-Cookie:
               description: >
-                `maroid_token` with the identity token of Dex, on a sign in and on a
-                redemption that succeeds. See `EXTID-DD-006`.
+                `__Host-maroid_session` with the access token of Dex, on a sign in and
+                on a redemption that succeeds. `ADR-0004` decided the name and the
+                token, and the specification of `WEBSESS` holds both.
               schema:
                 type: string
         "400":
@@ -204,13 +205,13 @@ paths:
 
 components:
   securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
       description: >
-        A token that Dex issued. The cookie `maroid_token` comes first, then this
-        header. See `SEC-005`.
+        The access token that Dex issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.
 
   parameters:
     Provider:
@@ -357,4 +358,4 @@ components:
             $ref: "#/components/schemas/Error"
 
 security:
-  - bearerAuth: []
+  - sessionCookie: []

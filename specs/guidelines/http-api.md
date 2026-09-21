@@ -4,7 +4,7 @@ title: The HTTP API
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-17
+updated: 2026-09-21
 scope: [apps/hub/internal/server/, apps/hub/internal/handler/, apps/hub/internal/middleware/]
 related: [ARC, PLG, SEC, UI]
 ---
@@ -32,6 +32,7 @@ The path prefixes are fixed:
 | `/auth/me`                | The current user                          | Authenticated          |
 | `/auth/link`              | The start of an attach                    | Authenticated          |
 | `/auth/identities*`       | The external accounts of the current user | Authenticated          |
+| `/auth/logout`            | The end of a session                      | Public                 |
 | `/plugins`                | The list of loaded plugins                | Authenticated          |
 | `/plugins/{id}/api/*`     | The routes of a plugin                    | Authenticated          |
 | `/plugins/{id}/settings*` | The settings of a user for a plugin       | Authenticated          |
@@ -43,6 +44,9 @@ The path prefixes are fixed:
 
 `/auth/callback` finishes a sign in, an attach, and a redemption. One client of Dex
 holds one redirect address, so one route finishes all three.
+
+`/auth/logout` is public. A sign out behind an access check answers 401 for a dead
+cookie. A second sign out must answer as the first one did.
 
 ## API-004
 
