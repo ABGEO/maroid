@@ -10,15 +10,20 @@ import (
 
 // UIRegistrar is responsible for registering plugin UI manifests and assets.
 type UIRegistrar struct {
-	registry *pluginui.UIRegistry
+	registry     *pluginui.UIRegistry
+	capabilities *pluginui.CapabilityRegistry
 }
 
 var _ Registrar = (*UIRegistrar)(nil)
 
 // NewUIRegistrar creates a new UIRegistrar.
-func NewUIRegistrar(reg *pluginui.UIRegistry) *UIRegistrar {
+func NewUIRegistrar(
+	reg *pluginui.UIRegistry,
+	capabilities *pluginui.CapabilityRegistry,
+) *UIRegistrar {
 	return &UIRegistrar{
-		registry: reg,
+		registry:     reg,
+		capabilities: capabilities,
 	}
 }
 
@@ -53,6 +58,7 @@ func (r *UIRegistrar) Register(plugin pluginapi.Plugin) error {
 	}
 
 	r.registry.Register(id, manifest)
+	r.capabilities.Record(id, pluginui.CapUI, manifest)
 
 	return nil
 }

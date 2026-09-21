@@ -7,15 +7,17 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // HandlerRegistrar is responsible for registering plugin HTTP routes as handlers.
 type HandlerRegistrar struct {
-	logger   *slog.Logger
-	verifier auth.TokenVerifier
-	resolver auth.IdentityResolver
-	registry *handler.Registry
+	logger       *slog.Logger
+	verifier     auth.TokenVerifier
+	resolver     auth.IdentityResolver
+	registry     *handler.Registry
+	capabilities *registry.CapabilityRegistry
 }
 
 var _ Registrar = (*HandlerRegistrar)(nil)
@@ -26,12 +28,14 @@ func NewHandlerRegistrar(
 	verifier auth.TokenVerifier,
 	resolver auth.IdentityResolver,
 	reg *handler.Registry,
+	capabilities *registry.CapabilityRegistry,
 ) *HandlerRegistrar {
 	return &HandlerRegistrar{
-		logger:   logger,
-		verifier: verifier,
-		resolver: resolver,
-		registry: reg,
+		logger:       logger,
+		verifier:     verifier,
+		resolver:     resolver,
+		registry:     reg,
+		capabilities: capabilities,
 	}
 }
 
@@ -77,6 +81,16 @@ func (r *HandlerRegistrar) Register(plugin pluginapi.Plugin) error {
 	if err != nil {
 		return fmt.Errorf("registering handler for plugin %s: %w", id, err)
 	}
+
+	items := make([]registry.APIRoute, 0, len(routes))
+	for _, route := range routes {
+		items = append(items, registry.APIRoute{
+			Method: route.Method,
+			Path:   "/plugins/" + id.String() + "/api" + route.Pattern,
+		})
+	}
+
+	r.capabilities.Record(id, registry.CapAPI, items)
 
 	return nil
 }

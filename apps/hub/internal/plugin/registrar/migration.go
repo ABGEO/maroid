@@ -10,15 +10,20 @@ import (
 
 // MigrationRegistrar is responsible for registering plugin migrations.
 type MigrationRegistrar struct {
-	registry *registry.MigrationRegistry
+	registry     *registry.MigrationRegistry
+	capabilities *registry.CapabilityRegistry
 }
 
 var _ Registrar = (*MigrationRegistrar)(nil)
 
 // NewMigrationRegistrar creates a new MigrationRegistrar.
-func NewMigrationRegistrar(reg *registry.MigrationRegistry) *MigrationRegistrar {
+func NewMigrationRegistrar(
+	reg *registry.MigrationRegistry,
+	capabilities *registry.CapabilityRegistry,
+) *MigrationRegistrar {
 	return &MigrationRegistrar{
-		registry: reg,
+		registry:     reg,
+		capabilities: capabilities,
 	}
 }
 
@@ -56,6 +61,8 @@ func (r *MigrationRegistrar) Register(plugin pluginapi.Plugin) error {
 	if err != nil {
 		return fmt.Errorf("registering migrations for plugin %s: %w", id, err)
 	}
+
+	r.capabilities.Record(id, registry.CapMigrations, registry.Present)
 
 	return nil
 }

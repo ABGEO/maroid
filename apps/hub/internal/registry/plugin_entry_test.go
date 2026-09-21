@@ -1,8 +1,6 @@
 package registry_test
 
 import (
-	"context"
-	"encoding/json"
 	"slices"
 	"testing"
 	"testing/fstest"
@@ -10,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -36,37 +33,9 @@ func newStubPlugin(id string, version string) *stubPlugin {
 	}
 }
 
-// stubSettings declares a schema for the plugins that the test names.
-type stubSettings struct {
-	declared map[string]bool
-}
-
-var _ settings.Service = (*stubSettings)(nil)
-
-func (s *stubSettings) Declares(pluginID string) bool {
-	return s.declared[pluginID]
-}
-
-func (s *stubSettings) Schema(string) (json.RawMessage, error) {
-	return json.RawMessage(`{}`), nil
-}
-
-func (s *stubSettings) Read(context.Context, string) (map[string]any, error) {
-	return map[string]any{}, nil
-}
-
-func (s *stubSettings) Settings(context.Context, *pluginapi.PluginID) (map[string]any, error) {
-	return map[string]any{}, nil
-}
-
-func (s *stubSettings) Save(context.Context, string, map[string]any) error {
-	return nil
-}
-
-// MCPHUB-SC-005: Two plugins are loaded, one of which declares a settings schema.
-// The report names both, with the settings flag and the user interface manifest
-// of each. MCPHUB-DD-007 gives both callers this one function, so GET /plugins
-// and the plugin list tool cannot answer differently.
+// MCPHUB-SC-005: Two plugins are loaded, and the report names both with what
+// each declares. MCPHUB-DD-007 gives both callers this one function.
+// PCAP-SC-001: The capabilities of a plugin are the ones a registrar recorded.
 func TestPluginEntriesReportEveryLoadedPlugin(t *testing.T) {
 	t.Parallel()
 
@@ -82,33 +51,40 @@ func TestPluginEntriesReportEveryLoadedPlugin(t *testing.T) {
 		Assets: fstest.MapFS{},
 	}
 
-	uiRegistry := registry.NewUIRegistry()
-	uiRegistry.Register(pluginapi.ParsePluginID(probeID), manifest)
+	capabilities := registry.NewCapabilityRegistry()
+	capabilities.Record(pluginapi.ParsePluginID(probeID), registry.CapSettings, registry.Present)
+	capabilities.Record(pluginapi.ParsePluginID(probeID), registry.CapUI, manifest)
 
-	entries := registry.PluginEntries(
-		pluginRegistry,
-		uiRegistry,
-		&stubSettings{declared: map[string]bool{probeID: true}},
-	)
+	entries := registry.PluginEntries(pluginRegistry, capabilities)
 
 	slices.SortFunc(entries, func(a registry.PluginEntry, b registry.PluginEntry) int {
 		return cmpString(a.ID, b.ID)
 	})
 
 	require.Equal(t, []registry.PluginEntry{
-		{ID: beaconID, Version: "2.3.4", Settings: false, UI: nil},
-		{ID: probeID, Version: "1.0.0", Settings: true, UI: manifest},
+		{
+			ID:           beaconID,
+			Version:      "2.3.4",
+			Capabilities: map[registry.Capability]any{},
+		},
+		{
+			ID:      probeID,
+			Version: "1.0.0",
+			Capabilities: map[registry.Capability]any{
+				registry.CapSettings: registry.Present,
+				registry.CapUI:       manifest,
+			},
+		},
 	}, entries)
 }
 
-// MCPHUB-FR-005: No plugin is loaded, so the report is an empty list, not an error.
+// PCAP-FR-001: No plugin is loaded, so the report is an empty list, not an error.
 func TestPluginEntriesReportAnEmptyListWhenNoPluginIsLoaded(t *testing.T) {
 	t.Parallel()
 
 	entries := registry.PluginEntries(
 		registry.NewPluginRegistry(),
-		registry.NewUIRegistry(),
-		&stubSettings{},
+		registry.NewCapabilityRegistry(),
 	)
 
 	require.Empty(t, entries)

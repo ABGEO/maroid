@@ -12,15 +12,20 @@ import (
 
 // CommandRegistrar is responsible for registering plugin commands.
 type CommandRegistrar struct {
-	registry *registry.CommandRegistry
+	registry     *registry.CommandRegistry
+	capabilities *registry.CapabilityRegistry
 }
 
 var _ Registrar = (*CommandRegistrar)(nil)
 
 // NewCommandRegistrar creates a new CommandRegistrar.
-func NewCommandRegistrar(reg *registry.CommandRegistry) *CommandRegistrar {
+func NewCommandRegistrar(
+	reg *registry.CommandRegistry,
+	capabilities *registry.CapabilityRegistry,
+) *CommandRegistrar {
 	return &CommandRegistrar{
-		registry: reg,
+		registry:     reg,
+		capabilities: capabilities,
 	}
 }
 
@@ -66,6 +71,13 @@ func (r *CommandRegistrar) Register(plugin pluginapi.Plugin) error {
 	if err != nil {
 		return fmt.Errorf("registering commands for plugin %s: %w", id, err)
 	}
+
+	items := make([]registry.CLICommand, 0, len(cmd.Commands()))
+	for _, sub := range cmd.Commands() {
+		items = append(items, registry.CLICommand{Command: cmd.Use + " " + sub.Name()})
+	}
+
+	r.capabilities.Record(id, registry.CapCLI, items)
 
 	return nil
 }

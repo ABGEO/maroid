@@ -10,7 +10,8 @@ import (
 
 // TelegramConversationRegistrar is responsible for registering plugin telegram conversations.
 type TelegramConversationRegistrar struct {
-	registry *registry.TelegramConversationRegistry
+	registry     *registry.TelegramConversationRegistry
+	capabilities *registry.CapabilityRegistry
 }
 
 var _ Registrar = (*TelegramConversationRegistrar)(nil)
@@ -18,9 +19,11 @@ var _ Registrar = (*TelegramConversationRegistrar)(nil)
 // NewTelegramConversationRegistrar creates a new TelegramConversationRegistrar.
 func NewTelegramConversationRegistrar(
 	reg *registry.TelegramConversationRegistry,
+	capabilities *registry.CapabilityRegistry,
 ) *TelegramConversationRegistrar {
 	return &TelegramConversationRegistrar{
-		registry: reg,
+		registry:     reg,
+		capabilities: capabilities,
 	}
 }
 
@@ -49,10 +52,25 @@ func (r *TelegramConversationRegistrar) Register(plugin pluginapi.Plugin) error 
 		)
 	}
 
-	return registerItems(
+	conversations, err := registerItems(
 		id,
 		"telegram conversations",
 		telegramConversationPlugin.TelegramConversations,
 		r.registry.Register,
 	)
+	if err != nil {
+		return err
+	}
+
+	items := make([]registry.TelegramConversation, 0, len(conversations))
+	for _, conversation := range conversations {
+		items = append(items, registry.TelegramConversation{
+			ID:    conversation.ID(),
+			Entry: conversation.Entry(),
+		})
+	}
+
+	r.capabilities.Record(id, registry.CapTelegramConversations, items)
+
+	return nil
 }

@@ -156,18 +156,19 @@ func hubWithToolRegistry(
 		newStubPlugin(beaconID, "2.3.4"),
 	))
 
-	uiRegistry := registry.NewUIRegistry()
-	uiRegistry.Register(pluginapi.ParsePluginID(probeID), &pluginapi.UIManifest{
+	// PCAP-SC-001: A registrar records what the hub loaded, so the report names
+	// the capabilities of each plugin.
+	capabilities := registry.NewCapabilityRegistry()
+	capabilities.Record(pluginapi.ParsePluginID(probeID), registry.CapSettings, registry.Present)
+	capabilities.Record(pluginapi.ParsePluginID(probeID), registry.CapUI, &pluginapi.UIManifest{
 		Name:   "Probe",
 		Routes: []pluginapi.UIRoute{{Path: "/", Label: "Probe"}},
 		Assets: fstest.MapFS{},
 	})
 
-	settingsSvc := &stubSettings{declared: map[string]bool{probeID: true}}
-
 	require.NoError(t, toolRegistry.Register(
 		tools.NewWhoAmI(),
-		tools.NewListPlugins(pluginRegistry, uiRegistry, settingsSvc),
+		tools.NewListPlugins(pluginRegistry, capabilities),
 		tools.NewPing(),
 	))
 
@@ -429,8 +430,11 @@ func TestTheIdentityToolNamesTheActingUser(t *testing.T) {
 }
 
 // MCPHUB-SC-005: Two plugins are loaded, one of which declares a settings schema.
-// The result names both, and the settings flag of each matches what GET /plugins
-// answers for the same two plugins. MCPHUB-DD-007 gives both one function.
+// The result names both, with what each declares. MCPHUB-DD-007 gives both
+// callers one function.
+// PCAP-SC-002: The agent reads the entry that GET /plugins gives, and neither
+// carries a settings flag or a user interface member beside the capabilities.
+// PCAP-SC-007: The settings capability is true to a client that tests it.
 func TestThePluginListToolReportsTheSameShapeAsTheRoute(t *testing.T) {
 	t.Parallel()
 
@@ -456,11 +460,20 @@ func TestThePluginListToolReportsTheSameShapeAsTheRoute(t *testing.T) {
 
 	require.Len(t, reported, 2)
 	require.Equal(t, "1.0.0", reported[probeID]["version"])
-	require.Equal(t, true, reported[probeID]["settings"])
-	require.NotNil(t, reported[probeID]["ui"])
 	require.Equal(t, "2.3.4", reported[beaconID]["version"])
-	require.Equal(t, false, reported[beaconID]["settings"])
-	require.NotContains(t, reported[beaconID], "ui")
+
+	require.NotContains(t, reported[probeID], "settings", "the flag moved into the capabilities")
+	require.NotContains(t, reported[probeID], "ui", "the manifest moved into the capabilities")
+
+	probeCapabilities, ok := reported[probeID]["capabilities"].(map[string]any)
+	require.True(t, ok, reported[probeID])
+
+	require.Equal(t, true, probeCapabilities["settings"])
+	require.NotNil(t, probeCapabilities["ui"])
+
+	beaconCapabilities, ok := reported[beaconID]["capabilities"].(map[string]any)
+	require.True(t, ok, reported[beaconID])
+	require.Empty(t, beaconCapabilities, "the plugin declares none")
 }
 
 // MCPHUB-SC-006: An authenticated MCP client calls the connectivity tool, and the

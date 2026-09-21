@@ -40,6 +40,7 @@ func New(
 	uiRegistry *registry.UIRegistry,
 	settingsRegistry *registry.SettingsRegistry,
 	mcpToolRegistry *registry.MCPToolRegistry,
+	capabilityRegistry *registry.CapabilityRegistry,
 ) *Loader {
 	logger := host.Logger()
 
@@ -48,16 +49,25 @@ func New(
 
 		registrars: []registrar.Registrar{
 			registrar.NewPluginRegistrar(pluginRegistry),
-			registrar.NewCommandRegistrar(commandRegistry),
-			registrar.NewCronRegistrar(cronRegistry),
-			registrar.NewHandlerRegistrar(logger, verifier, resolver, handlerRegistry),
-			registrar.NewMigrationRegistrar(migrationRegistry),
-			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry),
-			registrar.NewTelegramCommandRegistrar(telegramCommandRegistry),
-			registrar.NewTelegramConversationRegistrar(telegramConversationRegistry),
-			registrar.NewUIRegistrar(uiRegistry),
-			registrar.NewSettingsRegistrar(settingsRegistry),
-			registrar.NewMCPToolRegistrar(mcpToolRegistry),
+			registrar.NewCommandRegistrar(commandRegistry, capabilityRegistry),
+			registrar.NewCronRegistrar(cronRegistry, capabilityRegistry),
+			registrar.NewHandlerRegistrar(
+				logger,
+				verifier,
+				resolver,
+				handlerRegistry,
+				capabilityRegistry,
+			),
+			registrar.NewMigrationRegistrar(migrationRegistry, capabilityRegistry),
+			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry, capabilityRegistry),
+			registrar.NewTelegramCommandRegistrar(telegramCommandRegistry, capabilityRegistry),
+			registrar.NewTelegramConversationRegistrar(
+				telegramConversationRegistry,
+				capabilityRegistry,
+			),
+			registrar.NewUIRegistrar(uiRegistry, capabilityRegistry),
+			registrar.NewSettingsRegistrar(settingsRegistry, capabilityRegistry),
+			registrar.NewMCPToolRegistrar(mcpToolRegistry, capabilityRegistry),
 		},
 	}
 }

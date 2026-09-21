@@ -10,15 +10,20 @@ import (
 
 // CronRegistrar is responsible for registering plugin cron jobs.
 type CronRegistrar struct {
-	registry *registry.CronRegistry
+	registry     *registry.CronRegistry
+	capabilities *registry.CapabilityRegistry
 }
 
 var _ Registrar = (*CronRegistrar)(nil)
 
 // NewCronRegistrar creates a new CronRegistrar.
-func NewCronRegistrar(reg *registry.CronRegistry) *CronRegistrar {
+func NewCronRegistrar(
+	reg *registry.CronRegistry,
+	capabilities *registry.CapabilityRegistry,
+) *CronRegistrar {
 	return &CronRegistrar{
-		registry: reg,
+		registry:     reg,
+		capabilities: capabilities,
 	}
 }
 
@@ -47,5 +52,18 @@ func (r *CronRegistrar) Register(plugin pluginapi.Plugin) error {
 		)
 	}
 
-	return registerItems(id, "cron jobs", cronPlugin.CronJobs, r.registry.Register)
+	jobs, err := registerItems(id, "cron jobs", cronPlugin.CronJobs, r.registry.Register)
+	if err != nil {
+		return err
+	}
+
+	items := make([]registry.CronJob, 0, len(jobs))
+	for _, job := range jobs {
+		meta := job.Meta()
+		items = append(items, registry.CronJob{ID: meta.ID, Schedule: meta.Schedule})
+	}
+
+	r.capabilities.Record(id, registry.CapCron, items)
+
+	return nil
 }

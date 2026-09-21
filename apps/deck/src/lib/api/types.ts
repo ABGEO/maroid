@@ -16,11 +16,69 @@ export interface UIManifest {
 	routes: UIRoute[];
 }
 
+/** One route that a plugin serves, with the prefix that the hub mounts it under. */
+export interface APIRoute {
+	method: string;
+	path: string;
+}
+
+/** One bot command that a plugin answers, with the prefix of the plugin. */
+export interface TelegramCommand {
+	command: string;
+	description: string;
+}
+
+/** One tool that a plugin exposes over the Model Context Protocol. */
+export interface MCPTool {
+	name: string;
+	description: string;
+}
+
+/** One job that a plugin runs on a schedule. */
+export interface CronJob {
+	id: string;
+	schedule: string;
+}
+
+/** One topic that a plugin subscribes to. */
+export interface MQTTSubscriber {
+	id: string;
+	topic: string;
+}
+
+/** One conversation that a plugin drives. */
+export interface TelegramConversation {
+	id: string;
+	entry: string;
+}
+
+/** One command that a plugin adds to the command tree. */
+export interface CLICommand {
+	command: string;
+}
+
+/**
+ * What a plugin can do. A key is present when the hub loaded that capability,
+ * and absent otherwise. A capability that holds no item carries `true`, so every
+ * present capability is truthy.
+ */
+export interface Capabilities {
+	settings?: true;
+	migrations?: true;
+	ui?: UIManifest;
+	api?: APIRoute[];
+	cli?: CLICommand[];
+	cron?: CronJob[];
+	mqtt?: MQTTSubscriber[];
+	telegramCommands?: TelegramCommand[];
+	telegramConversations?: TelegramConversation[];
+	mcpTools?: MCPTool[];
+}
+
 export interface Plugin {
 	id: string;
 	version: string;
-	settings: boolean;
-	ui?: UIManifest;
+	capabilities: Capabilities;
 }
 
 /** One provider that Maroid offers, attached to the acting user's record or not. */

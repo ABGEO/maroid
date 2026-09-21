@@ -27,7 +27,13 @@ func TestTheRoutesOfThePluginHandlerResolve(t *testing.T) {
 	handler.RegisterHandlers(
 		router,
 		handler.NewPlugin(
-			logger, nil, nil, registry.NewPluginRegistry(), registry.NewUIRegistry(), nil,
+			logger,
+			nil,
+			nil,
+			registry.NewPluginRegistry(),
+			registry.NewUIRegistry(),
+			registry.NewCapabilityRegistry(),
+			nil,
 		),
 	)
 

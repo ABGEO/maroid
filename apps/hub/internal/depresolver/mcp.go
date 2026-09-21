@@ -17,18 +17,11 @@ func (c *Container) MCPToolRegistry() (*registry.MCPToolRegistry, error) {
 	var err error
 
 	c.mcpToolRegistry.once.Do(func() {
-		settingsSvc, settingsErr := c.SettingsService()
-		if settingsErr != nil {
-			err = settingsErr
-
-			return
-		}
-
 		c.mcpToolRegistry.instance = registry.NewMCPToolRegistry()
 
 		err = c.mcpToolRegistry.instance.Register(
 			tools.NewWhoAmI(),
-			tools.NewListPlugins(c.PluginRegistry(), c.UIRegistry(), settingsSvc),
+			tools.NewListPlugins(c.PluginRegistry(), c.CapabilityRegistry()),
 			tools.NewPing(),
 		)
 	})

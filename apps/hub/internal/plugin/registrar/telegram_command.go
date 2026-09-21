@@ -11,7 +11,8 @@ import (
 
 // TelegramCommandRegistrar is responsible for registering plugin telegram commands.
 type TelegramCommandRegistrar struct {
-	registry *registry.TelegramCommandRegistry
+	registry     *registry.TelegramCommandRegistry
+	capabilities *registry.CapabilityRegistry
 }
 
 var _ Registrar = (*TelegramCommandRegistrar)(nil)
@@ -19,9 +20,11 @@ var _ Registrar = (*TelegramCommandRegistrar)(nil)
 // NewTelegramCommandRegistrar creates a new TelegramCommandRegistrar.
 func NewTelegramCommandRegistrar(
 	reg *registry.TelegramCommandRegistry,
+	capabilities *registry.CapabilityRegistry,
 ) *TelegramCommandRegistrar {
 	return &TelegramCommandRegistrar{
-		registry: reg,
+		registry:     reg,
+		capabilities: capabilities,
 	}
 }
 
@@ -64,6 +67,17 @@ func (r *TelegramCommandRegistrar) Register(plugin pluginapi.Plugin) error {
 	if err != nil {
 		return fmt.Errorf("registering telegram commands for plugin %s: %w", id, err)
 	}
+
+	items := make([]registry.TelegramCommand, 0, len(wrappedCommands))
+	for _, cmd := range wrappedCommands {
+		meta := cmd.Meta()
+		items = append(items, registry.TelegramCommand{
+			Command:     meta.Command,
+			Description: meta.Description,
+		})
+	}
+
+	r.capabilities.Record(id, registry.CapTelegramCommands, items)
 
 	return nil
 }

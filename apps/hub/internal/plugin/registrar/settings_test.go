@@ -40,7 +40,7 @@ func TestRegisterRejectsAModelThatIsNotAStruct(t *testing.T) {
 	t.Parallel()
 
 	reg := registry.NewSettingsRegistry()
-	settingsRegistrar := registrar.NewSettingsRegistrar(reg)
+	settingsRegistrar := registrar.NewSettingsRegistrar(reg, registry.NewCapabilityRegistry())
 
 	err := settingsRegistrar.Register(&configurable{id: probeID, model: "not a struct"})
 
@@ -55,7 +55,7 @@ func TestRegisterHoldsTheSchemaOfThePlugin(t *testing.T) {
 	t.Parallel()
 
 	reg := registry.NewSettingsRegistry()
-	settingsRegistrar := registrar.NewSettingsRegistrar(reg)
+	settingsRegistrar := registrar.NewSettingsRegistrar(reg, registry.NewCapabilityRegistry())
 	plugin := &configurable{id: probeID, model: &probeModel{}}
 
 	require.True(t, settingsRegistrar.Supports(plugin))
@@ -71,7 +71,7 @@ func TestRegisterRejectsASecondSchemaForOnePlugin(t *testing.T) {
 	t.Parallel()
 
 	reg := registry.NewSettingsRegistry()
-	settingsRegistrar := registrar.NewSettingsRegistrar(reg)
+	settingsRegistrar := registrar.NewSettingsRegistrar(reg, registry.NewCapabilityRegistry())
 	plugin := &configurable{id: probeID, model: &probeModel{}}
 
 	require.NoError(t, settingsRegistrar.Register(plugin))

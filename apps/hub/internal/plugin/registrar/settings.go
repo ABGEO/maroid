@@ -11,15 +11,20 @@ import (
 
 // SettingsRegistrar is responsible for registering the settings schema of a plugin.
 type SettingsRegistrar struct {
-	registry *registry.SettingsRegistry
+	registry     *registry.SettingsRegistry
+	capabilities *registry.CapabilityRegistry
 }
 
 var _ Registrar = (*SettingsRegistrar)(nil)
 
 // NewSettingsRegistrar creates a new SettingsRegistrar.
-func NewSettingsRegistrar(reg *registry.SettingsRegistry) *SettingsRegistrar {
+func NewSettingsRegistrar(
+	reg *registry.SettingsRegistry,
+	capabilities *registry.CapabilityRegistry,
+) *SettingsRegistrar {
 	return &SettingsRegistrar{
-		registry: reg,
+		registry:     reg,
+		capabilities: capabilities,
 	}
 }
 
@@ -61,6 +66,8 @@ func (r *SettingsRegistrar) Register(plugin pluginapi.Plugin) error {
 	if err = r.registry.Register(id, schema); err != nil {
 		return fmt.Errorf("registering the settings schema for plugin %s: %w", id, err)
 	}
+
+	r.capabilities.Record(id, registry.CapSettings, registry.Present)
 
 	return nil
 }

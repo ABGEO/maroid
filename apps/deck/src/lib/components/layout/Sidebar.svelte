@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { pluginState } from '$lib/state/plugins.svelte';
+	import { uiOf } from '$lib/plugins/capabilities';
 
 	function isActive(href: string) {
 		return page.url.pathname === href;
@@ -18,7 +19,11 @@
 		});
 	}
 
-	const uiPlugins = $derived(pluginState.plugins.filter((p) => p.ui));
+	const uiPlugins = $derived(
+		pluginState.plugins
+			.map((plugin) => ({ id: plugin.id, manifest: uiOf(plugin) }))
+			.filter((entry) => entry.manifest !== undefined)
+	);
 
 	const pluginsGroupIsOpen = $derived(
 		page.url.pathname === resolve('/plugins') || page.url.pathname.startsWith('/plugins/')
@@ -122,21 +127,23 @@
 							{#each uiPlugins as plugin (plugin.id)}
 								<li>
 									<details
-										open={groupIsOpen(plugin.ui!.routes.map((r) => routeHref(plugin.id, r.path)))}
+										open={groupIsOpen(
+											plugin.manifest!.routes.map((r) => routeHref(plugin.id, r.path))
+										)}
 									>
 										<summary>
 											<span
 												class="grid h-4 w-4 shrink-0 place-items-center rounded font-mono text-[10px] font-semibold"
 												style="background:oklch(92% 0.04 {nameToHue(
-													plugin.ui!.name
-												)});color:oklch(40% 0.1 {nameToHue(plugin.ui!.name)})"
+													plugin.manifest!.name
+												)});color:oklch(40% 0.1 {nameToHue(plugin.manifest!.name)})"
 											>
-												{letterFromName(plugin.ui!.name)}
+												{letterFromName(plugin.manifest!.name)}
 											</span>
-											<span class="is-drawer-close:hidden">{plugin.ui!.name}</span>
+											<span class="is-drawer-close:hidden">{plugin.manifest!.name}</span>
 										</summary>
 										<ul>
-											{#each plugin.ui!.routes as route (route.path)}
+											{#each plugin.manifest!.routes as route (route.path)}
 												<li>
 													<a
 														href={resolve('/(dashboard)/plugins/[plugin]/[...path]', {

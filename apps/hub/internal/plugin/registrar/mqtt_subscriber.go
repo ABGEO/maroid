@@ -11,14 +11,18 @@ import (
 
 // MQTTSubscriberRegistrar is responsible for registering plugin MQTT subscribers.
 type MQTTSubscriberRegistrar struct {
-	registry *registry.MQTTSubscriberRegistry
+	registry     *registry.MQTTSubscriberRegistry
+	capabilities *registry.CapabilityRegistry
 }
 
 var _ Registrar = (*MQTTSubscriberRegistrar)(nil)
 
 // NewMQTTSubscriberRegistrar creates a new MQTTSubscriberRegistrar.
-func NewMQTTSubscriberRegistrar(reg *registry.MQTTSubscriberRegistry) *MQTTSubscriberRegistrar {
-	return &MQTTSubscriberRegistrar{registry: reg}
+func NewMQTTSubscriberRegistrar(
+	reg *registry.MQTTSubscriberRegistry,
+	capabilities *registry.CapabilityRegistry,
+) *MQTTSubscriberRegistrar {
+	return &MQTTSubscriberRegistrar{registry: reg, capabilities: capabilities}
 }
 
 // Name returns the name of the registrar.
@@ -53,6 +57,8 @@ func (r *MQTTSubscriberRegistrar) Register(plugin pluginapi.Plugin) error {
 		return fmt.Errorf("retrieving MQTT subscribers for plugin %s: %w", id, err)
 	}
 
+	items := make([]registry.MQTTSubscriber, 0, len(subscribers))
+
 	for _, sub := range subscribers {
 		meta := sub.Meta()
 
@@ -70,7 +76,11 @@ func (r *MQTTSubscriberRegistrar) Register(plugin pluginapi.Plugin) error {
 				err,
 			)
 		}
+
+		items = append(items, registry.MQTTSubscriber{ID: meta.ID, Topic: meta.Topic})
 	}
+
+	r.capabilities.Record(id, registry.CapMQTT, items)
 
 	return nil
 }

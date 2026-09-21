@@ -31,12 +31,13 @@ type PluginHandler interface {
 
 // Plugin represents the plugin handler.
 type Plugin struct {
-	logger         *slog.Logger
-	verifier       auth.TokenVerifier
-	resolver       auth.IdentityResolver
-	pluginRegistry *registry.PluginRegistry
-	uiRegistry     *registry.UIRegistry
-	settingsSvc    settings.Service
+	logger             *slog.Logger
+	verifier           auth.TokenVerifier
+	resolver           auth.IdentityResolver
+	pluginRegistry     *registry.PluginRegistry
+	uiRegistry         *registry.UIRegistry
+	capabilityRegistry *registry.CapabilityRegistry
+	settingsSvc settings.Service
 }
 
 var _ PluginHandler = (*Plugin)(nil)
@@ -48,6 +49,7 @@ func NewPlugin(
 	resolver auth.IdentityResolver,
 	pluginRegistry *registry.PluginRegistry,
 	uiRegistry *registry.UIRegistry,
+	capabilityRegistry *registry.CapabilityRegistry,
 	settingsSvc settings.Service,
 ) *Plugin {
 	return &Plugin{
@@ -55,11 +57,12 @@ func NewPlugin(
 			slog.String("component", "handler"),
 			slog.String("handler", "plugin"),
 		),
-		verifier:       verifier,
-		resolver:       resolver,
-		pluginRegistry: pluginRegistry,
-		uiRegistry:     uiRegistry,
-		settingsSvc:    settingsSvc,
+		verifier:           verifier,
+		resolver:           resolver,
+		pluginRegistry:     pluginRegistry,
+		uiRegistry:         uiRegistry,
+		capabilityRegistry: capabilityRegistry,
+		settingsSvc:        settingsSvc,
 	}
 }
 
@@ -88,7 +91,7 @@ func (h *Plugin) Register(router chi.Router) {
 func (h *Plugin) List(w http.ResponseWriter, r *http.Request) error {
 	// @todo: consider caching the data.
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, registry.PluginEntries(h.pluginRegistry, h.uiRegistry, h.settingsSvc))
+	render.JSON(w, r, registry.PluginEntries(h.pluginRegistry, h.capabilityRegistry))
 
 	return nil
 }

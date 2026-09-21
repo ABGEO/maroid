@@ -4,7 +4,7 @@ title: The hub as a Model Context Protocol server
 type: spec
 status: approved
 created: 2026-09-17
-updated: 2026-09-18
+updated: 2026-09-21
 approved_by: Temuri
 approved_on: 2026-09-18
 constrained_by: [SEC, OWN, API, ARC, PLG, LOG, GO, PKG, CFG]
@@ -395,6 +395,11 @@ its result as the structured content of the tool call.
 **Rationale:** The owner asked for the same shape `GET /plugins` gives. One
 function that both callers read is the only way two callers give the same
 answer without a second copy to keep in sync.
+
+`PCAP` later changed the members of that entry: the settings flag and the user
+interface manifest moved into a map of the capabilities. Both callers still read
+`registry.PluginEntries`, so `MCPHUB-FR-005` holds with no change here. See
+`PCAP-DD-006`.
 
 **Alternatives:** A second, MCP specific struct with the same fields.
 Compiles, reads fine on its own, and drifts the first time someone adds a

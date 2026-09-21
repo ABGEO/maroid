@@ -1,23 +1,16 @@
 package registry
 
-import (
-	"github.com/abgeo/maroid/apps/hub/internal/settings"
-	"github.com/abgeo/maroid/libs/pluginapi"
-)
-
 // PluginEntry is the report of one loaded plugin.
 type PluginEntry struct {
-	ID       string                `json:"id"`
-	Version  string                `json:"version"`
-	Settings bool                  `json:"settings"`
-	UI       *pluginapi.UIManifest `json:"ui,omitempty"`
+	ID           string             `json:"id"`
+	Version      string             `json:"version"`
+	Capabilities map[Capability]any `json:"capabilities"`
 }
 
 // PluginEntries reports every loaded plugin.
 func PluginEntries(
 	pluginRegistry *PluginRegistry,
-	uiRegistry *UIRegistry,
-	settingsSvc settings.Service,
+	capabilityRegistry *CapabilityRegistry,
 ) []PluginEntry {
 	plugins := pluginRegistry.All()
 	entries := make([]PluginEntry, 0, len(plugins))
@@ -26,17 +19,11 @@ func PluginEntries(
 		meta := plg.Meta()
 		id := meta.ID.String()
 
-		entry := PluginEntry{
-			ID:       id,
-			Version:  meta.Version,
-			Settings: settingsSvc.Declares(id),
-		}
-
-		if uiEntry, ok := uiRegistry.Get(id); ok {
-			entry.UI = uiEntry.Manifest
-		}
-
-		entries = append(entries, entry)
+		entries = append(entries, PluginEntry{
+			ID:           id,
+			Version:      meta.Version,
+			Capabilities: capabilityRegistry.Of(id),
+		})
 	}
 
 	return entries

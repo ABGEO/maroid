@@ -169,7 +169,13 @@ func (c *Container) buildHandlers() (map[string]handler.Handler, error) {
 		"auth": authHandler,
 		"ping": handler.NewPing(logger),
 		"plugin": handler.NewPlugin(
-			logger, verifier, identityResolver, c.PluginRegistry(), c.UIRegistry(), settingsSvc,
+			logger,
+			verifier,
+			identityResolver,
+			c.PluginRegistry(),
+			c.UIRegistry(),
+			c.CapabilityRegistry(),
+			settingsSvc,
 		),
 		"mcp": mcpHandler,
 	}, nil

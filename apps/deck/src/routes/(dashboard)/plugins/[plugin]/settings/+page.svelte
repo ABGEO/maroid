@@ -2,11 +2,12 @@
 	import type { PageProps } from './$types';
 	import SettingsForm from '$lib/components/settings/SettingsForm.svelte';
 	import { pluginState } from '$lib/state/plugins.svelte';
+	import { uiOf } from '$lib/plugins/capabilities';
 
 	let { data }: PageProps = $props();
 
 	const plugin = $derived(pluginState.plugins.find((p) => p.id === data.pluginId));
-	const name = $derived(plugin?.ui?.name ?? data.pluginId.split('.').pop() ?? data.pluginId);
+	const name = $derived(uiOf(plugin)?.name ?? data.pluginId.split('.').pop() ?? data.pluginId);
 </script>
 
 <div class="max-w-4xl">

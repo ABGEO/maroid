@@ -137,6 +137,7 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		c.UIRegistry(),
 		c.SettingsRegistry(),
 		registries.mcpTool,
+		c.CapabilityRegistry(),
 	), nil
 }
 

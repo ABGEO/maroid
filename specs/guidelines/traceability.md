@@ -214,7 +214,7 @@ title: The plugin model
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-21
 scope: [plugins/, apps/hub/internal/plugin/, libs/pluginapi/]
 related: [ARC, DAT, UI, BLD]
 ---
@@ -275,6 +275,7 @@ Add a row before you create the file or the directory.
 | `EXTID` | `features/extid/` | External identities and the delegated sign in. | Approved |
 | `THEMING` | `features/theming/` | The shared visual theme, and the identity provider's pages. | Approved |
 | `MCPHUB` | `features/mcphub/` | The hub as a Model Context Protocol server. | Approved |
+| `PCAP`  | `features/pcap/`  | The capabilities that a plugin declares.       | Approved |
 
 ## Retired identifiers
 

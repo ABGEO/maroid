@@ -69,6 +69,7 @@ type Resolver interface {
 	HandlerRegistry() (*handler.Registry, error)
 	MCPToolRegistry() (*registry.MCPToolRegistry, error)
 	UIRegistry() *registry.UIRegistry
+	CapabilityRegistry() *registry.CapabilityRegistry
 	Cron() *cron.Cron
 	NotifierRegistry() (*notifierregistry.SchemeRegistry, error)
 	NotifierDispatcher() (*dispatcher.ChannelDispatcher, error)
@@ -254,6 +255,11 @@ type Container struct {
 	uiRegistry struct {
 		once     sync.Once
 		instance *registry.UIRegistry
+	}
+
+	capabilityRegistry struct {
+		once     sync.Once
+		instance *registry.CapabilityRegistry
 	}
 
 	notifierRegistry struct {

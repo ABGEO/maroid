@@ -6,7 +6,6 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/settings"
 )
 
 const listPluginsName = "list_plugins"
@@ -21,21 +20,18 @@ type ListPluginsOutput struct {
 
 // listPlugins holds the registries that the report reads.
 type listPlugins struct {
-	pluginRegistry *registry.PluginRegistry
-	uiRegistry     *registry.UIRegistry
-	settingsSvc    settings.Service
+	pluginRegistry     *registry.PluginRegistry
+	capabilityRegistry *registry.CapabilityRegistry
 }
 
 // NewListPlugins builds the plugin list tool.
 func NewListPlugins(
 	pluginRegistry *registry.PluginRegistry,
-	uiRegistry *registry.UIRegistry,
-	settingsSvc settings.Service,
+	capabilityRegistry *registry.CapabilityRegistry,
 ) registry.MCPTool {
 	tool := &listPlugins{
-		pluginRegistry: pluginRegistry,
-		uiRegistry:     uiRegistry,
-		settingsSvc:    settingsSvc,
+		pluginRegistry:     pluginRegistry,
+		capabilityRegistry: capabilityRegistry,
 	}
 
 	return registry.MCPTool{
@@ -58,6 +54,6 @@ func (t *listPlugins) handle(
 	_ ListPluginsInput,
 ) (*mcp.CallToolResult, ListPluginsOutput, error) {
 	return nil, ListPluginsOutput{
-		Plugins: registry.PluginEntries(t.pluginRegistry, t.uiRegistry, t.settingsSvc),
+		Plugins: registry.PluginEntries(t.pluginRegistry, t.capabilityRegistry),
 	}, nil
 }

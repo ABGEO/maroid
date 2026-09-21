@@ -79,7 +79,8 @@ func TestTheRegistrarPutsEveryToolOfAPluginIntoTheRegistry(t *testing.T) {
 	t.Parallel()
 
 	toolRegistry := registry.NewMCPToolRegistry()
-	reg := registrar.NewMCPToolRegistrar(toolRegistry)
+	capabilities := registry.NewCapabilityRegistry()
+	reg := registrar.NewMCPToolRegistrar(toolRegistry, capabilities)
 
 	plugin := &toolPlugin{names: []string{getCodeName, "get_qr"}}
 
@@ -103,7 +104,10 @@ func TestTheRegistrarPutsEveryToolOfAPluginIntoTheRegistry(t *testing.T) {
 func TestTheRegistrarSkipsAPluginThatDeclaresNoTool(t *testing.T) {
 	t.Parallel()
 
-	reg := registrar.NewMCPToolRegistrar(registry.NewMCPToolRegistry())
+	reg := registrar.NewMCPToolRegistrar(
+		registry.NewMCPToolRegistry(),
+		registry.NewCapabilityRegistry(),
+	)
 
 	require.False(t, reg.Supports(&plainPlugin{}))
 }
@@ -114,7 +118,8 @@ func TestTheRegistrarRefusesTwoToolsOfOnePluginUnderOneName(t *testing.T) {
 	t.Parallel()
 
 	toolRegistry := registry.NewMCPToolRegistry()
-	reg := registrar.NewMCPToolRegistrar(toolRegistry)
+	capabilities := registry.NewCapabilityRegistry()
+	reg := registrar.NewMCPToolRegistrar(toolRegistry, capabilities)
 
 	err := reg.Register(&toolPlugin{names: []string{getCodeName, getCodeName}})
 

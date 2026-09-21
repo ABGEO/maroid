@@ -1,0 +1,197 @@
+openapi: 3.1.0
+
+info:
+  title: The capabilities that a plugin declares
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /plugins:
+    get:
+      operationId: listPlugins
+      summary: Report every loaded plugin and the capabilities it declares.
+      description: >
+        Realizes `PCAP-FR-001` and `PCAP-FR-004`. The plugin list tool of the
+        Model Context Protocol answers with the same entries. See
+        `MCPHUB-FR-005`.
+      responses:
+        "200":
+          description: One entry for each loaded plugin.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PluginEntry"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The token that the IdP mints for the web shell. `SEC-002`.
+
+  schemas:
+    PluginEntry:
+      type: object
+      required: [id, version, capabilities]
+      properties:
+        id:
+          type: string
+          description: The permanent name of the plugin. `GLO-plugin-id`.
+        version:
+          type: string
+        capabilities:
+          $ref: "#/components/schemas/Capabilities"
+
+    Capabilities:
+      type: object
+      description: >
+        Realizes `PCAP-INV-002`. A key is present when the hub loaded that
+        capability for the plugin, and absent otherwise. A capability that holds
+        no item carries `true`, so a client that tests the value reads every
+        present capability as true. `PCAP-FR-007`.
+      additionalProperties: false
+      properties:
+        settings:
+          const: true
+          description: The plugin declares a settings schema. The schema route serves the fields.
+        migrations:
+          const: true
+          description: The plugin ships migrations for its own schema.
+        ui:
+          $ref: "#/components/schemas/UIManifest"
+        api:
+          type: array
+          items:
+            $ref: "#/components/schemas/APIRoute"
+        cli:
+          type: array
+          items:
+            $ref: "#/components/schemas/CLICommand"
+        cron:
+          type: array
+          items:
+            $ref: "#/components/schemas/CronJob"
+        mqtt:
+          type: array
+          items:
+            $ref: "#/components/schemas/MQTTSubscriber"
+        telegramCommands:
+          type: array
+          items:
+            $ref: "#/components/schemas/TelegramCommand"
+        telegramConversations:
+          type: array
+          items:
+            $ref: "#/components/schemas/TelegramConversation"
+        mcpTools:
+          type: array
+          items:
+            $ref: "#/components/schemas/MCPTool"
+
+    UIManifest:
+      type: object
+      required: [name, routes]
+      properties:
+        name:
+          type: string
+        routes:
+          type: array
+          items:
+            type: object
+            required: [path, label]
+            properties:
+              path:
+                type: string
+              label:
+                type: string
+
+    APIRoute:
+      type: object
+      required: [method, path]
+      properties:
+        method:
+          type: string
+        path:
+          type: string
+          description: The path that a client calls, with the prefix that `API-004` gives it.
+
+    CLICommand:
+      type: object
+      required: [command]
+      properties:
+        command:
+          type: string
+
+    CronJob:
+      type: object
+      required: [id, schedule]
+      properties:
+        id:
+          type: string
+        schedule:
+          type: string
+
+    MQTTSubscriber:
+      type: object
+      required: [id, topic]
+      properties:
+        id:
+          type: string
+        topic:
+          type: string
+          description: The relative topic. `MQT-002` derives the effective one.
+
+    TelegramCommand:
+      type: object
+      required: [command, description]
+      properties:
+        command:
+          type: string
+          description: The command with the prefix of the plugin, as the bot answers it.
+        description:
+          type: string
+
+    TelegramConversation:
+      type: object
+      required: [id, entry]
+      properties:
+        id:
+          type: string
+        entry:
+          type: string
+
+    MCPTool:
+      type: object
+      required: [name, description]
+      properties:
+        name:
+          type: string
+          description: The tool name with the prefix of the plugin. `MCPHUB-FR-008`.
+        description:
+          type: string
+
+    Error:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+
+  responses:
+    Unauthorized:
+      description: The request carries no valid token, or the identity holds no active user record.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"

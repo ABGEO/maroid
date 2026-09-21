@@ -12,15 +12,20 @@ import (
 // MCPToolRegistrar is responsible for registering the Model Context Protocol
 // tools of a plugin.
 type MCPToolRegistrar struct {
-	registry *registry.MCPToolRegistry
+	registry     *registry.MCPToolRegistry
+	capabilities *registry.CapabilityRegistry
 }
 
 var _ Registrar = (*MCPToolRegistrar)(nil)
 
 // NewMCPToolRegistrar creates a new MCPToolRegistrar.
-func NewMCPToolRegistrar(reg *registry.MCPToolRegistry) *MCPToolRegistrar {
+func NewMCPToolRegistrar(
+	reg *registry.MCPToolRegistry,
+	capabilities *registry.CapabilityRegistry,
+) *MCPToolRegistrar {
 	return &MCPToolRegistrar{
-		registry: reg,
+		registry:     reg,
+		capabilities: capabilities,
 	}
 }
 
@@ -68,6 +73,16 @@ func (r *MCPToolRegistrar) Register(plugin pluginapi.Plugin) error {
 	if err = r.registry.Register(adapted...); err != nil {
 		return fmt.Errorf("registering the MCP tools for plugin %s: %w", id, err)
 	}
+
+	items := make([]registry.MCPToolItem, 0, len(adapted))
+	for index, entry := range adapted {
+		items = append(items, registry.MCPToolItem{
+			Name:        entry.Name,
+			Description: tools[index].Meta().Description,
+		})
+	}
+
+	r.capabilities.Record(id, registry.CapMCPTools, items)
 
 	return nil
 }

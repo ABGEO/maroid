@@ -4,13 +4,14 @@
 	import { api, type Plugin } from '$lib/api';
 	import { pluginState } from '$lib/state/plugins.svelte';
 	import { fieldsOf, missingFields } from '$lib/settings/schema';
+	import { capabilitiesOf, countOf, hasCapability, labelOf, uiOf } from '$lib/plugins/capabilities';
 
 	type Health = 'complete' | 'incomplete';
 
 	let health = $state<Record<string, Health>>({});
 
 	function displayName(plugin: Plugin): string {
-		return plugin.ui?.name ?? plugin.id.split('.').pop() ?? plugin.id;
+		return uiOf(plugin)?.name ?? plugin.id.split('.').pop() ?? plugin.id;
 	}
 
 	async function check(plugin: Plugin): Promise<void> {
@@ -32,7 +33,7 @@
 	}
 
 	$effect(() => {
-		for (const plugin of pluginState.plugins.filter((p) => p.settings)) {
+		for (const plugin of pluginState.plugins.filter((p) => hasCapability(p, 'settings'))) {
 			void check(plugin);
 		}
 	});
@@ -66,17 +67,23 @@
 						<div class="flex items-center gap-2">
 							<span class="text-[15px] font-semibold">{displayName(plugin)}</span>
 							<span class="badge badge-ghost badge-xs font-mono">v{plugin.version}</span>
-							{#if plugin.ui}
-								<span class="badge badge-soft badge-xs">UI</span>
-							{/if}
 							{#if health[plugin.id] === 'incomplete'}
 								<span class="badge badge-warning badge-xs">Needs attention</span>
 							{/if}
 						</div>
 						<div class="text-base-content/50 truncate font-mono text-[11px]">{plugin.id}</div>
+						{#if capabilitiesOf(plugin).length > 0}
+							<div class="mt-1.5 flex flex-wrap gap-1">
+								{#each capabilitiesOf(plugin) as name (name)}
+									<span class="badge badge-soft badge-xs">
+										{labelOf(name)}{countOf(plugin, name) > 0 ? `: ${countOf(plugin, name)}` : ''}
+									</span>
+								{/each}
+							</div>
+						{/if}
 					</div>
 
-					{#if plugin.settings}
+					{#if hasCapability(plugin, 'settings')}
 						<a
 							class="btn btn-ghost btn-sm"
 							href={resolve('/(dashboard)/plugins/[plugin]/settings', { plugin: plugin.id })}
