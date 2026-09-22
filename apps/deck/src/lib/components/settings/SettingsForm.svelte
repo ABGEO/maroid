@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Schema, UiSchemaRoot } from '@sjsf/form';
 
-	import { ApiError, api, type SettingsValues, type ValidationFailure } from '$lib/api';
+	import { ApiError, PROBLEM_TYPE, api, type SettingsValues } from '$lib/api';
 	import SchemaForm from '$lib/components/settings/SchemaForm.svelte';
 	import { toInput, uiSchemaFor } from '$lib/settings/form';
 	import { fieldsOf, missingFields, type SettingsField } from '$lib/settings/schema';
@@ -24,16 +24,10 @@
 	let revision = $state(0);
 	let child = $state<ReturnType<typeof SchemaForm>>();
 
-	function isValidationFailure(body: unknown): body is ValidationFailure {
-		return typeof body === 'object' && body !== null && 'fields' in body;
-	}
-
+	/** The detail names this occurrence, and the title names the type. */
 	function reasonOf(error: unknown, fallback: string): string {
-		if (error instanceof ApiError && typeof error.body === 'object' && error.body !== null) {
-			const reason = (error.body as { reason?: unknown }).reason;
-			if (typeof reason === 'string') {
-				return reason;
-			}
+		if (error instanceof ApiError && error.problem !== null) {
+			return error.problem.detail ?? error.problem.title;
 		}
 
 		return fallback;
@@ -58,7 +52,7 @@
 			revision += 1;
 			status = 'ready';
 		} catch (error) {
-			if (error instanceof ApiError && error.status === 404) {
+			if (error instanceof ApiError && error.is(PROBLEM_TYPE.settingsAbsent)) {
 				status = 'absent';
 
 				return;
@@ -79,9 +73,9 @@
 			await load(pluginId);
 			saved = true;
 		} catch (error) {
-			if (error instanceof ApiError && error.status === 422 && isValidationFailure(error.body)) {
-				child?.showFieldErrors(error.body.fields);
-				failure = error.body.reason;
+			if (error instanceof ApiError && error.is(PROBLEM_TYPE.settingsInvalid)) {
+				child?.showFieldErrors(error.fields);
+				failure = reasonOf(error, 'The settings do not match the schema.');
 			} else {
 				console.error('Failed to save the settings', error);
 				failure = reasonOf(error, 'The hub stored nothing. Try again.');

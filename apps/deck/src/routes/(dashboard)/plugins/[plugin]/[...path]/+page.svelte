@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 
 	import type { PluginHost } from '@maroid/plugin-sdk';
 
@@ -8,6 +9,13 @@
 	import { displayName, userState } from '$lib/state/user.svelte';
 
 	let { data }: PageProps = $props();
+
+	function pluginPath(path: string): string {
+		return resolve('/(dashboard)/plugins/[plugin]/[...path]', {
+			plugin: data.pluginId,
+			path: path.replace(/^\//, '')
+		});
+	}
 	let target: HTMLElement | undefined = $state();
 
 	const api = $derived(createPluginClient(data.pluginId));
@@ -21,9 +29,14 @@
 		get api() {
 			return api;
 		},
-		href: (path) => `/plugins/${data.pluginId}${path.startsWith('/') ? path : `/${path}`}`,
+		href: (path) => pluginPath(path),
 		navigate: (path) => {
-			void goto(host.href(path));
+			void goto(
+				resolve('/(dashboard)/plugins/[plugin]/[...path]', {
+					plugin: data.pluginId,
+					path: path.replace(/^\//, '')
+				})
+			);
 		}
 	};
 

@@ -126,9 +126,3 @@ export type SettingsValue = string | boolean;
 export type SettingsValues = Record<string, SettingsValue>;
 
 export type SettingsInput = Record<string, string | boolean | null>;
-
-/** The body that the hub answers with when a save does not match the schema. */
-export interface ValidationFailure {
-	reason: string;
-	fields: Record<string, string>;
-}

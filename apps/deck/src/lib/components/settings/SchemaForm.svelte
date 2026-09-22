@@ -12,6 +12,7 @@
 		type UiSchemaRoot,
 		type ValidationError
 	} from '@sjsf/form';
+
 	import { createFormValidator } from '@sjsf/cfworker-validator';
 	import { theme } from '@sjsf/daisyui5-theme';
 	import { createFormIdBuilder } from '@sjsf/form/id-builders/modern';
@@ -19,7 +20,8 @@
 	import { resolver } from '@sjsf/form/resolvers/basic';
 	import { translation } from '@sjsf/form/translations/en';
 
-	import type { SettingsValues } from '$lib/api';
+	import type { FieldFailure, SettingsValues } from '$lib/api';
+	import { pathOf } from '$lib/settings/pointer';
 
 	interface Props {
 		schema: Schema;
@@ -55,10 +57,10 @@
 	});
 
 	/** Puts the field messages of a rejected save on their own fields. */
-	export function showFieldErrors(fields: Record<string, string>): void {
-		const errors: ValidationError[] = Object.entries(fields).map(([key, message]) => ({
-			path: [key],
-			message
+	export function showFieldErrors(failures: FieldFailure[]): void {
+		const errors: ValidationError[] = failures.map((failure) => ({
+			path: pathOf(failure.pointer),
+			message: failure.detail
 		}));
 
 		updateErrors(form, errors);
