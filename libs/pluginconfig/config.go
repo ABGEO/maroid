@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	// configTag names a field of the installation configuration. See CFG-006.
+	// configTag names a field of the installation configuration.
 	configTag = "mapstructure"
-	// settingsTag names a field of the settings of one user. See PSET-FR-012.
+	// settingsTag names a field of the settings of one user.
 	settingsTag = "json"
 )
 

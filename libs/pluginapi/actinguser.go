@@ -12,7 +12,7 @@ func ContextWithActingUser(ctx context.Context, userID string) context.Context {
 
 // ActingUserFromContext returns the acting user of the context.
 // It returns the empty string when the context carries none, and
-// PluginDB.WithTx then reaches no scoped record. See OWN-006.
+// PluginDB.WithTx then reaches no scoped record.
 func ActingUserFromContext(ctx context.Context) string {
 	userID, _ := ctx.Value(actingUserKey{}).(string)
 

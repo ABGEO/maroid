@@ -6,6 +6,7 @@ use (
 	./libs/notifierapi
 	./libs/pluginapi
 	./libs/pluginconfig
+	./libs/problem
 	./plugins/gwp
 	./plugins/jasmine
 	./plugins/parking
