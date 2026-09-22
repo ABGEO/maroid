@@ -1,4 +1,5 @@
 import { ApiError } from './errors';
+import { PROBLEM_MEDIA_TYPE } from './problem';
 import type { ApiClient, ClientConfig, RequestOptions } from './types';
 
 function trimTrailingSlashes(value: string): string {
@@ -40,13 +41,18 @@ export function createClient(config: ClientConfig): ApiClient {
     return queryString ? `${url}?${queryString}` : url;
   }
 
+  function isJson(contentType: string): boolean {
+    const mediaType = contentType.split(';', 1)[0].trim().toLowerCase();
+
+    return mediaType === 'application/json' || mediaType.endsWith('+json');
+  }
+
   async function parseBody(response: Response): Promise<unknown> {
     if (response.status === 204) {
       return null;
     }
 
-    const contentType = response.headers.get('Content-Type') ?? '';
-    if (contentType.includes('application/json')) {
+    if (isJson(response.headers.get('Content-Type') ?? '')) {
       return response.json();
     }
 
@@ -58,7 +64,7 @@ export function createClient(config: ClientConfig): ApiClient {
   async function request<T>(url: string, init: RequestInit): Promise<T | null> {
     const headers = new Headers(init.headers);
     if (!headers.has('Accept')) {
-      headers.set('Accept', 'application/json');
+      headers.set('Accept', `application/json, ${PROBLEM_MEDIA_TYPE}`);
     }
 
     if (init.body !== undefined && !headers.has('Content-Type')) {
