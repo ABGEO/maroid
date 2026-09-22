@@ -235,7 +235,7 @@ func (m *Manager) merge(
 	}
 
 	if missing := missingFields(schema, fields); len(missing) > 0 {
-		return nil, &InvalidError{Fields: missing}
+		return nil, &InvalidError{Fields: sortedFailures(missing)}
 	}
 
 	return fields, nil
@@ -275,7 +275,7 @@ func missingFields(schema *Schema, fields model.Fields) map[string]string {
 
 	for key := range schema.Required {
 		if _, held := fields[key]; !held {
-			missing[key] = reasonRequired
+			missing[Pointer([]string{key})] = reasonRequired
 		}
 	}
 
@@ -390,7 +390,7 @@ func storedFields(entity *model.PluginSettings) model.Fields {
 	return entity.Fields
 }
 
-// maskOf reports a secret field to the person who stored it. See PSET-FR-005.
+// maskOf reports a secret field to the person who stored it.
 func maskOf(held bool) string {
 	if !held {
 		return ""
@@ -400,7 +400,7 @@ func maskOf(held bool) string {
 }
 
 // keepsSecret reports the value that a client read and sent back without a change.
-// It leaves the stored entry alone, exactly as an absent field does. See PSET-FR-006.
+// It leaves the stored entry alone, exactly as an absent field does.
 func keepsSecret(kind model.FieldKind, value any) bool {
 	return kind == model.FieldKindSecret && value == SecretMask
 }

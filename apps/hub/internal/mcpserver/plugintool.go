@@ -18,8 +18,8 @@ var errSettingsAbsent = errors.New("the acting user holds no complete settings f
 
 // NewPluginTool adapts one tool of a plugin to the registry of the hub.
 //
-// MCPHUB-FR-008: The name carries the plugin identifier, so two plugins never
-// collide. MCPHUB-FR-009: The description names the plugin that declares it.
+// The name carries the plugin identifier, so two plugins never collide, and the
+// description names the plugin that declares the tool.
 func NewPluginTool(
 	pluginID *pluginapi.PluginID,
 	tool pluginapi.MCPTool,

@@ -78,8 +78,8 @@ func (c *Transit) path(operation string, key Key) string {
 	return fmt.Sprintf("%s/%s/%s", c.mount, operation, key)
 }
 
-// readField reads one field of the answer. EXT-005 makes an answer with no data an
-// error, never an empty result.
+// readField reads one field of the answer. An answer with no data is an error,
+// never an empty result.
 func readField(answer *api.Secret, field string) (string, error) {
 	if answer == nil || answer.Data == nil {
 		return "", fmt.Errorf("%w: the answer holds no data", errs.ErrProtectionUnavailable)

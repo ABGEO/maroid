@@ -18,7 +18,7 @@ func probeSchema(t *testing.T) *settings.Schema {
 	return schema
 }
 
-func rejectedFields(t *testing.T, input map[string]any) map[string]string {
+func rejectedFields(t *testing.T, input map[string]any) []settings.FieldFailure {
 	t.Helper()
 
 	err := settings.Validate(probeSchema(t), input)
@@ -39,14 +39,21 @@ func TestValidateNamesTheFieldThatCausedTheRejection(t *testing.T) {
 		t.Parallel()
 
 		fields := rejectedFields(t, map[string]any{"nickname": "abgeo"})
-		require.Equal(t, map[string]string{"nickname": "the field is unknown"}, fields)
+		require.Equal(t, []settings.FieldFailure{
+			{Pointer: settings.Pointer([]string{"nickname"}), Detail: "the field is unknown"},
+		}, fields)
 	})
 
 	t.Run("a value outside the list", func(t *testing.T) {
 		t.Parallel()
 
 		fields := rejectedFields(t, map[string]any{keyPeriod: "week"})
-		require.Equal(t, map[string]string{keyPeriod: "the value is not in the list"}, fields)
+		require.Equal(t, []settings.FieldFailure{
+			{
+				Pointer: settings.Pointer([]string{keyPeriod}),
+				Detail:  "the value is not in the list",
+			},
+		}, fields)
 	})
 
 	t.Run("a value that is too long", func(t *testing.T) {
@@ -54,14 +61,21 @@ func TestValidateNamesTheFieldThatCausedTheRejection(t *testing.T) {
 
 		long := strings.Repeat("a", settings.MaxValueLength+1)
 		fields := rejectedFields(t, map[string]any{keyEmail: long})
-		require.Equal(t, map[string]string{keyEmail: "the value is too long"}, fields)
+		require.Equal(t, []settings.FieldFailure{
+			{Pointer: settings.Pointer([]string{keyEmail}), Detail: "the value is too long"},
+		}, fields)
 	})
 
 	t.Run("a value of the wrong type", func(t *testing.T) {
 		t.Parallel()
 
 		fields := rejectedFields(t, map[string]any{keyNotify: "yes"})
-		require.Equal(t, map[string]string{keyNotify: "the value has the wrong type"}, fields)
+		require.Equal(t, []settings.FieldFailure{
+			{
+				Pointer: settings.Pointer([]string{keyNotify}),
+				Detail:  "the value has the wrong type",
+			},
+		}, fields)
 	})
 }
 

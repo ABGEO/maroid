@@ -11,12 +11,11 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
+	"github.com/abgeo/maroid/libs/problem"
 )
-
-// reasonKey names the member that carries the reason of a failure. See API-006.
-const reasonKey = "reason"
 
 // PluginHandler represents the Plugin handler interface.
 type PluginHandler interface {
@@ -148,8 +147,7 @@ func (h *Plugin) SaveSettings(w http.ResponseWriter, r *http.Request) error {
 	var input map[string]any
 
 	if err := render.DecodeJSON(r.Body, &input); err != nil {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, map[string]string{reasonKey: "the body is not a JSON object"})
+		problem.Write(w, r, problem.NewBodyInvalid())
 
 		//nolint:nilerr // the handler answered the request, so Wrap must not log it.
 		return nil
@@ -164,25 +162,35 @@ func (h *Plugin) SaveSettings(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// failSettings answers with the status that the failure carries.
+// failSettings answers with the problem that the failure carries.
 func (h *Plugin) failSettings(w http.ResponseWriter, r *http.Request, err error) error {
 	var invalid *settings.InvalidError
 
 	switch {
 	case errors.Is(err, errs.ErrSettingsSchemaNotFound):
-		render.Status(r, http.StatusNotFound)
-		render.JSON(w, r, map[string]any{reasonKey: "the plugin declares no settings"})
+		problem.Write(w, r, problems.NewSettingsAbsent())
 	case errors.As(err, &invalid):
-		render.Status(r, http.StatusUnprocessableEntity)
-		render.JSON(w, r, map[string]any{
-			reasonKey: "the settings do not match the schema",
-			"fields":  invalid.Fields,
-		})
+		problem.Write(w, r, problems.NewSettingsInvalid().WithErrors(fieldFailures(invalid)...))
 	default:
+		// The body carries no cause, so this line is the one report of it.
 		h.logger.ErrorContext(r.Context(), "the settings request failed", slog.Any("error", err))
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, map[string]any{reasonKey: "the settings request failed"})
+
+		problem.Write(w, r, problem.NewInternal())
 	}
 
 	return nil
+}
+
+// fieldFailures turns the fields of a rejected save into the errors member.
+func fieldFailures(invalid *settings.InvalidError) []problem.FieldFailure {
+	failures := make([]problem.FieldFailure, 0, len(invalid.Fields))
+
+	for _, field := range invalid.Fields {
+		failures = append(failures, problem.FieldFailure{
+			Detail:  field.Detail,
+			Pointer: field.Pointer,
+		})
+	}
+
+	return failures
 }

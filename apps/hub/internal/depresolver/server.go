@@ -50,7 +50,14 @@ func (c *Container) HTTPRouter() (*chi.Mux, error) {
 	var err error
 
 	c.httpRouter.once.Do(func() {
-		c.httpRouter.instance = server.NewHTTPRouter(c.Config())
+		router, routerErr := server.NewHTTPRouter(c.Config(), c.Logger())
+		if routerErr != nil {
+			err = routerErr
+
+			return
+		}
+
+		c.httpRouter.instance = router
 
 		handlerRegistry, handlerRegistryErr := c.HandlerRegistry()
 		if handlerRegistryErr != nil {

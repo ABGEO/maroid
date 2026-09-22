@@ -3,61 +3,66 @@ package middleware
 import (
 	"fmt"
 	"log/slog"
-	"net"
 	"net/http"
+	"net/netip"
 
-	"github.com/go-chi/render"
+	"github.com/go-chi/chi/v5/middleware"
+
+	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
+	"github.com/abgeo/maroid/libs/problem"
 )
 
-// AllowedNetworks returns a Chi HTTP middleware that rejects requests
-// from IPs not contained in any of the given CIDR networks.
+// AllowedNetworks returns a middleware that refuses a caller outside every
+// given network.
 func AllowedNetworks(
 	logger *slog.Logger,
 	networks []string,
 ) (func(http.Handler) http.Handler, error) {
-	parsed := make([]*net.IPNet, 0, len(networks))
-
-	for _, cidr := range networks {
-		_, ipNet, err := net.ParseCIDR(cidr)
-		if err != nil {
-			return nil, fmt.Errorf("parsing CIDR %q: %w", cidr, err)
-		}
-
-		parsed = append(parsed, ipNet)
+	allowed, err := ParsePrefixes(networks)
+	if err != nil {
+		return nil, err
 	}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			host, _, err := net.SplitHostPort(r.RemoteAddr)
-			if err != nil {
-				host = r.RemoteAddr
-			}
-
-			ip := net.ParseIP(host)
-			if ip == nil {
-				logger.Warn("could not parse remote IP", slog.String("remote_addr", r.RemoteAddr))
-				renderError(w, r)
+			ip := middleware.GetClientIPAddr(r.Context())
+			if !ip.IsValid() {
+				logger.WarnContext(r.Context(), "the request carries no client address")
+				problem.Write(w, r, problems.NewNetworkNotAllowed())
 
 				return
 			}
 
-			for _, ipNet := range parsed {
-				if ipNet.Contains(ip) {
+			for _, network := range allowed {
+				if network.Contains(ip) {
 					next.ServeHTTP(w, r)
 
 					return
 				}
 			}
 
-			logger.Warn("request from disallowed network", slog.String("remote_ip", ip.String()))
-			renderError(w, r)
+			logger.WarnContext(
+				r.Context(),
+				"request from disallowed network",
+				slog.String("client.ip", ip.String()),
+			)
+			problem.Write(w, r, problems.NewNetworkNotAllowed())
 		})
 	}, nil
 }
 
-func renderError(w http.ResponseWriter, r *http.Request) {
-	render.Status(r, http.StatusForbidden)
-	render.JSON(w, r, map[string]any{
-		"message": "Forbidden",
-	})
+// ParsePrefixes reads each CIDR of the configuration.
+func ParsePrefixes(cidrs []string) ([]netip.Prefix, error) {
+	prefixes := make([]netip.Prefix, 0, len(cidrs))
+
+	for _, cidr := range cidrs {
+		prefix, err := netip.ParsePrefix(cidr)
+		if err != nil {
+			return nil, fmt.Errorf("parsing CIDR %q: %w", cidr, err)
+		}
+
+		prefixes = append(prefixes, prefix.Masked())
+	}
+
+	return prefixes, nil
 }

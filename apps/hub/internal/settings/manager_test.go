@@ -378,8 +378,9 @@ func TestSaveRejectsAnEmptyRequiredField(t *testing.T) {
 	var invalid *settings.InvalidError
 
 	require.ErrorAs(t, err, &invalid)
-	//nolint:gosec // G101: the value is the reason of a rejection, not a credential.
-	require.Equal(t, map[string]string{keyPassword: "the field is required"}, invalid.Fields)
+	require.Equal(t, []settings.FieldFailure{
+		{Pointer: settings.Pointer([]string{keyPassword}), Detail: "the field is required"},
+	}, invalid.Fields)
 	require.Equal(t, 0, world.rowCount(t, world.userA))
 }
 

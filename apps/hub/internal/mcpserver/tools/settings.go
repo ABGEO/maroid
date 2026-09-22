@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"maps"
-	"slices"
 	"strings"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
@@ -63,13 +61,13 @@ func (a *settingsAccess) failure(ctx context.Context, pluginID string, err error
 	}
 }
 
-// fieldReasons names each field that caused a rejection, with its reason. The
-// order does not change between two calls, so an agent reads one text.
-func fieldReasons(fields map[string]string) string {
+// fieldReasons names each field that caused a rejection, with its reason.
+// InvalidError.Fields holds one order, so two identical calls read one text.
+func fieldReasons(fields []settings.FieldFailure) string {
 	pairs := make([]string, 0, len(fields))
 
-	for _, key := range slices.Sorted(maps.Keys(fields)) {
-		pairs = append(pairs, key+": "+fields[key])
+	for _, failure := range fields {
+		pairs = append(pairs, failure.Pointer+": "+failure.Detail)
 	}
 
 	return strings.Join(pairs, ", ")

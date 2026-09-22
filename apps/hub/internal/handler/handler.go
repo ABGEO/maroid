@@ -23,16 +23,12 @@ func RegisterHandlers(router chi.Router, handlers ...Handler) {
 	}
 }
 
-// Wrap wraps a handler function with logging for errors.
+// Wrap turns a handler function into an http.HandlerFunc and logs the error that
+// the function returns.
 func Wrap(logger *slog.Logger, fn Fn) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		err := fn(w, r.WithContext(ctx))
-		if err != nil {
-			logger.ErrorContext(ctx, "handler errored", slog.Any("error", err))
-
-			return
+		if err := fn(w, r); err != nil {
+			logger.ErrorContext(r.Context(), "handler errored", slog.Any("error", err))
 		}
 	}
 }

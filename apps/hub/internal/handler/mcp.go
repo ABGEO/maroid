@@ -17,6 +17,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/libs/problem"
 )
 
 const (
@@ -94,17 +95,19 @@ func (h *MCP) Register(router chi.Router) {
 		},
 	)
 
-	router.Handle(mcpPath, jsonErrors(
+	router.Handle(mcpPath, problemErrors(
 		mcpauth.RequireBearerToken(h.verifier, h.tokenOptions)(transport),
 	))
 }
 
-// jsonErrors answers a plain text failure as the JSON body.
+// problemErrors answers a plain text failure of the transport as a problem.
 // The bearer token middleware of the SDK and the transport behind it both write
 // text/plain for a failure, and the transport writes its own JSON for a result.
-func jsonErrors(next http.Handler) http.Handler {
+// A JSON-RPC error inside a tool call is not a failure of the transport, so it
+// passes through. See section 4.5 of the MCPHUB specification.
+func problemErrors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		writer := &jsonErrorWriter{ResponseWriter: w}
+		writer := &problemWriter{ResponseWriter: w, request: r}
 
 		next.ServeHTTP(writer, r)
 
@@ -112,34 +115,37 @@ func jsonErrors(next http.Handler) http.Handler {
 	})
 }
 
-// jsonErrorWriter holds back a plain text failure and rewrites it. It passes a
+// problemWriter holds back a plain text failure and rewrites it. It passes a
 // result through untouched.
-type jsonErrorWriter struct {
+type problemWriter struct {
 	http.ResponseWriter
 
+	request   *http.Request
 	rewriting bool
+	status    int
 	reason    bytes.Buffer
 }
 
 // Unwrap gives http.ResponseController the writer behind this one, so the flush
 // of the transport still reaches the connection.
-func (w *jsonErrorWriter) Unwrap() http.ResponseWriter {
+func (w *problemWriter) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
 }
 
-func (w *jsonErrorWriter) WriteHeader(status int) {
+func (w *problemWriter) WriteHeader(status int) {
 	contentType := w.Header().Get("Content-Type")
 
 	if status >= http.StatusBadRequest && !strings.HasPrefix(contentType, mediaTypeJSON) {
 		w.rewriting = true
+		w.status = status
 
-		w.Header().Set("Content-Type", mediaTypeJSON)
+		w.Header().Set("Content-Type", problem.MediaType)
 	}
 
 	w.ResponseWriter.WriteHeader(status)
 }
 
-func (w *jsonErrorWriter) Write(chunk []byte) (int, error) {
+func (w *problemWriter) Write(chunk []byte) (int, error) {
 	if !w.rewriting {
 		//nolint:wrapcheck // The caller is net/http, which reads the error of the writer.
 		return w.ResponseWriter.Write(chunk)
@@ -149,16 +155,31 @@ func (w *jsonErrorWriter) Write(chunk []byte) (int, error) {
 	return w.reason.Write(chunk)
 }
 
-// flush writes the held back reason. A caller runs it once, after the handler.
-func (w *jsonErrorWriter) flush() {
+// flush writes the held back problem. A caller runs it once, after the handler.
+// The reason that the SDK wrote reaches no body, because the text of an error
+// belongs in the log.
+func (w *problemWriter) flush() {
 	if !w.rewriting {
 		return
 	}
 
-	body, err := json.Marshal(map[string]string{reasonKey: strings.TrimSpace(w.reason.String())})
+	body, err := json.Marshal(problem.Fill(w.request, transportProblem(w.status)))
 	if err != nil {
 		return
 	}
 
 	_, _ = w.ResponseWriter.Write(body)
+}
+
+// transportProblem names the failure of one status. Section 4.5 of the MCPHUB
+// specification gives the two that the transport answers.
+func transportProblem(status int) problem.Problem {
+	switch status {
+	case http.StatusUnauthorized:
+		return problem.NewAccessDenied()
+	case http.StatusMethodNotAllowed:
+		return problem.NewMethodNotAllowed()
+	default:
+		return problem.NewInternal().WithStatus(status)
+	}
 }

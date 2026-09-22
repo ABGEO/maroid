@@ -363,9 +363,9 @@ func TestSaveNamesEachFieldThatCausedTheRejection(t *testing.T) {
 	t.Parallel()
 
 	service := &stubSettings{
-		failure: &settings.InvalidError{Fields: map[string]string{
-			keyEmail: "the field is required",
-			"colour": "the field is unknown",
+		failure: &settings.InvalidError{Fields: []settings.FieldFailure{
+			{Pointer: settings.Pointer([]string{keyEmail}), Detail: "the field is required"},
+			{Pointer: settings.Pointer([]string{"colour"}), Detail: "the field is unknown"},
 		}},
 	}
 
@@ -377,8 +377,8 @@ func TestSaveNamesEachFieldThatCausedTheRejection(t *testing.T) {
 	)
 
 	text := failureText(t, result)
-	require.Contains(t, text, keyEmail+": the field is required")
-	require.Contains(t, text, "colour: the field is unknown")
+	require.Contains(t, text, "#/"+keyEmail+": the field is required")
+	require.Contains(t, text, "#/colour: the field is unknown")
 }
 
 // MCPHUB-SC-024: A call that carries a credential reaches no log line and no

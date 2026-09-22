@@ -31,8 +31,8 @@ type UserRepository interface {
 // User is a SQL based implementation of UserRepository.
 //
 // It holds the pool and not a transaction, because each operation is one
-// statement on the request path. `REP-003` binds the repository of a plugin,
-// which reaches its data through the search path that PluginDB sets.
+// statement on the request path. The repository of a plugin binds a transaction
+// instead, because it reaches its data through the search path that PluginDB sets.
 type User struct {
 	db *sqlx.DB
 }
@@ -46,8 +46,8 @@ func NewUser(db *sqlx.DB) *User {
 
 // GetActiveByID retrieves the active user record with the given identifier.
 //
-// IDENT-FR-002: A person that holds no active record reaches nothing, so a
-// blocked record answers the same way as a record that does not exist.
+// A person that holds no active record reaches nothing, so a blocked record
+// answers the same way as a record that does not exist.
 func (r *User) GetActiveByID(ctx context.Context, id string) (*model.User, error) {
 	query := `SELECT ` + userColumns + ` FROM public.users WHERE id = $1 AND status = $2;`
 

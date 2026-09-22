@@ -7,10 +7,9 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/go-chi/render"
-
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/problem"
 )
 
 var (
@@ -111,8 +110,7 @@ func resolve(
 }
 
 func sendAccessDeniedResponse(w http.ResponseWriter, r *http.Request) {
-	render.Status(r, http.StatusUnauthorized)
-	render.JSON(w, r, map[string]string{"error": "access denied"})
+	problem.Write(w, r, problem.NewAccessDenied())
 }
 
 // TokenFromContext retrieves the access token from the context.

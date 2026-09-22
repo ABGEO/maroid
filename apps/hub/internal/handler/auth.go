@@ -16,12 +16,11 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/libs/problem"
 )
-
-// errorKey names the reason in a JSON failure.
-const errorKey = "error"
 
 // The reasons that the hub reports at the target of a flow. Section 4.5 of the
 // specification gives each one, and the deck renders a message for each.
@@ -300,13 +299,9 @@ func (h *Auth) Detach(w http.ResponseWriter, r *http.Request) error {
 	case err == nil:
 		render.NoContent(w, r)
 	case errors.Is(err, errs.ErrLastIdentity):
-		render.Status(r, http.StatusConflict)
-		render.JSON(w, r, map[string]string{
-			errorKey: "the last external account cannot be detached",
-		})
+		problem.Write(w, r, problems.NewIdentityLast())
 	case errors.Is(err, errs.ErrIdentityNotFound):
-		render.Status(r, http.StatusNotFound)
-		render.JSON(w, r, map[string]string{errorKey: "not found"})
+		problem.Write(w, r, problem.NewNotFound())
 	default:
 		return fmt.Errorf("detaching the external account: %w", err)
 	}
@@ -356,7 +351,7 @@ type logoutResponse struct {
 
 // Logout ends the session of the person at Maroid.
 //
-// WEBSESS-FR-006: The route runs behind no access check, so a second call answers
+// The route runs behind no access check, so a second call answers
 // as the first one did. The session at the IdP survives, so a sign in that follows
 // needs no question from that service.
 func (h *Auth) Logout(w http.ResponseWriter, r *http.Request) error {
@@ -563,10 +558,10 @@ func redirectWithReason(w http.ResponseWriter, r *http.Request, target string, r
 	http.Redirect(w, r, redirectURL.String(), http.StatusFound)
 }
 
-// sendBadRequest answers with the JSON body of a bad request failure.
-func sendBadRequest(w http.ResponseWriter, r *http.Request, reason string) {
-	render.Status(r, http.StatusBadRequest)
-	render.JSON(w, r, map[string]string{errorKey: reason})
+// sendBadRequest answers with the problem of a request that a route cannot read.
+// The detail names the parameter and nothing of the request.
+func sendBadRequest(w http.ResponseWriter, r *http.Request, detail string) {
+	problem.Write(w, r, problem.NewRequestInvalid().WithDetail(detail))
 }
 
 func validateRedirect(redirect string, allowed []string) bool {

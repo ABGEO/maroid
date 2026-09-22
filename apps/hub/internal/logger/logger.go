@@ -20,7 +20,7 @@ func New(cfg *config.Config) (*slog.Logger, error) {
 
 	handler := getDefaultHandler(level, cfg.Logger.Format, cfg.Env)
 
-	return slog.New(handler), nil
+	return slog.New(WithRequest(handler)), nil
 }
 
 func parseLogLevel(rawLevel string) (slog.Level, error) {

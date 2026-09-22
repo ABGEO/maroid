@@ -209,7 +209,7 @@ func copyClaims(claims jwt.MapClaims) jwt.MapClaims {
 //
 // The access token is a signed token of the same shape as the identity token,
 // the way Dex mints it, and the identity token carries the at_hash that binds the
-// two. WEBSESS-DD-003 reads that claim.
+// two. The hub reads that claim.
 func (d *Provider) tokenHandler(key *rsa.PrivateKey) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		d.mu.Lock()

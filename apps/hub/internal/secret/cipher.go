@@ -3,7 +3,7 @@ package secret
 import "context"
 
 // UserKeyPrefix starts the name of the key that protects one user.
-// The owner creates each key under this prefix. See PSET-DD-004.
+// The owner creates each key under this prefix.
 const UserKeyPrefix = "maroid-user-"
 
 // Key names a key that a Cipher uses.
