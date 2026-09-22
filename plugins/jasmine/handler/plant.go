@@ -12,6 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/problem"
 	"github.com/abgeo/maroid/plugins/jasmine/dto"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 	"github.com/abgeo/maroid/plugins/jasmine/repository"
@@ -55,9 +56,8 @@ func (h *PlantHandler) List(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		h.logger.Error("failed to list plants", slog.Any("error", err))
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, dto.NewErrorResponse(dto.MessageInternalError))
+		h.logger.ErrorContext(r.Context(), "failed to list plants", slog.Any("error", err))
+		problem.Write(w, r, problem.NewInternal())
 
 		return
 	}
@@ -79,9 +79,8 @@ func (h *PlantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		h.logger.Error("failed to get plant", slog.Any("error", err))
-		render.Status(r, http.StatusNotFound)
-		render.JSON(w, r, dto.NewErrorResponse(dto.MessageNotFound))
+		h.logger.ErrorContext(r.Context(), "failed to get plant", slog.Any("error", err))
+		problem.Write(w, r, problem.NewNotFound())
 
 		return
 	}
@@ -94,8 +93,7 @@ func (h *PlantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.PlantRequest
 	if err := render.Bind(r, &req); err != nil {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, dto.NewRequestErrorResponse(err))
+		problem.Write(w, r, requestProblem(err))
 
 		return
 	}
@@ -116,9 +114,8 @@ func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		h.logger.Error("failed to create plant", slog.Any("error", err))
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, dto.NewErrorResponse(dto.MessageInternalError))
+		h.logger.ErrorContext(r.Context(), "failed to create plant", slog.Any("error", err))
+		problem.Write(w, r, problem.NewInternal())
 
 		return
 	}
@@ -133,8 +130,7 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.PlantRequest
 	if err := render.Bind(r, &req); err != nil {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, dto.NewRequestErrorResponse(err))
+		problem.Write(w, r, requestProblem(err))
 
 		return
 	}
@@ -163,9 +159,8 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		h.logger.Error("failed to update plant", slog.Any("error", err))
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, dto.NewErrorResponse(dto.MessageInternalError))
+		h.logger.ErrorContext(r.Context(), "failed to update plant", slog.Any("error", err))
+		problem.Write(w, r, problem.NewInternal())
 
 		return
 	}
@@ -187,9 +182,8 @@ func (h *PlantHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		h.logger.Error("failed to delete plant", slog.Any("error", err))
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, dto.NewErrorResponse(dto.MessageInternalError))
+		h.logger.ErrorContext(r.Context(), "failed to delete plant", slog.Any("error", err))
+		problem.Write(w, r, problem.NewInternal())
 
 		return
 	}

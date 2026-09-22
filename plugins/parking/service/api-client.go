@@ -282,7 +282,7 @@ func (s *APIClient) GetPerson(
 }
 
 // authorized builds a request that carries the credential of the acting user, and
-// returns the settings that produced it. See PSET-FR-012.
+// returns the settings that produced it.
 // It fails with pluginapi.ErrSettingsAbsent when the acting user stored no credential.
 func (s *APIClient) authorized(
 	ctx context.Context,
