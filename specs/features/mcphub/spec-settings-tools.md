@@ -4,7 +4,7 @@ title: The settings tools of the hub
 type: spec
 status: approved
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-09-22
 approved_by: Temuri
 approved_on: 2026-09-21
 constrained_by: [SEC, OWN, LOG, ARC, PLG, GO, TST]
@@ -201,11 +201,11 @@ sequenceDiagram
 | ----------------------------------------------- | -------------------------------------------------------------------- |
 | The plugin declares no settings schema          | "the plugin `<id>` declares no settings"                            |
 | The input changes a secret field                | "a secret field changes in the deck only: `<keys>`. Fill it at `<path>`" |
-| A value does not match the settings schema      | "the settings do not match the schema: `<key>`: `<reason>`", one pair for each field |
+| A value does not match the settings schema      | "the settings do not match the schema: `<pointer>`: `<detail>`", one pair for each field |
 | Anything else                                   | "the settings request failed"                                       |
 
-Each text names a field and never a value. The tool sorts the keys, so two
-identical calls read one text.
+Each text names a field and never a value. `InvalidError.Fields` holds one order,
+so two identical calls read one text.
 
 ## 5. Design decisions
 
@@ -287,7 +287,8 @@ and every agent that reports the new state then calls the read tool.
 
 **Decision:** `settingsAccess.failure` maps each failure of the service to the
 text of section 4.5. It names each field of a `*settings.InvalidError` with its
-reason, sorted by key, and it answers anything else with one fixed text.
+reason, in the order that `InvalidError.Fields` holds, and it answers anything else
+with one fixed text.
 
 **Rationale:** `InvalidError.Error()` names the fields and no reason, and an
 agent that reads "the field is required" corrects the call without a question to

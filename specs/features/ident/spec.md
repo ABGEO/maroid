@@ -4,10 +4,10 @@ title: The user record and the ownership of a row
 type: spec
 status: approved
 created: 2026-09-12
-updated: 2026-09-17
+updated: 2026-09-22
 approved_by: Temuri
 approved_on: 2026-09-12
-constrained_by: [OWN, DAT, SEC, TG, JOB, REP, PLG, API, CFG, PKG, TST]
+constrained_by: [OWN, DAT, SEC, TG, JOB, REP, PLG, API, ERR, CFG, PKG, TST]
 requirements: features/ident/requirements.md
 ---
 
@@ -289,15 +289,15 @@ The cron run of a job that declares `CronScopePerUser`:
 
 ### 4.5 Errors
 
-| Condition                                              | Behavior                                          | Message                            |
+| Condition                                              | Answer                                            | Type or message                    |
 | ------------------------------------------------------ | ------------------------------------------------- | ---------------------------------- |
-| The request carries no token                           | Status 401                                        | `access denied`                    |
-| The token carries no `federated_claims` claim          | Status 401, one error line in the log             | `access denied`                    |
-| No identity names an active record                     | Status 401, one info line in the log              | `access denied`                    |
-| The login finds no identity for the external account   | Redirect with `error=auth_failed`. `EXTID-FR-002` gives the distinct reason. | `user is not allowed` |
+| The request carries no token                           | Status 401                                        | `access-denied`                    |
+| The token carries no `federated_claims` claim          | Status 401, one error line in the log             | `access-denied`                    |
+| No identity names an active record                     | Status 401, one info line in the log              | `access-denied`                    |
+| The login finds no identity for the external account   | Redirect. `EXTID-FR-002` gives the distinct reason | `error=auth_failed`               |
 | The update sender holds no active record               | The update is dropped, one warning in the log     | `sender holds no active user record` |
-| A read names a row of another user                     | The row does not reach the handler. The handler answers as it answers a missing row: status 404. Realizes `IDENT-FR-006`. | `not found`  |
-| A write names a row of another user                    | The policy refuses it. `UPDATE` and `DELETE` change no row, and `INSERT` fails with `new row violates row-level security policy`. | The plugin answers 404. |
+| A read names a row of another user                     | The row does not reach the handler. The handler answers as it answers a missing row: status 404. Realizes `IDENT-FR-006`. | `not-found` |
+| A write names a row of another user                    | The policy refuses it. `UPDATE` and `DELETE` change no row, and `INSERT` fails with `new row violates row-level security policy`. | The plugin answers 404, `not-found` |
 | A transaction carries no acting user                   | `app.user_id` is set to the empty string. Every scoped table returns no row, and a write fails. The work on a shared table continues. | None |
 | One user of a per-user cron run fails                  | One error line, and the run continues with the next user | `cron job execution failed`  |
 

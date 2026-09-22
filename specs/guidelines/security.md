@@ -81,6 +81,9 @@ in its bundle. Every request for data still passes `SEC-004`.
 The Telegram webhook accepts a request only from a network that
 `telegram.webhook.allowed_networks` holds. Other requests get status 403.
 
+`SEC-009` gives the address that this rule reads. A request that carries none is
+refused, because the guard fails closed.
+
 ## SEC-008
 
 Every cookie that the hub sets carries these attributes:
@@ -98,6 +101,31 @@ The name of a cookie is a constant in the code. The configuration does not hold 
 **Why:** The hub and the deck answer at two hosts of one domain. Without the
 prefix a sibling host writes a cookie that the hub reads. A name that no
 deployment changes needs no check at the start.
+
+## SEC-009
+
+The hub resolves the address of a caller with a `ClientIPFrom` middleware of chi,
+which puts it in the context. Code reads it with `middleware.GetClientIPAddr`,
+and never from `RemoteAddr` or from a header of its own.
+
+| `server.trusted_proxies` | Middleware                  | Reads                                     |
+| -------------------------- | ----------------------------- | ------------------------------------------- |
+| Empty, the default       | `ClientIPFromRemoteAddr`    | The peer of the connection.               |
+| One or more CIDR         | `ClientIPFromXFF`           | `X-Forwarded-For`, from the right, past every address that a trusted network holds. |
+
+`RealIP` of chi is deprecated and does not serve this rule. It rewrites
+`RemoteAddr` from `X-Forwarded-For`, `X-Real-IP` or `True-Client-IP` sent by any
+peer, so a caller chooses the address that a guard then reads.
+
+A guard fails closed. `SEC-007` refuses a request that carries no resolved address.
+
+A deployment behind a proxy sets the key, or the allowlist of the webhook reads the
+address of the proxy and refuses every update. `chart/values.yaml` carries it.
+
+**Why:** The allowlist of the webhook is an access decision, and a header that any
+caller can set is no guard at all. The middleware of chi also folds a v4 mapped
+IPv6 address, strips a zone, and merges a repeated header, so no second spelling
+of a trusted address walks past the check.
 
 ## Retired identifiers
 

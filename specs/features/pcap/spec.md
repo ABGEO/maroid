@@ -4,10 +4,10 @@ title: The capabilities that a plugin declares
 type: spec
 status: approved
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-09-22
 approved_by: Temuri
 approved_on: 2026-09-21
-constrained_by: [PLG, ARC, API, UI, TS, PKG, GO, DEP]
+constrained_by: [PLG, ARC, API, ERR, UI, TS, PKG, GO, DEP]
 requirements: features/pcap/requirements.md
 ---
 

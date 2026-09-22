@@ -4,10 +4,10 @@ title: The session of a person at the web shell
 type: spec
 status: approved
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-09-22
 approved_by: Temuri
 approved_on: 2026-09-21
-constrained_by: [SEC, API, UI, CFG, GO, TS, TST]
+constrained_by: [SEC, API, ERR, UI, CFG, GO, TS, TST]
 requirements: features/websess/requirements.md
 ---
 
@@ -149,15 +149,20 @@ that names no target takes `auth.deck_url`.
 
 ### 4.6 Errors
 
-| Condition                                     | Behavior         | Message                                  |
-| --------------------------------------------- | ---------------- | ------------------------------------------ |
-| The request carries no session cookie         | 401              | `access denied`                          |
-| The token fails the verification              | 401              | `access denied`                          |
-| The token carries no federated claims         | 401              | `access denied`                          |
-| No active user record holds the identity      | 401              | `access denied`                          |
-| The sign out names a target outside the list  | 400              | `missing or invalid redirect parameter`  |
-| The sign out carries a dead cookie or none    | 200              | The target                               |
-| A cookie name lacks the prefix at the start   | The hub stops    | The name that failed                     |
+| Condition                                     | Status | Type              | Detail                              |
+| --------------------------------------------- | ------ | ------------------- | ------------------------------------- |
+| The request carries no session cookie         | 401    | `access-denied`   | None                                |
+| The token fails the verification              | 401    | `access-denied`   | None                                |
+| The token carries no federated claims         | 401    | `access-denied`   | None                                |
+| No active user record holds the identity      | 401    | `access-denied`   | None                                |
+| The sign out names a target outside the list  | 400    | `request-invalid` | The redirect parameter is absent or not allowed |
+| The sign out carries a dead cookie or none    | 200    | None              | The target. `WEBSESS-FR-006`        |
+
+The four conditions of a 401 answer with one type and one title, so a caller learns
+nothing about which account exists. `ERR-001` gives the shape.
+
+A cookie name that lacks the prefix stops the hub at the start. The log names the
+cookie, and no request reaches a body.
 
 ## 5. Design decisions
 

@@ -300,13 +300,24 @@ components:
           name: ABGEO.cloud
           attached: false
 
-    Error:
+    Problem:
       type: object
-      required: [reason]
+      description: A problem detail document. See `ERR-001` and RFC 9457.
+      required: [type, title, status]
       properties:
-        reason:
+        type:
           type: string
-          description: The reason for the failure. See `API-006`.
+          format: uri
+          description: The problem type. `ERR-002` gives the grammar, `ERR-003` the registry.
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
 
   responses:
     ToProvider:
@@ -320,42 +331,49 @@ components:
       description: >
         A parameter is absent, the target is not in `auth.allowed_redirects`, or the
         state names no flow row.
+        The type is `urn:maroid:problem:http:request-invalid`.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"
 
     Unauthorized:
-      description: The request carries no token, or no identity names an active record.
+      description: >
+        The request carries no token, or no identity names an active record.
+        The type is `urn:maroid:problem:http:access-denied`.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"
 
     NoTarget:
       description: >
         The target of the redemption is absent, or `auth.allowed_redirects` does not
         hold it. No target exists to report the failure at, so this answers in the
         body. Every other failure of this route redirects. See `EXTID-DD-015`.
+        The type is `urn:maroid:problem:http:request-invalid`.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"
 
     NoIdentity:
-      description: No identity of the acting user names that provider.
+      description: >
+        No identity of the acting user names that provider.
+        The type is `urn:maroid:problem:http:not-found`.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"
 
     LastIdentity:
       description: >
         The identity is the last one of the record. `EXTID-INV-002` keeps it.
+        The type is `urn:maroid:problem:hub:identity-last`.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"
 
 security:
   - sessionCookie: []

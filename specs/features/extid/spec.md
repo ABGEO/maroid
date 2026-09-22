@@ -4,10 +4,10 @@ title: External identities and the delegated sign in
 type: spec
 status: approved
 created: 2026-09-15
-updated: 2026-09-18
+updated: 2026-09-22
 approved_by: Temuri
 approved_on: 2026-09-16
-constrained_by: [OWN, SEC, API, TG, CLI, DAT, REP, PKG, CFG, GO, TST, LOG]
+constrained_by: [OWN, SEC, API, ERR, TG, CLI, DAT, REP, PKG, CFG, GO, TST, LOG]
 requirements: features/extid/requirements.md
 ---
 
@@ -421,24 +421,36 @@ gives the resolver that both callers hold.
 
 ### 4.5 Errors
 
-| Condition                                              | Behavior                                                      | Message                        |
+A failure that answers a status answers with a problem. `ERR-001` gives the shape.
+A failure that redirects carries its reason in the `error` parameter of the target,
+because the person reads the page of the deck and not a body.
+
+| Condition                                              | Answer                                                          | Type or parameter              |
 | ------------------------------------------------------ | --------------------------------------------------------------- | ------------------------------- |
-| The token is absent, or it fails the verification      | Status 401                                                      | `access denied`                |
-| The token carries no `federated_claims`                | Status 401, one error line in the log. The request asked for the wrong scopes | `access denied` |
-| No identity names the external account, at a request   | Status 401, one info line in the log                            | `access denied`                |
-| No identity names the external account, at a sign in   | Redirect with `error=no_identity`. `EXTID-FR-002` demands the distinct reason | `no identity for the external account` |
-| The identity names a record that is not active         | Redirect with `error=access_denied`                             | `user is not allowed`          |
-| The state names no flow row, or the row is consumed    | Status 400                                                      | `invalid state`                |
-| The browser carries no matching binding cookie         | Status 400. The row is spent, and the person starts again       | `invalid state`                |
-| The flow row expired                                   | Redirect with `error=auth_failed`                               | `the authorization flow expired` |
-| The attach finds the account on another record         | Redirect with `error=identity_taken`. Both records stay unchanged | `the external account belongs to another user` |
+| The token is absent, or it fails the verification      | Status 401                                                      | `access-denied`                |
+| The token carries no `federated_claims`                | Status 401, one error line in the log. The request asked for the wrong scopes | `access-denied`   |
+| No identity names the external account, at a request   | Status 401, one info line in the log                            | `access-denied`                |
+| No identity names the external account, at a sign in   | Redirect. `EXTID-FR-002` demands the distinct reason            | `error=no_identity`            |
+| The identity names a record that is not active         | Redirect                                                        | `error=access_denied`          |
+| The state names no flow row, or the row is consumed    | Status 400                                                      | `request-invalid`              |
+| The browser carries no matching binding cookie         | Status 400. The row is spent, and the person starts again       | `request-invalid`              |
+| The flow row expired                                   | Redirect                                                        | `error=auth_failed`            |
+| The attach finds the account on another record         | Redirect. Both records stay unchanged                           | `error=identity_taken`         |
 | The attach finds the account on the same record        | Redirect with no error. Nothing changes                         | None                           |
-| The detach names the last identity                     | Status 409                                                      | `the last external account cannot be detached` |
-| The detach names a provider with no identity           | Status 404                                                      | `not found`                    |
-| The invitation is absent, consumed, or expired         | Redirect to the target with `error=invitation_invalid`. The deck renders it | `the invitation is not valid` |
-| The target of the redemption is absent or not allowed  | Status 400. No target exists to report the failure at           | `missing or invalid redirect parameter` |
-| `maroid user invite` gets `--user` with a name flag    | The command returns an error before it writes                   | `--user excludes --first-name and --last-name` |
-| `maroid user invite` gets `--user` with no record      | The command returns an error                                    | `no user record holds that identifier` |
+| The detach names the last identity                     | Status 409                                                      | `identity-last`                |
+| The detach names a provider with no identity           | Status 404                                                      | `not-found`                    |
+| The invitation is absent, consumed, or expired         | Redirect to the target. The deck renders it                     | `error=invitation_invalid`     |
+| The target of the redemption is absent or not allowed  | Status 400. No target exists to report the failure at. `EXTID-DD-015` | `request-invalid`        |
+
+Every 401 answers with one type and one title, so a caller learns nothing about which
+account exists.
+
+The command line answers a person and writes no problem:
+
+| Condition                                           | Message                                        |
+| ----------------------------------------------------- | ------------------------------------------------ |
+| `maroid user invite` gets `--user` with a name flag | `--user excludes --first-name and --last-name` |
+| `maroid user invite` gets `--user` with no record   | `no user record holds that identifier`         |
 
 ## 5. Design decisions
 

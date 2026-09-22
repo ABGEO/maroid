@@ -85,34 +85,61 @@ components:
       required: []
       properties: {}
 
-    Error:
+    # Delete `errors` when no route of the feature reports a failed field.
+    Problem:
       type: object
-      required: [reason]
+      description: A problem detail document. See `ERR-001` and RFC 9457.
+      required: [type, title, status]
       properties:
-        reason:
+        type:
           type: string
-          description: The reason for the failure. See `API-006`.
+          format: uri
+          description: The problem type. `ERR-002` gives the grammar, `ERR-003` the registry.
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+        errors:
+          type: array
+          description: One item for each field that caused the rejection. See `ERR-004`.
+          items:
+            type: object
+            required: [detail, pointer]
+            properties:
+              detail:
+                type: string
+              pointer:
+                type: string
+                description: A JSON Pointer in the fragment form of RFC 6901.
+          examples:
+            - - detail: the field is required
+                pointer: "#/<field>"
 
   responses:
     Unauthorized:
       description: The request carries no active user record.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"
 
     NotFound:
       description: >
         The record does not exist, or it belongs to another user.
         The two cases answer the same way.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"
 
     Invalid:
       description: The body failed validation.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"

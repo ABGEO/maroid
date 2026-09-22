@@ -3,7 +3,7 @@ title: Architecture decision records
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-09-21
+updated: 2026-09-22
 ---
 
 # Architecture decision records
@@ -47,3 +47,4 @@ The frontmatter holds the identifier.
 | `ADR-0002` | Dex as the authorization server     | `dex-as-the-authorization-server.md`   | accepted | 2026-09-15 | `SEC-001`, `SEC-002`, `SEC-003`, `OWN-001`, `OWN-003`, `API-003`, `GLO-user` |
 | `ADR-0003` | An MCP tool call as a second entry point of Dex | `mcp-as-a-second-entry-point.md` | accepted | 2026-09-17 | `SEC-002`, `OWN-003` |
 | `ADR-0004` | The web credential travels in a host cookie | `the-web-credential-travels-in-a-host-cookie.md` | accepted | 2026-09-21 | `SEC-005`, `SEC-008`, `API-003` |
+| `ADR-0005` | Problem details as the one error format | `problem-details-as-the-error-format.md` | accepted | 2026-09-22 | `ERR-001` to `ERR-007`, `API-002`, `API-006`, `LOG-009`, `GLO-problem` |

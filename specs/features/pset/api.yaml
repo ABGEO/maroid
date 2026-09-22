@@ -74,6 +74,8 @@ paths:
       responses:
         "204":
           description: The hub stored every declared field.
+        "400":
+          $ref: "#/components/responses/MalformedBody"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -173,58 +175,87 @@ components:
           password: the-new-credential
           accountNumber: null
 
-    Error:
+    Problem:
       type: object
-      required: [reason]
+      description: A problem detail document. See `ERR-001` and RFC 9457.
+      required: [type, title, status]
       properties:
-        reason:
+        type:
           type: string
-          description: The reason for the failure. See `API-006`.
-
-    ValidationError:
-      type: object
-      required: [reason, fields]
-      properties:
-        reason:
+          format: uri
+          description: The problem type. `ERR-002` gives the grammar, `ERR-003` the registry.
+        title:
           type: string
-        fields:
-          type: object
-          description: One member for each field that caused the rejection. See `PSET-FR-009`.
-          additionalProperties:
-            type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
+        errors:
+          type: array
+          description: One item for each field that caused the rejection. See `ERR-004`.
+          items:
+            type: object
+            required: [detail, pointer]
+            properties:
+              detail:
+                type: string
+              pointer:
+                type: string
+                description: A JSON Pointer in the fragment form of RFC 6901.
           examples:
-            - password: the field is required
-              period: the value is not in the list
+            - - detail: the field is required
+                pointer: "#/password"
+              - detail: the value is not in the list
+                pointer: "#/period"
 
   responses:
-    Unauthorized:
-      description: The request carries no active user record.
+    MalformedBody:
+      description: >
+        The body does not decode as a JSON object. The hub stored nothing.
+        The type is `urn:maroid:problem:http:body-invalid`.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"
+
+    Unauthorized:
+      description: >
+        The request carries no active user record.
+        The type is `urn:maroid:problem:http:access-denied`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
 
     NoSchema:
       description: >
         The hub loaded no plugin with that identifier, or the plugin declares no
         settings schema. The two cases answer the same way.
+        The type is `urn:maroid:problem:hub:settings-absent`.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"
 
     Invalid:
-      description: A value does not match the settings schema. The hub stored nothing.
+      description: >
+        A value does not match the settings schema. The hub stored nothing.
+        The type is `urn:maroid:problem:hub:settings-invalid`, and `errors` names each
+        field. See `PSET-FR-009`.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/ValidationError"
+            $ref: "#/components/schemas/Problem"
 
     ProtectionFailed:
       description: >
         The hub reached no key for the acting user, or the protection service refused
         the call. The hub stored nothing.
+        The type is `urn:maroid:problem:http:internal`.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"

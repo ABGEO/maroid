@@ -4,7 +4,7 @@ title: Traceability
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-21
+updated: 2026-09-22
 scope: [specs/, code comments]
 related: [LNG, PRC, GIT]
 ---
@@ -134,38 +134,32 @@ A guideline does not name a feature. A requirements document does not name a des
 
 ## TRC-007
 
-Put the identifier in a comment at the place that realizes it.
-Put the identifier of an invariant at the check that enforces it.
-
-Go:
+A test cites the identifier that it verifies, in a comment above the test.
+`TST-001` gives the form.
 
 ```go
-// NOTIF-FR-001: The enqueue operation is idempotent for the key
-// (plugin_id, event_type, business_key).
-func (r *OutboxRepository) Enqueue(ctx context.Context, msg Message) error {
+// NOTIF-SC-003: A second enqueue with the same business key adds no row.
+func TestEnqueueIsIdempotent(t *testing.T) {
 ```
 
-TypeScript and Svelte:
-
-```ts
-// NOTIF-FR-004: The badge shows the count of the unread notifications.
-```
-
-SQL migration:
+A migration cites the invariant that its constraint enforces:
 
 ```sql
 -- NOTIF-INV-001: One row for each business key. The constraint enforces it.
 CREATE UNIQUE INDEX ...
 ```
 
-Cite a guideline rule in the code only when the code looks wrong without it:
+**Production code carries no identifier.** A comment there gives the reason that
+the code cannot give, in words that a reader checks against the code in front of
+them.
 
-```go
-// DAT-004: Every query goes through PluginDB. It sets the search_path.
-```
+**Why:** An identifier in production code goes stale when a document moves, and
+nothing fails when it does. A reader of the code cannot check it without opening
+`specs/`. The test is the one place where the citation earns its keep, because the
+test and the statement say the same thing, and the test fails when they disagree.
 
-Do not annotate every line. Annotate the function, the type, the constraint,
-or the block that carries the behavior.
+The trace runs from a statement to the test that verifies it, and from the test to
+the code it exercises.
 
 ## TRC-008
 
@@ -259,6 +253,7 @@ Add a row before you create the file or the directory.
 | `LOG` | `guidelines/logging.md`           | Active |
 | `OWN` | `guidelines/ownership.md`         | Active |
 | `SPC` | `guidelines/specification.md`     | Active |
+| `ERR` | `guidelines/errors.md`            | Active |
 
 ### Decision records
 

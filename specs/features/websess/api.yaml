@@ -65,24 +65,39 @@ components:
       examples:
         - redirect: "https://deck.example/signed-out"
 
-    Error:
+    Problem:
       type: object
-      required: [error]
+      description: A problem detail document. See `ERR-001` and RFC 9457.
+      required: [type, title, status]
       properties:
-        error:
+        type:
           type: string
-          description: The reason of the failure.
+          format: uri
+          description: The problem type. `ERR-002` gives the grammar, `ERR-003` the registry.
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
 
   responses:
     BadRequest:
       description: >
         The request names a target that `auth.allowed_redirects` does not hold.
         The hub clears no cookie.
+        The type is `urn:maroid:problem:http:request-invalid`.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"
           examples:
             invalidRedirect:
               value:
-                error: "missing or invalid redirect parameter"
+                type: "urn:maroid:problem:http:request-invalid"
+                title: "The request is not valid."
+                status: 400
+                detail: "The redirect parameter is absent or not allowed."

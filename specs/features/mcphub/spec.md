@@ -4,10 +4,10 @@ title: The hub as a Model Context Protocol server
 type: spec
 status: approved
 created: 2026-09-17
-updated: 2026-09-21
+updated: 2026-09-22
 approved_by: Temuri
 approved_on: 2026-09-18
-constrained_by: [SEC, OWN, API, ARC, PLG, LOG, GO, PKG, CFG]
+constrained_by: [SEC, OWN, API, ERR, ARC, PLG, LOG, GO, PKG, CFG]
 requirements: features/mcphub/requirements.md
 ---
 
@@ -46,7 +46,7 @@ tools: identity, plugin list, and connectivity.
 | --------- | ------------ | ---------------------------------------------------------------------------- |
 | `ARC-010` | Architecture | The MCP server mounts on the router of `maroid serve http` only. `worker` loads no HTTP route. |
 | `ARC-008` | Architecture | The plugin list tool reads `registry.PluginRegistry`, the same source `GET /plugins` reads. It names no plugin. |
-| `API-002` | HTTP API     | `/mcp` and the discovery routes register on the same router, so `RealIP`, `Logger`, `Recoverer`, `StripSlashes`, and CORS still apply. `API-002` names no authentication step, so it asks nothing more: `MCPHUB-DD-001` is the authentication of `/mcp`, not `auth.Middleware`. |
+| `API-002` | HTTP API     | `/mcp` and the discovery routes register on the same router, so every middleware that `API-002` names still applies. `API-002` names no authentication step, so it asks nothing more: `MCPHUB-DD-001` is the authentication of `/mcp`, not `auth.Middleware`. |
 | `API-003` | HTTP API     | Adds `/.well-known/oauth-protected-resource*` and `/mcp` to the fixed prefix list. |
 | `API-005` | HTTP API     | `handler.MCP` implements `handler.Handler`. |
 | `API-006` | HTTP API     | `MCPHUB-DD-003` answers every call with one JSON response. |
@@ -248,12 +248,20 @@ between the MCP client and the IdP.
 
 ### 4.5 Errors
 
-| Condition                                     | Behavior                               | Message                                    |
-| ----------------------------------------------- | ---------------------------------------- | --------------------------------------------- |
-| No bearer token                                | 401                                     | "no bearer token"                           |
-| The token fails verification                  | 401                                     | The reason from the verifier                |
-| The identity behind the token holds no active user record | 401                       | The same message as a failed verification, so a caller learns nothing about which account exists |
-| A `GET` or a `DELETE` reaches `/mcp`          | 405                                     | The stateless mode of the transport gives this. See `MCPHUB-DD-003`. |
+Every failure of the transport answers with a problem, and a JSON-RPC error inside a
+tool call does not. `ERR-001` gives both.
+
+| Condition                                                 | Status | Type                 |
+| --------------------------------------------------------- | ------ | ---------------------- |
+| No bearer token                                           | 401    | `access-denied`      |
+| The token fails verification                              | 401    | `access-denied`      |
+| The identity behind the token holds no active user record | 401    | `access-denied`      |
+| A `GET` or a `DELETE` reaches `/mcp`                      | 405    | `method-not-allowed` |
+
+The three conditions of a 401 answer with one type and one title, so a caller learns
+nothing about which account exists. None carries a `detail`. The reason from the
+verifier reaches the log, because `ERR-005` keeps the text of an error out of a body.
+The 401 keeps its `WWW-Authenticate` header, which names the discovery route.
 
 ## 5. Design decisions
 

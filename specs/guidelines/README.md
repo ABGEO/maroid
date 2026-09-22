@@ -3,7 +3,7 @@ title: The Maroid guidelines
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-09-12
+updated: 2026-09-22
 ---
 
 # The Maroid guidelines
@@ -31,8 +31,9 @@ The identifier is the prefix of every rule in that file.
 | `OWN` | [ownership.md](./ownership.md)                 | The user record, the acting user, the isolation of a row.   | 9     |
 | `UI`  | [web-ui.md](./web-ui.md)                       | The contract between the shell and a plugin user interface. | 9     |
 | `CFG` | [configuration.md](./configuration.md)         | The configuration and the secrets.                          | 7     |
-| `API` | [http-api.md](./http-api.md)                   | The HTTP routes, the middleware, the responses.             | 6     |
-| `SEC` | [security.md](./security.md)                   | The identity, the token, the allowlists.                    | 7     |
+| `API` | [http-api.md](./http-api.md)                   | The HTTP routes, the middleware, the responses.             | 7     |
+| `ERR` | [errors.md](./errors.md)                       | The shape of a failure. The problem types.                  | 7     |
+| `SEC` | [security.md](./security.md)                   | The identity, the token, the allowlists.                    | 9     |
 | `TG`  | [telegram.md](./telegram.md)                   | The bot, the commands, the conversations.                   | 7     |
 | `MQT` | [mqtt.md](./mqtt.md)                           | The topics, the namespaces, the delivery.                   | 7     |
 | `JOB` | [jobs.md](./jobs.md)                           | The workers and the cron jobs.                              | 8     |
@@ -43,7 +44,7 @@ The identifier is the prefix of every rule in that file.
 | `CLI` | [cli.md](./cli.md)                             | The command tree and the command contract.                  | 6     |
 | `REP` | [repository.md](./repository.md)               | The Go code that reads and writes the database.             | 7     |
 | `EXT` | [external-services.md](./external-services.md) | The clients of a third-party API.                           | 7     |
-| `LOG` | [logging.md](./logging.md)                     | The logger, the attributes, the redaction.                  | 8     |
+| `LOG` | [logging.md](./logging.md)                     | The logger, the attributes, the redaction.                  | 10    |
 | `GO`  | [go-style.md](./go-style.md)                   | The Go code style.                                          | 10    |
 | `TS`  | [frontend-style.md](./frontend-style.md)       | The TypeScript and Svelte code style.                       | 6     |
 | `TST` | [testing.md](./testing.md)                     | The tests.                                                  | 4     |
@@ -75,7 +76,8 @@ A guideline identifier is permanent. A retired guideline identifier never repeat
 | A schema, a migration, or a query               | `DAT`     |
 | A page, a remote, or the navigation             | `UI`      |
 | A configuration value or a secret               | `CFG`     |
-| An HTTP route, a prefix, or a response          | `API`     |
+| An HTTP route, a prefix, or a success response  | `API`     |
+| An error response or a problem type             | `ERR`     |
 | A token, an identity, or an allowlist           | `SEC`     |
 | A user, the owner of a row, or row isolation    | `OWN`     |
 | A bot command or a conversation                 | `TG`      |

@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-09-21
+updated: 2026-09-22
 related: [LNG]
 ---
 
@@ -55,6 +55,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-secret-field`  | secret field      | A field whose value Maroid returns to nobody after the user stores it.                                            |
 | `GLO-secret`        | secret            | The value of a secret field.                                                                                      |
 | `GLO-protection`    | protection        | The means that makes a secret unreadable to a reader of the database.                                             |
+| `GLO-problem`       | problem           | The body of an error response. It obeys RFC 9457 and `ERR-001`. A problem type names one failure.                |
 | `GLO-mcp-tool`      | MCP tool          | A function that Maroid exposes over the Model Context Protocol. An MCP client calls it by name and gets a result.  |
 | `GLO-mcp-client`    | MCP client        | The application that connects to the MCP server of the hub and calls an MCP tool.                                  |
 

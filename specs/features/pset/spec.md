@@ -4,10 +4,10 @@ title: The settings of a user for a plugin
 type: spec
 status: approved
 created: 2026-09-14
-updated: 2026-09-21
+updated: 2026-09-22
 approved_by: Temuri
 approved_on: 2026-09-14
-constrained_by: [CFG, PLG, OWN, ARC, API, EXT, PRC, DAT, REP, PKG, LIF, DEP, LOG, JOB, TST, SPC]
+constrained_by: [CFG, PLG, OWN, ARC, API, ERR, EXT, PRC, DAT, REP, PKG, LIF, DEP, LOG, JOB, TST, SPC]
 requirements: features/pset/requirements.md
 ---
 
@@ -196,8 +196,16 @@ const MaxValueLength = 4096
 // apps/hub/internal/settings/validate.go
 
 // InvalidError names each field that caused a rejection. See PSET-FR-009.
+// Fields is sorted by Pointer, so the answer and the log hold one order.
 type InvalidError struct {
-    Fields map[string]string
+    Fields []FieldFailure
+}
+
+// FieldFailure names one field of a rejected save. Pointer is the instance location
+// of the failure, as a JSON Pointer in the fragment form. See ERR-004.
+type FieldFailure struct {
+    Pointer string
+    Detail  string
 }
 
 func Validate(schema *Schema, input map[string]any) error
@@ -358,19 +366,24 @@ sequenceDiagram
 
 ### 4.5 Errors
 
-| Condition                                             | Behavior          | Message, and the keyword that reports it    |
-| ----------------------------------------------------- | ----------------- | ------------------------------------------- |
-| The request carries no active user record             | 401               | `access denied`. See `SEC-004`.             |
-| The plugin declares no settings schema                | 404               | `the plugin declares no settings`           |
-| The save names a field the schema declares no property for | 422, names the field | `the field is unknown`. `additionalProperties` |
-| The save leaves a required field with no value        | 422, names the field | `the field is required`. `required`      |
-| The save gives a value outside the list of a choice   | 422, names the field | `the value is not in the list`. `enum`   |
-| The save gives a value longer than 4096 characters    | 422, names the field | `the value is too long`. `maxLength`     |
-| The save gives a value whose type is not the kind     | 422, names the field | `the value has the wrong type`. `type`   |
-| OpenBao holds no key for the acting user              | 500, logs the key name | `protecting the value failed`          |
-| OpenBao refuses the login or answers nothing          | 500 on a request, and the process stops at the start | `reaching the protection failed` |
-| A stored entry does not decrypt                       | 500, the read fails, and it returns no value | `reading the protected value failed` |
-| A required field of the schema holds no stored value  | `ErrSettingsAbsent` to the plugin | The run ends. No failure. |
+| Condition                                             | Status | Type                | The text, and the keyword or the behavior   |
+| ----------------------------------------------------- | ------ | --------------------- | ------------------------------------------- |
+| The request carries no active user record             | 401    | `access-denied`     | See `SEC-004`.                              |
+| The plugin declares no settings schema                | 404    | `settings-absent`   |                                             |
+| The body does not decode as a JSON object             | 400    | `body-invalid`      | The hub stored nothing                      |
+| The save names a field the schema declares no property for | 422 | `settings-invalid` | `the field is unknown`. `additionalProperties` |
+| The save leaves a required field with no value        | 422    | `settings-invalid`  | `the field is required`. `required`         |
+| The save gives a value outside the list of a choice   | 422    | `settings-invalid`  | `the value is not in the list`. `enum`      |
+| The save gives a value longer than 4096 characters    | 422    | `settings-invalid`  | `the value is too long`. `maxLength`        |
+| The save gives a value whose type is not the kind     | 422    | `settings-invalid`  | `the value has the wrong type`. `type`      |
+| OpenBao holds no key for the acting user              | 500    | `internal`          | `protecting the value failed`, with the key name |
+| OpenBao refuses the login or answers nothing          | 500    | `internal`          | `reaching the protection failed`. The process stops at the start |
+| A stored entry does not decrypt                       | 500    | `internal`          | `reading the protected value failed`. The read returns no value |
+| A required field of the schema holds no stored value  | None   | None                | `ErrSettingsAbsent` to the plugin. The run ends |
+
+A 422 carries one `errors` item for each field: the text is `detail`, and the instance
+location is `pointer`. `ERR-004`. A 500 carries no `detail`, and its text reaches the
+log. `ERR-005`.
 
 ## 5. Design decisions
 
@@ -393,9 +406,10 @@ reflector sets `additionalProperties` to false. The four kinds are keywords:
 **Rationale:** One struct is the declaration and the decode target, so the two cannot
 drift. `writeOnly` states in the standard what `PSET-FR-004` and `PSET-FR-005` demand,
 `maxLength` states the limit of `PSET-FR-008`, and `additionalProperties` rejects the
-unknown field. The validator reports the instance location of each failure, so
-`PSET-FR-009` needs a mapping and no rule of ours. Neither library reaches
-`libs/pluginapi`, because the plugin returns `any` and the hub reflects it. That matters
+unknown field. The validator reports the instance location of each failure, and
+`ERR-004` gives the member that carries it, so `PSET-FR-009` needs a mapping and
+nothing more. Neither library reaches `libs/pluginapi`, because the plugin returns
+`any` and the hub reflects it. That matters
 under `PLG-001`: a shared object and its host hold the same version of every shared
 dependency, and a skew fails the open with an unclear message.
 **Alternatives:** A hand written list of field descriptions, with the validation in the

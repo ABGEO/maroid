@@ -181,17 +181,31 @@ components:
         description:
           type: string
 
-    Error:
+    Problem:
       type: object
-      required: [reason]
+      description: A problem detail document. See `ERR-001` and RFC 9457.
+      required: [type, title, status]
       properties:
-        reason:
+        type:
           type: string
+          format: uri
+          description: The problem type. `ERR-002` gives the grammar, `ERR-003` the registry.
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
 
   responses:
     Unauthorized:
-      description: The request carries no valid token, or the identity holds no active user record.
+      description: >
+        The request carries no valid token, or the identity holds no active user record.
+        The type is `urn:maroid:problem:http:access-denied`.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"

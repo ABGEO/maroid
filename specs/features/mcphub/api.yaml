@@ -73,22 +73,18 @@ paths:
                 description: A JSON-RPC 2.0 response.
         "401":
           $ref: "#/components/responses/Unauthorized"
-        "405":
-          description: >
-            `GET` or `DELETE` on this path. The stateless transport of
-            `MCPHUB-DD-003` answers neither.
     get:
       operationId: getMcp
       summary: Rejected. See `MCPHUB-DD-003`.
       responses:
         "405":
-          description: The stateless transport answers no `GET`.
+          $ref: "#/components/responses/MethodNotAllowed"
     delete:
       operationId: deleteMcp
       summary: Rejected. See `MCPHUB-DD-003`.
       responses:
         "405":
-          description: The stateless transport answers no `DELETE`.
+          $ref: "#/components/responses/MethodNotAllowed"
 
 components:
   securitySchemes:
@@ -122,25 +118,46 @@ components:
         resource_name:
           type: string
 
-    Error:
+    Problem:
       type: object
-      required: [reason]
+      description: A problem detail document. See `ERR-001` and RFC 9457.
+      required: [type, title, status]
       properties:
-        reason:
+        type:
           type: string
-          description: The reason for the failure. See `API-006`.
+          format: uri
+          description: The problem type. `ERR-002` gives the grammar, `ERR-003` the registry.
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri
 
   responses:
     Unauthorized:
       description: >
         The request carries no valid token, or the identity behind it holds
         no active user record. `MCPHUB-FR-002`, `MCPHUB-FR-003`.
+        The type is `urn:maroid:problem:http:access-denied`.
       headers:
         WWW-Authenticate:
           schema:
             type: string
           description: Names the discovery route of the failed request.
       content:
-        application/json:
+        application/problem+json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: "#/components/schemas/Problem"
+
+    MethodNotAllowed:
+      description: >
+        The stateless transport of `MCPHUB-DD-003` answers no `GET` and no `DELETE`.
+        The type is `urn:maroid:problem:http:method-not-allowed`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
