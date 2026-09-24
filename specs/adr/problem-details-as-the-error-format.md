@@ -4,7 +4,7 @@ title: Problem details as the one error format
 type: adr
 status: accepted
 created: 2026-09-21
-updated: 2026-09-22
+updated: 2026-09-24
 decided: 2026-09-22
 changes: [ERR-001, ERR-002, ERR-003, ERR-004, ERR-005, ERR-006, ERR-007, API-002, API-006, LOG-009, GLO-problem]
 supersedes:
@@ -70,6 +70,9 @@ deployment. `urn:maroid:problem:<owner>:<slug>` reads the same everywhere. The o
 segment repeats the rule that `DAT-001` gives a schema: a plugin owns the namespace
 that carries its identifier, so two plugins cannot collide.
 
+`ADR-0006` reversed the form. `ERR-002` gives a relative reference, and the owner
+segment stays.
+
 The standard adds no dependency. A problem is a struct with five members, and the
 writer sets the header itself, because `render.JSON` writes `application/json`. The
 writer lives in `libs/problem`, because `PLG-007` denies a plugin the import of
@@ -83,7 +86,10 @@ forbids, and the two halves still join.
 The hub generates that identifier and does not take `middleware.RequestID` of chi.
 That middleware reuses the `X-Request-Id` header of the request, so a caller picks
 the value that every log record of the request then holds, and it builds its own
-value from the hostname of the process. A UUID version 7 carries neither problem,
+value from the hostname of the process.
+
+`ADR-0006` reversed the refusal. `Z-233` requires a caller to supply the value,
+and `ERR-006` reads `X-Flow-ID` and bounds what it accepts. A UUID version 7 carries neither problem,
 and it sorts by time. `DAT-009` gives a row the same shape.
 
 The namespace identifier `maroid` is not registered with IANA. RFC 9457 asks for a

@@ -1,6 +1,8 @@
 # The routes that PSET adds. See `SPC-002`.
 openapi: 3.1.0
 
+x-maroid-document: hub
+
 info:
   title: The settings of a user for a plugin
   version: 0.1.0

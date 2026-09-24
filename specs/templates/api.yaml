@@ -3,6 +3,10 @@
 # A path holds the effective prefix that `API-004` gives. See `SPC-002`.
 openapi: 3.1.0
 
+# The document of `RES-007` that holds these routes: hub, mcp, or telegram.
+# `SPC-001`.
+x-maroid-document: hub
+
 info:
   title: The name of the feature
   version: 0.1.0

@@ -4,9 +4,9 @@ title: Traceability
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-22
+updated: 2026-09-24
 scope: [specs/, code comments]
-related: [LNG, PRC, GIT]
+related: [LNG, PRC, GIT, RES]
 ---
 
 # Traceability
@@ -24,12 +24,16 @@ The count of the segments tells you the level of an identifier.
 | Guideline | `<GID>-<NNN>`        | 2        | `PLG-004`      |
 | Feature   | `<KEY>-<TYPE>-<NNN>` | 3        | `NOTIF-FR-001` |
 
-Two identifier kinds do not use this grammar:
+Three identifier kinds do not use this grammar:
 
-| Identifier      | Form         | Example      |
-| --------------- | ------------ | ------------ |
-| Glossary term   | `GLO-<term>` | `GLO-plugin` |
-| Decision record | `ADR-####`   | `ADR-0003`   |
+| Identifier      | Form           | Example      |
+| --------------- | -------------- | ------------ |
+| Glossary term   | `GLO-<term>`   | `GLO-plugin` |
+| Decision record | `ADR-####`     | `ADR-0003`   |
+| External rule   | `Z-<number>`   | `Z-118`      |
+
+`RES-001` names the document and the revision that a `Z` number indexes. A
+prefix of one character is external, and it belongs to no file of `specs/`.
 
 ## TRC-002
 
@@ -254,6 +258,7 @@ Add a row before you create the file or the directory.
 | `OWN` | `guidelines/ownership.md`         | Active |
 | `SPC` | `guidelines/specification.md`     | Active |
 | `ERR` | `guidelines/errors.md`            | Active |
+| `RES` | `guidelines/rest.md`              | Active |
 
 ### Decision records
 
@@ -272,6 +277,7 @@ Add a row before you create the file or the directory.
 | `MCPHUB` | `features/mcphub/` | The hub as a Model Context Protocol server. | Approved |
 | `PCAP`  | `features/pcap/`  | The capabilities that a plugin declares.       | Approved |
 | `WEBSESS` | `features/websess/` | The session of a person at the web shell. | Approved |
+| `APIFMT` | `features/apifmt/` | The shape of a successful answer, and the routes that carry it. | Draft |
 
 ## Retired identifiers
 

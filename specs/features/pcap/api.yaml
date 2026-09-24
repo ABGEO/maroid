@@ -1,5 +1,7 @@
 openapi: 3.1.0
 
+x-maroid-document: hub
+
 info:
   title: The capabilities that a plugin declares
   version: 0.1.0

@@ -4,7 +4,7 @@ title: Telegram
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-09-24
 scope: [apps/hub/internal/telegram/, libs/pluginapi/telegram/]
 related: [PLG, SEC, API, OWN]
 ---
@@ -17,7 +17,8 @@ The hub resolves the acting user before it dispatches an update. See `OWN-003`.
 ## TG-001
 
 The bot receives an update through a webhook. The bot does not poll.
-The default path is `/telegram/webhook`. `SEC-007` protects it.
+The default path is `/telegram/webhook`. `SEC-007` and `SEC-010` protect it, and
+`X-Telegram-Bot-Api-Secret-Token` is the header that `SEC-010` reads.
 
 ## TG-002
 

@@ -3,7 +3,7 @@ title: Spec driven development in Maroid
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-09-12
+updated: 2026-09-24
 ---
 
 # Spec driven development in Maroid
@@ -103,7 +103,7 @@ Rules:
 - Each design decision has an identifier, a `Decision` line, and a `Rationale` line.
 - Each non-functional requirement has a scenario that measures it.
 - Keep the document within the size that `LNG-013` gives.
-  Divide a specification larger than 500 lines into subject files: `spec-<subject>.md`.
+  Divide a specification that passes 750 lines into subject files: `spec-<subject>.md`.
 - The specification declares each contract surface that the feature adds, and carries
   `api.yaml` when it adds an HTTP route. See `SPC`.
 - A design decision that changes more than one plugin becomes an ADR.
@@ -156,23 +156,17 @@ Stop. Open the full lane.
 specs/
   README.md                  This guide. Type: index.
   guidelines/                The locked rules. One file for each subject.
-    README.md                The index and the change procedure. Holds no rule.
-    architecture.md          ARC
-    plugin-model.md          PLG
-    data.md                  DAT
-    web-ui.md                UI
-    configuration.md         CFG
-    go-style.md              GO
-    frontend-style.md        TS
-    testing.md               TST
-    build-release.md         BLD
-    process.md               PRC
-    traceability.md          TRC
-    language.md              LNG
-    glossary.md              GLO
+    README.md                The index. It names every guideline and its prefix.
+    <slug>.md                One guideline. The frontmatter holds the prefix.
   adr/                       The decision records. One file for each decision.
     README.md                The ADR index.
     template.md              The ADR template.
+  api/                       The artifacts that no feature owns. SPC-002.
+    components.yaml          Every component that two fragments need.
+    telegram.yaml            The document that no fragment feeds.
+    vacuum-ruleset.yaml      The ruleset for hub.yaml.
+    vacuum-ruleset-transport.yaml
+                             The ruleset for the two transport documents.
   templates/
     requirements.md          The template for stage 1.
     spec.md                  The template for stage 2.
@@ -180,8 +174,9 @@ specs/
   features/
     <key>/                   One directory for each feature. The key is lowercase.
       requirements.md        Stage 1.
+      requirements-<subject>.md  Optional. Use when requirements.md passes 375 lines.
       spec.md                Stage 2.
-      spec-<subject>.md      Optional. Use when spec.md is larger than 500 lines.
+      spec-<subject>.md      Optional. Use when spec.md passes 750 lines.
       api.yaml               Optional. OpenAPI, when the feature adds a route. SPC-001.
 ```
 

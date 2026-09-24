@@ -4,9 +4,9 @@ title: Data
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-12
+updated: 2026-09-23
 scope: [apps/hub/db/, apps/hub/internal/migrator/, plugins/*/db/, plugins/*/repository/]
-related: [ARC, PLG, OWN]
+related: [ARC, PLG, OWN, RES]
 ---
 
 # Data
@@ -79,6 +79,30 @@ A hypertable puts the partitioning column in the key: `PRIMARY KEY (id, time)`.
 
 **Why:** Version 7 sorts by time, so the index keeps its locality and the row
 carries its creation order. One source for the value means no caller can omit it.
+
+## DAT-010
+
+A column that holds a point in time is `TIMESTAMPTZ`. It stores UTC, and no
+column stores a local time.
+
+The column that holds the time of the last write is `updated_at`. It carries the
+name that `Z-118` gives the member of the body, so no mapping stands between the
+column and the wire.
+
+A trigger that fills it assigns `now()`. It never assigns
+`now() AT TIME ZONE 'utc'`, which answers a value without a zone that PostgreSQL
+then reads in the zone of the session.
+
+**Why:** A naive value and a `TIMESTAMPTZ` column differ by the offset of the
+session on every server that does not run in UTC, so an insert and an update
+write two different instants.
+
+## DAT-011
+
+The core migrations run before the migrations of any plugin.
+
+**Why:** A core migration creates the function that a trigger of a plugin calls.
+A plugin that runs first finds no function.
 
 ## Retired identifiers
 

@@ -1,6 +1,8 @@
 # The routes that WEBSESS adds or changes. See `SPC-002`.
 openapi: 3.1.0
 
+x-maroid-document: hub
+
 info:
   title: The session of a person at the web shell
   version: 0.1.0

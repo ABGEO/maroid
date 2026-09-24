@@ -4,9 +4,9 @@ title: Build and release
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-17
-scope: [apps/, libs/, plugins/, .docker/, chart/]
-related: [ARC, PLG, UI, GO, TS]
+updated: 2026-09-23
+scope: [apps/, libs/, plugins/, .docker/, chart/, specs/api/]
+related: [RES, SPC, ARC, PLG, UI, GO, TS]
 ---
 
 # Build and release
@@ -30,6 +30,7 @@ Do not run a repository-wide script. Run the command for the artifact.
 | `libs/api-client`     | `pnpm --filter @maroid/api-client check`                                 | None today.                                                                            |
 | `libs/theme`          | `pnpm --filter @maroid/theme lint`                                       | None today.                                                                            |
 | `apps/gate`           | None today. The build reports a type error.                              | `pnpm --filter @maroid/gate build`                                                     |
+| `specs/features/*/api.yaml`, `specs/api/` | None today. Tranche 3 of `ADR-0006` adds `pnpm api:lint`.  | None today. Tranche 3 of `ADR-0006` adds `pnpm api:build`.                              |
 
 **Why:** A repository-wide script hides which artifact failed. It also reports a
 failure in an artifact that the change did not touch.

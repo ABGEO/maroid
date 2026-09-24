@@ -1,0 +1,163 @@
+# Shared components. `SPC-002` requires a component that more than one fragment
+# needs to live here, and a fragment to reference it rather than redefine it.
+openapi: 3.1.0
+
+info:
+  title: The shared components of Maroid
+  version: 1.0.0
+
+paths: {}
+
+components:
+  schemas:
+    Problem:
+      type: object
+      description: A problem detail document. See `ERR-001` and RFC 9457.
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: >
+            The problem type, as a relative reference. `ERR-002` gives the
+            grammar and `ERR-003` the registry.
+          examples: ["/problems/http/not-found"]
+        title:
+          type: string
+          description: A short sentence in English. It is constant for the type.
+        status:
+          type: integer
+          format: int32
+          minimum: 100
+          maximum: 599
+        detail:
+          type: string
+          description: One sentence about this occurrence. `ERR-005` bounds it.
+        instance:
+          type: string
+          format: uri-reference
+          description: The flow identifier of the request. `ERR-006` gives the form.
+          examples: ["/flows/0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77"]
+        errors:
+          type: array
+          description: One item for each field that caused the rejection. See `ERR-004`.
+          items:
+            type: object
+            required: [detail, pointer]
+            properties:
+              detail:
+                type: string
+              pointer:
+                type: string
+                description: A JSON Pointer in the fragment form of RFC 6901.
+
+    FlowId:
+      type: string
+      maxLength: 128
+      pattern: "^[a-zA-Z0-9/+_=-]+$"
+      description: >
+        The restriction that `ERR-006` applies. `Z-233` asks a specification to
+        declare it.
+
+    Page:
+      type: object
+      description: >
+        One page of a collection. `RES-005` gives the members, and a document
+        narrows `items` to the schema that the route answers.
+      required: [items, self, first]
+      properties:
+        items:
+          type: array
+          items: {}
+        self:
+          type: string
+          format: uri
+        first:
+          type: string
+          format: uri
+        next:
+          type: string
+          format: uri
+        prev:
+          type: string
+          format: uri
+
+  responses:
+    Unauthorized:
+      description: The request carries no active user record.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: The resource does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Invalid:
+      description: The body failed validation.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Default:
+      description: A failure. `ERR-001` gives the body.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+  headers:
+    FlowId:
+      description: The flow identifier of the request. `ERR-006`.
+      schema:
+        $ref: "#/components/schemas/FlowId"
+
+  parameters:
+    FlowId:
+      name: X-Flow-ID
+      in: header
+      required: false
+      description: >
+        The flow identifier. A client supplies one, and the hub generates one
+        when the request carries none. `Z-233`, `ERR-006`.
+      schema:
+        $ref: "#/components/schemas/FlowId"
+
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: The count of items. `RES-005` gives the default and the cap.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 20
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: An opaque cursor. `RES-006` gives it. A client constructs none.
+      schema:
+        type: string
+        maxLength: 4096
+    Sort:
+      name: sort
+      in: query
+      required: false
+      style: form
+      explode: false
+      description: >
+        The fields that order the collection, each one optionally prefixed with
+        `+` or `-`. A field with no prefix ascends. The operation declares the
+        set that it takes. `RES-005`, `Z-154`.
+      schema:
+        type: array
+        maxItems: 8
+        items:
+          type: string
+          maxLength: 64
+          pattern: "^[+-]?[a-z_][a-z_0-9]*$"

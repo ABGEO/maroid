@@ -4,7 +4,7 @@ title: Language
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-13
+updated: 2026-09-23
 scope: [specs/, CLAUDE.md, code comments, commit messages]
 related: [TRC, GLO, PRC, GO, TS]
 ---
@@ -261,17 +261,22 @@ token that the work cannot spend.
 The figures below are targets. Cut the text, never the statement.
 
 | Document                | Target lines |
-| ----------------------- | ------------ |
+| ----------------------- |--------------|
 | A guideline             | 150          |
 | An index                | 200          |
 | The process guide       | 250          |
 | A requirements document | 250          |
 | A specification file    | 500          |
+| A decision record       | 500          |
 | A template              | 150          |
 
 A document that passes its target by half divides into subject files.
 A requirements document divides into `requirements-<subject>.md`.
 A specification file divides into `spec-<subject>.md`.
+
+A guideline does not divide. `TRC-002` binds one prefix to one file. A guideline
+that passes its target cuts text, moves a rule to the guideline that owns its
+subject, or retires a rule.
 
 Apply these practices:
 

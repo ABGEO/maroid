@@ -4,7 +4,7 @@ title: Logging
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-22
+updated: 2026-09-23
 scope: [apps/hub/internal/logger/, apps/, libs/, plugins/]
 related: [ERR, LIF, SEC, LNG]
 ---
@@ -68,8 +68,8 @@ Never log a token, a password, a secret, or a full request body that can hold on
 
 ## LOG-009
 
-A log record of an HTTP request carries the `request` attribute. It holds the
-identifier that `ERR-006` gives, as the bare UUID and without the URN prefix.
+A log record of an HTTP request carries the `flow_id` attribute. It holds the
+flow identifier that `ERR-006` gives, bare and without the `/flows/` prefix.
 
 **Why:** A person reports the identifier that the response carries. The attribute
 is the way back to the cause.
@@ -82,14 +82,14 @@ attribute of `LOG-009` like every other:
 
 ```json
 {
-  "msg": "GET /ping => HTTP 200 (3µs)",
+  "msg": "GET /plugins => HTTP 200 (3µs)",
   "component": "middleware",
   "middleware": "access",
   "http.request.method": "GET",
-  "url.path": "/ping",
+  "url.path": "/plugins",
   "http.response.status_code": 200,
   "event.duration": 3000,
-  "request": "01a0c611-c3d9-710d-84de-7df920aa9a5f"
+  "flow_id": "01a0c611-c3d9-710d-84de-7df920aa9a5f"
 }
 ```
 

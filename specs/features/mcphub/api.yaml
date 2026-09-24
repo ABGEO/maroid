@@ -1,5 +1,7 @@
 openapi: 3.1.0
 
+x-maroid-document: mcp
+
 info:
   title: The hub as a Model Context Protocol server
   version: 0.1.0

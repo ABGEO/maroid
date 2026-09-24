@@ -4,8 +4,8 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-09-22
-related: [LNG]
+updated: 2026-09-23
+related: [LNG, ERR, RES, SPC]
 ---
 
 # Glossary
@@ -58,6 +58,15 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-problem`       | problem           | The body of an error response. It obeys RFC 9457 and `ERR-001`. A problem type names one failure.                |
 | `GLO-mcp-tool`      | MCP tool          | A function that Maroid exposes over the Model Context Protocol. An MCP client calls it by name and gets a result.  |
 | `GLO-mcp-client`    | MCP client        | The application that connects to the MCP server of the hub and calls an MCP tool.                                  |
+| `GLO-page`          | page              | One answer of a collection. It holds the items and the links that `RES-005` gives.                                |
+| `GLO-cursor`        | cursor            | The opaque value that names the position of a page. `RES-006` gives its content.                                  |
+| `GLO-flow-id`       | flow identifier   | The value that joins every record of one request. `ERR-006` gives its source and its bound.                       |
+| `GLO-binding`       | binding           | The short lived value that joins one hand off to the IdP to the browser that started it. It lives in a cookie and in no table. |
+| `GLO-handoff`       | hand off          | The step that sends a person from Maroid to the IdP and back. Three routes of `API-003` start one.                |
+| `GLO-transport-route` | transport route | A route that carries the protocol of another system and answers no resource of Maroid. `RES-003` gives which rules reach it. |
+| `GLO-api-document`  | API document      | One of the three OpenAPI files that `RES-007` names. `RES-008` builds each one.                                                       |
+| `GLO-api-fragment`  | API fragment      | The `api.yaml` of one feature. `SPC-002` merges it into an API document.                                          |
+| `GLO-shipped-client` | shipped client   | One of `libs/api-client`, `apps/deck`, and `libs/plugin-sdk`. `RES-010` binds each one.                           |
 
 ## Retired identifiers
 

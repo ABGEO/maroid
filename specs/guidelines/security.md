@@ -4,9 +4,9 @@ title: Authentication and authorization
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-21
+updated: 2026-09-24
 scope: [apps/hub/internal/auth/, apps/hub/internal/middleware/]
-related: [ARC, API, TG, CFG, OWN]
+related: [ARC, API, TG, CFG, OWN, RES]
 ---
 
 # Authentication and authorization
@@ -95,8 +95,13 @@ Every cookie that the hub sets carries these attributes:
 | `HttpOnly`  | Set       |
 | `Path`      | `/`       |
 | `Domain`    | Absent    |
+| `SameSite`  | `Lax`     |
 
 The name of a cookie is a constant in the code. The configuration does not hold it.
+
+`SameSite` is load bearing, and not a hardening default alone. A browser stores
+a `Lax` cookie from a `POST` only when the request is same site. The three
+routes of `API-003` that start a flow set a cookie on such a `POST`.
 
 **Why:** The hub and the deck answer at two hosts of one domain. Without the
 prefix a sibling host writes a cookie that the hub reads. A name that no
@@ -126,6 +131,22 @@ address of the proxy and refuses every update. `chart/values.yaml` carries it.
 caller can set is no guard at all. The middleware of chi also folds a v4 mapped
 IPv6 address, strips a zone, and merges a repeated header, so no second spelling
 of a trusted address walks past the check.
+
+## SEC-010
+
+A route that a third-party service calls verifies a secret. The hub registers
+that secret with the service, and compares it before it reads the body. A request
+that carries no matching secret gets status 401.
+
+The guideline of the service names the header that carries it.
+
+A network allowlist does not replace the secret. An allowlist answers where a
+request comes from, and a secret answers who sent it. Where both guard one route,
+the allowlist runs first, and a request that fails it gets 403 and no read of the
+secret.
+
+**Why:** An address is a weaker claim than a secret. A service that publishes the
+ranges it sends from lets any caller inside those ranges past an allowlist.
 
 ## Retired identifiers
 

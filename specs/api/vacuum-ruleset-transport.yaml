@@ -1,0 +1,19 @@
+# The ruleset for `mcp.yaml` and `telegram.yaml`. `RES-008` runs it.
+#
+# Nothing is disabled yet beyond the rule that contradicts the standard. vacuum
+# skips an exception whose rule the recommended set never loaded, and logs
+# "Rule does not exist, ignoring it" against that name under `vacuum lint
+# --debug`. A run without that flag drops the message, so a stale exception is
+# inert and silent. Every further exception lands after a real run reports the
+# rule, and each one cites the row of `RES-002` or the surface of `RES-003`.
+extends: [[vacuum:oas, recommended]]
+
+rules:
+  # `camel-case-properties` of vacuum asks for camel case. `Z-118` asks for
+  # snake case, and `RES-001` binds `Z-118`. `RES-008` gives this case.
+  camel-case-properties: "off"
+
+# `RES-003` puts a transport route and its payload outside every rule about a
+# resource. `/mcp` and `/telegram/webhook` are the two, and each sits in one of
+# these documents. The two discovery routes of `mcp.yaml` are not transport
+# routes, so every rule still reaches them.

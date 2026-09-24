@@ -1,0 +1,65 @@
+# The document that no fragment feeds. `SPC-002` and `RES-007`.
+openapi: 3.1.0
+
+info:
+  title: The Telegram webhook of Maroid
+  description: The route that takes an update of the bot. `TG-001`.
+  version: 1.0.0
+  x-api-id: 01a0cb39-8680-779f-bb60-05116c522d22
+  x-audience: external-public
+  contact:
+    name: The owner of Maroid
+    url: https://github.com/abgeo/maroid
+    email: <the address that the owner publishes>
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - webhookSecret: []
+
+paths:
+  /telegram/webhook:
+    post:
+      operationId: receiveTelegramUpdate
+      summary: Take one update of the bot.
+      description: >
+        The body is an Update of the Telegram Bot API. `RES-003` puts that
+        payload outside every rule about a resource. `SEC-007` guards the route
+        with a network allowlist, and `SEC-010` with the secret that the hub
+        registered with Telegram. `TG-001` names the header.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: An Update of the Telegram Bot API.
+      responses:
+        "204":
+          description: The hub took the update.
+        "401":
+          description: The update carries no valid secret of the bot.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "components.yaml#/components/schemas/Problem"
+        "403":
+          description: The caller is not on the network allowlist.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "components.yaml#/components/schemas/Problem"
+        default:
+          $ref: "components.yaml#/components/responses/Default"
+
+components:
+  securitySchemes:
+    webhookSecret:
+      type: apiKey
+      in: header
+      name: X-Telegram-Bot-Api-Secret-Token
+      description: >
+        The secret that the hub gave Telegram when it registered the webhook.
+        `SEC-010` gives the rule, and `TG-001` the header.

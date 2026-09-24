@@ -1,6 +1,8 @@
 # The routes that EXTID adds or changes. See `SPC-002`.
 openapi: 3.1.0
 
+x-maroid-document: hub
+
 info:
   title: External identities and the delegated sign in
   version: 0.1.0
@@ -244,12 +246,10 @@ components:
         the owner set, and the picture from the token of the session.
       properties:
         firstName:
-          type: string
-          nullable: true
+          type: ["string", "null"]
           description: The first name that the owner set on the record.
         lastName:
-          type: string
-          nullable: true
+          type: ["string", "null"]
           description: The last name that the owner set on the record.
         picture:
           type: string

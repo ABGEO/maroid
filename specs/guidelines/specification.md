@@ -4,9 +4,9 @@ title: The specification artifacts
 type: guideline
 status: active
 created: 2026-09-12
-updated: 2026-09-13
-scope: [specs/features/]
-related: [PRC, TRC, LNG, API, MQT, JOB, TG, CLI, NTF, CFG]
+updated: 2026-09-23
+scope: [specs/features/, specs/api/]
+related: [PRC, TRC, LNG, API, RES, MQT, JOB, TG, CLI, NTF, CFG]
 ---
 
 # The specification artifacts
@@ -26,6 +26,10 @@ A feature directory holds these files and no other:
 | `spec-<subject>.md`         | One subject of the specification              | `spec.md` passes the target of `LNG-013`          |
 | `api.yaml`                  | The OpenAPI description of the routes it adds | The feature adds or changes an HTTP route         |
 
+`api.yaml` carries the key `x-maroid-document` at the top level. Its value is
+`hub`, `mcp`, or `telegram`, and it names the document of `RES-007` that holds
+the routes of the fragment.
+
 A file that is not markdown carries no frontmatter. See `TRC-008`.
 
 ## SPC-002
@@ -34,8 +38,35 @@ A file that is not markdown carries no frontmatter. See `TRC-008`.
 It describes every route that the feature adds or changes, and no other route.
 A path holds the effective prefix that `API-004` gives, not the pattern of the plugin.
 
+The build merges every fragment into the document that `x-maroid-document` names.
+
+A fragment carries `info.title` and `info.version`, so that it validates alone.
+The build discards both and writes the meta block of `RES-007` on the merged
+document. A fragment carries no `x-api-id`, no `x-audience`, and no contact block.
+
+Two fragments that define one component name must define it identically, and the
+build fails when they differ. A component that more than one fragment needs lives
+in `specs/api/components.yaml`, and a fragment references it.
+
+A document whose routes no fragment declares lives directly under `specs/api/`,
+and the build merges no fragment into it. `RES-008` gives the components that the
+build still resolves, and the meta block that the source keeps. `telegram.yaml`
+is one.
+
+`specs/api/` holds the artifacts that no feature owns:
+
+| File                            | Holds                                         |
+| ------------------------------- | --------------------------------------------- |
+| `components.yaml`               | Every component that two fragments need.      |
+| `telegram.yaml`                 | The document that no fragment feeds.          |
+| `vacuum-ruleset.yaml`           | The ruleset for `hub.yaml`.                   |
+| `vacuum-ruleset-transport.yaml` | The ruleset for the two transport documents.  |
+
+`RES-008` holds the linter.
+
 **Why:** A client and a generator read the file. A route that only prose describes
-drifts from the code, and no tool catches the drift.
+drifts from the code, and no tool catches the drift. `RES-008` gives the reason
+for the merge.
 
 ## SPC-003
 
