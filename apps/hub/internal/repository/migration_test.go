@@ -140,7 +140,7 @@ func TestTheReverseRebuildsTheTelegramColumn(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, migrator.Up())
-	require.NoError(t, migrator.Steps(-1))
+	require.NoError(t, migrator.Migrate(versionBeforeUsersAlter))
 
 	var person struct {
 		TelegramID  int64   `db:"telegram_id"`
