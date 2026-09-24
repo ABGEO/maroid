@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // requestHandler adds the identifier of the request to every record that carries
@@ -25,7 +25,7 @@ func WithRequest(handler slog.Handler) slog.Handler {
 // Copies of a Record share state, so this clones before it adds. A handler that
 // fans out gives the same record to each of its handlers.
 func (h requestHandler) Handle(ctx context.Context, record slog.Record) error {
-	if identifier := problem.RequestIDFromContext(ctx); identifier != "" {
+	if identifier := rest.RequestIDFromContext(ctx); identifier != "" {
 		record = record.Clone()
 		record.AddAttrs(slog.String("request", identifier))
 	}

@@ -1,4 +1,4 @@
-module github.com/abgeo/maroid/libs/problem
+module github.com/abgeo/maroid/libs/rest
 
 go 1.26.7
 

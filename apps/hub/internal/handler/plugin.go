@@ -14,7 +14,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // PluginHandler represents the Plugin handler interface.
@@ -147,7 +147,7 @@ func (h *Plugin) SaveSettings(w http.ResponseWriter, r *http.Request) error {
 	var input map[string]any
 
 	if err := render.DecodeJSON(r.Body, &input); err != nil {
-		problem.Write(w, r, problem.NewBodyInvalid())
+		rest.Write(w, r, rest.NewBodyInvalid())
 
 		//nolint:nilerr // the handler answered the request, so Wrap must not log it.
 		return nil
@@ -168,25 +168,25 @@ func (h *Plugin) failSettings(w http.ResponseWriter, r *http.Request, err error)
 
 	switch {
 	case errors.Is(err, errs.ErrSettingsSchemaNotFound):
-		problem.Write(w, r, problems.NewSettingsAbsent())
+		rest.Write(w, r, problems.NewSettingsAbsent())
 	case errors.As(err, &invalid):
-		problem.Write(w, r, problems.NewSettingsInvalid().WithErrors(fieldFailures(invalid)...))
+		rest.Write(w, r, problems.NewSettingsInvalid().WithErrors(fieldFailures(invalid)...))
 	default:
 		// The body carries no cause, so this line is the one report of it.
 		h.logger.ErrorContext(r.Context(), "the settings request failed", slog.Any("error", err))
 
-		problem.Write(w, r, problem.NewInternal())
+		rest.Write(w, r, rest.NewInternal())
 	}
 
 	return nil
 }
 
 // fieldFailures turns the fields of a rejected save into the errors member.
-func fieldFailures(invalid *settings.InvalidError) []problem.FieldFailure {
-	failures := make([]problem.FieldFailure, 0, len(invalid.Fields))
+func fieldFailures(invalid *settings.InvalidError) []rest.FieldFailure {
+	failures := make([]rest.FieldFailure, 0, len(invalid.Fields))
 
 	for _, field := range invalid.Fields {
-		failures = append(failures, problem.FieldFailure{
+		failures = append(failures, rest.FieldFailure{
 			Detail:  field.Detail,
 			Pointer: field.Pointer,
 		})

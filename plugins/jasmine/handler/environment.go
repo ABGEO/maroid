@@ -12,7 +12,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 	"github.com/abgeo/maroid/plugins/jasmine/dto"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 	"github.com/abgeo/maroid/plugins/jasmine/repository"
@@ -57,7 +57,7 @@ func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		h.logger.ErrorContext(r.Context(), "failed to list environments", slog.Any("error", err))
-		problem.Write(w, r, problem.NewInternal())
+		rest.Write(w, r, rest.NewInternal())
 
 		return
 	}
@@ -80,7 +80,7 @@ func (h *EnvironmentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		h.logger.ErrorContext(r.Context(), "failed to get environment", slog.Any("error", err))
-		problem.Write(w, r, problem.NewNotFound())
+		rest.Write(w, r, rest.NewNotFound())
 
 		return
 	}
@@ -93,7 +93,7 @@ func (h *EnvironmentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 func (h *EnvironmentHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.EnvironmentRequest
 	if err := render.Bind(r, &req); err != nil {
-		problem.Write(w, r, requestProblem(err))
+		rest.Write(w, r, requestProblem(err))
 
 		return
 	}
@@ -113,7 +113,7 @@ func (h *EnvironmentHandler) Create(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		h.logger.ErrorContext(r.Context(), "failed to create environment", slog.Any("error", err))
-		problem.Write(w, r, problem.NewInternal())
+		rest.Write(w, r, rest.NewInternal())
 
 		return
 	}
@@ -128,7 +128,7 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.EnvironmentRequest
 	if err := render.Bind(r, &req); err != nil {
-		problem.Write(w, r, requestProblem(err))
+		rest.Write(w, r, requestProblem(err))
 
 		return
 	}
@@ -156,7 +156,7 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		h.logger.ErrorContext(r.Context(), "failed to update environment", slog.Any("error", err))
-		problem.Write(w, r, problem.NewInternal())
+		rest.Write(w, r, rest.NewInternal())
 
 		return
 	}
@@ -179,7 +179,7 @@ func (h *EnvironmentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		h.logger.ErrorContext(r.Context(), "failed to delete environment", slog.Any("error", err))
-		problem.Write(w, r, problem.NewInternal())
+		rest.Write(w, r, rest.NewInternal())
 
 		return
 	}

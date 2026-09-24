@@ -1,4 +1,4 @@
-package problem_test
+package rest_test
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // ERR-001: An error response carries the media type and the three required members.
@@ -19,15 +19,15 @@ func TestWriteCarriesTheMediaTypeAndTheRequiredMembers(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/plugins", nil)
 
-	problem.Write(recorder, request, problem.NewNotFound())
+	rest.Write(recorder, request, rest.NewNotFound())
 
 	assert.Equal(t, http.StatusNotFound, recorder.Code)
-	assert.Equal(t, problem.MediaType, recorder.Header().Get("Content-Type"))
+	assert.Equal(t, rest.ProblemMediaType, recorder.Header().Get("Content-Type"))
 
 	var body map[string]any
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
 
-	assert.Equal(t, problem.TypeNotFound, body["type"])
+	assert.Equal(t, rest.TypeNotFound, body["type"])
 	assert.Equal(t, "The resource does not exist.", body["title"])
 	assert.InDelta(t, float64(http.StatusNotFound), body["status"], 0)
 }
@@ -39,7 +39,7 @@ func TestWriteOmitsAnEmptyOptionalMember(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/plugins", nil)
 
-	problem.Write(recorder, request, problem.NewNotFound())
+	rest.Write(recorder, request, rest.NewNotFound())
 
 	var body map[string]any
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
@@ -55,17 +55,17 @@ func TestEveryConstructorMatchesTheRegistry(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		built  problem.Problem
+		built  rest.Problem
 		want   string
 		status int
 	}{
-		"request invalid":    {problem.NewRequestInvalid(), problem.TypeRequestInvalid, 400},
-		"body invalid":       {problem.NewBodyInvalid(), problem.TypeBodyInvalid, 400},
-		"access denied":      {problem.NewAccessDenied(), problem.TypeAccessDenied, 401},
-		"not found":          {problem.NewNotFound(), problem.TypeNotFound, 404},
-		"method not allowed": {problem.NewMethodNotAllowed(), problem.TypeMethodNotAllowed, 405},
-		"validation failed":  {problem.NewValidationFailed(), problem.TypeValidationFailed, 422},
-		"internal":           {problem.NewInternal(), problem.TypeInternal, 500},
+		"request invalid":    {rest.NewRequestInvalid(), rest.TypeRequestInvalid, 400},
+		"body invalid":       {rest.NewBodyInvalid(), rest.TypeBodyInvalid, 400},
+		"access denied":      {rest.NewAccessDenied(), rest.TypeAccessDenied, 401},
+		"not found":          {rest.NewNotFound(), rest.TypeNotFound, 404},
+		"method not allowed": {rest.NewMethodNotAllowed(), rest.TypeMethodNotAllowed, 405},
+		"validation failed":  {rest.NewValidationFailed(), rest.TypeValidationFailed, 422},
+		"internal":           {rest.NewInternal(), rest.TypeInternal, 500},
 	}
 
 	for name, testCase := range cases {
@@ -92,13 +92,13 @@ func TestWriteCarriesTheFieldFailures(t *testing.T) {
 		nil,
 	)
 
-	failure := problem.NewValidationFailed().WithErrors(
-		problem.FieldFailure{Detail: "is required", Pointer: "#/address/city"},
+	failure := rest.NewValidationFailed().WithErrors(
+		rest.FieldFailure{Detail: "is required", Pointer: "#/address/city"},
 	)
-	problem.Write(recorder, request, failure)
+	rest.Write(recorder, request, failure)
 
 	var body struct {
-		Errors []problem.FieldFailure `json:"errors"`
+		Errors []rest.FieldFailure `json:"errors"`
 	}
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
 
@@ -114,8 +114,8 @@ func TestWriteDropsTheDetailOfAnInternalProblem(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/plugins", nil)
 
-	leaking := problem.NewInternal().WithDetail("pq: relation \"plants\" does not exist")
-	problem.Write(recorder, request, leaking)
+	leaking := rest.NewInternal().WithDetail("pq: relation \"plants\" does not exist")
+	rest.Write(recorder, request, leaking)
 
 	assert.NotContains(t, recorder.Body.String(), "plants")
 
@@ -130,12 +130,12 @@ func TestWriteDropsTheDetailOfAnInternalProblem(t *testing.T) {
 func TestEveryProblemEncodes(t *testing.T) {
 	t.Parallel()
 
-	awkward := problem.NewValidationFailed().
+	awkward := rest.NewValidationFailed().
 		WithDetail("invalid utf8 \xff\xfe and control \x00 bytes").
-		WithErrors(problem.FieldFailure{Detail: "\x01", Pointer: "#/a~1b~0c"})
+		WithErrors(rest.FieldFailure{Detail: "\x01", Pointer: "#/a~1b~0c"})
 
-	for name, prob := range map[string]problem.Problem{
-		"a registered type": problem.NewInternal(),
+	for name, prob := range map[string]rest.Problem{
+		"a registered type": rest.NewInternal(),
 		"the zero value":    {},
 		"awkward text":      awkward,
 	} {

@@ -1,4 +1,4 @@
-package problem
+package rest
 
 import (
 	"bytes"
@@ -47,7 +47,7 @@ func Write(w http.ResponseWriter, r *http.Request, prob Problem) {
 		status = http.StatusInternalServerError
 	}
 
-	w.Header().Set("Content-Type", MediaType)
+	w.Header().Set("Content-Type", ProblemMediaType)
 	w.WriteHeader(status)
 
 	_, _ = io.Copy(w, &body)

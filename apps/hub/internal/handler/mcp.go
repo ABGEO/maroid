@@ -17,7 +17,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 const (
@@ -138,7 +138,7 @@ func (w *problemWriter) WriteHeader(status int) {
 		w.rewriting = true
 		w.status = status
 
-		w.Header().Set("Content-Type", problem.MediaType)
+		w.Header().Set("Content-Type", rest.ProblemMediaType)
 	}
 
 	w.ResponseWriter.WriteHeader(status)
@@ -162,7 +162,7 @@ func (w *problemWriter) flush() {
 		return
 	}
 
-	body, err := json.Marshal(problem.Fill(w.request, transportProblem(w.status)))
+	body, err := json.Marshal(rest.Fill(w.request, transportProblem(w.status)))
 	if err != nil {
 		return
 	}
@@ -172,13 +172,13 @@ func (w *problemWriter) flush() {
 
 // transportProblem names the failure of one status. Section 4.5 of the MCPHUB
 // specification gives the two that the transport answers.
-func transportProblem(status int) problem.Problem {
+func transportProblem(status int) rest.Problem {
 	switch status {
 	case http.StatusUnauthorized:
-		return problem.NewAccessDenied()
+		return rest.NewAccessDenied()
 	case http.StatusMethodNotAllowed:
-		return problem.NewMethodNotAllowed()
+		return rest.NewMethodNotAllowed()
 	default:
-		return problem.NewInternal().WithStatus(status)
+		return rest.NewInternal().WithStatus(status)
 	}
 }

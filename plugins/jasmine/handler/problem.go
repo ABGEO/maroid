@@ -6,27 +6,27 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // requestProblem names a body that the route refuses. A body that does not decode
 // is body-invalid, and a body that breaks a rule is validation-failed with one
 // item for each field.
-func requestProblem(err error) problem.Problem {
+func requestProblem(err error) rest.Problem {
 	var invalid validator.ValidationErrors
 	if !errors.As(err, &invalid) {
-		return problem.NewBodyInvalid()
+		return rest.NewBodyInvalid()
 	}
 
-	failures := make([]problem.FieldFailure, 0, len(invalid))
+	failures := make([]rest.FieldFailure, 0, len(invalid))
 	for _, fieldErr := range invalid {
-		failures = append(failures, problem.FieldFailure{
+		failures = append(failures, rest.FieldFailure{
 			Detail:  validationDetail(fieldErr),
 			Pointer: "#/" + fieldErr.Field(),
 		})
 	}
 
-	return problem.NewValidationFailed().WithErrors(failures...)
+	return rest.NewValidationFailed().WithErrors(failures...)
 }
 
 // validationDetail renders the reason that one rule gives.

@@ -26,13 +26,13 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 const (
 	hubHostname    = "hub.maroid.localhost"
 	hubExternalURL = "https://" + hubHostname
-	errorMediaType = problem.MediaType
+	errorMediaType = rest.ProblemMediaType
 	// mcpClientID is the default that mcp.client_id carries. See CFG-003.
 	mcpClientID = "mcp"
 	recordID    = "01998aa0-1111-7000-8000-000000000001"
@@ -281,13 +281,13 @@ func callTool(
 
 // problemOf reads the problem that an error response carries. ERR-001 gives the
 // shape, and ERR-005 keeps the reason of the verifier out of the body.
-func problemOf(t *testing.T, recorder *httptest.ResponseRecorder) problem.Problem {
+func problemOf(t *testing.T, recorder *httptest.ResponseRecorder) rest.Problem {
 	t.Helper()
 
 	contentType := recorder.Header().Get("Content-Type")
 	require.Equal(t, errorMediaType, contentType)
 
-	var body problem.Problem
+	var body rest.Problem
 
 	err := json.Unmarshal(recorder.Body.Bytes(), &body)
 	require.NoError(t, err, recorder.Body.String())
@@ -433,7 +433,7 @@ func TestAnExpiredTokenReachesNoTool(t *testing.T) {
 		"/.well-known/oauth-protected-resource/mcp",
 		"the refusal names where to get a token",
 	)
-	require.Equal(t, problem.TypeAccessDenied, problemOf(t, recorder).Type)
+	require.Equal(t, rest.TypeAccessDenied, problemOf(t, recorder).Type)
 }
 
 // MCPHUB-FR-002: A call that carries no token reaches the same rejection, and the
@@ -454,7 +454,7 @@ func TestACallWithNoTokenReachesNoTool(t *testing.T) {
 	// Section 4.5 of MCPHUB: Every condition of a 401 answers with one type and
 	// one title, and none carries a detail.
 	answer := problemOf(t, recorder)
-	require.Equal(t, problem.TypeAccessDenied, answer.Type)
+	require.Equal(t, rest.TypeAccessDenied, answer.Type)
 	require.Empty(t, answer.Detail)
 }
 
@@ -475,7 +475,7 @@ func TestATokenWithNoUserRecordReachesNoTool(t *testing.T) {
 	// Section 4.5 of MCPHUB: The refusal reads the same as a failed verification,
 	// so a caller learns nothing about which account exists.
 	answer := problemOf(t, recorder)
-	require.Equal(t, problem.TypeAccessDenied, answer.Type)
+	require.Equal(t, rest.TypeAccessDenied, answer.Type)
 	require.Empty(t, answer.Detail)
 }
 

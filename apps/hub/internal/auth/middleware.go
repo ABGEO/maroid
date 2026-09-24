@@ -9,7 +9,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 var (
@@ -110,7 +110,7 @@ func resolve(
 }
 
 func sendAccessDeniedResponse(w http.ResponseWriter, r *http.Request) {
-	problem.Write(w, r, problem.NewAccessDenied())
+	rest.Write(w, r, rest.NewAccessDenied())
 }
 
 // TokenFromContext retrieves the access token from the context.

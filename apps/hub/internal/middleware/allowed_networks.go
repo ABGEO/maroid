@@ -9,7 +9,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // AllowedNetworks returns a middleware that refuses a caller outside every
@@ -28,7 +28,7 @@ func AllowedNetworks(
 			ip := middleware.GetClientIPAddr(r.Context())
 			if !ip.IsValid() {
 				logger.WarnContext(r.Context(), "the request carries no client address")
-				problem.Write(w, r, problems.NewNetworkNotAllowed())
+				rest.Write(w, r, problems.NewNetworkNotAllowed())
 
 				return
 			}
@@ -46,7 +46,7 @@ func AllowedNetworks(
 				"request from disallowed network",
 				slog.String("client.ip", ip.String()),
 			)
-			problem.Write(w, r, problems.NewNetworkNotAllowed())
+			rest.Write(w, r, problems.NewNetworkNotAllowed())
 		})
 	}, nil
 }

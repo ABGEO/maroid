@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // routableMethods holds every method that a route of the hub can carry.
@@ -28,7 +28,7 @@ var routableMethods = []string{
 // notFound answers a route that the router does not hold.
 func notFound() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		problem.Write(w, r, problem.NewNotFound())
+		rest.Write(w, r, rest.NewNotFound())
 	}
 }
 
@@ -43,7 +43,7 @@ func methodNotAllowed(router *chi.Mux) http.HandlerFunc {
 			w.Header().Set("Allow", allowed)
 		}
 
-		problem.Write(w, r, problem.NewMethodNotAllowed())
+		rest.Write(w, r, rest.NewMethodNotAllowed())
 	}
 }
 
@@ -91,5 +91,5 @@ func recoverPanic(logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
 		slog.String("stack", string(debug.Stack())),
 	)
 
-	problem.Write(w, r, problem.NewInternal())
+	rest.Write(w, r, rest.NewInternal())
 }

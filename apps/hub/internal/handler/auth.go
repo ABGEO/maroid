@@ -19,7 +19,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // The reasons that the hub reports at the target of a flow. Section 4.5 of the
@@ -299,9 +299,9 @@ func (h *Auth) Detach(w http.ResponseWriter, r *http.Request) error {
 	case err == nil:
 		render.NoContent(w, r)
 	case errors.Is(err, errs.ErrLastIdentity):
-		problem.Write(w, r, problems.NewIdentityLast())
+		rest.Write(w, r, problems.NewIdentityLast())
 	case errors.Is(err, errs.ErrIdentityNotFound):
-		problem.Write(w, r, problem.NewNotFound())
+		rest.Write(w, r, rest.NewNotFound())
 	default:
 		return fmt.Errorf("detaching the external account: %w", err)
 	}
@@ -561,7 +561,7 @@ func redirectWithReason(w http.ResponseWriter, r *http.Request, target string, r
 // sendBadRequest answers with the problem of a request that a route cannot read.
 // The detail names the parameter and nothing of the request.
 func sendBadRequest(w http.ResponseWriter, r *http.Request, detail string) {
-	problem.Write(w, r, problem.NewRequestInvalid().WithDetail(detail))
+	rest.Write(w, r, rest.NewRequestInvalid().WithDetail(detail))
 }
 
 func validateRedirect(redirect string, allowed []string) bool {

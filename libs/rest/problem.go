@@ -1,7 +1,8 @@
-package problem
+package rest
 
-// MediaType is the content type of every error response.
-const MediaType = "application/problem+json"
+// ProblemMediaType is the content type of every error response. The name
+// carries the subject, because this module also answers application/json.
+const ProblemMediaType = "application/problem+json"
 
 // Problem is the body of an error response.
 type Problem struct {

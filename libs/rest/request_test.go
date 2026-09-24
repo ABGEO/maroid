@@ -1,4 +1,4 @@
-package problem_test
+package rest_test
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // ERR-006: The hub gives each request an identifier, and it is a UUID version 7.
@@ -20,8 +20,8 @@ func TestRequestIDGivesAUUIDVersion7(t *testing.T) {
 
 	var seen string
 
-	handler := problem.RequestID(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		seen = problem.RequestIDFromContext(r.Context())
+	handler := rest.RequestID(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		seen = rest.RequestIDFromContext(r.Context())
 	}))
 
 	recorder := httptest.NewRecorder()
@@ -39,7 +39,7 @@ func TestRequestIDGivesAUUIDVersion7(t *testing.T) {
 func TestRequestIDSetsTheHeaderAsTheBareUUID(t *testing.T) {
 	t.Parallel()
 
-	handler := problem.RequestID(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	handler := rest.RequestID(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
 
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(
@@ -47,7 +47,7 @@ func TestRequestIDSetsTheHeaderAsTheBareUUID(t *testing.T) {
 		httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/ping", nil),
 	)
 
-	header := recorder.Header().Get(problem.RequestIDHeader)
+	header := recorder.Header().Get(rest.RequestIDHeader)
 	require.NotEmpty(t, header)
 	assert.NotContains(t, header, "urn:")
 
@@ -64,12 +64,12 @@ func TestRequestIDIgnoresTheHeaderOfTheRequest(t *testing.T) {
 
 	var seen string
 
-	handler := problem.RequestID(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		seen = problem.RequestIDFromContext(r.Context())
+	handler := rest.RequestID(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		seen = rest.RequestIDFromContext(r.Context())
 	}))
 
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/ping", nil)
-	request.Header.Set(problem.RequestIDHeader, chosen)
+	request.Header.Set(rest.RequestIDHeader, chosen)
 
 	handler.ServeHTTP(httptest.NewRecorder(), request)
 
@@ -82,8 +82,8 @@ func TestWriteFillsTheInstanceFromTheRequest(t *testing.T) {
 
 	var body map[string]any
 
-	handler := problem.RequestID(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		problem.Write(w, r, problem.NewNotFound())
+	handler := rest.RequestID(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rest.Write(w, r, rest.NewNotFound())
 	}))
 
 	recorder := httptest.NewRecorder()
@@ -97,6 +97,6 @@ func TestWriteFillsTheInstanceFromTheRequest(t *testing.T) {
 	instance, ok := body["instance"].(string)
 	require.True(t, ok)
 	assert.True(t, strings.HasPrefix(instance, "urn:maroid:request:"))
-	assert.Equal(t, recorder.Header().Get(problem.RequestIDHeader),
+	assert.Equal(t, recorder.Header().Get(rest.RequestIDHeader),
 		strings.TrimPrefix(instance, "urn:maroid:request:"))
 }

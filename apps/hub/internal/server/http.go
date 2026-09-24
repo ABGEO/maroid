@@ -12,7 +12,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	hubmiddleware "github.com/abgeo/maroid/apps/hub/internal/middleware"
-	"github.com/abgeo/maroid/libs/problem"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // NewHTTPRouter creates a new HTTP router with middleware.
@@ -23,7 +23,7 @@ func NewHTTPRouter(cfg *config.Config, logger *slog.Logger) (*chi.Mux, error) {
 	}
 
 	router := chi.NewRouter()
-	router.Use(problem.RequestID)
+	router.Use(rest.RequestID)
 	router.Use(resolveClientIP)
 	router.Use(accessLog(logger))
 	router.Use(recoverer(logger))
