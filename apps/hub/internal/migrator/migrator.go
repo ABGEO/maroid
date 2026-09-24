@@ -3,6 +3,7 @@
 package migrator
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -119,7 +120,7 @@ func (m *Migrator) buildMigrationPlan(target string) (*migrationPlan, error) {
 	migrations := m.migrationRegistry.All()
 	plan := &migrationPlan{
 		filesystems: migrations,
-		order:       slices.Collect(maps.Keys(migrations)),
+		order:       orderComponents(migrations),
 	}
 
 	switch target {
@@ -168,6 +169,26 @@ func (m *Migrator) newMigrateInstance(
 	}
 
 	return instance, nil
+}
+
+// orderComponents puts the core ahead of every plugin and sorts the plugins
+// after it.
+func orderComponents(migrations map[string]fs.FS) []string {
+	return slices.SortedFunc(maps.Keys(migrations), func(left, right string) int {
+		if order := cmp.Compare(coreRank(left), coreRank(right)); order != 0 {
+			return order
+		}
+
+		return cmp.Compare(left, right)
+	})
+}
+
+func coreRank(component string) int {
+	if component == TargetCore {
+		return 0
+	}
+
+	return 1
 }
 
 func buildSchemaName(component string) string {
