@@ -21,10 +21,9 @@ import (
 )
 
 const (
-	mcpPath        = "/mcp"
-	discoveryPath  = "/.well-known/oauth-protected-resource"
-	mediaTypeJSON  = "application/json"
-	resourceScheme = "https://"
+	mcpPath       = "/mcp"
+	discoveryPath = "/.well-known/oauth-protected-resource"
+	mediaTypeJSON = "application/json"
 )
 
 // MCP serves the Model Context Protocol of the hub, and the discovery document
@@ -47,8 +46,8 @@ func NewMCP(
 	resolver auth.IdentityResolver,
 	toolRegistry *registry.MCPToolRegistry,
 ) *MCP {
-	origin := resourceScheme + cfg.Server.Hostname
-	metadataURL := origin + discoveryPath + mcpPath
+	origin := cfg.Server.ExternalAddress("")
+	metadataURL := cfg.Server.ExternalAddress(discoveryPath + mcpPath)
 
 	logger = logger.With(
 		slog.String("component", "handler"),

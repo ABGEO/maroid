@@ -31,6 +31,7 @@ import (
 
 const (
 	hubHostname    = "hub.maroid.localhost"
+	hubExternalURL = "https://" + hubHostname
 	errorMediaType = problem.MediaType
 	// mcpClientID is the default that mcp.client_id carries. See CFG-003.
 	mcpClientID = "mcp"
@@ -148,12 +149,27 @@ func hubWithToolRegistry(
 ) *chi.Mux {
 	t.Helper()
 
+	return hubAt(t, hubExternalURL, resolver, dex, toolRegistry, loadPlugins)
+}
+
+// hubAt mounts the handler against one stored external address, so that a test
+// varies the scheme that the deployment answers on.
+func hubAt(
+	t *testing.T,
+	externalURL string,
+	resolver auth.IdentityResolver,
+	dex *authtest.Provider,
+	toolRegistry *registry.MCPToolRegistry,
+	loadPlugins func(),
+) *chi.Mux {
+	t.Helper()
+
 	cfg := &config.Config{}
-	cfg.Server.Hostname = hubHostname
+	cfg.Server.ExternalURL = externalURL
 	cfg.OIDC.Issuer = dex.URL
 	cfg.OIDC.ClientID = authtest.ClientID
 	cfg.OIDC.ClientSecret = "secret"
-	cfg.OIDC.RedirectURI = "https://" + hubHostname + "/auth/callback"
+	cfg.OIDC.RedirectURI = externalURL + "/auth/callback"
 	cfg.MCP.ClientID = mcpClientID
 
 	oidcSvc, err := auth.NewOIDCService(cfg)
@@ -319,6 +335,42 @@ func TestAToolThatAPluginRegistersReachesTheClient(t *testing.T) {
 	require.Equal(t, "reached", content["answer"])
 }
 
+// APIFMT-SC-014: The discovery document answers the scheme of the stored external
+// address. The scheme lived in a constant before, so a deployment that did not
+// serve HTTPS published a document that reached nobody.
+func TestTheDiscoveryDocumentCarriesTheStoredScheme(t *testing.T) {
+	t.Parallel()
+
+	const plainExternalURL = "http://hub.maroid.localhost:8000"
+
+	dex := authtest.StartProvider(t)
+	router := hubAt(
+		t,
+		plainExternalURL,
+		&stubResolver{user: activeRecord()},
+		dex,
+		registry.NewMCPToolRegistry(),
+		nil,
+	)
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequestWithContext(
+		t.Context(), http.MethodGet, "/.well-known/oauth-protected-resource/mcp", http.NoBody,
+	)
+	request.Host = hubHostname
+
+	router.ServeHTTP(recorder, request)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	var document struct {
+		Resource string `json:"resource"`
+	}
+
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &document))
+	require.Equal(t, plainExternalURL+"/mcp", document.Resource)
+}
+
 // MCPHUB-SC-001: An MCP client that holds no token reads the discovery document,
 // whose resource names /mcp and whose authorization_servers names Dex.
 func TestTheDiscoveryRouteNamesDexWithNoToken(t *testing.T) {
@@ -353,7 +405,7 @@ func TestTheDiscoveryRouteNamesDexWithNoToken(t *testing.T) {
 			}
 
 			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &document))
-			require.Equal(t, "https://"+hubHostname+"/mcp", document.Resource)
+			require.Equal(t, hubExternalURL+"/mcp", document.Resource)
 			require.Equal(t, []string{dex.URL}, document.AuthorizationServers)
 		})
 	}

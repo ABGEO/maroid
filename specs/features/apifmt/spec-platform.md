@@ -78,7 +78,6 @@ documents and a linter checks them. Four headers join the answer.
 | `libs/rest/concurrency.go`                    | create | `ETag`, `IfMatch`, `ErrModified`.                        |
 | `libs/rest/cache.go`                          | create | `NoStore`, `Immutable`, and the middleware that sets the first. |
 | `libs/rest/idempotency.go`                    | create | The middleware and the `IdempotencyStore` interface.     |
-| `libs/pluginapi/host.go`                      | change | `Host` exposes `ExternalURL()`.                          |
 | `tools/apibuild/main.go`                      | create | The merge of `APIFMT-DD-012`.                            |
 | `specs/api/components.yaml`                   | change | The five headers of section 4.5, and `PreconditionFailed`. |
 | `specs/api/vacuum-ruleset.yaml`               | exists | The ruleset for `hub.yaml`.                              |
@@ -94,8 +93,13 @@ documents and a linter checks them. Four headers join the answer.
 
 `server.hostname` goes. `validate:"url"` demands the scheme, which `fqdn` did not.
 Three readers take the value: the MCP discovery document, the webhook that
-Telegram registers, and a link that `RES-005` builds. `pluginapi.Host` exposes it
-so that a plugin builds a link the same way.
+Telegram registers, and a link that `RES-005` builds.
+
+`libs/pluginapi` does not change. A middleware of the hub puts the value in the
+request context, and the link builder of `libs/rest` reads it there. The hub
+mounts every plugin route inside its own router, so that middleware reaches a
+plugin handler. A plugin therefore builds a link with no configuration of its
+own, and it never holds the `Host` header that `RES-005` forbids.
 
 ### 4.3 Declarations
 

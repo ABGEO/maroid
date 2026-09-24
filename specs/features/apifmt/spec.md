@@ -67,6 +67,7 @@ time takes UTC. The deck and `libs/api-client` read the new shape.
 | `libs/rest/registry.go`                | change | The constructors. `NewCursorStale` joins them.                |
 | `libs/rest/writer.go`                  | move   | `Fill` and `Write`. Unchanged.                                |
 | `libs/rest/page.go`                    | create | `Page[T]`, `NewPage`, and the link builder.                   |
+| `libs/rest/base.go`                    | create | The middleware that carries the external address, and its reader. |
 | `libs/rest/cursor.go`                  | create | `Cursor`, `EncodeCursor`, `DecodeCursor`.                     |
 | `libs/rest/flow.go`                    | rename | The middleware. `spec-platform.md` holds it.                  |
 | `apps/hub/internal/handler/plugin.go`  | change | `List` answers a page. `SaveSettings` keeps its shape.        |

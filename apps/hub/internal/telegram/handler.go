@@ -112,7 +112,7 @@ func webhookOptions(
 
 	return []telego.WebhookOption{
 		telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
-			URL:         cfg.Server.Hostname + cfg.Telegram.Webhook.Path,
+			URL:         cfg.Server.ExternalAddress(cfg.Telegram.Webhook.Path),
 			SecretToken: bot.SecretToken(),
 		}),
 	}

@@ -60,7 +60,7 @@ type CORS struct {
 
 // Server defines HTTP server configuration parameters.
 type Server struct {
-	Hostname       string   `validate:"fqdn"`
+	ExternalURL    string   `mapstructure:"external_url"    validate:"required,url"`
 	ListenAddr     string   `default:"0.0.0.0"              mapstructure:"address"         validate:"ip"`
 	Port           string   `default:"8000"                 validate:"min=1,max=65535"`
 	TrustedProxies []string `mapstructure:"trusted_proxies" validate:"omitempty,dive,cidr"`
@@ -74,6 +74,12 @@ type Server struct {
 // Address returns the full server address in host:port format.
 func (c *Server) Address() string {
 	return net.JoinHostPort(c.ListenAddr, c.Port)
+}
+
+// ExternalAddress joins the external address of this deployment with a path. A
+// trailing slash on the stored value never reaches the result.
+func (c *Server) ExternalAddress(path string) string {
+	return strings.TrimSuffix(c.ExternalURL, "/") + path
 }
 
 // Provider is one account system that Dex federates and that Maroid offers.
