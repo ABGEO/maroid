@@ -5,7 +5,7 @@ type: guideline
 status: active
 created: 2026-09-21
 updated: 2026-09-24
-scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, libs/problem/, libs/api-client/, plugins/]
+scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, libs/rest/, libs/api-client/, plugins/]
 related: [API, DAT, LOG, OWN, PLG, RES, UI]
 ---
 
@@ -78,14 +78,14 @@ compares one constant.
 
 A type names a condition that HTTP itself defines, or a mechanism that every
 component runs, or a mechanism of one domain of the hub. The first two live in
-`libs/problem`, and the third in the hub. Which component answers it today
+`libs/rest`, and the third in the hub. Which component answers it today
 decides nothing.
 
 A cursor is a mechanism that every component runs: `RES-005` gives a page to
 every collection, and a plugin answers one. `PLG-007` denies a plugin the hub, so
 the type of a stale cursor lives in the library.
 
-`libs/problem` holds these, under `/problems/http/`.
+`libs/rest` holds these, under `/problems/http/`.
 
 | Slug                     | Status | Title                                               |
 | ------------------------ | ------ | ----------------------------------------------------- |
@@ -189,11 +189,11 @@ then reaches the line that holds the cause.
 
 ## ERR-007
 
-`libs/problem` holds the type, one constructor for each type of the first table of
+`libs/rest` holds the type, one constructor for each type of the first table of
 `ERR-003`, the writer, and the middleware of `ERR-006`. The identifier lives there
 because a plugin fills `instance` too, and `PLG-007` denies it the hub.
 
-The second table lives in the hub, because `ARC-004` gives `libs/` the code that a
+The second table lives in the hub, because `ARC-005` gives `libs/` the code that a
 plugin and the hub both import.
 
 Every caller writes a problem with `Write`, which reports nothing, as `http.Error`
@@ -202,7 +202,10 @@ so a body that does not encode still leaves the answer well formed. No caller
 builds a body of its own, and none answers a failure with `render.JSON`, which
 writes `application/json`.
 
-A plugin imports `libs/problem` and never `apps/hub`. `PLG-007`.
+`RES-005` and `RES-006` put the page and the cursor in the same module, for the
+same reason. `ADR-0007` gives the name.
+
+A plugin imports `libs/rest` and never `apps/hub`. `PLG-007`.
 
 `libs/api-client` parses the media type and puts the problem on `ApiError`.
 `@maroid/plugin-sdk` re-exports it for a plugin user interface. `UI-006`.

@@ -277,7 +277,7 @@ Add a row before you create the file or the directory.
 | `MCPHUB` | `features/mcphub/` | The hub as a Model Context Protocol server. | Approved |
 | `PCAP`  | `features/pcap/`  | The capabilities that a plugin declares.       | Approved |
 | `WEBSESS` | `features/websess/` | The session of a person at the web shell. | Approved |
-| `APIFMT` | `features/apifmt/` | The shape of a successful answer, and the routes that carry it. | Draft |
+| `APIFMT` | `features/apifmt/` | The answer that a client reads, and the platform that carries it. | Approved |
 
 ## Retired identifiers
 

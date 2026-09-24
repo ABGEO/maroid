@@ -4,7 +4,7 @@ title: Build and release
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-23
+updated: 2026-09-24
 scope: [apps/, libs/, plugins/, .docker/, chart/, specs/api/]
 related: [RES, SPC, ARC, PLG, UI, GO, TS]
 ---
@@ -57,7 +57,7 @@ CGO_ENABLED=1 go build -buildmode=plugin -o build/plugins/<name>.so ./plugins/<n
 
 ## BLD-004
 
-A change in `libs/pluginapi` touches every plugin.
+A change in a module of `libs/` that every plugin imports touches every plugin.
 Build every plugin after such a change, and confirm that the hub loads each one.
 
 **Why:** `BLD-002` fails at runtime, not at build time. Only a load proves the change.
