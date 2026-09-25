@@ -305,6 +305,41 @@ func TestTheListNeedsASession(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, recorder.Code)
 }
 
+// APIFMT-SC-010: A member that holds no value is absent, and no answer carries a
+// JSON null. A record whose owner set neither name answers neither member.
+func TestMeOmitsANameThatTheRecordDoesNotHold(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+
+	var userID string
+	require.NoError(t, fixture.database.Get(
+		&userID,
+		`INSERT INTO public.users (first_name, last_name) VALUES (NULL, NULL) RETURNING id;`,
+	))
+	require.NoError(t, fixture.service.Attach(
+		t.Context(), userID, auth.ProviderTelegram, "222", model.Profile{},
+	))
+
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/auth/me", nil)
+	request.AddCookie(requestCookie(
+		sessionCookie, fixture.provider.Sign(t, auth.ProviderTelegram, "222"),
+	))
+
+	recorder := httptest.NewRecorder()
+	fixture.router.ServeHTTP(recorder, request)
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	require.NotContains(t, recorder.Body.String(), "null", recorder.Body.String())
+
+	var body map[string]any
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+
+	require.NotContains(t, body, "first_name")
+	require.NotContains(t, body, "last_name")
+	require.Contains(t, body, "provider", "a member that holds a value stays")
+}
+
 // /auth/me reports the two names of the record and the provider that
 // authenticated the session, so the deck can warn before a detach that would
 // sign the person out of their own request.

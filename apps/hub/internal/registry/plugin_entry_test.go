@@ -46,8 +46,8 @@ func TestPluginEntriesReportEveryLoadedPlugin(t *testing.T) {
 	))
 
 	manifest := &pluginapi.UIManifest{
-		Name:   "Probe",
-		Routes: []pluginapi.UIRoute{{Path: "/", Label: "Probe"}},
+		Name:   probeName,
+		Routes: []pluginapi.UIRoute{{Path: "/", Label: probeName}},
 		Assets: fstest.MapFS{},
 	}
 

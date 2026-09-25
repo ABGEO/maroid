@@ -25,8 +25,13 @@ func NewUIRegistry() *UIRegistry {
 	}
 }
 
-// Register registers a UI manifest for a plugin.
+// Register registers a UI manifest for a plugin. A manifest that names no route
+// answers an empty array, because a collection never answers a null.
 func (r *UIRegistry) Register(pluginID *pluginapi.PluginID, manifest *pluginapi.UIManifest) {
+	if manifest != nil && manifest.Routes == nil {
+		manifest.Routes = []pluginapi.UIRoute{}
+	}
+
 	r.entries[pluginID.String()] = ManifestEntry{
 		PluginID: pluginID,
 		Manifest: manifest,

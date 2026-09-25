@@ -263,17 +263,21 @@ components:
   schemas:
     CurrentUser:
       type: object
-      required: [first_name, last_name, picture, provider]
+      required: [picture, provider]
       description: >
         The person of the current session. The two names come from the record that
         the owner set, and the picture from the token of the session.
       properties:
         first_name:
-          type: ["string", "null"]
-          description: The first name that the owner set on the record.
+          type: string
+          description: >
+            The first name that the owner set on the record. The member is
+            absent when the record holds none. `APIFMT-FR-009`.
         last_name:
-          type: ["string", "null"]
-          description: The last name that the owner set on the record.
+          type: string
+          description: >
+            The last name that the owner set on the record. The member is
+            absent when the record holds none. `APIFMT-FR-009`.
         picture:
           type: string
           description: >

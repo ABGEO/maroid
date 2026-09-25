@@ -377,8 +377,8 @@ func (h *Auth) Logout(w http.ResponseWriter, r *http.Request) error {
 
 // meResponse is the body of GET /auth/me.
 type meResponse struct {
-	FirstName *string `json:"first_name"`
-	LastName  *string `json:"last_name"`
+	FirstName *string `json:"first_name,omitempty"`
+	LastName  *string `json:"last_name,omitempty"`
 	Picture   string  `json:"picture"`
 	Provider  string  `json:"provider"`
 }

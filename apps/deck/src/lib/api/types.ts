@@ -1,6 +1,6 @@
 export interface User {
-	first_name: string | null;
-	last_name: string | null;
+	first_name?: string;
+	last_name?: string;
 	picture: string;
 	/** The connector that authenticated this session. */
 	provider: string;

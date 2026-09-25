@@ -1,12 +1,15 @@
 package registry_test
 
 import (
+	"encoding/json"
 	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // APIFMT-SC-001: Every member that Maroid names carries one spelling. A
@@ -35,4 +38,27 @@ func TestEveryCapabilityIsSnakeCase(t *testing.T) {
 			assert.Regexp(t, snake, string(capability))
 		})
 	}
+}
+
+// probeName is the display name of the plugin that these tests register.
+const probeName = "Probe"
+
+// APIFMT-SC-010: A collection answers an empty array and never a null. A plugin
+// that registers a manifest with no route still answers one.
+func TestAManifestWithNoRouteAnswersAnEmptyArray(t *testing.T) {
+	t.Parallel()
+
+	uiRegistry := registry.NewUIRegistry()
+	pluginID := pluginapi.ParsePluginID("dev.maroid.probe")
+
+	uiRegistry.Register(pluginID, &pluginapi.UIManifest{Name: probeName})
+
+	entry, ok := uiRegistry.Get(pluginID.String())
+	require.True(t, ok)
+
+	encoded, err := json.Marshal(entry.Manifest)
+	require.NoError(t, err)
+
+	assert.Contains(t, string(encoded), `"routes":[]`)
+	assert.NotContains(t, string(encoded), "null")
 }
