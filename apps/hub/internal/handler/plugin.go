@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -149,9 +150,13 @@ func (h *Plugin) SettingsSchema(w http.ResponseWriter, r *http.Request) error {
 
 // ReadSettings returns the settings that the acting user stored for the plugin.
 func (h *Plugin) ReadSettings(w http.ResponseWriter, r *http.Request) error {
-	values, err := h.settingsSvc.Read(r.Context(), chi.URLParam(r, "id"))
+	values, version, err := h.settingsSvc.Read(r.Context(), chi.URLParam(r, "id"))
 	if err != nil {
 		return h.failSettings(w, r, err)
+	}
+
+	if !version.IsZero() {
+		w.Header().Set(rest.ETagHeader, rest.ETag(version))
 	}
 
 	render.Status(r, http.StatusOK)
@@ -171,7 +176,21 @@ func (h *Plugin) SaveSettings(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	if err := h.settingsSvc.Save(r.Context(), chi.URLParam(r, "id"), input); err != nil {
+	ifMatch, held, err := rest.IfMatch(r)
+	if err != nil {
+		rest.Write(w, r, rest.NewRequestInvalid().
+			WithDetail("The If-Match header is not a validator that this API answered."))
+
+		//nolint:nilerr // the handler answered the request, so Wrap must not log it.
+		return nil
+	}
+
+	var version *time.Time
+	if held {
+		version = &ifMatch
+	}
+
+	if err = h.settingsSvc.Save(r.Context(), chi.URLParam(r, "id"), input, version); err != nil {
 		return h.failSettings(w, r, err)
 	}
 
@@ -189,6 +208,8 @@ func (h *Plugin) failSettings(w http.ResponseWriter, r *http.Request, err error)
 		rest.Write(w, r, problems.NewSettingsAbsent())
 	case errors.As(err, &invalid):
 		rest.Write(w, r, problems.NewSettingsInvalid().WithErrors(fieldFailures(invalid)...))
+	case errors.Is(err, rest.ErrModified):
+		rest.Write(w, r, rest.NewPreconditionFailed())
 	default:
 		// The body carries no cause, so this line is the one report of it.
 		h.logger.ErrorContext(r.Context(), "the settings request failed", slog.Any("error", err))

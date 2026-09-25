@@ -3,8 +3,10 @@ package settings
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // SecretMask stands for a secret that the row holds. Read returns it in place of every
@@ -26,9 +29,9 @@ type Service interface {
 	Schema(pluginID string) (json.RawMessage, error)
 	SecretFields(pluginID string) ([]string, error)
 	ChangedSecrets(pluginID string, input map[string]any) ([]string, error)
-	Read(ctx context.Context, pluginID string) (map[string]any, error)
+	Read(ctx context.Context, pluginID string) (map[string]any, time.Time, error)
 	Settings(ctx context.Context, pluginID *pluginapi.PluginID) (map[string]any, error)
-	Save(ctx context.Context, pluginID string, input map[string]any) error
+	Save(ctx context.Context, pluginID string, input map[string]any, ifMatch *time.Time) error
 }
 
 // SchemaSource gives the settings schema of one plugin.
@@ -121,15 +124,20 @@ func (m *Manager) ChangedSecrets(pluginID string, input map[string]any) ([]strin
 }
 
 // Read returns the settings of the acting user, for the person who stored them.
-func (m *Manager) Read(ctx context.Context, pluginID string) (map[string]any, error) {
+// The second answer is the moment of the last write, which an entity tag names.
+// It is the zero time when no row exists.
+func (m *Manager) Read(
+	ctx context.Context,
+	pluginID string,
+) (map[string]any, time.Time, error) {
 	schema, err := m.schemaOf(pluginID)
 	if err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
 
-	stored, err := m.stored(ctx, pluginID)
+	stored, version, err := m.stored(ctx, pluginID)
 	if err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
 
 	values := make(map[string]any, len(schema.Kinds))
@@ -148,7 +156,7 @@ func (m *Manager) Read(ctx context.Context, pluginID string) (map[string]any, er
 		}
 	}
 
-	return values, nil
+	return values, version, nil
 }
 
 // Settings returns the settings of the acting user, for the plugin that reads them.
@@ -163,7 +171,7 @@ func (m *Manager) Settings(
 		return nil, err
 	}
 
-	stored, err := m.stored(ctx, id)
+	stored, _, err := m.stored(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +190,14 @@ func (m *Manager) Settings(
 }
 
 // Save stores the settings of the acting user for the plugin.
-func (m *Manager) Save(ctx context.Context, pluginID string, input map[string]any) error {
+// A non-nil ifMatch refuses a write to a record that changed after the client
+// read it.
+func (m *Manager) Save(
+	ctx context.Context,
+	pluginID string,
+	input map[string]any,
+	ifMatch *time.Time,
+) error {
 	schema, err := m.schemaOf(pluginID)
 	if err != nil {
 		return err
@@ -205,9 +220,13 @@ func (m *Manager) Save(ctx context.Context, pluginID string, input map[string]an
 			return mergeErr
 		}
 
-		return settingsRepo.Upsert(ctx, pluginID, fields)
+		return settingsRepo.Upsert(ctx, pluginID, fields, ifMatch)
 	})
 	if err != nil {
+		if errors.Is(err, rest.ErrModified) {
+			return rest.ErrModified
+		}
+
 		return fmt.Errorf("saving the settings: %w", err)
 	}
 
@@ -362,7 +381,10 @@ func (m *Manager) schemaOf(pluginID string) (*Schema, error) {
 	return schema, nil
 }
 
-func (m *Manager) stored(ctx context.Context, pluginID string) (model.Fields, error) {
+func (m *Manager) stored(
+	ctx context.Context,
+	pluginID string,
+) (model.Fields, time.Time, error) {
 	var entity *model.PluginSettings
 
 	err := database.WithUserTx(ctx, m.db, func(tx *sqlx.Tx) error {
@@ -376,10 +398,15 @@ func (m *Manager) stored(ctx context.Context, pluginID string) (model.Fields, er
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("reading the settings of the acting user: %w", err)
+		return nil, time.Time{}, fmt.Errorf("reading the settings of the acting user: %w", err)
 	}
 
-	return storedFields(entity), nil
+	var version time.Time
+	if entity != nil {
+		version = entity.UpdatedAt
+	}
+
+	return storedFields(entity), version, nil
 }
 
 func storedFields(entity *model.PluginSettings) model.Fields {

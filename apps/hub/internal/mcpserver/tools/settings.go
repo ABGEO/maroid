@@ -34,7 +34,7 @@ func (a *settingsAccess) stored(
 		return nil, nil, a.failure(ctx, pluginID, err)
 	}
 
-	values, err := a.settingsSvc.Read(ctx, pluginID)
+	values, _, err := a.settingsSvc.Read(ctx, pluginID)
 	if err != nil {
 		return nil, nil, a.failure(ctx, pluginID, err)
 	}

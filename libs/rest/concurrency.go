@@ -9,9 +9,13 @@ import (
 	"time"
 )
 
-// IfMatchHeader carries the validator that a client read, on a write that must
-// not replace a record which moved since.
-const IfMatchHeader = "If-Match"
+const (
+	// IfMatchHeader carries the validator that a client read, on a write that must
+	// not replace a record which moved since.
+	IfMatchHeader = "If-Match"
+	// ETagHeader carries the validator of a record whose last write is at moment.
+	ETagHeader = "ETag"
+)
 
 var (
 	// ErrModified reports a write whose record moved after the client read it. A

@@ -83,6 +83,18 @@ components:
           format: uri
 
   responses:
+    PreconditionFailed:
+      description: >
+        The record changed after the client read it. The type is
+        `/problems/http/precondition-failed`, and the client reads the record
+        again before it writes what it still means to write. `APIFMT-FR-019`.
+      headers:
+        X-Flow-ID:
+          $ref: "#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
     Unauthorized:
       description: The request carries no active user record.
       content:
@@ -109,6 +121,13 @@ components:
             $ref: "#/components/schemas/Problem"
 
   headers:
+    ETag:
+      description: >
+        The validator of the record, weak, built from the moment of its last
+        write. A client sends it back in `If-Match`. `APIFMT-DD-014`.
+      schema:
+        type: string
+        examples: ['W/"1790332200123456789"']
     FlowId:
       description: The flow identifier of the request. `ERR-006`.
       schema:
@@ -161,3 +180,15 @@ components:
           type: string
           maxLength: 64
           pattern: "^[+-]?[a-z_][a-z_0-9]*$"
+    IfMatch:
+      name: If-Match
+      in: header
+      required: false
+      description: >
+        The validator that the client read. The write lands only while the
+        record still holds it, and a record that moved answers 412. A write
+        that names none lands, because `Z-182` does not make the header
+        mandatory. `APIFMT-FR-019`.
+      schema:
+        type: string
+        examples: ['W/"1790332200123456789"']

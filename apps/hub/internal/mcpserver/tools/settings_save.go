@@ -64,7 +64,7 @@ func (t *savePluginSettings) handle(
 		return nil, SavePluginSettingsOutput{}, err
 	}
 
-	if err := t.settingsSvc.Save(ctx, input.Plugin, input.Values); err != nil {
+	if err := t.settingsSvc.Save(ctx, input.Plugin, input.Values, nil); err != nil {
 		return nil, SavePluginSettingsOutput{}, t.failure(ctx, input.Plugin, err)
 	}
 

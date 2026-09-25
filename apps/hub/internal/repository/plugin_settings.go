@@ -5,10 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 const pluginSettingsColumns = `id, user_id, plugin_id, fields, created_at, updated_at`
@@ -16,7 +18,7 @@ const pluginSettingsColumns = `id, user_id, plugin_id, fields, created_at, updat
 // PluginSettingsRepository defines the data access contract for the settings of a user.
 type PluginSettingsRepository interface {
 	Get(ctx context.Context, pluginID string) (*model.PluginSettings, error)
-	Upsert(ctx context.Context, pluginID string, fields model.Fields) error
+	Upsert(ctx context.Context, pluginID string, fields model.Fields, ifMatch *time.Time) error
 }
 
 // PluginSettings is a SQL based implementation of PluginSettingsRepository.
@@ -58,18 +60,31 @@ func (r *PluginSettings) Upsert(
 	ctx context.Context,
 	pluginID string,
 	fields model.Fields,
+	ifMatch *time.Time,
 ) error {
 	query := `
 		INSERT INTO public.plugin_settings (plugin_id, fields)
 		VALUES (:plugin_id, :fields)
-		ON CONFLICT (user_id, plugin_id) DO UPDATE SET fields = EXCLUDED.fields;`
+		ON CONFLICT (user_id, plugin_id) DO UPDATE SET fields = EXCLUDED.fields
+		WHERE CAST(:if_match AS TIMESTAMPTZ) IS NULL
+		   OR public.plugin_settings.updated_at = CAST(:if_match AS TIMESTAMPTZ);`
 
-	_, err := r.tx.NamedExecContext(ctx, query, map[string]any{
+	result, err := r.tx.NamedExecContext(ctx, query, map[string]any{
 		"plugin_id": pluginID,
 		"fields":    fields,
+		"if_match":  ifMatch,
 	})
 	if err != nil {
 		return fmt.Errorf("upserting PluginSettings: %w", err)
+	}
+
+	changed, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("reading the rows that the upsert changed: %w", err)
+	}
+
+	if changed == 0 {
+		return rest.ErrModified
 	}
 
 	return nil

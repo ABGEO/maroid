@@ -78,8 +78,8 @@ func (s *stubSettings) ChangedSecrets(string, map[string]any) ([]string, error) 
 	return nil, nil
 }
 
-func (s *stubSettings) Read(context.Context, string) (map[string]any, error) {
-	return map[string]any{}, nil
+func (s *stubSettings) Read(context.Context, string) (map[string]any, time.Time, error) {
+	return map[string]any{}, time.Time{}, nil
 }
 
 func (s *stubSettings) Settings(
@@ -89,7 +89,9 @@ func (s *stubSettings) Settings(
 	return map[string]any{}, nil
 }
 
-func (s *stubSettings) Save(context.Context, string, map[string]any) error { return nil }
+func (s *stubSettings) Save(context.Context, string, map[string]any, *time.Time) error {
+	return nil
+}
 
 // stubPlugin is a loaded plugin that carries nothing but its metadata.
 type stubPlugin struct {

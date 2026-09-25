@@ -1,8 +1,10 @@
 package repository_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
@@ -11,12 +13,16 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/rest"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
 const (
 	probePluginID = "dev.maroid.probe"
 	keyEmail      = "email"
+
+	firstAddress  = "first@example.com"
+	secondAddress = "second@example.com"
 )
 
 func storeFields(t *testing.T, instance *testdb.Instance, user string, fields model.Fields) {
@@ -25,7 +31,7 @@ func storeFields(t *testing.T, instance *testdb.Instance, user string, fields mo
 	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
 
 	require.NoError(t, database.WithUserTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
-		return repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, fields)
+		return repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, fields, nil)
 	}))
 }
 
@@ -70,10 +76,10 @@ func TestUpsertReplacesTheRowOfThePair(t *testing.T) {
 	userA := insertUser(t, instance, nameOfA)
 
 	storeFields(t, instance, userA, model.Fields{
-		keyEmail: {Kind: model.FieldKindText, Value: "first@example.com"},
+		keyEmail: {Kind: model.FieldKindText, Value: firstAddress},
 	})
 	storeFields(t, instance, userA, model.Fields{
-		keyEmail: {Kind: model.FieldKindText, Value: "second@example.com"},
+		keyEmail: {Kind: model.FieldKindText, Value: secondAddress},
 	})
 
 	ctx := pluginapi.ContextWithActingUser(t.Context(), userA)
@@ -118,4 +124,75 @@ func TestGetReturnsNoRowOfAnotherUser(t *testing.T) {
 	}))
 
 	require.Nil(t, stored, "the row of another user reads as a row that does not exist")
+}
+
+// asUser runs one unit of work as the acting user, the way a request does.
+func asUser(t *testing.T, instance *testdb.Instance, user string,
+	work func(ctx context.Context, tx *sqlx.Tx) error,
+) error {
+	t.Helper()
+
+	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
+
+	//nolint:wrapcheck // the test reads the error that the repository answered.
+	return database.WithUserTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
+		return work(ctx, tx)
+	})
+}
+
+// APIFMT-SC-019: Two clients read one record and both write it back. The first
+// write lands and the second answers that the record moved. APIFMT-DD-014.
+func TestAConditionalUpsertRefusesARecordThatMoved(t *testing.T) {
+	t.Parallel()
+
+	instance := startWithCoreMigrations(t)
+	user := insertUser(t, instance, nameOfA)
+
+	storeFields(t, instance, user, model.Fields{
+		keyEmail: {Kind: model.FieldKindText, Value: firstAddress},
+	})
+
+	var held time.Time
+
+	require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
+		row, err := repository.NewPluginSettings(tx).Get(ctx, probePluginID)
+		if err != nil {
+			return fmt.Errorf("reading the row that the test wrote: %w", err)
+		}
+
+		held = row.UpdatedAt
+
+		return nil
+	}))
+
+	// The first write holds the validator that the client read, and it lands.
+	require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
+		return repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
+			keyEmail: {Kind: model.FieldKindText, Value: secondAddress},
+		}, &held)
+	}))
+
+	// The second write holds the validator that the first one retired.
+	err := asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
+		return repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
+			keyEmail: {Kind: model.FieldKindText, Value: "third@example.com"},
+		}, &held)
+	})
+
+	require.ErrorIs(t, err, rest.ErrModified)
+}
+
+// APIFMT-SC-019: A write that names no validator lands. Z-182 asks for the
+// optimistic path and does not make the header mandatory.
+func TestAnUnconditionalUpsertLands(t *testing.T) {
+	t.Parallel()
+
+	instance := startWithCoreMigrations(t)
+	user := insertUser(t, instance, nameOfA)
+
+	for _, value := range []string{firstAddress, secondAddress} {
+		storeFields(t, instance, user, model.Fields{
+			keyEmail: {Kind: model.FieldKindText, Value: value},
+		})
+	}
 }

@@ -243,7 +243,7 @@ func TestSaveStoresEveryDeclaredField(t *testing.T) {
 		keyPassword: valuePassword,
 		keyPeriod:   valuePeriod,
 		keyNotify:   true,
-	}))
+	}, nil))
 
 	require.Equal(t, 1, world.rowCount(t, world.userA))
 	require.Equal(t, valueEmail, world.storedValue(t, world.userA, keyEmail))
@@ -263,9 +263,9 @@ func TestReadReturnsNoSecret(t *testing.T) {
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: valuePassword,
-	}))
+	}, nil))
 
-	values, err := world.manager.Read(ctx, probeID)
+	values, _, err := world.manager.Read(ctx, probeID)
 	require.NoError(t, err)
 
 	require.Equal(t, valueEmail, values[keyEmail])
@@ -282,13 +282,13 @@ func TestSaveKeepsAStoredSecretThatTheInputMasks(t *testing.T) {
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: "first@example.com", keyPassword: valuePassword,
-	}))
+	}, nil))
 
 	protected := world.storedValue(t, world.userA, keyPassword)
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: "second@example.com", keyPassword: settings.SecretMask,
-	}))
+	}, nil))
 
 	require.Equal(t, protected, world.storedValue(t, world.userA, keyPassword))
 
@@ -306,14 +306,14 @@ func TestSaveRemovesAStoredValueThatTheInputEmpties(t *testing.T) {
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: valuePassword, keyAccount: "123456",
-	}))
+	}, nil))
 	require.Equal(t, "123456", world.storedValue(t, world.userA, keyAccount))
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: settings.SecretMask, keyAccount: "",
-	}))
+	}, nil))
 
-	values, err := world.manager.Read(ctx, probeID)
+	values, _, err := world.manager.Read(ctx, probeID)
 	require.NoError(t, err)
 	require.NotContains(t, values, keyAccount)
 }
@@ -327,13 +327,13 @@ func TestSaveKeepsAStoredSecretThatTheInputOmits(t *testing.T) {
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: "first@example.com", keyPassword: valuePassword,
-	}))
+	}, nil))
 
 	protected := world.storedValue(t, world.userA, keyPassword)
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: "second@example.com",
-	}))
+	}, nil))
 
 	require.Equal(t, protected, world.storedValue(t, world.userA, keyPassword))
 
@@ -352,14 +352,14 @@ func TestSaveRemovesAFieldThatTheInputSetsToNull(t *testing.T) {
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: valuePassword, keyAccount: "8370764",
-	}))
+	}, nil))
 	require.Equal(t, "8370764", world.storedValue(t, world.userA, keyAccount))
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyAccount: nil,
-	}))
+	}, nil))
 
-	values, err := world.manager.Read(ctx, probeID)
+	values, _, err := world.manager.Read(ctx, probeID)
 	require.NoError(t, err)
 	require.NotContains(t, values, keyAccount)
 }
@@ -373,7 +373,7 @@ func TestSaveRejectsAnEmptyRequiredField(t *testing.T) {
 
 	err := world.manager.Save(world.as(world.userA), probeID, map[string]any{
 		keyEmail: valueEmail,
-	})
+	}, nil)
 
 	var invalid *settings.InvalidError
 
@@ -394,7 +394,7 @@ func TestAnUndeclaredFieldReachesNoAnswerAndLeavesAtTheNextSave(t *testing.T) {
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: valuePassword,
-	}))
+	}, nil))
 
 	require.NoError(t, database.WithUserTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
 		_, err := tx.ExecContext(ctx, `
@@ -408,7 +408,7 @@ func TestAnUndeclaredFieldReachesNoAnswerAndLeavesAtTheNextSave(t *testing.T) {
 	}))
 	require.Equal(t, "old", world.storedValue(t, world.userA, "legacy"))
 
-	values, err := world.manager.Read(ctx, probeID)
+	values, _, err := world.manager.Read(ctx, probeID)
 	require.NoError(t, err)
 	require.NotContains(t, values, "legacy")
 
@@ -418,7 +418,7 @@ func TestAnUndeclaredFieldReachesNoAnswerAndLeavesAtTheNextSave(t *testing.T) {
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail,
-	}))
+	}, nil))
 
 	var held bool
 
@@ -437,10 +437,10 @@ func TestSettingsReachNoOtherUser(t *testing.T) {
 
 	require.NoError(t, world.manager.Save(world.as(world.userA), probeID, map[string]any{
 		keyEmail: "a@example.com", keyPassword: "secret-of-a",
-	}))
+	}, nil))
 	require.NoError(t, world.manager.Save(world.as(world.userB), probeID, map[string]any{
 		keyEmail: "b@example.com", keyPassword: "secret-of-b",
-	}))
+	}, nil))
 
 	values, err := world.manager.Settings(
 		world.as(world.userA), pluginapi.ParsePluginID(probeID),
@@ -474,7 +474,7 @@ func TestSettingsFailWhenAStoredSecretDoesNotRead(t *testing.T) {
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: valuePassword,
-	}))
+	}, nil))
 
 	require.NoError(t, database.WithUserTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
 		_, err := tx.ExecContext(ctx, `
@@ -504,13 +504,13 @@ func TestARunReadsTheValueThatTheUserJustSaved(t *testing.T) {
 
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: "old",
-	}))
+	}, nil))
 
 	first, err := world.manager.Settings(ctx, pluginapi.ParsePluginID(probeID))
 	require.NoError(t, err)
 	require.Equal(t, "old", first[keyPassword])
 
-	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{keyPassword: "new"}))
+	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{keyPassword: "new"}, nil))
 
 	time.Sleep(time.Second)
 
@@ -536,7 +536,7 @@ func TestARunReadsTheSettingsWithinTheTimeLimit(t *testing.T) {
 	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: valuePassword,
 		keyAccount: "8370764", keyPeriod: valuePeriod,
-	}))
+	}, nil))
 
 	taken := make([]time.Duration, 0, samples)
 

@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -83,8 +84,8 @@ func (s *stubSettings) ChangedSecrets(string, map[string]any) ([]string, error) 
 	return s.changed, s.failure
 }
 
-func (s *stubSettings) Read(context.Context, string) (map[string]any, error) {
-	return s.values, s.failure
+func (s *stubSettings) Read(context.Context, string) (map[string]any, time.Time, error) {
+	return s.values, time.Time{}, s.failure
 }
 
 func (s *stubSettings) Settings(
@@ -94,7 +95,12 @@ func (s *stubSettings) Settings(
 	return s.values, s.failure
 }
 
-func (s *stubSettings) Save(_ context.Context, _ string, input map[string]any) error {
+func (s *stubSettings) Save(
+	_ context.Context,
+	_ string,
+	input map[string]any,
+	_ *time.Time,
+) error {
 	if s.failure != nil {
 		return s.failure
 	}
@@ -247,7 +253,7 @@ func (w *world) store(t *testing.T, user string, input map[string]any) {
 	t.Helper()
 
 	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
-	require.NoError(t, w.manager.Save(ctx, probePluginID, input))
+	require.NoError(t, w.manager.Save(ctx, probePluginID, input, nil))
 }
 
 // storedSecret reads the secret of one user in its plaintext form.

@@ -58,6 +58,8 @@ paths:
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
           description: The stored settings of the acting user.
           content:
             application/json:
@@ -70,6 +72,7 @@ paths:
     put:
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
       operationId: saveSettings
       summary: Store the settings of the acting user for the plugin.
       description: >
@@ -97,6 +100,8 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NoSchema"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
         "422":
           $ref: "#/components/responses/Invalid"
         "500":
