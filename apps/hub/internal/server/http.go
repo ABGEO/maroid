@@ -24,6 +24,7 @@ func NewHTTPRouter(cfg *config.Config, logger *slog.Logger) (*chi.Mux, error) {
 
 	router := chi.NewRouter()
 	router.Use(rest.FlowID)
+	router.Use(rest.CachePeriod)
 	router.Use(resolveClientIP)
 	router.Use(accessLog(logger))
 	router.Use(recoverer(logger))

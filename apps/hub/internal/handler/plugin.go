@@ -106,6 +106,9 @@ func (h *Plugin) UIAssets(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
+	w.Header().Set("Cache-Control", rest.Immutable)
+	w.Header().Set("Vary", "Accept-Encoding")
+
 	fileServer := http.StripPrefix(
 		fmt.Sprintf("/plugins/%s/ui/", id),
 		http.FileServer(http.FS(entry.Manifest.Assets)),
