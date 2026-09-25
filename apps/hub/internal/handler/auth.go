@@ -278,7 +278,10 @@ func (h *Auth) Identities(w http.ResponseWriter, r *http.Request) error {
 			state.Username = identity.Username
 			state.DisplayName = identity.DisplayName
 			state.PictureURL = identity.PictureURL
-			state.AttachedAt = &identity.CreatedAt
+			// encoding/json writes a time.Time in the zone that it carries, and
+			// the database answers the zone of the session.
+			attachedAt := identity.CreatedAt.UTC()
+			state.AttachedAt = &attachedAt
 		}
 
 		states = append(states, state)

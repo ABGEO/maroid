@@ -41,8 +41,8 @@ func NewPlantResponse(plant *model.Plant) PlantResponse {
 		Name:          plant.Name,
 		Species:       plant.Species,
 		EnvironmentID: plant.EnvironmentID,
-		CreatedAt:     plant.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:     plant.UpdatedAt.Format(time.RFC3339),
+		CreatedAt:     plant.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:     plant.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 }
 

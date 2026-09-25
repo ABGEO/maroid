@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -253,6 +254,12 @@ func TestTheListNamesEveryProvider(t *testing.T) {
 	require.Equal(t, "Temuri", body[0]["display_name"])
 	require.Equal(t, "https://a/b.jpg", body[0]["picture_url"])
 	require.NotEmpty(t, body[0]["attached_at"])
+
+	// APIFMT-SC-009: encoding/json writes a time.Time in the zone that it
+	// carries, and the database answers the zone of the session.
+	attachedAt, ok := body[0]["attached_at"].(string)
+	require.True(t, ok)
+	require.True(t, strings.HasSuffix(attachedAt, "Z"), attachedAt)
 
 	require.Equal(t, providerCloud, body[1]["provider"])
 	require.Equal(t, false, body[1]["attached"], "a provider that nobody attached appears")

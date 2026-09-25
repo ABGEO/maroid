@@ -35,8 +35,8 @@ func NewEnvironmentResponse(env *model.Environment) EnvironmentResponse {
 	return EnvironmentResponse{
 		ID:        env.ID,
 		Name:      env.Name,
-		CreatedAt: env.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: env.UpdatedAt.Format(time.RFC3339),
+		CreatedAt: env.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt: env.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 }
 
