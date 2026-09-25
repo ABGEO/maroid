@@ -4,7 +4,7 @@ title: Errors
 type: guideline
 status: active
 created: 2026-09-21
-updated: 2026-09-24
+updated: 2026-09-25
 scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, libs/rest/, libs/api-client/, plugins/]
 related: [API, DAT, LOG, OWN, PLG, RES, UI]
 ---
@@ -96,6 +96,7 @@ the type of a stale cursor lives in the library.
 | `access-denied`          | 401    | The request carries no active user record.          |
 | `not-found`              | 404    | The resource does not exist.                        |
 | `method-not-allowed`     | 405    | The method does not reach this resource.            |
+| `precondition-failed`    | 412    | The record changed after the client read it.        |
 | `validation-failed`      | 422    | The body failed validation.                         |
 | `internal`               | 500    | The request failed.                                 |
 

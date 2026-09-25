@@ -6,14 +6,15 @@ import "net/http"
 // failure of the protocol and carries no fact of a domain, so the hub and a
 // plugin both reach for it.
 const (
-	TypeRequestInvalid   = "/problems/http/request-invalid"
-	TypeBodyInvalid      = "/problems/http/body-invalid"
-	TypeAccessDenied     = "/problems/http/access-denied"
-	TypeCursorStale      = "/problems/http/cursor-stale"
-	TypeNotFound         = "/problems/http/not-found"
-	TypeMethodNotAllowed = "/problems/http/method-not-allowed"
-	TypeValidationFailed = "/problems/http/validation-failed"
-	TypeInternal         = "/problems/http/internal"
+	TypeRequestInvalid     = "/problems/http/request-invalid"
+	TypeBodyInvalid        = "/problems/http/body-invalid"
+	TypeAccessDenied       = "/problems/http/access-denied"
+	TypeCursorStale        = "/problems/http/cursor-stale"
+	TypeNotFound           = "/problems/http/not-found"
+	TypeMethodNotAllowed   = "/problems/http/method-not-allowed"
+	TypePreconditionFailed = "/problems/http/precondition-failed"
+	TypeValidationFailed   = "/problems/http/validation-failed"
+	TypeInternal           = "/problems/http/internal"
 )
 
 // NewRequestInvalid reports a request that a route cannot read.
@@ -60,6 +61,16 @@ func NewMethodNotAllowed() Problem {
 		TypeMethodNotAllowed,
 		"The method does not reach this resource.",
 		http.StatusMethodNotAllowed,
+	)
+}
+
+// NewPreconditionFailed reports a write whose record moved after the client read
+// it. The client reads the record again and writes what it still means to write.
+func NewPreconditionFailed() Problem {
+	return newProblem(
+		TypePreconditionFailed,
+		"The record changed after the client read it.",
+		http.StatusPreconditionFailed,
 	)
 }
 
