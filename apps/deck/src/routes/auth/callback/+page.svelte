@@ -5,7 +5,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 
-	import { buildAuthUrl } from '$lib/api/client';
+	import { startSignIn } from '$lib/api/client';
 	import { authFailureMessage } from '$lib/auth/messages';
 
 	const reason = page.url.searchParams.get('error');
@@ -32,7 +32,9 @@
 					<button
 						class="btn btn-primary w-full"
 						onclick={() => {
-							window.location.href = buildAuthUrl();
+							void startSignIn().then((address) => {
+								window.location.href = address;
+							});
 						}}
 					>
 						Try Again

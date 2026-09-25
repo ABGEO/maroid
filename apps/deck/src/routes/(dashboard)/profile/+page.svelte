@@ -6,7 +6,7 @@
 	import { page } from '$app/state';
 
 	import { ApiError, api, type ProviderIdentity } from '$lib/api';
-	import { buildLinkUrl } from '$lib/api/client';
+	import { startAttach } from '$lib/api/client';
 	import { authFailureMessage } from '$lib/auth/messages';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { userState } from '$lib/state/user.svelte';
@@ -73,7 +73,9 @@
 	}
 
 	function connect(provider: string): void {
-		window.location.href = buildLinkUrl(provider);
+		void startAttach(provider).then((address) => {
+			window.location.href = address;
+		});
 	}
 
 	onMount(() => {

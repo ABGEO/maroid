@@ -6,6 +6,14 @@ export interface User {
 	provider: string;
 }
 
+/**
+ * The body that a route starting a flow answers. It names the address of the
+ * identity provider that the browser visits next. See `API-003`.
+ */
+export interface Handoff {
+	authorization_url: string;
+}
+
 /** The body of a sign out. It names the target that the browser goes to. */
 export interface SignOut {
 	redirect: string;

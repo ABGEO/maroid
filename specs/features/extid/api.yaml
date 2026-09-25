@@ -12,8 +12,8 @@ servers:
     description: The hub.
 
 paths:
-  /auth:
-    get:
+  /auth/sessions:
+    post:
       operationId: startSignIn
       summary: Start a sign in at the identity provider.
       description: >
@@ -27,13 +27,13 @@ paths:
         - $ref: "#/components/parameters/Provider"
         - $ref: "#/components/parameters/Redirect"
       responses:
-        "302":
-          $ref: "#/components/responses/ToProvider"
+        "202":
+          $ref: "#/components/responses/Handoff"
         "400":
           $ref: "#/components/responses/BadRequest"
 
-  /auth/link:
-    get:
+  /auth/identities:
+    post:
       operationId: startAttach
       summary: Start an attach of a further external account to the acting user.
       description: >
@@ -53,15 +53,41 @@ paths:
             type: string
         - $ref: "#/components/parameters/Redirect"
       responses:
-        "302":
-          $ref: "#/components/responses/ToProvider"
+        "202":
+          $ref: "#/components/responses/Handoff"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-
-  /auth/invite:
     get:
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      operationId: listIdentities
+      summary: Read every provider that Maroid offers, attached or not.
+      description: >
+        Realizes `EXTID-FR-009`.
+        The list holds one member for each provider in `auth.providers`, whether an
+        external account of that provider holds an identity of the acting user or
+        not. `EXTID-DD-009` gives the reason that the list lives in the
+        configuration, and `EXTID-DD-016` the reason that it lives apart from
+        `/auth/me`.
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: Every provider, in the order that the configuration holds.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProviderState"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/invitation-redemptions:
+    post:
       operationId: redeemInvitation
       summary: Start the redemption of an invitation.
       description: >
@@ -82,10 +108,10 @@ paths:
             type: string
         - $ref: "#/components/parameters/Redirect"
       responses:
-        "302":
+        "202":
           description: >
-            The redirect to Dex when the invitation is valid. An invitation that is
-            absent, consumed, or expired redirects to the target instead, with the
+            The address of the identity provider, when the invitation is valid. An
+            invitation that is absent, consumed, or expired answers 404 instead, with the
             query parameter `error=invitation_invalid`. The deck renders that.
             See `EXTID-DD-015`.
           headers:
@@ -96,6 +122,8 @@ paths:
                 type: string
         "400":
           $ref: "#/components/responses/NoTarget"
+        "404":
+          $ref: "#/components/responses/InvitationSpent"
 
   /auth/callback:
     get:
@@ -147,7 +175,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
 
-  /auth/me:
+  /auth/sessions/self:
     get:
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
@@ -167,34 +195,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CurrentUser"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
-  /auth/identities:
-    get:
-      parameters:
-        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
-      operationId: listIdentities
-      summary: Read every provider that Maroid offers, attached or not.
-      description: >
-        Realizes `EXTID-FR-009`.
-        The list holds one member for each provider in `auth.providers`, whether an
-        external account of that provider holds an identity of the acting user or
-        not. `EXTID-DD-009` gives the reason that the list lives in the
-        configuration, and `EXTID-DD-016` the reason that it lives apart from
-        `/auth/me`.
-      responses:
-        "200":
-          headers:
-            X-Flow-ID:
-              $ref: "../../api/components.yaml#/components/headers/FlowId"
-          description: Every provider, in the order that the configuration holds.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ProviderState"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -292,6 +292,18 @@ components:
           picture: https://example.com/a.jpg
           provider: telegram
 
+    Handoff:
+      type: object
+      required: [authorization_url]
+      description: The address that the client visits to continue the flow.
+      properties:
+        authorization_url:
+          type: string
+          format: uri
+          description: The authorization endpoint of the identity provider.
+      examples:
+        - authorization_url: https://idp.example.com/auth?client_id=maroid&state=abc
+
     ProviderState:
       type: object
       required: [provider, name, attached]
@@ -347,14 +359,19 @@ components:
           format: uri
 
   responses:
-    ToProvider:
-      description: The redirect to Dex, with `connector_id` and the state.
+    Handoff:
+      description: >
+        The address of the identity provider that the client visits next. A POST
+        mints a binding and writes a cookie, which `Z-149` forbids a `GET` to do,
+        and a `POST` cannot redirect a browser that reached it with fetch.
+        `API-003`.
       headers:
         X-Flow-ID:
           $ref: "../../api/components.yaml#/components/headers/FlowId"
-        Location:
+      content:
+        application/json:
           schema:
-            type: string
+            $ref: "#/components/schemas/Handoff"
 
     BadRequest:
       headers:
@@ -380,6 +397,18 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
+
+    InvitationSpent:
+      description: >
+        The invitation is absent, consumed, or expired. The type is
+        `/problems/http/not-found`, and the deck names the reason to the person.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
 
     NoTarget:
       headers:

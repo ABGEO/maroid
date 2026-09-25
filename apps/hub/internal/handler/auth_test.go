@@ -22,6 +22,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/libs/rest"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
@@ -120,15 +121,15 @@ func TestTheAttachLandsOnTheRecordThatStartedIt(t *testing.T) {
 		ctx, other, auth.ProviderTelegram, "222", model.Profile{},
 	))
 
-	link := httptest.NewRequestWithContext(ctx, http.MethodGet,
-		"/auth/link?provider="+providerCloud+"&redirect="+url.QueryEscape(shellTarget), nil)
+	link := httptest.NewRequestWithContext(ctx, http.MethodPost,
+		"/auth/identities?provider="+providerCloud+"&redirect="+url.QueryEscape(shellTarget), nil)
 	link.AddCookie(requestCookie(sessionCookie, fixture.provider.Sign(
 		t, auth.ProviderTelegram, "111",
 	)))
 
 	started := httptest.NewRecorder()
 	fixture.router.ServeHTTP(started, link)
-	require.Equal(t, http.StatusFound, started.Code, "the starter reaches the provider")
+	require.Equal(t, http.StatusAccepted, started.Code, "the starter names the provider")
 
 	state := stateOf(t, started)
 	binding := cookieOf(t, started, bindingCookie)
@@ -184,9 +185,9 @@ func TestTheRedemptionBindsTheFirstIdentity(t *testing.T) {
 	started := httptest.NewRecorder()
 	fixture.router.ServeHTTP(
 		started,
-		httptest.NewRequestWithContext(ctx, http.MethodGet, address, nil),
+		httptest.NewRequestWithContext(ctx, http.MethodPost, address, nil),
 	)
-	require.Equal(t, http.StatusFound, started.Code)
+	require.Equal(t, http.StatusAccepted, started.Code)
 
 	state := stateOf(t, started)
 
@@ -209,19 +210,19 @@ func TestTheRedemptionBindsTheFirstIdentity(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, identities, 1)
 
-	// A spent invitation reports at the target, so the deck renders it.
+	// A spent invitation answers a problem, because the deck reaches this route
+	// with fetch and reads no redirect. The deck then names the reason itself.
 	replay := httptest.NewRecorder()
 	fixture.router.ServeHTTP(
 		replay,
-		httptest.NewRequestWithContext(ctx, http.MethodGet, address, nil),
+		httptest.NewRequestWithContext(ctx, http.MethodPost, address, nil),
 	)
-	require.Equal(t, http.StatusFound, replay.Code)
-	require.Contains(
-		t,
-		replay.Header().Get("Location"),
-		"error=invitation_invalid",
-		"the grant is spent, and the deck reads the reason",
-	)
+	require.Equal(t, http.StatusNotFound, replay.Code)
+
+	var problem rest.Problem
+
+	require.NoError(t, json.Unmarshal(replay.Body.Bytes(), &problem))
+	require.Equal(t, rest.TypeNotFound, problem.Type, "the grant is spent")
 }
 
 // EXTID-SC-011: The list names every provider that the configuration holds. It
@@ -321,7 +322,9 @@ func TestMeOmitsANameThatTheRecordDoesNotHold(t *testing.T) {
 		t.Context(), userID, auth.ProviderTelegram, "222", model.Profile{},
 	))
 
-	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/auth/me", nil)
+	request := httptest.NewRequestWithContext(
+		t.Context(), http.MethodGet, "/auth/sessions/self", nil,
+	)
 	request.AddCookie(requestCookie(
 		sessionCookie, fixture.provider.Sign(t, auth.ProviderTelegram, "222"),
 	))
@@ -340,7 +343,7 @@ func TestMeOmitsANameThatTheRecordDoesNotHold(t *testing.T) {
 	require.Contains(t, body, "provider", "a member that holds a value stays")
 }
 
-// /auth/me reports the two names of the record and the provider that
+// GET /auth/sessions/self reports the two names of the record and the provider that
 // authenticated the session, so the deck can warn before a detach that would
 // sign the person out of their own request.
 func TestMeReportsTheNameAndTheProvider(t *testing.T) {
@@ -388,11 +391,13 @@ func TestMeNamesTheProviderThatSignedIn(t *testing.T) {
 	require.Equal(t, providerCloud, fixture.me(t, providerCloud, "abc")["provider"])
 }
 
-// me reads /auth/me as the person that the external account names.
+// me reads GET /auth/sessions/self as the person that the external account names.
 func (f *authFixture) me(t *testing.T, connector string, accountID string) map[string]any {
 	t.Helper()
 
-	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/auth/me", nil)
+	request := httptest.NewRequestWithContext(
+		t.Context(), http.MethodGet, "/auth/sessions/self", nil,
+	)
 	request.AddCookie(requestCookie(sessionCookie, f.provider.Sign(t, connector, accountID)))
 
 	recorder := httptest.NewRecorder()
@@ -441,11 +446,11 @@ func (f *authFixture) signIn(
 	started := httptest.NewRecorder()
 	f.router.ServeHTTP(started, httptest.NewRequestWithContext(
 		t.Context(),
-		http.MethodGet,
-		"/auth?redirect="+url.QueryEscape(shellTarget),
+		http.MethodPost,
+		"/auth/sessions?redirect="+url.QueryEscape(shellTarget),
 		nil,
 	))
-	require.Equal(t, http.StatusFound, started.Code)
+	require.Equal(t, http.StatusAccepted, started.Code)
 
 	state := stateOf(t, started)
 
@@ -582,14 +587,23 @@ func handOffToHub(t *testing.T, token string) string {
 
 	landing := shellTarget + "/auth/callback"
 
-	return "/auth/invite?token=" + url.QueryEscape(parsed.Query().Get("token")) +
+	return "/auth/invitation-redemptions?token=" + url.QueryEscape(parsed.Query().Get("token")) +
 		"&redirect=" + url.QueryEscape(landing)
 }
 
+// stateOf reads the state out of the address that a start answers. The three
+// starts answer 202 with the address in the body, because a POST cannot redirect
+// a browser that reached it with fetch. API-003.
 func stateOf(t *testing.T, recorder *httptest.ResponseRecorder) string {
 	t.Helper()
 
-	parsed, err := url.Parse(recorder.Header().Get("Location"))
+	var handoff struct {
+		AuthorizationURL string `json:"authorization_url"`
+	}
+
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &handoff), recorder.Body.String())
+
+	parsed, err := url.Parse(handoff.AuthorizationURL)
 	require.NoError(t, err)
 
 	state := parsed.Query().Get("state")

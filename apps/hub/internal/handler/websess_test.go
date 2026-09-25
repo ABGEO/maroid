@@ -25,12 +25,12 @@ func (f *authFixture) signOut(
 ) *httptest.ResponseRecorder {
 	t.Helper()
 
-	address := "/auth/logout"
+	address := "/auth/sessions/self"
 	if target != "" {
 		address += "?redirect=" + url.QueryEscape(target)
 	}
 
-	request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, address, nil)
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodDelete, address, nil)
 	for _, cookie := range cookies {
 		request.AddCookie(cookie)
 	}
@@ -180,7 +180,7 @@ func TestASignOutEndsTheSession(t *testing.T) {
 	require.Empty(t, clearedCookie(t, out, auth.SessionCookieName).Value)
 
 	// The browser that dropped the cookie reaches nothing.
-	after := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/auth/me", nil)
+	after := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/auth/sessions/self", nil)
 
 	recorder := httptest.NewRecorder()
 	fixture.router.ServeHTTP(recorder, after)

@@ -12,8 +12,8 @@ servers:
     description: The hub.
 
 paths:
-  /auth/logout:
-    post:
+  /auth/sessions/self:
+    delete:
       operationId: signOut
       summary: End the session of the acting person.
       description: >

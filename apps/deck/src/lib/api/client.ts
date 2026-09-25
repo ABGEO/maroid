@@ -2,6 +2,8 @@ import { env } from '$env/dynamic/public';
 
 import { createClient, type ApiClient } from '@maroid/api-client';
 
+import type { Handoff } from './types';
+
 const BASE_URL = (env.PUBLIC_HUB_BASE_URL ?? '').replace(/\/+$/, '');
 
 let isRedirecting = false;
@@ -18,18 +20,30 @@ export function signedOutUrl(): string {
 	return `${window.location.origin}/signed-out`;
 }
 
-export function buildAuthUrl(): string {
-	return `${BASE_URL}/auth?redirect=${encodeURIComponent(landingUrl())}`;
+/**
+ * Routes that start a flow at the identity provider answer 202 with
+ * the address to visit, because a POST cannot redirect a browser that reached
+ * it with fetch.
+ */
+async function startFlow(path: string, params: Record<string, string>): Promise<string> {
+	const handoff = await client.post<Handoff>(path, undefined, { params });
+	if (!handoff) {
+		throw new Error('the hub named no authorization address');
+	}
+
+	return handoff.authorization_url;
 }
 
-export function buildInviteUrl(token: string): string {
-	const query = new URLSearchParams({ token, redirect: landingUrl() });
-	return `${BASE_URL}/auth/invite?${query.toString()}`;
+export function startSignIn(): Promise<string> {
+	return startFlow('/auth/sessions', { redirect: landingUrl() });
 }
 
-export function buildLinkUrl(provider: string): string {
-	const query = new URLSearchParams({ provider, redirect: profileUrl() });
-	return `${BASE_URL}/auth/link?${query.toString()}`;
+export function startInvitationRedemption(token: string): Promise<string> {
+	return startFlow('/auth/invitation-redemptions', { token, redirect: landingUrl() });
+}
+
+export function startAttach(provider: string): Promise<string> {
+	return startFlow('/auth/identities', { provider, redirect: profileUrl() });
 }
 
 function redirectToAuth(): void {
@@ -38,7 +52,9 @@ function redirectToAuth(): void {
 	}
 
 	isRedirecting = true;
-	window.location.href = buildAuthUrl();
+	void startSignIn().then((address) => {
+		window.location.href = address;
+	});
 }
 
 export const client: ApiClient = createClient({

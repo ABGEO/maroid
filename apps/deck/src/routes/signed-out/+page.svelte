@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { buildAuthUrl } from '$lib/api/client';
+	import { startSignIn } from '$lib/api/client';
 </script>
 
 <div class="bg-base-200 flex min-h-screen items-center justify-center p-4">
@@ -15,7 +15,9 @@
 			<button
 				class="btn btn-primary w-full"
 				onclick={() => {
-					window.location.href = buildAuthUrl();
+					void startSignIn().then((address) => {
+						window.location.href = address;
+					});
 				}}
 			>
 				Sign in

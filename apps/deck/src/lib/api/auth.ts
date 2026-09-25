@@ -2,8 +2,8 @@ import { client } from './client';
 import type { SignOut, User } from './types';
 
 export const auth = {
-	me: (): Promise<User | null> => client.get<User>('/auth/me'),
+	me: (): Promise<User | null> => client.get<User>('/auth/sessions/self'),
 
 	logout: (redirect: string): Promise<SignOut | null> =>
-		client.post<SignOut>('/auth/logout', undefined, { params: { redirect } })
+		client.del<SignOut>('/auth/sessions/self', { params: { redirect } })
 };

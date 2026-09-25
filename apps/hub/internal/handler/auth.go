@@ -25,11 +25,10 @@ import (
 // The reasons that the hub reports at the target of a flow. Section 4.5 of the
 // specification gives each one, and the deck renders a message for each.
 const (
-	reasonAuthFailed        = "auth_failed"
-	reasonNoIdentity        = "no_identity"
-	reasonAccessDenied      = "access_denied"
-	reasonIdentityTaken     = "identity_taken"
-	reasonInvitationInvalid = "invitation_invalid"
+	reasonAuthFailed    = "auth_failed"
+	reasonNoIdentity    = "no_identity"
+	reasonAccessDenied  = "access_denied"
+	reasonIdentityTaken = "identity_taken"
 )
 
 var (
@@ -100,16 +99,16 @@ func (h *Auth) Register(router chi.Router) {
 
 	router.Route("/auth", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Get("/", Wrap(h.logger, h.Initiate))
+			r.Post("/sessions", Wrap(h.logger, h.Initiate))
+			r.Delete("/sessions/self", Wrap(h.logger, h.Logout))
 			r.Get("/callback", Wrap(h.logger, h.Callback))
-			r.Get("/invite", Wrap(h.logger, h.Invite))
-			r.Post("/logout", Wrap(h.logger, h.Logout))
+			r.Post("/invitation-redemptions", Wrap(h.logger, h.Invite))
 		})
 
 		r.Group(func(r chi.Router) {
 			r.Use(auth.Middleware(h.logger, h.verifier, h.identityResolver))
-			r.Get("/me", Wrap(h.logger, h.Me))
-			r.Get("/link", Wrap(h.logger, h.Link))
+			r.Get("/sessions/self", Wrap(h.logger, h.Me))
+			r.Post("/identities", Wrap(h.logger, h.Link))
 			r.Get("/identities", Wrap(h.logger, h.Identities))
 			r.Delete("/identities/{provider}", Wrap(h.logger, h.Detach))
 		})
@@ -134,13 +133,13 @@ func (h *Auth) Initiate(w http.ResponseWriter, r *http.Request) error {
 
 	authURL, binding, err := h.oidcFlow.Initiate(r.Context(), flow)
 	if err != nil {
-		redirectWithError(w, r, redirect)
+		rest.Write(w, r, rest.NewInternal())
 
 		return fmt.Errorf("initiating OIDC flow: %w", err)
 	}
 
 	auth.SetBindingCookie(w, binding)
-	http.Redirect(w, r, authURL, http.StatusFound)
+	sendHandoff(w, r, authURL)
 
 	return nil
 }
@@ -228,13 +227,13 @@ func (h *Auth) Link(w http.ResponseWriter, r *http.Request) error {
 		Redirect: redirect,
 	})
 	if err != nil {
-		redirectWithError(w, r, redirect)
+		rest.Write(w, r, rest.NewInternal())
 
 		return fmt.Errorf("initiating the attach: %w", err)
 	}
 
 	auth.SetBindingCookie(w, binding)
-	http.Redirect(w, r, authURL, http.StatusFound)
+	sendHandoff(w, r, authURL)
 
 	return nil
 }
@@ -325,7 +324,8 @@ func (h *Auth) Invite(w http.ResponseWriter, r *http.Request) error {
 
 	invitation, err := h.invitationRepo.GetValidByTokenHash(r.Context(), digest[:])
 	if err != nil {
-		redirectWithReason(w, r, redirect, reasonInvitationInvalid)
+		rest.Write(w, r, rest.NewNotFound().
+			WithDetail("The invitation is spent, expired, or unknown."))
 
 		return fmt.Errorf("reading the invitation: %w", err)
 	}
@@ -336,18 +336,29 @@ func (h *Auth) Invite(w http.ResponseWriter, r *http.Request) error {
 		Redirect:     redirect,
 	})
 	if err != nil {
-		redirectWithError(w, r, redirect)
+		rest.Write(w, r, rest.NewInternal())
 
 		return fmt.Errorf("initiating the redemption: %w", err)
 	}
 
 	auth.SetBindingCookie(w, binding)
-	http.Redirect(w, r, authURL, http.StatusFound)
+	sendHandoff(w, r, authURL)
 
 	return nil
 }
 
-// logoutResponse is the body of POST /auth/logout.
+// handoffResponse is the body of a route that starts a flow at the IdP.
+type handoffResponse struct {
+	AuthorizationURL string `json:"authorization_url"`
+}
+
+// sendHandoff answers 202 with the address to visit.
+func sendHandoff(w http.ResponseWriter, r *http.Request, authURL string) {
+	render.Status(r, http.StatusAccepted)
+	render.JSON(w, r, handoffResponse{AuthorizationURL: authURL})
+}
+
+// logoutResponse is the body of DELETE /auth/sessions/self.
 type logoutResponse struct {
 	Redirect string `json:"redirect"`
 }
@@ -375,7 +386,7 @@ func (h *Auth) Logout(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// meResponse is the body of GET /auth/me.
+// meResponse is the body of GET /auth/sessions/self.
 type meResponse struct {
 	FirstName *string `json:"first_name,omitempty"`
 	LastName  *string `json:"last_name,omitempty"`
