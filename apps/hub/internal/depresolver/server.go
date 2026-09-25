@@ -174,7 +174,6 @@ func (c *Container) buildHandlers() (map[string]handler.Handler, error) {
 
 	return map[string]handler.Handler{
 		"auth": authHandler,
-		"ping": handler.NewPing(logger),
 		"plugin": handler.NewPlugin(
 			logger,
 			verifier,
