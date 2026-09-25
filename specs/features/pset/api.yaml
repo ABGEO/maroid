@@ -19,6 +19,8 @@ paths:
     parameters:
       - $ref: "#/components/parameters/PluginId"
     get:
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       operationId: getSettingsSchema
       summary: Read the settings schema that the plugin declares.
       description: >
@@ -26,6 +28,9 @@ paths:
         The deck reads the kind of a field from the keywords of the property.
       responses:
         "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
           description: The schema. It holds no value of any user.
           content:
             application/json:
@@ -40,6 +45,8 @@ paths:
     parameters:
       - $ref: "#/components/parameters/PluginId"
     get:
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       operationId: getSettings
       summary: Read the settings of the acting user for the plugin.
       description: >
@@ -48,6 +55,9 @@ paths:
         A field that the current schema does not declare is absent.
       responses:
         "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
           description: The stored settings of the acting user.
           content:
             application/json:
@@ -58,6 +68,8 @@ paths:
         "404":
           $ref: "#/components/responses/NoSchema"
     put:
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       operationId: saveSettings
       summary: Store the settings of the acting user for the plugin.
       description: >
@@ -75,6 +87,9 @@ paths:
               $ref: "#/components/schemas/SettingsInput"
       responses:
         "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
           description: The hub stored every declared field.
         "400":
           $ref: "#/components/responses/MalformedBody"
@@ -215,37 +230,49 @@ components:
 
   responses:
     MalformedBody:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         The body does not decode as a JSON object. The hub stored nothing.
-        The type is `urn:maroid:problem:http:body-invalid`.
+        The type is `/problems/http/body-invalid`.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
 
     Unauthorized:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         The request carries no active user record.
-        The type is `urn:maroid:problem:http:access-denied`.
+        The type is `/problems/http/access-denied`.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
 
     NoSchema:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         The hub loaded no plugin with that identifier, or the plugin declares no
         settings schema. The two cases answer the same way.
-        The type is `urn:maroid:problem:hub:settings-absent`.
+        The type is `/problems/hub/settings-absent`.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
 
     Invalid:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         A value does not match the settings schema. The hub stored nothing.
-        The type is `urn:maroid:problem:hub:settings-invalid`, and `errors` names each
+        The type is `/problems/hub/settings-invalid`, and `errors` names each
         field. See `PSET-FR-009`.
       content:
         application/problem+json:
@@ -253,10 +280,13 @@ components:
             $ref: "#/components/schemas/Problem"
 
     ProtectionFailed:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         The hub reached no key for the acting user, or the protection service refused
         the call. The hub stored nothing.
-        The type is `urn:maroid:problem:http:internal`.
+        The type is `/problems/http/internal`.
       content:
         application/problem+json:
           schema:

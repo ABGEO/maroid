@@ -90,7 +90,7 @@ func TestEveryAnswerCarriesTheRequestIdentifier(t *testing.T) {
 
 	recorder, body := answerOf(t, http.MethodGet, "/nowhere")
 
-	identifier := recorder.Header().Get(rest.RequestIDHeader)
+	identifier := recorder.Header().Get(rest.FlowIDHeader)
 	require.NotEmpty(t, identifier)
 	assert.Equal(t, rest.Instance(identifier), body.Instance)
 }
@@ -117,7 +117,7 @@ func TestTheAccessRecordCarriesTheRequestIdentifier(t *testing.T) {
 	var record map[string]any
 
 	require.NoError(t, json.Unmarshal(buffer.Bytes(), &record), buffer.String())
-	assert.Equal(t, recorder.Header().Get(rest.RequestIDHeader), record["request"])
+	assert.Equal(t, recorder.Header().Get(rest.FlowIDHeader), record["flow_id"])
 	assert.InDelta(t, float64(http.StatusOK), record["http.response.status_code"], 0)
 	assert.Equal(t, http.MethodGet, record["http.request.method"])
 	assert.Equal(t, "/ping", record["url.path"])

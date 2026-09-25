@@ -16,6 +16,8 @@ security:
 paths:
   /plugins:
     get:
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       operationId: listPlugins
       summary: Report every loaded plugin and the capabilities it declares.
       description: >
@@ -24,6 +26,9 @@ paths:
         `MCPHUB-FR-005`.
       responses:
         "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
           description: One entry for each loaded plugin.
           content:
             application/json:
@@ -204,9 +209,12 @@ components:
 
   responses:
     Unauthorized:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         The request carries no valid token, or the identity holds no active user record.
-        The type is `urn:maroid:problem:http:access-denied`.
+        The type is `/problems/http/access-denied`.
       content:
         application/problem+json:
           schema:

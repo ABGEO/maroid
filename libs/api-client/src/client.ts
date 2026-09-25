@@ -1,5 +1,5 @@
 import { ApiError } from './errors';
-import { PROBLEM_MEDIA_TYPE } from './problem';
+import { FLOW_ID_HEADER, PROBLEM_MEDIA_TYPE } from './problem';
 import type { ApiClient, ClientConfig, RequestOptions } from './types';
 
 function trimTrailingSlashes(value: string): string {
@@ -81,7 +81,12 @@ export function createClient(config: ClientConfig): ApiClient {
     }
 
     if (!response.ok) {
-      throw new ApiError(response.status, response.statusText, body);
+      throw new ApiError(
+        response.status,
+        response.statusText,
+        body,
+        response.headers.get(FLOW_ID_HEADER) ?? ''
+      );
     }
 
     return body as T;

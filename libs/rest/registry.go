@@ -6,13 +6,13 @@ import "net/http"
 // failure of the protocol and carries no fact of a domain, so the hub and a
 // plugin both reach for it.
 const (
-	TypeRequestInvalid   = "urn:maroid:problem:http:request-invalid"
-	TypeBodyInvalid      = "urn:maroid:problem:http:body-invalid"
-	TypeAccessDenied     = "urn:maroid:problem:http:access-denied"
-	TypeNotFound         = "urn:maroid:problem:http:not-found"
-	TypeMethodNotAllowed = "urn:maroid:problem:http:method-not-allowed"
-	TypeValidationFailed = "urn:maroid:problem:http:validation-failed"
-	TypeInternal         = "urn:maroid:problem:http:internal"
+	TypeRequestInvalid   = "/problems/http/request-invalid"
+	TypeBodyInvalid      = "/problems/http/body-invalid"
+	TypeAccessDenied     = "/problems/http/access-denied"
+	TypeNotFound         = "/problems/http/not-found"
+	TypeMethodNotAllowed = "/problems/http/method-not-allowed"
+	TypeValidationFailed = "/problems/http/validation-failed"
+	TypeInternal         = "/problems/http/internal"
 )
 
 // NewRequestInvalid reports a request that a route cannot read.

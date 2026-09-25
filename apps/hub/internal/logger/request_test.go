@@ -31,11 +31,11 @@ func TestARecordOfARequestCarriesTheIdentifier(t *testing.T) {
 	buffer := &bytes.Buffer{}
 	log := slog.New(logger.WithRequest(slog.NewJSONHandler(buffer, nil)))
 
-	ctx := rest.ContextWithRequestID(t.Context(), "0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77")
+	ctx := rest.ContextWithFlowID(t.Context(), "0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77")
 	log.InfoContext(ctx, "the plugin answered")
 
 	record := recordOf(t, buffer)
-	assert.Equal(t, "0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77", record["request"])
+	assert.Equal(t, "0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77", record["flow_id"])
 }
 
 // LOG-009: A record outside a request carries no `request` attribute.
@@ -47,7 +47,7 @@ func TestARecordOutsideARequestCarriesNoIdentifier(t *testing.T) {
 
 	log.InfoContext(t.Context(), "the worker started")
 
-	assert.NotContains(t, recordOf(t, buffer), "request")
+	assert.NotContains(t, recordOf(t, buffer), "flow_id")
 }
 
 // LOG-003: A component adds its attributes with With, and the wrapper survives,
@@ -59,10 +59,10 @@ func TestTheIdentifierSurvivesWith(t *testing.T) {
 	log := slog.New(logger.WithRequest(slog.NewJSONHandler(buffer, nil))).
 		With(slog.String("component", "handler"))
 
-	ctx := rest.ContextWithRequestID(t.Context(), "0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77")
+	ctx := rest.ContextWithFlowID(t.Context(), "0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77")
 	log.ErrorContext(ctx, "the handler errored")
 
 	record := recordOf(t, buffer)
 	assert.Equal(t, "handler", record["component"])
-	assert.Equal(t, "0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77", record["request"])
+	assert.Equal(t, "0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77", record["flow_id"])
 }

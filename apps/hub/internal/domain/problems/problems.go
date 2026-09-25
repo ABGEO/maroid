@@ -11,10 +11,10 @@ import (
 
 // The problem types that the hub owns.
 const (
-	TypeNetworkNotAllowed = "urn:maroid:problem:hub:network-not-allowed"
-	TypeSettingsAbsent    = "urn:maroid:problem:hub:settings-absent"
-	TypeIdentityLast      = "urn:maroid:problem:hub:identity-last"
-	TypeSettingsInvalid   = "urn:maroid:problem:hub:settings-invalid"
+	TypeNetworkNotAllowed = "/problems/hub/network-not-allowed"
+	TypeSettingsAbsent    = "/problems/hub/settings-absent"
+	TypeIdentityLast      = "/problems/hub/identity-last"
+	TypeSettingsInvalid   = "/problems/hub/settings-invalid"
 )
 
 // NewNetworkNotAllowed reports a caller that the network allowlist does not hold.

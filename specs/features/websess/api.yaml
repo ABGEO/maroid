@@ -25,6 +25,7 @@ paths:
         from that service. See `WEBSESS-DD-005`.
       security: []
       parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
         - name: redirect
           in: query
           required: false
@@ -42,6 +43,8 @@ paths:
             session cookie with the attributes that `SEC-008` gives and a
             negative age, so the browser replaces the value it holds.
           headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
             Set-Cookie:
               description: >
                 `__Host-maroid_session` with an empty value and a negative age.
@@ -88,10 +91,13 @@ components:
 
   responses:
     BadRequest:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         The request names a target that `auth.allowed_redirects` does not hold.
         The hub clears no cookie.
-        The type is `urn:maroid:problem:http:request-invalid`.
+        The type is `/problems/http/request-invalid`.
       content:
         application/problem+json:
           schema:
@@ -99,7 +105,7 @@ components:
           examples:
             invalidRedirect:
               value:
-                type: "urn:maroid:problem:http:request-invalid"
+                type: "/problems/http/request-invalid"
                 title: "The request is not valid."
                 status: 400
                 detail: "The redirect parameter is absent or not allowed."

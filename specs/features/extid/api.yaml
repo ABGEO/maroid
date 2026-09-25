@@ -23,6 +23,7 @@ paths:
         See `EXTID-DD-001`.
       security: []
       parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
         - $ref: "#/components/parameters/Provider"
         - $ref: "#/components/parameters/Redirect"
       responses:
@@ -41,6 +42,7 @@ paths:
         acting user. The callback reads that identifier from the row, never from the
         request, so a rewritten cookie cannot move the attach.
       parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
         - name: provider
           in: query
           required: true
@@ -69,6 +71,7 @@ paths:
         writes a flow row with the intent `redeem` and redirects.
       security: []
       parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
         - name: token
           in: query
           required: true
@@ -86,6 +89,8 @@ paths:
             query parameter `error=invitation_invalid`. The deck renders that.
             See `EXTID-DD-015`.
           headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
             Location:
               schema:
                 type: string
@@ -106,6 +111,7 @@ paths:
         of the provider onto the identity.
       security: []
       parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
         - name: state
           in: query
           required: true
@@ -126,6 +132,8 @@ paths:
             `auth_failed`. `EXTID-DD-013` gives the reason that `no_identity` stands
             apart.
           headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
             Location:
               schema:
                 type: string
@@ -141,6 +149,8 @@ paths:
 
   /auth/me:
     get:
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       operationId: getCurrentUser
       summary: Read the person of the current session.
       description: >
@@ -149,6 +159,9 @@ paths:
         caller can tell which identity a detach would end.
       responses:
         "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
           description: The name of the record, the picture of the session, and its provider.
           content:
             application/json:
@@ -159,6 +172,8 @@ paths:
 
   /auth/identities:
     get:
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       operationId: listIdentities
       summary: Read every provider that Maroid offers, attached or not.
       description: >
@@ -170,6 +185,9 @@ paths:
         `/auth/me`.
       responses:
         "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
           description: Every provider, in the order that the configuration holds.
           content:
             application/json:
@@ -189,6 +207,8 @@ paths:
         schema:
           type: string
     delete:
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       operationId: detachIdentity
       summary: Detach an external account from the acting user.
       description: >
@@ -197,6 +217,9 @@ paths:
         reaches a record that holds none. See `EXTID-DD-003`.
       responses:
         "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
           description: The identity is gone.
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -323,53 +346,70 @@ components:
     ToProvider:
       description: The redirect to Dex, with `connector_id` and the state.
       headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
         Location:
           schema:
             type: string
 
     BadRequest:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         A parameter is absent, the target is not in `auth.allowed_redirects`, or the
         state names no flow row.
-        The type is `urn:maroid:problem:http:request-invalid`.
+        The type is `/problems/http/request-invalid`.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
 
     Unauthorized:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         The request carries no token, or no identity names an active record.
-        The type is `urn:maroid:problem:http:access-denied`.
+        The type is `/problems/http/access-denied`.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
 
     NoTarget:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         The target of the redemption is absent, or `auth.allowed_redirects` does not
         hold it. No target exists to report the failure at, so this answers in the
         body. Every other failure of this route redirects. See `EXTID-DD-015`.
-        The type is `urn:maroid:problem:http:request-invalid`.
+        The type is `/problems/http/request-invalid`.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
 
     NoIdentity:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         No identity of the acting user names that provider.
-        The type is `urn:maroid:problem:http:not-found`.
+        The type is `/problems/http/not-found`.
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
 
     LastIdentity:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         The identity is the last one of the record. `EXTID-INV-002` keeps it.
-        The type is `urn:maroid:problem:hub:identity-last`.
+        The type is `/problems/hub/identity-last`.
       content:
         application/problem+json:
           schema:

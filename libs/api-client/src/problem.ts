@@ -1,3 +1,6 @@
+/** The header that carries the flow identifier of a request. See `ERR-006`. */
+export const FLOW_ID_HEADER = 'X-Flow-ID';
+
 /** The media type of every error response of the hub. */
 export const PROBLEM_MEDIA_TYPE = 'application/problem+json';
 
@@ -11,7 +14,7 @@ export interface FieldFailure {
 
 /** The body of an error response. It obeys RFC 9457. */
 export interface Problem {
-  /** The problem type, a URN of the form urn:maroid:problem:<owner>:<slug>. */
+  /** The problem type, a relative reference of the form /problems/<owner>/<slug>. */
   type: string;
   title: string;
   status: number;
@@ -22,17 +25,17 @@ export interface Problem {
 
 /** The problem types that the hub owns. */
 export const PROBLEM_TYPE = {
-  requestInvalid: 'urn:maroid:problem:http:request-invalid',
-  bodyInvalid: 'urn:maroid:problem:http:body-invalid',
-  accessDenied: 'urn:maroid:problem:http:access-denied',
-  networkNotAllowed: 'urn:maroid:problem:hub:network-not-allowed',
-  notFound: 'urn:maroid:problem:http:not-found',
-  settingsAbsent: 'urn:maroid:problem:hub:settings-absent',
-  methodNotAllowed: 'urn:maroid:problem:http:method-not-allowed',
-  identityLast: 'urn:maroid:problem:hub:identity-last',
-  validationFailed: 'urn:maroid:problem:http:validation-failed',
-  settingsInvalid: 'urn:maroid:problem:hub:settings-invalid',
-  internal: 'urn:maroid:problem:http:internal'
+  requestInvalid: '/problems/http/request-invalid',
+  bodyInvalid: '/problems/http/body-invalid',
+  accessDenied: '/problems/http/access-denied',
+  networkNotAllowed: '/problems/hub/network-not-allowed',
+  notFound: '/problems/http/not-found',
+  settingsAbsent: '/problems/hub/settings-absent',
+  methodNotAllowed: '/problems/http/method-not-allowed',
+  identityLast: '/problems/hub/identity-last',
+  validationFailed: '/problems/http/validation-failed',
+  settingsInvalid: '/problems/hub/settings-invalid',
+  internal: '/problems/http/internal'
 } as const;
 
 /**

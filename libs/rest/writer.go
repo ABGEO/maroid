@@ -23,7 +23,7 @@ func Fill(r *http.Request, prob Problem) Problem {
 	}
 
 	if prob.Instance == "" {
-		prob.Instance = Instance(RequestIDFromContext(r.Context()))
+		prob.Instance = Instance(FlowIDFromContext(r.Context()))
 	}
 
 	return prob
