@@ -13,7 +13,7 @@ import (
 type EnvironmentRepository interface {
 	Insert(ctx context.Context, entity *model.Environment) error
 	GetByID(ctx context.Context, id string) (*model.Environment, error)
-	List(ctx context.Context) ([]model.Environment, error)
+	List(ctx context.Context, after string, limit int) ([]model.Environment, error)
 	Update(ctx context.Context, entity *model.Environment) error
 	Delete(ctx context.Context, id string) error
 }
@@ -64,13 +64,24 @@ func (r *Environment) GetByID(ctx context.Context, id string) (*model.Environmen
 	return &entity, nil
 }
 
-// List retrieves all Environment records.
-func (r *Environment) List(ctx context.Context) ([]model.Environment, error) {
+// List retrieves one page of Environment records, reading past the row that
+// after names. The page reads with a keyset and never with an offset.
+func (r *Environment) List(
+	ctx context.Context,
+	after string,
+	limit int,
+) ([]model.Environment, error) {
 	var entities []model.Environment
 
-	query := `SELECT id, name, created_at, updated_at FROM environments ORDER BY id;`
+	query := `
+		SELECT id, name, created_at, updated_at
+		FROM environments
+		WHERE ($1 = '' OR id > $1)
+		ORDER BY id
+		LIMIT $2;
+	`
 
-	if err := r.tx.SelectContext(ctx, &entities, query); err != nil {
+	if err := r.tx.SelectContext(ctx, &entities, query, after, limit); err != nil {
 		return nil, fmt.Errorf("listing Environments: %w", err)
 	}
 

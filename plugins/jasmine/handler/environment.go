@@ -47,23 +47,16 @@ func (h *EnvironmentHandler) Routes() []pluginapi.Route {
 
 // List handles GET /environments.
 func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
-	environments, err := fetchInTx(
-		r.Context(),
-		h.db,
-		"listing the environments",
-		func(ctx context.Context, tx *sqlx.Tx) ([]model.Environment, error) {
-			return repository.NewEnvironment(tx).List(ctx)
+	listPage(
+		w, r, h.logger, h.db, "listing the environments",
+		func(
+			ctx context.Context, tx *sqlx.Tx, after string, limit int,
+		) ([]model.Environment, error) {
+			return repository.NewEnvironment(tx).List(ctx, after, limit)
 		},
+		func(row model.Environment) string { return row.ID },
+		dto.NewEnvironmentResponseList,
 	)
-	if err != nil {
-		h.logger.ErrorContext(r.Context(), "failed to list environments", slog.Any("error", err))
-		rest.Write(w, r, rest.NewInternal())
-
-		return
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, dto.NewEnvironmentResponseList(environments))
 }
 
 // GetByID handles GET /environments/{id}.

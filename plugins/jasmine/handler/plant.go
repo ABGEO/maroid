@@ -47,23 +47,14 @@ func (h *PlantHandler) Routes() []pluginapi.Route {
 
 // List handles GET /plants.
 func (h *PlantHandler) List(w http.ResponseWriter, r *http.Request) {
-	plants, err := fetchInTx(
-		r.Context(),
-		h.db,
-		"listing the plants",
-		func(ctx context.Context, tx *sqlx.Tx) ([]model.Plant, error) {
-			return repository.NewPlant(tx).List(ctx)
+	listPage(
+		w, r, h.logger, h.db, "listing the plants",
+		func(ctx context.Context, tx *sqlx.Tx, after string, limit int) ([]model.Plant, error) {
+			return repository.NewPlant(tx).List(ctx, after, limit)
 		},
+		func(row model.Plant) string { return row.ID },
+		dto.NewPlantResponseList,
 	)
-	if err != nil {
-		h.logger.ErrorContext(r.Context(), "failed to list plants", slog.Any("error", err))
-		rest.Write(w, r, rest.NewInternal())
-
-		return
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, dto.NewPlantResponseList(plants))
 }
 
 // GetByID handles GET /plants/{id}.
