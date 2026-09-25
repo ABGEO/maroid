@@ -3,6 +3,7 @@ package dto
 
 // APIResponse is a generic API response wrapper.
 type APIResponse[T any] struct {
+	//nolint:tagliatelle
 	Result struct {
 		DataType string `json:"dataType"`
 		Data     T      `json:"data"`
@@ -10,6 +11,8 @@ type APIResponse[T any] struct {
 }
 
 // ParkingLot represents a single parking lot returned from the API.
+//
+//nolint:tagliatelle
 type ParkingLot struct {
 	Polygon      string `json:"polygon"`
 	Address      string `json:"address"`
@@ -17,6 +20,8 @@ type ParkingLot struct {
 }
 
 // ParkingPlace represents a single parking place returned from the API.
+//
+//nolint:tagliatelle
 type ParkingPlace struct {
 	ID           int    `json:"id"`
 	UniqueNumber string `json:"uniqueNumber"`
@@ -30,6 +35,8 @@ type APIRequest[T any] struct {
 }
 
 // StartParkingData holds the fields for a start-parking request.
+//
+//nolint:tagliatelle
 type StartParkingData struct {
 	PlaceNo   string `json:"placeNo"`
 	VehicleID int    `json:"vehicleId"`
@@ -37,6 +44,8 @@ type StartParkingData struct {
 }
 
 // Person represents the authenticated person's profile from the API.
+//
+//nolint:tagliatelle
 type Person struct {
 	FirstName            string  `json:"firstName"`
 	LastName             string  `json:"lastName"`
@@ -45,6 +54,8 @@ type Person struct {
 }
 
 // ActiveSession represents the current parking session from GET /parking.
+//
+//nolint:tagliatelle
 type ActiveSession struct {
 	ID                 int        `json:"id"`
 	Difference         int        `json:"difference"`
@@ -57,6 +68,8 @@ type ActiveSession struct {
 }
 
 // ParkingSession represents an active parking session returned from the API.
+//
+//nolint:tagliatelle
 type ParkingSession struct {
 	ID                 int        `json:"id"`
 	IncludeFreeParking bool       `json:"includeFreeParking"`

@@ -11,6 +11,8 @@ import (
 )
 
 // BillingItemsRequest represents the request payload for fetching billing items.
+//
+//nolint:tagliatelle
 type BillingItemsRequest struct {
 	AccountID     string `json:"accountId,omitempty"`
 	AccountNumber string `json:"accountNumber"`
@@ -26,6 +28,8 @@ type BaseResponse struct {
 }
 
 // AuthResponse represents the response returned after authentication.
+//
+//nolint:tagliatelle
 type AuthResponse struct {
 	BaseResponse
 
@@ -73,6 +77,7 @@ type CustomerResponse struct {
 type ListResponse[T any] struct {
 	BaseResponse
 
+	//nolint:tagliatelle
 	List struct {
 		Page    int `json:"page"`
 		Total   int `json:"total"`
@@ -82,8 +87,6 @@ type ListResponse[T any] struct {
 }
 
 // BillingItem represents a single billing item returned from the API.
-//
-//nolint:tagliatelle
 type BillingItem struct {
 	RowNumber     string `json:"rn"`
 	ItemDate      string `json:"itemdate"`

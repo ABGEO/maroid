@@ -14,6 +14,8 @@ import (
 )
 
 // AuthResponse represents the response from the authentication API.
+//
+//nolint:tagliatelle
 type AuthResponse struct {
 	IsValid          bool      `json:"isValid,omitempty"`
 	IsEmployee       bool      `json:"isEmployee,omitempty"`
@@ -26,6 +28,8 @@ type AuthResponse struct {
 }
 
 // ParticipantInfoResponse represents the participant information response from the API.
+//
+//nolint:tagliatelle
 type ParticipantInfoResponse struct {
 	UserID                   uuid.UUID `binding:"required" json:"applicationUserId"`
 	PersonalID               string    `binding:"required" json:"personalId"`
@@ -40,6 +44,8 @@ type ParticipantInfoResponse struct {
 }
 
 // PaginatedResponse represents a generic paginated response structure.
+//
+//nolint:tagliatelle
 type PaginatedResponse[T any] struct {
 	Status  string `json:"status"`
 	Code    int    `json:"code"`
@@ -54,6 +60,8 @@ type PaginatedResponse[T any] struct {
 }
 
 // ContributionsRequest represents the request parameters for fetching contributions.
+//
+//nolint:tagliatelle
 type ContributionsRequest struct {
 	Page         int        `json:"pageNumber"`
 	PageSize     int        `json:"pageSize"`
@@ -85,6 +93,8 @@ func (d *ContributionsRequest) ToQueryParams() map[string]string {
 }
 
 // Contribution represents a pension contribution record from the external API.
+//
+//nolint:tagliatelle
 type Contribution struct {
 	BasisID          uuid.UUID `json:"basisId"`
 	Date             string    `json:"date"`

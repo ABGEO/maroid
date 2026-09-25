@@ -10,6 +10,8 @@ import (
 )
 
 // TransactionsRequest represents a request to fetch transactions for a customer.
+//
+//nolint:tagliatelle
 type TransactionsRequest struct {
 	CustomerNumber string `json:"customerNumber"`
 	DateFrom       string `json:"dateFrom,omitempty"`
@@ -25,6 +27,8 @@ type BaseResponse struct {
 }
 
 // ErrorResponse represents an error returned by the API.
+//
+//nolint:tagliatelle
 type ErrorResponse struct {
 	Type    string         `json:"type"    mapstructure:"type"`
 	Title   string         `json:"title"   mapstructure:"title"`
@@ -34,6 +38,8 @@ type ErrorResponse struct {
 }
 
 // AuthResponse represents the response returned after authentication.
+//
+//nolint:tagliatelle
 type AuthResponse struct {
 	BaseResponse
 
@@ -42,6 +48,8 @@ type AuthResponse struct {
 }
 
 // TransactionsResponse represents the response returned when fetching transactions.
+//
+//nolint:tagliatelle
 type TransactionsResponse struct {
 	BaseResponse
 
@@ -50,6 +58,8 @@ type TransactionsResponse struct {
 }
 
 // Transaction represents a single transaction record.
+//
+//nolint:tagliatelle
 type Transaction struct {
 	Consumption            float64 `json:"consumption"`
 	Amount                 float64 `json:"amount"`

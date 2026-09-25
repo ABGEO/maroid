@@ -12,7 +12,7 @@ import (
 type PlantRequest struct {
 	Name          string  `json:"name"              validate:"required"`
 	Species       *string `json:"species,omitempty" validate:"omitempty,min=1"`
-	EnvironmentID string  `json:"environmentId"     validate:"required,uuid4"`
+	EnvironmentID string  `json:"environment_id"    validate:"required,uuid4"`
 }
 
 // Bind implements render.Binder, validating the payload after render.Bind decodes it.
@@ -29,9 +29,9 @@ type PlantResponse struct {
 	ID            string  `json:"id"`
 	Name          string  `json:"name"`
 	Species       *string `json:"species,omitempty"`
-	EnvironmentID string  `json:"environmentId"`
-	CreatedAt     string  `json:"createdAt"`
-	UpdatedAt     string  `json:"updatedAt"`
+	EnvironmentID string  `json:"environment_id"`
+	CreatedAt     string  `json:"created_at"`
+	UpdatedAt     string  `json:"updated_at"`
 }
 
 // NewPlantResponse maps a plant model to its response representation.

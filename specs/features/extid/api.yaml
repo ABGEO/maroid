@@ -263,15 +263,15 @@ components:
   schemas:
     CurrentUser:
       type: object
-      required: [firstName, lastName, picture, provider]
+      required: [first_name, last_name, picture, provider]
       description: >
         The person of the current session. The two names come from the record that
         the owner set, and the picture from the token of the session.
       properties:
-        firstName:
+        first_name:
           type: ["string", "null"]
           description: The first name that the owner set on the record.
-        lastName:
+        last_name:
           type: ["string", "null"]
           description: The last name that the owner set on the record.
         picture:
@@ -283,8 +283,8 @@ components:
           type: string
           description: The connector that authenticated this session.
       examples:
-        - firstName: Temuri
-          lastName: Takalandze
+        - first_name: Temuri
+          last_name: Takalandze
           picture: https://example.com/a.jpg
           provider: telegram
 
@@ -304,11 +304,11 @@ components:
           type: boolean
         username:
           type: ["string", "null"]
-        displayName:
+        display_name:
           type: ["string", "null"]
-        pictureUrl:
+        picture_url:
           type: ["string", "null"]
-        attachedAt:
+        attached_at:
           type: string
           format: date-time
       examples:
@@ -316,9 +316,9 @@ components:
           name: Telegram
           attached: true
           username: ABGEO07
-          displayName: Temuri
-          pictureUrl: https://example.com/a.jpg
-          attachedAt: 2026-09-15T10:00:00Z
+          display_name: Temuri
+          picture_url: https://example.com/a.jpg
+          attached_at: 2026-09-15T10:00:00Z
         - provider: cloud
           name: ABGEO.cloud
           attached: false

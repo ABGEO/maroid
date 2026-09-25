@@ -93,15 +93,15 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MQTTSubscriber"
-        telegramCommands:
+        telegram_commands:
           type: array
           items:
             $ref: "#/components/schemas/TelegramCommand"
-        telegramConversations:
+        telegram_conversations:
           type: array
           items:
             $ref: "#/components/schemas/TelegramConversation"
-        mcpTools:
+        mcp_tools:
           type: array
           items:
             $ref: "#/components/schemas/MCPTool"

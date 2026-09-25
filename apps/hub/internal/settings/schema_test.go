@@ -23,6 +23,8 @@ const (
 )
 
 // probeModel is the model that the scenarios of spec-scenarios.md declare.
+//
+//nolint:tagliatelle // RES-003: a settings key, which the plugin author chose.
 type probeModel struct {
 	Email         string `json:"email"         jsonschema:"title=Email,required"`
 	Password      string `json:"password"      jsonschema:"title=Password,format=password,writeOnly=true,required"`

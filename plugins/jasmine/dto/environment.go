@@ -26,8 +26,8 @@ func (req *EnvironmentRequest) Bind(_ *http.Request) error {
 type EnvironmentResponse struct {
 	ID        string `json:"id"`
 	Name      string `json:"name"`
-	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 // NewEnvironmentResponse maps an environment model to its response representation.

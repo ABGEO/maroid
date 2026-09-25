@@ -24,6 +24,7 @@ func TestInferSchemaReflectsTheModelOfATool(t *testing.T) {
 
 	require.NoError(t, err)
 
+	//nolint:tagliatelle // RES-003: a keyword of JSON Schema.
 	var shape struct {
 		Type string `json:"type"`
 		// The member names are the keywords of JSON Schema, not names of the hub.

@@ -75,9 +75,9 @@ export interface Capabilities {
 	cli?: CLICommand[];
 	cron?: CronJob[];
 	mqtt?: MQTTSubscriber[];
-	telegramCommands?: TelegramCommand[];
-	telegramConversations?: TelegramConversation[];
-	mcpTools?: MCPTool[];
+	telegram_commands?: TelegramCommand[];
+	telegram_conversations?: TelegramConversation[];
+	mcp_tools?: MCPTool[];
 }
 
 export interface Plugin {

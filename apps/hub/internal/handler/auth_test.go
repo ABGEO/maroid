@@ -250,14 +250,14 @@ func TestTheListNamesEveryProvider(t *testing.T) {
 	require.Equal(t, "Telegram", body[0]["name"], "the deck shows this text")
 	require.Equal(t, true, body[0]["attached"])
 	require.Equal(t, "abgeo", body[0]["username"])
-	require.Equal(t, "Temuri", body[0]["displayName"])
-	require.Equal(t, "https://a/b.jpg", body[0]["pictureUrl"])
-	require.NotEmpty(t, body[0]["attachedAt"])
+	require.Equal(t, "Temuri", body[0]["display_name"])
+	require.Equal(t, "https://a/b.jpg", body[0]["picture_url"])
+	require.NotEmpty(t, body[0]["attached_at"])
 
 	require.Equal(t, providerCloud, body[1]["provider"])
 	require.Equal(t, false, body[1]["attached"], "a provider that nobody attached appears")
 	require.Nil(t, body[1]["username"])
-	require.Nil(t, body[1]["pictureUrl"])
+	require.Nil(t, body[1]["picture_url"])
 }
 
 // EXTID-FR-009: The list belongs to the person that asks for it, and to no other.
@@ -319,8 +319,8 @@ func TestMeReportsTheNameAndTheProvider(t *testing.T) {
 
 	body := fixture.me(t, auth.ProviderTelegram, "111")
 
-	require.Equal(t, "Temuri", body["firstName"])
-	require.Equal(t, "Takalandze", body["lastName"])
+	require.Equal(t, "Temuri", body["first_name"])
+	require.Equal(t, "Takalandze", body["last_name"])
 	require.Equal(t, auth.ProviderTelegram, body["provider"])
 }
 

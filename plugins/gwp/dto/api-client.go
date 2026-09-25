@@ -14,6 +14,8 @@ type ListResponse[T any] struct {
 }
 
 // AuthResponse represents the response returned after authentication.
+//
+//nolint:tagliatelle
 type AuthResponse struct {
 	BaseResponse
 
@@ -26,6 +28,8 @@ type AuthResponse struct {
 }
 
 // Customer represents a customer entity in the API.
+//
+//nolint:tagliatelle
 type Customer struct {
 	ID                    int64   `json:"id"`
 	CustomerNumber        string  `json:"customerNo"`
@@ -38,6 +42,8 @@ type Customer struct {
 }
 
 // ReadingResponse represents the response containing reading information.
+//
+//nolint:tagliatelle
 type ReadingResponse struct {
 	CustomerNumber string        `json:"customerNo"`
 	Customer       string        `json:"name"`
@@ -46,6 +52,8 @@ type ReadingResponse struct {
 }
 
 // ReadingItem represents a single reading item in the reading response.
+//
+//nolint:tagliatelle
 type ReadingItem struct {
 	Name            string  `json:"name"`
 	Address         string  `json:"address"`

@@ -23,9 +23,9 @@ func TestEachCapabilityCarriesItsDeclaredName(t *testing.T) {
 		registry.CapCLI:                   "cli",
 		registry.CapCron:                  "cron",
 		registry.CapMQTT:                  "mqtt",
-		registry.CapTelegramCommands:      "telegramCommands",
-		registry.CapTelegramConversations: "telegramConversations",
-		registry.CapMCPTools:              "mcpTools",
+		registry.CapTelegramCommands:      "telegram_commands",
+		registry.CapTelegramConversations: "telegram_conversations",
+		registry.CapMCPTools:              "mcp_tools",
 	}, map[registry.Capability]string{
 		registry.CapSettings:              string(registry.CapSettings),
 		registry.CapUI:                    string(registry.CapUI),

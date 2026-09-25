@@ -263,6 +263,7 @@ func callTool(
 	// The member names come from the JSON-RPC shape of the Model Context Protocol,
 	// so the snake case of the hub does not apply.
 	var envelope struct {
+		//nolint:tagliatelle // RES-003: a payload of the Model Context Protocol.
 		Result struct {
 			StructuredContent map[string]any `json:"structuredContent"`
 			IsError           bool           `json:"isError"`
@@ -398,7 +399,6 @@ func TestTheDiscoveryRouteNamesDexWithNoToken(t *testing.T) {
 
 			require.Equal(t, http.StatusOK, recorder.Code)
 
-			//nolint:tagliatelle
 			var document struct {
 				Resource             string   `json:"resource"`
 				AuthorizationServers []string `json:"authorization_servers"`

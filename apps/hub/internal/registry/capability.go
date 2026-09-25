@@ -18,9 +18,9 @@ const (
 	CapCLI                   Capability = "cli"
 	CapCron                  Capability = "cron"
 	CapMQTT                  Capability = "mqtt"
-	CapTelegramCommands      Capability = "telegramCommands"
-	CapTelegramConversations Capability = "telegramConversations"
-	CapMCPTools              Capability = "mcpTools"
+	CapTelegramCommands      Capability = "telegram_commands"
+	CapTelegramConversations Capability = "telegram_conversations"
+	CapMCPTools              Capability = "mcp_tools"
 )
 
 // Present is the value of a capability that a plugin declares and that holds no

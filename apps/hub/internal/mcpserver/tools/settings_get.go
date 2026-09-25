@@ -20,6 +20,8 @@ type GetPluginSettingsInput struct {
 
 // GetPluginSettingsOutput reports the settings schema of a plugin and the values
 // that the acting user stored for it.
+//
+//nolint:tagliatelle
 type GetPluginSettingsOutput struct {
 	Plugin       string         `json:"plugin"       jsonschema:"the plugin identifier"`
 	Schema       map[string]any `json:"schema"       jsonschema:"the JSON Schema of the fields"`

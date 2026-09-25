@@ -22,6 +22,8 @@ type SavePluginSettingsInput struct {
 }
 
 // SavePluginSettingsOutput reports the settings that the row holds after the save.
+//
+//nolint:tagliatelle
 type SavePluginSettingsOutput struct {
 	Plugin       string         `json:"plugin"       jsonschema:"the plugin identifier"`
 	SecretFields []string       `json:"secretFields" jsonschema:"the key of each secret field"`
