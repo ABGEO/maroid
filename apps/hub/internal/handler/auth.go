@@ -61,6 +61,7 @@ type Auth struct {
 	identityResolver auth.IdentityResolver
 	invitationRepo   repository.InvitationRepository
 	authSvc          *auth.Service
+	idempotency      rest.IdempotencyStore
 }
 
 var _ AuthHandler = (*Auth)(nil)
@@ -76,6 +77,7 @@ func NewAuth(
 	identityResolver auth.IdentityResolver,
 	invitationRepo repository.InvitationRepository,
 	authSvc *auth.Service,
+	idempotency rest.IdempotencyStore,
 ) *Auth {
 	return &Auth{
 		cfg: cfg,
@@ -90,6 +92,7 @@ func NewAuth(
 		identityResolver: identityResolver,
 		invitationRepo:   invitationRepo,
 		authSvc:          authSvc,
+		idempotency:      idempotency,
 	}
 }
 
@@ -107,6 +110,8 @@ func (h *Auth) Register(router chi.Router) {
 
 		r.Group(func(r chi.Router) {
 			r.Use(auth.Middleware(h.logger, h.verifier, h.identityResolver))
+			r.Use(rest.Idempotency(h.logger, h.idempotency))
+
 			r.Get("/sessions/self", Wrap(h.logger, h.Me))
 			r.Post("/identities", Wrap(h.logger, h.Link))
 			r.Get("/identities", Wrap(h.logger, h.Identities))

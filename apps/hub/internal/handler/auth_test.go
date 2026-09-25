@@ -87,6 +87,7 @@ func authUnderTest(t *testing.T) *authFixture {
 		auth.NewResolver(identityRepo),
 		invitationRepo,
 		service,
+		noIdempotency{},
 	)
 
 	router := chi.NewRouter()

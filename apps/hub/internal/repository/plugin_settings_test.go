@@ -3,10 +3,12 @@ package repository_test
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/database"
@@ -195,4 +197,43 @@ func TestAnUnconditionalUpsertLands(t *testing.T) {
 			keyEmail: {Kind: model.FieldKindText, Value: value},
 		})
 	}
+}
+
+// APIFMT-SC-020: The cache keeps what the first write answered, so a repeat
+// after a restart answers the same media type and not one that a sniff guessed.
+func TestTheKeyCacheKeepsTheHeadersOfTheAnswer(t *testing.T) {
+	t.Parallel()
+
+	instance := startWithCoreMigrations(t)
+	user := insertUser(t, instance, nameOfA)
+
+	kept := &model.IdempotencyKey{
+		Key:         "key-1",
+		RequestHash: "digest",
+		Status:      http.StatusCreated,
+		Headers:     model.Headers{"Content-Type": {"application/json"}},
+		Body:        []byte(`{"id":"01a0cae5-eb36-777a-824e-6e7e28d7a6b1"}`),
+	}
+
+	require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
+		return repository.NewIdempotency(tx).Keep(ctx, kept)
+	}))
+
+	var held *model.IdempotencyKey
+
+	require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
+		var readErr error
+
+		held, readErr = repository.NewIdempotency(tx).Answer(ctx, "key-1")
+		if readErr != nil {
+			return fmt.Errorf("reading the key cache: %w", readErr)
+		}
+
+		return nil
+	}))
+
+	require.NotNil(t, held)
+	assert.Equal(t, http.StatusCreated, held.Status)
+	assert.Equal(t, []string{"application/json"}, held.Headers["Content-Type"])
+	assert.JSONEq(t, string(kept.Body), string(held.Body))
 }

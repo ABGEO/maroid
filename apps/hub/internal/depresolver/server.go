@@ -172,6 +172,11 @@ func (c *Container) buildHandlers() (map[string]handler.Handler, error) {
 		return nil, err
 	}
 
+	idempotencyStore, err := c.IdempotencyStore()
+	if err != nil {
+		return nil, err
+	}
+
 	return map[string]handler.Handler{
 		"auth": authHandler,
 		"plugin": handler.NewPlugin(
@@ -182,6 +187,7 @@ func (c *Container) buildHandlers() (map[string]handler.Handler, error) {
 			c.UIRegistry(),
 			c.CapabilityRegistry(),
 			settingsSvc,
+			idempotencyStore,
 		),
 		"mcp": mcpHandler,
 	}, nil
@@ -219,6 +225,11 @@ func (c *Container) buildAuthHandler(
 		return nil, err
 	}
 
+	idempotencyStore, err := c.IdempotencyStore()
+	if err != nil {
+		return nil, err
+	}
+
 	return handler.NewAuth(
 		cfg,
 		logger,
@@ -229,6 +240,7 @@ func (c *Container) buildAuthHandler(
 		identityResolver,
 		invitationRepo,
 		authSvc,
+		idempotencyStore,
 	), nil
 }
 

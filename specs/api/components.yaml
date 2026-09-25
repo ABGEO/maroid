@@ -192,3 +192,17 @@ components:
       schema:
         type: string
         examples: ['W/"1790332200123456789"']
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: >
+        A key that the client picks for one write, so that repeating that write
+        is safe. A repeat under one key answers the result of the first write and
+        creates no second record. A repeat under one key with another request
+        answers `/problems/http/request-invalid`. The cache holds an answer for
+        24 hours. `Z-230`, `APIFMT-FR-020`.
+      schema:
+        type: string
+        maxLength: 255
+        examples: ["01a0cae5-eb36-777a-824e-6e7e28d7a6b1"]

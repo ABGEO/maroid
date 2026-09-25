@@ -38,6 +38,7 @@ type Plugin struct {
 	uiRegistry         *registry.UIRegistry
 	capabilityRegistry *registry.CapabilityRegistry
 	settingsSvc        settings.Service
+	idempotency        rest.IdempotencyStore
 }
 
 var _ PluginHandler = (*Plugin)(nil)
@@ -51,8 +52,10 @@ func NewPlugin(
 	uiRegistry *registry.UIRegistry,
 	capabilityRegistry *registry.CapabilityRegistry,
 	settingsSvc settings.Service,
+	idempotency rest.IdempotencyStore,
 ) *Plugin {
 	return &Plugin{
+		idempotency: idempotency,
 		logger: logger.With(
 			slog.String("component", "handler"),
 			slog.String("handler", "plugin"),
@@ -73,6 +76,7 @@ func (h *Plugin) Register(router chi.Router) {
 	router.Route("/plugins", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
+			r.Use(rest.Idempotency(h.logger, h.idempotency))
 
 			r.Get("/", Wrap(h.logger, h.List))
 			r.Get("/{id}/settings/schema", Wrap(h.logger, h.SettingsSchema))

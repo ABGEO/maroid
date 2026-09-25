@@ -7,15 +7,17 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // PluginWrapper is a handler that wraps plugin-provided HTTP routes and registers them under a specific path prefix.
 type PluginWrapper struct {
-	logger   *slog.Logger
-	verifier auth.TokenVerifier
-	resolver auth.IdentityResolver
-	pluginID *pluginapi.PluginID
-	routes   []pluginapi.Route
+	logger      *slog.Logger
+	verifier    auth.TokenVerifier
+	resolver    auth.IdentityResolver
+	idempotency rest.IdempotencyStore
+	pluginID    *pluginapi.PluginID
+	routes      []pluginapi.Route
 }
 
 var _ Handler = (*PluginWrapper)(nil)
@@ -25,15 +27,17 @@ func NewPluginWrapper(
 	logger *slog.Logger,
 	verifier auth.TokenVerifier,
 	resolver auth.IdentityResolver,
+	idempotency rest.IdempotencyStore,
 	pluginID *pluginapi.PluginID,
 	routes []pluginapi.Route,
 ) *PluginWrapper {
 	return &PluginWrapper{
-		logger:   logger,
-		verifier: verifier,
-		resolver: resolver,
-		pluginID: pluginID,
-		routes:   routes,
+		logger:      logger,
+		verifier:    verifier,
+		resolver:    resolver,
+		idempotency: idempotency,
+		pluginID:    pluginID,
+		routes:      routes,
 	}
 }
 
@@ -49,6 +53,7 @@ func (h *PluginWrapper) Register(router chi.Router) {
 
 	router.Route(h.pathPrefix(), func(r chi.Router) {
 		r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
+		r.Use(rest.Idempotency(h.logger, h.idempotency))
 
 		for _, route := range h.routes {
 			r.MethodFunc(route.Method, route.Pattern, route.Handler)

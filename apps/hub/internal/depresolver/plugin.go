@@ -122,10 +122,16 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		return nil, err
 	}
 
+	idempotencyStore, err := c.IdempotencyStore()
+	if err != nil {
+		return nil, err
+	}
+
 	return pluginloader.New(
 		pluginHost,
 		verifier,
 		identityResolver,
+		idempotencyStore,
 		registries.command,
 		registries.cron,
 		registries.handler,

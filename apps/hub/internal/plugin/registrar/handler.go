@@ -9,6 +9,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // HandlerRegistrar is responsible for registering plugin HTTP routes as handlers.
@@ -18,6 +19,7 @@ type HandlerRegistrar struct {
 	resolver     auth.IdentityResolver
 	registry     *handler.Registry
 	capabilities *registry.CapabilityRegistry
+	idempotency  rest.IdempotencyStore
 }
 
 var _ Registrar = (*HandlerRegistrar)(nil)
@@ -29,6 +31,7 @@ func NewHandlerRegistrar(
 	resolver auth.IdentityResolver,
 	reg *handler.Registry,
 	capabilities *registry.CapabilityRegistry,
+	idempotency rest.IdempotencyStore,
 ) *HandlerRegistrar {
 	return &HandlerRegistrar{
 		logger:       logger,
@@ -36,6 +39,7 @@ func NewHandlerRegistrar(
 		resolver:     resolver,
 		registry:     reg,
 		capabilities: capabilities,
+		idempotency:  idempotency,
 	}
 }
 
@@ -73,6 +77,7 @@ func (r *HandlerRegistrar) Register(plugin pluginapi.Plugin) error {
 		r.logger,
 		r.verifier,
 		r.resolver,
+		r.idempotency,
 		id,
 		routes,
 	)

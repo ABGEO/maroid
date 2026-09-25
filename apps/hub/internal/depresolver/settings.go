@@ -6,9 +6,11 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/apps/hub/internal/idempotency"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
+	"github.com/abgeo/maroid/libs/rest"
 )
 
 // SettingsRegistry initializes and returns the settings schema registry.
@@ -57,4 +59,31 @@ func (c *Container) SettingsService() (settings.Service, error) {
 	}
 
 	return c.settingsService.instance, nil
+}
+
+// IdempotencyStore initializes and returns the key cache of a repeated write.
+func (c *Container) IdempotencyStore() (rest.IdempotencyStore, error) {
+	c.idempotencyStore.mu.Lock()
+	defer c.idempotencyStore.mu.Unlock()
+
+	var err error
+
+	c.idempotencyStore.once.Do(func() {
+		var dbInstance *sqlx.DB
+
+		dbInstance, err = c.Database()
+		if err != nil {
+			return
+		}
+
+		c.idempotencyStore.instance = idempotency.NewStore(dbInstance)
+	})
+
+	if err != nil {
+		c.idempotencyStore.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing the key cache: %w", err)
+	}
+
+	return c.idempotencyStore.instance, nil
 }

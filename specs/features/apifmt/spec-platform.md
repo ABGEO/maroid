@@ -351,12 +351,26 @@ optimistic path and does not make the header mandatory.
 **Decision:** A middleware of `libs/rest` reads `Idempotency-Key` on a write that
 creates. It stores the status and the body under the key of the acting user, and
 answers the stored pair on a repeat. The hub implements the store over
-`idempotency_keys`, and a plugin reaches it through `pluginapi.Host`.
+`idempotency_keys`.
+
+The middleware runs behind the access check, wherever one stands: the
+authenticated group of the auth routes, the group of the settings routes, and
+the group that `API-004` mounts every plugin route in. It reaches no route that
+carries no credential.
 
 **Rationale:** The store belongs to the hub because it is one table for every
 plugin, and the middleware belongs to `libs/rest` because a plugin route needs
 it and `PLG-007` denies a plugin `apps/hub`. An interface between the two keeps
 `libs/rest` free of the database.
+
+`pluginapi.Host` gains nothing. The hub mounts every plugin route inside the
+group that holds the middleware, so a plugin handler never reaches the store.
+
+A route that carries no credential takes no key. `OWN-004` scopes the table to a
+user and a public route names none. The two public starts of `API-003` would
+gain nothing anyway: each answers an address that carries a single use state, so
+a replay would hand a client an address that its own flow row has already
+spent.
 
 **Alternatives:** A natural key on each table, so that a repeat collides. It works
 per table, needs a migration on each one, and answers a conflict rather than the
@@ -367,7 +381,7 @@ recommends. A stored row older than 24 hours expires, and a cron job removes it.
 `Z-230` gives that lifetime and calls the store a key cache, not a request log.
 
 `Z-230` also gives the schema of the header. `specs/api/components.yaml` gains
-it as a parameter, and a write references it.
+it as a parameter, and each authenticated write references it.
 
 ### `APIFMT-DD-016`
 
@@ -384,6 +398,30 @@ would hand one person the rows of another.
 
 **Alternatives:** Set the header in each handler. A handler added later sets
 nothing, and a proxy then decides.
+
+### `APIFMT-DD-017`
+
+**Realizes:** `APIFMT-FR-019`
+
+**Decision:** A caller of `libs/api-client` holds the validator itself. A read
+that needs one calls a method that answers the body and the entity tag together,
+and a write names the tag in its options. The client remembers nothing between
+the two.
+
+**Rationale:** `request` answers the body and drops the response, so no caller
+can read a header of a successful answer today. Handing the tag back to the
+caller keeps the client stateless and makes the conditional write visible at the
+site that performs it. A reader of `SettingsForm.svelte` sees which value guards
+the save.
+
+**Alternatives:** Cache the last tag for each address inside the client and
+attach it to the next write of that address. It needs no change at any call site,
+and that is the problem: a write becomes conditional without anyone asking, and
+an unrelated read of the same address replaces the validator that the form still
+holds, so the guard silently protects the wrong state.
+
+A route adopts the conditional write one at a time. `Z-182` makes the header
+optional, so a route that has not adopted it keeps its behavior.
 
 ## 6. Scenarios
 
