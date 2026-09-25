@@ -255,6 +255,12 @@ type providerState struct {
 
 // Identities reports every provider that Maroid offers, attached or not.
 func (h *Auth) Identities(w http.ResponseWriter, r *http.Request) error {
+	if _, problem := rest.ReadPageRequest(r, rest.PageOptions{Bounded: true}); problem != nil {
+		rest.Write(w, r, *problem)
+
+		return nil
+	}
+
 	identities, err := h.identityRepo.ListByUser(
 		r.Context(),
 		auth.UserIDFromContext(r.Context()),
@@ -286,7 +292,14 @@ func (h *Auth) Identities(w http.ResponseWriter, r *http.Request) error {
 		states = append(states, state)
 	}
 
-	render.JSON(w, r, states)
+	page, err := rest.NewPage(r, states, nil, nil)
+	if err != nil {
+		rest.Write(w, r, rest.NewInternal())
+
+		return fmt.Errorf("building the page of identities: %w", err)
+	}
+
+	render.JSON(w, r, page)
 
 	return nil
 }

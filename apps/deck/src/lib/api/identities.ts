@@ -1,3 +1,5 @@
+import type { Page } from '@maroid/api-client';
+
 import { client } from './client';
 import type { ProviderIdentity } from './types';
 
@@ -7,7 +9,7 @@ function path(provider: string): string {
 
 export const identities = {
 	list: (): Promise<ProviderIdentity[] | null> =>
-		client.get<ProviderIdentity[]>('/auth/identities'),
+		client.get<Page<ProviderIdentity>>('/auth/identities').then((page) => page?.items ?? null),
 
 	detach: (provider: string): Promise<void> =>
 		client.del<void>(path(provider)).then(() => undefined)

@@ -90,6 +90,7 @@ func authUnderTest(t *testing.T) *authFixture {
 	)
 
 	router := chi.NewRouter()
+	router.Use(rest.BaseURL("https://hub.example.com"))
 	authHandler.Register(router)
 
 	return &authFixture{
@@ -428,9 +429,15 @@ func (f *authFixture) listIdentities(
 	f.router.ServeHTTP(recorder, request)
 	require.Equal(t, http.StatusOK, recorder.Code)
 
-	var body []map[string]any
+	// The collection answers a page, and the items live under one member.
+	// APIFMT-FR-002.
+	var page struct {
+		Items []map[string]any `json:"items"`
+	}
 
-	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &page))
+
+	body := page.Items
 
 	return body
 }

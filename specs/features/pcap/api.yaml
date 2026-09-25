@@ -29,13 +29,22 @@ paths:
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
-          description: One entry for each loaded plugin.
+          description: >
+            One page that holds every loaded plugin. The deployment bounds the
+            set, so the route takes no `limit` and no `cursor`, and a request
+            that names either answers `/problems/http/request-invalid`.
+            `APIFMT-FR-004`.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/PluginEntry"
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/PluginEntry"
         "401":
           $ref: "#/components/responses/Unauthorized"
 

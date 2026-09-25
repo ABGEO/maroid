@@ -76,13 +76,23 @@ paths:
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
-          description: Every provider, in the order that the configuration holds.
+          description: >
+            One page that holds every provider, in the order that the
+            configuration holds. The connectors that the identity provider
+            federates bound the set, so the route takes no `limit` and no
+            `cursor`, and a request that names either answers
+            `/problems/http/request-invalid`. `APIFMT-FR-004`.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ProviderState"
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/ProviderState"
         "401":
           $ref: "#/components/responses/Unauthorized"
 

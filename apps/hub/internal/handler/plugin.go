@@ -89,8 +89,23 @@ func (h *Plugin) Register(router chi.Router) {
 // List returns a list of all registered plugins with their metadata and UI capabilities if available.
 func (h *Plugin) List(w http.ResponseWriter, r *http.Request) error {
 	// @todo: consider caching the data.
+	if _, problem := rest.ReadPageRequest(r, rest.PageOptions{Bounded: true}); problem != nil {
+		rest.Write(w, r, *problem)
+
+		return nil
+	}
+
+	entries := registry.PluginEntries(h.pluginRegistry, h.capabilityRegistry)
+
+	page, err := rest.NewPage(r, entries, nil, nil)
+	if err != nil {
+		rest.Write(w, r, rest.NewInternal())
+
+		return fmt.Errorf("building the page of plugins: %w", err)
+	}
+
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, registry.PluginEntries(h.pluginRegistry, h.capabilityRegistry))
+	render.JSON(w, r, page)
 
 	return nil
 }
