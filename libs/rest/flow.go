@@ -28,6 +28,7 @@ const flowIDKey contextKey = 0
 // version 7 when the request carries none.
 func FlowID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//nolint:canonicalheader
 		value := boundFlowID(r.Header.Get(FlowIDHeader))
 		if value == "" {
 			identifier, err := uuid.NewV7()
@@ -40,6 +41,7 @@ func FlowID(next http.Handler) http.Handler {
 			value = identifier.String()
 		}
 
+		//nolint:canonicalheader
 		w.Header().Set(FlowIDHeader, value)
 
 		next.ServeHTTP(w, r.WithContext(ContextWithFlowID(r.Context(), value)))

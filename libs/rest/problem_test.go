@@ -61,6 +61,7 @@ func TestEveryConstructorMatchesTheRegistry(t *testing.T) {
 	}{
 		"request invalid":    {rest.NewRequestInvalid(), rest.TypeRequestInvalid, 400},
 		"body invalid":       {rest.NewBodyInvalid(), rest.TypeBodyInvalid, 400},
+		"cursor stale":       {rest.NewCursorStale(), rest.TypeCursorStale, 400},
 		"access denied":      {rest.NewAccessDenied(), rest.TypeAccessDenied, 401},
 		"not found":          {rest.NewNotFound(), rest.TypeNotFound, 404},
 		"method not allowed": {rest.NewMethodNotAllowed(), rest.TypeMethodNotAllowed, 405},

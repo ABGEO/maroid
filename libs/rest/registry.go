@@ -9,6 +9,7 @@ const (
 	TypeRequestInvalid   = "/problems/http/request-invalid"
 	TypeBodyInvalid      = "/problems/http/body-invalid"
 	TypeAccessDenied     = "/problems/http/access-denied"
+	TypeCursorStale      = "/problems/http/cursor-stale"
 	TypeNotFound         = "/problems/http/not-found"
 	TypeMethodNotAllowed = "/problems/http/method-not-allowed"
 	TypeValidationFailed = "/problems/http/validation-failed"
@@ -23,6 +24,17 @@ func NewRequestInvalid() Problem {
 // NewBodyInvalid reports a body that does not decode as a JSON object.
 func NewBodyInvalid() Problem {
 	return newProblem(TypeBodyInvalid, "The body is not a JSON object.", http.StatusBadRequest)
+}
+
+// NewCursorStale reports a cursor whose sort or filters differ from the request
+// that carries it. A client tells it from a cursor it built wrong, and retires
+// the one it holds. RES-006.
+func NewCursorStale() Problem {
+	return newProblem(
+		TypeCursorStale,
+		"The cursor does not match this request.",
+		http.StatusBadRequest,
+	)
 }
 
 // NewAccessDenied reports a request that carries no active user record. Every

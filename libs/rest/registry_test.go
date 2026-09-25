@@ -21,6 +21,7 @@ func TestEveryTypeIsARelativeReference(t *testing.T) {
 	for name, build := range map[string]func() rest.Problem{
 		"request-invalid":    rest.NewRequestInvalid,
 		"body-invalid":       rest.NewBodyInvalid,
+		"cursor-stale":       rest.NewCursorStale,
 		"access-denied":      rest.NewAccessDenied,
 		"not-found":          rest.NewNotFound,
 		"method-not-allowed": rest.NewMethodNotAllowed,
