@@ -2,10 +2,14 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/libs/rest"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 )
 
@@ -14,7 +18,7 @@ type EnvironmentRepository interface {
 	Insert(ctx context.Context, entity *model.Environment) error
 	GetByID(ctx context.Context, id string) (*model.Environment, error)
 	List(ctx context.Context, after string, limit int) ([]model.Environment, error)
-	Update(ctx context.Context, entity *model.Environment) error
+	Update(ctx context.Context, entity *model.Environment, ifMatch *time.Time) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -89,21 +93,39 @@ func (r *Environment) List(
 }
 
 // Update updates an existing Environment record and refreshes the given entity with the stored values.
-func (r *Environment) Update(ctx context.Context, entity *model.Environment) error {
+// A non-nil ifMatch makes the write conditional on the moment of the last write,
+// and a record that moved since keeps its values and answers rest.ErrModified.
+func (r *Environment) Update(
+	ctx context.Context,
+	entity *model.Environment,
+	ifMatch *time.Time,
+) error {
 	query := `
 		UPDATE environments
 		SET name = :name
 		WHERE id = :id
+		  AND (
+		    CAST(:if_match AS TIMESTAMPTZ) IS NULL
+		    OR updated_at = CAST(:if_match AS TIMESTAMPTZ)
+		  )
 		RETURNING updated_at;
 	`
 
-	query, args, err := sqlx.Named(query, entity)
+	query, args, err := sqlx.Named(query, map[string]any{
+		"id":       entity.ID,
+		"name":     entity.Name,
+		"if_match": ifMatch,
+	})
 	if err != nil {
 		return fmt.Errorf("binding Environment update arguments: %w", err)
 	}
 
-	err = r.tx.GetContext(ctx, entity, r.tx.Rebind(query), args...)
-	if err != nil {
+	// A write that named no moment and still matched no row lost its record to
+	// another transaction, which is a failure and not a failed precondition.
+	switch err = r.tx.GetContext(ctx, entity, r.tx.Rebind(query), args...); {
+	case errors.Is(err, sql.ErrNoRows) && ifMatch != nil:
+		return rest.ErrModified
+	case err != nil:
 		return fmt.Errorf("updating Environment: %w", err)
 	}
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -61,23 +62,14 @@ func (h *PlantHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *PlantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	plant, err := fetchInTx(
-		r.Context(),
-		h.db,
-		"getting the plant "+id,
+	readRecord(
+		w, r, h.logger, h.db, "getting the plant "+id,
 		func(ctx context.Context, tx *sqlx.Tx) (*model.Plant, error) {
 			return repository.NewPlant(tx).GetByID(ctx, id)
 		},
+		func(row *model.Plant) time.Time { return row.UpdatedAt },
+		dto.NewPlantResponse,
 	)
-	if err != nil {
-		h.logger.ErrorContext(r.Context(), "failed to get plant", slog.Any("error", err))
-		rest.Write(w, r, rest.NewNotFound())
-
-		return
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, dto.NewPlantResponse(plant))
 }
 
 // Create handles POST /plants.
@@ -111,6 +103,7 @@ func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set(rest.ETagHeader, rest.ETag(plant.UpdatedAt))
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, dto.NewPlantResponse(plant))
 }
@@ -125,6 +118,8 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
+	ifMatch := rest.IfMatchFromContext(r.Context())
 
 	plant, err := fetchInTx(
 		r.Context(),
@@ -142,7 +137,7 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 			existing.Species = req.Species
 			existing.EnvironmentID = req.EnvironmentID
 
-			if txErr = repo.Update(ctx, existing); txErr != nil {
+			if txErr = repo.Update(ctx, existing, ifMatch); txErr != nil {
 				return nil, fmt.Errorf("writing the record: %w", txErr)
 			}
 
@@ -150,12 +145,12 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		h.logger.ErrorContext(r.Context(), "failed to update plant", slog.Any("error", err))
-		rest.Write(w, r, rest.NewInternal())
+		failWrite(w, r, h.logger, "failed to update plant", err)
 
 		return
 	}
 
+	w.Header().Set(rest.ETagHeader, rest.ETag(plant.UpdatedAt))
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, dto.NewPlantResponse(plant))
 }

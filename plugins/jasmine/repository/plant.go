@@ -2,10 +2,14 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/libs/rest"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 )
 
@@ -20,7 +24,7 @@ type PlantRepository interface {
 		after string,
 		limit int,
 	) ([]model.Plant, error)
-	Update(ctx context.Context, entity *model.Plant) error
+	Update(ctx context.Context, entity *model.Plant, ifMatch *time.Time) error
 	Delete(ctx context.Context, id string) error
 }
 
@@ -115,21 +119,37 @@ func (r *Plant) ListByEnvironmentID(
 }
 
 // Update updates an existing Plant record and refreshes the given entity with the stored values.
-func (r *Plant) Update(ctx context.Context, entity *model.Plant) error {
+// A non-nil ifMatch makes the write conditional on the moment of the last write,
+// and a record that moved since keeps its values and answers rest.ErrModified.
+func (r *Plant) Update(ctx context.Context, entity *model.Plant, ifMatch *time.Time) error {
 	query := `
 		UPDATE plants
 		SET name = :name, species = :species, environment_id = :environment_id
 		WHERE id = :id
+		  AND (
+		    CAST(:if_match AS TIMESTAMPTZ) IS NULL
+		    OR updated_at = CAST(:if_match AS TIMESTAMPTZ)
+		  )
 		RETURNING updated_at;
 	`
 
-	query, args, err := sqlx.Named(query, entity)
+	query, args, err := sqlx.Named(query, map[string]any{
+		"id":             entity.ID,
+		"name":           entity.Name,
+		"species":        entity.Species,
+		"environment_id": entity.EnvironmentID,
+		"if_match":       ifMatch,
+	})
 	if err != nil {
 		return fmt.Errorf("binding Plant update arguments: %w", err)
 	}
 
-	err = r.tx.GetContext(ctx, entity, r.tx.Rebind(query), args...)
-	if err != nil {
+	// A write that named no moment and still matched no row lost its record to
+	// another transaction, which is a failure and not a failed precondition.
+	switch err = r.tx.GetContext(ctx, entity, r.tx.Rebind(query), args...); {
+	case errors.Is(err, sql.ErrNoRows) && ifMatch != nil:
+		return rest.ErrModified
+	case err != nil:
 		return fmt.Errorf("updating Plant: %w", err)
 	}
 

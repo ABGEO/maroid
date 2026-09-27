@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -63,23 +64,14 @@ func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *EnvironmentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
-	env, err := fetchInTx(
-		r.Context(),
-		h.db,
-		"getting the environment "+id,
+	readRecord(
+		w, r, h.logger, h.db, "getting the environment "+id,
 		func(ctx context.Context, tx *sqlx.Tx) (*model.Environment, error) {
 			return repository.NewEnvironment(tx).GetByID(ctx, id)
 		},
+		func(row *model.Environment) time.Time { return row.UpdatedAt },
+		dto.NewEnvironmentResponse,
 	)
-	if err != nil {
-		h.logger.ErrorContext(r.Context(), "failed to get environment", slog.Any("error", err))
-		rest.Write(w, r, rest.NewNotFound())
-
-		return
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, dto.NewEnvironmentResponse(env))
 }
 
 // Create handles POST /environments.
@@ -111,6 +103,7 @@ func (h *EnvironmentHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set(rest.ETagHeader, rest.ETag(env.UpdatedAt))
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, dto.NewEnvironmentResponse(env))
 }
@@ -126,6 +119,8 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ifMatch := rest.IfMatchFromContext(r.Context())
+
 	env, err := fetchInTx(
 		r.Context(),
 		h.db,
@@ -140,7 +135,7 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 			existing.Name = req.Name
 
-			if txErr = repo.Update(ctx, existing); txErr != nil {
+			if txErr = repo.Update(ctx, existing, ifMatch); txErr != nil {
 				return nil, fmt.Errorf("writing the record: %w", txErr)
 			}
 
@@ -148,12 +143,12 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 		},
 	)
 	if err != nil {
-		h.logger.ErrorContext(r.Context(), "failed to update environment", slog.Any("error", err))
-		rest.Write(w, r, rest.NewInternal())
+		failWrite(w, r, h.logger, "failed to update environment", err)
 
 		return
 	}
 
+	w.Header().Set(rest.ETagHeader, rest.ETag(env.UpdatedAt))
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, dto.NewEnvironmentResponse(env))
 }
