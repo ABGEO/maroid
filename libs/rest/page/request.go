@@ -1,25 +1,27 @@
-package rest
+package page
 
 import (
 	"net/http"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 const (
-	// DefaultPageLimit is the count of items that a request with no limit takes.
-	DefaultPageLimit = 20
-	// MaxPageLimit is the ceiling that a request may not pass.
-	MaxPageLimit = 100
+	// DefaultLimit is the count of items that a request with no limit takes.
+	DefaultLimit = 20
+	// MaxLimit is the ceiling that a request may not pass.
+	MaxLimit = 100
 
 	limitParameter = "limit"
 	sortParameter  = "sort"
 )
 
-// PageOptions declares what one route takes. A route fills it once, and the
+// Options declares what one route takes. A route fills it once, and the
 // reader refuses every parameter that the route does not declare.
-type PageOptions struct {
+type Options struct {
 	// Bounded marks a collection that the deployment bounds, which answers every
 	// item in one page and takes no limit and no cursor.
 	Bounded bool
@@ -31,8 +33,8 @@ type PageOptions struct {
 	Filters []string
 }
 
-// PageRequest holds what one request asks of a collection.
-type PageRequest struct {
+// Request holds what one request asks of a collection.
+type Request struct {
 	// Limit is the count of items to answer. It is zero for a bounded route.
 	Limit int
 	// Cursor names the position to read from, or nil for the first page.
@@ -44,33 +46,33 @@ type PageRequest struct {
 	Filters map[string]string
 }
 
-// ReadPageRequest reads limit, cursor and sort from the query and checks each
-// one against what the route declares. It answers a problem that the caller
-// writes, and a nil problem means the request is good.
-func ReadPageRequest(r *http.Request, declared PageOptions) (PageRequest, *Problem) {
+// ReadRequest reads limit, cursor and sort from the query and checks each
+// one against what the route declares. It answers a failure that the caller
+// writes, and a nil failure means the request is good.
+func ReadRequest(r *http.Request, declared Options) (Request, *problem.Problem) {
 	query := r.URL.Query()
-	asked := PageRequest{
+	asked := Request{
 		Filters: readFilters(r, declared),
 	}
 
 	if declared.Bounded {
 		for _, name := range []string{limitParameter, cursorParameter} {
 			if query.Has(name) {
-				return PageRequest{}, refuse(name, "this collection answers every item in one page")
+				return Request{}, refuse(name, "this collection answers every item in one page")
 			}
 		}
 	} else {
-		limit, problem := readLimit(query.Get(limitParameter))
-		if problem != nil {
-			return PageRequest{}, problem
+		limit, failure := readLimit(query.Get(limitParameter))
+		if failure != nil {
+			return Request{}, failure
 		}
 
 		asked.Limit = limit
 	}
 
-	sort, problem := readSort(query.Get(sortParameter), declared)
-	if problem != nil {
-		return PageRequest{}, problem
+	sort, failure := readSort(query.Get(sortParameter), declared)
+	if failure != nil {
+		return Request{}, failure
 	}
 
 	asked.Sort = sort
@@ -78,15 +80,15 @@ func ReadPageRequest(r *http.Request, declared PageOptions) (PageRequest, *Probl
 	if raw := query.Get(cursorParameter); raw != "" {
 		cursor, err := DecodeCursor(raw)
 		if err != nil {
-			return PageRequest{}, refuse(
+			return Request{}, refuse(
 				cursorParameter, "the value is not a cursor that this API produced",
 			)
 		}
 
 		if !cursor.Matches(asked.Sort, asked.Filters) {
-			stale := NewCursorStale()
+			stale := problem.NewCursorStale()
 
-			return PageRequest{}, &stale
+			return Request{}, &stale
 		}
 
 		asked.Cursor = &cursor
@@ -97,9 +99,9 @@ func ReadPageRequest(r *http.Request, declared PageOptions) (PageRequest, *Probl
 
 // readLimit answers the default when the request names none, and refuses a
 // value outside the bounds that RES-005 gives.
-func readLimit(raw string) (int, *Problem) {
+func readLimit(raw string) (int, *problem.Problem) {
 	if raw == "" {
-		return DefaultPageLimit, nil
+		return DefaultLimit, nil
 	}
 
 	limit, err := strconv.Atoi(raw)
@@ -107,8 +109,8 @@ func readLimit(raw string) (int, *Problem) {
 		return 0, refuse(limitParameter, "the value is not a number")
 	}
 
-	if limit < 1 || limit > MaxPageLimit {
-		return 0, refuse(limitParameter, "the value is outside 1 to "+strconv.Itoa(MaxPageLimit))
+	if limit < 1 || limit > MaxLimit {
+		return 0, refuse(limitParameter, "the value is outside 1 to "+strconv.Itoa(MaxLimit))
 	}
 
 	return limit, nil
@@ -116,7 +118,7 @@ func readLimit(raw string) (int, *Problem) {
 
 // readSort refuses every field that the route does not declare, and the detail
 // names that field so a client learns the set from the failure.
-func readSort(raw string, declared PageOptions) ([]string, *Problem) {
+func readSort(raw string, declared Options) ([]string, *problem.Problem) {
 	if raw == "" {
 		return nil, nil
 	}
@@ -134,7 +136,7 @@ func readSort(raw string, declared PageOptions) ([]string, *Problem) {
 
 // readFilters keeps the declared filters that the request carries, so that a
 // cursor and a request compare on the same set.
-func readFilters(r *http.Request, declared PageOptions) map[string]string {
+func readFilters(r *http.Request, declared Options) map[string]string {
 	query := r.URL.Query()
 	filters := map[string]string{}
 
@@ -149,9 +151,9 @@ func readFilters(r *http.Request, declared PageOptions) map[string]string {
 
 // refuse builds the failure of one parameter, naming it so a client learns
 // which value to correct. ERR-005 bounds the detail.
-func refuse(parameter string, reason string) *Problem {
-	problem := NewRequestInvalid().
+func refuse(parameter string, reason string) *problem.Problem {
+	failure := problem.NewRequestInvalid().
 		WithDetail("The " + parameter + " parameter is not valid: " + reason + ".")
 
-	return &problem
+	return &failure
 }

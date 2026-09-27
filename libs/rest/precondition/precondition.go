@@ -1,4 +1,6 @@
-package rest
+// Package precondition carries the entity tag of a record and the conditional
+// write that it guards.
+package precondition
 
 import (
 	"context"
@@ -8,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 const (
@@ -18,7 +22,9 @@ const (
 	ETagHeader = "ETag"
 )
 
-const ifMatchKey contextKey = 2
+type contextKey int
+
+const ifMatchKey contextKey = 0
 
 var (
 	// ErrModified reports a write whose record moved after the client read it. A
@@ -48,7 +54,7 @@ func IfMatch(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		moment, held, err := readIfMatch(r)
 		if err != nil {
-			Write(w, r, NewRequestInvalid().
+			problem.Write(w, r, problem.NewRequestInvalid().
 				WithDetail("The If-Match header is not a validator that this API answered."))
 
 			return
@@ -60,13 +66,13 @@ func IfMatch(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r.WithContext(ContextWithIfMatch(r.Context(), &moment)))
+		next.ServeHTTP(w, r.WithContext(WithIfMatch(r.Context(), &moment)))
 	})
 }
 
-// ContextWithIfMatch returns a context that carries the moment of a conditional
+// WithIfMatch returns a context that carries the moment of a conditional
 // write. A nil moment is the write that names no validator.
-func ContextWithIfMatch(ctx context.Context, moment *time.Time) context.Context {
+func WithIfMatch(ctx context.Context, moment *time.Time) context.Context {
 	return context.WithValue(ctx, ifMatchKey, moment)
 }
 

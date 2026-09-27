@@ -1,4 +1,5 @@
-package rest
+// Package cache sets how long a reader keeps an answer.
+package cache
 
 import "net/http"
 
@@ -13,12 +14,12 @@ const (
 	cacheControlHeader = "Cache-Control"
 )
 
-// CachePeriod sets the default period on every answer. A handler that answers
+// Middleware sets the default period on every answer. A handler that answers
 // the same bytes to everyone sets the header itself, and this keeps what it set.
 //
 // The default runs first so that a route added later carries it without anyone
 // deciding, which is the safe direction.
-func CachePeriod(next http.Handler) http.Handler {
+func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(cacheControlHeader, NoStore)
 

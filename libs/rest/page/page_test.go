@@ -1,4 +1,4 @@
-package rest_test
+package page_test
 
 import (
 	"encoding/json"
@@ -9,7 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/address"
+	"github.com/abgeo/maroid/libs/rest/page"
 )
 
 const externalURL = "https://hub.example.com"
@@ -26,7 +27,7 @@ func plantsRequest(t *testing.T, query string) *http.Request {
 
 	var carried *http.Request
 
-	handler := rest.BaseURL(externalURL)(http.HandlerFunc(
+	handler := address.Middleware(externalURL)(http.HandlerFunc(
 		func(_ http.ResponseWriter, r *http.Request) { carried = r },
 	))
 	handler.ServeHTTP(
@@ -44,10 +45,10 @@ func plantsRequest(t *testing.T, query string) *http.Request {
 func TestAPageCarriesTheRequiredMembers(t *testing.T) {
 	t.Parallel()
 
-	page, err := rest.NewPage(plantsRequest(t, "limit=20"), []string{"a", "b"}, nil, nil)
+	answered, err := page.New(plantsRequest(t, "limit=20"), []string{"a", "b"}, nil, nil)
 	require.NoError(t, err)
 
-	encoded, err := json.Marshal(page)
+	encoded, err := json.Marshal(answered)
 	require.NoError(t, err)
 
 	var body map[string]any
@@ -65,10 +66,10 @@ func TestAPageCarriesTheRequiredMembers(t *testing.T) {
 func TestAnEmptyPageAnswersAnEmptyArray(t *testing.T) {
 	t.Parallel()
 
-	page, err := rest.NewPage(plantsRequest(t, ""), []string{}, nil, nil)
+	answered, err := page.New(plantsRequest(t, ""), []string{}, nil, nil)
 	require.NoError(t, err)
 
-	encoded, err := json.Marshal(page)
+	encoded, err := json.Marshal(answered)
 	require.NoError(t, err)
 
 	assert.Contains(t, string(encoded), `"items":[]`)
@@ -80,11 +81,11 @@ func TestAnEmptyPageAnswersAnEmptyArray(t *testing.T) {
 func TestALinkIsAbsoluteAndBuiltFromTheStoredAddress(t *testing.T) {
 	t.Parallel()
 
-	page, err := rest.NewPage(plantsRequest(t, "limit=20"), []string{"a"}, nil, nil)
+	answered, err := page.New(plantsRequest(t, "limit=20"), []string{"a"}, nil, nil)
 	require.NoError(t, err)
 
-	assert.Equal(t, externalURL+"/plugins/dev.maroid.jasmine/api/plants?limit=20", page.Self)
-	assert.Equal(t, page.Self, page.First, "the first page is its own first")
+	assert.Equal(t, externalURL+"/plugins/dev.maroid.jasmine/api/plants?limit=20", answered.Self)
+	assert.Equal(t, answered.Self, answered.First, "the first page is its own first")
 }
 
 // APIFMT-SC-004: A page that a row follows carries the cursor that reaches it,
@@ -94,15 +95,15 @@ func TestANextLinkCarriesTheCursor(t *testing.T) {
 
 	next := sampleCursor()
 
-	page, err := rest.NewPage(plantsRequest(t, "limit=2"), []string{"a", "b"}, &next, nil)
+	answered, err := page.New(plantsRequest(t, "limit=2"), []string{"a", "b"}, &next, nil)
 	require.NoError(t, err)
 
-	require.NotNil(t, page.Next)
+	require.NotNil(t, answered.Next)
 
-	encoded, err := rest.EncodeCursor(next)
+	encoded, err := page.EncodeCursor(next)
 	require.NoError(t, err)
 
-	assert.Contains(t, *page.Next, "cursor="+encoded)
-	assert.Contains(t, *page.Next, "limit=2")
-	assert.NotContains(t, page.First, "cursor=", "the first page names no cursor")
+	assert.Contains(t, *answered.Next, "cursor="+encoded)
+	assert.Contains(t, *answered.Next, "limit=2")
+	assert.NotContains(t, answered.First, "cursor=", "the first page names no cursor")
 }

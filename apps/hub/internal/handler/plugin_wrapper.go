@@ -7,7 +7,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/idempotency"
 )
 
 // PluginWrapper is a handler that wraps plugin-provided HTTP routes and registers them under a specific path prefix.
@@ -15,7 +15,7 @@ type PluginWrapper struct {
 	logger      *slog.Logger
 	verifier    auth.TokenVerifier
 	resolver    auth.IdentityResolver
-	idempotency rest.IdempotencyStore
+	idempotency idempotency.Store
 	pluginID    *pluginapi.PluginID
 	routes      []pluginapi.Route
 }
@@ -27,7 +27,7 @@ func NewPluginWrapper(
 	logger *slog.Logger,
 	verifier auth.TokenVerifier,
 	resolver auth.IdentityResolver,
-	idempotency rest.IdempotencyStore,
+	idempotency idempotency.Store,
 	pluginID *pluginapi.PluginID,
 	routes []pluginapi.Route,
 ) *PluginWrapper {
@@ -53,7 +53,7 @@ func (h *PluginWrapper) Register(router chi.Router) {
 
 	router.Route(h.pathPrefix(), func(r chi.Router) {
 		r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
-		r.Use(rest.Idempotency(h.logger, h.idempotency))
+		r.Use(idempotency.Middleware(h.logger, h.idempotency))
 
 		for _, route := range h.routes {
 			r.MethodFunc(route.Method, route.Pattern, route.Handler)

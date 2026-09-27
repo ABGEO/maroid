@@ -19,7 +19,9 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/idempotency"
+	"github.com/abgeo/maroid/libs/rest/page"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 // The reasons that the hub reports at the target of a flow. Section 4.5 of the
@@ -61,7 +63,7 @@ type Auth struct {
 	identityResolver auth.IdentityResolver
 	invitationRepo   repository.InvitationRepository
 	authSvc          *auth.Service
-	idempotency      rest.IdempotencyStore
+	idempotency      idempotency.Store
 }
 
 var _ AuthHandler = (*Auth)(nil)
@@ -77,7 +79,7 @@ func NewAuth(
 	identityResolver auth.IdentityResolver,
 	invitationRepo repository.InvitationRepository,
 	authSvc *auth.Service,
-	idempotency rest.IdempotencyStore,
+	idempotency idempotency.Store,
 ) *Auth {
 	return &Auth{
 		cfg: cfg,
@@ -110,7 +112,7 @@ func (h *Auth) Register(router chi.Router) {
 
 		r.Group(func(r chi.Router) {
 			r.Use(auth.Middleware(h.logger, h.verifier, h.identityResolver))
-			r.Use(rest.Idempotency(h.logger, h.idempotency))
+			r.Use(idempotency.Middleware(h.logger, h.idempotency))
 
 			r.Get("/sessions/self", Wrap(h.logger, h.Me))
 			r.Post("/identities", Wrap(h.logger, h.Link))
@@ -138,7 +140,7 @@ func (h *Auth) Initiate(w http.ResponseWriter, r *http.Request) error {
 
 	authURL, binding, err := h.oidcFlow.Initiate(r.Context(), flow)
 	if err != nil {
-		rest.Write(w, r, rest.NewInternal())
+		problem.Write(w, r, problem.NewInternal())
 
 		return fmt.Errorf("initiating OIDC flow: %w", err)
 	}
@@ -232,7 +234,7 @@ func (h *Auth) Link(w http.ResponseWriter, r *http.Request) error {
 		Redirect: redirect,
 	})
 	if err != nil {
-		rest.Write(w, r, rest.NewInternal())
+		problem.Write(w, r, problem.NewInternal())
 
 		return fmt.Errorf("initiating the attach: %w", err)
 	}
@@ -260,8 +262,8 @@ type providerState struct {
 
 // Identities reports every provider that Maroid offers, attached or not.
 func (h *Auth) Identities(w http.ResponseWriter, r *http.Request) error {
-	if _, problem := rest.ReadPageRequest(r, rest.PageOptions{Bounded: true}); problem != nil {
-		rest.Write(w, r, *problem)
+	if _, failure := page.ReadRequest(r, page.Options{Bounded: true}); failure != nil {
+		problem.Write(w, r, *failure)
 
 		return nil
 	}
@@ -297,14 +299,14 @@ func (h *Auth) Identities(w http.ResponseWriter, r *http.Request) error {
 		states = append(states, state)
 	}
 
-	page, err := rest.NewPage(r, states, nil, nil)
+	answered, err := page.New(r, states, nil, nil)
 	if err != nil {
-		rest.Write(w, r, rest.NewInternal())
+		problem.Write(w, r, problem.NewInternal())
 
 		return fmt.Errorf("building the page of identities: %w", err)
 	}
 
-	render.JSON(w, r, page)
+	render.JSON(w, r, answered)
 
 	return nil
 }
@@ -319,9 +321,9 @@ func (h *Auth) Detach(w http.ResponseWriter, r *http.Request) error {
 	case err == nil:
 		render.NoContent(w, r)
 	case errors.Is(err, errs.ErrLastIdentity):
-		rest.Write(w, r, problems.NewIdentityLast())
+		problem.Write(w, r, problems.NewIdentityLast())
 	case errors.Is(err, errs.ErrIdentityNotFound):
-		rest.Write(w, r, rest.NewNotFound())
+		problem.Write(w, r, problem.NewNotFound())
 	default:
 		return fmt.Errorf("detaching the external account: %w", err)
 	}
@@ -342,7 +344,7 @@ func (h *Auth) Invite(w http.ResponseWriter, r *http.Request) error {
 
 	invitation, err := h.invitationRepo.GetValidByTokenHash(r.Context(), digest[:])
 	if err != nil {
-		rest.Write(w, r, rest.NewNotFound().
+		problem.Write(w, r, problem.NewNotFound().
 			WithDetail("The invitation is spent, expired, or unknown."))
 
 		return fmt.Errorf("reading the invitation: %w", err)
@@ -354,7 +356,7 @@ func (h *Auth) Invite(w http.ResponseWriter, r *http.Request) error {
 		Redirect:     redirect,
 	})
 	if err != nil {
-		rest.Write(w, r, rest.NewInternal())
+		problem.Write(w, r, problem.NewInternal())
 
 		return fmt.Errorf("initiating the redemption: %w", err)
 	}
@@ -593,7 +595,7 @@ func redirectWithReason(w http.ResponseWriter, r *http.Request, target string, r
 // sendBadRequest answers with the problem of a request that a route cannot read.
 // The detail names the parameter and nothing of the request.
 func sendBadRequest(w http.ResponseWriter, r *http.Request, detail string) {
-	rest.Write(w, r, rest.NewRequestInvalid().WithDetail(detail))
+	problem.Write(w, r, problem.NewRequestInvalid().WithDetail(detail))
 }
 
 func validateRedirect(redirect string, allowed []string) bool {

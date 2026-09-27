@@ -50,7 +50,7 @@ linters:
         - repository.InvitationRepository
         - repository.AuthFlowRepository
         - auth.IdentityResolver
-        - rest.IdempotencyStore
+        - idempotency.Store
         - auth.TokenVerifier
         - secret.Cipher
         - settings.Service

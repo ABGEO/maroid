@@ -4,7 +4,7 @@ title: The wire library is libs/rest
 type: adr
 status: accepted
 created: 2026-09-24
-updated: 2026-09-25
+updated: 2026-09-27
 decided: 2026-09-24
 changes: [ERR-003, ERR-007, BLD-004]
 supersedes:
@@ -98,17 +98,12 @@ rule a defect.
 
 ### What does not change
 
-`Problem`, `FieldFailure`, `Fill` and `Write` keep the names they have. Each one
-names its subject already, or takes a `Problem` that a reader sees at the call
-site. The package clause becomes `package rest`, so a call site reads
-`rest.Write` and `rest.NewNotFound`.
-
-One identifier takes the word that the package name used to carry. `MediaType`
-becomes `ProblemMediaType`, because a bare constant offers a reader no type to
-read the subject from, and this module answers `application/json` for a page as
-well. `Instance` and the four names of the request identifier have the same
-shape, and `ERR-006` renames them to the flow identifier, so they take their new
-names there.
+`Problem`, `FieldFailure`, `Fill`, `Write` and `MediaType` keep the names they
+had in `libs/problem`, and the package `problem` holds them, so a call site reads
+`problem.Write` and `problem.NewNotFound`. The package name carries the subject
+of `MediaType`, so the constant needs no prefix. `ERR-006` renames `Instance` and
+the four names of the request identifier to the flow identifier, and the package
+`flow` holds them.
 
 The media type stays `application/problem+json`, and every registered type keeps
 its identifier. `libs/api-client` and `@maroid/plugin-sdk` read a body and not a

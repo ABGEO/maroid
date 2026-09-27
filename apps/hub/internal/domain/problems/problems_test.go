@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 // APIFMT-SC-010: A failure of a domain of the hub carries the owner `hub`, and
@@ -14,7 +14,7 @@ import (
 func TestEveryHubTypeIsARelativeReference(t *testing.T) {
 	t.Parallel()
 
-	for name, build := range map[string]func() rest.Problem{
+	for name, build := range map[string]func() problem.Problem{
 		"network-not-allowed": problems.NewNetworkNotAllowed,
 		"settings-absent":     problems.NewSettingsAbsent,
 		"identity-last":       problems.NewIdentityLast,

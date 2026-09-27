@@ -9,7 +9,8 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/page"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 // listPage answers one page of a collection.
@@ -27,9 +28,9 @@ func listPage[T any, R any](
 	identify func(T) string,
 	present func([]T) []R,
 ) {
-	asked, problem := rest.ReadPageRequest(r, rest.PageOptions{})
-	if problem != nil {
-		rest.Write(w, r, *problem)
+	asked, failure := page.ReadRequest(r, page.Options{})
+	if failure != nil {
+		problem.Write(w, r, *failure)
 
 		return
 	}
@@ -47,33 +48,33 @@ func listPage[T any, R any](
 	)
 	if err != nil {
 		logger.ErrorContext(r.Context(), action, slog.Any("error", err))
-		rest.Write(w, r, rest.NewInternal())
+		problem.Write(w, r, problem.NewInternal())
 
 		return
 	}
 
-	var next *rest.Cursor
+	var next *page.Cursor
 
 	if len(rows) > asked.Limit {
 		rows = rows[:asked.Limit]
 		boundary := identify(rows[len(rows)-1])
-		next = &rest.Cursor{
+		next = &page.Cursor{
 			Sort:      asked.Sort,
-			Direction: rest.DirectionForward,
+			Direction: page.DirectionForward,
 			Filters:   asked.Filters,
 			Boundary:  map[string]string{"id": boundary},
 			ID:        boundary,
 		}
 	}
 
-	page, err := rest.NewPage(r, present(rows), next, nil)
+	answered, err := page.New(r, present(rows), next, nil)
 	if err != nil {
 		logger.ErrorContext(r.Context(), action, slog.Any("error", err))
-		rest.Write(w, r, rest.NewInternal())
+		problem.Write(w, r, problem.NewInternal())
 
 		return
 	}
 
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, page)
+	render.JSON(w, r, answered)
 }

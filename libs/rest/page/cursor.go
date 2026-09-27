@@ -1,4 +1,4 @@
-package rest
+package page
 
 import (
 	"bytes"
@@ -72,7 +72,7 @@ func EncodeCursor(cursor Cursor) (string, error) {
 }
 
 // DecodeCursor reads the value that a client passed back. It fails for a value
-// that Maroid did not produce, and the caller answers TypeRequestInvalid.
+// that Maroid did not produce, and the caller answers problem.TypeRequestInvalid.
 func DecodeCursor(value string) (Cursor, error) {
 	raw, err := base64.RawURLEncoding.DecodeString(value)
 	if err != nil {

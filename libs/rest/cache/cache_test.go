@@ -1,4 +1,4 @@
-package rest_test
+package cache_test
 
 import (
 	"net/http"
@@ -7,7 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/cache"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 // answerOf runs one handler behind the cache middleware and returns the answer.
@@ -15,7 +16,7 @@ func answerOf(t *testing.T, handler http.HandlerFunc) *httptest.ResponseRecorder
 	t.Helper()
 
 	recorder := httptest.NewRecorder()
-	rest.CachePeriod(handler).ServeHTTP(
+	cache.Middleware(handler).ServeHTTP(
 		recorder,
 		httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/plugins", nil),
 	)
@@ -33,8 +34,8 @@ func TestEveryAnswerCarriesTheCacheDefault(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	assert.Equal(t, rest.NoStore, recorder.Header().Get("Cache-Control"))
-	assert.Equal(t, "no-cache, no-store, must-revalidate, max-age=0", rest.NoStore)
+	assert.Equal(t, cache.NoStore, recorder.Header().Get("Cache-Control"))
+	assert.Equal(t, "no-cache, no-store, must-revalidate, max-age=0", cache.NoStore)
 }
 
 // APIFMT-SC-021: A handler that answers the same bytes to everyone overrides the
@@ -43,13 +44,13 @@ func TestAHandlerOverridesTheCacheDefault(t *testing.T) {
 	t.Parallel()
 
 	recorder := answerOf(t, func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Cache-Control", rest.Immutable)
+		w.Header().Set("Cache-Control", cache.Immutable)
 		w.WriteHeader(http.StatusOK)
 	})
 
-	assert.Equal(t, rest.Immutable, recorder.Header().Get("Cache-Control"))
-	assert.Contains(t, rest.Immutable, "public")
-	assert.Contains(t, rest.Immutable, "immutable")
+	assert.Equal(t, cache.Immutable, recorder.Header().Get("Cache-Control"))
+	assert.Contains(t, cache.Immutable, "public")
+	assert.Contains(t, cache.Immutable, "immutable")
 }
 
 // APIFMT-SC-021: The default reaches a failure too, because a problem carries
@@ -58,8 +59,8 @@ func TestAFailureCarriesTheCacheDefault(t *testing.T) {
 	t.Parallel()
 
 	recorder := answerOf(t, func(w http.ResponseWriter, r *http.Request) {
-		rest.Write(w, r, rest.NewNotFound())
+		problem.Write(w, r, problem.NewNotFound())
 	})
 
-	assert.Equal(t, rest.NoStore, recorder.Header().Get("Cache-Control"))
+	assert.Equal(t, cache.NoStore, recorder.Header().Get("Cache-Control"))
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/testdb"
 	"github.com/abgeo/maroid/plugins/jasmine/db"
 	"github.com/abgeo/maroid/plugins/jasmine/handler"
@@ -56,7 +56,7 @@ func routerUnderTest(t *testing.T) http.Handler {
 
 	// The hub mounts this for every route, so a plugin route reads the validator
 	// off the context and parses nothing.
-	router.Use(rest.IfMatch)
+	router.Use(precondition.IfMatch)
 
 	for _, route := range routes {
 		router.Method(route.Method, route.Pattern, route.Handler)
@@ -82,7 +82,7 @@ func send(
 	request.Header.Set("Content-Type", "application/json")
 
 	if ifMatch != "" {
-		request.Header.Set(rest.IfMatchHeader, ifMatch)
+		request.Header.Set(precondition.IfMatchHeader, ifMatch)
 	}
 
 	recorder := httptest.NewRecorder()
@@ -117,7 +117,7 @@ func createEnvironment(t *testing.T, router http.Handler) (string, string) {
 
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &answer))
 
-	tag := recorder.Header().Get(rest.ETagHeader)
+	tag := recorder.Header().Get(precondition.ETagHeader)
 	require.NotEmpty(t, tag, "a write answers the validator of what it stored")
 
 	return "/environments/" + answer.ID, tag
@@ -134,7 +134,7 @@ func TestTheSecondOfTwoWritesUnderOneValidatorIsRefused(t *testing.T) {
 	read := send(t, router, http.MethodGet, address, "", "")
 	require.Equal(t, http.StatusOK, read.Code)
 
-	shared := read.Header().Get(rest.ETagHeader)
+	shared := read.Header().Get(precondition.ETagHeader)
 	require.NotEmpty(t, shared, "a read answers the validator of the record")
 
 	first := send(t, router, http.MethodPut, address, `{"name":"Shelf"}`, shared)
@@ -158,7 +158,7 @@ func TestAWriteAnswersTheValidatorOfWhatItStored(t *testing.T) {
 	first := send(t, router, http.MethodPut, address, `{"name":"Shelf"}`, created)
 	require.Equal(t, http.StatusOK, first.Code, first.Body.String())
 
-	answered := first.Header().Get(rest.ETagHeader)
+	answered := first.Header().Get(precondition.ETagHeader)
 	require.NotEmpty(t, answered)
 	assert.NotEqual(t, created, answered, "a write moves the record, so the validator moves")
 

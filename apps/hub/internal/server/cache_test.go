@@ -11,7 +11,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/cache"
 )
 
 // cacheOf answers the Cache-Control of one route of the router under test.
@@ -23,7 +23,7 @@ func cacheOf(t *testing.T, path string) string {
 
 	router.Get("/reads", func(http.ResponseWriter, *http.Request) {})
 	router.Get("/assets", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Cache-Control", rest.Immutable)
+		w.Header().Set("Cache-Control", cache.Immutable)
 	})
 
 	recorder := httptest.NewRecorder()
@@ -49,7 +49,7 @@ func TestEveryRouteSaysHowLongAReaderKeepsTheAnswer(t *testing.T) {
 
 			period := cacheOf(t, path)
 
-			assert.Equal(t, rest.NoStore, period)
+			assert.Equal(t, cache.NoStore, period)
 			assert.NotContains(t, period, "public")
 		})
 	}
@@ -59,7 +59,7 @@ func TestEveryRouteSaysHowLongAReaderKeepsTheAnswer(t *testing.T) {
 
 		period := cacheOf(t, "/assets")
 
-		assert.Equal(t, rest.Immutable, period)
+		assert.Equal(t, cache.Immutable, period)
 		assert.Contains(t, period, "public")
 	})
 }

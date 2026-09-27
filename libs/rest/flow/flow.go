@@ -1,4 +1,5 @@
-package rest
+// Package flow gives each request the identifier that joins every record of it.
+package flow
 
 import (
 	"context"
@@ -8,9 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// FlowIDHeader carries the flow identifier, on the request that a caller sends
+// Header carries the flow identifier, on the request that a caller sends
 // and on every answer.
-const FlowIDHeader = "X-Flow-ID"
+const Header = "X-Flow-ID"
 
 const (
 	instancePrefix  = "/flows/"
@@ -22,14 +23,13 @@ type contextKey int
 
 const flowIDKey contextKey = 0
 
-// FlowID gives each request a flow identifier, puts it in the context, and sets
+// Middleware gives each request a flow identifier, puts it in the context, and sets
 // it on the response. It reads the one that the request carries, so a caller
 // picks the value that every record of its request holds, and it makes a UUID
 // version 7 when the request carries none.
-func FlowID(next http.Handler) http.Handler {
+func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//nolint:canonicalheader
-		value := boundFlowID(r.Header.Get(FlowIDHeader))
+		value := boundFlowID(r.Header.Get(Header))
 		if value == "" {
 			identifier, err := uuid.NewV7()
 			if err != nil {
@@ -41,10 +41,9 @@ func FlowID(next http.Handler) http.Handler {
 			value = identifier.String()
 		}
 
-		//nolint:canonicalheader
-		w.Header().Set(FlowIDHeader, value)
+		w.Header().Set(Header, value)
 
-		next.ServeHTTP(w, r.WithContext(ContextWithFlowID(r.Context(), value)))
+		next.ServeHTTP(w, r.WithContext(WithID(r.Context(), value)))
 	})
 }
 
@@ -78,14 +77,14 @@ func flowIDRune(character rune) bool {
 	}
 }
 
-// ContextWithFlowID returns a context that carries the flow identifier.
-func ContextWithFlowID(ctx context.Context, identifier string) context.Context {
+// WithID returns a context that carries the flow identifier.
+func WithID(ctx context.Context, identifier string) context.Context {
 	return context.WithValue(ctx, flowIDKey, identifier)
 }
 
-// FlowIDFromContext returns the flow identifier, or the empty string when the
+// IDFromContext returns the flow identifier, or the empty string when the
 // context carries none. The value is bare, without the prefix of an instance.
-func FlowIDFromContext(ctx context.Context) string {
+func IDFromContext(ctx context.Context) string {
 	identifier, _ := ctx.Value(flowIDKey).(string)
 
 	return identifier

@@ -12,7 +12,10 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	hubmiddleware "github.com/abgeo/maroid/apps/hub/internal/middleware"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/address"
+	"github.com/abgeo/maroid/libs/rest/cache"
+	"github.com/abgeo/maroid/libs/rest/flow"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 )
 
 // NewHTTPRouter creates a new HTTP router with middleware.
@@ -23,15 +26,15 @@ func NewHTTPRouter(cfg *config.Config, logger *slog.Logger) (*chi.Mux, error) {
 	}
 
 	router := chi.NewRouter()
-	router.Use(rest.FlowID)
-	router.Use(rest.CachePeriod)
-	router.Use(rest.BaseURL(cfg.Server.ExternalURL))
+	router.Use(flow.Middleware)
+	router.Use(cache.Middleware)
+	router.Use(address.Middleware(cfg.Server.ExternalURL))
 	router.Use(resolveClientIP)
 	router.Use(accessLog(logger))
 	router.Use(recoverer(logger))
 	router.Use(middleware.StripSlashes)
 	router.Use(render.SetContentType(render.ContentTypeJSON))
-	router.Use(rest.IfMatch)
+	router.Use(precondition.IfMatch)
 
 	if cfg.CORS.Enabled {
 		router.Use(cors.Handler(cors.Options{

@@ -30,7 +30,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/conversation"
 	"github.com/abgeo/maroid/libs/notifier/dispatcher"
 	notifierregistry "github.com/abgeo/maroid/libs/notifier/registry"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/idempotency"
 )
 
 // Resolver defines an interface for resolving shared dependencies.
@@ -54,7 +54,7 @@ type Resolver interface {
 	SecretCipher() (secret.Cipher, error)
 	SettingsRegistry() *registry.SettingsRegistry
 	SettingsService() (settings.Service, error)
-	IdempotencyStore() (rest.IdempotencyStore, error)
+	IdempotencyStore() (idempotency.Store, error)
 	Migrator() (*migrator.Migrator, error)
 	PluginHost() (*pluginhost.Host, error)
 	PluginLoader() (*pluginloader.Loader, error)
@@ -165,7 +165,7 @@ type Container struct {
 	idempotencyStore struct {
 		mu       sync.Mutex
 		once     sync.Once
-		instance rest.IdempotencyStore
+		instance idempotency.Store
 	}
 
 	httpRouter struct {

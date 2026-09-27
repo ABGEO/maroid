@@ -13,7 +13,8 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/precondition"
+	"github.com/abgeo/maroid/libs/rest/problem"
 	"github.com/abgeo/maroid/plugins/jasmine/dto"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 	"github.com/abgeo/maroid/plugins/jasmine/repository"
@@ -76,7 +77,7 @@ func (h *PlantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.PlantRequest
 	if err := render.Bind(r, &req); err != nil {
-		rest.Write(w, r, requestProblem(err))
+		problem.Write(w, r, requestProblem(err))
 
 		return
 	}
@@ -98,12 +99,12 @@ func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		h.logger.ErrorContext(r.Context(), "failed to create plant", slog.Any("error", err))
-		rest.Write(w, r, rest.NewInternal())
+		problem.Write(w, r, problem.NewInternal())
 
 		return
 	}
 
-	w.Header().Set(rest.ETagHeader, rest.ETag(plant.UpdatedAt))
+	w.Header().Set(precondition.ETagHeader, precondition.ETag(plant.UpdatedAt))
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, dto.NewPlantResponse(plant))
 }
@@ -114,12 +115,12 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.PlantRequest
 	if err := render.Bind(r, &req); err != nil {
-		rest.Write(w, r, requestProblem(err))
+		problem.Write(w, r, requestProblem(err))
 
 		return
 	}
 
-	ifMatch := rest.IfMatchFromContext(r.Context())
+	ifMatch := precondition.IfMatchFromContext(r.Context())
 
 	plant, err := fetchInTx(
 		r.Context(),
@@ -150,7 +151,7 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set(rest.ETagHeader, rest.ETag(plant.UpdatedAt))
+	w.Header().Set(precondition.ETagHeader, precondition.ETag(plant.UpdatedAt))
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, dto.NewPlantResponse(plant))
 }
@@ -169,7 +170,7 @@ func (h *PlantHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		h.logger.ErrorContext(r.Context(), "failed to delete plant", slog.Any("error", err))
-		rest.Write(w, r, rest.NewInternal())
+		problem.Write(w, r, problem.NewInternal())
 
 		return
 	}

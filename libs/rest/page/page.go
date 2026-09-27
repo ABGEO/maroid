@@ -1,10 +1,14 @@
-package rest
+// Package page holds the page that a collection answers, its cursor, and the
+// reader of the page parameters.
+package page
 
 import (
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+
+	"github.com/abgeo/maroid/libs/rest/address"
 )
 
 const cursorParameter = "cursor"
@@ -26,12 +30,12 @@ type Page[T any] struct {
 	Prev *string `json:"prev,omitempty"`
 }
 
-// NewPage builds one page and its links. Every link repeats the sort and the
+// New builds one page and its links. Every link repeats the sort and the
 // filters of the request, because a cursor that meets another set is stale.
 //
 // next and prev carry the boundary rows of this page, and a nil leaves the link
 // absent, which is what tells a client that no further page exists.
-func NewPage[T any](r *http.Request, items []T, next *Cursor, prev *Cursor) (Page[T], error) {
+func New[T any](r *http.Request, items []T, next *Cursor, prev *Cursor) (Page[T], error) {
 	if items == nil {
 		items = []T{}
 	}
@@ -86,7 +90,7 @@ func cursorLink(r *http.Request, cursor *Cursor) (*string, error) {
 // link builds one absolute address for this collection, carrying the query of
 // the request with the cursor replaced.
 func link(r *http.Request, cursor string) (string, error) {
-	base := BaseURLFromContext(r.Context())
+	base := address.BaseFromContext(r.Context())
 	if base == "" {
 		return "", fmt.Errorf("building a link: %w", errNoBaseURL)
 	}
@@ -98,12 +102,12 @@ func link(r *http.Request, cursor string) (string, error) {
 		query.Set(cursorParameter, cursor)
 	}
 
-	address := base + r.URL.EscapedPath()
+	target := base + r.URL.EscapedPath()
 	if encoded := query.Encode(); encoded != "" {
-		address += "?" + encoded
+		target += "?" + encoded
 	}
 
-	return address, nil
+	return target, nil
 }
 
 func cloneQuery(values url.Values) url.Values {

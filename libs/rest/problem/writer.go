@@ -1,10 +1,12 @@
-package rest
+package problem
 
 import (
 	"bytes"
 	"encoding/json"
 	"io"
 	"net/http"
+
+	"github.com/abgeo/maroid/libs/rest/flow"
 )
 
 // fallbackBody answers when a problem does not encode. It is a constant, so it
@@ -23,7 +25,7 @@ func Fill(r *http.Request, prob Problem) Problem {
 	}
 
 	if prob.Instance == "" {
-		prob.Instance = Instance(FlowIDFromContext(r.Context()))
+		prob.Instance = flow.Instance(flow.IDFromContext(r.Context()))
 	}
 
 	return prob
@@ -47,7 +49,7 @@ func Write(w http.ResponseWriter, r *http.Request, prob Problem) {
 		status = http.StatusInternalServerError
 	}
 
-	w.Header().Set("Content-Type", ProblemMediaType)
+	w.Header().Set("Content-Type", MediaType)
 	w.WriteHeader(status)
 
 	_, _ = io.Copy(w, &body)

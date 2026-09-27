@@ -13,7 +13,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 )
 
 // writeRouter answers one write through the chain, and reports the moment that
@@ -29,7 +29,7 @@ func writeRouter(t *testing.T, reached **time.Time) http.Handler {
 	require.NoError(t, err)
 
 	router.Put("/writes", func(_ http.ResponseWriter, r *http.Request) {
-		*reached = rest.IfMatchFromContext(r.Context())
+		*reached = precondition.IfMatchFromContext(r.Context())
 	})
 
 	return router
@@ -43,7 +43,7 @@ func send(t *testing.T, router http.Handler, validator string) *httptest.Respons
 		t.Context(), http.MethodPut, "/writes", strings.NewReader("{}"),
 	)
 	if validator != "" {
-		request.Header.Set(rest.IfMatchHeader, validator)
+		request.Header.Set(precondition.IfMatchHeader, validator)
 	}
 
 	recorder := httptest.NewRecorder()
@@ -62,10 +62,10 @@ func TestTheChainCarriesTheValidatorToEveryWrite(t *testing.T) {
 	var reached *time.Time
 
 	moment := time.Date(2026, time.September, 25, 10, 30, 0, 123456789, time.UTC)
-	recorder := send(t, writeRouter(t, &reached), rest.ETag(moment))
+	recorder := send(t, writeRouter(t, &reached), precondition.ETag(moment))
 
 	require.Equal(t, http.StatusOK, recorder.Code)
-	require.NotNil(t, reached, "the chain mounts rest.IfMatch")
+	require.NotNil(t, reached, "the chain mounts precondition.IfMatch")
 	assert.True(t, moment.Equal(*reached))
 }
 

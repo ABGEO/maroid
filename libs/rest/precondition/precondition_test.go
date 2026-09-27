@@ -1,4 +1,4 @@
-package rest_test
+package precondition_test
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 )
 
 // writtenAt is the moment of the last write of a record under test.
@@ -25,14 +25,14 @@ func writeWith(t *testing.T, validator string) (*time.Time, int) {
 
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodPut, "/plugins", nil)
 	if validator != "" {
-		request.Header.Set(rest.IfMatchHeader, validator)
+		request.Header.Set(precondition.IfMatchHeader, validator)
 	}
 
 	var reached *time.Time
 
 	recorder := httptest.NewRecorder()
-	rest.IfMatch(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		reached = rest.IfMatchFromContext(r.Context())
+	precondition.IfMatch(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		reached = precondition.IfMatchFromContext(r.Context())
 	})).ServeHTTP(recorder, request)
 
 	return reached, recorder.Code
@@ -43,7 +43,7 @@ func writeWith(t *testing.T, validator string) (*time.Time, int) {
 func TestTheEntityTagIsAWeakValidatorOfTheLastWrite(t *testing.T) {
 	t.Parallel()
 
-	tag := rest.ETag(writtenAt())
+	tag := precondition.ETag(writtenAt())
 
 	assert.Equal(t, `W/"1790332200123456789"`, tag)
 	assert.True(t, len(tag) > 2 && tag[:2] == "W/", "the validator is weak")
@@ -56,9 +56,13 @@ func TestTheEntityTagFollowsTheInstant(t *testing.T) {
 
 	zone := time.FixedZone("somewhere", 4*60*60)
 
-	assert.Equal(t, rest.ETag(writtenAt()), rest.ETag(writtenAt().In(zone)),
+	assert.Equal(t, precondition.ETag(writtenAt()), precondition.ETag(writtenAt().In(zone)),
 		"one instant answers one validator in any zone")
-	assert.NotEqual(t, rest.ETag(writtenAt()), rest.ETag(writtenAt().Add(time.Nanosecond)))
+	assert.NotEqual(
+		t,
+		precondition.ETag(writtenAt()),
+		precondition.ETag(writtenAt().Add(time.Nanosecond)),
+	)
 }
 
 // APIFMT-SC-019: A write that carries the validator it read reaches its handler
@@ -68,7 +72,7 @@ func TestTheEntityTagFollowsTheInstant(t *testing.T) {
 func TestIfMatchCarriesTheValidatorToTheHandler(t *testing.T) {
 	t.Parallel()
 
-	moment, status := writeWith(t, rest.ETag(writtenAt()))
+	moment, status := writeWith(t, precondition.ETag(writtenAt()))
 	require.Equal(t, http.StatusOK, status)
 	require.NotNil(t, moment)
 	assert.True(t, writtenAt().Equal(*moment))

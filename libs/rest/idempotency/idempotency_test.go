@@ -1,4 +1,4 @@
-package rest_test
+package idempotency_test
 
 import (
 	"context"
@@ -15,30 +15,31 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/idempotency"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 // memoryStore is the key cache of one test, and of one person. A real store
 // answers each person their own row, which the store of the hub does in the
 // policy of its table.
 type memoryStore struct {
-	held map[string]rest.IdempotentAnswer
+	held map[string]idempotency.Answer
 }
 
 func newMemoryStore() *memoryStore {
-	return &memoryStore{held: map[string]rest.IdempotentAnswer{}}
+	return &memoryStore{held: map[string]idempotency.Answer{}}
 }
 
-func (s *memoryStore) Answer(_ context.Context, key string) (rest.IdempotentAnswer, error) {
+func (s *memoryStore) Answer(_ context.Context, key string) (idempotency.Answer, error) {
 	answer, found := s.held[key]
 	if !found {
-		return rest.IdempotentAnswer{}, rest.ErrNoIdempotentAnswer
+		return idempotency.Answer{}, idempotency.ErrNoAnswer
 	}
 
 	return answer, nil
 }
 
-func (s *memoryStore) Keep(_ context.Context, key string, answer rest.IdempotentAnswer) error {
+func (s *memoryStore) Keep(_ context.Context, key string, answer idempotency.Answer) error {
 	s.held[key] = answer
 
 	return nil
@@ -60,7 +61,7 @@ func (c *creator) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
 // writeWithKey sends one write through the middleware.
 func writeWithKey(
 	t *testing.T,
-	store rest.IdempotencyStore,
+	store idempotency.Store,
 	handler http.Handler,
 	key string,
 	body string,
@@ -71,11 +72,13 @@ func writeWithKey(
 		t.Context(), http.MethodPost, "/plants", strings.NewReader(body),
 	)
 	if key != "" {
-		request.Header.Set(rest.IdempotencyKeyHeader, key)
+		request.Header.Set(idempotency.KeyHeader, key)
 	}
 
 	recorder := httptest.NewRecorder()
-	rest.Idempotency(slog.New(slog.DiscardHandler), store)(handler).ServeHTTP(recorder, request)
+	idempotency.Middleware(slog.New(slog.DiscardHandler), store)(
+		handler,
+	).ServeHTTP(recorder, request)
 
 	return recorder
 }
@@ -151,7 +154,7 @@ func TestAFailedWriteIsNeverStored(t *testing.T) {
 
 	failing := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		runs.Add(1)
-		rest.Write(w, r, rest.NewInternal())
+		problem.Write(w, r, problem.NewInternal())
 	})
 
 	writeWithKey(t, store, failing, "key-1", `{"name":"Jasmine"}`)
@@ -204,19 +207,19 @@ func TestABodyThatDoesNotArriveAnswersARequestFailure(t *testing.T) {
 	request := httptest.NewRequestWithContext(
 		t.Context(), http.MethodPost, "/plants", errReader{},
 	)
-	request.Header.Set(rest.IdempotencyKeyHeader, "key-1")
+	request.Header.Set(idempotency.KeyHeader, "key-1")
 
 	recorder := httptest.NewRecorder()
-	rest.Idempotency(slog.New(slog.DiscardHandler), newMemoryStore())(&creator{}).
+	idempotency.Middleware(slog.New(slog.DiscardHandler), newMemoryStore())(&creator{}).
 		ServeHTTP(recorder, request)
 
 	require.Equal(t, http.StatusBadRequest, recorder.Code)
 
-	var problem rest.Problem
+	var answered problem.Problem
 
-	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &problem))
-	assert.Equal(t, rest.TypeRequestInvalid, problem.Type)
-	assert.NotEqual(t, rest.TypeBodyInvalid, problem.Type,
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &answered))
+	assert.Equal(t, problem.TypeRequestInvalid, answered.Type)
+	assert.NotEqual(t, problem.TypeBodyInvalid, answered.Type,
 		"the shape of a body that never arrived is unknown")
 }
 

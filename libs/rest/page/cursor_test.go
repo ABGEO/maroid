@@ -1,4 +1,4 @@
-package rest_test
+package page_test
 
 import (
 	"encoding/base64"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/page"
 )
 
 const (
@@ -15,10 +15,10 @@ const (
 	sampleRow         = "01a0cae5-eb36-777a-824e-71285629ec17"
 )
 
-func sampleCursor() rest.Cursor {
-	return rest.Cursor{
+func sampleCursor() page.Cursor {
+	return page.Cursor{
 		Sort:      []string{"id"},
-		Direction: rest.DirectionForward,
+		Direction: page.DirectionForward,
 		Filters:   map[string]string{environmentFilter: sampleEnvironment},
 		Boundary:  map[string]string{"id": sampleRow},
 		ID:        sampleRow,
@@ -30,10 +30,10 @@ func sampleCursor() rest.Cursor {
 func TestACursorSurvivesTheRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	encoded, err := rest.EncodeCursor(sampleCursor())
+	encoded, err := page.EncodeCursor(sampleCursor())
 	require.NoError(t, err)
 
-	decoded, err := rest.DecodeCursor(encoded)
+	decoded, err := page.DecodeCursor(encoded)
 	require.NoError(t, err)
 	assert.Equal(t, sampleCursor(), decoded)
 }
@@ -43,7 +43,7 @@ func TestACursorSurvivesTheRoundTrip(t *testing.T) {
 func TestACursorIsBase64URL(t *testing.T) {
 	t.Parallel()
 
-	encoded, err := rest.EncodeCursor(sampleCursor())
+	encoded, err := page.EncodeCursor(sampleCursor())
 	require.NoError(t, err)
 
 	assert.NotContains(t, encoded, "+")
@@ -69,7 +69,7 @@ func TestACursorThatMaroidDidNotProduceFails(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := rest.DecodeCursor(value)
+			_, err := page.DecodeCursor(value)
 			require.Error(t, err)
 		})
 	}
@@ -98,7 +98,7 @@ func TestAStaleCursorIsTheOneThatDoesNotMatchTheRequest(t *testing.T) {
 func TestACursorCarriesNoSecret(t *testing.T) {
 	t.Parallel()
 
-	encoded, err := rest.EncodeCursor(sampleCursor())
+	encoded, err := page.EncodeCursor(sampleCursor())
 	require.NoError(t, err)
 
 	assert.NotContains(t, encoded, ".", "no signature separator")

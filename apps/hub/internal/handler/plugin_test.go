@@ -11,7 +11,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/address"
 )
 
 // API-003: One handler owns the prefix /plugins, and the routes under it must each
@@ -24,7 +24,7 @@ func TestTheRoutesOfThePluginHandlerResolve(t *testing.T) {
 
 	logger := slog.New(slog.DiscardHandler)
 	router := chi.NewRouter()
-	router.Use(rest.BaseURL("https://hub.example.com"))
+	router.Use(address.Middleware("https://hub.example.com"))
 
 	handler.RegisterHandlers(
 		router,

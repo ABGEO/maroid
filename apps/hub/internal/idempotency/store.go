@@ -14,7 +14,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/idempotency"
 )
 
 // Lifetime is how long the cache holds one answer.
@@ -25,15 +25,15 @@ type Store struct {
 	db *sqlx.DB
 }
 
-var _ rest.IdempotencyStore = (*Store)(nil)
+var _ idempotency.Store = (*Store)(nil)
 
 // NewStore creates a Store over the given database.
 func NewStore(db *sqlx.DB) *Store {
 	return &Store{db: db}
 }
 
-// Answer returns what the key holds, or rest.ErrNoIdempotentAnswer.
-func (s *Store) Answer(ctx context.Context, key string) (rest.IdempotentAnswer, error) {
+// Answer returns what the key holds, or idempotency.ErrNoAnswer.
+func (s *Store) Answer(ctx context.Context, key string) (idempotency.Answer, error) {
 	var held *model.IdempotencyKey
 
 	err := database.WithUserTx(ctx, s.db, func(tx *sqlx.Tx) error {
@@ -47,14 +47,14 @@ func (s *Store) Answer(ctx context.Context, key string) (rest.IdempotentAnswer, 
 		return nil
 	})
 	if err != nil {
-		return rest.IdempotentAnswer{}, fmt.Errorf("reading the key cache: %w", err)
+		return idempotency.Answer{}, fmt.Errorf("reading the key cache: %w", err)
 	}
 
 	if held == nil {
-		return rest.IdempotentAnswer{}, rest.ErrNoIdempotentAnswer
+		return idempotency.Answer{}, idempotency.ErrNoAnswer
 	}
 
-	return rest.IdempotentAnswer{
+	return idempotency.Answer{
 		RequestHash: held.RequestHash,
 		Status:      held.Status,
 		Header:      http.Header(held.Headers),
@@ -63,7 +63,7 @@ func (s *Store) Answer(ctx context.Context, key string) (rest.IdempotentAnswer, 
 }
 
 // Keep stores the answer of a write under the key.
-func (s *Store) Keep(ctx context.Context, key string, answer rest.IdempotentAnswer) error {
+func (s *Store) Keep(ctx context.Context, key string, answer idempotency.Answer) error {
 	err := database.WithUserTx(ctx, s.db, func(tx *sqlx.Tx) error {
 		return repository.NewIdempotency(tx).Keep(ctx, &model.IdempotencyKey{
 			Key:         key,

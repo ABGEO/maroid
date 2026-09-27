@@ -16,7 +16,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 )
 
 // SecretMask stands for a secret that the row holds. Read returns it in place of every
@@ -223,8 +223,8 @@ func (m *Manager) Save(
 		return settingsRepo.Upsert(ctx, pluginID, fields, ifMatch)
 	})
 	if err != nil {
-		if errors.Is(err, rest.ErrModified) {
-			return rest.ErrModified
+		if errors.Is(err, precondition.ErrModified) {
+			return precondition.ErrModified
 		}
 
 		return fmt.Errorf("saving the settings: %w", err)

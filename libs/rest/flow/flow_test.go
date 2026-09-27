@@ -1,4 +1,4 @@
-package rest_test
+package flow_test
 
 import (
 	"encoding/json"
@@ -11,7 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/flow"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 // flowOf runs one request through the middleware and returns the value that the
@@ -21,13 +22,13 @@ func flowOf(t *testing.T, sent string) (string, *httptest.ResponseRecorder) {
 
 	var seen string
 
-	handler := rest.FlowID(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		seen = rest.FlowIDFromContext(r.Context())
+	handler := flow.Middleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		seen = flow.IDFromContext(r.Context())
 	}))
 
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/plugins", nil)
 	if sent != "" {
-		request.Header.Set(rest.FlowIDHeader, sent)
+		request.Header.Set(flow.Header, sent)
 	}
 
 	recorder := httptest.NewRecorder()
@@ -46,7 +47,7 @@ func TestFlowIDGivesAUUIDVersion7WhenTheRequestCarriesNone(t *testing.T) {
 	parsed, err := uuid.Parse(seen)
 	require.NoError(t, err)
 	assert.Equal(t, uuid.Version(7), parsed.Version())
-	assert.Equal(t, seen, recorder.Header().Get(rest.FlowIDHeader))
+	assert.Equal(t, seen, recorder.Header().Get(flow.Header))
 }
 
 // APIFMT-SC-018: A caller picks the value that every record of its request
@@ -59,7 +60,7 @@ func TestFlowIDTakesTheValueOfTheRequest(t *testing.T) {
 	seen, recorder := flowOf(t, chosen)
 
 	assert.Equal(t, chosen, seen)
-	assert.Equal(t, chosen, recorder.Header().Get(rest.FlowIDHeader))
+	assert.Equal(t, chosen, recorder.Header().Get(flow.Header))
 }
 
 // APIFMT-SC-018: The middleware bounds what a caller sends, because the value
@@ -99,8 +100,8 @@ func TestWriteFillsTheInstanceWithTheFlow(t *testing.T) {
 
 	var body map[string]any
 
-	handler := rest.FlowID(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		rest.Write(w, r, rest.NewNotFound())
+	handler := flow.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		problem.Write(w, r, problem.NewNotFound())
 	}))
 
 	recorder := httptest.NewRecorder()
@@ -113,5 +114,5 @@ func TestWriteFillsTheInstanceWithTheFlow(t *testing.T) {
 
 	instance, ok := body["instance"].(string)
 	require.True(t, ok)
-	assert.Equal(t, "/flows/"+recorder.Header().Get(rest.FlowIDHeader), instance)
+	assert.Equal(t, "/flows/"+recorder.Header().Get(flow.Header), instance)
 }

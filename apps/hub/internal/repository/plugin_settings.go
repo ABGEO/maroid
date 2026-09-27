@@ -10,7 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 )
 
 const pluginSettingsColumns = `id, user_id, plugin_id, fields, created_at, updated_at`
@@ -84,7 +84,7 @@ func (r *PluginSettings) Upsert(
 	}
 
 	if changed == 0 {
-		return rest.ErrModified
+		return precondition.ErrModified
 	}
 
 	return nil

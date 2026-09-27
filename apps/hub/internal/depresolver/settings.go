@@ -10,7 +10,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
-	"github.com/abgeo/maroid/libs/rest"
+	restidempotency "github.com/abgeo/maroid/libs/rest/idempotency"
 )
 
 // SettingsRegistry initializes and returns the settings schema registry.
@@ -62,7 +62,7 @@ func (c *Container) SettingsService() (settings.Service, error) {
 }
 
 // IdempotencyStore initializes and returns the key cache of a repeated write.
-func (c *Container) IdempotencyStore() (rest.IdempotencyStore, error) {
+func (c *Container) IdempotencyStore() (restidempotency.Store, error) {
 	c.idempotencyStore.mu.Lock()
 	defer c.idempotencyStore.mu.Unlock()
 

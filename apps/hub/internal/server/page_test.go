@@ -12,7 +12,8 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/page"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 const externalURL = "https://hub.example.com"
@@ -35,21 +36,21 @@ func pagedRequest(t *testing.T, items []string, target string) *httptest.Respons
 	require.NoError(t, err)
 
 	router.Get("/plugins", func(w http.ResponseWriter, r *http.Request) {
-		_, problem := rest.ReadPageRequest(r, rest.PageOptions{Bounded: true})
-		if problem != nil {
-			rest.Write(w, r, *problem)
+		_, failure := page.ReadRequest(r, page.Options{Bounded: true})
+		if failure != nil {
+			problem.Write(w, r, *failure)
 
 			return
 		}
 
-		page, buildErr := rest.NewPage(r, items, nil, nil)
+		answered, buildErr := page.New(r, items, nil, nil)
 		if buildErr != nil {
-			rest.Write(w, r, rest.NewInternal())
+			problem.Write(w, r, problem.NewInternal())
 
 			return
 		}
 
-		_ = json.NewEncoder(w).Encode(page)
+		_ = json.NewEncoder(w).Encode(answered)
 	})
 
 	recorder := httptest.NewRecorder()
@@ -69,16 +70,16 @@ func TestABoundedCollectionAnswersAPageThroughTheChain(t *testing.T) {
 	recorder := pagedRouter(t, []string{"a", "b"})
 	require.Equal(t, http.StatusOK, recorder.Code)
 
-	var page struct {
+	var answered struct {
 		Items []string `json:"items"`
 		Self  string   `json:"self"`
 		First string   `json:"first"`
 	}
 
-	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &page))
-	assert.Len(t, page.Items, 2)
-	assert.Equal(t, externalURL+"/plugins", page.Self)
-	assert.Equal(t, externalURL+"/plugins", page.First)
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &answered))
+	assert.Len(t, answered.Items, 2)
+	assert.Equal(t, externalURL+"/plugins", answered.Self)
+	assert.Equal(t, externalURL+"/plugins", answered.First)
 }
 
 // APIFMT-SC-003: A collection with no row answers an empty array, never a null.
@@ -106,10 +107,10 @@ func TestABoundedCollectionRefusesThePagingParameters(t *testing.T) {
 			recorder := pagedRequest(t, []string{"a"}, target)
 			require.Equal(t, http.StatusBadRequest, recorder.Code)
 
-			var problem rest.Problem
+			var failure problem.Problem
 
-			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &problem))
-			assert.Equal(t, rest.TypeRequestInvalid, problem.Type)
+			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &failure))
+			assert.Equal(t, problem.TypeRequestInvalid, failure.Type)
 		})
 	}
 }

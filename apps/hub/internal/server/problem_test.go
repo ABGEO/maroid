@@ -15,7 +15,8 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/logger"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/flow"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 func routerUnderTest(t *testing.T) http.Handler {
@@ -31,7 +32,7 @@ func routerUnderTest(t *testing.T) http.Handler {
 	return router
 }
 
-func answerOf(t *testing.T, method, path string) (*httptest.ResponseRecorder, rest.Problem) {
+func answerOf(t *testing.T, method, path string) (*httptest.ResponseRecorder, problem.Problem) {
 	t.Helper()
 
 	recorder := httptest.NewRecorder()
@@ -40,9 +41,9 @@ func answerOf(t *testing.T, method, path string) (*httptest.ResponseRecorder, re
 		httptest.NewRequestWithContext(t.Context(), method, path, nil),
 	)
 
-	var body rest.Problem
+	var body problem.Problem
 
-	require.Equal(t, rest.ProblemMediaType, recorder.Header().Get("Content-Type"))
+	require.Equal(t, problem.MediaType, recorder.Header().Get("Content-Type"))
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body), recorder.Body.String())
 
 	return recorder, body
@@ -55,7 +56,7 @@ func TestAnUnknownRouteAnswersWithAProblem(t *testing.T) {
 	recorder, body := answerOf(t, http.MethodGet, "/nowhere")
 
 	assert.Equal(t, http.StatusNotFound, recorder.Code)
-	assert.Equal(t, rest.TypeNotFound, body.Type)
+	assert.Equal(t, problem.TypeNotFound, body.Type)
 	assert.Equal(t, http.StatusNotFound, body.Status)
 }
 
@@ -68,7 +69,7 @@ func TestAMethodThatTheRouteRefusesAnswersWithAProblem(t *testing.T) {
 	recorder, body := answerOf(t, http.MethodPost, "/ping")
 
 	assert.Equal(t, http.StatusMethodNotAllowed, recorder.Code)
-	assert.Equal(t, rest.TypeMethodNotAllowed, body.Type)
+	assert.Equal(t, problem.TypeMethodNotAllowed, body.Type)
 	assert.Equal(t, "GET", recorder.Header().Get("Allow"))
 }
 
@@ -79,7 +80,7 @@ func TestAPanicAnswersWithAProblemAndLeaksNothing(t *testing.T) {
 	recorder, body := answerOf(t, http.MethodGet, "/boom")
 
 	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
-	assert.Equal(t, rest.TypeInternal, body.Type)
+	assert.Equal(t, problem.TypeInternal, body.Type)
 	assert.Empty(t, body.Detail)
 	assert.NotContains(t, recorder.Body.String(), "the handler gave up")
 }
@@ -90,9 +91,9 @@ func TestEveryAnswerCarriesTheRequestIdentifier(t *testing.T) {
 
 	recorder, body := answerOf(t, http.MethodGet, "/nowhere")
 
-	identifier := recorder.Header().Get(rest.FlowIDHeader)
+	identifier := recorder.Header().Get(flow.Header)
 	require.NotEmpty(t, identifier)
-	assert.Equal(t, rest.Instance(identifier), body.Instance)
+	assert.Equal(t, flow.Instance(identifier), body.Instance)
 }
 
 // LOG-002 and LOG-009: The access record is JSON on stdout, and it carries the
@@ -117,7 +118,7 @@ func TestTheAccessRecordCarriesTheRequestIdentifier(t *testing.T) {
 	var record map[string]any
 
 	require.NoError(t, json.Unmarshal(buffer.Bytes(), &record), buffer.String())
-	assert.Equal(t, recorder.Header().Get(rest.FlowIDHeader), record["flow_id"])
+	assert.Equal(t, recorder.Header().Get(flow.Header), record["flow_id"])
 	assert.InDelta(t, float64(http.StatusOK), record["http.response.status_code"], 0)
 	assert.Equal(t, http.MethodGet, record["http.request.method"])
 	assert.Equal(t, "/ping", record["url.path"])

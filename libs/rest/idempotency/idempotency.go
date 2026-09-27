@@ -1,4 +1,5 @@
-package rest
+// Package idempotency answers a repeated write with the result of the first one.
+package idempotency
 
 import (
 	"bytes"
@@ -10,47 +11,49 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 const (
-	// IdempotencyKeyHeader carries the key that a client picks for one write, so
+	// KeyHeader carries the key that a client picks for one write, so
 	// that repeating that write is safe.
-	IdempotencyKeyHeader = "Idempotency-Key"
+	KeyHeader = "Middleware-Key"
 
 	idempotencyKeyMaxLength = 255
 	idempotencyBodyMax      = 1 << 20
 )
 
-// ErrNoIdempotentAnswer reports that the store holds no answer for a key.
-var ErrNoIdempotentAnswer = errors.New("the store holds no answer for this key")
+// ErrNoAnswer reports that the store holds no answer for a key.
+var ErrNoAnswer = errors.New("the store holds no answer for this key")
 
-// IdempotentAnswer is the answer that one write produced, kept so that a repeat
+// Answer is the answer that one write produced, kept so that a repeat
 // of that write reads it again.
-type IdempotentAnswer struct {
+type Answer struct {
 	RequestHash string
 	Status      int
 	Header      http.Header
 	Body        []byte
 }
 
-// IdempotencyStore keeps the answer of a write under the key that a client
+// Store keeps the answer of a write under the key that a client
 // picked. The hub implements it over a table, and this module holds no database.
-type IdempotencyStore interface {
-	// Answer returns what the key holds, or ErrNoIdempotentAnswer.
-	Answer(ctx context.Context, key string) (IdempotentAnswer, error)
+type Store interface {
+	// Answer returns what the key holds, or ErrNoAnswer.
+	Answer(ctx context.Context, key string) (Answer, error)
 	// Keep stores the answer of a write under the key.
-	Keep(ctx context.Context, key string, answer IdempotentAnswer) error
+	Keep(ctx context.Context, key string, answer Answer) error
 }
 
-// Idempotency answers a repeated write with the result of the first one.
+// Middleware answers a repeated write with the result of the first one.
 //
 // It runs behind the access check, because the store scopes every row to the
 // acting user and a request with no acting user reaches no row. A request that
 // carries no key passes through, as does a method that creates nothing.
-func Idempotency(logger *slog.Logger, store IdempotencyStore) func(http.Handler) http.Handler {
+func Middleware(logger *slog.Logger, store Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			key := strings.TrimSpace(r.Header.Get(IdempotencyKeyHeader))
+			key := strings.TrimSpace(r.Header.Get(KeyHeader))
 			if key == "" || r.Method != http.MethodPost {
 				next.ServeHTTP(w, r)
 
@@ -58,15 +61,15 @@ func Idempotency(logger *slog.Logger, store IdempotencyStore) func(http.Handler)
 			}
 
 			if len(key) > idempotencyKeyMaxLength {
-				Write(w, r, NewRequestInvalid().
-					WithDetail("The Idempotency-Key header is longer than the store holds."))
+				problem.Write(w, r, problem.NewRequestInvalid().
+					WithDetail("The Middleware-Key header is longer than the store holds."))
 
 				return
 			}
 
 			body, err := io.ReadAll(io.LimitReader(r.Body, idempotencyBodyMax+1))
 			if err != nil {
-				Write(w, r, NewRequestInvalid().
+				problem.Write(w, r, problem.NewRequestInvalid().
 					WithDetail("The body of the request did not arrive in full."))
 
 				return
@@ -96,7 +99,7 @@ func Idempotency(logger *slog.Logger, store IdempotencyStore) func(http.Handler)
 			// A store that does not keep the answer leaves the key free, so the
 			// next repeat runs the write again. That is the safe direction, and
 			// it is invisible without this line.
-			if err = store.Keep(r.Context(), key, IdempotentAnswer{
+			if err = store.Keep(r.Context(), key, Answer{
 				RequestHash: digestOf(r, body),
 				Status:      recorder.status,
 				Header:      recorder.header,
@@ -114,7 +117,7 @@ func replay(
 	w http.ResponseWriter,
 	r *http.Request,
 	logger *slog.Logger,
-	store IdempotencyStore,
+	store Store,
 	key string,
 	hash string,
 ) bool {
@@ -122,7 +125,7 @@ func replay(
 	if err != nil {
 		// An absent key is the ordinary case. Anything else means the cache
 		// failed, and the write runs again rather than refusing the request.
-		if !errors.Is(err, ErrNoIdempotentAnswer) {
+		if !errors.Is(err, ErrNoAnswer) {
 			logger.ErrorContext(r.Context(), "the key cache answered nothing",
 				slog.String("idempotency_key", key), slog.Any("error", err))
 		}
@@ -133,8 +136,8 @@ func replay(
 	// A header that this request already carries stays: the chain sets the flow
 	// identifier and the cache period for this request, not for the first one.
 	if held.RequestHash != hash {
-		Write(w, r, NewRequestInvalid().WithDetail(
-			"The Idempotency-Key header names an earlier request that differs from this one.",
+		problem.Write(w, r, problem.NewRequestInvalid().WithDetail(
+			"The Middleware-Key header names an earlier request that differs from this one.",
 		))
 
 		return true

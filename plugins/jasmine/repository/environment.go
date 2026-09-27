@@ -9,7 +9,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 )
 
@@ -94,7 +94,7 @@ func (r *Environment) List(
 
 // Update updates an existing Environment record and refreshes the given entity with the stored values.
 // A non-nil ifMatch makes the write conditional on the moment of the last write,
-// and a record that moved since keeps its values and answers rest.ErrModified.
+// and a record that moved since keeps its values and answers precondition.ErrModified.
 func (r *Environment) Update(
 	ctx context.Context,
 	entity *model.Environment,
@@ -124,7 +124,7 @@ func (r *Environment) Update(
 	// another transaction, which is a failure and not a failed precondition.
 	switch err = r.tx.GetContext(ctx, entity, r.tx.Rebind(query), args...); {
 	case errors.Is(err, sql.ErrNoRows) && ifMatch != nil:
-		return rest.ErrModified
+		return precondition.ErrModified
 	case err != nil:
 		return fmt.Errorf("updating Environment: %w", err)
 	}

@@ -14,18 +14,18 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/idempotency"
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest"
+	restidempotency "github.com/abgeo/maroid/libs/rest/idempotency"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
 // keep stores one answer under the key of the given person.
-func keep(t *testing.T, store rest.IdempotencyStore, user string, key string) {
+func keep(t *testing.T, store restidempotency.Store, user string, key string) {
 	t.Helper()
 
 	require.NoError(t, store.Keep(
 		pluginapi.ContextWithActingUser(t.Context(), user),
 		key,
-		rest.IdempotentAnswer{
+		restidempotency.Answer{
 			RequestHash: "hash-of-" + key,
 			Status:      http.StatusCreated,
 			Header:      http.Header{"Content-Type": []string{mediaTypeOfAnAnswer}},
@@ -35,11 +35,11 @@ func keep(t *testing.T, store rest.IdempotencyStore, user string, key string) {
 }
 
 // held reports whether the cache still answers the key of the given person.
-func held(t *testing.T, store rest.IdempotencyStore, user string, key string) bool {
+func held(t *testing.T, store restidempotency.Store, user string, key string) bool {
 	t.Helper()
 
 	_, err := store.Answer(pluginapi.ContextWithActingUser(t.Context(), user), key)
-	if errors.Is(err, rest.ErrNoIdempotentAnswer) {
+	if errors.Is(err, restidempotency.ErrNoAnswer) {
 		return false
 	}
 

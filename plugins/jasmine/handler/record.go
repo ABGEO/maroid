@@ -10,7 +10,8 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/precondition"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 // readRecord answers one record with the validator that guards a write to it.
@@ -29,12 +30,12 @@ func readRecord[T any, R any](
 	row, err := fetchInTx(r.Context(), db, action, read)
 	if err != nil {
 		logger.ErrorContext(r.Context(), action, slog.Any("error", err))
-		rest.Write(w, r, rest.NewNotFound())
+		problem.Write(w, r, problem.NewNotFound())
 
 		return
 	}
 
-	w.Header().Set(rest.ETagHeader, rest.ETag(moment(row)))
+	w.Header().Set(precondition.ETagHeader, precondition.ETag(moment(row)))
 	render.Status(r, http.StatusOK)
 	render.JSON(w, r, present(row))
 }

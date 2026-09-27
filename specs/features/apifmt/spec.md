@@ -4,7 +4,7 @@ title: The answer that a client reads
 type: spec
 status: approved
 created: 2026-09-24
-updated: 2026-09-25
+updated: 2026-09-27
 approved_by: Temuri
 approved_on: 2026-09-25
 constrained_by: [RES, ERR, DAT, OWN, GO, TS, PLG, ARC]
@@ -20,7 +20,7 @@ published documents, and the headers. `SPC-001` divides the two.
 
 `libs/problem` becomes `libs/rest` and gains the page and the cursor. Every
 handler of the hub and of a plugin answers a collection through
-`rest.Page[T]`. Every JSON tag of the API takes snake case, and every point in
+`page.Page[T]`. Every JSON tag of the API takes snake case, and every point in
 time takes UTC. The deck and `libs/api-client` read the new shape.
 
 ## 2. Coverage
@@ -46,9 +46,9 @@ time takes UTC. The deck and `libs/api-client` read the new shape.
 
 | Rule      | How this design obeys it                                                  |
 | --------- | --------------------------------------------------------------------------- |
-| `RES-005` | `rest.Page[T]` carries the five members, and `items`, `self` and `first` are required. |
-| `RES-006` | `rest.Cursor` holds the five members, and a client never builds one.      |
-| `ERR-001` | Every failure answers `rest.Write`.                                       |
+| `RES-005` | `page.Page[T]` carries the five members, and `items`, `self` and `first` are required. |
+| `RES-006` | `page.Cursor` holds the five members, and a client never builds one.      |
+| `ERR-001` | Every failure answers `problem.Write`.                                    |
 | `ERR-003` | `cursor-stale` joins the registry of `libs/rest`.                         |
 | `PLG-007` | `libs/rest` imports no package of `apps/hub`.                             |
 | `ARC-005` | `libs/rest` holds what the hub and a plugin both import.                  |
@@ -63,13 +63,13 @@ time takes UTC. The deck and `libs/api-client` read the new shape.
 | File                                   | Change | Holds                                                         |
 | -------------------------------------- | ------ | --------------------------------------------------------------- |
 | `libs/rest/go.mod`                     | rename | The module path becomes `github.com/abgeo/maroid/libs/rest`.  |
-| `libs/rest/problem.go`                 | move   | `Problem`, `FieldFailure`, and the three builders. Unchanged.  |
-| `libs/rest/registry.go`                | change | The constructors. `NewCursorStale` joins them.                |
-| `libs/rest/writer.go`                  | move   | `Fill` and `Write`. Unchanged.                                |
-| `libs/rest/page.go`                    | create | `Page[T]`, `NewPage`, and the link builder.                   |
-| `libs/rest/base.go`                    | create | The middleware that carries the external address, and its reader. |
-| `libs/rest/cursor.go`                  | create | `Cursor`, `EncodeCursor`, `DecodeCursor`.                     |
-| `libs/rest/flow.go`                    | rename | The middleware. `spec-platform.md` holds it.                  |
+| `libs/rest/problem/problem.go`         | move   | `Problem`, `FieldFailure`, and the three builders. Unchanged.  |
+| `libs/rest/problem/registry.go`        | change | The constructors. `NewCursorStale` joins them.                |
+| `libs/rest/problem/writer.go`          | move   | `Fill` and `Write`. Unchanged.                                |
+| `libs/rest/page/page.go`               | create | `Page[T]`, `New`, and the link builder.                       |
+| `libs/rest/address/address.go`         | create | The middleware that carries the external address, and its reader. |
+| `libs/rest/page/cursor.go`             | create | `Cursor`, `EncodeCursor`, `DecodeCursor`.                     |
+| `libs/rest/flow/flow.go`               | rename | The middleware. `spec-platform.md` holds it.                  |
 | `apps/hub/internal/handler/plugin.go`  | change | `List` answers a page. `SaveSettings` keeps its shape.        |
 | `apps/hub/internal/handler/auth.go`    | change | Five tags take snake case. `Identities` answers a page.       |
 | `plugins/jasmine/dto/plant.go`         | change | Four tags take snake case. The two times take UTC.            |
@@ -179,7 +179,7 @@ module for one type.
 
 **Realizes:** `APIFMT-FR-002`
 
-**Decision:** `Page[T]` is generic. A handler answers `rest.Page[PlantResponse]`
+**Decision:** `Page[T]` is generic. A handler answers `page.Page[PlantResponse]`
 and never a page of `any`.
 
 **Rationale:** The compiler then checks that the items match the schema that

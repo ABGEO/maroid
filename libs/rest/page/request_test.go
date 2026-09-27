@@ -1,4 +1,4 @@
-package rest_test
+package page_test
 
 import (
 	"net/http"
@@ -7,26 +7,27 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/page"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 // environmentFilter is the one filter that the sample collection narrows by.
 const environmentFilter = "environment_id"
 
 // unbounded is a route that pages, and that declares no sort field.
-func unbounded() rest.PageOptions { return rest.PageOptions{} }
+func unbounded() page.Options { return page.Options{} }
 
 // APIFMT-SC-005: A request that names no size takes the default, and one that
 // names a size above the ceiling answers a failure. RES-005 gives both numbers.
 func TestTheLimitTakesTheDefaultAndTheCeiling(t *testing.T) {
 	t.Parallel()
 
-	asked, problem := rest.ReadPageRequest(plantsRequest(t, ""), unbounded())
-	require.Nil(t, problem)
+	asked, failure := page.ReadRequest(plantsRequest(t, ""), unbounded())
+	require.Nil(t, failure)
 	assert.Equal(t, 20, asked.Limit)
 
-	asked, problem = rest.ReadPageRequest(plantsRequest(t, "limit=50"), unbounded())
-	require.Nil(t, problem)
+	asked, failure = page.ReadRequest(plantsRequest(t, "limit=50"), unbounded())
+	require.Nil(t, failure)
 	assert.Equal(t, 50, asked.Limit)
 
 	for name, query := range map[string]string{
@@ -38,10 +39,10 @@ func TestTheLimitTakesTheDefaultAndTheCeiling(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			_, problem := rest.ReadPageRequest(plantsRequest(t, query), unbounded())
-			require.NotNil(t, problem)
-			assert.Equal(t, rest.TypeRequestInvalid, problem.Type)
-			assert.Contains(t, problem.Detail, "limit")
+			_, failure := page.ReadRequest(plantsRequest(t, query), unbounded())
+			require.NotNil(t, failure)
+			assert.Equal(t, problem.TypeRequestInvalid, failure.Type)
+			assert.Contains(t, failure.Detail, "limit")
 		})
 	}
 }
@@ -51,16 +52,16 @@ func TestTheLimitTakesTheDefaultAndTheCeiling(t *testing.T) {
 func TestABoundedRouteRefusesThePagingParameters(t *testing.T) {
 	t.Parallel()
 
-	bounded := rest.PageOptions{Bounded: true}
+	bounded := page.Options{Bounded: true}
 
-	asked, problem := rest.ReadPageRequest(plantsRequest(t, ""), bounded)
-	require.Nil(t, problem)
+	asked, failure := page.ReadRequest(plantsRequest(t, ""), bounded)
+	require.Nil(t, failure)
 	assert.Zero(t, asked.Limit, "a bounded route answers every item in one page")
 
 	for _, query := range []string{"limit=10", "cursor=abc"} {
-		_, problem := rest.ReadPageRequest(plantsRequest(t, query), bounded)
-		require.NotNil(t, problem, query)
-		assert.Equal(t, rest.TypeRequestInvalid, problem.Type)
+		_, failure := page.ReadRequest(plantsRequest(t, query), bounded)
+		require.NotNil(t, failure, query)
+		assert.Equal(t, problem.TypeRequestInvalid, failure.Type)
 	}
 }
 
@@ -69,15 +70,15 @@ func TestABoundedRouteRefusesThePagingParameters(t *testing.T) {
 func TestAnUndeclaredSortFieldAnswersAFailure(t *testing.T) {
 	t.Parallel()
 
-	_, problem := rest.ReadPageRequest(plantsRequest(t, "sort=created_at"), unbounded())
-	require.NotNil(t, problem)
-	assert.Equal(t, rest.TypeRequestInvalid, problem.Type)
-	assert.Contains(t, problem.Detail, "created_at")
+	_, failure := page.ReadRequest(plantsRequest(t, "sort=created_at"), unbounded())
+	require.NotNil(t, failure)
+	assert.Equal(t, problem.TypeRequestInvalid, failure.Type)
+	assert.Contains(t, failure.Detail, "created_at")
 
-	declared := rest.PageOptions{SortFields: []string{"name"}}
+	declared := page.Options{SortFields: []string{"name"}}
 
-	asked, problem := rest.ReadPageRequest(plantsRequest(t, "sort=-name"), declared)
-	require.Nil(t, problem)
+	asked, failure := page.ReadRequest(plantsRequest(t, "sort=-name"), declared)
+	require.Nil(t, failure)
 	assert.Equal(t, []string{"-name"}, asked.Sort)
 }
 
@@ -86,19 +87,19 @@ func TestAnUndeclaredSortFieldAnswersAFailure(t *testing.T) {
 func TestAStaleCursorAndABrokenCursorAnswerDifferently(t *testing.T) {
 	t.Parallel()
 
-	_, problem := rest.ReadPageRequest(plantsRequest(t, "cursor=!!!"), unbounded())
-	require.NotNil(t, problem)
-	assert.Equal(t, rest.TypeRequestInvalid, problem.Type)
+	_, failure := page.ReadRequest(plantsRequest(t, "cursor=!!!"), unbounded())
+	require.NotNil(t, failure)
+	assert.Equal(t, problem.TypeRequestInvalid, failure.Type)
 
 	held := sampleCursor()
-	encoded, err := rest.EncodeCursor(held)
+	encoded, err := page.EncodeCursor(held)
 	require.NoError(t, err)
 
 	request := plantsRequest(t, "cursor="+encoded+"&"+environmentFilter+"=another")
-	options := rest.PageOptions{Filters: []string{environmentFilter}}
+	options := page.Options{Filters: []string{environmentFilter}}
 
-	_, problem = rest.ReadPageRequest(request, options)
-	require.NotNil(t, problem)
-	assert.Equal(t, rest.TypeCursorStale, problem.Type)
-	assert.Equal(t, http.StatusBadRequest, problem.Status)
+	_, failure = page.ReadRequest(request, options)
+	require.NotNil(t, failure)
+	assert.Equal(t, problem.TypeCursorStale, failure.Type)
+	assert.Equal(t, http.StatusBadRequest, failure.Status)
 }

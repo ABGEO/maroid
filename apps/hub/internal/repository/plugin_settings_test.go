@@ -15,7 +15,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
@@ -181,7 +181,7 @@ func TestAConditionalUpsertRefusesARecordThatMoved(t *testing.T) {
 		}, &held)
 	})
 
-	require.ErrorIs(t, err, rest.ErrModified)
+	require.ErrorIs(t, err, precondition.ErrModified)
 }
 
 // APIFMT-SC-019: A write that names no validator lands. Z-182 asks for the

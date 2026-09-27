@@ -12,7 +12,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/idempotency"
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest"
+	restidempotency "github.com/abgeo/maroid/libs/rest/idempotency"
 )
 
 // APIFMT-SC-020: The middleware and the store of the hub answer a repeat with
@@ -42,10 +42,12 @@ func TestARepeatedWriteReachesTheHandlerOnce(t *testing.T) {
 			"/plugins/dev.maroid.jasmine/api/environments",
 			strings.NewReader(`{"name":"Balcony"}`),
 		)
-		request.Header.Set(rest.IdempotencyKeyHeader, "key-1")
+		request.Header.Set(restidempotency.KeyHeader, "key-1")
 
 		recorder := httptest.NewRecorder()
-		rest.Idempotency(slog.New(slog.DiscardHandler), store)(handler).ServeHTTP(recorder, request)
+		restidempotency.Middleware(slog.New(slog.DiscardHandler), store)(
+			handler,
+		).ServeHTTP(recorder, request)
 
 		return recorder
 	}
@@ -90,10 +92,12 @@ func TestOneKeyOfTwoPeopleAnswersEachOfThem(t *testing.T) {
 			strings.NewReader(`{"name":"Balcony"}`),
 		)
 		// The same key, picked by two different people.
-		request.Header.Set(rest.IdempotencyKeyHeader, "shared-key")
+		request.Header.Set(restidempotency.KeyHeader, "shared-key")
 
 		recorder := httptest.NewRecorder()
-		rest.Idempotency(slog.New(slog.DiscardHandler), store)(handler).ServeHTTP(recorder, request)
+		restidempotency.Middleware(slog.New(slog.DiscardHandler), store)(
+			handler,
+		).ServeHTTP(recorder, request)
 
 		return recorder
 	}

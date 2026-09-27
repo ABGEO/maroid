@@ -74,14 +74,14 @@ documents and a linter checks them. Four headers join the answer.
 | `apps/hub/internal/handler/mcp.go`            | change | The origin reads `ExternalURL`. `resourceScheme` goes.   |
 | `apps/hub/internal/telegram/handler.go`       | change | The webhook address reads `ExternalURL`.                 |
 | `apps/hub/internal/migrator/migrator.go`      | change | `buildMigrationPlan` orders the core first.              |
-| `apps/hub/internal/server/http.go`            | change | `rest.FlowID`, `rest.IfMatch` and `rest.Allow` join the chain. |
+| `apps/hub/internal/server/http.go`            | change | `flow.Middleware`, `precondition.IfMatch` and `rest.Allow` join the chain. |
 | `apps/hub/internal/repository/idempotency.go` | create | The store of a repeated write.                           |
 | `apps/hub/internal/idempotency/sweep.go`      | create | The job that removes a row the cache outlived.           |
 | `apps/hub/internal/depresolver/cron.go`       | change | `CronRegistry` holds the jobs of the hub.                |
-| `libs/rest/flow.go`                           | rename | `FlowID`, `FlowIDFromContext`, `Instance`. From `request.go`. |
-| `libs/rest/concurrency.go`                    | create | `ETag`, the `IfMatch` middleware, `ErrModified`.         |
-| `libs/rest/cache.go`                          | create | `NoStore`, `Immutable`, and the middleware that sets the first. |
-| `libs/rest/idempotency.go`                    | create | The middleware and the `IdempotencyStore` interface.     |
+| `libs/rest/flow/flow.go`                      | rename | `Middleware`, `IDFromContext`, `Instance`. From `request.go`. |
+| `libs/rest/precondition/precondition.go`      | create | `ETag`, the `IfMatch` middleware, `ErrModified`.         |
+| `libs/rest/cache/cache.go`                    | create | `NoStore`, `Immutable`, and the middleware that sets the first. |
+| `libs/rest/idempotency/idempotency.go`        | create | The middleware and the `Store` interface.                |
 | `tools/apibuild/main.go`                      | create | The merge of `APIFMT-DD-012`.                            |
 | `specs/api/components.yaml`                   | change | The five headers of section 4.5, and `PreconditionFailed`. |
 | `specs/api/vacuum-ruleset.yaml`               | exists | The ruleset for `hub.yaml`.                              |
@@ -315,7 +315,7 @@ The build fails on a duplicated component name whose two definitions differ, as
 
 **Realizes:** `APIFMT-FR-018`
 
-**Decision:** `rest.FlowID` replaces `rest.RequestID`. It reads `X-Flow-ID`,
+**Decision:** `flow.Middleware` replaces `rest.RequestID`. It reads `X-Flow-ID`,
 removes every character outside `[a-zA-Z0-9/+_=-]`, cuts to 128 characters, and
 makes a UUID version 7 when nothing remains. `Instance` answers `/flows/<value>`.
 
@@ -340,11 +340,11 @@ an `instance` like a type, and `ERR-002` gives the relative form.
 nanoseconds>"`. A write that carries `If-Match` adds `AND updated_at = $n` to its
 `UPDATE`, and zero rows changed answers 412.
 
-The `rest.IfMatch` middleware reads the header once for the whole chain, and the
+The `precondition.IfMatch` middleware reads the header once for the whole chain, and the
 context carries the moment to every handler. A value that this API never answered
 stops there with a 400. So no route parses the header, and a plugin reads the
-moment with `rest.IfMatchFromContext`. Setting the `ETag` stays with the handler,
-which alone knows the record that it answered, and mapping `rest.ErrModified` to
+moment with `precondition.IfMatchFromContext`. Setting the `ETag` stays with the handler,
+which alone knows the record that it answered, and mapping `precondition.ErrModified` to
 a 412 stays with the handler, because a plugin route is an `http.HandlerFunc` and
 returns no error to the chain.
 
@@ -469,7 +469,7 @@ deck that a person serves over plain `http` on a local address.
 A form remounts when the person opens it again, so a new form holds a new
 intent, which is the second limit case of `APIFMT-FR-022`.
 
-`put` and `del` ignore the option. `rest.Idempotency` reads the key on a `POST`
+`put` and `del` ignore the option. `idempotency.Middleware` reads the key on a `POST`
 alone, and `APIFMT-DD-014` already guards a `PUT`.
 
 **Alternatives:** Renew the key from an effect that tracks every bound value. It

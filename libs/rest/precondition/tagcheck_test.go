@@ -1,4 +1,4 @@
-package rest_test
+package precondition_test
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 )
 
 // APIFMT-SC-019: The value that the client reads off ETag is the value that the
@@ -21,19 +21,19 @@ func TestTheEntityTagOfAReadIsReadableAsAnIfMatch(t *testing.T) {
 	moment := time.Date(2026, time.September, 25, 10, 30, 0, 123456789, time.UTC)
 
 	// What a read answers, and what the deck now holds in its form.
-	answered := rest.ETag(moment)
+	answered := precondition.ETag(moment)
 	require.Equal(t, `W/"1790332200123456789"`, answered)
 
 	// The same string, arriving on the write that the client sends back.
 	request := httptest.NewRequestWithContext(
 		t.Context(), http.MethodPut, "/plugins/p/settings", nil,
 	)
-	request.Header.Set(rest.IfMatchHeader, answered)
+	request.Header.Set(precondition.IfMatchHeader, answered)
 
 	var read *time.Time
 
-	rest.IfMatch(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
-		read = rest.IfMatchFromContext(r.Context())
+	precondition.IfMatch(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		read = precondition.IfMatchFromContext(r.Context())
 	})).ServeHTTP(httptest.NewRecorder(), request)
 
 	require.NotNil(t, read)

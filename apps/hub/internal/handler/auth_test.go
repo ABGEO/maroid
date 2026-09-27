@@ -22,7 +22,8 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/address"
+	"github.com/abgeo/maroid/libs/rest/problem"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
@@ -91,7 +92,7 @@ func authUnderTest(t *testing.T) *authFixture {
 	)
 
 	router := chi.NewRouter()
-	router.Use(rest.BaseURL("https://hub.example.com"))
+	router.Use(address.Middleware("https://hub.example.com"))
 	authHandler.Register(router)
 
 	return &authFixture{
@@ -182,12 +183,12 @@ func TestTheRedemptionBindsTheFirstIdentity(t *testing.T) {
 	// The command prints an address of the deck. This stands in for the page of
 	// the deck: it reads the token and hands it to the hub with its own landing
 	// page as the target. EXTID-DD-015 gives the two steps.
-	address := handOffToHub(t, issued.Token)
+	target := handOffToHub(t, issued.Token)
 
 	started := httptest.NewRecorder()
 	fixture.router.ServeHTTP(
 		started,
-		httptest.NewRequestWithContext(ctx, http.MethodPost, address, nil),
+		httptest.NewRequestWithContext(ctx, http.MethodPost, target, nil),
 	)
 	require.Equal(t, http.StatusAccepted, started.Code)
 
@@ -217,14 +218,14 @@ func TestTheRedemptionBindsTheFirstIdentity(t *testing.T) {
 	replay := httptest.NewRecorder()
 	fixture.router.ServeHTTP(
 		replay,
-		httptest.NewRequestWithContext(ctx, http.MethodPost, address, nil),
+		httptest.NewRequestWithContext(ctx, http.MethodPost, target, nil),
 	)
 	require.Equal(t, http.StatusNotFound, replay.Code)
 
-	var problem rest.Problem
+	var failure problem.Problem
 
-	require.NoError(t, json.Unmarshal(replay.Body.Bytes(), &problem))
-	require.Equal(t, rest.TypeNotFound, problem.Type, "the grant is spent")
+	require.NoError(t, json.Unmarshal(replay.Body.Bytes(), &failure))
+	require.Equal(t, problem.TypeNotFound, failure.Type, "the grant is spent")
 }
 
 // EXTID-SC-011: The list names every provider that the configuration holds. It

@@ -14,7 +14,11 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/cache"
+	"github.com/abgeo/maroid/libs/rest/idempotency"
+	"github.com/abgeo/maroid/libs/rest/page"
+	"github.com/abgeo/maroid/libs/rest/precondition"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 // PluginHandler represents the Plugin handler interface.
@@ -37,7 +41,7 @@ type Plugin struct {
 	uiRegistry         *registry.UIRegistry
 	capabilityRegistry *registry.CapabilityRegistry
 	settingsSvc        settings.Service
-	idempotency        rest.IdempotencyStore
+	idempotency        idempotency.Store
 }
 
 var _ PluginHandler = (*Plugin)(nil)
@@ -51,7 +55,7 @@ func NewPlugin(
 	uiRegistry *registry.UIRegistry,
 	capabilityRegistry *registry.CapabilityRegistry,
 	settingsSvc settings.Service,
-	idempotency rest.IdempotencyStore,
+	idempotency idempotency.Store,
 ) *Plugin {
 	return &Plugin{
 		idempotency: idempotency,
@@ -75,7 +79,7 @@ func (h *Plugin) Register(router chi.Router) {
 	router.Route("/plugins", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
-			r.Use(rest.Idempotency(h.logger, h.idempotency))
+			r.Use(idempotency.Middleware(h.logger, h.idempotency))
 
 			r.Get("/", Wrap(h.logger, h.List))
 			r.Get("/{id}/settings/schema", Wrap(h.logger, h.SettingsSchema))
@@ -93,23 +97,23 @@ func (h *Plugin) Register(router chi.Router) {
 // List returns a list of all registered plugins with their metadata and UI capabilities if available.
 func (h *Plugin) List(w http.ResponseWriter, r *http.Request) error {
 	// @todo: consider caching the data.
-	if _, problem := rest.ReadPageRequest(r, rest.PageOptions{Bounded: true}); problem != nil {
-		rest.Write(w, r, *problem)
+	if _, failure := page.ReadRequest(r, page.Options{Bounded: true}); failure != nil {
+		problem.Write(w, r, *failure)
 
 		return nil
 	}
 
 	entries := registry.PluginEntries(h.pluginRegistry, h.capabilityRegistry)
 
-	page, err := rest.NewPage(r, entries, nil, nil)
+	answered, err := page.New(r, entries, nil, nil)
 	if err != nil {
-		rest.Write(w, r, rest.NewInternal())
+		problem.Write(w, r, problem.NewInternal())
 
 		return fmt.Errorf("building the page of plugins: %w", err)
 	}
 
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, page)
+	render.JSON(w, r, answered)
 
 	return nil
 }
@@ -125,7 +129,7 @@ func (h *Plugin) UIAssets(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	w.Header().Set("Cache-Control", rest.Immutable)
+	w.Header().Set("Cache-Control", cache.Immutable)
 	w.Header().Set("Vary", "Accept-Encoding")
 
 	fileServer := http.StripPrefix(
@@ -159,7 +163,7 @@ func (h *Plugin) ReadSettings(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if !version.IsZero() {
-		w.Header().Set(rest.ETagHeader, rest.ETag(version))
+		w.Header().Set(precondition.ETagHeader, precondition.ETag(version))
 	}
 
 	render.Status(r, http.StatusOK)
@@ -173,13 +177,13 @@ func (h *Plugin) SaveSettings(w http.ResponseWriter, r *http.Request) error {
 	var input map[string]any
 
 	if err := render.DecodeJSON(r.Body, &input); err != nil {
-		rest.Write(w, r, rest.NewBodyInvalid())
+		problem.Write(w, r, problem.NewBodyInvalid())
 
 		//nolint:nilerr // the handler answered the request, so Wrap must not log it.
 		return nil
 	}
 
-	version := rest.IfMatchFromContext(r.Context())
+	version := precondition.IfMatchFromContext(r.Context())
 	if err := h.settingsSvc.Save(r.Context(), chi.URLParam(r, "id"), input, version); err != nil {
 		return h.failSettings(w, r, err)
 	}
@@ -195,27 +199,27 @@ func (h *Plugin) failSettings(w http.ResponseWriter, r *http.Request, err error)
 
 	switch {
 	case errors.Is(err, errs.ErrSettingsSchemaNotFound):
-		rest.Write(w, r, problems.NewSettingsAbsent())
+		problem.Write(w, r, problems.NewSettingsAbsent())
 	case errors.As(err, &invalid):
-		rest.Write(w, r, problems.NewSettingsInvalid().WithErrors(fieldFailures(invalid)...))
-	case errors.Is(err, rest.ErrModified):
-		rest.Write(w, r, rest.NewPreconditionFailed())
+		problem.Write(w, r, problems.NewSettingsInvalid().WithErrors(fieldFailures(invalid)...))
+	case errors.Is(err, precondition.ErrModified):
+		problem.Write(w, r, problem.NewPreconditionFailed())
 	default:
 		// The body carries no cause, so this line is the one report of it.
 		h.logger.ErrorContext(r.Context(), "the settings request failed", slog.Any("error", err))
 
-		rest.Write(w, r, rest.NewInternal())
+		problem.Write(w, r, problem.NewInternal())
 	}
 
 	return nil
 }
 
 // fieldFailures turns the fields of a rejected save into the errors member.
-func fieldFailures(invalid *settings.InvalidError) []rest.FieldFailure {
-	failures := make([]rest.FieldFailure, 0, len(invalid.Fields))
+func fieldFailures(invalid *settings.InvalidError) []problem.FieldFailure {
+	failures := make([]problem.FieldFailure, 0, len(invalid.Fields))
 
 	for _, field := range invalid.Fields {
-		failures = append(failures, rest.FieldFailure{
+		failures = append(failures, problem.FieldFailure{
 			Detail:  field.Detail,
 			Pointer: field.Pointer,
 		})

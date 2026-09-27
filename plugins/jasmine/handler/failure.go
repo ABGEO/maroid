@@ -5,7 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/precondition"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 // failWrite answers a write that did not land. A record that moved after the
@@ -18,12 +19,12 @@ func failWrite(
 	message string,
 	err error,
 ) {
-	if errors.Is(err, rest.ErrModified) {
-		rest.Write(w, r, rest.NewPreconditionFailed())
+	if errors.Is(err, precondition.ErrModified) {
+		problem.Write(w, r, problem.NewPreconditionFailed())
 
 		return
 	}
 
 	logger.ErrorContext(r.Context(), message, slog.Any("error", err))
-	rest.Write(w, r, rest.NewInternal())
+	problem.Write(w, r, problem.NewInternal())
 }

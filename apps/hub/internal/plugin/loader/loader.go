@@ -11,7 +11,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/registrar"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest"
+	"github.com/abgeo/maroid/libs/rest/idempotency"
 )
 
 // ConstructorSymbol is the name of the exported constructor symbol
@@ -30,7 +30,7 @@ func New(
 	host pluginapi.Host,
 	verifier auth.TokenVerifier,
 	resolver auth.IdentityResolver,
-	idempotency rest.IdempotencyStore,
+	idempotency idempotency.Store,
 	commandRegistry *registry.CommandRegistry,
 	cronRegistry *registry.CronRegistry,
 	handlerRegistry *handler.Registry,
