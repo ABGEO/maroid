@@ -19,7 +19,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
-	"github.com/abgeo/maroid/libs/rest/idempotency"
 	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
@@ -63,7 +62,6 @@ type Auth struct {
 	identityResolver auth.IdentityResolver
 	invitationRepo   repository.InvitationRepository
 	authSvc          *auth.Service
-	idempotency      idempotency.Store
 }
 
 var _ AuthHandler = (*Auth)(nil)
@@ -79,7 +77,6 @@ func NewAuth(
 	identityResolver auth.IdentityResolver,
 	invitationRepo repository.InvitationRepository,
 	authSvc *auth.Service,
-	idempotency idempotency.Store,
 ) *Auth {
 	return &Auth{
 		cfg: cfg,
@@ -94,7 +91,6 @@ func NewAuth(
 		identityResolver: identityResolver,
 		invitationRepo:   invitationRepo,
 		authSvc:          authSvc,
-		idempotency:      idempotency,
 	}
 }
 
@@ -112,7 +108,6 @@ func (h *Auth) Register(router chi.Router) {
 
 		r.Group(func(r chi.Router) {
 			r.Use(auth.Middleware(h.logger, h.verifier, h.identityResolver))
-			r.Use(idempotency.Middleware(h.logger, h.idempotency))
 
 			r.Get("/sessions/self", Wrap(h.logger, h.Me))
 			r.Post("/identities", Wrap(h.logger, h.Link))

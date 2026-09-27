@@ -294,3 +294,97 @@ func TestAWriteWhoseClientLeftStillKeepsTheAnswer(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, repeat.Code)
 	assert.Equal(t, int32(1), handler.runs.Load(), "the repeat answers the kept result")
 }
+
+// sendTo runs one keyed write at target through the middleware.
+func sendTo(
+	t *testing.T,
+	store idempotency.Store,
+	handler http.Handler,
+	target string,
+) *httptest.ResponseRecorder {
+	t.Helper()
+
+	request := httptest.NewRequestWithContext(
+		t.Context(), http.MethodPost, target, strings.NewReader(`{"name":"Fern"}`),
+	)
+	request.Header.Set(idempotency.KeyHeader, "key-1")
+
+	recorder := httptest.NewRecorder()
+	idempotency.Middleware(slog.New(slog.DiscardHandler), store)(
+		handler,
+	).ServeHTTP(recorder, request)
+
+	return recorder
+}
+
+// APIFMT-SC-020: A repeat answers the headers that describe the answer, and no
+// other. A cookie or a CORS grant belongs to the request that first carried it,
+// so the cache neither keeps it nor hands it to a repeat.
+func TestARepeatReplaysOnlyTheHeadersOfTheAnswer(t *testing.T) {
+	t.Parallel()
+
+	store := newMemoryStore()
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Location", "/plants/1")
+		w.Header().Set("ETag", `"1790332200123456789"`)
+		w.Header().Set("Set-Cookie", "__Host-maroid_binding=secret")
+		w.Header().Set("Access-Control-Allow-Origin", "https://first.example")
+		w.Header().Set("X-Probe", "first")
+		w.WriteHeader(http.StatusCreated)
+	})
+
+	sendTo(t, store, handler, "/plants")
+	repeat := sendTo(t, store, handler, "/plants")
+
+	assert.Equal(t, http.StatusCreated, repeat.Code)
+	assert.Equal(t, "application/json", repeat.Header().Get("Content-Type"))
+	assert.Equal(t, "/plants/1", repeat.Header().Get("Location"))
+	assert.Equal(t, `"1790332200123456789"`, repeat.Header().Get("ETag"))
+
+	for _, name := range []string{"Set-Cookie", "Access-Control-Allow-Origin", "X-Probe"} {
+		assert.Empty(t, repeat.Header().Get(name), "a repeat never carries %s", name)
+		assert.Empty(t, store.held["key-1"].Header.Get(name), "the cache never keeps %s", name)
+	}
+}
+
+// APIFMT-SC-020: A row that an earlier release stored with every header still
+// replays the headers of the answer alone.
+func TestAStoredCookieNeverReplays(t *testing.T) {
+	t.Parallel()
+
+	store := newMemoryStore()
+	handler := &creator{}
+
+	sendTo(t, store, handler, "/plants")
+
+	held := store.held["key-1"]
+	held.Header.Set("Set-Cookie", "__Host-maroid_binding=secret")
+	store.held["key-1"] = held
+
+	repeat := sendTo(t, store, handler, "/plants")
+
+	assert.Equal(t, http.StatusCreated, repeat.Code)
+	assert.Empty(t, repeat.Header().Get("Set-Cookie"))
+}
+
+// APIFMT-SC-020: A route may carry its input in the query. The same key with
+// another query is another request, so it answers 400 and never the first
+// answer.
+func TestARepeatUnderOneKeyWithAnotherQueryIsRefused(t *testing.T) {
+	t.Parallel()
+
+	store := newMemoryStore()
+	handler := &creator{}
+
+	first := sendTo(t, store, handler, "/identities?provider=telegram")
+	other := sendTo(t, store, handler, "/identities?provider=cloud")
+
+	assert.Equal(t, http.StatusCreated, first.Code)
+	assert.Equal(t, http.StatusBadRequest, other.Code)
+	assert.Equal(t, int32(1), handler.runs.Load())
+
+	same := sendTo(t, store, handler, "/identities?provider=telegram")
+	assert.Equal(t, http.StatusCreated, same.Code)
+	assert.Equal(t, int32(1), handler.runs.Load(), "the same query replays")
+}

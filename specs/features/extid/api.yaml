@@ -44,7 +44,6 @@ paths:
         request, so a rewritten cookie cannot move the attach.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
-        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
         - name: provider
           in: query
           required: true

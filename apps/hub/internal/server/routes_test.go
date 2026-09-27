@@ -299,3 +299,37 @@ func TestASaveAnswersTheValidatorOfTheNextSave(t *testing.T) {
 	stale := send(http.MethodPut, answered)
 	assert.Equal(t, http.StatusPreconditionFailed, stale.Code)
 }
+
+// APIFMT-SC-020: A start of a flow takes no key. Each start mints a binding
+// and a state that one flow spends, so a key that replayed the first answer
+// would hand a client a spent address and the secret of its cookie. The route
+// runs every time, and the key cache holds nothing.
+func TestAFlowStartIgnoresTheKey(t *testing.T) {
+	t.Parallel()
+
+	fixture := hubUnderTest(t)
+
+	start := func() *httptest.ResponseRecorder {
+		request := httptest.NewRequestWithContext(t.Context(), http.MethodPost,
+			"/auth/identities?provider=telegram&"+redirect, http.NoBody)
+		request.AddCookie(fixture.session)
+		request.Header.Set(idempotency.KeyHeader, "one-start")
+
+		recorder := httptest.NewRecorder()
+		fixture.router.ServeHTTP(recorder, request)
+
+		return recorder
+	}
+
+	first := start()
+	second := start()
+
+	require.Equal(t, http.StatusAccepted, first.Code, first.Body.String())
+	require.Equal(t, http.StatusAccepted, second.Code, second.Body.String())
+	assert.NotEqual(t, first.Body.String(), second.Body.String(), "each start mints its own state")
+
+	var held int
+
+	require.NoError(t, fixture.database.Get(&held, `SELECT count(*) FROM public.idempotency_keys;`))
+	assert.Zero(t, held)
+}

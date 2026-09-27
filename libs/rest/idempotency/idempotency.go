@@ -113,7 +113,7 @@ func Middleware(logger *slog.Logger, store Store) func(http.Handler) http.Handle
 			if err = store.Keep(keepCtx, key, Answer{
 				RequestHash: digestOf(r, body),
 				Status:      recorder.status,
-				Header:      recorder.header,
+				Header:      replayable(recorder.header),
 				Body:        recorder.body.Bytes(),
 			}); err != nil {
 				logger.ErrorContext(r.Context(), "the key cache kept no answer",
@@ -154,7 +154,7 @@ func replay(
 		return true
 	}
 
-	for name, values := range held.Header {
+	for name, values := range replayable(held.Header) {
 		if w.Header().Get(name) != "" {
 			continue
 		}
@@ -170,12 +170,35 @@ func replay(
 	return true
 }
 
-// digestOf builds the request hash that the cache compares.
+// replayable keeps the headers that describe the answer itself. A cookie, a
+// CORS grant, or any other header belongs to the request that first carried it,
+// and a replay must never hand it to another.
+func replayable(header http.Header) http.Header {
+	names := []string{
+		"Content-Type",
+		"Location",
+		"ETag",
+	}
+	kept := http.Header{}
+
+	for _, name := range names {
+		if values := header.Values(name); len(values) > 0 {
+			kept[http.CanonicalHeaderKey(name)] = values
+		}
+	}
+
+	return kept
+}
+
+// digestOf builds the request hash that the cache compares. The query counts,
+// because a route may carry its input there and not in the body.
 func digestOf(r *http.Request, body []byte) string {
 	sum := sha256.New()
 	sum.Write([]byte(r.Method))
 	sum.Write([]byte{0})
 	sum.Write([]byte(r.URL.Path))
+	sum.Write([]byte{0})
+	sum.Write([]byte(r.URL.Query().Encode()))
 	sum.Write([]byte{0})
 	sum.Write(body)
 

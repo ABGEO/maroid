@@ -96,7 +96,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		handler.NewAuth(
 			cfg, logger, verifier,
 			auth.NewOIDCFlow(oidcSvc, repository.NewAuthFlow(instance.DB), cfg.Auth.FlowTTL),
-			userRepo, identityRepo, resolver, invitationRepo, service, store,
+			userRepo, identityRepo, resolver, invitationRepo, service,
 		),
 		handler.NewPlugin(
 			logger, verifier, resolver,

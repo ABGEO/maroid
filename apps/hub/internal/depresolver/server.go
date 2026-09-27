@@ -225,11 +225,6 @@ func (c *Container) buildAuthHandler(
 		return nil, err
 	}
 
-	idempotencyStore, err := c.IdempotencyStore()
-	if err != nil {
-		return nil, err
-	}
-
 	return handler.NewAuth(
 		cfg,
 		logger,
@@ -240,7 +235,6 @@ func (c *Container) buildAuthHandler(
 		identityResolver,
 		invitationRepo,
 		authSvc,
-		idempotencyStore,
 	), nil
 }
 

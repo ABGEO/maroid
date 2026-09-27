@@ -164,8 +164,8 @@ CREATE INDEX idempotency_keys_created_at ON public.idempotency_keys (created_at)
 `OWN-004` and `OWN-006` scope it: the table carries `user_id`, forces row level
 security, and takes the policy and the `set_updated_at` trigger of every other
 scoped table. `OWN-005` fills `user_id` from the session. `request_hash` holds a
-digest of the method, the path, and the body, so a repeat under one key with
-another body answers a failure rather than the wrong record.
+digest of the method, the path, the query, and the body, so a repeat under one
+key with another request answers a failure rather than the wrong record.
 
 `body` holds bytes, because a 204 carries no JSON and a replay answers the bytes
 that the first write answered. `headers` holds the headers of that answer, so a
@@ -393,10 +393,9 @@ creates. It stores the status and the body under the key of the acting user, and
 answers the stored pair on a repeat. The hub implements the store over
 `idempotency_keys`.
 
-The middleware runs behind the access check, wherever one stands: the
-authenticated group of the auth routes, the group of the settings routes, and
-the group that `API-004` mounts every plugin route in. It reaches no route that
-carries no credential.
+The middleware runs behind the access check, on the group of the settings routes
+and on the group that `API-004` mounts every plugin route in. It reaches no route
+that carries no credential, and no route that starts a flow.
 
 **Rationale:** The store belongs to the hub because it is one table for every
 plugin, and the middleware belongs to `libs/rest` because a plugin route needs
@@ -407,10 +406,15 @@ it and `PLG-007` denies a plugin `apps/hub`. An interface between the two keeps
 group that holds the middleware, so a plugin handler never reaches the store.
 
 A route that carries no credential takes no key. `OWN-004` scopes the table to a
-user and a public route names none. The two public starts of `API-003` would
-gain nothing anyway: each answers an address that carries a single use state, so
-a replay would hand a client an address that its own flow row has already
-spent.
+user and a public route names none. No start of a flow takes one either, public
+or authenticated. Each start answers an address that carries a single use state
+and sets the cookie of its binding, so a replay would hand a client an address
+that its own flow row has already spent, and the secret of a cookie that the
+cache would have to hold.
+
+A repeat answers the status, the body, and three headers of the first answer:
+`Content-Type`, `Location`, and `ETag`. The cache keeps no other header. A cookie
+or a CORS grant belongs to the request that first carried it.
 
 **Alternatives:** A natural key on each table, so that a repeat collides. It works
 per table, needs a migration on each one, and answers a conflict rather than the
