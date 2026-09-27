@@ -83,7 +83,7 @@ time takes UTC. The deck and `libs/api-client` read the new shape.
 | `plugins/jasmine/ui/src/lib/`          | create | A pager that follows `next` and `prev`.                       |
 | `libs/api-client/src/problem.ts`       | change | Every type constant takes the relative form.                  |
 | `apps/deck/src/lib/api/types.ts`       | change | The five members already read snake case. See `APIFMT-DD-004`. |
-| `.golangci.yaml`                       | change | `tagliatelle` takes `json: snake`, with the exemptions of `APIFMT-DD-004`. |
+| `.golangci.yaml`                       | change | `tagliatelle` takes `json: snake`.                            |
 
 `Page[T]` and its members:
 
@@ -221,8 +221,9 @@ asking for it. It buys no confidentiality here and costs a rotation story.
 **Realizes:** `APIFMT-FR-001`, `APIFMT-INV-002`
 
 **Decision:** Every JSON tag of the API takes snake case. `.golangci.yaml` sets
-`tagliatelle` to `json: snake`, and exempts the files that `RES-003` puts outside
-the standard.
+`tagliatelle` to `json: snake`. A struct that `RES-003` puts outside the standard
+carries `//nolint:tagliatelle` on its own declaration, and the configuration
+exempts no file.
 
 **Rationale:** The linter enforces the rule that a reviewer would otherwise
 carry. Eleven tags on the API surface change. The 90 tags of
@@ -230,7 +231,14 @@ carry. Eleven tags on the API surface change. The 90 tags of
 `apps/hub/internal/mcpserver/tools/` sit inside an MCP payload, and the two of
 `plugins/parking/config/config.go` are keys of a map that a person stored.
 
-**Alternatives:** Turn `tagliatelle` off and rely on review. The repository
+The exemption sits on the struct, where a reader of the struct sees it. A new
+struct in the same file is not exempt until its author marks it.
+
+**Alternatives:** Exempt the files in `.golangci.yaml`. One place lists every
+exemption, but a reader of a struct does not see it, and every struct that a
+file gains later takes the exemption without a decision.
+
+Turn `tagliatelle` off and rely on review. The repository
 already carries the opposite setting, so the rule would hold for exactly as long
 as the next reviewer remembers it.
 
@@ -375,7 +383,7 @@ rows measure the cost, because the time of a read this small drowns in noise.
 | 1   | Rename `libs/problem` to `libs/rest` in `go.work`, `go.mod` and every import. | `APIFMT-DD-001`                | [x]  |
 | 2   | Add `page.go` and `cursor.go` to `libs/rest`, with their tests.            | `APIFMT-FR-002`, `APIFMT-FR-003` | [x]  |
 | 3   | Add `NewCursorStale` to the registry.                                     | `APIFMT-FR-005`                 | [x]  |
-| 4   | Flip `tagliatelle` and add the exemptions. Change the eleven tags.        | `APIFMT-FR-001`                 | [x]  |
+| 4   | Flip `tagliatelle`, mark each exempt struct, and change the eleven tags. | `APIFMT-FR-001`                 | [x]  |
 | 5   | Add `.UTC()` to each DTO that formats a moment.                           | `APIFMT-FR-008`                 | [x]  |
 | 6   | Add `omitempty` to every optional member.                                 | `APIFMT-FR-009`                 | [x]  |
 | 7   | Take a cursor and a limit in each `List` of `jasmine`.                    | `APIFMT-FR-003`                 | [x]  |
