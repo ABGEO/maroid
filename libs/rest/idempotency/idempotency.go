@@ -18,7 +18,7 @@ import (
 const (
 	// KeyHeader carries the key that a client picks for one write, so
 	// that repeating that write is safe.
-	KeyHeader = "Middleware-Key"
+	KeyHeader = "Idempotency-Key"
 
 	idempotencyKeyMaxLength = 255
 	idempotencyBodyMax      = 1 << 20
@@ -62,7 +62,7 @@ func Middleware(logger *slog.Logger, store Store) func(http.Handler) http.Handle
 
 			if len(key) > idempotencyKeyMaxLength {
 				problem.Write(w, r, problem.NewRequestInvalid().
-					WithDetail("The Middleware-Key header is longer than the store holds."))
+					WithDetail("The Idempotency-Key header is longer than the store holds."))
 
 				return
 			}
@@ -137,7 +137,7 @@ func replay(
 	// identifier and the cache period for this request, not for the first one.
 	if held.RequestHash != hash {
 		problem.Write(w, r, problem.NewRequestInvalid().WithDetail(
-			"The Middleware-Key header names an earlier request that differs from this one.",
+			"The Idempotency-Key header names an earlier request that differs from this one.",
 		))
 
 		return true
