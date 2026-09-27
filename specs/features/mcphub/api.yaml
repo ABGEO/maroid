@@ -89,7 +89,7 @@ paths:
                 type: object
                 description: A JSON-RPC 2.0 response.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "#/components/responses/BearerChallenge"
     get:
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
@@ -139,27 +139,8 @@ components:
         resource_name:
           type: string
 
-    Problem:
-      type: object
-      description: A problem detail document. See `ERR-001` and RFC 9457.
-      required: [type, title, status]
-      properties:
-        type:
-          type: string
-          format: uri
-          description: The problem type. `ERR-002` gives the grammar, `ERR-003` the registry.
-        title:
-          type: string
-        status:
-          type: integer
-        detail:
-          type: string
-        instance:
-          type: string
-          format: uri
-
   responses:
-    Unauthorized:
+    BearerChallenge:
       description: >
         The request carries no valid token, or the identity behind it holds
         no active user record. `MCPHUB-FR-002`, `MCPHUB-FR-003`.
@@ -174,7 +155,7 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
 
     MethodNotAllowed:
       headers:
@@ -186,4 +167,4 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "../../api/components.yaml#/components/schemas/Problem"

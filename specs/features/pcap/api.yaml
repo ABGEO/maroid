@@ -11,7 +11,7 @@ servers:
     description: The hub.
 
 security:
-  - bearerAuth: []
+  - sessionCookie: []
 
 paths:
   /plugins:
@@ -45,16 +45,20 @@ paths:
                         type: array
                         items:
                           $ref: "#/components/schemas/PluginEntry"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
 
 components:
   securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: The token that the IdP mints for the web shell. `SEC-002`.
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: >
+        The access token that Dex issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.
 
   schemas:
     PluginEntry:
@@ -196,35 +200,3 @@ components:
           description: The tool name with the prefix of the plugin. `MCPHUB-FR-008`.
         description:
           type: string
-
-    Problem:
-      type: object
-      description: A problem detail document. See `ERR-001` and RFC 9457.
-      required: [type, title, status]
-      properties:
-        type:
-          type: string
-          format: uri
-          description: The problem type. `ERR-002` gives the grammar, `ERR-003` the registry.
-        title:
-          type: string
-        status:
-          type: integer
-        detail:
-          type: string
-        instance:
-          type: string
-          format: uri
-
-  responses:
-    Unauthorized:
-      headers:
-        X-Flow-ID:
-          $ref: "../../api/components.yaml#/components/headers/FlowId"
-      description: >
-        The request carries no valid token, or the identity holds no active user record.
-        The type is `/problems/http/access-denied`.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"

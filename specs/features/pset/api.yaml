@@ -12,7 +12,7 @@ servers:
     description: The hub.
 
 security:
-  - bearerAuth: []
+  - sessionCookie: []
 
 paths:
   /plugins/{pluginId}/settings/schema:
@@ -37,7 +37,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SettingsSchema"
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NoSchema"
 
@@ -60,13 +60,16 @@ paths:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
             ETag:
               $ref: "../../api/components.yaml#/components/headers/ETag"
+              description: >
+                The validator of the stored settings. It is absent while the user
+                stores none, and a save that then names no `If-Match` lands.
           description: The stored settings of the acting user.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/SettingsValues"
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NoSchema"
     put:
@@ -95,9 +98,9 @@ paths:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
           description: The hub stored every declared field.
         "400":
-          $ref: "#/components/responses/MalformedBody"
+          $ref: "#/components/responses/MalformedRequest"
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NoSchema"
         "412":
@@ -119,11 +122,13 @@ components:
         examples: [dev.maroid.telasi]
 
   securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: The token carries the Maroid user identifier. See `SEC-003`.
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: >
+        The access token that Dex issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.
 
   schemas:
     SettingsSchema:
@@ -197,66 +202,19 @@ components:
           password: the-new-credential
           accountNumber: null
 
-    Problem:
-      type: object
-      description: A problem detail document. See `ERR-001` and RFC 9457.
-      required: [type, title, status]
-      properties:
-        type:
-          type: string
-          format: uri
-          description: The problem type. `ERR-002` gives the grammar, `ERR-003` the registry.
-        title:
-          type: string
-        status:
-          type: integer
-        detail:
-          type: string
-        instance:
-          type: string
-          format: uri
-        errors:
-          type: array
-          description: One item for each field that caused the rejection. See `ERR-004`.
-          items:
-            type: object
-            required: [detail, pointer]
-            properties:
-              detail:
-                type: string
-              pointer:
-                type: string
-                description: A JSON Pointer in the fragment form of RFC 6901.
-          examples:
-            - - detail: the field is required
-                pointer: "#/password"
-              - detail: the value is not in the list
-                pointer: "#/period"
-
   responses:
-    MalformedBody:
+    MalformedRequest:
       headers:
         X-Flow-ID:
           $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
-        The body does not decode as a JSON object. The hub stored nothing.
-        The type is `/problems/http/body-invalid`.
+        The hub stored nothing. A body that does not decode as a JSON object
+        answers `/problems/http/body-invalid`. An `If-Match` that holds no
+        validator of this API answers `/problems/http/request-invalid`.
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
-
-    Unauthorized:
-      headers:
-        X-Flow-ID:
-          $ref: "../../api/components.yaml#/components/headers/FlowId"
-      description: >
-        The request carries no active user record.
-        The type is `/problems/http/access-denied`.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
 
     NoSchema:
       headers:
@@ -269,7 +227,7 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
 
     Invalid:
       headers:
@@ -282,7 +240,7 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
 
     ProtectionFailed:
       headers:
@@ -295,4 +253,4 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "../../api/components.yaml#/components/schemas/Problem"

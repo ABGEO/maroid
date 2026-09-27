@@ -59,7 +59,7 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
     get:
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
@@ -94,8 +94,10 @@ paths:
                         type: array
                         items:
                           $ref: "#/components/schemas/ProviderState"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
 
   /auth/invitation-redemptions:
     post:
@@ -104,8 +106,9 @@ paths:
       description: >
         Realizes `EXTID-FR-012`, `EXTID-FR-013`, and `EXTID-FR-014`.
         The hub reads the invitation by the digest of the token. An invitation that is
-        absent, consumed, or expired ends the request before Dex. Otherwise the hub
-        writes a flow row with the intent `redeem` and redirects.
+        absent, consumed, or expired answers 404 before Dex. Otherwise the hub
+        writes a flow row with the intent `redeem` and answers the address to visit.
+        See `EXTID-DD-015`.
       security: []
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
@@ -120,17 +123,7 @@ paths:
         - $ref: "#/components/parameters/Redirect"
       responses:
         "202":
-          description: >
-            The address of the identity provider, when the invitation is valid. An
-            invitation that is absent, consumed, or expired answers 404 instead, with the
-            query parameter `error=invitation_invalid`. The deck renders that.
-            See `EXTID-DD-015`.
-          headers:
-            X-Flow-ID:
-              $ref: "../../api/components.yaml#/components/headers/FlowId"
-            Location:
-              schema:
-                type: string
+          $ref: "#/components/responses/Handoff"
         "400":
           $ref: "#/components/responses/NoTarget"
         "404":
@@ -207,7 +200,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/CurrentUser"
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
 
   /auth/identities/{provider}:
     parameters:
@@ -233,7 +226,7 @@ paths:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
           description: The identity is gone.
         "401":
-          $ref: "#/components/responses/Unauthorized"
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NoIdentity"
         "409":
@@ -330,11 +323,11 @@ components:
         attached:
           type: boolean
         username:
-          type: ["string", "null"]
+          type: string
         display_name:
-          type: ["string", "null"]
+          type: string
         picture_url:
-          type: ["string", "null"]
+          type: string
         attached_at:
           type: string
           format: date-time
@@ -349,25 +342,6 @@ components:
         - provider: cloud
           name: ABGEO.cloud
           attached: false
-
-    Problem:
-      type: object
-      description: A problem detail document. See `ERR-001` and RFC 9457.
-      required: [type, title, status]
-      properties:
-        type:
-          type: string
-          format: uri
-          description: The problem type. `ERR-002` gives the grammar, `ERR-003` the registry.
-        title:
-          type: string
-        status:
-          type: integer
-        detail:
-          type: string
-        instance:
-          type: string
-          format: uri
 
   responses:
     Handoff:
@@ -395,19 +369,7 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
-
-    Unauthorized:
-      headers:
-        X-Flow-ID:
-          $ref: "../../api/components.yaml#/components/headers/FlowId"
-      description: >
-        The request carries no token, or no identity names an active record.
-        The type is `/problems/http/access-denied`.
-      content:
-        application/problem+json:
-          schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
 
     InvitationSpent:
       description: >
@@ -433,7 +395,7 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
 
     NoIdentity:
       headers:
@@ -445,7 +407,7 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
 
     LastIdentity:
       headers:
@@ -457,7 +419,7 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
 
 security:
   - sessionCookie: []

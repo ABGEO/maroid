@@ -55,7 +55,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/SignOut"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          $ref: "#/components/responses/RedirectRefused"
 
 components:
   schemas:
@@ -70,27 +70,8 @@ components:
       examples:
         - redirect: "https://deck.example/signed-out"
 
-    Problem:
-      type: object
-      description: A problem detail document. See `ERR-001` and RFC 9457.
-      required: [type, title, status]
-      properties:
-        type:
-          type: string
-          format: uri
-          description: The problem type. `ERR-002` gives the grammar, `ERR-003` the registry.
-        title:
-          type: string
-        status:
-          type: integer
-        detail:
-          type: string
-        instance:
-          type: string
-          format: uri
-
   responses:
-    BadRequest:
+    RedirectRefused:
       headers:
         X-Flow-ID:
           $ref: "../../api/components.yaml#/components/headers/FlowId"
@@ -101,7 +82,7 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
           examples:
             invalidRedirect:
               value:

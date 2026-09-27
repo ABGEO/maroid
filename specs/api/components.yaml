@@ -96,25 +96,51 @@ components:
           schema:
             $ref: "#/components/schemas/Problem"
     Unauthorized:
-      description: The request carries no active user record.
+      description: >
+        The request carries no valid credential, or the identity behind it holds
+        no active user record. The type is `/problems/http/access-denied`.
+      headers:
+        X-Flow-ID:
+          $ref: "#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    RequestInvalid:
+      description: >
+        A query parameter or a header holds a value that the route does not take.
+        The type is `/problems/http/request-invalid`, and `detail` names the
+        parameter.
+      headers:
+        X-Flow-ID:
+          $ref: "#/components/headers/FlowId"
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
     NotFound:
       description: The resource does not exist.
+      headers:
+        X-Flow-ID:
+          $ref: "#/components/headers/FlowId"
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
     Invalid:
       description: The body failed validation.
+      headers:
+        X-Flow-ID:
+          $ref: "#/components/headers/FlowId"
       content:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
     Default:
       description: A failure. `ERR-001` gives the body.
+      headers:
+        X-Flow-ID:
+          $ref: "#/components/headers/FlowId"
       content:
         application/problem+json:
           schema:
