@@ -162,6 +162,12 @@ func run(
 	recorder := &recordedAnswer{ResponseWriter: w, status: http.StatusOK}
 	next.ServeHTTP(recorder, r)
 
+	// A handler that writes nothing answers 200 when it returns, with the
+	// headers it set. The recorder saw no write, so it reads them now.
+	if !recorder.written {
+		recorder.header = w.Header().Clone()
+	}
+
 	if recorder.status >= http.StatusBadRequest {
 		return
 	}
@@ -261,6 +267,12 @@ func (a *recordedAnswer) WriteHeader(status int) {
 	a.header = a.ResponseWriter.Header().Clone()
 
 	a.ResponseWriter.WriteHeader(status)
+}
+
+// Unwrap answers the writer that this one records for, so that
+// http.ResponseController reaches it.
+func (a *recordedAnswer) Unwrap() http.ResponseWriter {
+	return a.ResponseWriter
 }
 
 func (a *recordedAnswer) Write(payload []byte) (int, error) {

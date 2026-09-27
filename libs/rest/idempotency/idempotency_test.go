@@ -483,3 +483,44 @@ func TestAPanickingWriteFreesItsKey(t *testing.T) {
 	repeat := writeWithKey(t, store, &creator{}, "key-1", `{"name":"Fern"}`)
 	assert.Equal(t, http.StatusCreated, repeat.Code)
 }
+
+// A keyed handler reaches the writer of the server through
+// http.ResponseController, so it can flush or set a deadline.
+func TestAKeyedHandlerReachesTheResponseController(t *testing.T) {
+	t.Parallel()
+
+	var flushErr atomic.Value
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+		flushErr.Store(fmt.Sprint(http.NewResponseController(w).Flush()))
+	})
+
+	recorder := writeWithKey(t, newMemoryStore(), handler, "key-1", `{"name":"Fern"}`)
+
+	assert.Equal(t, http.StatusCreated, recorder.Code)
+	assert.Equal(t, "<nil>", flushErr.Load(), "the flush reaches the server")
+}
+
+// APIFMT-SC-020: A handler that sets its headers and writes nothing answers
+// 200 when it returns. A repeat answers the same headers.
+func TestARepeatOfAnAnswerWithNoBodyKeepsItsHeaders(t *testing.T) {
+	t.Parallel()
+
+	store := newMemoryStore()
+
+	var runs atomic.Int32
+
+	silent := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		runs.Add(1)
+		w.Header().Set("Location", "/plants/1")
+	})
+
+	first := writeWithKey(t, store, silent, "key-1", `{"name":"Fern"}`)
+	repeat := writeWithKey(t, store, silent, "key-1", `{"name":"Fern"}`)
+
+	assert.Equal(t, http.StatusOK, first.Code)
+	assert.Equal(t, http.StatusOK, repeat.Code)
+	assert.Equal(t, "/plants/1", repeat.Header().Get("Location"))
+	assert.Equal(t, int32(1), runs.Load())
+}
