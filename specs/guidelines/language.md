@@ -4,7 +4,7 @@ title: Language
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-23
+updated: 2026-09-28
 scope: [specs/, CLAUDE.md, code comments, commit messages]
 related: [TRC, GLO, PRC, GO, TS]
 ---
@@ -229,8 +229,8 @@ These comments are correct:
 | Kind                                                   | Rule                                                                      |
 | ------------------------------------------------------ | ------------------------------------------------------------------------- |
 | A documentation comment on an exported identifier      | Required. See `GO-003`.                                                   |
-| A statement identifier at the code that realizes it    | Required. See `TRC-007`.                                                  |
-| A reason that the code cannot show                     | Correct. Give the constraint, the standard, or the defect that forced it. |
+| A statement identifier above the test that verifies it, or above the migration constraint that enforces it | Required. See `TRC-007`. Production code carries none. |
+| A reason that the code cannot show                     | Correct. Give the constraint, the standard, or the defect that forced it, in words. |
 | A warning about a result that a reader does not expect | Correct.                                                                  |
 | `// @todo:` with the work named                        | Correct.                                                                  |
 
