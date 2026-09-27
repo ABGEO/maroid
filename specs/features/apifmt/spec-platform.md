@@ -99,9 +99,10 @@ documents and a linter checks them. Four headers join the answer.
 
 | Key                   | Type     | Default | Validation           | Realizes        |
 | --------------------- | -------- | ------- | -------------------- | --------------- |
-| `server.external_url` | `string` | none    | `required,url`       | `APIFMT-FR-013` |
+| `server.external_url` | `string` | none    | `required,http_url`  | `APIFMT-FR-013` |
 
-`server.hostname` goes. `validate:"url"` demands the scheme, which `fqdn` did not.
+`server.hostname` goes. `validate:"http_url"` demands `http` or `https` and a host, which
+`fqdn` did not. `url` alone reads `localhost:8000` as a scheme and a path.
 Three readers take the value: the MCP discovery document, the webhook that
 Telegram registers, and a link that `RES-005` builds.
 
@@ -227,7 +228,7 @@ sequenceDiagram
 **Realizes:** `APIFMT-FR-013`
 
 **Decision:** `server.external_url` replaces `server.hostname`. It carries the
-scheme, the host and the port, and `validate:"required,url"` checks it at the
+scheme, the host and the port, and `validate:"required,http_url"` checks it at the
 start.
 
 **Rationale:** Three readers build an address today and two build a broken one.

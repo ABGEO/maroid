@@ -85,6 +85,9 @@ func TestTheExternalAddressIsRequiredAndCarriesTheScheme(t *testing.T) {
 		"no value":            {externalURL: "", valid: false},
 		"a bare host":         {externalURL: "hub.example.com", valid: false},
 		"a path with no host": {externalURL: "/mcp", valid: false},
+		"a host and a port":   {externalURL: "localhost:8000", valid: false},
+		"a domain and a port": {externalURL: "hub.example.com:8443", valid: false},
+		"a scheme not http":   {externalURL: "mailto:owner@example.com", valid: false},
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

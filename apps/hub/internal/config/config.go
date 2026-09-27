@@ -60,7 +60,7 @@ type CORS struct {
 
 // Server defines HTTP server configuration parameters.
 type Server struct {
-	ExternalURL    string   `mapstructure:"external_url"    validate:"required,url"`
+	ExternalURL    string   `mapstructure:"external_url"    validate:"required,http_url"`
 	ListenAddr     string   `default:"0.0.0.0"              mapstructure:"address"         validate:"ip"`
 	Port           string   `default:"8000"                 validate:"min=1,max=65535"`
 	TrustedProxies []string `mapstructure:"trusted_proxies" validate:"omitempty,dive,cidr"`
