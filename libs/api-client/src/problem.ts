@@ -1,4 +1,4 @@
-/** The header that carries the flow identifier of a request. See `ERR-006`. */
+/** The header that carries the flow identifier of a request. */
 export const FLOW_ID_HEADER = 'X-Flow-ID';
 
 /** The media type of every error response of the hub. */

@@ -98,7 +98,7 @@ func ReadRequest(r *http.Request, declared Options) (Request, *problem.Problem) 
 }
 
 // readLimit answers the default when the request names none, and refuses a
-// value outside the bounds that RES-005 gives.
+// value below 1 or above MaxLimit.
 func readLimit(raw string) (int, *problem.Problem) {
 	if raw == "" {
 		return DefaultLimit, nil
@@ -150,7 +150,7 @@ func readFilters(r *http.Request, declared Options) map[string]string {
 }
 
 // refuse builds the failure of one parameter, naming it so a client learns
-// which value to correct. ERR-005 bounds the detail.
+// which value to correct.
 func refuse(parameter string, reason string) *problem.Problem {
 	failure := problem.NewRequestInvalid().
 		WithDetail("The " + parameter + " parameter is not valid: " + reason + ".")

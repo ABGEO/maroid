@@ -19,8 +19,8 @@ func WithRequest(handler slog.Handler) slog.Handler {
 	return requestHandler{Handler: handler}
 }
 
-// Handle adds the `flow_id` attribute and passes the record on. LOG-009 gives
-// the name. The value is bare, without the prefix that an instance member holds.
+// Handle adds the `flow_id` attribute and passes the record on. The value is
+// bare, without the prefix that an instance member holds.
 //
 // Copies of a Record share state, so this clones before it adds. A handler that
 // fans out gives the same record to each of its handlers.

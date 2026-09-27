@@ -67,11 +67,11 @@ func New[T any](r *http.Request, items []T, next *Cursor, prev *Cursor) (Page[T]
 	return page, nil
 }
 
-// cursorLink answers the address of one neighbouring page, or nil when no such
+// cursorLink answers the address of one neighboring page, or nil when no such
 // page exists.
 func cursorLink(r *http.Request, cursor *Cursor) (*string, error) {
 	if cursor == nil {
-		return nil, nil //nolint:nilnil // An absent link carries a meaning. RES-005.
+		return nil, nil //nolint:nilnil // An absent link tells a client that no page lies there.
 	}
 
 	encoded, err := EncodeCursor(*cursor)

@@ -43,7 +43,7 @@ func NewMemberUnknown() Problem {
 
 // NewCursorStale reports a cursor whose sort or filters differ from the request
 // that carries it. A client tells it from a cursor it built wrong, and retires
-// the one it holds. RES-006.
+// the one it holds.
 func NewCursorStale() Problem {
 	return newProblem(
 		TypeCursorStale,

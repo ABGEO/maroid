@@ -8,7 +8,7 @@ export interface User {
 
 /**
  * The body that a route starting a flow answers. It names the address of the
- * identity provider that the browser visits next. See `API-003`.
+ * identity provider that the browser visits next.
  */
 export interface Handoff {
 	authorization_url: string;

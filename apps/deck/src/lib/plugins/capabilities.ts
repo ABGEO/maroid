@@ -54,7 +54,7 @@ export function countOf(plugin: Plugin, name: CapabilityName): number {
 	return Array.isArray(value) ? value.length : 0;
 }
 
-/** Every capability of a plugin, in the order that LABELS gives. PCAP-FR-006. */
+/** Every capability of a plugin, in the order that LABELS gives. */
 export function capabilitiesOf(plugin: Plugin): CapabilityName[] {
 	return ORDER.filter((name) => hasCapability(plugin, name));
 }
