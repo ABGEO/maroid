@@ -61,6 +61,7 @@ func TestEveryConstructorMatchesTheRegistry(t *testing.T) {
 	}{
 		"request invalid":    {problem.NewRequestInvalid(), problem.TypeRequestInvalid, 400},
 		"body invalid":       {problem.NewBodyInvalid(), problem.TypeBodyInvalid, 400},
+		"member unknown":     {problem.NewMemberUnknown(), problem.TypeMemberUnknown, 400},
 		"cursor stale":       {problem.NewCursorStale(), problem.TypeCursorStale, 400},
 		"access denied":      {problem.NewAccessDenied(), problem.TypeAccessDenied, 401},
 		"not found":          {problem.NewNotFound(), problem.TypeNotFound, 404},

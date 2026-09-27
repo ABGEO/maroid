@@ -64,7 +64,7 @@ time takes UTC. The deck and `libs/api-client` read the new shape.
 | -------------------------------------- | ------ | --------------------------------------------------------------- |
 | `libs/rest/go.mod`                     | rename | The module path becomes `github.com/abgeo/maroid/libs/rest`.  |
 | `libs/rest/problem/problem.go`         | move   | `Problem`, `FieldFailure`, and the three builders. Unchanged.  |
-| `libs/rest/problem/registry.go`        | change | The constructors. `NewCursorStale` joins them.                |
+| `libs/rest/problem/registry.go`        | change | The constructors. `NewCursorStale` and `NewMemberUnknown` join them. |
 | `libs/rest/problem/writer.go`          | move   | `Fill` and `Write`. Unchanged.                                |
 | `libs/rest/page/page.go`               | create | `Page[T]`, `New`, and the link builder.                       |
 | `libs/rest/address/address.go`         | create | The middleware that carries the external address, and its reader. |
@@ -80,7 +80,7 @@ time takes UTC. The deck and `libs/api-client` read the new shape.
 | `libs/api-client/src/page.ts`          | create | `Page<T>`.                                                    |
 | `libs/api-client/src/client.ts`        | change | `follow` reads a link as it came. Another origin throws.      |
 | `plugins/jasmine/ui/src/lib/`          | create | A pager that follows `next` and `prev`.                       |
-| `libs/api-client/src/problem.ts`       | change | Eleven type constants take the relative form.                 |
+| `libs/api-client/src/problem.ts`       | change | Every type constant takes the relative form.                  |
 | `apps/deck/src/lib/api/types.ts`       | change | The five members already read snake case. See `APIFMT-DD-004`. |
 | `.golangci.yaml`                       | change | `tagliatelle` takes `json: snake`, with the exemptions of `APIFMT-DD-004`. |
 

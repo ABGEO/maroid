@@ -8,6 +8,7 @@ import "net/http"
 const (
 	TypeRequestInvalid     = "/problems/http/request-invalid"
 	TypeBodyInvalid        = "/problems/http/body-invalid"
+	TypeMemberUnknown      = "/problems/http/member-unknown"
 	TypeAccessDenied       = "/problems/http/access-denied"
 	TypeCursorStale        = "/problems/http/cursor-stale"
 	TypeNotFound           = "/problems/http/not-found"
@@ -25,6 +26,17 @@ func NewRequestInvalid() Problem {
 // NewBodyInvalid reports a body that does not decode as a JSON object.
 func NewBodyInvalid() Problem {
 	return newProblem(TypeBodyInvalid, "The body is not a JSON object.", http.StatusBadRequest)
+}
+
+// NewMemberUnknown reports a body that carries a member which the schema of the
+// route does not declare. A route refuses the member rather than drop it, so a
+// client learns of a misspelled member.
+func NewMemberUnknown() Problem {
+	return newProblem(
+		TypeMemberUnknown,
+		"The body carries a member that the schema does not declare.",
+		http.StatusBadRequest,
+	)
 }
 
 // NewCursorStale reports a cursor whose sort or filters differ from the request
