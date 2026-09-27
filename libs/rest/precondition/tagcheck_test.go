@@ -22,7 +22,7 @@ func TestTheEntityTagOfAReadIsReadableAsAnIfMatch(t *testing.T) {
 
 	// What a read answers, and what the deck now holds in its form.
 	answered := precondition.ETag(moment)
-	require.Equal(t, `W/"1790332200123456789"`, answered)
+	require.Equal(t, `"1790332200123456789"`, answered)
 
 	// The same string, arriving on the write that the client sends back.
 	request := httptest.NewRequestWithContext(

@@ -40,13 +40,13 @@ func writeWith(t *testing.T, validator string) (*time.Time, int) {
 
 // APIFMT-SC-019: The validator comes from the moment of the last write, so no
 // column and no migration carries a version. APIFMT-DD-014.
-func TestTheEntityTagIsAWeakValidatorOfTheLastWrite(t *testing.T) {
+func TestTheEntityTagIsAStrongValidatorOfTheLastWrite(t *testing.T) {
 	t.Parallel()
 
 	tag := precondition.ETag(writtenAt())
 
-	assert.Equal(t, `W/"1790332200123456789"`, tag)
-	assert.True(t, len(tag) > 2 && tag[:2] == "W/", "the validator is weak")
+	assert.Equal(t, `"1790332200123456789"`, tag)
+	assert.NotContains(t, tag, "W/", "RFC 9110 lets only a strong validator guard a write")
 }
 
 // APIFMT-SC-019: Two moments that differ answer two validators, and one moment
@@ -82,17 +82,6 @@ func TestIfMatchCarriesTheValidatorToTheHandler(t *testing.T) {
 	assert.Nil(t, moment, "a write with no If-Match lands unconditionally")
 }
 
-// APIFMT-SC-019: A strong validator of the same shape reads too, because a
-// client that drops the weakness prefix still names one moment.
-func TestIfMatchReadsAStrongValidator(t *testing.T) {
-	t.Parallel()
-
-	moment, status := writeWith(t, `"1790332200123456789"`)
-	require.Equal(t, http.StatusOK, status)
-	require.NotNil(t, moment)
-	assert.True(t, writtenAt().Equal(*moment))
-}
-
 // APIFMT-SC-019: A value that Maroid did not answer never reaches a handler, so
 // no write compares against a moment that nothing produced. The middleware
 // answers it, so no route repeats the check.
@@ -100,11 +89,12 @@ func TestIfMatchRefusesAValueThatMaroidDidNotAnswer(t *testing.T) {
 	t.Parallel()
 
 	for name, value := range map[string]string{
-		"no quotes":      "1790332200123456789",
-		"not a number":   `W/"yesterday"`,
-		"empty quotes":   `W/""`,
-		"any":            "*",
-		"two validators": `W/"1", W/"2"`,
+		"no quotes":        "1790332200123456789",
+		"not a number":     `"yesterday"`,
+		"a weak validator": `W/"1790332200123456789"`,
+		"empty quotes":     `""`,
+		"any":              "*",
+		"two validators":   `"1", "2"`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

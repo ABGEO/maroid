@@ -149,11 +149,11 @@ components:
   headers:
     ETag:
       description: >
-        The validator of the record, weak, built from the moment of its last
+        The validator of the record, strong, built from the moment of its last
         write. A client sends it back in `If-Match`. `APIFMT-DD-014`.
       schema:
         type: string
-        examples: ['W/"1790332200123456789"']
+        examples: ['"1790332200123456789"']
     FlowId:
       description: The flow identifier of the request. `ERR-006`.
       schema:
@@ -217,7 +217,7 @@ components:
         mandatory. `APIFMT-FR-019`.
       schema:
         type: string
-        examples: ['W/"1790332200123456789"']
+        examples: ['"1790332200123456789"']
     IdempotencyKey:
       name: Idempotency-Key
       in: header

@@ -36,10 +36,10 @@ var (
 )
 
 // ETag returns the validator of a record whose last write is at moment. The
-// value is weak, because two answers with one moment can still differ in a
-// member that another table feeds.
+// value is strong, because it names one version of the stored record, and RFC
+// 9110 lets only a strong validator guard a write.
 func ETag(moment time.Time) string {
-	return `W/"` + strconv.FormatInt(moment.UnixNano(), 10) + `"`
+	return `"` + strconv.FormatInt(moment.UnixNano(), 10) + `"`
 }
 
 // IfMatch reads the validator of a conditional write once, and the context of
@@ -104,15 +104,13 @@ func readIfMatch(r *http.Request) (time.Time, bool, error) {
 	return moment, true, nil
 }
 
-// validatorMoment reads the moment out of one validator, weak or strong.
+// validatorMoment reads the moment out of one strong validator.
 func validatorMoment(validator string) (time.Time, error) {
-	quoted := strings.TrimPrefix(validator, "W/")
-
-	if len(quoted) < 2 || quoted[0] != '"' || quoted[len(quoted)-1] != '"' {
+	if len(validator) < 2 || validator[0] != '"' || validator[len(validator)-1] != '"' {
 		return time.Time{}, fmt.Errorf("reading %q: %w", validator, errValidatorInvalid)
 	}
 
-	nanoseconds, err := strconv.ParseInt(quoted[1:len(quoted)-1], 10, 64)
+	nanoseconds, err := strconv.ParseInt(validator[1:len(validator)-1], 10, 64)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("reading %q: %w", validator, errValidatorInvalid)
 	}

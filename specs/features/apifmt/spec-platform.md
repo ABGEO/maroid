@@ -191,7 +191,7 @@ function. `APIFMT-FR-014`.
 | Header              | On                                    | Value                                   | Realizes        |
 | ------------------- | ------------------------------------- | ---------------------------------------- | --------------- |
 | `X-Flow-ID`         | Every answer                          | The flow identifier, bare                | `APIFMT-FR-018` |
-| `ETag`              | A single record that a client writes  | `W/"<updated_at in unix nanoseconds>"`   | `APIFMT-FR-019` |
+| `ETag`              | A single record that a client writes  | `"<updated_at in unix nanoseconds>"`     | `APIFMT-FR-019` |
 | `If-Match`          | Read once by the chain, for every route | The value of an earlier `ETag`          | `APIFMT-FR-019` |
 | `Idempotency-Key`   | Read from a write that creates        | A value that the client picks            | `APIFMT-FR-020` |
 | `Cache-Control`     | Every answer                          | See below                                | `APIFMT-FR-021` |
@@ -350,13 +350,13 @@ an `instance` like a type, and `ERR-002` gives the relative form.
 
 **Realizes:** `APIFMT-FR-019`
 
-**Decision:** An `ETag` is the weak validator `W/"<updated_at in unix
+**Decision:** An `ETag` is the strong validator `"<updated_at in unix
 nanoseconds>"`. A write that carries `If-Match` adds `AND updated_at = $n` to its
 `UPDATE`, and zero rows changed answers 412.
 
 The `precondition.IfMatch` middleware reads the header once for the whole chain, and the
 context carries the moment to every handler. A value that this API never answered
-stops there with a 400. So no route parses the header, and a plugin reads the
+stops there with a 400, and so does a weak validator. So no route parses the header, and a plugin reads the
 moment with `precondition.IfMatchFromContext`. Setting the `ETag` stays with the handler,
 which alone knows the record that it answered, and mapping `precondition.ErrModified` to
 a 412 stays with the handler, because a plugin route is an `http.HandlerFunc` and
@@ -365,8 +365,16 @@ returns no error to the chain.
 **Rationale:** Every scoped table already carries `updated_at` with the trigger
 that fills it, so this adds no column and no migration. The comparison runs
 inside the same statement as the write, so no window sits between the check and
-the change. The validator is weak because two answers with one `updated_at` can
-still differ in a member that another table feeds.
+the change.
+
+The validator is strong. RFC 9110 compares `If-Match` strongly, and a weak
+validator never matches, so a client or a proxy that follows the RFC would refuse
+every conditional write. The value names one version of the stored record, which
+RFC 9110 allows a strong validator to be. A deploy that adds a member, or a
+settings schema that hides a stored field, changes an answer and keeps its
+`updated_at`. A write under the old validator then lands, which is safe, because
+the stored record did not change and the stored record is what `If-Match`
+guards.
 
 **Alternatives:** A `version` integer on every table. It adds a column and a
 migration to nine tables and duplicates what `updated_at` already orders. A
