@@ -28,7 +28,7 @@
 			}
 
 			health[plugin.id] =
-				missingFields(fieldsOf(schema), values).length > 0 ? 'incomplete' : 'complete';
+				missingFields(fieldsOf(schema), values.value).length > 0 ? 'incomplete' : 'complete';
 		} catch (error) {
 			console.error('Failed to read the settings of a plugin', error);
 		}

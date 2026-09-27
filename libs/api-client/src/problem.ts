@@ -32,6 +32,7 @@ export const PROBLEM_TYPE = {
   notFound: '/problems/http/not-found',
   settingsAbsent: '/problems/hub/settings-absent',
   methodNotAllowed: '/problems/http/method-not-allowed',
+  preconditionFailed: '/problems/http/precondition-failed',
   identityLast: '/problems/hub/identity-last',
   validationFailed: '/problems/http/validation-failed',
   settingsInvalid: '/problems/hub/settings-invalid',

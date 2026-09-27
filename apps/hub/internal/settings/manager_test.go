@@ -554,3 +554,25 @@ func TestARunReadsTheSettingsWithinTheTimeLimit(t *testing.T) {
 	percentile95 := taken[(samples*95/100)-1]
 	require.Less(t, percentile95, limit, "the 95th percentile of %d reads", samples)
 }
+
+// APIFMT-SC-019: A read answers the moment of the last write, which the entity
+// tag names. A record that no one has written yet has no such moment, so the
+// read answers none and the create that follows guards nothing.
+func TestReadAnswersAVersionOnlyForARecordThatExists(t *testing.T) {
+	t.Parallel()
+
+	world := newWorld(t)
+	ctx := world.as(world.userA)
+
+	_, version, err := world.manager.Read(ctx, probeID)
+	require.NoError(t, err)
+	require.True(t, version.IsZero(), "no row, so no validator to guard it")
+
+	require.NoError(t, world.manager.Save(ctx, probeID, map[string]any{
+		keyEmail: valueEmail, keyPassword: valuePassword,
+	}, nil))
+
+	_, version, err = world.manager.Read(ctx, probeID)
+	require.NoError(t, err)
+	require.False(t, version.IsZero(), "the row exists, so the read names its moment")
+}

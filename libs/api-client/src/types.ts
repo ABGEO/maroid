@@ -2,6 +2,22 @@ export interface RequestOptions {
   params?: Record<string, string | number | null | undefined>;
   headers?: HeadersInit;
   signal?: AbortSignal;
+  /**
+   * The entity tag that an earlier read answered. The write lands only while
+   * the record still holds it, and a record that moved answers 412. A White
+   * that names none lands.
+   */
+  ifMatch?: string;
+}
+
+/**
+ * A body and the entity tag that came with it. A caller holds the tag and sends
+ * it back on the write that guards this state.
+ */
+export interface Tagged<T> {
+  value: T;
+  /** Absent when the answer carried no entity tag. */
+  etag?: string;
 }
 
 export interface ClientConfig {
@@ -17,6 +33,11 @@ export interface ClientConfig {
 
 export interface ApiClient {
   get<T>(path: string, options?: RequestOptions): Promise<T | null>;
+  /**
+   * Read a record and the entity tag that guards it. The client keeps nothing
+   * between this call and the write, so the caller holds the tag itself.
+   */
+  getTagged<T>(path: string, options?: RequestOptions): Promise<Tagged<T> | null>;
   post<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T | null>;
   put<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T | null>;
   del<T>(path: string, options?: RequestOptions): Promise<T | null>;

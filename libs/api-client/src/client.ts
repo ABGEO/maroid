@@ -61,7 +61,16 @@ export function createClient(config: ClientConfig): ApiClient {
     return text.length > 0 ? text : null;
   }
 
-  async function request<T>(url: string, init: RequestInit): Promise<T | null> {
+  /**
+   * Send one request and answer the body beside the response, so that a caller
+   * can read a header of a successful answer. `request` drops the response for
+   * every caller that needs only the body.
+   */
+  async function exchange<T>(
+    url: string,
+    init: RequestInit,
+    ifMatch?: string
+  ): Promise<{ body: T | null; response: Response } | null> {
     const headers = new Headers(init.headers);
     if (!headers.has('Accept')) {
       headers.set('Accept', `application/json, ${PROBLEM_MEDIA_TYPE}`);
@@ -71,7 +80,15 @@ export function createClient(config: ClientConfig): ApiClient {
       headers.set('Content-Type', 'application/json');
     }
 
-    const response = await fetchImpl(url, { ...init, credentials: 'include', headers });
+    if (ifMatch !== undefined && !headers.has('If-Match')) {
+      headers.set('If-Match', ifMatch);
+    }
+
+    const response = await fetchImpl(url, {
+      ...init,
+      credentials: 'include',
+      headers
+    });
     const body = await parseBody(response);
 
     if (response.status === 401) {
@@ -89,7 +106,13 @@ export function createClient(config: ClientConfig): ApiClient {
       );
     }
 
-    return body as T;
+    return { body: body as T | null, response };
+  }
+
+  async function request<T>(url: string, init: RequestInit, ifMatch?: string): Promise<T | null> {
+    const exchanged = await exchange<T>(url, init, ifMatch);
+
+    return exchanged?.body ?? null;
   }
 
   function serializeBody(body?: unknown): string | undefined {
@@ -105,6 +128,23 @@ export function createClient(config: ClientConfig): ApiClient {
       });
     },
 
+    async getTagged<T>(path: string, options: RequestOptions = {}) {
+      const exchanged = await exchange<T>(buildUrl(path, options.params), {
+        method: 'GET',
+        headers: options.headers,
+        signal: options.signal
+      });
+
+      if (exchanged === null) {
+        return null;
+      }
+
+      return {
+        value: exchanged.body as T,
+        etag: exchanged.response.headers.get('ETag') ?? undefined
+      };
+    },
+
     post<T>(path: string, body?: unknown, options: RequestOptions = {}) {
       return request<T>(buildUrl(path, options.params), {
         method: 'POST',
@@ -115,24 +155,35 @@ export function createClient(config: ClientConfig): ApiClient {
     },
 
     put<T>(path: string, body?: unknown, options: RequestOptions = {}) {
-      return request<T>(buildUrl(path, options.params), {
-        method: 'PUT',
-        body: serializeBody(body),
-        headers: options.headers,
-        signal: options.signal
-      });
+      return request<T>(
+        buildUrl(path, options.params),
+        {
+          method: 'PUT',
+          body: serializeBody(body),
+          headers: options.headers,
+          signal: options.signal
+        },
+        options.ifMatch
+      );
     },
 
     del<T>(path: string, options: RequestOptions = {}) {
-      return request<T>(buildUrl(path, options.params), {
-        method: 'DELETE',
-        headers: options.headers,
-        signal: options.signal
-      });
+      return request<T>(
+        buildUrl(path, options.params),
+        {
+          method: 'DELETE',
+          headers: options.headers,
+          signal: options.signal
+        },
+        options.ifMatch
+      );
     },
 
     scope(childPrefix: string) {
-      return createClient({ ...config, prefix: `${prefix}${normalizeSegment(childPrefix)}` });
+      return createClient({
+        ...config,
+        prefix: `${prefix}${normalizeSegment(childPrefix)}`
+      });
     }
   };
 

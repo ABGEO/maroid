@@ -22,6 +22,7 @@
 	let saving = $state(false);
 	let saved = $state(false);
 	let revision = $state(0);
+	let etag = $state<string | undefined>(undefined);
 	let child = $state<ReturnType<typeof SchemaForm>>();
 
 	/** The detail names this occurrence, and the title names the type. */
@@ -46,9 +47,10 @@
 
 			fields = fieldsOf(document);
 			schema = document as Schema;
-			values = stored;
-			uiSchema = uiSchemaFor(fields, stored);
-			missing = missingFields(fields, stored);
+			values = stored.value;
+			etag = stored.etag;
+			uiSchema = uiSchemaFor(fields, stored.value);
+			missing = missingFields(fields, stored.value);
 			revision += 1;
 			status = 'ready';
 		} catch (error) {
@@ -69,13 +71,16 @@
 		failure = null;
 
 		try {
-			await api.settings.save(pluginId, toInput(fields, value));
+			await api.settings.save(pluginId, toInput(fields, value), etag);
 			await load(pluginId);
 			saved = true;
 		} catch (error) {
 			if (error instanceof ApiError && error.is(PROBLEM_TYPE.settingsInvalid)) {
 				child?.showFieldErrors(error.fields);
 				failure = reasonOf(error, 'The settings do not match the schema.');
+			} else if (error instanceof ApiError && error.is(PROBLEM_TYPE.preconditionFailed)) {
+				await load(pluginId);
+				failure = 'These settings changed elsewhere. The form now shows the stored values.';
 			} else {
 				console.error('Failed to save the settings', error);
 				failure = reasonOf(error, 'The hub stored nothing. Try again.');
