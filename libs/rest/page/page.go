@@ -1,5 +1,3 @@
-// Package page holds the page that a collection answers, its cursor, and the
-// reader of the page parameters.
 package page
 
 import (
@@ -13,7 +11,7 @@ import (
 
 const cursorParameter = "cursor"
 
-var errNoBaseURL = errors.New("the context carries no external address")
+var errNoBaseURL = errors.New("page: no external address in the context")
 
 // Page is one answer of a collection.
 type Page[T any] struct {

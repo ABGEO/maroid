@@ -24,7 +24,7 @@ func (d Direction) valid() bool {
 	return d == DirectionForward || d == DirectionBackward
 }
 
-var errCursorShape = errors.New("the value is not a cursor")
+var errCursorShape = errors.New("page: not a cursor")
 
 // Cursor names one position in one collection.
 type Cursor struct {

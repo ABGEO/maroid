@@ -30,9 +30,9 @@ var (
 	// ErrModified reports a write whose record moved after the client read it. A
 	// repository answers it when the conditional update changes no row, and the
 	// handler turns it into a 412.
-	ErrModified = errors.New("the record changed after the client read it")
+	ErrModified = errors.New("precondition: record changed after the read")
 
-	errValidatorInvalid = errors.New("the validator is not one that this API answered")
+	errValidatorInvalid = errors.New("precondition: validator not answered by this API")
 )
 
 // ETag returns the validator of a record whose last write is at moment. The
@@ -66,13 +66,13 @@ func IfMatch(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r.WithContext(WithIfMatch(r.Context(), &moment)))
+		next.ServeHTTP(w, r.WithContext(withIfMatch(r.Context(), &moment)))
 	})
 }
 
-// WithIfMatch returns a context that carries the moment of a conditional
+// withIfMatch returns a context that carries the moment of a conditional
 // write. A nil moment is the write that names no validator.
-func WithIfMatch(ctx context.Context, moment *time.Time) context.Context {
+func withIfMatch(ctx context.Context, moment *time.Time) context.Context {
 	return context.WithValue(ctx, ifMatchKey, moment)
 }
 

@@ -20,13 +20,13 @@ func Middleware(external string) func(http.Handler) http.Handler {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			next.ServeHTTP(w, r.WithContext(WithBase(r.Context(), trimmed)))
+			next.ServeHTTP(w, r.WithContext(withBase(r.Context(), trimmed)))
 		})
 	}
 }
 
-// WithBase returns a context that carries the external address.
-func WithBase(ctx context.Context, external string) context.Context {
+// withBase returns a context that carries the external address.
+func withBase(ctx context.Context, external string) context.Context {
 	return context.WithValue(ctx, baseURLKey, external)
 }
 

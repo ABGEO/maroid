@@ -10,10 +10,8 @@ import (
 )
 
 const (
-	// DefaultLimit is the count of items that a request with no limit takes.
-	DefaultLimit = 20
-	// MaxLimit is the ceiling that a request may not pass.
-	MaxLimit = 100
+	defaultLimit = 20
+	maxLimit     = 100
 
 	limitParameter = "limit"
 	sortParameter  = "sort"
@@ -98,10 +96,10 @@ func ReadRequest(r *http.Request, declared Options) (Request, *problem.Problem) 
 }
 
 // readLimit answers the default when the request names none, and refuses a
-// value below 1 or above MaxLimit.
+// value below 1 or above maxLimit.
 func readLimit(raw string) (int, *problem.Problem) {
 	if raw == "" {
-		return DefaultLimit, nil
+		return defaultLimit, nil
 	}
 
 	limit, err := strconv.Atoi(raw)
@@ -109,8 +107,8 @@ func readLimit(raw string) (int, *problem.Problem) {
 		return 0, refuse(limitParameter, "the value is not a number")
 	}
 
-	if limit < 1 || limit > MaxLimit {
-		return 0, refuse(limitParameter, "the value is outside 1 to "+strconv.Itoa(MaxLimit))
+	if limit < 1 || limit > maxLimit {
+		return 0, refuse(limitParameter, "the value is outside 1 to "+strconv.Itoa(maxLimit))
 	}
 
 	return limit, nil
