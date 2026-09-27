@@ -256,7 +256,14 @@ func TestTheKeyCacheKeepsTheHeadersOfTheAnswer(t *testing.T) {
 	}
 
 	require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
-		return repository.NewIdempotency(tx).Keep(ctx, kept)
+		repo := repository.NewIdempotency(tx)
+
+		claimed, err := repo.Claim(ctx, kept.Key, kept.RequestHash, time.Minute)
+		if err != nil || !claimed {
+			return fmt.Errorf("claiming the key (claimed %t): %w", claimed, err)
+		}
+
+		return repo.Complete(ctx, kept)
 	}))
 
 	var held *model.IdempotencyKey

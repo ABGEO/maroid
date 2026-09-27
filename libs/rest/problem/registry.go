@@ -13,6 +13,7 @@ const (
 	TypeCursorStale        = "/problems/http/cursor-stale"
 	TypeNotFound           = "/problems/http/not-found"
 	TypeMethodNotAllowed   = "/problems/http/method-not-allowed"
+	TypeRequestInProgress  = "/problems/http/request-in-progress"
 	TypePreconditionFailed = "/problems/http/precondition-failed"
 	TypeContentTooLarge    = "/problems/http/content-too-large"
 	TypeValidationFailed   = "/problems/http/validation-failed"
@@ -74,6 +75,17 @@ func NewMethodNotAllowed() Problem {
 		TypeMethodNotAllowed,
 		"The method does not reach this resource.",
 		http.StatusMethodNotAllowed,
+	)
+}
+
+// NewRequestInProgress reports a repeat that arrived while the first write under
+// its key still runs. The client sends it again later and reads the answer of
+// that first write.
+func NewRequestInProgress() Problem {
+	return newProblem(
+		TypeRequestInProgress,
+		"An earlier request under this key is still running.",
+		http.StatusConflict,
 	)
 }
 

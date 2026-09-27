@@ -50,6 +50,18 @@ type hubFixture struct {
 	router   http.Handler
 	database *sqlx.DB
 	session  *http.Cookie
+	gate     *gate
+}
+
+// gate holds a write of the probe plugin until the test lets it through, so a
+// second request arrives while the first still runs.
+type gate struct {
+	entered chan struct{}
+	release chan struct{}
+}
+
+func newGate() *gate {
+	return &gate{entered: make(chan struct{}, 1), release: make(chan struct{})}
 }
 
 // hubUnderTest builds the router the way the hub does: the middleware of
@@ -85,11 +97,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	router, err := server.NewHTTPRouter(cfg, logger)
 	require.NoError(t, err)
 
-	uis := registry.NewUIRegistry()
-	uis.Register(pluginapi.ParsePluginID(probePlugin), &pluginapi.UIManifest{
-		Name:   "Probe",
-		Assets: fstest.MapFS{"remoteEntry.js": {Data: []byte("export const probe = 1;")}},
-	})
+	held := newGate()
 
 	handler.RegisterHandlers(
 		router,
@@ -100,13 +108,13 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		),
 		handler.NewPlugin(
 			logger, verifier, resolver,
-			registry.NewPluginRegistry(), uis, registry.NewCapabilityRegistry(),
+			registry.NewPluginRegistry(), probeUI(), registry.NewCapabilityRegistry(),
 			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store,
 		),
 		handler.NewMCP(cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry()),
 		handler.NewPluginWrapper(
 			logger, verifier, resolver, store,
-			pluginapi.ParsePluginID(probePlugin), probeRoutes(t, instance.DB),
+			pluginapi.ParsePluginID(probePlugin), probeRoutes(t, instance.DB, held),
 		),
 	)
 
@@ -116,6 +124,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		router:   router,
 		database: instance.DB,
 		session:  sessionOfAPerson(t, instance.DB, service, provider),
+		gate:     held,
 	}
 }
 
@@ -164,6 +173,17 @@ func sessionOfAPerson(
 	}
 }
 
+// probeUI registers the user interface of the probe plugin, one script.
+func probeUI() *registry.UIRegistry {
+	uis := registry.NewUIRegistry()
+	uis.Register(pluginapi.ParsePluginID(probePlugin), &pluginapi.UIManifest{
+		Name:   "Probe",
+		Assets: fstest.MapFS{"remoteEntry.js": {Data: []byte("export const probe = 1;")}},
+	})
+
+	return uis
+}
+
 func hubConfig(issuer string) *config.Config {
 	cfg := &config.Config{}
 	cfg.Server.ExternalURL = hubAddress
@@ -182,11 +202,13 @@ func hubConfig(issuer string) *config.Config {
 
 // probeRoutes makes the table of the probe plugin and answers its routes. A POST
 // writes one record and answers it.
-func probeRoutes(t *testing.T, database *sqlx.DB) []pluginapi.Route {
+func probeRoutes(t *testing.T, database *sqlx.DB, held *gate) []pluginapi.Route {
 	t.Helper()
 
 	_, err := database.Exec(`CREATE TABLE probe_records (id SERIAL PRIMARY KEY, name TEXT);`)
 	require.NoError(t, err)
+
+	write := createRecord(database)
 
 	return []pluginapi.Route{
 		{
@@ -196,33 +218,16 @@ func probeRoutes(t *testing.T, database *sqlx.DB) []pluginapi.Route {
 				w.WriteHeader(http.StatusOK)
 			},
 		},
+		{Method: http.MethodPost, Pattern: "/records", Handler: write},
 		{
 			Method:  http.MethodPost,
-			Pattern: "/records",
+			Pattern: "/held-records",
 			Handler: func(w http.ResponseWriter, r *http.Request) {
-				var body struct {
-					Name string `json:"name"`
-				}
+				held.entered <- struct{}{}
 
-				if json.NewDecoder(r.Body).Decode(&body) != nil {
-					w.WriteHeader(http.StatusBadRequest)
+				<-held.release
 
-					return
-				}
-
-				var id int
-
-				if database.GetContext(r.Context(), &id,
-					`INSERT INTO probe_records (name) VALUES ($1) RETURNING id;`, body.Name,
-				) != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-
-					return
-				}
-
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusCreated)
-				_ = json.NewEncoder(w).Encode(map[string]int{"id": id})
+				write(w, r)
 			},
 		},
 	}
@@ -277,4 +282,34 @@ func (s *settingsStub) Save(
 	s.moment = s.moment.Add(time.Second)
 
 	return s.moment, nil
+}
+
+// createRecord answers a handler that writes one record of the probe plugin and
+// answers it.
+func createRecord(database *sqlx.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Name string `json:"name"`
+		}
+
+		if json.NewDecoder(r.Body).Decode(&body) != nil {
+			w.WriteHeader(http.StatusBadRequest)
+
+			return
+		}
+
+		var id int
+
+		if database.GetContext(r.Context(), &id,
+			`INSERT INTO probe_records (name) VALUES ($1) RETURNING id;`, body.Name,
+		) != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(map[string]int{"id": id})
+	}
 }

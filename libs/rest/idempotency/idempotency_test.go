@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 
@@ -22,26 +23,54 @@ import (
 
 // memoryStore is the key cache of one test, and of one person. A real store
 // answers each person their own row, which the store of the hub does in the
-// policy of its table.
+// policy of its table. held holds the finished answers, and pending the keys
+// whose first write still runs.
 type memoryStore struct {
-	held map[string]idempotency.Answer
+	mu      sync.Mutex
+	held    map[string]idempotency.Answer
+	pending map[string]bool
 }
 
 func newMemoryStore() *memoryStore {
-	return &memoryStore{held: map[string]idempotency.Answer{}}
+	return &memoryStore{held: map[string]idempotency.Answer{}, pending: map[string]bool{}}
 }
 
-func (s *memoryStore) Answer(_ context.Context, key string) (idempotency.Answer, error) {
-	answer, found := s.held[key]
-	if !found {
-		return idempotency.Answer{}, idempotency.ErrNoAnswer
+func (s *memoryStore) Reserve(
+	_ context.Context,
+	key string,
+	_ string,
+) (*idempotency.Answer, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if answer, found := s.held[key]; found {
+		return &answer, nil
 	}
 
-	return answer, nil
+	if s.pending[key] {
+		return nil, idempotency.ErrInProgress
+	}
+
+	s.pending[key] = true
+
+	return nil, nil //nolint:nilnil // a claimed key holds no answer yet.
 }
 
-func (s *memoryStore) Keep(_ context.Context, key string, answer idempotency.Answer) error {
+func (s *memoryStore) Complete(_ context.Context, key string, answer idempotency.Answer) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	delete(s.pending, key)
 	s.held[key] = answer
+
+	return nil
+}
+
+func (s *memoryStore) Release(_ context.Context, key string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	delete(s.pending, key)
 
 	return nil
 }
@@ -163,6 +192,7 @@ func TestAFailedWriteIsNeverStored(t *testing.T) {
 
 	assert.Equal(t, int32(2), runs.Load(), "a failure leaves the key free")
 	assert.Empty(t, store.held)
+	assert.Empty(t, store.pending, "a failure leaves no claim")
 }
 
 // APIFMT-SC-020: A keyed body larger than the cache holds answers 413 and never
@@ -259,12 +289,12 @@ type contextStore struct {
 	*memoryStore
 }
 
-func (s contextStore) Keep(ctx context.Context, key string, answer idempotency.Answer) error {
+func (s contextStore) Complete(ctx context.Context, key string, answer idempotency.Answer) error {
 	if err := ctx.Err(); err != nil {
 		return fmt.Errorf("keeping the answer: %w", err)
 	}
 
-	return s.memoryStore.Keep(ctx, key, answer)
+	return s.memoryStore.Complete(ctx, key, answer)
 }
 
 // APIFMT-SC-020: The client that loses its answer drops the connection, which
@@ -387,4 +417,69 @@ func TestARepeatUnderOneKeyWithAnotherQueryIsRefused(t *testing.T) {
 	same := sendTo(t, store, handler, "/identities?provider=telegram")
 	assert.Equal(t, http.StatusCreated, same.Code)
 	assert.Equal(t, int32(1), handler.runs.Load(), "the same query replays")
+}
+
+// APIFMT-SC-020, APIFMT-FR-020: A client that times out sends its write again
+// while the first still runs. The repeat answers 409 and never runs the write,
+// and once the first write lands the next repeat reads its answer. One record
+// exists.
+func TestARepeatWhileTheFirstWriteRunsAnswersConflict(t *testing.T) {
+	t.Parallel()
+
+	store := newMemoryStore()
+	started := make(chan struct{})
+	finish := make(chan struct{})
+
+	var runs atomic.Int32
+
+	slow := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		runs.Add(1)
+		close(started)
+		<-finish
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = w.Write([]byte(`{"id":"first"}`))
+	})
+
+	firstDone := make(chan *httptest.ResponseRecorder)
+
+	go func() { firstDone <- writeWithKey(t, store, slow, "key-1", `{"name":"Fern"}`) }()
+
+	<-started
+
+	during := writeWithKey(t, store, slow, "key-1", `{"name":"Fern"}`)
+
+	assert.Equal(t, http.StatusConflict, during.Code)
+	assert.Equal(t, "1", during.Header().Get("Retry-After"))
+	assert.Contains(t, during.Body.String(), problem.TypeRequestInProgress)
+
+	close(finish)
+
+	first := <-firstDone
+	after := writeWithKey(t, store, slow, "key-1", `{"name":"Fern"}`)
+
+	assert.Equal(t, http.StatusCreated, first.Code)
+	assert.Equal(t, http.StatusCreated, after.Code)
+	assert.JSONEq(t, first.Body.String(), after.Body.String())
+	assert.Equal(t, int32(1), runs.Load(), "the write ran once")
+}
+
+// APIFMT-SC-020: A handler that panics leaves no claim on its key, so the
+// repeat runs the write rather than answering 409 until the claim lapses.
+func TestAPanickingWriteFreesItsKey(t *testing.T) {
+	t.Parallel()
+
+	store := newMemoryStore()
+
+	panicking := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		panic("the handler gave up")
+	})
+
+	assert.Panics(t, func() {
+		writeWithKey(t, store, panicking, "key-1", `{"name":"Fern"}`)
+	})
+
+	repeat := writeWithKey(t, store, &creator{}, "key-1", `{"name":"Fern"}`)
+	assert.Equal(t, http.StatusCreated, repeat.Code)
 }

@@ -96,6 +96,7 @@ the type of a stale cursor lives in the library.
 | `access-denied`          | 401    | The request carries no active user record.          |
 | `not-found`              | 404    | The resource does not exist.                        |
 | `method-not-allowed`     | 405    | The method does not reach this resource.            |
+| `request-in-progress`    | 409    | An earlier request under this key is still running. |
 | `precondition-failed`    | 412    | The record changed after the client read it.        |
 | `content-too-large`      | 413    | The body is larger than the route takes.            |
 | `validation-failed`      | 422    | The body failed validation.                         |

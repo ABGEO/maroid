@@ -12,10 +12,14 @@ type noIdempotency struct{}
 
 var _ idempotency.Store = noIdempotency{}
 
-func (noIdempotency) Answer(context.Context, string) (idempotency.Answer, error) {
-	return idempotency.Answer{}, idempotency.ErrNoAnswer
+func (noIdempotency) Reserve(context.Context, string, string) (*idempotency.Answer, error) {
+	return nil, nil //nolint:nilnil // every request claims its key and runs.
 }
 
-func (noIdempotency) Keep(context.Context, string, idempotency.Answer) error {
+func (noIdempotency) Complete(context.Context, string, idempotency.Answer) error {
+	return nil
+}
+
+func (noIdempotency) Release(context.Context, string) error {
 	return nil
 }

@@ -23,11 +23,12 @@ const (
 
 	idempotencyKeyMaxLength = 255
 	idempotencyBodyMax      = 1 << 20
-	keepTimeout             = 5 * time.Second
+	storeTimeout            = 5 * time.Second
 )
 
-// ErrNoAnswer reports that the store holds no answer for a key.
-var ErrNoAnswer = errors.New("the store holds no answer for this key")
+// ErrInProgress reports a key whose first write still runs. The repeat answers
+// 409 and the client sends it again later.
+var ErrInProgress = errors.New("idempotency: a write under the key still runs")
 
 // Answer is the answer that one write produced, kept so that a repeat
 // of that write reads it again.
@@ -38,13 +39,20 @@ type Answer struct {
 	Body        []byte
 }
 
-// Store keeps the answer of a write under the key that a client
-// picked. The hub implements it over a table, and this module holds no database.
+// Store keeps the answer of a write under the key that a client picked. The
+// hub implements it over a table, and this module holds no database.
+//
+// A write claims its key before it runs, so two requests under one key never
+// both run the write, even when the second arrives while the first still runs.
 type Store interface {
-	// Answer returns what the key holds, or ErrNoAnswer.
-	Answer(ctx context.Context, key string) (Answer, error)
-	// Keep stores the answer of a write under the key.
-	Keep(ctx context.Context, key string, answer Answer) error
+	// Reserve claims the key for a request whose hash is hash. It answers nil
+	// when this request claimed the key and runs the write, the answer that a
+	// finished write left, or ErrInProgress while the first write still runs.
+	Reserve(ctx context.Context, key string, hash string) (*Answer, error)
+	// Complete stores the answer of the write that claimed the key.
+	Complete(ctx context.Context, key string, answer Answer) error
+	// Release frees a key whose write failed, so that a repeat runs it again.
+	Release(ctx context.Context, key string) error
 }
 
 // Middleware answers a repeated write with the result of the first one.
@@ -52,7 +60,8 @@ type Store interface {
 // It runs behind the access check, because the store scopes every row to the
 // acting user and a request with no acting user reaches no row. A request that
 // carries no key passes through, as does a method that creates nothing. A
-// keyed body larger than 1 MiB answers 413.
+// keyed body larger than 1 MiB answers 413, and a repeat that arrives while
+// the first write still runs answers 409.
 func Middleware(logger *slog.Logger, store Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -89,71 +98,100 @@ func Middleware(logger *slog.Logger, store Store) func(http.Handler) http.Handle
 			}
 
 			r.Body = io.NopCloser(bytes.NewReader(body))
+			hash := digestOf(r, body)
 
-			if done := replay(w, r, logger, store, key, digestOf(r, body)); done {
+			held, err := store.Reserve(r.Context(), key, hash)
+
+			switch {
+			case errors.Is(err, ErrInProgress):
+				w.Header().Set("Retry-After", "1")
+				problem.Write(w, r, problem.NewRequestInProgress())
+
 				return
-			}
-
-			recorder := &recordedAnswer{ResponseWriter: w, status: http.StatusOK}
-			next.ServeHTTP(recorder, r)
-
-			if recorder.status >= http.StatusBadRequest {
-				return
-			}
-
-			// The client that lost its answer is the one whose request context
-			// ends, and it is the client that repeats. The write has landed, so
-			// the answer is kept past that end.
-			keepCtx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), keepTimeout)
-			defer cancel()
-
-			// A store that does not keep the answer leaves the key free, so the
-			// next repeat runs the write again. That is the safe direction, and
-			// it is invisible without this line.
-			if err = store.Keep(keepCtx, key, Answer{
-				RequestHash: digestOf(r, body),
-				Status:      recorder.status,
-				Header:      replayable(recorder.header),
-				Body:        recorder.body.Bytes(),
-			}); err != nil {
-				logger.ErrorContext(r.Context(), "the key cache kept no answer",
+			case err != nil:
+				// A cache that fails leaves the write unguarded rather than
+				// refusing it. That is the safe direction for the person, and it
+				// is invisible without this line.
+				logger.ErrorContext(r.Context(), "the key cache claimed nothing",
 					slog.String("idempotency_key", key), slog.Any("error", err))
+				next.ServeHTTP(w, r)
+
+				return
+			case held != nil:
+				replay(w, r, *held, hash)
+
+				return
 			}
+
+			run(w, r, next, logger, store, key, hash)
 		})
 	}
 }
 
-// replay answers the stored result, and reports whether it did.
-func replay(
+// run serves the write that claimed the key, then stores its answer, or frees
+// the key when the write failed.
+//
+// The client that lost its answer is the one whose request context ends, and it
+// is the client that repeats. The write has landed, so the store runs past that
+// end. A handler that panics frees the key before the panic travels on.
+func run(
 	w http.ResponseWriter,
 	r *http.Request,
+	next http.Handler,
 	logger *slog.Logger,
 	store Store,
 	key string,
 	hash string,
-) bool {
-	held, err := store.Answer(r.Context(), key)
-	if err != nil {
-		// An absent key is the ordinary case. Anything else means the cache
-		// failed, and the write runs again rather than refusing the request.
-		if !errors.Is(err, ErrNoAnswer) {
-			logger.ErrorContext(r.Context(), "the key cache answered nothing",
-				slog.String("idempotency_key", key), slog.Any("error", err))
+) {
+	storeCtx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), storeTimeout)
+	defer cancel()
+
+	settled := false
+
+	defer func(ctx context.Context) {
+		if settled {
+			return
 		}
 
-		return false
+		if err := store.Release(ctx, key); err != nil {
+			logger.ErrorContext(ctx, "the key cache freed no key",
+				slog.String("idempotency_key", key), slog.Any("error", err))
+		}
+	}(storeCtx)
+
+	recorder := &recordedAnswer{ResponseWriter: w, status: http.StatusOK}
+	next.ServeHTTP(recorder, r)
+
+	if recorder.status >= http.StatusBadRequest {
+		return
 	}
 
-	// A header that this request already carries stays: the chain sets the flow
-	// identifier and the cache period for this request, not for the first one.
+	settled = true
+
+	if err := store.Complete(storeCtx, key, Answer{
+		RequestHash: hash,
+		Status:      recorder.status,
+		Header:      replayable(recorder.header),
+		Body:        recorder.body.Bytes(),
+	}); err != nil {
+		logger.ErrorContext(r.Context(), "the key cache kept no answer",
+			slog.String("idempotency_key", key), slog.Any("error", err))
+	}
+}
+
+// replay answers the stored result. A request whose hash differs is another
+// request under the same key, and it answers 400.
+func replay(w http.ResponseWriter, r *http.Request, held Answer, hash string) {
 	if held.RequestHash != hash {
 		problem.Write(w, r, problem.NewRequestInvalid().WithDetail(
 			"The Idempotency-Key header names an earlier request that differs from this one.",
 		))
 
-		return true
+		return
 	}
 
+	// A header that this request already carries stays: the chain sets the flow
+	// identifier and the cache period for this request, not for the first one.
 	for name, values := range replayable(held.Header) {
 		if w.Header().Get(name) != "" {
 			continue
@@ -166,8 +204,6 @@ func replay(
 
 	w.WriteHeader(held.Status)
 	_, _ = w.Write(held.Body)
-
-	return true
 }
 
 // replayable keeps the headers that describe the answer itself. A cookie, a

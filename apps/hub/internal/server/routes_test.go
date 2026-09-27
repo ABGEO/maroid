@@ -333,3 +333,51 @@ func TestAFlowStartIgnoresTheKey(t *testing.T) {
 	require.NoError(t, fixture.database.Get(&held, `SELECT count(*) FROM public.idempotency_keys;`))
 	assert.Zero(t, held)
 }
+
+// APIFMT-SC-020, APIFMT-FR-020: A client times out and sends its write again
+// while the first still runs. Through the whole chain of the hub, the repeat
+// answers 409 and runs nothing, and once the first lands the next repeat reads
+// its answer. One record exists.
+func TestARepeatDuringTheFirstWriteMakesNoSecondRecord(t *testing.T) {
+	t.Parallel()
+
+	fixture := hubUnderTest(t)
+
+	write := func() *httptest.ResponseRecorder {
+		request := httptest.NewRequestWithContext(t.Context(), http.MethodPost,
+			"/plugins/"+probePlugin+"/api/held-records", strings.NewReader(`{"name":"Fern"}`))
+		request.AddCookie(fixture.session)
+		request.Header.Set(idempotency.KeyHeader, "slow-write")
+
+		recorder := httptest.NewRecorder()
+		fixture.router.ServeHTTP(recorder, request)
+
+		return recorder
+	}
+
+	firstDone := make(chan *httptest.ResponseRecorder)
+
+	go func() { firstDone <- write() }()
+
+	<-fixture.gate.entered
+
+	during := write()
+
+	assert.Equal(t, http.StatusConflict, during.Code, during.Body.String())
+	assert.Equal(t, "1", during.Header().Get("Retry-After"))
+	assert.Contains(t, during.Body.String(), problem.TypeRequestInProgress)
+
+	close(fixture.gate.release)
+
+	first := <-firstDone
+	after := write()
+
+	require.Equal(t, http.StatusCreated, first.Code, first.Body.String())
+	assert.Equal(t, http.StatusCreated, after.Code)
+	assert.JSONEq(t, first.Body.String(), after.Body.String())
+
+	var records int
+
+	require.NoError(t, fixture.database.Get(&records, `SELECT count(*) FROM probe_records;`))
+	assert.Equal(t, 1, records)
+}

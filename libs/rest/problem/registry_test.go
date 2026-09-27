@@ -26,6 +26,7 @@ func TestEveryTypeIsARelativeReference(t *testing.T) {
 		"access-denied":       problem.NewAccessDenied,
 		"not-found":           problem.NewNotFound,
 		"method-not-allowed":  problem.NewMethodNotAllowed,
+		"request-in-progress": problem.NewRequestInProgress,
 		"precondition-failed": problem.NewPreconditionFailed,
 		"content-too-large":   problem.NewContentTooLarge,
 		"validation-failed":   problem.NewValidationFailed,

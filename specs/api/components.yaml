@@ -227,7 +227,9 @@ components:
         is safe. A repeat under one key answers the status, the body, and the
         `Content-Type`, `Location`, and `ETag` of the first write, and creates no
         second record. A repeat under one key with another method, path, query,
-        or body answers `/problems/http/request-invalid`. A body under a key holds at most
+        or body answers `/problems/http/request-invalid`. A repeat that arrives
+        while the first write still runs answers 409,
+        `/problems/http/request-in-progress`, and the client sends it again. A body under a key holds at most
         1 MiB, and a larger one answers 413, `/problems/http/content-too-large`.
         The cache holds an answer for 24 hours. `Z-230`, `APIFMT-FR-020`.
       schema:

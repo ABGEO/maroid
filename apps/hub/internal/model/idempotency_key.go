@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+// IdempotencyPending is the status of a row whose first write still runs. No
+// answer of HTTP carries it, so it never names a finished write.
+const IdempotencyPending = 0
+
 var errHeadersNotBytes = errors.New("the headers column did not answer bytes")
 
 // IdempotencyKey is the answer of one write, kept under the key that a client

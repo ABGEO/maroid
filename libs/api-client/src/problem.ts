@@ -33,6 +33,7 @@ export const PROBLEM_TYPE = {
   notFound: '/problems/http/not-found',
   settingsAbsent: '/problems/hub/settings-absent',
   methodNotAllowed: '/problems/http/method-not-allowed',
+  requestInProgress: '/problems/http/request-in-progress',
   preconditionFailed: '/problems/http/precondition-failed',
   contentTooLarge: '/problems/http/content-too-large',
   identityLast: '/problems/hub/identity-last',

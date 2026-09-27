@@ -166,6 +166,7 @@ security, and takes the policy and the `set_updated_at` trigger of every other
 scoped table. `OWN-005` fills `user_id` from the session. `request_hash` holds a
 digest of the method, the path, the query, and the body, so a repeat under one
 key with another request answers a failure rather than the wrong record.
+`status` 0 marks a pending row, because no answer of HTTP carries it.
 
 `body` holds bytes, because a 204 carries no JSON and a replay answers the bytes
 that the first write answered. `headers` holds the headers of that answer, so a
@@ -392,6 +393,15 @@ optimistic path and does not make the header mandatory.
 creates. It stores the status and the body under the key of the acting user, and
 answers the stored pair on a repeat. The hub implements the store over
 `idempotency_keys`.
+
+A write claims its key before it runs: the store writes a pending row, and the
+unique key of `(user_id, key)` lets one claim win. A repeat that finds a pending
+row answers 409, `/problems/http/request-in-progress`, with `Retry-After: 1`, and
+runs nothing. A repeat that finds a finished row reads its answer. A write that
+answers 400 or more, or panics, deletes its pending row, so a repeat runs it
+again. A pending row older than one minute belongs to a hub that died between
+the claim and the answer, and the next claim takes it over. The server answers
+within 15 seconds, so no running write reaches that age.
 
 The middleware runs behind the access check, on the group of the settings routes
 and on the group that `API-004` mounts every plugin route in. It reaches no route

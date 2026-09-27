@@ -66,6 +66,11 @@ func TestEveryConstructorMatchesTheRegistry(t *testing.T) {
 		"access denied":      {problem.NewAccessDenied(), problem.TypeAccessDenied, 401},
 		"not found":          {problem.NewNotFound(), problem.TypeNotFound, 404},
 		"method not allowed": {problem.NewMethodNotAllowed(), problem.TypeMethodNotAllowed, 405},
+		"request in progress": {
+			problem.NewRequestInProgress(),
+			problem.TypeRequestInProgress,
+			409,
+		},
 		"precondition failed": {
 			problem.NewPreconditionFailed(),
 			problem.TypePreconditionFailed,

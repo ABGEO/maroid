@@ -1,7 +1,6 @@
 package repository_test
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -13,39 +12,53 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/idempotency"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	restidempotency "github.com/abgeo/maroid/libs/rest/idempotency"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
-// keep stores one answer under the key of the given person.
+// keep stores one answer under the key of the given person, the way a write
+// does: it claims the key, then completes it.
 func keep(t *testing.T, store restidempotency.Store, user string, key string) {
 	t.Helper()
 
-	require.NoError(t, store.Keep(
-		pluginapi.ContextWithActingUser(t.Context(), user),
-		key,
-		restidempotency.Answer{
-			RequestHash: "hash-of-" + key,
-			Status:      http.StatusCreated,
-			Header:      http.Header{"Content-Type": []string{mediaTypeOfAnAnswer}},
-			Body:        []byte(`{"name":"Balcony"}`),
-		},
-	))
+	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
+	hash := "hash-of-" + key
+
+	answer, err := store.Reserve(ctx, key, hash)
+	require.NoError(t, err)
+	require.Nil(t, answer, "the key is free, so the write claims it")
+
+	require.NoError(t, store.Complete(ctx, key, restidempotency.Answer{
+		RequestHash: hash,
+		Status:      http.StatusCreated,
+		Header:      http.Header{"Content-Type": []string{mediaTypeOfAnAnswer}},
+		Body:        []byte(`{"name":"Balcony"}`),
+	}))
 }
 
-// held reports whether the cache still answers the key of the given person.
-func held(t *testing.T, store restidempotency.Store, user string, key string) bool {
+// held reports whether the cache still holds a row under the key of the given
+// person. It reads the row and claims nothing.
+func held(t *testing.T, instance *testdb.Instance, user string, key string) bool {
 	t.Helper()
 
-	_, err := store.Answer(pluginapi.ContextWithActingUser(t.Context(), user), key)
-	if errors.Is(err, restidempotency.ErrNoAnswer) {
-		return false
-	}
+	var row *model.IdempotencyKey
 
-	require.NoError(t, err)
+	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
+	require.NoError(t, database.WithUserTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
+		var err error
 
-	return true
+		row, err = repository.NewIdempotency(tx).Answer(ctx, key)
+		if err != nil {
+			return fmt.Errorf("reading the key cache: %w", err)
+		}
+
+		return nil
+	}))
+
+	return row != nil
 }
 
 // expire moves one row past the lifetime of the cache, so the sweep sees a row
@@ -93,8 +106,8 @@ func TestTheSweepRemovesOnlyTheKeysThatExpired(t *testing.T) {
 	sweep := idempotency.NewSweep(slog.New(slog.DiscardHandler), instance.DB)
 	require.NoError(t, sweep.Run(pluginapi.ContextWithActingUser(t.Context(), user)))
 
-	assert.True(t, held(t, store, user, "fresh"), "a key inside the lifetime stays")
-	assert.False(t, held(t, store, user, "expired"), "a key past the lifetime goes")
+	assert.True(t, held(t, instance, user, "fresh"), "a key inside the lifetime stays")
+	assert.False(t, held(t, instance, user, "expired"), "a key past the lifetime goes")
 }
 
 // APIFMT-DD-015, OWN-006: One run reaches the rows of one person. The policy
@@ -116,8 +129,8 @@ func TestTheSweepReachesOnlyTheActingUser(t *testing.T) {
 	sweep := idempotency.NewSweep(slog.New(slog.DiscardHandler), instance.DB)
 	require.NoError(t, sweep.Run(pluginapi.ContextWithActingUser(t.Context(), userA)))
 
-	assert.False(t, held(t, store, userA, "shared-key"))
-	assert.True(t, held(t, store, userB, "shared-key"),
+	assert.False(t, held(t, instance, userA, "shared-key"))
+	assert.True(t, held(t, instance, userB, "shared-key"),
 		"the run of one person leaves the rows of another")
 }
 
@@ -137,7 +150,7 @@ func TestASweepThatNamesNoUserRemovesNothing(t *testing.T) {
 	sweep := idempotency.NewSweep(slog.New(slog.DiscardHandler), instance.DB)
 	require.NoError(t, sweep.Run(t.Context()), "the run reports no failure")
 
-	assert.True(t, held(t, store, user, "expired"),
+	assert.True(t, held(t, instance, user, "expired"),
 		"the policy answers no row, so the scheduler must name the user")
 	assert.Equal(t, pluginapi.CronScopePerUser, sweep.Meta().Scope,
 		"the scope is what makes the scheduler name it")

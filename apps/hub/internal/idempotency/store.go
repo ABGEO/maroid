@@ -17,8 +17,15 @@ import (
 	"github.com/abgeo/maroid/libs/rest/idempotency"
 )
 
-// Lifetime is how long the cache holds one answer.
-const Lifetime = 24 * time.Hour
+const (
+	// Lifetime is how long the cache holds one answer.
+	Lifetime = 24 * time.Hour
+
+	// PendingLease is how long a claim holds a key before another request takes it
+	// over. It passes the write timeout of the server, so only a claim whose hub
+	// died reaches it.
+	PendingLease = time.Minute
+)
 
 // Store reads and writes the key cache as the acting user.
 type Store struct {
@@ -32,29 +39,52 @@ func NewStore(db *sqlx.DB) *Store {
 	return &Store{db: db}
 }
 
-// Answer returns what the key holds, or idempotency.ErrNoAnswer.
-func (s *Store) Answer(ctx context.Context, key string) (idempotency.Answer, error) {
-	var held *model.IdempotencyKey
+// Reserve claims the key for this request. It answers nil when the request
+// holds the key, the answer of a finished write, or idempotency.ErrInProgress
+// while another request holds it.
+func (s *Store) Reserve(ctx context.Context, key string, hash string) (*idempotency.Answer, error) {
+	var (
+		claimed bool
+		held    *model.IdempotencyKey
+	)
 
 	err := database.WithUserTx(ctx, s.db, func(tx *sqlx.Tx) error {
+		repo := repository.NewIdempotency(tx)
+
+		var claimErr error
+
+		claimed, claimErr = repo.Claim(ctx, key, hash, PendingLease)
+		if claimErr != nil {
+			return fmt.Errorf("writing the claim: %w", claimErr)
+		}
+
+		if claimed {
+			return nil
+		}
+
 		var readErr error
 
-		held, readErr = repository.NewIdempotency(tx).Answer(ctx, key)
+		held, readErr = repo.Answer(ctx, key)
 		if readErr != nil {
-			return fmt.Errorf("reading the stored answer: %w", readErr)
+			return fmt.Errorf("reading the held key: %w", readErr)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return idempotency.Answer{}, fmt.Errorf("reading the key cache: %w", err)
+		return nil, fmt.Errorf("claiming the key: %w", err)
 	}
 
-	if held == nil {
-		return idempotency.Answer{}, idempotency.ErrNoAnswer
+	switch {
+	case claimed:
+		return nil, nil //nolint:nilnil // a claimed key holds no answer yet.
+	case held == nil, held.Status == model.IdempotencyPending:
+		// No row after a failed claim is a row that its request freed in
+		// between. The client sends the write again, and that claim holds.
+		return nil, idempotency.ErrInProgress
 	}
 
-	return idempotency.Answer{
+	return &idempotency.Answer{
 		RequestHash: held.RequestHash,
 		Status:      held.Status,
 		Header:      http.Header(held.Headers),
@@ -62,10 +92,10 @@ func (s *Store) Answer(ctx context.Context, key string) (idempotency.Answer, err
 	}, nil
 }
 
-// Keep stores the answer of a write under the key.
-func (s *Store) Keep(ctx context.Context, key string, answer idempotency.Answer) error {
+// Complete stores the answer of the write that claimed the key.
+func (s *Store) Complete(ctx context.Context, key string, answer idempotency.Answer) error {
 	err := database.WithUserTx(ctx, s.db, func(tx *sqlx.Tx) error {
-		return repository.NewIdempotency(tx).Keep(ctx, &model.IdempotencyKey{
+		return repository.NewIdempotency(tx).Complete(ctx, &model.IdempotencyKey{
 			Key:         key,
 			RequestHash: answer.RequestHash,
 			Status:      answer.Status,
@@ -75,6 +105,18 @@ func (s *Store) Keep(ctx context.Context, key string, answer idempotency.Answer)
 	})
 	if err != nil {
 		return fmt.Errorf("writing the key cache: %w", err)
+	}
+
+	return nil
+}
+
+// Release frees the key of a write that failed.
+func (s *Store) Release(ctx context.Context, key string) error {
+	err := database.WithUserTx(ctx, s.db, func(tx *sqlx.Tx) error {
+		return repository.NewIdempotency(tx).Release(ctx, key)
+	})
+	if err != nil {
+		return fmt.Errorf("freeing the key: %w", err)
 	}
 
 	return nil
