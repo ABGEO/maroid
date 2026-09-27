@@ -405,7 +405,7 @@ func (h *Auth) Logout(w http.ResponseWriter, r *http.Request) error {
 type meResponse struct {
 	FirstName *string `json:"first_name,omitempty"`
 	LastName  *string `json:"last_name,omitempty"`
-	Picture   string  `json:"picture"`
+	Picture   string  `json:"picture,omitempty"`
 	Provider  string  `json:"provider"`
 }
 

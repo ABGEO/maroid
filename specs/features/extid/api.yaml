@@ -267,7 +267,7 @@ components:
   schemas:
     CurrentUser:
       type: object
-      required: [picture, provider]
+      required: [provider]
       description: >
         The person of the current session. The two names come from the record that
         the owner set, and the picture from the token of the session.
@@ -285,8 +285,9 @@ components:
         picture:
           type: string
           description: >
-            The `picture` claim of the token. It is empty when the provider gave
-            none, and the shell then draws the initials of the person.
+            The `picture` claim of the token. The member is absent when the
+            provider gave none, and the shell then draws the initials of the
+            person. `APIFMT-FR-009`.
         provider:
           type: string
           description: The connector that authenticated this session.

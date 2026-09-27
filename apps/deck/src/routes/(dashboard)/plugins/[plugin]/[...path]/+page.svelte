@@ -24,7 +24,7 @@
 		get user() {
 			const user = userState.user;
 
-			return user ? { name: displayName(user), picture: user.picture } : null;
+			return user ? { name: displayName(user), picture: user.picture ?? '' } : null;
 		},
 		get api() {
 			return api;

@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/db"
@@ -391,6 +392,40 @@ func TestMeNamesTheProviderThatSignedIn(t *testing.T) {
 		t, auth.ProviderTelegram, fixture.me(t, auth.ProviderTelegram, "111")["provider"],
 	)
 	require.Equal(t, providerCloud, fixture.me(t, providerCloud, "abc")["provider"])
+}
+
+// APIFMT-SC-001, APIFMT-FR-009: A provider that gives no picture leaves the
+// member out, as GET /auth/identities leaves out picture_url. One condition
+// answers one way.
+func TestMeOmitsAPictureThatTheProviderDidNotGive(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+
+	userID := addUserRecord(t, fixture.database, "Temuri")
+	require.NoError(t, fixture.service.Attach(
+		t.Context(), userID, auth.ProviderTelegram, "111", model.Profile{},
+	))
+
+	claims := fixture.provider.Claims(auth.ProviderTelegram, "111")
+	delete(claims, "picture")
+
+	request := httptest.NewRequestWithContext(
+		t.Context(), http.MethodGet, "/auth/sessions/self", nil,
+	)
+	request.AddCookie(requestCookie(sessionCookie, fixture.provider.SignClaims(t, claims)))
+
+	recorder := httptest.NewRecorder()
+	fixture.router.ServeHTTP(recorder, request)
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	var body map[string]any
+
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+	assert.NotContains(t, body, "picture", "no picture is no member, never an empty string")
+	assert.Equal(t, auth.ProviderTelegram, body["provider"])
+	assert.Equal(t, "https://example.com/a.jpg",
+		fixture.me(t, auth.ProviderTelegram, "111")["picture"], "a picture that exists stays")
 }
 
 // me reads GET /auth/sessions/self as the person that the external account names.
