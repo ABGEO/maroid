@@ -12,6 +12,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
+	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
 // deckOrigin stands for the web shell, which runs on its own origin.
@@ -86,4 +87,22 @@ func TestThePreflightAllowsTheWriteHeaders(t *testing.T) {
 			assert.Contains(t, recorder.Header().Get("Access-Control-Allow-Headers"), header)
 		})
 	}
+}
+
+// APIFMT-SC-019: A malformed If-Match answers 400 with the CORS grant, so the
+// deck reads the problem and the flow identifier rather than a failed fetch.
+func TestABrowserReadsTheRefusalOfAMalformedIfMatch(t *testing.T) {
+	t.Parallel()
+
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/reads", nil)
+	request.Header.Set("Origin", deckOrigin)
+	request.Header.Set("If-Match", "yesterday")
+
+	recorder := httptest.NewRecorder()
+	corsRouter(t).ServeHTTP(recorder, request)
+
+	require.Equal(t, http.StatusBadRequest, recorder.Code)
+	assert.Contains(t, recorder.Body.String(), problem.TypeRequestInvalid)
+	assert.Equal(t, deckOrigin, recorder.Header().Get("Access-Control-Allow-Origin"),
+		"a browser hides an answer that carries no grant")
 }

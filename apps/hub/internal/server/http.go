@@ -34,7 +34,6 @@ func NewHTTPRouter(cfg *config.Config, logger *slog.Logger) (*chi.Mux, error) {
 	router.Use(recoverer(logger))
 	router.Use(middleware.StripSlashes)
 	router.Use(render.SetContentType(render.ContentTypeJSON))
-	router.Use(precondition.IfMatch)
 
 	if cfg.CORS.Enabled {
 		router.Use(cors.Handler(cors.Options{
@@ -46,6 +45,8 @@ func NewHTTPRouter(cfg *config.Config, logger *slog.Logger) (*chi.Mux, error) {
 			MaxAge:           int(cfg.CORS.MaxAge.Seconds()),
 		}))
 	}
+
+	router.Use(precondition.IfMatch)
 
 	router.NotFound(notFound())
 	router.MethodNotAllowed(methodNotAllowed(router))

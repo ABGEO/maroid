@@ -19,15 +19,16 @@ The hub serves APIs that `RES-007` names, on one router. The router is chi.
 
 The router applies this middleware, in this order:
 the flow identifier, the cache period, the external address, the real address,
-the access log, the recoverer, `StripSlashes`, the JSON content type, and
-`If-Match`. CORS follows when `cors.enabled` is true.
+the access log, the recoverer, `StripSlashes`, the JSON content type, CORS when
+`cors.enabled` is true, and `If-Match`.
 
 The flow identifier comes first, so every later middleware and every log record
 reaches it. `ERR-006` gives the value, the generator, and the header.
 
 The cache period and the external address come before every handler. A handler
 overrides the period, and a page builds its links from the address and never from
-`Host`. `RES-005`. The chain reads `If-Match` once, so no route parses it.
+`Host`. `RES-005`. The chain reads `If-Match` once, so no route parses it. It
+comes after CORS, so a browser reads the problem that a malformed value answers.
 
 The real address and the recoverer are of the hub, not of chi. `SEC-009` gives the
 reason for the first, and `ERR-001` for the second. The access log is
