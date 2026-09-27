@@ -28,6 +28,7 @@ export const PROBLEM_TYPE = {
   requestInvalid: '/problems/http/request-invalid',
   bodyInvalid: '/problems/http/body-invalid',
   memberUnknown: '/problems/http/member-unknown',
+  cursorStale: '/problems/http/cursor-stale',
   accessDenied: '/problems/http/access-denied',
   networkNotAllowed: '/problems/hub/network-not-allowed',
   notFound: '/problems/http/not-found',
