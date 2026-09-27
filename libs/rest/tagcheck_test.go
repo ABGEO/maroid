@@ -30,8 +30,12 @@ func TestTheEntityTagOfAReadIsReadableAsAnIfMatch(t *testing.T) {
 	)
 	request.Header.Set(rest.IfMatchHeader, answered)
 
-	read, held, err := rest.IfMatch(request)
-	require.NoError(t, err)
-	assert.True(t, held)
-	assert.True(t, moment.Equal(read), "the hub reads back the moment that the read answered")
+	var read *time.Time
+
+	rest.IfMatch(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		read = rest.IfMatchFromContext(r.Context())
+	})).ServeHTTP(httptest.NewRecorder(), request)
+
+	require.NotNil(t, read)
+	assert.True(t, moment.Equal(*read), "the hub reads back the moment that the read answered")
 }

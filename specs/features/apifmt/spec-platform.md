@@ -72,10 +72,10 @@ documents and a linter checks them. Four headers join the answer.
 | `apps/hub/internal/handler/mcp.go`            | change | The origin reads `ExternalURL`. `resourceScheme` goes.   |
 | `apps/hub/internal/telegram/handler.go`       | change | The webhook address reads `ExternalURL`.                 |
 | `apps/hub/internal/migrator/migrator.go`      | change | `buildMigrationPlan` orders the core first.              |
-| `apps/hub/internal/server/http.go`            | change | `rest.FlowID` and `rest.Allow` join the chain.           |
+| `apps/hub/internal/server/http.go`            | change | `rest.FlowID`, `rest.IfMatch` and `rest.Allow` join the chain. |
 | `apps/hub/internal/repository/idempotency.go` | create | The store of a repeated write.                           |
 | `libs/rest/flow.go`                           | rename | `FlowID`, `FlowIDFromContext`, `Instance`. From `request.go`. |
-| `libs/rest/concurrency.go`                    | create | `ETag`, `IfMatch`, `ErrModified`.                        |
+| `libs/rest/concurrency.go`                    | create | `ETag`, the `IfMatch` middleware, `ErrModified`.         |
 | `libs/rest/cache.go`                          | create | `NoStore`, `Immutable`, and the middleware that sets the first. |
 | `libs/rest/idempotency.go`                    | create | The middleware and the `IdempotencyStore` interface.     |
 | `tools/apibuild/main.go`                      | create | The merge of `APIFMT-DD-012`.                            |
@@ -168,7 +168,7 @@ function. `APIFMT-FR-014`.
 | ------------------- | ------------------------------------- | ---------------------------------------- | --------------- |
 | `X-Flow-ID`         | Every answer                          | The flow identifier, bare                | `APIFMT-FR-018` |
 | `ETag`              | A single record that a client writes  | `W/"<updated_at in unix nanoseconds>"`   | `APIFMT-FR-019` |
-| `If-Match`          | Read from a write                     | The value of an earlier `ETag`           | `APIFMT-FR-019` |
+| `If-Match`          | Read once by the chain, for every route | The value of an earlier `ETag`          | `APIFMT-FR-019` |
 | `Idempotency-Key`   | Read from a write that creates        | A value that the client picks            | `APIFMT-FR-020` |
 | `Cache-Control`     | Every answer                          | See below                                | `APIFMT-FR-021` |
 | `Allow`             | Every 405                             | The methods of the route                 | `API-007`       |
@@ -329,6 +329,14 @@ an `instance` like a type, and `ERR-002` gives the relative form.
 **Decision:** An `ETag` is the weak validator `W/"<updated_at in unix
 nanoseconds>"`. A write that carries `If-Match` adds `AND updated_at = $n` to its
 `UPDATE`, and zero rows changed answers 412.
+
+The `rest.IfMatch` middleware reads the header once for the whole chain, and the
+context carries the moment to every handler. A value that this API never answered
+stops there with a 400. So no route parses the header, and a plugin reads the
+moment with `rest.IfMatchFromContext`. Setting the `ETag` stays with the handler,
+which alone knows the record that it answered, and mapping `rest.ErrModified` to
+a 412 stays with the handler, because a plugin route is an `http.HandlerFunc` and
+returns no error to the chain.
 
 **Rationale:** Every scoped table already carries `updated_at` with the trigger
 that fills it, so this adds no column and no migration. The comparison runs

@@ -53,9 +53,9 @@ type CORS struct {
 	AllowOrigins     []string      `default:"[*]"                         mapstructure:"allow_origins"`
 	AllowMethods     []string      `default:"[GET,POST,PATCH,PUT,DELETE]" mapstructure:"allow_methods"`
 	AllowHeaders     []string      `default:"[*]"                         mapstructure:"allow_headers"`
-	ExposeHeaders    []string      `default:"[ETag,X-Flow-ID]" mapstructure:"expose_headers"`
-	AllowCredentials bool          `default:"false"            mapstructure:"allow_credentials"`
-	MaxAge           time.Duration `default:"12h"              mapstructure:"max_age"`
+	ExposeHeaders    []string      `default:"[ETag,X-Flow-ID]"            mapstructure:"expose_headers"`
+	AllowCredentials bool          `default:"false"                       mapstructure:"allow_credentials"`
+	MaxAge           time.Duration `default:"12h"                         mapstructure:"max_age"`
 }
 
 // Server defines HTTP server configuration parameters.

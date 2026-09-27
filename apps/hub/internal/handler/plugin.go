@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -180,21 +179,8 @@ func (h *Plugin) SaveSettings(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	ifMatch, held, err := rest.IfMatch(r)
-	if err != nil {
-		rest.Write(w, r, rest.NewRequestInvalid().
-			WithDetail("The If-Match header is not a validator that this API answered."))
-
-		//nolint:nilerr // the handler answered the request, so Wrap must not log it.
-		return nil
-	}
-
-	var version *time.Time
-	if held {
-		version = &ifMatch
-	}
-
-	if err = h.settingsSvc.Save(r.Context(), chi.URLParam(r, "id"), input, version); err != nil {
+	version := rest.IfMatchFromContext(r.Context())
+	if err := h.settingsSvc.Save(r.Context(), chi.URLParam(r, "id"), input, version); err != nil {
 		return h.failSettings(w, r, err)
 	}
 
