@@ -27,6 +27,7 @@ func TestEveryTypeIsARelativeReference(t *testing.T) {
 		"not-found":           problem.NewNotFound,
 		"method-not-allowed":  problem.NewMethodNotAllowed,
 		"precondition-failed": problem.NewPreconditionFailed,
+		"content-too-large":   problem.NewContentTooLarge,
 		"validation-failed":   problem.NewValidationFailed,
 		"internal":            problem.NewInternal,
 	} {

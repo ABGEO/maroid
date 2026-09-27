@@ -409,7 +409,15 @@ per table, needs a migration on each one, and answers a conflict rather than the
 earlier result.
 
 A repeat under one key with another request hash answers 400, which `Z-230`
-recommends. A stored row older than 24 hours expires, and an hourly job of the hub
+recommends.
+
+The middleware hashes the whole body before the write runs, so it holds the body
+in memory, and a body under a key holds at most 1 MiB. A larger body under a key
+answers 413, `/problems/http/content-too-large`, and never reaches the handler.
+Passing it through would drop the promise of the key without a word, and a retry
+after a timeout would make the duplicate that `APIFMT-FR-020` forbids. A body with
+no key takes no limit from this middleware. No route of today takes a body near
+the limit. A stored row older than 24 hours expires, and an hourly job of the hub
 removes it. `Z-230` gives that lifetime and calls the store a key cache, not a
 request log. The read serves what the table holds, so the job is the one thing
 that expires a row. The job declares `CronScopePerUser`, which `OWN-009` gives for

@@ -34,6 +34,7 @@ export const PROBLEM_TYPE = {
   settingsAbsent: '/problems/hub/settings-absent',
   methodNotAllowed: '/problems/http/method-not-allowed',
   preconditionFailed: '/problems/http/precondition-failed',
+  contentTooLarge: '/problems/http/content-too-large',
   identityLast: '/problems/hub/identity-last',
   validationFailed: '/problems/http/validation-failed',
   settingsInvalid: '/problems/hub/settings-invalid',

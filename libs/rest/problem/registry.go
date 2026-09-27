@@ -14,6 +14,7 @@ const (
 	TypeNotFound           = "/problems/http/not-found"
 	TypeMethodNotAllowed   = "/problems/http/method-not-allowed"
 	TypePreconditionFailed = "/problems/http/precondition-failed"
+	TypeContentTooLarge    = "/problems/http/content-too-large"
 	TypeValidationFailed   = "/problems/http/validation-failed"
 	TypeInternal           = "/problems/http/internal"
 )
@@ -83,6 +84,15 @@ func NewPreconditionFailed() Problem {
 		TypePreconditionFailed,
 		"The record changed after the client read it.",
 		http.StatusPreconditionFailed,
+	)
+}
+
+// NewContentTooLarge reports a body that is larger than the route takes.
+func NewContentTooLarge() Problem {
+	return newProblem(
+		TypeContentTooLarge,
+		"The body is larger than the route takes.",
+		http.StatusRequestEntityTooLarge,
 	)
 }
 

@@ -226,8 +226,9 @@ components:
         A key that the client picks for one write, so that repeating that write
         is safe. A repeat under one key answers the result of the first write and
         creates no second record. A repeat under one key with another request
-        answers `/problems/http/request-invalid`. The cache holds an answer for
-        24 hours. `Z-230`, `APIFMT-FR-020`.
+        answers `/problems/http/request-invalid`. A body under a key holds at most
+        1 MiB, and a larger one answers 413, `/problems/http/content-too-large`.
+        The cache holds an answer for 24 hours. `Z-230`, `APIFMT-FR-020`.
       schema:
         type: string
         maxLength: 255

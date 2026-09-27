@@ -51,7 +51,8 @@ type Store interface {
 //
 // It runs behind the access check, because the store scopes every row to the
 // acting user and a request with no acting user reaches no row. A request that
-// carries no key passes through, as does a method that creates nothing.
+// carries no key passes through, as does a method that creates nothing. A
+// keyed body larger than 1 MiB answers 413.
 func Middleware(logger *slog.Logger, store Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -77,10 +78,12 @@ func Middleware(logger *slog.Logger, store Store) func(http.Handler) http.Handle
 				return
 			}
 
+			// The cache compares the whole body before the write runs, so it
+			// holds the body in memory. A larger body under a key would lose the
+			// promise of the key without a word, so it answers a failure.
 			if len(body) > idempotencyBodyMax {
-				r.Body = io.NopCloser(io.MultiReader(bytes.NewReader(body), r.Body))
-
-				next.ServeHTTP(w, r)
+				problem.Write(w, r, problem.NewContentTooLarge().
+					WithDetail("A body under an Idempotency-Key holds at most 1 MiB."))
 
 				return
 			}

@@ -71,6 +71,7 @@ func TestEveryConstructorMatchesTheRegistry(t *testing.T) {
 			problem.TypePreconditionFailed,
 			412,
 		},
+		"content too large": {problem.NewContentTooLarge(), problem.TypeContentTooLarge, 413},
 		"validation failed": {problem.NewValidationFailed(), problem.TypeValidationFailed, 422},
 		"internal":          {problem.NewInternal(), problem.TypeInternal, 500},
 	}

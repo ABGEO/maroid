@@ -165,15 +165,14 @@ func TestAFailedWriteIsNeverStored(t *testing.T) {
 	assert.Empty(t, store.held)
 }
 
-// APIFMT-SC-020: A body larger than the cache holds reaches the handler whole.
-// The middleware buffers to hash, and a truncated buffer would hand the handler
-// a body that the client never sent.
-func TestABodyTooLargeToCacheReachesTheHandlerWhole(t *testing.T) {
+// APIFMT-SC-020: A keyed body larger than the cache holds answers 413 and never
+// reaches the handler, because the key could not keep its promise. The same
+// body with no key reaches the handler whole.
+func TestABodyTooLargeToCacheIsRefusedUnderAKey(t *testing.T) {
 	t.Parallel()
 
 	const oversized = (1 << 20) + 4096
 
-	store := newMemoryStore()
 	sent := strings.Repeat("x", oversized)
 
 	var read atomic.Int64
@@ -193,11 +192,18 @@ func TestABodyTooLargeToCacheReachesTheHandlerWhole(t *testing.T) {
 		w.WriteHeader(http.StatusCreated)
 	})
 
-	recorder := writeWithKey(t, store, handler, "key-1", sent)
+	store := newMemoryStore()
+	keyed := writeWithKey(t, store, handler, "key-1", sent)
 
-	assert.Equal(t, http.StatusCreated, recorder.Code)
+	assert.Equal(t, http.StatusRequestEntityTooLarge, keyed.Code)
+	assert.Contains(t, keyed.Body.String(), problem.TypeContentTooLarge)
+	assert.Zero(t, read.Load(), "the handler never ran")
+	assert.Empty(t, store.held)
+
+	unkeyed := writeWithKey(t, store, handler, "", sent)
+
+	assert.Equal(t, http.StatusCreated, unkeyed.Code)
 	assert.Equal(t, int64(oversized), read.Load(), "the handler read every byte")
-	assert.Empty(t, store.held, "the cache holds no body this large")
 }
 
 // APIFMT-SC-020: A body that never arrives answers a failure that names the
