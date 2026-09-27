@@ -4,7 +4,7 @@ title: The HTTP API
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-23
+updated: 2026-09-27
 scope: [apps/hub/internal/server/, apps/hub/internal/handler/, apps/hub/internal/middleware/]
 related: [ARC, ERR, PLG, RES, SEC, UI]
 ---
@@ -18,11 +18,16 @@ The hub serves APIs that `RES-007` names, on one router. The router is chi.
 ## API-002
 
 The router applies this middleware, in this order:
-the flow identifier, the real address, the access log, the recoverer,
-`StripSlashes`, and the JSON content type. CORS follows when `cors.enabled` is true.
+the flow identifier, the cache period, the external address, the real address,
+the access log, the recoverer, `StripSlashes`, the JSON content type, and
+`If-Match`. CORS follows when `cors.enabled` is true.
 
 The flow identifier comes first, so every later middleware and every log record
 reaches it. `ERR-006` gives the value, the generator, and the header.
+
+The cache period and the external address come before every handler. A handler
+overrides the period, and a page builds its links from the address and never from
+`Host`. `RES-005`. The chain reads `If-Match` once, so no route parses it.
 
 The real address and the recoverer are of the hub, not of chi. `SEC-009` gives the
 reason for the first, and `ERR-001` for the second. The access log is
@@ -41,6 +46,19 @@ the one route that carries it, because a bearer token has a scheme.
 
 A route inside its sunset window carries `Deprecation` and `Sunset`. `RES-011`
 gives the window.
+
+Every answer carries `X-Flow-ID`, which `ERR-006` gives, and `Cache-Control`. The
+value is `no-cache, no-store, must-revalidate, max-age=0` unless the route names
+another, as `Z-227` asks. The assets of a plugin name
+`public, max-age=31536000, immutable`, because an asset name carries its hash.
+
+A route that answers a record that a client writes carries `ETag`, and a write to
+that record reads `If-Match`. A record that moved since the read answers 412,
+`precondition-failed`. A write with no `If-Match` lands, because `Z-182` does not
+make the header mandatory.
+
+A write that creates reads `Idempotency-Key`. A repeat under one key answers the
+first result, and a repeat with another body answers `request-invalid`. `Z-230`.
 
 **Why:** A client reads `Allow` to learn what the route takes. A header that names
 a scheme nobody implements teaches a client nothing.

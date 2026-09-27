@@ -4,7 +4,7 @@ title: The Zalando guidelines as the standard of the HTTP API
 type: adr
 status: accepted
 created: 2026-09-22
-updated: 2026-09-24
+updated: 2026-09-27
 decided: 2026-09-24
 changes: [API-001, API-002, API-003, API-006, API-007, BLD-001, CLI-001, DAT-010, DAT-011, ERR-001, ERR-002, ERR-003, ERR-004, ERR-006, GLO-api-document, GLO-api-fragment, GLO-binding, GLO-cursor, GLO-flow-id, GLO-handoff, GLO-page, GLO-shipped-client, GLO-transport-route, LNG-013, LOG-009, LOG-010, RES-001, RES-002, RES-003, RES-004, RES-005, RES-006, RES-007, RES-008, RES-009, RES-010, RES-011, SEC-008, SEC-010, SPC-001, SPC-002, TG-001, TRC-001]
 supersedes:
@@ -122,7 +122,7 @@ permission, the rules that bind a client, and the window before a route goes.
 | ---------------------------------- | -------------------- | -------------------------------------------- |
 | `POST /auth/sessions`              | `GET /auth`          | 202 with the address of the IdP.             |
 | `GET /auth/sessions/self`       | `GET /auth/me`       | The acting user and the provider.            |
-| `DELETE /auth/sessions/self`    | `POST /auth/logout`  | 204. Public, and idempotent.                 |
+| `DELETE /auth/sessions/self`    | `POST /auth/logout`  | 200 with the target. Public, and idempotent. |
 | `POST /auth/identities`            | `GET /auth/link`     | 202 with the address of the IdP.             |
 | `POST /auth/invitation-redemptions`| `GET /auth/invite`   | 202 with the address of the IdP.             |
 | None                               | `GET /ping`          | The route goes. Nothing calls it.            |

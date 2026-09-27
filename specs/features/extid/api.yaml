@@ -18,7 +18,8 @@ paths:
       summary: Start a sign in at the identity provider.
       description: >
         Realizes `EXTID-FR-001`.
-        The hub writes a flow row with the intent `sign_in`, then redirects to Dex.
+        The hub writes a flow row with the intent `sign_in`, then answers the
+        address of Dex.
         The row holds the state, the nonce, the verifier, and the target.
         See `EXTID-DD-001`.
       security: []
@@ -71,7 +72,7 @@ paths:
         external account of that provider holds an identity of the acting user or
         not. `EXTID-DD-009` gives the reason that the list lives in the
         configuration, and `EXTID-DD-016` the reason that it lives apart from
-        `/auth/me`.
+        `/auth/sessions/self`.
       responses:
         "200":
           headers:
@@ -389,8 +390,7 @@ components:
           $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
         The target of the redemption is absent, or `auth.allowed_redirects` does not
-        hold it. No target exists to report the failure at, so this answers in the
-        body. Every other failure of this route redirects. See `EXTID-DD-015`.
+        hold it. See `EXTID-DD-015`.
         The type is `/problems/http/request-invalid`.
       content:
         application/problem+json:

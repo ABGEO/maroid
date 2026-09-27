@@ -69,6 +69,7 @@ time takes UTC. The deck and `libs/api-client` read the new shape.
 | `libs/rest/page/page.go`               | create | `Page[T]`, `New`, and the link builder.                       |
 | `libs/rest/address/address.go`         | create | The middleware that carries the external address, and its reader. |
 | `libs/rest/page/cursor.go`             | create | `Cursor`, `EncodeCursor`, `DecodeCursor`.                     |
+| `libs/rest/page/request.go`            | create | `ReadRequest`, which reads `limit`, `cursor`, and `sort`.     |
 | `libs/rest/page/keyset.go`             | create | `Seek`, `Fetch`, `Window`, and `Read`, which finds the neighbors. |
 | `libs/rest/flow/flow.go`               | rename | The middleware. `spec-platform.md` holds it.                  |
 | `apps/hub/internal/handler/plugin.go`  | change | `List` answers a page. `SaveSettings` keeps its shape.        |
@@ -371,17 +372,17 @@ rows measure the cost, because the time of a read this small drowns in noise.
 
 | #   | Step                                                                      | Realizes                        | Done |
 | --- | --------------------------------------------------------------------------- | ------------------------------- | ---- |
-| 1   | Rename `libs/problem` to `libs/rest` in `go.work`, `go.mod` and every import. | `APIFMT-DD-001`                | [ ]  |
-| 2   | Add `page.go` and `cursor.go` to `libs/rest`, with their tests.            | `APIFMT-FR-002`, `APIFMT-FR-003` | [ ]  |
-| 3   | Add `NewCursorStale` to the registry.                                     | `APIFMT-FR-005`                 | [ ]  |
-| 4   | Flip `tagliatelle` and add the exemptions. Change the eleven tags.        | `APIFMT-FR-001`                 | [ ]  |
-| 5   | Add `.UTC()` to each DTO that formats a moment.                           | `APIFMT-FR-008`                 | [ ]  |
-| 6   | Add `omitempty` to every optional member.                                 | `APIFMT-FR-009`                 | [ ]  |
-| 7   | Take a cursor and a limit in each `List` of `jasmine`.                    | `APIFMT-FR-003`                 | [ ]  |
-| 8   | Answer a page from the four list routes.                                  | `APIFMT-FR-002`, `APIFMT-FR-004` | [ ]  |
-| 9   | Add `page.ts` to `libs/api-client`, and change the relative type constants. | `APIFMT-FR-010`                | [ ]  |
-| 10  | Change the four list call sites of the deck and of the plugin interface.  | `APIFMT-FR-002`                 | [ ]  |
-| 11  | Change `pcap/api.yaml` and `extid/api.yaml` to the page and the cursor.   | `SPC-002`                       | [ ]  |
+| 1   | Rename `libs/problem` to `libs/rest` in `go.work`, `go.mod` and every import. | `APIFMT-DD-001`                | [x]  |
+| 2   | Add `page.go` and `cursor.go` to `libs/rest`, with their tests.            | `APIFMT-FR-002`, `APIFMT-FR-003` | [x]  |
+| 3   | Add `NewCursorStale` to the registry.                                     | `APIFMT-FR-005`                 | [x]  |
+| 4   | Flip `tagliatelle` and add the exemptions. Change the eleven tags.        | `APIFMT-FR-001`                 | [x]  |
+| 5   | Add `.UTC()` to each DTO that formats a moment.                           | `APIFMT-FR-008`                 | [x]  |
+| 6   | Add `omitempty` to every optional member.                                 | `APIFMT-FR-009`                 | [x]  |
+| 7   | Take a cursor and a limit in each `List` of `jasmine`.                    | `APIFMT-FR-003`                 | [x]  |
+| 8   | Answer a page from the four list routes.                                  | `APIFMT-FR-002`, `APIFMT-FR-004` | [x]  |
+| 9   | Add `page.ts` to `libs/api-client`, and change the relative type constants. | `APIFMT-FR-010`                | [x]  |
+| 10  | Change the four list call sites of the deck and of the plugin interface.  | `APIFMT-FR-002`                 | [x]  |
+| 11  | Change `pcap/api.yaml` and `extid/api.yaml` to the page and the cursor.   | `SPC-002`                       | [x]  |
 
 Step 1 lands alone, because every later step imports the new path.
 

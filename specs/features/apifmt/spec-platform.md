@@ -23,7 +23,8 @@ The route table of `API-003` replaces the one that runs. `server.hostname`
 becomes `server.external_url`, and three readers build their address from it. A
 migration corrects the trigger that writes `updated_at`, and the migrator orders
 the core before every plugin. A Go command merges the fragments into three
-documents and a linter checks them. Four headers join the answer.
+documents and a linter checks them. Five headers join the answer, and every 405
+names `Allow`.
 
 ## 2. Coverage
 
@@ -37,7 +38,7 @@ documents and a linter checks them. Four headers join the answer.
 | `APIFMT-FR-016` | `APIFMT-DD-012`               |
 | `APIFMT-FR-017` | `APIFMT-DD-012`               |
 | `APIFMT-FR-018` | 4.5, `APIFMT-DD-013`          |
-| `APIFMT-FR-019` | 4.5, `APIFMT-DD-014`          |
+| `APIFMT-FR-019` | 4.5, `APIFMT-DD-014`, `APIFMT-DD-017` |
 | `APIFMT-FR-020` | 4.4, 4.5, `APIFMT-DD-015`     |
 | `APIFMT-FR-021` | 4.5, `APIFMT-DD-016`          |
 | `APIFMT-FR-022` | 4.1, `APIFMT-DD-018`          |
@@ -74,13 +75,15 @@ documents and a linter checks them. Four headers join the answer.
 | `apps/hub/internal/handler/mcp.go`            | change | The origin reads `ExternalURL`. `resourceScheme` goes.   |
 | `apps/hub/internal/telegram/handler.go`       | change | The webhook address reads `ExternalURL`.                 |
 | `apps/hub/internal/migrator/migrator.go`      | change | `buildMigrationPlan` orders the core first.              |
-| `apps/hub/internal/server/http.go`            | change | `flow.Middleware`, `precondition.IfMatch` and `rest.Allow` join the chain. |
-| `apps/hub/internal/repository/idempotency.go` | create | The store of a repeated write.                           |
+| `apps/hub/internal/server/http.go`            | change | `flow.Middleware`, `cache.Middleware`, `address.Middleware` and `precondition.IfMatch` join the chain. |
+| `apps/hub/internal/server/problem.go`         | change | A 405 names the methods of the route in `Allow`.         |
+| `apps/hub/internal/idempotency/store.go`      | create | The store of a repeated write.                           |
 | `apps/hub/internal/idempotency/sweep.go`      | create | The job that removes a row the cache outlived.           |
 | `apps/hub/internal/depresolver/cron.go`       | change | `CronRegistry` holds the jobs of the hub.                |
 | `libs/rest/flow/flow.go`                      | rename | `Middleware`, `IDFromContext`, `Instance`. From `request.go`. |
 | `libs/rest/precondition/precondition.go`      | create | `ETag`, the `IfMatch` middleware, `ErrModified`.         |
 | `libs/rest/cache/cache.go`                    | create | `NoStore`, `Immutable`, and the middleware that sets the first. |
+| `libs/rest/address/address.go`                | create | The middleware that carries `external_url`, and its reader. |
 | `libs/rest/idempotency/idempotency.go`        | create | The middleware and the `Store` interface.                |
 | `tools/apibuild/main.go`                      | create | The merge of `APIFMT-DD-012`.                            |
 | `specs/api/components.yaml`                   | change | The five headers of section 4.5, and `PreconditionFailed`. |
@@ -140,24 +143,34 @@ version of a document reaches a reader, and `ADR-0006` names them.
 | `idempotency_keys`  | `public` | The answer of a write that a client may repeat. | `APIFMT-FR-020` |
 
 ```sql
-CREATE TABLE idempotency_keys (
-    id           UUID        PRIMARY KEY DEFAULT uuidv7(),
-    user_id      UUID        NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+CREATE TABLE public.idempotency_keys (
+    id           UUID        NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    user_id      UUID        NOT NULL
+        DEFAULT NULLIF(current_setting('app.user_id', true), '')::uuid
+        REFERENCES public.users (id) ON DELETE CASCADE,
     key          TEXT        NOT NULL,
     request_hash TEXT        NOT NULL,
     status       SMALLINT    NOT NULL,
-    body         JSONB       NOT NULL,
+    headers      JSONB       NOT NULL DEFAULT '{}'::jsonb,
+    body         BYTEA       NOT NULL,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT idempotency_keys_user_key UNIQUE (user_id, key)
 );
 
-CREATE UNIQUE INDEX idempotency_keys_user_key ON idempotency_keys (user_id, key);
+CREATE INDEX idempotency_keys_created_at ON public.idempotency_keys (created_at);
 ```
 
 `OWN-004` and `OWN-006` scope it: the table carries `user_id`, forces row level
-security, and takes the policy of every other scoped table. `request_hash` holds
-a digest of the method, the path, and the body, so a repeat under one key with
+security, and takes the policy and the `set_updated_at` trigger of every other
+scoped table. `OWN-005` fills `user_id` from the session. `request_hash` holds a
+digest of the method, the path, and the body, so a repeat under one key with
 another body answers a failure rather than the wrong record.
+
+`body` holds bytes, because a 204 carries no JSON and a replay answers the bytes
+that the first write answered. `headers` holds the headers of that answer, so a
+replay carries its `Content-Type` and `Location`. The sweep reads `created_at`,
+so an index serves it.
 
 The migration that corrects the trigger replaces the body of one function:
 
@@ -316,7 +329,7 @@ The build fails on a duplicated component name whose two definitions differ, as
 
 **Realizes:** `APIFMT-FR-018`
 
-**Decision:** `flow.Middleware` replaces `rest.RequestID`. It reads `X-Flow-ID`,
+**Decision:** `flow.Middleware` replaces `RequestID` of `libs/problem`. It reads `X-Flow-ID`,
 removes every character outside `[a-zA-Z0-9/+_=-]`, cuts to 128 characters, and
 makes a UUID version 7 when nothing remains. `Instance` answers `/flows/<value>`.
 
@@ -568,19 +581,19 @@ carry `public`, `Vary` and an `ETag`.
 
 | #   | Step                                                                   | Realizes                         | Done |
 | --- | ------------------------------------------------------------------------ | -------------------------------- | ---- |
-| 1   | Correct the trigger with one migration.                                 | `APIFMT-FR-014`                  | [ ]  |
-| 2   | Order the migration plan.                                               | `APIFMT-FR-015`                  | [ ]  |
-| 3   | Replace `Hostname` with `ExternalURL`, and change the three readers.    | `APIFMT-FR-013`                  | [ ]  |
-| 4   | Rename `RequestID` to `FlowID`, read the header, and change `Instance`. | `APIFMT-FR-018`                  | [ ]  |
-| 5   | Rename the routes, delete `/ping`, and answer 202 from the three starts. | `APIFMT-FR-011`, `APIFMT-FR-012` | [ ]  |
-| 6   | Change the deck and `libs/api-client` to the new routes.                | `APIFMT-FR-011`                  | [ ]  |
-| 7   | Add `concurrency.go`, and take `If-Match` in each write.                | `APIFMT-FR-019`                  | [ ]  |
-| 8   | Add the table, the store, and the idempotency middleware.               | `APIFMT-FR-020`                  | [ ]  |
-| 8a  | Add the job that removes a row the cache outlived.                     | `APIFMT-FR-020`                  | [ ]  |
-| 9   | Add `cache.go`, the middleware, and the override on the asset route.    | `APIFMT-FR-021`                  | [ ]  |
+| 1   | Correct the trigger with one migration.                                 | `APIFMT-FR-014`                  | [x]  |
+| 2   | Order the migration plan.                                               | `APIFMT-FR-015`                  | [x]  |
+| 3   | Replace `Hostname` with `ExternalURL`, and change the three readers.    | `APIFMT-FR-013`                  | [x]  |
+| 4   | Replace `RequestID` with `flow.Middleware`, read the header, and change `Instance`. | `APIFMT-FR-018`                  | [x]  |
+| 5   | Rename the routes, delete `/ping`, and answer 202 from the three starts. | `APIFMT-FR-011`, `APIFMT-FR-012` | [x]  |
+| 6   | Change the deck and `libs/api-client` to the new routes.                | `APIFMT-FR-011`                  | [x]  |
+| 7   | Add the `precondition` package, and take `If-Match` in each write.      | `APIFMT-FR-019`                  | [x]  |
+| 8   | Add the table, the store, and the idempotency middleware.               | `APIFMT-FR-020`                  | [x]  |
+| 8a  | Add the job that removes a row the cache outlived.                     | `APIFMT-FR-020`                  | [x]  |
+| 9   | Add the `cache` package, the middleware, and the override on the asset route. | `APIFMT-FR-021`                  | [x]  |
 | 10  | Write `tools/apibuild`, and add `api:build` and `api:lint`.             | `APIFMT-FR-016`, `APIFMT-FR-017` | [ ]  |
-| 11  | Add the five headers and `PreconditionFailed` to `components.yaml`.     | `SPC-002`                        | [ ]  |
-| 12  | Change `extid/api.yaml` and `websess/api.yaml` to the renamed routes.   | `SPC-002`                        | [ ]  |
+| 11  | Add the five headers and `PreconditionFailed` to `components.yaml`.     | `SPC-002`                        | [x]  |
+| 12  | Change `extid/api.yaml` and `websess/api.yaml` to the renamed routes.   | `SPC-002`                        | [x]  |
 | 13  | Add the two commands to `BLD-001`.                                      | `RES-008`                        | [ ]  |
 | 14  | Add the write intent, send its key from `post`, and hold one in the form. | `APIFMT-FR-022`                | [x]  |
 

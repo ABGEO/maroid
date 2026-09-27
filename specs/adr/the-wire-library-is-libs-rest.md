@@ -53,6 +53,11 @@ failure about a cursor and not about a problem.
 `github.com/abgeo/maroid/libs/rest`. It holds the problem, the page, the cursor,
 the writer, and every middleware that shapes an HTTP answer.
 
+The module holds one package for each concern: `problem`, `page`, `flow`,
+`address`, `precondition`, `cache`, and `idempotency`. The package name carries
+the subject, so an identifier does not repeat it, and a plugin imports only the
+concerns it uses.
+
 ## Rationale
 
 The module already carries the wire contract that the hub and every plugin share.
@@ -81,7 +86,7 @@ contract across two imports with no rule to say which half a new type joins.
 | --------------------------- | ----------------------------------------------------------------- |
 | `libs/problem/go.mod`       | The module path becomes `github.com/abgeo/maroid/libs/rest`.    |
 | `go.work`                   | `./libs/problem` becomes `./libs/rest`.                         |
-| 17 Go files                 | The import path and the `problem.` qualifier become `rest.`.    |
+| 17 Go files                 | The import path becomes `libs/rest/problem`. The `problem.` qualifier stays. |
 | `ERR-003`, `ERR-007`        | Every sentence that names `libs/problem` names `libs/rest`.     |
 | `ERR-007`                   | It names the page and the cursor as the other residents, and cites `ARC-005`. |
 | `errors.md` frontmatter     | The `scope` list names `libs/rest/`.                            |
