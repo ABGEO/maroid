@@ -4,10 +4,15 @@ export interface RequestOptions {
   signal?: AbortSignal;
   /**
    * The entity tag that an earlier read answered. The write lands only while
-   * the record still holds it, and a record that moved answers 412. A White
+   * the record still holds it, and a record that moved answers 412. A write
    * that names none lands.
    */
   ifMatch?: string;
+  /**
+   * The key of a write that creates. The hub answers a repeat under one key
+   * with the earlier result. `post` alone sends it.
+   */
+  idempotencyKey?: string;
 }
 
 /**

@@ -1,11 +1,12 @@
 <script lang="ts">
-  import type { PluginHost } from '@maroid/plugin-sdk';
+  import { createWriteIntent, type PluginHost } from '@maroid/plugin-sdk';
 
   import { createJasmineApi } from '../../api';
 
   let { host }: { host: PluginHost } = $props();
 
   const api = createJasmineApi(host);
+  const intent = createWriteIntent();
 
   let name = $state('');
   let submitting = $state(false);
@@ -22,11 +23,15 @@
     error = null;
 
     try {
-      const created = await api.environments.create({ name });
+      const payload = { name };
+      const created = await api.environments.create(payload, {
+        idempotencyKey: intent.keyFor(payload)
+      });
       if (created === null) {
         return;
       }
 
+      intent.settle();
       host.navigate('/environments');
     } catch (err) {
       console.error('Failed to create environment', err);

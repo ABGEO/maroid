@@ -4,10 +4,10 @@ title: The platform that carries the API
 type: spec
 status: approved
 created: 2026-09-24
-updated: 2026-09-25
+updated: 2026-09-27
 approved_by: Temuri
 approved_on: 2026-09-25
-constrained_by: [RES, ERR, API, DAT, CFG, SEC, TG, LOG, BLD, OWN, CLI, GO]
+constrained_by: [RES, ERR, API, DAT, CFG, SEC, TG, LOG, BLD, OWN, CLI, GO, UI]
 requirements: features/apifmt/requirements-platform.md
 ---
 
@@ -40,6 +40,7 @@ documents and a linter checks them. Four headers join the answer.
 | `APIFMT-FR-019` | 4.5, `APIFMT-DD-014`          |
 | `APIFMT-FR-020` | 4.4, 4.5, `APIFMT-DD-015`     |
 | `APIFMT-FR-021` | 4.5, `APIFMT-DD-016`          |
+| `APIFMT-FR-022` | 4.1, `APIFMT-DD-018`          |
 
 ## 3. Guideline compliance
 
@@ -59,6 +60,7 @@ documents and a linter checks them. Four headers join the answer.
 | `CLI-001` | The merge is a command of `tools/`, and joins no command tree of the hub.  |
 | `LOG-009` | The access record reads the flow identifier from the context.              |
 | `OWN-006` | A route that answers the rows of one person forbids a shared cache.        |
+| `UI-006`  | A plugin form reaches the write intent through `@maroid/plugin-sdk`.       |
 
 ## 4. Design
 
@@ -86,6 +88,12 @@ documents and a linter checks them. Four headers join the answer.
 | `package.json`                                | change | `api:build` and `api:lint`.                              |
 | `libs/api-client/src/client.ts`               | change | The new paths, `X-Flow-ID`, `If-Match`.                  |
 | `apps/deck/src/lib/api/`                      | change | The three starts read a 202 and navigate.                |
+| `libs/api-client/src/intent.ts`               | create | `createWriteIntent`, `WriteIntent`.                      |
+| `libs/api-client/src/types.ts`                | change | `idempotencyKey` joins `RequestOptions`.                 |
+| `libs/api-client/src/client.ts`               | change | `post` sends `Idempotency-Key` when a caller names one.  |
+| `libs/plugin-sdk/src/index.ts`                | change | Exports `createWriteIntent` and `WriteIntent`.           |
+| `plugins/jasmine/ui/src/api/`                 | change | Each `create` takes `RequestOptions`.                    |
+| `plugins/jasmine/ui/src/pages/environments/Add.svelte` | change | Holds one intent, and sends its key on each submit. |
 
 ### 4.2 Configuration
 
@@ -437,6 +445,45 @@ holds, so the guard silently protects the wrong state.
 A route adopts the conditional write one at a time. `Z-182` makes the header
 optional, so a route that has not adopted it keeps its behavior.
 
+### `APIFMT-DD-018`
+
+**Realizes:** `APIFMT-FR-022`
+
+**Decision:** `createWriteIntent()` answers a `WriteIntent` that a form holds for
+as long as it is mounted. `keyFor(body: unknown): string` answers the key of the
+body that the form sends. It answers the key that it held when the body
+serializes to the text of the last call, and a new key otherwise. `settle()`
+drops the key once a write lands. The form passes the key to `post` as
+`RequestOptions.idempotencyKey`, and `post` sends it as `Idempotency-Key`.
+
+A key is 32 hexadecimal characters from 16 bytes of `crypto.getRandomValues`.
+
+**Rationale:** The form decides at the moment it submits, so no field needs its
+own wiring, and a field added later cannot escape the guard. Comparing the body
+means the hub never receives one key with two bodies, so the form never reaches
+the 400 of `APIFMT-DD-015`. `Z-230` asks for a value with enough entropy and
+gives no format, and 128 random bits collide in no realistic key cache.
+`getRandomValues` works in every context, while `crypto.randomUUID` throws on a
+deck that a person serves over plain `http` on a local address.
+
+A form remounts when the person opens it again, so a new form holds a new
+intent, which is the second limit case of `APIFMT-FR-022`.
+
+`put` and `del` ignore the option. `rest.Idempotency` reads the key on a `POST`
+alone, and `APIFMT-DD-014` already guards a `PUT`.
+
+**Alternatives:** Renew the key from an effect that tracks every bound value. It
+reads closer to the statement, but each form must list its fields, and a field
+that it forgets sends one key with two bodies. Make the key inside `post` for
+each call. Two presses then send two keys, which `APIFMT-FR-022` exists to stop.
+
+A person who changes a value and then restores it sends the earlier key with the
+earlier body. The hub then answers the earlier result, if one exists, and one
+record still exists. The hub keeps no answer of a failure, so a resubmit after a
+failure runs the write again.
+
+The flow starts of the deck take no key. `APIFMT-DD-015` gives the reason.
+
 ## 6. Scenarios
 
 ### `APIFMT-SC-012` (verifies `APIFMT-FR-011`)
@@ -534,6 +581,7 @@ carry `public`, `Vary` and an `ETag`.
 | 11  | Add the five headers and `PreconditionFailed` to `components.yaml`.     | `SPC-002`                        | [ ]  |
 | 12  | Change `extid/api.yaml` and `websess/api.yaml` to the renamed routes.   | `SPC-002`                        | [ ]  |
 | 13  | Add the two commands to `BLD-001`.                                      | `RES-008`                        | [ ]  |
+| 14  | Add the write intent, send its key from `post`, and hold one in the form. | `APIFMT-FR-022`                | [x]  |
 
 Step 1 and step 2 land before any other, because a deployment that starts on the
 wrong order stores the wrong instant.

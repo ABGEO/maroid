@@ -4,3 +4,4 @@ export type { Page } from './page';
 export { FLOW_ID_HEADER, PROBLEM_MEDIA_TYPE, PROBLEM_TYPE, isProblem } from './problem';
 export { ApiError } from './errors';
 export { createClient } from './client';
+export { createWriteIntent, type WriteIntent } from './intent';

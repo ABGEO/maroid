@@ -2,6 +2,8 @@ import { ApiError } from './errors';
 import { FLOW_ID_HEADER, PROBLEM_MEDIA_TYPE } from './problem';
 import type { ApiClient, ClientConfig, RequestOptions } from './types';
 
+const IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
+
 function trimTrailingSlashes(value: string): string {
   return value.replace(/\/+$/, '');
 }
@@ -146,10 +148,15 @@ export function createClient(config: ClientConfig): ApiClient {
     },
 
     post<T>(path: string, body?: unknown, options: RequestOptions = {}) {
+      const headers = new Headers(options.headers);
+      if (options.idempotencyKey !== undefined && !headers.has(IDEMPOTENCY_KEY_HEADER)) {
+        headers.set(IDEMPOTENCY_KEY_HEADER, options.idempotencyKey);
+      }
+
       return request<T>(buildUrl(path, options.params), {
         method: 'POST',
         body: serializeBody(body),
-        headers: options.headers,
+        headers,
         signal: options.signal
       });
     },

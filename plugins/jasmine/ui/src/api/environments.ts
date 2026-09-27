@@ -1,4 +1,4 @@
-import type { ApiClient, Page } from "@maroid/plugin-sdk";
+import type { ApiClient, Page, RequestOptions } from "@maroid/plugin-sdk";
 
 import type { Environment, EnvironmentPayload } from "./types";
 
@@ -11,8 +11,8 @@ export function createEnvironmentsApi(api: ApiClient) {
         .get<Page<Environment>>("/environments")
         .then((page) => page?.items ?? null),
     get: (id: string) => api.get<Environment>(`/environments/${id}`),
-    create: (payload: EnvironmentPayload) =>
-      api.post<Environment>("/environments", payload),
+    create: (payload: EnvironmentPayload, options?: RequestOptions) =>
+      api.post<Environment>("/environments", payload, options),
     update: (id: string, payload: EnvironmentPayload) =>
       api.put<Environment>(`/environments/${id}`, payload),
     remove: (id: string) => api.del<null>(`/environments/${id}`),

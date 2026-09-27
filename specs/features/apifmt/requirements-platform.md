@@ -4,9 +4,9 @@ title: The platform that carries the API
 type: requirements
 status: approved
 created: 2026-09-24
-updated: 2026-09-24
+updated: 2026-09-27
 approved_by: Temuri
-approved_on: 2026-09-24
+approved_on: 2026-09-27
 constrained_by: [RES, ERR, API, DAT, CFG, SEC, TG, LOG, BLD, OWN]
 ---
 
@@ -48,6 +48,7 @@ keeps it.
 | Term             | Meaning                                                                    |
 | ---------------- | ---------------------------------------------------------------------------- |
 | external address | The address that reaches one deployment from outside it, with the scheme.  |
+| key of a write   | A value that a client sends with a write that creates, so that the hub knows a repeat. |
 
 `GLO-api-document` gives the published document.
 
@@ -220,6 +221,29 @@ that a shared cache keeps reaches the wrong reader.
   cache keeps the answer.
 - Limit case: a route that answers the same bytes to everyone names a period.
 - Unwanted case: a route says nothing, and a proxy decides.
+
+### `APIFMT-FR-022`
+
+When a person submits one form that creates a record more than once, the deck
+must send each attempt under the key of the first attempt.
+
+The deck must send a new key once the person changes a value in the form, or
+once a write from the form succeeds.
+
+**Why:** `APIFMT-FR-020` protects a repeat only when the same key reaches the hub
+twice. A person who sees no answer presses the button again, and a key that each
+attempt makes for itself lets that second press create a second record.
+
+**Examples:**
+
+- Normal case: the answer to a create is lost, the person submits again with the
+  same values, and one record exists.
+- Limit case: the person edits a value after a failed attempt and submits, and the
+  hub treats the attempt as a new write.
+- Limit case: a write succeeds, the person opens the form again and submits the
+  same values, and a second record exists.
+- Unwanted case: the person submits changed values under the key of an earlier
+  attempt, and the hub refuses the write as a repeat that differs.
 
 ## 6. Constraints from the guidelines
 

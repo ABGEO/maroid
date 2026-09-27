@@ -5,7 +5,14 @@ export type {
   Page,
   Problem,
   RequestOptions,
-  Tagged
+  Tagged,
+  WriteIntent
 } from '@maroid/api-client';
-export { ApiError, PROBLEM_MEDIA_TYPE, PROBLEM_TYPE, isProblem } from '@maroid/api-client';
+export {
+  ApiError,
+  PROBLEM_MEDIA_TYPE,
+  PROBLEM_TYPE,
+  createWriteIntent,
+  isProblem
+} from '@maroid/api-client';
 export { defineRoute } from './route';
