@@ -91,14 +91,27 @@ func TestAStaleCursorAndABrokenCursorAnswerDifferently(t *testing.T) {
 	require.NotNil(t, failure)
 	assert.Equal(t, problem.TypeRequestInvalid, failure.Type)
 
+	// The cursor carries no sort, as a request that names none builds it, so
+	// the filters alone decide whether it matches.
 	held := sampleCursor()
+	held.Sort = nil
+
 	encoded, err := page.EncodeCursor(held)
 	require.NoError(t, err)
 
-	request := plantsRequest(t, "cursor="+encoded+"&"+environmentFilter+"=another")
 	options := page.Options{Filters: []string{environmentFilter}}
 
-	_, failure = page.ReadRequest(request, options)
+	asked, failure := page.ReadRequest(
+		plantsRequest(t, "cursor="+encoded+"&"+environmentFilter+"="+sampleEnvironment),
+		options,
+	)
+	require.Nil(t, failure, "the same filter keeps the cursor")
+	require.NotNil(t, asked.Cursor)
+
+	_, failure = page.ReadRequest(
+		plantsRequest(t, "cursor="+encoded+"&"+environmentFilter+"=another"),
+		options,
+	)
 	require.NotNil(t, failure)
 	assert.Equal(t, problem.TypeCursorStale, failure.Type)
 	assert.Equal(t, http.StatusBadRequest, failure.Status)

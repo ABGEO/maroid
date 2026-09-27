@@ -364,7 +364,8 @@ registered type.
 **Layer:** integration.
 **Given** a collection of ten thousand rows.
 **When** a client reads page 1 and then page 100, each with a limit of 100.
-**Then** the second answer takes at most one fifth longer than the first.
+**Then** the second read touches at most one fifth more rows than the first. The
+rows measure the cost, because the time of a read this small drowns in noise.
 
 ## 7. Build plan
 

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/fs"
 	"testing"
-	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx" // The PostgreSQL driver for migrate
@@ -216,10 +215,15 @@ func unique(values []string) []string {
 	return out
 }
 
-// APIFMT-NFR-001, APIFMT-SC-011: The time to answer one page does not grow with
-// the position of that page. A keyset reads from an index; an offset would scan
+// APIFMT-NFR-001, APIFMT-SC-011: The cost of one page does not grow with the
+// position of that page. A keyset reads from an index; an offset would read
 // every row that it discards.
-func TestThePageTimeDoesNotGrowWithThePosition(t *testing.T) {
+//
+// The test counts the rows that each read touches rather than the time it
+// takes. A read of a hundred rows takes a fraction of a millisecond, where the
+// noise of a shared machine drowns the difference, and the rows are the cause
+// of the time.
+func TestThePageCostDoesNotGrowWithThePosition(t *testing.T) {
 	t.Parallel()
 
 	const (
@@ -231,20 +235,21 @@ func TestThePageTimeDoesNotGrowWithThePosition(t *testing.T) {
 
 	database := plantsUnderTest(t, rows)
 
-	// The deepest boundary that still leaves a full page behind it.
+	// The boundary of page 100, the last full page of the collection.
 	deepest := fmt.Sprintf("plant-%06d", rows-pageSize-1)
 
-	first := timeOnePage(t, database, "", pageSize)
-	deep := timeOnePage(t, database, deepest, pageSize)
+	first := rowsReadByOnePage(t, database, "", pageSize)
+	deep := rowsReadByOnePage(t, database, deepest, pageSize)
 
-	t.Logf("page 1 took %s, page %d took %s", first, deepPage, deep)
+	t.Logf("page 1 read %d rows, page %d read %d rows", first, deepPage, deep)
 
-	assert.Less(t, deep.Seconds(), first.Seconds()*tolerance+0.05,
-		"page %d must not cost more than a fifth beyond page 1", deepPage)
+	assert.LessOrEqual(t, float64(deep), float64(first)*tolerance,
+		"page %d must not read more than a fifth beyond page 1", deepPage)
 }
 
-// timeOnePage measures one read from the request to the last row.
-func timeOnePage(t *testing.T, database *sqlx.DB, after string, limit int) time.Duration {
+// rowsReadByOnePage answers the count of plant rows that one read touches, from
+// the counters that PostgreSQL keeps for the current transaction.
+func rowsReadByOnePage(t *testing.T, database *sqlx.DB, after string, limit int) int64 {
 	t.Helper()
 
 	tx, err := database.Beginx()
@@ -252,14 +257,25 @@ func timeOnePage(t *testing.T, database *sqlx.DB, after string, limit int) time.
 
 	defer func() { _ = tx.Rollback() }()
 
-	started := time.Now()
+	touched := func() int64 {
+		var count int64
 
-	read, err := repository.NewPlant(tx).
-		List(context.Background(), page.Seek{Direction: page.DirectionForward, Boundary: after, Limit: limit})
-	elapsed := time.Since(started)
+		require.NoError(t, tx.Get(&count, `
+			SELECT coalesce(seq_tup_read, 0) + coalesce(idx_tup_fetch, 0)
+			FROM pg_stat_xact_user_tables
+			WHERE relname = 'plants';`))
 
+		return count
+	}
+
+	before := touched()
+
+	read, err := repository.NewPlant(tx).List(
+		context.Background(),
+		page.Seek{Direction: page.DirectionForward, Boundary: after, Limit: limit},
+	)
 	require.NoError(t, err)
 	require.Len(t, read, limit, "the page is full, so the two reads compare")
 
-	return elapsed
+	return touched() - before
 }

@@ -111,10 +111,16 @@ func webhookOptions(
 	}
 
 	return []telego.WebhookOption{
-		telego.WithWebhookSet(ctx, &telego.SetWebhookParams{
-			URL:         cfg.Server.ExternalAddress(cfg.Telegram.Webhook.Path),
-			SecretToken: bot.SecretToken(),
-		}),
+		telego.WithWebhookSet(ctx, webhookParams(cfg, bot.SecretToken())),
+	}
+}
+
+// webhookParams names the address that Telegram posts every update to, built
+// from the one stored external address.
+func webhookParams(cfg *config.Config, secret string) *telego.SetWebhookParams {
+	return &telego.SetWebhookParams{
+		URL:         cfg.Server.ExternalAddress(cfg.Telegram.Webhook.Path),
+		SecretToken: secret,
 	}
 }
 
