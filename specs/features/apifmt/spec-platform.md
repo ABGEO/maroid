@@ -74,6 +74,8 @@ documents and a linter checks them. Four headers join the answer.
 | `apps/hub/internal/migrator/migrator.go`      | change | `buildMigrationPlan` orders the core first.              |
 | `apps/hub/internal/server/http.go`            | change | `rest.FlowID`, `rest.IfMatch` and `rest.Allow` join the chain. |
 | `apps/hub/internal/repository/idempotency.go` | create | The store of a repeated write.                           |
+| `apps/hub/internal/idempotency/sweep.go`      | create | The job that removes a row the cache outlived.           |
+| `apps/hub/internal/depresolver/cron.go`       | change | `CronRegistry` holds the jobs of the hub.                |
 | `libs/rest/flow.go`                           | rename | `FlowID`, `FlowIDFromContext`, `Instance`. From `request.go`. |
 | `libs/rest/concurrency.go`                    | create | `ETag`, the `IfMatch` middleware, `ErrModified`.         |
 | `libs/rest/cache.go`                          | create | `NoStore`, `Immutable`, and the middleware that sets the first. |
@@ -385,8 +387,12 @@ per table, needs a migration on each one, and answers a conflict rather than the
 earlier result.
 
 A repeat under one key with another request hash answers 400, which `Z-230`
-recommends. A stored row older than 24 hours expires, and a cron job removes it.
-`Z-230` gives that lifetime and calls the store a key cache, not a request log.
+recommends. A stored row older than 24 hours expires, and an hourly job of the hub
+removes it. `Z-230` gives that lifetime and calls the store a key cache, not a
+request log. The read serves what the table holds, so the job is the one thing
+that expires a row. The job declares `CronScopePerUser`, which `OWN-009` gives for
+a scoped table, so the scheduler names the user and nothing bypasses row level
+security.
 
 `Z-230` also gives the schema of the header. `specs/api/components.yaml` gains
 it as a parameter, and each authenticated write references it.
@@ -522,6 +528,7 @@ carry `public`, `Vary` and an `ETag`.
 | 6   | Change the deck and `libs/api-client` to the new routes.                | `APIFMT-FR-011`                  | [ ]  |
 | 7   | Add `concurrency.go`, and take `If-Match` in each write.                | `APIFMT-FR-019`                  | [ ]  |
 | 8   | Add the table, the store, and the idempotency middleware.               | `APIFMT-FR-020`                  | [ ]  |
+| 8a  | Add the job that removes a row the cache outlived.                     | `APIFMT-FR-020`                  | [ ]  |
 | 9   | Add `cache.go`, the middleware, and the override on the asset route.    | `APIFMT-FR-021`                  | [ ]  |
 | 10  | Write `tools/apibuild`, and add `api:build` and `api:lint`.             | `APIFMT-FR-016`, `APIFMT-FR-017` | [ ]  |
 | 11  | Add the five headers and `PreconditionFailed` to `components.yaml`.     | `SPC-002`                        | [ ]  |

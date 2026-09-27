@@ -211,7 +211,7 @@ func TestTheKeyCacheKeepsTheHeadersOfTheAnswer(t *testing.T) {
 		Key:         "key-1",
 		RequestHash: "digest",
 		Status:      http.StatusCreated,
-		Headers:     model.Headers{"Content-Type": {"application/json"}},
+		Headers:     model.Headers{"Content-Type": {mediaTypeOfAnAnswer}},
 		Body:        []byte(`{"id":"01a0cae5-eb36-777a-824e-6e7e28d7a6b1"}`),
 	}
 
@@ -234,6 +234,6 @@ func TestTheKeyCacheKeepsTheHeadersOfTheAnswer(t *testing.T) {
 
 	require.NotNil(t, held)
 	assert.Equal(t, http.StatusCreated, held.Status)
-	assert.Equal(t, []string{"application/json"}, held.Headers["Content-Type"])
+	assert.Equal(t, []string{mediaTypeOfAnAnswer}, held.Headers["Content-Type"])
 	assert.JSONEq(t, string(kept.Body), string(held.Body))
 }

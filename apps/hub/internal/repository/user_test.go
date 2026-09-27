@@ -16,6 +16,8 @@ import (
 const (
 	nameOfA = "Temuri"
 	nameOfB = "Nino"
+
+	mediaTypeOfAnAnswer = "application/json"
 )
 
 func startWithCoreMigrations(t *testing.T) *testdb.Instance {

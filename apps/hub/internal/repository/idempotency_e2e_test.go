@@ -30,7 +30,7 @@ func TestARepeatedWriteReachesTheHandlerOnce(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		runs.Add(1)
 
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", mediaTypeOfAnAnswer)
 		w.WriteHeader(http.StatusCreated)
 		_, _ = w.Write([]byte(`{"id":"01a0cae5-eb36-777a-824e-6e7e28d7a6b1"}`))
 	})
@@ -55,7 +55,7 @@ func TestARepeatedWriteReachesTheHandlerOnce(t *testing.T) {
 
 	assert.Equal(t, http.StatusCreated, first.Code)
 	assert.Equal(t, http.StatusCreated, second.Code)
-	assert.Equal(t, "application/json", second.Header().Get("Content-Type"))
+	assert.Equal(t, mediaTypeOfAnAnswer, second.Header().Get("Content-Type"))
 	assert.JSONEq(t, first.Body.String(), second.Body.String())
 	assert.Equal(t, int32(1), runs.Load(), "the handler ran once")
 }
@@ -77,7 +77,7 @@ func TestOneKeyOfTwoPeopleAnswersEachOfThem(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		runs.Add(1)
 
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", mediaTypeOfAnAnswer)
 		w.WriteHeader(http.StatusCreated)
 		_, _ = w.Write([]byte(`{"owner":"` + pluginapi.ActingUserFromContext(r.Context()) + `"}`))
 	})

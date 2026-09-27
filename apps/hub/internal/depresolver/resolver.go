@@ -216,6 +216,7 @@ type Container struct {
 	}
 
 	cronRegistry struct {
+		mu       sync.Mutex
 		once     sync.Once
 		instance *registry.CronRegistry
 	}
