@@ -96,6 +96,11 @@ paths:
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+              description: >
+                The validator of what the save stored. The next save names it in
+                `If-Match` with no read between.
           description: The hub stored every declared field.
         "400":
           $ref: "#/components/responses/MalformedRequest"

@@ -89,8 +89,13 @@ func (s *stubSettings) Settings(
 	return map[string]any{}, nil
 }
 
-func (s *stubSettings) Save(context.Context, string, map[string]any, *time.Time) error {
-	return nil
+func (s *stubSettings) Save(
+	context.Context,
+	string,
+	map[string]any,
+	*time.Time,
+) (time.Time, error) {
+	return time.Time{}, nil
 }
 
 // stubPlugin is a loaded plugin that carries nothing but its metadata.

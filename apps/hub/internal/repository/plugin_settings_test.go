@@ -33,7 +33,7 @@ func storeFields(t *testing.T, instance *testdb.Instance, user string, fields mo
 	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
 
 	require.NoError(t, database.WithUserTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
-		return repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, fields, nil)
+		return errorOf(repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, fields, nil))
 	}))
 }
 
@@ -169,19 +169,59 @@ func TestAConditionalUpsertRefusesARecordThatMoved(t *testing.T) {
 
 	// The first write holds the validator that the client read, and it lands.
 	require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
-		return repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
+		return errorOf(repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
 			keyEmail: {Kind: model.FieldKindText, Value: secondAddress},
-		}, &held)
+		}, &held))
 	}))
 
 	// The second write holds the validator that the first one retired.
 	err := asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
-		return repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
+		return errorOf(repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
 			keyEmail: {Kind: model.FieldKindText, Value: "third@example.com"},
-		}, &held)
+		}, &held))
 	})
 
 	require.ErrorIs(t, err, precondition.ErrModified)
+}
+
+// APIFMT-SC-019: A write answers the moment it stored, so the answer of a save
+// carries the validator that the next save names. Two writes in a row answer
+// two moments, and each equals what a read then finds.
+func TestAnUpsertAnswersTheMomentItStored(t *testing.T) {
+	t.Parallel()
+
+	instance := startWithCoreMigrations(t)
+	user := insertUser(t, instance, nameOfA)
+
+	for _, value := range []string{firstAddress, secondAddress} {
+		var written, stored time.Time
+
+		require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
+			var err error
+
+			written, err = repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
+				keyEmail: {Kind: model.FieldKindText, Value: value},
+			}, nil)
+			if err != nil {
+				return fmt.Errorf("storing the settings: %w", err)
+			}
+
+			return nil
+		}))
+
+		require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
+			row, err := repository.NewPluginSettings(tx).Get(ctx, probePluginID)
+			if err != nil {
+				return fmt.Errorf("reading the row that the test wrote: %w", err)
+			}
+
+			stored = row.UpdatedAt
+
+			return nil
+		}))
+
+		assert.True(t, written.Equal(stored), "the answer names the stored moment")
+	}
 }
 
 // APIFMT-SC-019: A write that names no validator lands. Z-182 asks for the
@@ -236,4 +276,10 @@ func TestTheKeyCacheKeepsTheHeadersOfTheAnswer(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, held.Status)
 	assert.Equal(t, []string{mediaTypeOfAnAnswer}, held.Headers["Content-Type"])
 	assert.JSONEq(t, string(kept.Body), string(held.Body))
+}
+
+// errorOf drops the moment that a write answers, for a test that reads only
+// whether the write landed.
+func errorOf(_ time.Time, err error) error {
+	return err
 }

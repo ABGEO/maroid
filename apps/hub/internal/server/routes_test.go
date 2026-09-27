@@ -12,6 +12,7 @@ import (
 
 	"github.com/abgeo/maroid/libs/rest/cache"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
@@ -255,4 +256,46 @@ func TestARepeatedWriteMakesOneRecord(t *testing.T) {
 
 	other := write(`{"name":"Palm"}`)
 	assert.Equal(t, http.StatusBadRequest, other.Code)
+}
+
+// APIFMT-SC-019: A save answers the validator of what it stored, so a client
+// that saves twice sends the second save under the tag that the first answered,
+// with no read between. The tag that the first save retired answers 412.
+func TestASaveAnswersTheValidatorOfTheNextSave(t *testing.T) {
+	t.Parallel()
+
+	fixture := hubUnderTest(t)
+	settingsPath := "/plugins/" + probePlugin + "/settings"
+
+	send := func(method string, ifMatch string) *httptest.ResponseRecorder {
+		request := httptest.NewRequestWithContext(
+			t.Context(), method, settingsPath, strings.NewReader("{}"),
+		)
+		request.AddCookie(fixture.session)
+
+		if ifMatch != "" {
+			request.Header.Set(precondition.IfMatchHeader, ifMatch)
+		}
+
+		recorder := httptest.NewRecorder()
+		fixture.router.ServeHTTP(recorder, request)
+
+		return recorder
+	}
+
+	read := send(http.MethodGet, "")
+	require.Equal(t, http.StatusOK, read.Code, read.Body.String())
+
+	first := send(http.MethodPut, read.Header().Get(precondition.ETagHeader))
+	require.Equal(t, http.StatusNoContent, first.Code, first.Body.String())
+
+	answered := first.Header().Get(precondition.ETagHeader)
+	require.NotEmpty(t, answered)
+	assert.NotEqual(t, read.Header().Get(precondition.ETagHeader), answered)
+
+	second := send(http.MethodPut, answered)
+	assert.Equal(t, http.StatusNoContent, second.Code, second.Body.String())
+
+	stale := send(http.MethodPut, answered)
+	assert.Equal(t, http.StatusPreconditionFailed, stale.Code)
 }

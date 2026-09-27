@@ -1,10 +1,12 @@
 package server_test
 
 import (
+	"context"
 	"encoding/json"
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"sync"
 	"testing"
 	"testing/fstest"
 	"time"
@@ -24,8 +26,10 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
+	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
@@ -97,7 +101,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		handler.NewPlugin(
 			logger, verifier, resolver,
 			registry.NewPluginRegistry(), uis, registry.NewCapabilityRegistry(),
-			nil, store,
+			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store,
 		),
 		handler.NewMCP(cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry()),
 		handler.NewPluginWrapper(
@@ -222,4 +226,55 @@ func probeRoutes(t *testing.T, database *sqlx.DB) []pluginapi.Route {
 			},
 		},
 	}
+}
+
+// settingsStub holds one stored record of settings for every plugin. A save
+// under a validator that the record no longer holds answers ErrModified, and
+// each save that lands moves the moment by one second.
+type settingsStub struct {
+	mu     sync.Mutex
+	moment time.Time
+}
+
+var _ settings.Service = (*settingsStub)(nil)
+
+func (s *settingsStub) Declares(string) bool { return true }
+
+func (s *settingsStub) Schema(string) (json.RawMessage, error) {
+	return json.RawMessage(`{}`), nil
+}
+
+func (s *settingsStub) SecretFields(string) ([]string, error) { return nil, nil }
+
+func (s *settingsStub) ChangedSecrets(string, map[string]any) ([]string, error) {
+	return nil, nil
+}
+
+func (s *settingsStub) Read(context.Context, string) (map[string]any, time.Time, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return map[string]any{}, s.moment, nil
+}
+
+func (s *settingsStub) Settings(context.Context, *pluginapi.PluginID) (map[string]any, error) {
+	return map[string]any{}, nil
+}
+
+func (s *settingsStub) Save(
+	_ context.Context,
+	_ string,
+	_ map[string]any,
+	ifMatch *time.Time,
+) (time.Time, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if ifMatch != nil && !ifMatch.Equal(s.moment) {
+		return time.Time{}, precondition.ErrModified
+	}
+
+	s.moment = s.moment.Add(time.Second)
+
+	return s.moment, nil
 }

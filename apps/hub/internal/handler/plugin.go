@@ -184,10 +184,13 @@ func (h *Plugin) SaveSettings(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	version := precondition.IfMatchFromContext(r.Context())
-	if err := h.settingsSvc.Save(r.Context(), chi.URLParam(r, "id"), input, version); err != nil {
+
+	written, err := h.settingsSvc.Save(r.Context(), chi.URLParam(r, "id"), input, version)
+	if err != nil {
 		return h.failSettings(w, r, err)
 	}
 
+	w.Header().Set(precondition.ETagHeader, precondition.ETag(written))
 	render.NoContent(w, r)
 
 	return nil

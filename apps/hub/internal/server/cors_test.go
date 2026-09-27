@@ -35,7 +35,7 @@ func corsRouter(t *testing.T) http.Handler {
 	require.NoError(t, err)
 
 	router.Get("/reads", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("ETag", `W/"1790332200123456789"`)
+		w.Header().Set("ETag", `"1790332200123456789"`)
 	})
 
 	return router

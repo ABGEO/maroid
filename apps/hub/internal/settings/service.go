@@ -31,7 +31,12 @@ type Service interface {
 	ChangedSecrets(pluginID string, input map[string]any) ([]string, error)
 	Read(ctx context.Context, pluginID string) (map[string]any, time.Time, error)
 	Settings(ctx context.Context, pluginID *pluginapi.PluginID) (map[string]any, error)
-	Save(ctx context.Context, pluginID string, input map[string]any, ifMatch *time.Time) error
+	Save(
+		ctx context.Context,
+		pluginID string,
+		input map[string]any,
+		ifMatch *time.Time,
+	) (time.Time, error)
 }
 
 // SchemaSource gives the settings schema of one plugin.
@@ -189,23 +194,25 @@ func (m *Manager) Settings(
 	return m.reveal(ctx, schema, stored)
 }
 
-// Save stores the settings of the acting user for the plugin.
-// A non-nil ifMatch refuses a write to a record that changed after the client
-// read it.
+// Save stores the settings of the acting user for the plugin, and answers the
+// moment of the write. A non-nil ifMatch refuses a write to a record that
+// changed after the client read it.
 func (m *Manager) Save(
 	ctx context.Context,
 	pluginID string,
 	input map[string]any,
 	ifMatch *time.Time,
-) error {
+) (time.Time, error) {
 	schema, err := m.schemaOf(pluginID)
 	if err != nil {
-		return err
+		return time.Time{}, err
 	}
 
 	if err = Validate(schema, input); err != nil {
-		return err
+		return time.Time{}, err
 	}
+
+	var written time.Time
 
 	err = database.WithUserTx(ctx, m.db, func(tx *sqlx.Tx) error {
 		settingsRepo := repository.NewPluginSettings(tx)
@@ -220,17 +227,24 @@ func (m *Manager) Save(
 			return mergeErr
 		}
 
-		return settingsRepo.Upsert(ctx, pluginID, fields, ifMatch)
+		var upsertErr error
+
+		written, upsertErr = settingsRepo.Upsert(ctx, pluginID, fields, ifMatch)
+		if upsertErr != nil {
+			return fmt.Errorf("storing the settings: %w", upsertErr)
+		}
+
+		return nil
 	})
 	if err != nil {
 		if errors.Is(err, precondition.ErrModified) {
-			return precondition.ErrModified
+			return time.Time{}, precondition.ErrModified
 		}
 
-		return fmt.Errorf("saving the settings: %w", err)
+		return time.Time{}, fmt.Errorf("saving the settings: %w", err)
 	}
 
-	return nil
+	return written, nil
 }
 
 // merge builds the row from the input and from the fields that the row already holds.

@@ -100,14 +100,14 @@ func (s *stubSettings) Save(
 	_ string,
 	input map[string]any,
 	_ *time.Time,
-) error {
+) (time.Time, error) {
 	if s.failure != nil {
-		return s.failure
+		return time.Time{}, s.failure
 	}
 
 	s.saved = input
 
-	return nil
+	return time.Time{}, nil
 }
 
 // session installs one tool on a server and connects a client to it. The
@@ -253,7 +253,7 @@ func (w *world) store(t *testing.T, user string, input map[string]any) {
 	t.Helper()
 
 	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
-	require.NoError(t, w.manager.Save(ctx, probePluginID, input, nil))
+	require.NoError(t, errorOf(w.manager.Save(ctx, probePluginID, input, nil)))
 }
 
 // storedSecret reads the secret of one user in its plaintext form.
@@ -526,4 +526,10 @@ func TestEachUserReadsOnlyTheirOwnSettings(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, want, values[keyEmail])
 	}
+}
+
+// errorOf drops the moment that a write answers, for a test that reads only
+// whether the write landed.
+func errorOf(_ time.Time, err error) error {
+	return err
 }

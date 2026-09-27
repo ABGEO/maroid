@@ -18,7 +18,12 @@ const pluginSettingsColumns = `id, user_id, plugin_id, fields, created_at, updat
 // PluginSettingsRepository defines the data access contract for the settings of a user.
 type PluginSettingsRepository interface {
 	Get(ctx context.Context, pluginID string) (*model.PluginSettings, error)
-	Upsert(ctx context.Context, pluginID string, fields model.Fields, ifMatch *time.Time) error
+	Upsert(
+		ctx context.Context,
+		pluginID string,
+		fields model.Fields,
+		ifMatch *time.Time,
+	) (time.Time, error)
 }
 
 // PluginSettings is a SQL based implementation of PluginSettingsRepository.
@@ -55,37 +60,41 @@ func (r *PluginSettings) Get(
 	return &entity, nil
 }
 
-// Upsert stores the fields of the acting user for the given plugin.
+// Upsert stores the fields of the acting user for the given plugin, and answers
+// the moment of the write, which the next validator carries.
 func (r *PluginSettings) Upsert(
 	ctx context.Context,
 	pluginID string,
 	fields model.Fields,
 	ifMatch *time.Time,
-) error {
+) (time.Time, error) {
 	query := `
 		INSERT INTO public.plugin_settings (plugin_id, fields)
 		VALUES (:plugin_id, :fields)
 		ON CONFLICT (user_id, plugin_id) DO UPDATE SET fields = EXCLUDED.fields
 		WHERE CAST(:if_match AS TIMESTAMPTZ) IS NULL
-		   OR public.plugin_settings.updated_at = CAST(:if_match AS TIMESTAMPTZ);`
+		   OR public.plugin_settings.updated_at = CAST(:if_match AS TIMESTAMPTZ)
+		RETURNING updated_at;`
 
-	result, err := r.tx.NamedExecContext(ctx, query, map[string]any{
+	bound, args, err := sqlx.Named(query, map[string]any{
 		"plugin_id": pluginID,
 		"fields":    fields,
 		"if_match":  ifMatch,
 	})
 	if err != nil {
-		return fmt.Errorf("upserting PluginSettings: %w", err)
+		return time.Time{}, fmt.Errorf("binding the upsert of PluginSettings: %w", err)
 	}
 
-	changed, err := result.RowsAffected()
+	var written time.Time
+
+	err = r.tx.GetContext(ctx, &written, r.tx.Rebind(bound), args...)
+	if errors.Is(err, sql.ErrNoRows) {
+		return time.Time{}, precondition.ErrModified
+	}
+
 	if err != nil {
-		return fmt.Errorf("reading the rows that the upsert changed: %w", err)
+		return time.Time{}, fmt.Errorf("upserting PluginSettings: %w", err)
 	}
 
-	if changed == 0 {
-		return precondition.ErrModified
-	}
-
-	return nil
+	return written, nil
 }
