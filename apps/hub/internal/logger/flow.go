@@ -7,16 +7,16 @@ import (
 	"github.com/abgeo/maroid/libs/rest/flow"
 )
 
-// requestHandler adds the flow identifier to every record that carries the
+// flowIDHandler adds the flow identifier to every record that carries the
 // context of a request.
-type requestHandler struct {
+type flowIDHandler struct {
 	slog.Handler
 }
 
-// WithRequest wraps a handler so that every record of a request carries the
+// WithFlowID wraps a handler so that every record of a request carries the
 // flow identifier of that request.
-func WithRequest(handler slog.Handler) slog.Handler {
-	return requestHandler{Handler: handler}
+func WithFlowID(handler slog.Handler) slog.Handler {
+	return flowIDHandler{Handler: handler}
 }
 
 // Handle adds the `flow_id` attribute and passes the record on. The value is
@@ -24,7 +24,7 @@ func WithRequest(handler slog.Handler) slog.Handler {
 //
 // Copies of a Record share state, so this clones before it adds. A handler that
 // fans out gives the same record to each of its handlers.
-func (h requestHandler) Handle(ctx context.Context, record slog.Record) error {
+func (h flowIDHandler) Handle(ctx context.Context, record slog.Record) error {
 	if identifier := flow.IDFromContext(ctx); identifier != "" {
 		record = record.Clone()
 		record.AddAttrs(slog.String("flow_id", identifier))
@@ -35,11 +35,11 @@ func (h requestHandler) Handle(ctx context.Context, record slog.Record) error {
 }
 
 // WithAttrs keeps the wrapper in place when a component adds its attributes.
-func (h requestHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return requestHandler{Handler: h.Handler.WithAttrs(attrs)}
+func (h flowIDHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	return flowIDHandler{Handler: h.Handler.WithAttrs(attrs)}
 }
 
 // WithGroup keeps the wrapper in place when a component opens a group.
-func (h requestHandler) WithGroup(name string) slog.Handler {
-	return requestHandler{Handler: h.Handler.WithGroup(name)}
+func (h flowIDHandler) WithGroup(name string) slog.Handler {
+	return flowIDHandler{Handler: h.Handler.WithGroup(name)}
 }

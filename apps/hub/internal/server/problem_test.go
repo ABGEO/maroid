@@ -85,8 +85,9 @@ func TestAPanicAnswersWithAProblemAndLeaksNothing(t *testing.T) {
 	assert.NotContains(t, recorder.Body.String(), "the handler gave up")
 }
 
-// ERR-006: Every response carries the identifier, and a problem holds it as a URI.
-func TestEveryAnswerCarriesTheRequestIdentifier(t *testing.T) {
+// ERR-006: Every response carries the flow identifier, and a problem holds it as a
+// URI.
+func TestEveryAnswerCarriesTheFlowIdentifier(t *testing.T) {
 	t.Parallel()
 
 	recorder, body := answerOf(t, http.MethodGet, "/nowhere")
@@ -97,12 +98,12 @@ func TestEveryAnswerCarriesTheRequestIdentifier(t *testing.T) {
 }
 
 // LOG-002 and LOG-009: The access record is JSON on stdout, and it carries the
-// identifier of the request that a problem also names.
-func TestTheAccessRecordCarriesTheRequestIdentifier(t *testing.T) {
+// flow identifier that a problem also names.
+func TestTheAccessRecordCarriesTheFlowIdentifier(t *testing.T) {
 	t.Parallel()
 
 	buffer := &bytes.Buffer{}
-	log := slog.New(logger.WithRequest(slog.NewJSONHandler(buffer, nil)))
+	log := slog.New(logger.WithFlowID(slog.NewJSONHandler(buffer, nil)))
 
 	router, err := server.NewHTTPRouter(&config.Config{}, log)
 	require.NoError(t, err)

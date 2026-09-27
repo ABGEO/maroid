@@ -23,13 +23,13 @@ func recordOf(t *testing.T, buffer *bytes.Buffer) map[string]any {
 	return record
 }
 
-// LOG-009: A log record of an HTTP request carries the `request` attribute, as
+// LOG-009: A log record of an HTTP request carries the `flow_id` attribute, as
 // the bare UUID.
-func TestARecordOfARequestCarriesTheIdentifier(t *testing.T) {
+func TestARecordOfARequestCarriesTheFlowIdentifier(t *testing.T) {
 	t.Parallel()
 
 	buffer := &bytes.Buffer{}
-	log := slog.New(logger.WithRequest(slog.NewJSONHandler(buffer, nil)))
+	log := slog.New(logger.WithFlowID(slog.NewJSONHandler(buffer, nil)))
 
 	ctx := flow.WithID(t.Context(), "0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77")
 	log.InfoContext(ctx, "the plugin answered")
@@ -38,12 +38,12 @@ func TestARecordOfARequestCarriesTheIdentifier(t *testing.T) {
 	assert.Equal(t, "0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77", record["flow_id"])
 }
 
-// LOG-009: A record outside a request carries no `request` attribute.
-func TestARecordOutsideARequestCarriesNoIdentifier(t *testing.T) {
+// LOG-009: A record outside a request carries no `flow_id` attribute.
+func TestARecordOutsideARequestCarriesNoFlowIdentifier(t *testing.T) {
 	t.Parallel()
 
 	buffer := &bytes.Buffer{}
-	log := slog.New(logger.WithRequest(slog.NewJSONHandler(buffer, nil)))
+	log := slog.New(logger.WithFlowID(slog.NewJSONHandler(buffer, nil)))
 
 	log.InfoContext(t.Context(), "the worker started")
 
@@ -51,12 +51,12 @@ func TestARecordOutsideARequestCarriesNoIdentifier(t *testing.T) {
 }
 
 // LOG-003: A component adds its attributes with With, and the wrapper survives,
-// so a record of that component still carries the identifier.
-func TestTheIdentifierSurvivesWith(t *testing.T) {
+// so a record of that component still carries the flow identifier.
+func TestTheFlowIdentifierSurvivesWith(t *testing.T) {
 	t.Parallel()
 
 	buffer := &bytes.Buffer{}
-	log := slog.New(logger.WithRequest(slog.NewJSONHandler(buffer, nil))).
+	log := slog.New(logger.WithFlowID(slog.NewJSONHandler(buffer, nil))).
 		With(slog.String("component", "handler"))
 
 	ctx := flow.WithID(t.Context(), "0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77")
