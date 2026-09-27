@@ -171,36 +171,6 @@ func TestABackwardReadAnswersTheRowsBeforeTheBoundaryInOrder(t *testing.T) {
 	assert.Equal(t, "plant-000003", rows[1].ID)
 }
 
-// APIFMT-SC-004: A filter narrows the collection, and the keyset holds inside it.
-func TestTheKeysetHoldsInsideAFilter(t *testing.T) {
-	t.Parallel()
-
-	database := plantsUnderTest(t, 4)
-
-	_, err := database.Exec(
-		`INSERT INTO environments (id, name) VALUES ('env-0002', 'Shelf');`)
-	require.NoError(t, err)
-	_, err = database.Exec(
-		`INSERT INTO plants (id, name, environment_id)
-		 VALUES ('plant-000099', 'Other', 'env-0002');`)
-	require.NoError(t, err)
-
-	tx, err := database.Beginx()
-	require.NoError(t, err)
-
-	t.Cleanup(func() { _ = tx.Rollback() })
-
-	rows, err := repository.NewPlant(tx).ListByEnvironmentID(
-		context.Background(), "env-0001", "", 10,
-	)
-	require.NoError(t, err)
-	assert.Len(t, rows, 4, "the filter holds")
-
-	for _, row := range rows {
-		assert.Equal(t, "env-0001", row.EnvironmentID)
-	}
-}
-
 func unique(values []string) []string {
 	held := map[string]struct{}{}
 	out := make([]string, 0, len(values))

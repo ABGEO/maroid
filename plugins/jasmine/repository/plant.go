@@ -22,12 +22,6 @@ type PlantRepository interface {
 	Insert(ctx context.Context, entity *model.Plant) error
 	GetByID(ctx context.Context, id string) (*model.Plant, error)
 	List(ctx context.Context, seek page.Seek) ([]model.Plant, error)
-	ListByEnvironmentID(
-		ctx context.Context,
-		environmentID string,
-		after string,
-		limit int,
-	) ([]model.Plant, error)
 	Update(ctx context.Context, entity *model.Plant, ifMatch *time.Time) error
 	Delete(ctx context.Context, id string) error
 }
@@ -94,24 +88,6 @@ func (r *Plant) List(ctx context.Context, seek page.Seek) ([]model.Plant, error)
 
 	if seek.Direction == page.DirectionBackward {
 		slices.Reverse(entities)
-	}
-
-	return entities, nil
-}
-
-// ListByEnvironmentID retrieves one page of Plant records of one environment.
-func (r *Plant) ListByEnvironmentID(
-	ctx context.Context,
-	environmentID string,
-	after string,
-	limit int,
-) ([]model.Plant, error) {
-	var entities []model.Plant
-
-	query := selectPlants + " WHERE environment_id = $1 AND id > $2 ORDER BY id LIMIT $3;"
-
-	if err := r.tx.SelectContext(ctx, &entities, query, environmentID, after, limit); err != nil {
-		return nil, fmt.Errorf("listing Plants by environment ID: %w", err)
 	}
 
 	return entities, nil
