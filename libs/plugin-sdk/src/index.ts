@@ -2,6 +2,7 @@ export type { User, PluginHost, RouteCleanup, RouteMounter } from './types';
 export type {
   ApiClient,
   FieldFailure,
+  LinkOptions,
   Page,
   Problem,
   RequestOptions,

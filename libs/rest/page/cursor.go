@@ -20,6 +20,10 @@ const (
 	DirectionBackward Direction = "backward"
 )
 
+func (d Direction) valid() bool {
+	return d == DirectionForward || d == DirectionBackward
+}
+
 var errCursorShape = errors.New("the value is not a cursor")
 
 // Cursor names one position in one collection.
@@ -88,7 +92,7 @@ func DecodeCursor(value string) (Cursor, error) {
 		return Cursor{}, fmt.Errorf("reading the cursor: %w", err)
 	}
 
-	if cursor.ID == "" || cursor.Direction == "" {
+	if cursor.ID == "" || !cursor.Direction.valid() {
 		return Cursor{}, fmt.Errorf("reading the cursor: %w", errCursorShape)
 	}
 

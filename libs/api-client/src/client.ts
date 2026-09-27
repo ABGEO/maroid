@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import { FLOW_ID_HEADER, PROBLEM_MEDIA_TYPE } from './problem';
-import type { ApiClient, ClientConfig, RequestOptions } from './types';
+import type { ApiClient, ClientConfig, LinkOptions, RequestOptions } from './types';
 
 const IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
 
@@ -117,6 +117,17 @@ export function createClient(config: ClientConfig): ApiClient {
     return exchanged?.body ?? null;
   }
 
+  function resolveLink(link: string): string {
+    const hub = new URL(baseUrl || globalThis.location.origin);
+    const target = new URL(link, hub);
+
+    if (target.origin !== hub.origin) {
+      throw new Error(`the link ${link} leaves the origin of the hub`);
+    }
+
+    return target.href;
+  }
+
   function serializeBody(body?: unknown): string | undefined {
     return body !== undefined ? JSON.stringify(body) : undefined;
   }
@@ -145,6 +156,14 @@ export function createClient(config: ClientConfig): ApiClient {
         value: exchanged.body as T,
         etag: exchanged.response.headers.get('ETag') ?? undefined
       };
+    },
+
+    follow<T>(link: string, options: LinkOptions = {}) {
+      return request<T>(resolveLink(link), {
+        method: 'GET',
+        headers: options.headers,
+        signal: options.signal
+      });
     },
 
     post<T>(path: string, body?: unknown, options: RequestOptions = {}) {

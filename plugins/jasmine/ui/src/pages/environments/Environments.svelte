@@ -1,38 +1,21 @@
 <script lang="ts">
   import type { PluginHost } from '@maroid/plugin-sdk';
 
-  import { createJasmineApi, type Environment } from '../../api';
+  import { createJasmineApi } from '../../api';
+  import Pager from '../../lib/Pager.svelte';
+  import { createPager } from '../../lib/paging.svelte';
 
   let { host }: { host: PluginHost } = $props();
 
   const api = createJasmineApi(host);
-
-  let status = $state<'loading' | 'ready' | 'error'>('loading');
-  let environments = $state<Environment[]>([]);
-
-  async function load(): Promise<void> {
-    status = 'loading';
-
-    try {
-      const result = await api.environments.list();
-      if (result === null) {
-        return;
-      }
-
-      environments = result;
-      status = 'ready';
-    } catch (error) {
-      console.error('Failed to load environments', error);
-      status = 'error';
-    }
-  }
+  const pager = createPager(api.environments.list);
 
   function formatDate(value: string): string {
     return new Date(value).toLocaleDateString();
   }
 
   $effect(() => {
-    void load();
+    void pager.reload();
   });
 </script>
 
@@ -42,11 +25,11 @@
       <a href={host.href('/environments/add')}>Add environment</a>
     </div>
 
-    {#if status === 'loading'}
+    {#if pager.status === 'loading'}
       <p>Loading…</p>
-    {:else if status === 'error'}
-      <p class="error">Failed to load environments. <button onclick={load}>Retry</button></p>
-    {:else if environments.length === 0}
+    {:else if pager.status === 'error'}
+      <p class="error">Failed to load environments. <button onclick={() => pager.reload()}>Retry</button></p>
+    {:else if pager.page?.items.length === 0}
       <p>No environments yet.</p>
     {:else}
       <table>
@@ -54,7 +37,7 @@
           <tr><th>Name</th><th>Created</th></tr>
         </thead>
         <tbody>
-          {#each environments as environment (environment.id)}
+          {#each pager.page?.items ?? [] as environment (environment.id)}
             <tr>
               <td>{environment.name}</td>
               <td>{formatDate(environment.created_at)}</td>
@@ -62,6 +45,7 @@
           {/each}
         </tbody>
       </table>
+      <Pager {pager} />
     {/if}
 </div>
 

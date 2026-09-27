@@ -4,12 +4,10 @@ import type { Environment, EnvironmentPayload } from "./types";
 
 export function createEnvironmentsApi(api: ApiClient) {
   return {
-    // The collection answers a page. A null means the client is redirecting to
-    // a sign in, so the caller still tells it from an empty collection.
-    list: () =>
-      api
-        .get<Page<Environment>>("/environments")
-        .then((page) => page?.items ?? null),
+    list: (link?: string) =>
+      link
+        ? api.follow<Page<Environment>>(link)
+        : api.get<Page<Environment>>("/environments"),
     get: (id: string) => api.get<Environment>(`/environments/${id}`),
     create: (payload: EnvironmentPayload, options?: RequestOptions) =>
       api.post<Environment>("/environments", payload, options),

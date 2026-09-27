@@ -2,38 +2,40 @@
   import type { PluginHost } from '@maroid/plugin-sdk';
 
   import { createJasmineApi, type Plant } from '../../api';
+  import Pager from '../../lib/Pager.svelte';
+  import { createPager } from '../../lib/paging.svelte';
 
   let { host }: { host: PluginHost } = $props();
 
   const api = createJasmineApi(host);
 
-  let status = $state<'loading' | 'ready' | 'error'>('loading');
-  let plants = $state<Plant[]>([]);
   let environmentNames = $state<Record<string, string>>({});
 
-  async function load(): Promise<void> {
-    status = 'loading';
+  // A page of plants names only its own environments, so the page reads each of
+  // those by identifier rather than every page of environments. An environment
+  // that fails to read shows its identifier.
+  async function nameEnvironments(plants: Plant[]): Promise<void> {
+    const unnamed = [...new Set(plants.map((plant) => plant.environment_id))].filter(
+      (id) => !(id in environmentNames)
+    );
 
-    try {
-      const [plantList, environmentList] = await Promise.all([
-        api.plants.list(),
-        api.environments.list()
-      ]);
+    const environments = await Promise.all(unnamed.map((id) => api.environments.get(id).catch(() => null)));
 
-      if (plantList === null || environmentList === null) {
-        return;
+    for (const environment of environments) {
+      if (environment !== null) {
+        environmentNames[environment.id] = environment.name;
       }
-
-      plants = plantList;
-      environmentNames = Object.fromEntries(
-        environmentList.map((environment) => [environment.id, environment.name])
-      );
-      status = 'ready';
-    } catch (error) {
-      console.error('Failed to load plants', error);
-      status = 'error';
     }
   }
+
+  const pager = createPager(async (link?: string) => {
+    const page = await api.plants.list(link);
+    if (page !== null) {
+      await nameEnvironments(page.items);
+    }
+
+    return page;
+  });
 
   function environmentName(id: string): string {
     return environmentNames[id] ?? id;
@@ -44,18 +46,18 @@
   }
 
   $effect(() => {
-    void load();
+    void pager.reload();
   });
 </script>
 
 <div class="page">
     <h2>Plants</h2>
 
-    {#if status === 'loading'}
+    {#if pager.status === 'loading'}
       <p>Loading…</p>
-    {:else if status === 'error'}
-      <p class="error">Failed to load plants. <button onclick={load}>Retry</button></p>
-    {:else if plants.length === 0}
+    {:else if pager.status === 'error'}
+      <p class="error">Failed to load plants. <button onclick={() => pager.reload()}>Retry</button></p>
+    {:else if pager.page?.items.length === 0}
       <p>No plants yet.</p>
     {:else}
       <table>
@@ -63,7 +65,7 @@
           <tr><th>Name</th><th>Species</th><th>Environment</th><th>Created</th></tr>
         </thead>
         <tbody>
-          {#each plants as plant (plant.id)}
+          {#each pager.page?.items ?? [] as plant (plant.id)}
             <tr>
               <td>{plant.name}</td>
               <td>{plant.species ?? '—'}</td>
@@ -73,6 +75,7 @@
           {/each}
         </tbody>
       </table>
+      <Pager {pager} />
     {/if}
 </div>
 

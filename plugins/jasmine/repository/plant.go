@@ -5,19 +5,23 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 )
+
+const selectPlants = "SELECT id, name, species, environment_id, created_at, updated_at FROM plants"
 
 // PlantRepository defines the data access contract for Plant entities.
 type PlantRepository interface {
 	Insert(ctx context.Context, entity *model.Plant) error
 	GetByID(ctx context.Context, id string) (*model.Plant, error)
-	List(ctx context.Context, after string, limit int) ([]model.Plant, error)
+	List(ctx context.Context, seek page.Seek) ([]model.Plant, error)
 	ListByEnvironmentID(
 		ctx context.Context,
 		environmentID string,
@@ -65,7 +69,7 @@ func (r *Plant) Insert(ctx context.Context, entity *model.Plant) error {
 func (r *Plant) GetByID(ctx context.Context, id string) (*model.Plant, error) {
 	var entity model.Plant
 
-	query := `SELECT id, name, species, environment_id, created_at, updated_at FROM plants WHERE id = $1;`
+	query := selectPlants + " WHERE id = $1;"
 
 	if err := r.tx.GetContext(ctx, &entity, query, id); err != nil {
 		return nil, fmt.Errorf("getting Plant by ID: %w", err)
@@ -74,21 +78,22 @@ func (r *Plant) GetByID(ctx context.Context, id string) (*model.Plant, error) {
 	return &entity, nil
 }
 
-// List retrieves one page of Plant records, reading past the row that after
-// names.
-func (r *Plant) List(ctx context.Context, after string, limit int) ([]model.Plant, error) {
+// List retrieves the Plant records that seek names, in the order of the identifier.
+func (r *Plant) List(ctx context.Context, seek page.Seek) ([]model.Plant, error) {
+	condition, order := "id > $1", "id"
+	if seek.Direction == page.DirectionBackward {
+		condition, order = "id < $1", "id DESC"
+	}
+
 	var entities []model.Plant
 
-	query := `
-		SELECT id, name, species, environment_id, created_at, updated_at
-		FROM plants
-		WHERE ($1 = '' OR id > $1)
-		ORDER BY id
-		LIMIT $2;
-	`
-
-	if err := r.tx.SelectContext(ctx, &entities, query, after, limit); err != nil {
+	query := selectPlants + " WHERE " + condition + " ORDER BY " + order + " LIMIT $2;"
+	if err := r.tx.SelectContext(ctx, &entities, query, seek.Boundary, seek.Limit); err != nil {
 		return nil, fmt.Errorf("listing Plants: %w", err)
+	}
+
+	if seek.Direction == page.DirectionBackward {
+		slices.Reverse(entities)
 	}
 
 	return entities, nil
@@ -103,13 +108,7 @@ func (r *Plant) ListByEnvironmentID(
 ) ([]model.Plant, error) {
 	var entities []model.Plant
 
-	query := `
-		SELECT id, name, species, environment_id, created_at, updated_at
-		FROM plants
-		WHERE environment_id = $1 AND ($2 = '' OR id > $2)
-		ORDER BY id
-		LIMIT $3;
-	`
+	query := selectPlants + " WHERE environment_id = $1 AND id > $2 ORDER BY id LIMIT $3;"
 
 	if err := r.tx.SelectContext(ctx, &entities, query, environmentID, after, limit); err != nil {
 		return nil, fmt.Errorf("listing Plants by environment ID: %w", err)

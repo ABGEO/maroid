@@ -69,6 +69,7 @@ time takes UTC. The deck and `libs/api-client` read the new shape.
 | `libs/rest/page/page.go`               | create | `Page[T]`, `New`, and the link builder.                       |
 | `libs/rest/address/address.go`         | create | The middleware that carries the external address, and its reader. |
 | `libs/rest/page/cursor.go`             | create | `Cursor`, `EncodeCursor`, `DecodeCursor`.                     |
+| `libs/rest/page/keyset.go`             | create | `Seek`, `Fetch`, `Window`, and `Read`, which finds the neighbors. |
 | `libs/rest/flow/flow.go`               | rename | The middleware. `spec-platform.md` holds it.                  |
 | `apps/hub/internal/handler/plugin.go`  | change | `List` answers a page. `SaveSettings` keeps its shape.        |
 | `apps/hub/internal/handler/auth.go`    | change | Five tags take snake case. `Identities` answers a page.       |
@@ -76,7 +77,9 @@ time takes UTC. The deck and `libs/api-client` read the new shape.
 | `plugins/jasmine/dto/environment.go`   | change | Two tags take snake case. The two times take UTC.             |
 | `plugins/jasmine/repository/plant.go`  | change | `List` takes a cursor and a limit.                            |
 | `plugins/jasmine/repository/environment.go` | change | The same.                                                |
-| `libs/api-client/src/page.ts`          | create | `Page<T>` and the reader that follows a cursor.               |
+| `libs/api-client/src/page.ts`          | create | `Page<T>`.                                                    |
+| `libs/api-client/src/client.ts`        | change | `follow` reads a link as it came. Another origin throws.      |
+| `plugins/jasmine/ui/src/lib/`          | create | A pager that follows `next` and `prev`.                       |
 | `libs/api-client/src/problem.ts`       | change | Eleven type constants take the relative form.                 |
 | `apps/deck/src/lib/api/types.ts`       | change | The five members already read snake case. See `APIFMT-DD-004`. |
 | `.golangci.yaml`                       | change | `tagliatelle` takes `json: snake`, with the exemptions of `APIFMT-DD-004`. |
@@ -126,19 +129,26 @@ sequenceDiagram
     participant H as A handler
     participant R as A repository
     C->>H: GET a collection, with a cursor
-    H->>H: DecodeCursor, and compare the sort and the filters
+    H->>H: ReadRequest decodes the cursor, and compares the sort and the filters
     alt they differ
         H-->>C: 400, cursor-stale
     else they match
-        H->>R: List, with the boundary and the limit plus one
-        R-->>H: rows
-        H->>H: EncodeCursor from the last row, when a row remains
+        H->>R: page.Read calls List with a Seek of the limit plus one
+        R-->>H: rows, in the order of the collection
+        H->>R: page.Read calls List with a Seek of one row past the other edge
+        R-->>H: a row, or none
+        H->>H: EncodeCursor for next from the last row, and for prev from the first
         H-->>C: 200, a page
     end
 ```
 
-The repository reads one row more than the limit. A row that remains proves a
-next page exists, and the handler drops it before it answers.
+`page.Read` owns the keyset, and a repository answers one `Seek`. The read takes
+one row more than the limit. A row that remains proves a further page in the
+direction of the read, and `Read` drops it. A read of one row past the other edge
+proves the other side, so a page carries `prev` only when a row lies before it.
+The first page reads no such row. A page that holds no row takes the boundary of
+its cursor as both edges, so a client still reaches every row after a delete.
+Every read of one page runs in one transaction.
 
 ### 4.5 Errors
 

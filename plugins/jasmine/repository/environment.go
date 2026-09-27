@@ -5,19 +5,23 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 )
+
+const selectEnvironments = "SELECT id, name, created_at, updated_at FROM environments"
 
 // EnvironmentRepository defines the data access contract for Environment entities.
 type EnvironmentRepository interface {
 	Insert(ctx context.Context, entity *model.Environment) error
 	GetByID(ctx context.Context, id string) (*model.Environment, error)
-	List(ctx context.Context, after string, limit int) ([]model.Environment, error)
+	List(ctx context.Context, seek page.Seek) ([]model.Environment, error)
 	Update(ctx context.Context, entity *model.Environment, ifMatch *time.Time) error
 	Delete(ctx context.Context, id string) error
 }
@@ -59,7 +63,7 @@ func (r *Environment) Insert(ctx context.Context, entity *model.Environment) err
 func (r *Environment) GetByID(ctx context.Context, id string) (*model.Environment, error) {
 	var entity model.Environment
 
-	query := `SELECT id, name, created_at, updated_at FROM environments WHERE id = $1;`
+	query := selectEnvironments + " WHERE id = $1;"
 
 	if err := r.tx.GetContext(ctx, &entity, query, id); err != nil {
 		return nil, fmt.Errorf("getting Environment by ID: %w", err)
@@ -68,25 +72,22 @@ func (r *Environment) GetByID(ctx context.Context, id string) (*model.Environmen
 	return &entity, nil
 }
 
-// List retrieves one page of Environment records, reading past the row that
-// after names. The page reads with a keyset and never with an offset.
-func (r *Environment) List(
-	ctx context.Context,
-	after string,
-	limit int,
-) ([]model.Environment, error) {
+// List retrieves the Environment records that seek names, in the order of the identifier.
+func (r *Environment) List(ctx context.Context, seek page.Seek) ([]model.Environment, error) {
+	condition, order := "id > $1", "id"
+	if seek.Direction == page.DirectionBackward {
+		condition, order = "id < $1", "id DESC"
+	}
+
 	var entities []model.Environment
 
-	query := `
-		SELECT id, name, created_at, updated_at
-		FROM environments
-		WHERE ($1 = '' OR id > $1)
-		ORDER BY id
-		LIMIT $2;
-	`
-
-	if err := r.tx.SelectContext(ctx, &entities, query, after, limit); err != nil {
+	query := selectEnvironments + " WHERE " + condition + " ORDER BY " + order + " LIMIT $2;"
+	if err := r.tx.SelectContext(ctx, &entities, query, seek.Boundary, seek.Limit); err != nil {
 		return nil, fmt.Errorf("listing Environments: %w", err)
+	}
+
+	if seek.Direction == page.DirectionBackward {
+		slices.Reverse(entities)
 	}
 
 	return entities, nil

@@ -13,18 +13,15 @@ import (
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
-// listPage answers one page of a collection.
-//
-// It reads one row more than the page holds, and a row that remains proves that
-// a further page exists. The read is a keyset, so the cost of a page does not
-// grow with its position.
+// listPage answers one page of a collection. Every read of the page runs in one
+// transaction, so the page and its links see one state of the table.
 func listPage[T any, R any](
 	w http.ResponseWriter,
 	r *http.Request,
 	logger *slog.Logger,
 	db *pluginapi.PluginDB,
 	action string,
-	read func(ctx context.Context, tx *sqlx.Tx, after string, limit int) ([]T, error),
+	read func(ctx context.Context, tx *sqlx.Tx, seek page.Seek) ([]T, error),
 	identify func(T) string,
 	present func([]T) []R,
 ) {
@@ -35,15 +32,14 @@ func listPage[T any, R any](
 		return
 	}
 
-	after := ""
-	if asked.Cursor != nil {
-		after = asked.Cursor.ID
-	}
-
-	rows, err := fetchInTx(
+	window, err := fetchInTx(
 		r.Context(), db, action,
-		func(ctx context.Context, tx *sqlx.Tx) ([]T, error) {
-			return read(ctx, tx, after, asked.Limit+1)
+		func(ctx context.Context, tx *sqlx.Tx) (page.Window[T], error) {
+			fetch := func(ctx context.Context, seek page.Seek) ([]T, error) {
+				return read(ctx, tx, seek)
+			}
+
+			return page.Read(ctx, asked, fetch, identify)
 		},
 	)
 	if err != nil {
@@ -53,21 +49,7 @@ func listPage[T any, R any](
 		return
 	}
 
-	var next *page.Cursor
-
-	if len(rows) > asked.Limit {
-		rows = rows[:asked.Limit]
-		boundary := identify(rows[len(rows)-1])
-		next = &page.Cursor{
-			Sort:      asked.Sort,
-			Direction: page.DirectionForward,
-			Filters:   asked.Filters,
-			Boundary:  map[string]string{"id": boundary},
-			ID:        boundary,
-		}
-	}
-
-	answered, err := page.New(r, present(rows), next, nil)
+	answered, err := page.New(r, present(window.Items), window.Next, window.Prev)
 	if err != nil {
 		logger.ErrorContext(r.Context(), action, slog.Any("error", err))
 		problem.Write(w, r, problem.NewInternal())

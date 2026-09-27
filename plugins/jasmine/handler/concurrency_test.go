@@ -14,13 +14,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/rest/address"
 	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/testdb"
 	"github.com/abgeo/maroid/plugins/jasmine/db"
 	"github.com/abgeo/maroid/plugins/jasmine/handler"
 )
 
-const pluginID = "dev.maroid.jasmine"
+const (
+	pluginID    = "dev.maroid.jasmine"
+	externalURL = "https://hub.test"
+)
 
 // setUpdatedAt is the trigger function that a core migration of the hub creates.
 // A plugin test owns no core migration, so it creates the function itself.
@@ -53,6 +57,7 @@ func routerUnderTest(t *testing.T) http.Handler {
 	).Routes()
 
 	router := chi.NewRouter()
+	router.Use(address.Middleware(externalURL))
 
 	// The hub mounts this for every route, so a plugin route reads the validator
 	// off the context and parses nothing.

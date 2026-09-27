@@ -15,6 +15,9 @@ export interface RequestOptions {
   idempotencyKey?: string;
 }
 
+/** The options of a request to a link that the hub answered. */
+export type LinkOptions = Pick<RequestOptions, 'headers' | 'signal'>;
+
 /**
  * A body and the entity tag that came with it. A caller holds the tag and sends
  * it back on the write that guards this state.
@@ -43,6 +46,13 @@ export interface ApiClient {
    * between this call and the write, so the caller holds the tag itself.
    */
   getTagged<T>(path: string, options?: RequestOptions): Promise<Tagged<T> | null>;
+  /**
+   * Read an address that the hub answered, such as the `next` link of a page.
+   * The link goes out as it came, because it carries the opaque cursor, the
+   * sort, and the filters. A link to another origin throws, so the credential
+   * never leaves the hub.
+   */
+  follow<T>(link: string, options?: LinkOptions): Promise<T | null>;
   post<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T | null>;
   put<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T | null>;
   del<T>(path: string, options?: RequestOptions): Promise<T | null>;

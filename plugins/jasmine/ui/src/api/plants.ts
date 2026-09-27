@@ -4,10 +4,10 @@ import type { Plant, PlantPayload } from "./types";
 
 export function createPlantsApi(api: ApiClient) {
   return {
-    // The collection answers a page. A null means the client is redirecting to
-    // a sign in, so the caller still tells it from an empty collection.
-    list: () =>
-      api.get<Page<Plant>>("/plants").then((page) => page?.items ?? null),
+    list: (link?: string) =>
+      link
+        ? api.follow<Page<Plant>>(link)
+        : api.get<Page<Plant>>("/plants"),
     get: (id: string) => api.get<Plant>(`/plants/${id}`),
     create: (payload: PlantPayload, options?: RequestOptions) =>
       api.post<Plant>("/plants", payload, options),

@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/libs/testdb"
 	"github.com/abgeo/maroid/plugins/jasmine/db"
 	"github.com/abgeo/maroid/plugins/jasmine/repository"
@@ -80,7 +81,8 @@ func readEveryPage(t *testing.T, database *sqlx.DB, limit int) []string {
 		tx, err := database.Beginx()
 		require.NoError(t, err)
 
-		rows, err := repository.NewPlant(tx).List(context.Background(), after, limit+1)
+		rows, err := repository.NewPlant(tx).
+			List(context.Background(), page.Seek{Direction: page.DirectionForward, Boundary: after, Limit: limit + 1})
 		require.NoError(t, err)
 		require.NoError(t, tx.Commit())
 
@@ -136,14 +138,38 @@ func TestTheListReadsOneRowMoreThanTheLimit(t *testing.T) {
 
 	t.Cleanup(func() { _ = tx.Rollback() })
 
-	rows, err := repository.NewPlant(tx).List(context.Background(), "", 3)
+	rows, err := repository.NewPlant(tx).
+		List(context.Background(), page.Seek{Direction: page.DirectionForward, Limit: 3})
 	require.NoError(t, err)
 	assert.Len(t, rows, 3, "two asked for plus the probe row")
 
-	rows, err = repository.NewPlant(tx).List(context.Background(), "plant-000001", 3)
+	rows, err = repository.NewPlant(tx).
+		List(context.Background(), page.Seek{Direction: page.DirectionForward, Boundary: "plant-000001", Limit: 3})
 	require.NoError(t, err)
 	assert.Len(t, rows, 1, "the keyset reads past the boundary only")
 	assert.Equal(t, "plant-000002", rows[0].ID)
+}
+
+// APIFMT-SC-004: A backward read takes the rows nearest before the boundary, and
+// answers them in the order of the collection.
+func TestABackwardReadAnswersTheRowsBeforeTheBoundaryInOrder(t *testing.T) {
+	t.Parallel()
+
+	database := plantsUnderTest(t, 6)
+
+	tx, err := database.Beginx()
+	require.NoError(t, err)
+
+	t.Cleanup(func() { _ = tx.Rollback() })
+
+	rows, err := repository.NewPlant(tx).List(
+		context.Background(),
+		page.Seek{Direction: page.DirectionBackward, Boundary: "plant-000004", Limit: 2},
+	)
+	require.NoError(t, err)
+	require.Len(t, rows, 2)
+	assert.Equal(t, "plant-000002", rows[0].ID)
+	assert.Equal(t, "plant-000003", rows[1].ID)
 }
 
 // APIFMT-SC-004: A filter narrows the collection, and the keyset holds inside it.
@@ -228,7 +254,8 @@ func timeOnePage(t *testing.T, database *sqlx.DB, after string, limit int) time.
 
 	started := time.Now()
 
-	read, err := repository.NewPlant(tx).List(context.Background(), after, limit)
+	read, err := repository.NewPlant(tx).
+		List(context.Background(), page.Seek{Direction: page.DirectionForward, Boundary: after, Limit: limit})
 	elapsed := time.Since(started)
 
 	require.NoError(t, err)

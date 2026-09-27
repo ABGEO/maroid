@@ -13,6 +13,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/rest/problem"
 	"github.com/abgeo/maroid/plugins/jasmine/dto"
@@ -51,10 +52,8 @@ func (h *EnvironmentHandler) Routes() []pluginapi.Route {
 func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 	listPage(
 		w, r, h.logger, h.db, "listing the environments",
-		func(
-			ctx context.Context, tx *sqlx.Tx, after string, limit int,
-		) ([]model.Environment, error) {
-			return repository.NewEnvironment(tx).List(ctx, after, limit)
+		func(ctx context.Context, tx *sqlx.Tx, seek page.Seek) ([]model.Environment, error) {
+			return repository.NewEnvironment(tx).List(ctx, seek)
 		},
 		func(row model.Environment) string { return row.ID },
 		dto.NewEnvironmentResponseList,

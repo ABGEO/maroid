@@ -64,7 +64,10 @@ func TestACursorThatMaroidDidNotProduceFails(t *testing.T) {
 		"not base64":    "!!!not-base64!!!",
 		"not json":      base64.RawURLEncoding.EncodeToString([]byte("plain text")),
 		"another shape": base64.RawURLEncoding.EncodeToString([]byte(`{"unexpected":1}`)),
-		"empty":         "",
+		"another direction": base64.RawURLEncoding.EncodeToString(
+			[]byte(`{"direction":"sideways","id":"plant-1"}`),
+		),
+		"empty": "",
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

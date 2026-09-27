@@ -13,6 +13,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/rest/problem"
 	"github.com/abgeo/maroid/plugins/jasmine/dto"
@@ -51,8 +52,8 @@ func (h *PlantHandler) Routes() []pluginapi.Route {
 func (h *PlantHandler) List(w http.ResponseWriter, r *http.Request) {
 	listPage(
 		w, r, h.logger, h.db, "listing the plants",
-		func(ctx context.Context, tx *sqlx.Tx, after string, limit int) ([]model.Plant, error) {
-			return repository.NewPlant(tx).List(ctx, after, limit)
+		func(ctx context.Context, tx *sqlx.Tx, seek page.Seek) ([]model.Plant, error) {
+			return repository.NewPlant(tx).List(ctx, seek)
 		},
 		func(row model.Plant) string { return row.ID },
 		dto.NewPlantResponseList,
