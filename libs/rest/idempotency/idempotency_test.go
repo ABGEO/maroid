@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -244,4 +245,46 @@ func TestARepeatAnswersTheContentTypeOfTheFirstWrite(t *testing.T) {
 	assert.Equal(t, "application/json", first.Header().Get("Content-Type"))
 	assert.Equal(t, first.Header().Get("Content-Type"), second.Header().Get("Content-Type"),
 		"a repeat answers the media type that the first write answered")
+}
+
+// contextStore refuses to keep an answer under a context that has ended, as a
+// database store does.
+type contextStore struct {
+	*memoryStore
+}
+
+func (s contextStore) Keep(ctx context.Context, key string, answer idempotency.Answer) error {
+	if err := ctx.Err(); err != nil {
+		return fmt.Errorf("keeping the answer: %w", err)
+	}
+
+	return s.memoryStore.Keep(ctx, key, answer)
+}
+
+// APIFMT-SC-020: The client that loses its answer drops the connection, which
+// ends the request context after the write lands. The answer is still kept, so
+// the repeat of that client answers it and one record exists.
+func TestAWriteWhoseClientLeftStillKeepsTheAnswer(t *testing.T) {
+	t.Parallel()
+
+	store := contextStore{newMemoryStore()}
+	handler := &creator{}
+
+	ctx, disconnect := context.WithCancel(t.Context())
+	request := httptest.NewRequestWithContext(
+		ctx, http.MethodPost, "/plants", strings.NewReader(`{"name":"Fern"}`),
+	)
+	request.Header.Set(idempotency.KeyHeader, "left-early")
+
+	idempotency.Middleware(slog.New(slog.DiscardHandler), store)(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler.ServeHTTP(w, r)
+			disconnect()
+		}),
+	).ServeHTTP(httptest.NewRecorder(), request)
+
+	repeat := writeWithKey(t, store, handler, "left-early", `{"name":"Fern"}`)
+
+	assert.Equal(t, http.StatusCreated, repeat.Code)
+	assert.Equal(t, int32(1), handler.runs.Load(), "the repeat answers the kept result")
 }

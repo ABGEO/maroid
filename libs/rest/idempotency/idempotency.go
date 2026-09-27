@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
@@ -22,6 +23,7 @@ const (
 
 	idempotencyKeyMaxLength = 255
 	idempotencyBodyMax      = 1 << 20
+	keepTimeout             = 5 * time.Second
 )
 
 // ErrNoAnswer reports that the store holds no answer for a key.
@@ -96,10 +98,16 @@ func Middleware(logger *slog.Logger, store Store) func(http.Handler) http.Handle
 				return
 			}
 
+			// The client that lost its answer is the one whose request context
+			// ends, and it is the client that repeats. The write has landed, so
+			// the answer is kept past that end.
+			keepCtx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), keepTimeout)
+			defer cancel()
+
 			// A store that does not keep the answer leaves the key free, so the
 			// next repeat runs the write again. That is the safe direction, and
 			// it is invisible without this line.
-			if err = store.Keep(r.Context(), key, Answer{
+			if err = store.Keep(keepCtx, key, Answer{
 				RequestHash: digestOf(r, body),
 				Status:      recorder.status,
 				Header:      recorder.header,
