@@ -67,8 +67,8 @@
             <tr>
               <td>{plant.name}</td>
               <td>{plant.species ?? '—'}</td>
-              <td>{environmentName(plant.environmentId)}</td>
-              <td>{formatDate(plant.createdAt)}</td>
+              <td>{environmentName(plant.environment_id)}</td>
+              <td>{formatDate(plant.created_at)}</td>
             </tr>
           {/each}
         </tbody>

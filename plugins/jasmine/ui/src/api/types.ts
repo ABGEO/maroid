@@ -1,8 +1,8 @@
 export interface Environment {
   id: string;
   name: string;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface EnvironmentPayload {
@@ -13,13 +13,13 @@ export interface Plant {
   id: string;
   name: string;
   species?: string;
-  environmentId: string;
-  createdAt: string;
-  updatedAt: string;
+  environment_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PlantPayload {
   name: string;
   species?: string;
-  environmentId: string;
+  environment_id: string;
 }

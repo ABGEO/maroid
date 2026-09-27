@@ -57,7 +57,7 @@
           {#each environments as environment (environment.id)}
             <tr>
               <td>{environment.name}</td>
-              <td>{formatDate(environment.createdAt)}</td>
+              <td>{formatDate(environment.created_at)}</td>
             </tr>
           {/each}
         </tbody>
