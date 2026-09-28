@@ -209,7 +209,7 @@ func TestEveryRouteSaysHowLongAReaderKeepsTheAnswer(t *testing.T) {
 			header := fixture.send(t, route).Header()
 
 			if route.row == "/plugins/{id}/ui/*" {
-				assert.Equal(t, cache.Immutable, header.Get("Cache-Control"))
+				assert.Equal(t, cache.Revalidate, header.Get("Cache-Control"))
 				assert.Equal(t, "Accept-Encoding", header.Get("Vary"))
 				assert.NotEmpty(t, header.Get("ETag"))
 
@@ -220,6 +220,21 @@ func TestEveryRouteSaysHowLongAReaderKeepsTheAnswer(t *testing.T) {
 			assert.NotContains(t, header.Get("Cache-Control"), "public")
 		})
 	}
+}
+
+// APIFMT-SC-021: An asset under assets/ carries its content hash in its name, so
+// a reader keeps it for a year and never asks again.
+func TestAHashedPluginAssetIsImmutable(t *testing.T) {
+	t.Parallel()
+
+	fixture := hubUnderTest(t)
+	header := fixture.send(t, apiRoute{
+		method: http.MethodGet,
+		target: "/plugins/" + probePlugin + "/ui/assets/entry-Bx9s2kQa.js",
+	}).Header()
+
+	assert.Equal(t, cache.Immutable, header.Get("Cache-Control"))
+	assert.NotEmpty(t, header.Get("ETag"))
 }
 
 // APIFMT-SC-020: A write that a person sends twice under one key makes one

@@ -4,7 +4,7 @@ title: The platform that carries the API
 type: spec
 status: approved
 created: 2026-09-24
-updated: 2026-09-27
+updated: 2026-09-28
 approved_by: Temuri
 approved_on: 2026-09-25
 constrained_by: [RES, ERR, API, DAT, CFG, SEC, TG, LOG, BLD, OWN, CLI, GO, UI]
@@ -82,7 +82,7 @@ names `Allow`.
 | `apps/hub/internal/depresolver/cron.go`       | change | `CronRegistry` holds the jobs of the hub.                |
 | `libs/rest/flow/flow.go`                      | rename | `Middleware`, `IDFromContext`, `Instance`. From `request.go`. |
 | `libs/rest/precondition/precondition.go`      | create | `ETag`, the `IfMatch` middleware, `ErrModified`.         |
-| `libs/rest/cache/cache.go`                    | create | `NoStore`, `Immutable`, and the middleware that sets the first. |
+| `libs/rest/cache/cache.go`                    | create | `NoStore`, `Immutable`, `Revalidate`, and the middleware that sets the first. |
 | `libs/rest/address/address.go`                | create | The middleware that carries `external_url`, and its reader. |
 | `libs/rest/idempotency/idempotency.go`        | create | The middleware and the `Store` interface.                |
 | `tools/apibuild/main.go`                      | create | The merge of `APIFMT-DD-012`.                            |
@@ -201,12 +201,15 @@ function. `APIFMT-FR-014`.
 | Route class                         | `Cache-Control`                              |
 | ----------------------------------- | --------------------------------------------- |
 | Every route, by default             | `no-cache, no-store, must-revalidate, max-age=0` |
-| `/plugins/{id}/ui/*`                | `public, max-age=31536000, immutable`         |
+| `/plugins/{id}/ui/assets/*`         | `public, max-age=31536000, immutable`         |
+| Every other `/plugins/{id}/ui/*`    | `public, no-cache`                            |
 
 `Z-227` gives the default string and asks every deviation to carry a reason.
-`/plugins/{id}/ui/*` is the one deviation. `SEC-006` makes it public, and a
-bundler puts a content hash in each asset name, so a changed asset takes a new
-address and no cache serves a stale one.
+`/plugins/{id}/ui/*` is the one deviation. `SEC-006` makes it public. The bundler
+puts a content hash in each name under `assets/`, so a changed asset there takes a
+new address and no cache serves a stale one. The manifest and the entry of the
+remote keep their names across builds, so a reader revalidates them with the
+`ETag`, and a changed build reaches the deck at the next load.
 
 That route also carries `Vary: Accept-Encoding` and an `ETag`, which `Z-227`
 demands of a route that declares itself cacheable. Its fragment declares all
@@ -605,7 +608,8 @@ that key with another body answers 400.
 **Given** every route of `API-003`.
 **When** a test reads the answer of each one.
 **Then** each carries the default of `Z-227`, and only the assets of a plugin
-carry `public`, `Vary` and an `ETag`.
+carry `public`, `Vary` and an `ETag`. An asset under `assets/` carries `immutable`,
+and `remoteEntry.js` carries `no-cache`.
 
 ## 7. Build plan
 

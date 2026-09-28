@@ -4,7 +4,7 @@ title: The HTTP API
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-27
+updated: 2026-09-28
 scope: [apps/hub/internal/server/, apps/hub/internal/handler/, apps/hub/internal/middleware/]
 related: [ARC, ERR, PLG, RES, SEC, UI]
 ---
@@ -50,8 +50,11 @@ gives the window.
 
 Every answer carries `X-Flow-ID`, which `ERR-006` gives, and `Cache-Control`. The
 value is `no-cache, no-store, must-revalidate, max-age=0` unless the route names
-another, as `Z-227` asks. The assets of a plugin name
-`public, max-age=31536000, immutable`, because an asset name carries its hash.
+another, as `Z-227` asks. An asset of a plugin under `assets/` names
+`public, max-age=31536000, immutable`, because its name carries its content hash.
+Every other asset of a plugin keeps its name across builds, the Module Federation
+manifest and entry among them, and names `public, no-cache`, so a reader
+revalidates it with its entity tag.
 
 A route that answers a record that a client writes carries `ETag`, and a write to
 that record reads `If-Match`. A record that moved since the read answers 412,

@@ -173,12 +173,16 @@ func sessionOfAPerson(
 	}
 }
 
-// probeUI registers the user interface of the probe plugin, one script.
+// probeUI registers the user interface of the probe plugin: the entry, which
+// keeps its name across builds, and one asset whose name carries a hash.
 func probeUI() *registry.UIRegistry {
 	uis := registry.NewUIRegistry()
 	uis.Register(pluginapi.ParsePluginID(probePlugin), &pluginapi.UIManifest{
-		Name:   "Probe",
-		Assets: fstest.MapFS{"remoteEntry.js": {Data: []byte("export const probe = 1;")}},
+		Name: "Probe",
+		Assets: fstest.MapFS{
+			"remoteEntry.js":           {Data: []byte("export const probe = 1;")},
+			"assets/entry-Bx9s2kQa.js": {Data: []byte("export const chunk = 1;")},
+		},
 	})
 
 	return uis

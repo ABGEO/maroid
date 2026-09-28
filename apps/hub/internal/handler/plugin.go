@@ -1,10 +1,15 @@
 package handler
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net/http"
+	"strings"
+	"sync"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -20,6 +25,9 @@ import (
 	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
+
+// hashedAssetDir holds the assets whose names carry their content hash.
+const hashedAssetDir = "assets/"
 
 // PluginHandler represents the Plugin handler interface.
 type PluginHandler interface {
@@ -42,6 +50,9 @@ type Plugin struct {
 	capabilityRegistry *registry.CapabilityRegistry
 	settingsSvc        settings.Service
 	idempotency        idempotency.Store
+	// assetTags holds the entity tag of each plugin asset. An asset is embedded
+	// in the shared object, so its tag cannot change while the hub runs.
+	assetTags sync.Map
 }
 
 var _ PluginHandler = (*Plugin)(nil)
@@ -129,8 +140,14 @@ func (h *Plugin) UIAssets(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	w.Header().Set("Cache-Control", cache.Immutable)
+	asset := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/plugins/%s/ui/", id))
+
+	w.Header().Set("Cache-Control", assetCachePeriod(asset))
 	w.Header().Set("Vary", "Accept-Encoding")
+
+	if tag, ok := h.assetTag(id, entry.Manifest.Assets, asset); ok {
+		w.Header().Set(precondition.ETagHeader, tag)
+	}
 
 	fileServer := http.StripPrefix(
 		fmt.Sprintf("/plugins/%s/ui/", id),
@@ -196,6 +213,28 @@ func (h *Plugin) SaveSettings(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// assetTag answers false for a path that names no file, and the file server then
+// answers 404.
+func (h *Plugin) assetTag(pluginID string, assets fs.FS, asset string) (string, bool) {
+	key := pluginID + "/" + asset
+	if cached, ok := h.assetTags.Load(key); ok {
+		if tag, isTag := cached.(string); isTag {
+			return tag, true
+		}
+	}
+
+	content, err := fs.ReadFile(assets, asset)
+	if err != nil {
+		return "", false
+	}
+
+	sum := sha256.Sum256(content)
+	tag := `"` + hex.EncodeToString(sum[:16]) + `"`
+	h.assetTags.Store(key, tag)
+
+	return tag, true
+}
+
 // failSettings answers with the problem that the failure carries.
 func (h *Plugin) failSettings(w http.ResponseWriter, r *http.Request, err error) error {
 	var invalid *settings.InvalidError
@@ -229,4 +268,12 @@ func fieldFailures(invalid *settings.InvalidError) []problem.FieldFailure {
 	}
 
 	return failures
+}
+
+func assetCachePeriod(asset string) string {
+	if strings.HasPrefix(asset, hashedAssetDir) {
+		return cache.Immutable
+	}
+
+	return cache.Revalidate
 }

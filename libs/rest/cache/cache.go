@@ -10,6 +10,9 @@ const (
 	// Immutable is the period of an asset whose name carries a content hash. A
 	// changed asset takes a new address, so no cache serves a stale one.
 	Immutable = "public, max-age=31536000, immutable"
+	// Revalidate is the period of an asset that keeps its name across builds. A
+	// reader keeps it, but asks with its entity tag before each use.
+	Revalidate = "public, no-cache"
 
 	cacheControlHeader = "Cache-Control"
 )
