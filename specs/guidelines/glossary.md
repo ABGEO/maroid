@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-09-23
+updated: 2026-09-28
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -67,6 +67,11 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-api-document`  | API document      | One of the three OpenAPI files that `RES-007` names. `RES-008` builds each one.                                                       |
 | `GLO-api-fragment`  | API fragment      | The `api.yaml` of one feature. `SPC-002` merges it into an API document.                                          |
 | `GLO-shipped-client` | shipped client   | One of `libs/api-client`, `apps/deck`, and `libs/plugin-sdk`. `RES-010` binds each one.                           |
+| `GLO-theme`         | theme             | The set of colors, radii, and fonts that gives a page its Maroid visual identity. Maroid keeps one definition of it. |
+| `GLO-theme-variant` | theme variant     | One of the two forms of the theme that the deck offers: light and dark.                                           |
+| `GLO-component-library` | component library | The one shared set of components and styling that the deck and every remote import.                       |
+| `GLO-component`     | component         | One reusable control of the component library. It receives every value it shows from its caller.                  |
+| `GLO-catalog`       | catalog           | A page that shows each component alone, with sample values, outside the deck.                                     |
 
 ## Retired identifiers
 
