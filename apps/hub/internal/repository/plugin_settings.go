@@ -61,39 +61,53 @@ func (r *PluginSettings) Get(
 }
 
 // Upsert stores the fields of the acting user for the given plugin, and answers
-// the moment of the write, which the next validator carries.
+// the moment of the write, which the next validator carries. A write that names
+// a validator changes only the row that still carries it, and never inserts.
 func (r *PluginSettings) Upsert(
 	ctx context.Context,
 	pluginID string,
 	fields model.Fields,
 	ifMatch *time.Time,
 ) (time.Time, error) {
+	if ifMatch != nil {
+		return r.update(ctx, pluginID, fields, *ifMatch)
+	}
+
 	query := `
 		INSERT INTO public.plugin_settings (plugin_id, fields)
-		VALUES (:plugin_id, :fields)
+		VALUES ($1, $2)
 		ON CONFLICT (user_id, plugin_id) DO UPDATE SET fields = EXCLUDED.fields
-		WHERE CAST(:if_match AS TIMESTAMPTZ) IS NULL
-		   OR public.plugin_settings.updated_at = CAST(:if_match AS TIMESTAMPTZ)
 		RETURNING updated_at;`
-
-	bound, args, err := sqlx.Named(query, map[string]any{
-		"plugin_id": pluginID,
-		"fields":    fields,
-		"if_match":  ifMatch,
-	})
-	if err != nil {
-		return time.Time{}, fmt.Errorf("binding the upsert of PluginSettings: %w", err)
-	}
 
 	var written time.Time
 
-	err = r.tx.GetContext(ctx, &written, r.tx.Rebind(bound), args...)
+	if err := r.tx.GetContext(ctx, &written, query, pluginID, fields); err != nil {
+		return time.Time{}, fmt.Errorf("upserting PluginSettings: %w", err)
+	}
+
+	return written, nil
+}
+
+func (r *PluginSettings) update(
+	ctx context.Context,
+	pluginID string,
+	fields model.Fields,
+	ifMatch time.Time,
+) (time.Time, error) {
+	query := `
+		UPDATE public.plugin_settings SET fields = $2
+		WHERE plugin_id = $1 AND updated_at = $3
+		RETURNING updated_at;`
+
+	var written time.Time
+
+	err := r.tx.GetContext(ctx, &written, query, pluginID, fields, ifMatch)
 	if errors.Is(err, sql.ErrNoRows) {
 		return time.Time{}, precondition.ErrModified
 	}
 
 	if err != nil {
-		return time.Time{}, fmt.Errorf("upserting PluginSettings: %w", err)
+		return time.Time{}, fmt.Errorf("updating PluginSettings: %w", err)
 	}
 
 	return written, nil

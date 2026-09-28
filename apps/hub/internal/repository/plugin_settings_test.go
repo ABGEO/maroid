@@ -184,6 +184,40 @@ func TestAConditionalUpsertRefusesARecordThatMoved(t *testing.T) {
 	require.ErrorIs(t, err, precondition.ErrModified)
 }
 
+// APIFMT-SC-019: A write that names a validator for a record that does not exist
+// answers that the record moved, and stores nothing. RFC 9110 fails If-Match
+// when no current representation exists. APIFMT-DD-014.
+func TestAConditionalUpsertRefusesARecordThatIsAbsent(t *testing.T) {
+	t.Parallel()
+
+	instance := startWithCoreMigrations(t)
+	user := insertUser(t, instance, nameOfA)
+	held := time.Now()
+
+	err := asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
+		return errorOf(repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
+			keyEmail: {Kind: model.FieldKindText, Value: firstAddress},
+		}, &held))
+	})
+
+	require.ErrorIs(t, err, precondition.ErrModified)
+
+	var stored *model.PluginSettings
+
+	require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
+		var readErr error
+
+		stored, readErr = repository.NewPluginSettings(tx).Get(ctx, probePluginID)
+		if readErr != nil {
+			return fmt.Errorf("reading the settings: %w", readErr)
+		}
+
+		return nil
+	}))
+
+	assert.Nil(t, stored, "the refused write stores no row")
+}
+
 // APIFMT-SC-019: A write answers the moment it stored, so the answer of a save
 // carries the validator that the next save names. Two writes in a row answer
 // two moments, and each equals what a read then finds.
