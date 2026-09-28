@@ -23,7 +23,7 @@ type PlantRepository interface {
 	GetByID(ctx context.Context, id string) (*model.Plant, error)
 	List(ctx context.Context, seek page.Seek) ([]model.Plant, error)
 	Update(ctx context.Context, entity *model.Plant, ifMatch *time.Time) error
-	Delete(ctx context.Context, id string) error
+	Delete(ctx context.Context, id string, ifMatch *time.Time) error
 }
 
 // Plant is a SQL-based implementation of PlantRepository.
@@ -131,13 +131,30 @@ func (r *Plant) Update(ctx context.Context, entity *model.Plant, ifMatch *time.T
 	return nil
 }
 
-// Delete removes a Plant record by its ID.
-func (r *Plant) Delete(ctx context.Context, id string) error {
-	query := `DELETE FROM plants WHERE id = $1;`
+// Delete removes a Plant record by its ID. A non-nil ifMatch removes only
+// the record that still carries that moment, and a record that moved or does not
+// exist answers precondition.ErrModified.
+func (r *Plant) Delete(ctx context.Context, id string, ifMatch *time.Time) error {
+	query := `
+		DELETE FROM plants
+		WHERE id = $1 AND ($2::timestamptz IS NULL OR updated_at = $2);`
 
-	_, err := r.tx.ExecContext(ctx, query, id)
+	result, err := r.tx.ExecContext(ctx, query, id, ifMatch)
 	if err != nil {
 		return fmt.Errorf("deleting Plant: %w", err)
+	}
+
+	if ifMatch == nil {
+		return nil
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("deleting Plant: %w", err)
+	}
+
+	if affected == 0 {
+		return precondition.ErrModified
 	}
 
 	return nil

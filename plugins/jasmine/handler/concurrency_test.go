@@ -195,3 +195,30 @@ func TestAWriteUnderAValidatorThatMaroidDidNotAnswerIsRefused(t *testing.T) {
 	written := send(t, router, http.MethodPut, address, `{"name":"Shelf"}`, `"not-a-moment"`)
 	assert.Equal(t, http.StatusBadRequest, written.Code, written.Body.String())
 }
+
+// APIFMT-SC-019: A delete that names a validator removes only the record that
+// still carries it. A stale validator, or one for a record that no longer
+// exists, answers 412. APIFMT-DD-014.
+func TestADeleteUnderAStaleValidatorIsRefused(t *testing.T) {
+	t.Parallel()
+
+	router := routerUnderTest(t)
+	address, created := createEnvironment(t, router)
+
+	written := send(t, router, http.MethodPut, address, `{"name":"Shelf"}`, created)
+	require.Equal(t, http.StatusOK, written.Code, written.Body.String())
+
+	current := written.Header().Get(precondition.ETagHeader)
+
+	stale := send(t, router, http.MethodDelete, address, "", created)
+	assert.Equal(t, http.StatusPreconditionFailed, stale.Code, stale.Body.String())
+
+	kept := send(t, router, http.MethodGet, address, "", "")
+	require.Equal(t, http.StatusOK, kept.Code, "the refused delete kept the record")
+
+	removed := send(t, router, http.MethodDelete, address, "", current)
+	require.Equal(t, http.StatusNoContent, removed.Code, removed.Body.String())
+
+	again := send(t, router, http.MethodDelete, address, "", current)
+	assert.Equal(t, http.StatusPreconditionFailed, again.Code, again.Body.String())
+}

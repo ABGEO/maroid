@@ -23,7 +23,7 @@ type EnvironmentRepository interface {
 	GetByID(ctx context.Context, id string) (*model.Environment, error)
 	List(ctx context.Context, seek page.Seek) ([]model.Environment, error)
 	Update(ctx context.Context, entity *model.Environment, ifMatch *time.Time) error
-	Delete(ctx context.Context, id string) error
+	Delete(ctx context.Context, id string, ifMatch *time.Time) error
 }
 
 // Environment is a SQL-based implementation of EnvironmentRepository.
@@ -133,13 +133,30 @@ func (r *Environment) Update(
 	return nil
 }
 
-// Delete removes an Environment record by its ID.
-func (r *Environment) Delete(ctx context.Context, id string) error {
-	query := `DELETE FROM environments WHERE id = $1;`
+// Delete removes an Environment record by its ID. A non-nil ifMatch removes only
+// the record that still carries that moment, and a record that moved or does not
+// exist answers precondition.ErrModified.
+func (r *Environment) Delete(ctx context.Context, id string, ifMatch *time.Time) error {
+	query := `
+		DELETE FROM environments
+		WHERE id = $1 AND ($2::timestamptz IS NULL OR updated_at = $2);`
 
-	_, err := r.tx.ExecContext(ctx, query, id)
+	result, err := r.tx.ExecContext(ctx, query, id, ifMatch)
 	if err != nil {
 		return fmt.Errorf("deleting Environment: %w", err)
+	}
+
+	if ifMatch == nil {
+		return nil
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("deleting Environment: %w", err)
+	}
+
+	if affected == 0 {
+		return precondition.ErrModified
 	}
 
 	return nil

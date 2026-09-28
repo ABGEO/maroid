@@ -156,21 +156,21 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 // Delete handles DELETE /environments/{id}.
 func (h *EnvironmentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	ifMatch := precondition.IfMatchFromContext(r.Context())
 
 	err := execInTx(
 		r.Context(),
 		h.db,
 		"deleting the environment "+id,
 		func(ctx context.Context, tx *sqlx.Tx) error {
-			return repository.NewEnvironment(tx).Delete(ctx, id)
+			return repository.NewEnvironment(tx).Delete(ctx, id, ifMatch)
 		},
 	)
 	if err != nil {
-		h.logger.ErrorContext(r.Context(), "failed to delete environment", slog.Any("error", err))
-		problem.Write(w, r, problem.NewInternal())
+		failWrite(w, r, h.logger, "failed to delete environment", err)
 
 		return
 	}
 
-	render.Status(r, http.StatusNoContent)
+	render.NoContent(w, r)
 }
