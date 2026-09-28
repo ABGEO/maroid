@@ -222,3 +222,22 @@ func TestADeleteUnderAStaleValidatorIsRefused(t *testing.T) {
 	again := send(t, router, http.MethodDelete, address, "", current)
 	assert.Equal(t, http.StatusPreconditionFailed, again.Code, again.Body.String())
 }
+
+// APIFMT-SC-019: A write to a record that does not exist answers 404, and 412
+// when it names a validator, because RFC 9110 fails If-Match when no current
+// record exists. APIFMT-DD-014.
+func TestAWriteToAnAbsentRecordIsNotAFailureOfTheServer(t *testing.T) {
+	t.Parallel()
+
+	router := routerUnderTest(t)
+	address, tag := createEnvironment(t, router)
+
+	removed := send(t, router, http.MethodDelete, address, "", "")
+	require.Equal(t, http.StatusNoContent, removed.Code, removed.Body.String())
+
+	plain := send(t, router, http.MethodPut, address, `{"name":"Shelf"}`, "")
+	assert.Equal(t, http.StatusNotFound, plain.Code, plain.Body.String())
+
+	conditional := send(t, router, http.MethodPut, address, `{"name":"Shelf"}`, tag)
+	assert.Equal(t, http.StatusPreconditionFailed, conditional.Code, conditional.Body.String())
+}
