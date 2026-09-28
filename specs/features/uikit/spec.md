@@ -313,7 +313,7 @@ unless it says otherwise.
 
 **Given** the plant list holds plants.
 **When** the page renders.
-**Then** the Next control and a deck button show the same primary color.
+**Then** the primary button of the page and a primary button of the deck show the same color.
 
 ### `UIKIT-SC-002`
 
@@ -450,7 +450,7 @@ variable that `libs/theme/src/*.css` defines, and `src/` for a color literal.
 **Layer:** manual
 
 **Given** the `libs/ui` source.
-**When** the owner reads every import.
+**When** the owner reads every import of a TypeScript or Svelte file.
 **Then** each import names `svelte` or a file of `libs/ui`.
 
 ## 7. Build plan
@@ -464,9 +464,9 @@ variable that `libs/theme/src/*.css` defines, and `src/` for a color literal.
 | 5   | Write `pager.svelte.ts` from the jasmine pager, with the changes of section 4.1.                         | `UIKIT-FR-008` to `UIKIT-FR-011`                 | [x]  |
 | 6   | Write `Pagination.svelte` and `index.ts`.                                                                | `UIKIT-FR-005` to `UIKIT-FR-007`, `UIKIT-FR-009` | [x]  |
 | 7   | Move the jasmine pages to `createPager` and `Pagination`. Delete the old pager.                          | `UIKIT-FR-012`                                   | [x]  |
-| 8   | Add the `libs/ui` row to `BLD-001`.                                                                      | `BLD-001`                                        | [ ]  |
-| 9   | Run `pnpm --filter @maroid/ui lint`, `pnpm --filter @maroid/ui check`, `pnpm --filter ./plugins/jasmine/ui build`, then build the jasmine shared object. | `BLD-001`, `BLD-003` | [ ]  |
-| 10  | Run `UIKIT-SC-001` to `UIKIT-SC-016`.                                                                    | Every requirement                                | [ ]  |
+| 8   | Add the `libs/ui` row to `BLD-001`.                                                                      | `BLD-001`                                        | [x]  |
+| 9   | Run `pnpm --filter @maroid/ui lint`, `pnpm --filter @maroid/ui check`, `pnpm --filter ./plugins/jasmine/ui build`, then build the jasmine shared object. | `BLD-001`, `BLD-003` | [x]  |
+| 10  | Run `UIKIT-SC-001` to `UIKIT-SC-016`.                                                                    | Every requirement                                | [x]  |
 
 The `BLD-001` row:
 
