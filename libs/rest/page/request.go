@@ -1,6 +1,7 @@
 package page
 
 import (
+	"errors"
 	"net/http"
 	"slices"
 	"strconv"
@@ -102,16 +103,19 @@ func readLimit(raw string) (int, *problem.Problem) {
 		return defaultLimit, nil
 	}
 
-	limit, err := strconv.Atoi(raw)
-	if err != nil {
+	outside := refuse(limitParameter, "the value is outside 1 to "+strconv.Itoa(maxLimit))
+	limit, err := strconv.ParseUint(raw, 10, 32)
+
+	switch {
+	case errors.Is(err, strconv.ErrRange):
+		return 0, outside
+	case err != nil:
 		return 0, refuse(limitParameter, "the value is not a number")
+	case limit < 1 || limit > maxLimit:
+		return 0, outside
 	}
 
-	if limit < 1 || limit > maxLimit {
-		return 0, refuse(limitParameter, "the value is outside 1 to "+strconv.Itoa(maxLimit))
-	}
-
-	return limit, nil
+	return int(limit), nil
 }
 
 // readSort refuses every field that the route does not declare, and the detail

@@ -35,6 +35,8 @@ func TestTheLimitTakesTheDefaultAndTheCeiling(t *testing.T) {
 		"below one":         "limit=0",
 		"negative":          "limit=-1",
 		"not a number":      "limit=many",
+		"a sign":            "limit=%2B5",
+		"beyond parsing":    "limit=99999999999",
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
