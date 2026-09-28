@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PluginHost } from '@maroid/plugin-sdk';
 
+  import '../../app.css';
   import { createJasmineApi } from '../../api';
   import Pager from '../../lib/Pager.svelte';
   import { createPager } from '../../lib/paging.svelte';
@@ -19,20 +20,20 @@
   });
 </script>
 
-<div class="page">
-    <div class="header">
-      <h2>Environments</h2>
-      <a href={host.href('/environments/add')}>Add environment</a>
+<div>
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Environments</h2>
+      <a class="btn btn-primary btn-sm" href={host.href('/environments/add')}>Add environment</a>
     </div>
 
     {#if pager.status === 'loading'}
       <p>Loading…</p>
     {:else if pager.status === 'error'}
-      <p class="error">Failed to load environments. <button onclick={() => pager.reload()}>Retry</button></p>
+      <p class="text-error">Failed to load environments. <button class="btn btn-sm" onclick={() => pager.reload()}>Retry</button></p>
     {:else if pager.page?.items.length === 0}
       <p>No environments yet.</p>
     {:else}
-      <table>
+      <table class="table">
         <thead>
           <tr><th>Name</th><th>Created</th></tr>
         </thead>
@@ -48,12 +49,3 @@
       <Pager {pager} />
     {/if}
 </div>
-
-<style>
-  h2 { margin: 0 0 1rem; }
-  .header { display: flex; align-items: center; justify-content: space-between; }
-  .error { color: #f87171; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--maroid-color-surface, #1e293b); }
-  th { font-weight: 600; }
-</style>

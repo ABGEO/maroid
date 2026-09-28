@@ -8,7 +8,8 @@
     "dev": "vite build --watch"
   },
   "dependencies": {
-    "@maroid/plugin-sdk": "workspace:*"
+    "@maroid/plugin-sdk": "workspace:*",
+    "@maroid/ui": "workspace:*"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"
@@ -16,7 +17,10 @@
   "devDependencies": {
     "@module-federation/vite": "^1.15.4",
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@tailwindcss/vite": "^4.1.18",
+    "daisyui": "^5.5.19",
     "svelte": "^5.54.0",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
   }

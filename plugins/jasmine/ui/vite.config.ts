@@ -1,5 +1,6 @@
 import { federation } from "@module-federation/vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
@@ -17,6 +18,7 @@ export default defineConfig({
       remotes: {},
       shared: [],
     }),
+    tailwindcss(),
     svelte(),
   ],
 });

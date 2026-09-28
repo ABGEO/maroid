@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createWriteIntent, type PluginHost } from '@maroid/plugin-sdk';
 
+  import '../../app.css';
   import { createJasmineApi } from '../../api';
 
   let { host }: { host: PluginHost } = $props();
@@ -42,29 +43,22 @@
   }
 </script>
 
-<div class="page">
-  <h2>Add Environment</h2>
+<div>
+  <h2 class="mb-4 text-lg font-semibold">Add Environment</h2>
 
-  <form onsubmit={submit}>
-    <label for="name">Name</label>
-    <input id="name" bind:value={name} required disabled={submitting} />
+  <form class="flex max-w-sm flex-col gap-2" onsubmit={submit}>
+    <label class="label" for="name">Name</label>
+    <input class="input" id="name" bind:value={name} required disabled={submitting} />
 
     {#if error}
-      <p class="error">{error}</p>
+      <p class="text-error">{error}</p>
     {/if}
 
-    <div class="actions">
-      <button type="submit" disabled={submitting || name.trim() === ''}>
+    <div class="mt-2 flex items-center gap-4">
+      <button class="btn btn-primary btn-sm" type="submit" disabled={submitting || name.trim() === ''}>
         {submitting ? 'Saving…' : 'Save'}
       </button>
-      <a href={host.href('/environments')}>Cancel</a>
+      <a class="btn btn-ghost btn-sm" href={host.href('/environments')}>Cancel</a>
     </div>
   </form>
 </div>
-
-<style>
-  h2 { margin: 0 0 1rem; }
-  form { display: flex; flex-direction: column; gap: 0.5rem; max-width: 24rem; }
-  .actions { display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem; }
-  .error { color: #f87171; }
-</style>

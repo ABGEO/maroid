@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PluginHost } from '@maroid/plugin-sdk';
 
+  import '../../app.css';
   import { createJasmineApi, type Plant } from '../../api';
   import Pager from '../../lib/Pager.svelte';
   import { createPager } from '../../lib/paging.svelte';
@@ -50,17 +51,17 @@
   });
 </script>
 
-<div class="page">
-    <h2>Plants</h2>
+<div>
+    <h2 class="mb-4 text-lg font-semibold">Plants</h2>
 
     {#if pager.status === 'loading'}
       <p>Loading…</p>
     {:else if pager.status === 'error'}
-      <p class="error">Failed to load plants. <button onclick={() => pager.reload()}>Retry</button></p>
+      <p class="text-error">Failed to load plants. <button class="btn btn-sm" onclick={() => pager.reload()}>Retry</button></p>
     {:else if pager.page?.items.length === 0}
       <p>No plants yet.</p>
     {:else}
-      <table>
+      <table class="table">
         <thead>
           <tr><th>Name</th><th>Species</th><th>Environment</th><th>Created</th></tr>
         </thead>
@@ -78,11 +79,3 @@
       <Pager {pager} />
     {/if}
 </div>
-
-<style>
-  h2 { margin: 0 0 1rem; }
-  .error { color: #f87171; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--maroid-color-surface, #1e293b); }
-  th { font-weight: 600; }
-</style>

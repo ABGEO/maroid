@@ -4,6 +4,7 @@ packages:
   - "libs/api-client"
   - "libs/plugin-sdk"
   - "libs/theme"
+  - "libs/ui"
   - "plugins/*/ui"
 allowBuilds:
   '@parcel/watcher': false

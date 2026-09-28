@@ -1,0 +1,29 @@
+{
+	"name": "@maroid/ui",
+	"version": "0.1.0",
+	"type": "module",
+	"exports": {
+		"./remote.css": "./src/remote.css"
+	},
+	"scripts": {
+		"check": "svelte-check --tsconfig ./tsconfig.json",
+		"lint": "prettier --check ."
+	},
+	"dependencies": {
+		"@maroid/theme": "workspace:*",
+		"daisyui": "^5.5.19"
+	},
+	"peerDependencies": {
+		"svelte": "^5.0.0",
+		"tailwindcss": "^4.0.0"
+	},
+	"devDependencies": {
+		"prettier": "^3.8.1",
+		"prettier-plugin-svelte": "^3.4.1",
+		"prettier-plugin-tailwindcss": "^0.7.2",
+		"svelte": "^5.54.0",
+		"svelte-check": "^4.4.2",
+		"tailwindcss": "^4.1.18",
+		"typescript": "^5.9.3"
+	}
+}
