@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+
+	"github.com/google/uuid"
 )
 
 // Direction says which way a cursor reads from its boundary row.
@@ -92,7 +94,7 @@ func DecodeCursor(value string) (Cursor, error) {
 		return Cursor{}, fmt.Errorf("reading the cursor: %w", err)
 	}
 
-	if cursor.ID == "" || !cursor.Direction.valid() {
+	if _, err = uuid.Parse(cursor.ID); err != nil || !cursor.Direction.valid() {
 		return Cursor{}, fmt.Errorf("reading the cursor: %w", errCursorShape)
 	}
 
