@@ -1,7 +1,9 @@
 @import '@maroid/theme/maroid.css';
 
 @import 'tailwindcss';
-@plugin 'daisyui';
+@plugin 'daisyui' {
+	themes: false;
+}
 
 @source '../web/templates';
 
