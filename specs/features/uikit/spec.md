@@ -132,14 +132,17 @@ The `reference` import of the theme gives the remote the names `font-display` an
 never emits a default that overrides the font of the deck.
 
 **The pagination.** `Pagination` renders nothing when `pager.hasPrevious` and
-`pager.hasNext` are both false. Otherwise it renders a daisyUI `join` inside a `nav`
-with the accessible name `Pagination`. The `class` prop joins the class list of the
+`pager.hasNext` are both false. Otherwise it renders the daisyUI pagination with
+two outline buttons of equal width: a `nav` with the classes `join grid grid-cols-2`
+and the accessible name `Pagination`. The `class` prop joins the class list of the
 `nav`, so the caller places it.
 
-| Control  | Classes                | Disabled when                                        |
-| -------- | ---------------------- | ---------------------------------------------------- |
-| Previous | `join-item btn btn-sm` | `!pager.hasPrevious` or `pager.status === 'loading'` |
-| Next     | `join-item btn btn-sm` | `!pager.hasNext` or `pager.status === 'loading'`     |
+| Control  | Label        | Classes                            | Disabled when                                        |
+| -------- | ------------ | ---------------------------------- | ---------------------------------------------------- |
+| Previous | `< Previous` | `join-item btn btn-sm btn-outline` | `!pager.hasPrevious` or `pager.status === 'loading'` |
+| Next     | `Next >`     | `join-item btn btn-sm btn-outline` | `!pager.hasNext` or `pager.status === 'loading'`     |
+
+The `<` and `>` carry `aria-hidden`, so the accessible names stay `Previous` and `Next`.
 
 **The pager.** The behavior keeps the one of
 `plugins/jasmine/ui/src/lib/paging.svelte.ts`, with the changes below. The pager
@@ -184,7 +187,7 @@ export interface Pager<P extends PageLinks> {
 | Table            | Hand-written borders, `#1e293b` | `table`                                           |
 | Retry, add, save | Unstyled `button`, `a`          | `btn btn-sm`, `btn btn-primary btn-sm`            |
 | Heading          | `h2 { margin }`                 | `text-lg font-semibold mb-4`                      |
-| Pager            | `<Pager {pager} />`             | `<Pagination {pager} class="mt-4 justify-end" />` |
+| Pager            | `<Pager {pager} />`             | `<Pagination {pager} class="mt-4 ml-auto w-fit" />` |
 
 ### 4.2 Data model
 
@@ -458,9 +461,9 @@ variable that `libs/theme/src/*.css` defines, and `src/` for a color literal.
 | 2   | Record the gzip size of jasmine `dist/assets`. It was 20629 bytes.                                       | `UIKIT-NFR-002`                                  | [x]  |
 | 3   | Write `remote.css`. Add Tailwind CSS to the jasmine build. Create `src/app.css`.                         | `UIKIT-FR-001`, `UIKIT-FR-003`, `UIKIT-INV-001`  | [x]  |
 | 4   | Move the jasmine pages to the classes of section 4.1. Delete each `<style>` block.                       | `UIKIT-FR-013`                                   | [x]  |
-| 5   | Write `pager.svelte.ts` from the jasmine pager, with the changes of section 4.1.                         | `UIKIT-FR-008` to `UIKIT-FR-011`                 | [ ]  |
-| 6   | Write `Pagination.svelte` and `index.ts`.                                                                | `UIKIT-FR-005` to `UIKIT-FR-007`, `UIKIT-FR-009` | [ ]  |
-| 7   | Move the jasmine pages to `createPager` and `Pagination`. Delete the old pager.                          | `UIKIT-FR-012`                                   | [ ]  |
+| 5   | Write `pager.svelte.ts` from the jasmine pager, with the changes of section 4.1.                         | `UIKIT-FR-008` to `UIKIT-FR-011`                 | [x]  |
+| 6   | Write `Pagination.svelte` and `index.ts`.                                                                | `UIKIT-FR-005` to `UIKIT-FR-007`, `UIKIT-FR-009` | [x]  |
+| 7   | Move the jasmine pages to `createPager` and `Pagination`. Delete the old pager.                          | `UIKIT-FR-012`                                   | [x]  |
 | 8   | Add the `libs/ui` row to `BLD-001`.                                                                      | `BLD-001`                                        | [ ]  |
 | 9   | Run `pnpm --filter @maroid/ui lint`, `pnpm --filter @maroid/ui check`, `pnpm --filter ./plugins/jasmine/ui build`, then build the jasmine shared object. | `BLD-001`, `BLD-003` | [ ]  |
 | 10  | Run `UIKIT-SC-001` to `UIKIT-SC-016`.                                                                    | Every requirement                                | [ ]  |

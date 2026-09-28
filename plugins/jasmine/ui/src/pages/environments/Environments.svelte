@@ -1,10 +1,9 @@
 <script lang="ts">
   import type { PluginHost } from '@maroid/plugin-sdk';
+  import { createPager, Pagination } from '@maroid/ui';
 
   import '../../app.css';
   import { createJasmineApi } from '../../api';
-  import Pager from '../../lib/Pager.svelte';
-  import { createPager } from '../../lib/paging.svelte';
 
   let { host }: { host: PluginHost } = $props();
 
@@ -46,6 +45,6 @@
           {/each}
         </tbody>
       </table>
-      <Pager {pager} />
+      <Pagination {pager} class="mt-4 ml-auto w-fit" />
     {/if}
 </div>

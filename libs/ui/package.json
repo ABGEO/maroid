@@ -3,6 +3,11 @@
 	"version": "0.1.0",
 	"type": "module",
 	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"svelte": "./src/index.ts",
+			"default": "./src/index.ts"
+		},
 		"./remote.css": "./src/remote.css"
 	},
 	"scripts": {
