@@ -89,32 +89,34 @@ components:
           description: The moment of the measurement, in UTC. `RES-001`.
         component:
           type: object
-          required: [name]
+          required: [name, version]
           properties:
             name:
               type: string
               examples: [maroid-hub]
             version:
               type: string
+              description: The version of the hub.
+              examples: [0.1.0]
       examples:
         - status: OK
           timestamp: "2026-09-29T10:30:00Z"
           component:
             name: maroid-hub
-            version: ""
+            version: 0.1.0
 
     NotReadyProblem:
       description: The problem `not-ready`. `HEALTH-DD-004`.
       allOf:
         - $ref: "../../api/components.yaml#/components/schemas/Problem"
         - type: object
-          required: [dependencies]
           properties:
             dependencies:
               type: array
+              minItems: 1
               description: >
-                The name of each dependency that failed, sorted. Empty while the
-                hub is shutting down.
+                The name of each dependency that failed, sorted. Absent while the
+                hub is shutting down, because no dependency failed.
               items:
                 type: string
                 enum: [database, idp, secret-store]

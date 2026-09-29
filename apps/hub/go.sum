@@ -19,6 +19,8 @@ github.com/abgeo/maroid/libs/pluginapi v0.0.0-20260921174859-594a9a680178 h1:KcY
 github.com/abgeo/maroid/libs/pluginapi v0.0.0-20260921174859-594a9a680178/go.mod h1:fnW9Pf+S85lU9YYEwItG30rkbrx3t0pvI29paGOeLcA=
 github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20260921174859-594a9a680178 h1:+uSlYLoTBaJywQOnA5xOEcbSVeq3Q4kyXJfb53spLaQ=
 github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20260921174859-594a9a680178/go.mod h1:4TtkHDOuCAhBwpVeU+6JYMxcr4vS2n2GToLFMwUzQtI=
+github.com/abgeo/maroid/libs/rest v0.0.0-20260928193233-edde2b9de6e9 h1:bcbTDhsO6vs5x02X7UHwCFsrUB+PtrJeJ3z8RKlt1Xo=
+github.com/abgeo/maroid/libs/rest v0.0.0-20260928193233-edde2b9de6e9/go.mod h1:Yw1QSc28rGaeWU2PLxJDQQOUbifhEkJgVlcXUW7TFXk=
 github.com/abgeo/maroid/libs/testdb v0.0.0-20260921174859-594a9a680178 h1:JzUu9uMpjXbHdtPuTPI59X6jPuyslaYO4hSQk/ILwn8=
 github.com/abgeo/maroid/libs/testdb v0.0.0-20260921174859-594a9a680178/go.mod h1:04v9RWP8oGTiNEFqayQ3PXbdVZiBsbc/fOVeO/Eu6jc=
 github.com/ajg/form v1.5.1/go.mod h1:uL1WgH+h2mgNtvBq0339dVnzXdBETtL2LeUXaIv25UY=
@@ -92,8 +94,6 @@ github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/gabriel-vasile/mimetype v1.4.15 h1:05iP/CYtZ/w455R/KZM6rZ5ieAdh99UPtd+d3YzLmaI=
 github.com/gabriel-vasile/mimetype v1.4.15/go.mod h1:azpTcoLcDZRNgFou5j+APrqQx9HqVPWa6ijYQIIVswQ=
-github.com/go-chi/chi/v5 v5.2.5 h1:Eg4myHZBjyvJmAFjFvWgrqDTXFyOzjj7YIm3L3mu6Ug=
-github.com/go-chi/chi/v5 v5.2.5/go.mod h1:X7Gx4mteadT3eDOMTsXzmI4/rwUpOwBHLpAfupzFJP0=
 github.com/go-chi/chi/v5 v5.3.0 h1:halUjDxhshgXHMrao5bB8eNBXo/rnzwr8m5m36glehM=
 github.com/go-chi/chi/v5 v5.3.0/go.mod h1:R+tYY2hNuVUUjxoPtqUdgBqevM9s9njzkTLutVsOCto=
 github.com/go-chi/cors v1.2.2 h1:Jmey33TE+b+rB7fT8MUy1u0I4L+NARQlK6LhzKPSyQE=
@@ -165,6 +165,8 @@ github.com/hashicorp/go-sockaddr v1.0.7 h1:G+pTkSO01HpR5qCxg7lxfsFEZaG+C0VssTy/9
 github.com/hashicorp/go-sockaddr v1.0.7/go.mod h1:FZQbEYa1pxkQ7WLpyXJ6cbjpT8q0YgQaK/JakXqGyWw=
 github.com/hashicorp/hcl v1.0.1-vault-7 h1:ag5OxFVy3QYTFTJODRzTKVZ6xvdfLLCA1cy/Y6xGI0I=
 github.com/hashicorp/hcl v1.0.1-vault-7/go.mod h1:XYhtn6ijBSAj6n4YqAaf7RBPS4I06AItNorpy+MoQNM=
+github.com/hellofresh/health-go/v5 v5.5.5 h1:JZwZ8kZzAgjdGCvjgrIJTcu1sImvZoHbwAj7CK19fpw=
+github.com/hellofresh/health-go/v5 v5.5.5/go.mod h1:W+6uiWHS/m9jaB0aYBVlUBTeyE98yom6f+0ewLoBPYQ=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/invopop/jsonschema v0.14.0 h1:MHQqLhvpNUZfw+hM3AZDYK7jxO8FZoQeQM77g8iyZjg=

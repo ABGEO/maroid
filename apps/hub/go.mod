@@ -7,6 +7,7 @@ require (
 	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260921174859-594a9a680178
 	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20260921174859-594a9a680178
 	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20260921174859-594a9a680178
+	github.com/abgeo/maroid/libs/rest v0.0.0-20260928193233-edde2b9de6e9
 	github.com/abgeo/maroid/libs/testdb v0.0.0-20260921174859-594a9a680178
 	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
@@ -17,6 +18,7 @@ require (
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golang-migrate/migrate/v4 v4.20.1
+	github.com/hellofresh/health-go/v5 v5.5.5
 	github.com/invopop/jsonschema v0.14.0
 	github.com/jackc/pgx v3.6.2+incompatible
 	github.com/jmoiron/sqlx v1.4.0

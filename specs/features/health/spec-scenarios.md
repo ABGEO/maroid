@@ -39,7 +39,7 @@ requirements: features/health/requirements.md
 **Given** a `Checker` whose readiness is `OK` with the time `2026-09-29T14:30:00+04:00`.
 **When** a client sends `GET /readyz`.
 **Then** the answer is 200 with the media type `application/json`. The body holds
-`"status": "OK"`, `"component": {"name": "maroid-hub", ...}`, and
+`"status": "OK"`, `"component": {"name": "maroid-hub", "version": "0.1.0"}`, and
 `"timestamp": "2026-09-29T10:30:00Z"`.
 
 ## `HEALTH-SC-004`
@@ -56,11 +56,12 @@ requirements: features/health/requirements.md
 **Verifies:** `HEALTH-FR-004`, `HEALTH-NFR-001`
 **Layer:** unit
 
-**Given** a `Service` whose IdP is a test server that answers after 10 seconds,
-under `GOMAXPROCS=1`.
+**Given** a `Service` whose IdP and secret store are test servers that answer after
+10 seconds.
 **When** the test calls `Readiness`.
 **Then** the call returns in less than 3 seconds. The status is `Unavailable`, and
-`Failures` holds `idp`.
+`Failures` holds `idp` and `secret-store`. Each test server sees its request end
+before 3 seconds.
 
 ## `HEALTH-SC-006`
 
@@ -118,7 +119,7 @@ text, and the `flow_id` of the answer.
 
 **Given** a `Service` whose three dependencies answer, and a call to `Drain`.
 **When** a client sends `GET /readyz`.
-**Then** the answer is 503 with `not-ready`, an empty `dependencies`, and the
+**Then** the answer is 503 with `not-ready`, no member `dependencies`, and the
 `detail` of section 4.5. No dependency receives a request.
 
 ## `HEALTH-SC-012`
@@ -164,10 +165,10 @@ process exits between 5 and 6 seconds after the signal.
 **Layer:** unit
 
 **Given** `problem.NewValidationFailed(...)` with one failed field, and
-`problems.NewNotReady(nil)`.
+`problems.NewNotReady()`.
 **When** `problem.Write` answers each one.
 **Then** the first body holds `errors` with one item at the top level. The second
-holds `"dependencies": []`. Neither body nests a member named `Problem`.
+holds no member `dependencies`. Neither body nests a member named `Problem`.
 
 ## `HEALTH-SC-018`
 

@@ -78,7 +78,7 @@ the readiness answers 503, and the listener stays open for the drain period.
 | Path                                              | Action | Holds                                                           |
 | ------------------------------------------------- | ------ | --------------------------------------------------------------- |
 | `apps/hub/internal/healthcheck/doc.go`            | keep   | The package comment.                                            |
-| `apps/hub/internal/healthcheck/service.go`        | change | `Checker`, `Service`, `New`, `Drain`, the path constants.       |
+| `apps/hub/internal/healthcheck/service.go`        | change | `Checker`, `Service`, `New`, `Drain`, the path constants, the name and the version of the component. |
 | `apps/hub/internal/healthcheck/postgres.go`       | change | The check `database`. It wraps the error as `pinging the database: %w`. |
 | `apps/hub/internal/healthcheck/idp.go`            | keep   | The check `idp`.                                                |
 | `apps/hub/internal/healthcheck/openbao.go`        | change | The check `secret-store`.                                       |
@@ -160,7 +160,7 @@ whichever comes first.
 | ---------------------------------- | ------ | ------------------------------------------------- | ---------------------------------------- |
 | One dependency or more fails       | 503    | `not-ready`, `dependencies` holds each name       | One record for each failed check. `HEALTH-DD-011` |
 | A check passes its time limit      | 503    | The same. The name of the check is in the list.   | The same. `error` holds the timeout text of the library |
-| The hub drains                     | 503    | `not-ready`, `dependencies` is empty, a `detail`  | None                                     |
+| The hub drains                     | 503    | `not-ready` with a `detail`, and no `dependencies` | None                                    |
 
 The `detail` of a drain is `The hub is shutting down.`
 
@@ -191,6 +191,9 @@ gives the two routes two body shapes.
 **Realizes:** `HEALTH-FR-003`
 **Decision:** A measurement with the status `OK` answers 200 with the `health.Check`
 of the library. The handler sets `Timestamp` to UTC before it writes the body.
+`component` carries the name `maroid-hub` and the version of the hub. The version
+is the constant `0.1.0`, the value that `mcpserver` reports. When the build stamps
+a version, both read that one value.
 **Rationale:** The owner keeps the representation of the library. `RES-001` asks
 for UTC with the `Z` suffix, and the library writes the local zone of the process.
 **Alternatives:** A body of Maroid, `{"status": "up"}`. The owner declined it.
@@ -208,7 +211,7 @@ host and a port.
 **Alternatives:** The names inside `detail`. A client parses a sentence, which
 `ERR-001` gives as the reason for a type.
 
-The handler writes `problems.NewNotReady(names)` with `problem.Write`.
+The handler writes `problems.NewNotReady(names...)` with `problem.Write`.
 `HEALTH-DD-010` gives the extension that carries `dependencies`.
 
 ### `HEALTH-DD-005`
@@ -249,9 +252,12 @@ that is no dependency into `dependencies`.
 
 **Realizes:** `HEALTH-NFR-001`
 **Decision:** Each check carries a time limit of 2 seconds. The readiness instance
-takes `health.WithMaxConcurrent(3)`, one slot for each check.
+takes `health.WithMaxConcurrent(3)`, one slot for each check. Each check also runs
+its call under a context that ends at the same limit.
 **Rationale:** The default of the library is `runtime.NumCPU()`. A pod with one CPU
 runs the three checks one after the other, so the answer takes up to 6 seconds.
+The library stops the wait at the limit and does not cancel the check, so a call to
+a dependency that hangs would stay open past every probe.
 **Alternatives:** A shorter limit of 1 second. A cold connection to the database
 through TLS takes more than that.
 
@@ -294,10 +300,10 @@ func Write(w http.ResponseWriter, r *http.Request, body Body)
 // apps/hub/internal/domain/problems
 type NotReadyProblem struct {
     problem.Problem
-    Dependencies []string `json:"dependencies"`
+    Dependencies []string `json:"dependencies,omitempty"`
 }
 
-func NewNotReady(dependencies []string) *NotReadyProblem
+func NewNotReady(dependencies ...string) *NotReadyProblem
 func NewSettingsInvalid(failures ...problem.FieldFailure) *problem.ValidationProblem
 ```
 
@@ -306,8 +312,8 @@ embeds it, built whole from its arguments. A `With` method changes the problem t
 it receives and returns it. `Fill` sets `instance` and drops the `detail` of
 `internal` on the embedded `Problem`. `encoding/json` puts the members of an
 embedded struct at the top level, so no type writes an encoder of its own.
-`NewNotReady` stores an empty slice for no name, so the member is `[]` and never
-`null`.
+A `NotReadyProblem` with no name omits `dependencies`, so the answer of a drain is
+the base problem and its `detail`.
 **Rationale:** Each type declares its members as fields, and the compiler checks
 them. The next type adds one struct and changes no code of `libs/rest`. A call such
 as `problem.Write(w, r, problem.NewNotFound())` reads as before.
@@ -348,8 +354,8 @@ the hub.
 | #   | Step                                                                          | Realizes                                   | Done |
 | --- | ----------------------------------------------------------------------------- | ------------------------------------------ | ---- |
 | 1   | Add `Body` and `ValidationProblem` to `libs/rest/problem`. Build every plugin and load each one. `BLD-004`. | `HEALTH-FR-007`                  | [x]  |
-| 2   | Add `TypeNotReady`, `NotReadyProblem`, and `NewNotReady`.                            | `HEALTH-FR-007`                            | [ ]  |
-| 3   | Rename the checks, set `WithMaxConcurrent`, add `Drain`, `Draining`, the paths. | `HEALTH-FR-005`, `HEALTH-FR-006`, `HEALTH-NFR-001` | [ ]  |
+| 2   | Add `TypeNotReady`, `NotReadyProblem`, and `NewNotReady`.                            | `HEALTH-FR-007`                            | [x]  |
+| 3   | Rename the checks, set `WithMaxConcurrent`, add `Drain`, `Draining`, the paths. | `HEALTH-FR-005`, `HEALTH-FR-006`, `HEALTH-NFR-001` | [x]  |
 | 4   | Map a measurement to an answer in `handler.Health`.                           | `HEALTH-FR-001` to `HEALTH-FR-004`, `HEALTH-FR-007` to `HEALTH-FR-009` | [ ]  |
 | 5   | Set `Skip` in `accessLog`.                                                    | `HEALTH-FR-012`                            | [ ]  |
 | 6   | Add `Server.DrainPeriod`, and the drain step in `serve http`.                 | `HEALTH-FR-010`, `HEALTH-FR-011`, `HEALTH-NFR-003` | [ ]  |

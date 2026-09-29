@@ -15,7 +15,16 @@ const (
 	TypeSettingsAbsent    = "/problems/hub/settings-absent"
 	TypeIdentityLast      = "/problems/hub/identity-last"
 	TypeSettingsInvalid   = "/problems/hub/settings-invalid"
+	TypeNotReady          = "/problems/hub/not-ready"
 )
+
+// NotReadyProblem reports a hub that cannot serve a request, with the name of each
+// dependency that failed.
+type NotReadyProblem struct {
+	problem.Problem
+
+	Dependencies []string `json:"dependencies,omitempty"`
+}
 
 // NewNetworkNotAllowed reports a caller that the network allowlist does not hold.
 func NewNetworkNotAllowed() *problem.Problem {
@@ -54,5 +63,18 @@ func NewSettingsInvalid(failures ...problem.FieldFailure) *problem.ValidationPro
 			Status: http.StatusUnprocessableEntity,
 		},
 		Errors: failures,
+	}
+}
+
+// NewNotReady reports a hub that cannot serve a request. A shutdown names no
+// dependency, because none failed.
+func NewNotReady(dependencies ...string) *NotReadyProblem {
+	return &NotReadyProblem{
+		Problem: problem.Problem{
+			Type:   TypeNotReady,
+			Title:  "The hub cannot serve a request.",
+			Status: http.StatusServiceUnavailable,
+		},
+		Dependencies: dependencies,
 	}
 }
