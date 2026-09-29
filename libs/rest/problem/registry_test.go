@@ -18,7 +18,7 @@ var relativeType = regexp.MustCompile(`^/problems/http/[a-z0-9-]+$`)
 func TestEveryTypeIsARelativeReference(t *testing.T) {
 	t.Parallel()
 
-	for name, build := range map[string]func() problem.Problem{
+	for name, build := range map[string]func() *problem.Problem{
 		"request-invalid":     problem.NewRequestInvalid,
 		"body-invalid":        problem.NewBodyInvalid,
 		"member-unknown":      problem.NewMemberUnknown,
@@ -29,7 +29,7 @@ func TestEveryTypeIsARelativeReference(t *testing.T) {
 		"request-in-progress": problem.NewRequestInProgress,
 		"precondition-failed": problem.NewPreconditionFailed,
 		"content-too-large":   problem.NewContentTooLarge,
-		"validation-failed":   problem.NewValidationFailed,
+		"validation-failed":   func() *problem.Problem { return problem.NewValidationFailed().Base() },
 		"internal":            problem.NewInternal,
 	} {
 		t.Run(name, func(t *testing.T) {

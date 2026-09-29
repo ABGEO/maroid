@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/libs/rest/flow"
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
@@ -55,7 +56,7 @@ func TestEveryConstructorMatchesTheRegistry(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]struct {
-		built  problem.Problem
+		built  *problem.Problem
 		want   string
 		status int
 	}{
@@ -77,8 +78,12 @@ func TestEveryConstructorMatchesTheRegistry(t *testing.T) {
 			412,
 		},
 		"content too large": {problem.NewContentTooLarge(), problem.TypeContentTooLarge, 413},
-		"validation failed": {problem.NewValidationFailed(), problem.TypeValidationFailed, 422},
-		"internal":          {problem.NewInternal(), problem.TypeInternal, 500},
+		"validation failed": {
+			problem.NewValidationFailed().Base(),
+			problem.TypeValidationFailed,
+			422,
+		},
+		"internal": {problem.NewInternal(), problem.TypeInternal, 500},
 	}
 
 	for name, testCase := range cases {
@@ -105,8 +110,8 @@ func TestWriteCarriesTheFieldFailures(t *testing.T) {
 		nil,
 	)
 
-	failure := problem.NewValidationFailed().WithErrors(
-		problem.FieldFailure{Detail: "is required", Pointer: "#/address/city"},
+	failure := problem.NewValidationFailed(
+		problem.FieldFailure{Detail: requiredField, Pointer: "#/address/city"},
 	)
 	problem.Write(recorder, request, failure)
 
@@ -116,8 +121,92 @@ func TestWriteCarriesTheFieldFailures(t *testing.T) {
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
 
 	require.Len(t, body.Errors, 1)
-	assert.Equal(t, "is required", body.Errors[0].Detail)
+	assert.Equal(t, requiredField, body.Errors[0].Detail)
 	assert.Equal(t, "#/address/city", body.Errors[0].Pointer)
+}
+
+const requiredField = "is required"
+
+// retryProblem stands for a type that another module declares: it embeds the base
+// problem and adds members of its own.
+type retryProblem struct {
+	problem.Problem
+
+	After   int      `json:"after"`
+	Targets []string `json:"targets"`
+}
+
+// HEALTH-SC-016: A type that embeds the problem puts its members at the top level
+// of the body, next to the members of ERR-001.
+func TestWriteAnswersATypeThatEmbedsTheProblem(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct {
+		built  problem.Body
+		member string
+	}{
+		"the validation problem": {
+			built: problem.NewValidationFailed(
+				problem.FieldFailure{Detail: requiredField, Pointer: "#/name"},
+			),
+			member: "errors",
+		},
+		"a type of another module": {
+			built: &retryProblem{
+				Problem: *problem.NewInternal(),
+				After:   5,
+				Targets: []string{"a"},
+			},
+			member: "targets",
+		},
+	}
+
+	for name, testCase := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			recorder := httptest.NewRecorder()
+			request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/plugins", nil)
+
+			problem.Write(recorder, request, testCase.built)
+
+			var body map[string]any
+			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+
+			assert.Equal(t, testCase.built.Base().Type, body["type"])
+			assert.Contains(t, body, testCase.member)
+			assert.NotContains(t, body, "Problem")
+		})
+	}
+}
+
+// HEALTH-SC-019: Write fills the embedded problem of any type, so the rules of
+// ERR-005 and ERR-006 reach a type that adds members.
+func TestWriteFillsTheEmbeddedProblem(t *testing.T) {
+	t.Parallel()
+
+	const flowID = "01a0c611-c3d9-710d-84de-7df920aa9a5f"
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequestWithContext(
+		flow.WithID(t.Context(), flowID), http.MethodGet, "/plugins", nil,
+	)
+
+	body := &problem.ValidationProblem{
+		Problem: *problem.NewInternal().WithDetail("pq: relation \"plants\" does not exist"),
+		Errors:  []problem.FieldFailure{{Detail: requiredField, Pointer: "#/name"}},
+	}
+
+	problem.Write(recorder, request, body)
+
+	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
+
+	var answered map[string]any
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &answered))
+
+	assert.Equal(t, flow.Instance(flowID), answered["instance"])
+	assert.NotContains(t, answered, "detail")
+	assert.Contains(t, answered, "errors")
 }
 
 // ERR-005: A problem of the type internal carries no detail.
@@ -137,19 +226,19 @@ func TestWriteDropsTheDetailOfAnInternalProblem(t *testing.T) {
 	assert.NotContains(t, body, "detail")
 }
 
-// Every member of a problem is a string, a number, or a slice of those, so one
-// always encodes and Write never reaches its fallback. A member that can fail to
-// encode, such as one of type any, fails this test first.
+// Every member of a problem and of the validation problem is a string, a number,
+// or a slice of those, so one always encodes and Write never reaches its fallback.
 func TestEveryProblemEncodes(t *testing.T) {
 	t.Parallel()
 
-	awkward := problem.NewValidationFailed().
-		WithDetail("invalid utf8 \xff\xfe and control \x00 bytes").
-		WithErrors(problem.FieldFailure{Detail: "\x01", Pointer: "#/a~1b~0c"})
+	awkward := problem.NewValidationFailed(
+		problem.FieldFailure{Detail: "\x01", Pointer: "#/a~1b~0c"},
+	)
+	awkward.WithDetail("invalid utf8 \xff\xfe and control \x00 bytes")
 
-	for name, prob := range map[string]problem.Problem{
+	for name, prob := range map[string]problem.Body{
 		"a registered type": problem.NewInternal(),
-		"the zero value":    {},
+		"the zero value":    &problem.Problem{},
 		"awkward text":      awkward,
 	} {
 		t.Run(name, func(t *testing.T) {

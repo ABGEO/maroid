@@ -21,19 +21,19 @@ const (
 )
 
 // NewRequestInvalid reports a request that a route cannot read.
-func NewRequestInvalid() Problem {
+func NewRequestInvalid() *Problem {
 	return newProblem(TypeRequestInvalid, "The request is not valid.", http.StatusBadRequest)
 }
 
 // NewBodyInvalid reports a body that does not decode as a JSON object.
-func NewBodyInvalid() Problem {
+func NewBodyInvalid() *Problem {
 	return newProblem(TypeBodyInvalid, "The body is not a JSON object.", http.StatusBadRequest)
 }
 
 // NewMemberUnknown reports a body that carries a member which the schema of the
 // route does not declare. A route refuses the member rather than drop it, so a
 // client learns of a misspelled member.
-func NewMemberUnknown() Problem {
+func NewMemberUnknown() *Problem {
 	return newProblem(
 		TypeMemberUnknown,
 		"The body carries a member that the schema does not declare.",
@@ -44,7 +44,7 @@ func NewMemberUnknown() Problem {
 // NewCursorStale reports a cursor whose sort or filters differ from the request
 // that carries it. A client tells it from a cursor it built wrong, and retires
 // the one it holds.
-func NewCursorStale() Problem {
+func NewCursorStale() *Problem {
 	return newProblem(
 		TypeCursorStale,
 		"The cursor does not match this request.",
@@ -55,7 +55,7 @@ func NewCursorStale() Problem {
 // NewAccessDenied reports a request that carries no active user record. Every
 // condition of a 401 answers with this one, so a caller learns nothing about
 // which account exists.
-func NewAccessDenied() Problem {
+func NewAccessDenied() *Problem {
 	return newProblem(
 		TypeAccessDenied,
 		"The request carries no active user record.",
@@ -65,12 +65,12 @@ func NewAccessDenied() Problem {
 
 // NewNotFound reports a resource that does not exist. A resource of another user
 // answers the same way, because the row level policy hides it.
-func NewNotFound() Problem {
+func NewNotFound() *Problem {
 	return newProblem(TypeNotFound, "The resource does not exist.", http.StatusNotFound)
 }
 
 // NewMethodNotAllowed reports a method that does not reach the resource.
-func NewMethodNotAllowed() Problem {
+func NewMethodNotAllowed() *Problem {
 	return newProblem(
 		TypeMethodNotAllowed,
 		"The method does not reach this resource.",
@@ -81,7 +81,7 @@ func NewMethodNotAllowed() Problem {
 // NewRequestInProgress reports a repeat that arrived while the first write under
 // its key still runs. The client sends it again later and reads the answer of
 // that first write.
-func NewRequestInProgress() Problem {
+func NewRequestInProgress() *Problem {
 	return newProblem(
 		TypeRequestInProgress,
 		"An earlier request under this key is still running.",
@@ -91,7 +91,7 @@ func NewRequestInProgress() Problem {
 
 // NewPreconditionFailed reports a write whose record moved after the client read
 // it. The client reads the record again and writes what it still means to write.
-func NewPreconditionFailed() Problem {
+func NewPreconditionFailed() *Problem {
 	return newProblem(
 		TypePreconditionFailed,
 		"The record changed after the client read it.",
@@ -100,7 +100,7 @@ func NewPreconditionFailed() Problem {
 }
 
 // NewContentTooLarge reports a body that is larger than the route takes.
-func NewContentTooLarge() Problem {
+func NewContentTooLarge() *Problem {
 	return newProblem(
 		TypeContentTooLarge,
 		"The body is larger than the route takes.",
@@ -108,17 +108,21 @@ func NewContentTooLarge() Problem {
 	)
 }
 
-// NewValidationFailed reports a body that the rules of a route refuse.
-func NewValidationFailed() Problem {
-	return newProblem(
-		TypeValidationFailed,
-		"The body failed validation.",
-		http.StatusUnprocessableEntity,
-	)
+// NewValidationFailed reports a body that the rules of a route refuse, with one
+// item for each field that failed.
+func NewValidationFailed(failures ...FieldFailure) *ValidationProblem {
+	return &ValidationProblem{
+		Problem: *newProblem(
+			TypeValidationFailed,
+			"The body failed validation.",
+			http.StatusUnprocessableEntity,
+		),
+		Errors: failures,
+	}
 }
 
 // NewInternal reports a failure that Maroid does not describe to the caller.
 // The cause belongs in the log, so this problem carries no detail.
-func NewInternal() Problem {
+func NewInternal() *Problem {
 	return newProblem(TypeInternal, "The request failed.", http.StatusInternalServerError)
 }

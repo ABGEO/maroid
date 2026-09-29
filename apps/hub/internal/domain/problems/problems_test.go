@@ -14,11 +14,11 @@ import (
 func TestEveryHubTypeIsARelativeReference(t *testing.T) {
 	t.Parallel()
 
-	for name, build := range map[string]func() problem.Problem{
+	for name, build := range map[string]func() *problem.Problem{
 		"network-not-allowed": problems.NewNetworkNotAllowed,
 		"settings-absent":     problems.NewSettingsAbsent,
 		"identity-last":       problems.NewIdentityLast,
-		"settings-invalid":    problems.NewSettingsInvalid,
+		"settings-invalid":    func() *problem.Problem { return problems.NewSettingsInvalid().Base() },
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

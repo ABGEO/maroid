@@ -31,7 +31,7 @@ the readiness answers 503, and the listener stays open for the drain period.
 | `HEALTH-FR-004`   | Section 4.5, `HEALTH-DD-004`, `HEALTH-SC-004`, `HEALTH-SC-005`     |
 | `HEALTH-FR-005`   | `HEALTH-DD-005`, `HEALTH-SC-006`                                   |
 | `HEALTH-FR-006`   | `HEALTH-DD-005`, `HEALTH-SC-007`                                   |
-| `HEALTH-FR-007`   | Section 4.5, `HEALTH-DD-004`, `HEALTH-DD-006`, `HEALTH-DD-010`, `HEALTH-SC-008`, `HEALTH-SC-016`, `HEALTH-SC-017` |
+| `HEALTH-FR-007`   | Section 4.5, `HEALTH-DD-004`, `HEALTH-DD-006`, `HEALTH-DD-010`, `HEALTH-SC-008`, `HEALTH-SC-016`, `HEALTH-SC-019` |
 | `HEALTH-FR-008`   | `HEALTH-DD-004`, `HEALTH-DD-011`, `HEALTH-SC-009`, `HEALTH-SC-018` |
 | `HEALTH-FR-009`   | Section 4.3, `HEALTH-DD-001`, `HEALTH-SC-010`                      |
 | `HEALTH-FR-010`   | Section 4.4, `HEALTH-DD-007`, `HEALTH-SC-011`                      |
@@ -83,8 +83,9 @@ the readiness answers 503, and the listener stays open for the drain period.
 | `apps/hub/internal/healthcheck/idp.go`            | keep   | The check `idp`.                                                |
 | `apps/hub/internal/healthcheck/openbao.go`        | change | The check `secret-store`.                                       |
 | `apps/hub/internal/handler/health.go`             | change | The two routes and the map from a measurement to an answer.     |
-| `libs/rest/problem/problem.go`                    | change | `Extension`, `WithExtension`, `MarshalJSON`, `Validation`. `Errors` goes. |
-| `apps/hub/internal/domain/problems/problems.go`   | change | `TypeNotReady`, `NotReady`, and `NewNotReady`.                  |
+| `libs/rest/problem/`                              | change | `Body`, `ValidationProblem`, and pointer constructors. `Errors` leaves `Problem`. |
+| `apps/hub/internal/domain/problems/problems.go`   | change | `TypeNotReady`, `NotReadyProblem`, `NewNotReady`, and pointer constructors. |
+| Every caller of a constructor or of `Fill`        | change | The hub, `libs/rest`, and `plugins/jasmine` take `*Problem`.    |
 | `apps/hub/internal/server/access.go`              | change | `Skip` of the access log.                                       |
 | `apps/hub/internal/config/config.go`              | change | `Server.DrainPeriod`.                                           |
 | `apps/hub/internal/depresolver/health.go`         | keep   | `HealthService`.                                                |
@@ -266,50 +267,54 @@ routes out of the order that `API-002` gives.
 ### `HEALTH-DD-010`
 
 **Realizes:** `HEALTH-FR-007`, `ERR-004`
-**Decision:** `problem.Problem` carries one typed extension. `WithExtension` sets it,
-and `MarshalJSON` merges its members into the top level of the body.
-`Errors` leaves the base, and `WithErrors` sets the extension `Validation`.
+**Decision:** A problem type that adds members is a struct that embeds
+`problem.Problem`. `Write` takes any type that reaches its embedded `Problem`
+through `Base`, so one writer answers every type.
 
 ```go
 // libs/rest/problem
-type Problem struct {
-    Type      string `json:"type"`
-    Title     string `json:"title"`
-    Status    int    `json:"status"`
-    Detail    string `json:"detail,omitempty"`
-    Instance  string `json:"instance,omitempty"`
-    Extension any    `json:"-"`
+type Body interface {
+    Base() *Problem
 }
 
-type Validation struct {
+func (p *Problem) Base() *Problem
+func (p *Problem) WithDetail(detail string) *Problem
+func (p *Problem) WithStatus(status int) *Problem
+
+type ValidationProblem struct {
+    Problem
     Errors []FieldFailure `json:"errors"`
 }
 
-func (p Problem) WithExtension(extension any) Problem
-func (p Problem) WithErrors(failures ...FieldFailure) Problem // WithExtension(Validation{...})
-func (p Problem) MarshalJSON() ([]byte, error)
+func NewValidationFailed(failures ...FieldFailure) *ValidationProblem
+
+func Fill(r *http.Request, body Body)
+func Write(w http.ResponseWriter, r *http.Request, body Body)
 
 // apps/hub/internal/domain/problems
-type NotReady struct {
+type NotReadyProblem struct {
+    problem.Problem
     Dependencies []string `json:"dependencies"`
 }
 
-func NewNotReady(dependencies []string) problem.Problem
+func NewNotReady(dependencies []string) *NotReadyProblem
+func NewSettingsInvalid(failures ...problem.FieldFailure) *problem.ValidationProblem
 ```
 
-`MarshalJSON` returns an error when the extension encodes to no JSON object, or
-when it holds a member of `ERR-001`. `Write` then answers the fallback body of
-`internal`. `NewNotReady` stores an empty slice for no name, so the member is `[]`
-and never `null`.
-**Rationale:** `Write` and `Fill` keep their signatures, so no call of either
-changes, in the hub or in a plugin. A call of `WithErrors` does not change either. Each
-extension stays a struct, so the compiler checks its members. The next type that
-needs a member adds a struct and changes no code of `libs/rest`.
-**Alternatives:** A `Body` interface that a struct satisfies when it embeds
-`Problem`. It needs a pointer receiver, so every call of `Write` changes. A map of
-extension members. It loses the types, and a member name can collide unseen. A
-struct for `not-ready` that the handler encodes itself. It repeats `Fill`, the
-media type, and the fallback in each handler that adds a member.
+A constructor returns the type of its problem: `*Problem`, or the struct that
+embeds it, built whole from its arguments. A `With` method changes the problem that
+it receives and returns it. `Fill` sets `instance` and drops the `detail` of
+`internal` on the embedded `Problem`. `encoding/json` puts the members of an
+embedded struct at the top level, so no type writes an encoder of its own.
+`NewNotReady` stores an empty slice for no name, so the member is `[]` and never
+`null`.
+**Rationale:** Each type declares its members as fields, and the compiler checks
+them. The next type adds one struct and changes no code of `libs/rest`. A call such
+as `problem.Write(w, r, problem.NewNotFound())` reads as before.
+**Alternatives:** One `Extension` field of type `any` that a custom encoder merges
+into the body. It checks the type of a member at no point, and it builds the body
+by a splice of bytes. A second writer for an embedding type next to a `Write` that
+takes a value. It gives one job two functions.
 
 ### `HEALTH-DD-011`
 
@@ -336,14 +341,14 @@ the hub.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `HEALTH-SC-001` through `HEALTH-SC-018`.
+`spec-scenarios.md` holds `HEALTH-SC-001` through `HEALTH-SC-019`.
 
 ## 7. Build plan
 
 | #   | Step                                                                          | Realizes                                   | Done |
 | --- | ----------------------------------------------------------------------------- | ------------------------------------------ | ---- |
-| 1   | Add the extension to `problem.Problem`. Build every plugin and load each one. `BLD-004`. | `HEALTH-FR-007`                  | [ ]  |
-| 2   | Add `TypeNotReady`, `NotReady`, and `NewNotReady`.                            | `HEALTH-FR-007`                            | [ ]  |
+| 1   | Add `Body` and `ValidationProblem` to `libs/rest/problem`. Build every plugin and load each one. `BLD-004`. | `HEALTH-FR-007`                  | [x]  |
+| 2   | Add `TypeNotReady`, `NotReadyProblem`, and `NewNotReady`.                            | `HEALTH-FR-007`                            | [ ]  |
 | 3   | Rename the checks, set `WithMaxConcurrent`, add `Drain`, `Draining`, the paths. | `HEALTH-FR-005`, `HEALTH-FR-006`, `HEALTH-NFR-001` | [ ]  |
 | 4   | Map a measurement to an answer in `handler.Health`.                           | `HEALTH-FR-001` to `HEALTH-FR-004`, `HEALTH-FR-007` to `HEALTH-FR-009` | [ ]  |
 | 5   | Set `Skip` in `accessLog`.                                                    | `HEALTH-FR-012`                            | [ ]  |

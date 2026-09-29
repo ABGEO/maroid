@@ -78,7 +78,7 @@ func (h *EnvironmentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 func (h *EnvironmentHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.EnvironmentRequest
 	if err := render.Bind(r, &req); err != nil {
-		problem.Write(w, r, requestProblem(err))
+		writeRequestProblem(w, r, err)
 
 		return
 	}
@@ -114,7 +114,7 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.EnvironmentRequest
 	if err := render.Bind(r, &req); err != nil {
-		problem.Write(w, r, requestProblem(err))
+		writeRequestProblem(w, r, err)
 
 		return
 	}

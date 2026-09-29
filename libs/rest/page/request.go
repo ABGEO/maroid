@@ -85,9 +85,7 @@ func ReadRequest(r *http.Request, declared Options) (Request, *problem.Problem) 
 		}
 
 		if !cursor.Matches(asked.Sort, asked.Filters) {
-			stale := problem.NewCursorStale()
-
-			return Request{}, &stale
+			return Request{}, problem.NewCursorStale()
 		}
 
 		asked.Cursor = &cursor
@@ -154,8 +152,6 @@ func readFilters(r *http.Request, declared Options) map[string]string {
 // refuse builds the failure of one parameter, naming it so a client learns
 // which value to correct.
 func refuse(parameter string, reason string) *problem.Problem {
-	failure := problem.NewRequestInvalid().
+	return problem.NewRequestInvalid().
 		WithDetail("The " + parameter + " parameter is not valid: " + reason + ".")
-
-	return &failure
 }

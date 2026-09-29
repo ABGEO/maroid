@@ -140,9 +140,9 @@ its feature holds that declaration.
 ## ERR-004
 
 A problem type can add members to the five of `ERR-001`, as RFC 9457 section 3.2
-allows. The type declares them in one struct of its own, and a problem carries
-one such struct at most. No added member repeats the name of a member of
-`ERR-001`. The encoder refuses one that does, and the answer is `internal`.
+allows. The type is a struct that embeds the base problem and declares each added
+member as a field. No added member repeats the name of a member of `ERR-001`. The
+test of the type checks its own body.
 
 A problem that reports a failed field carries `errors`. Each item holds `detail`
 and `pointer`. `pointer` is a JSON Pointer in the fragment form of RFC 6901, so it

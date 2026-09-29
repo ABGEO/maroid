@@ -27,7 +27,7 @@ func listPage[T any, R any](
 ) {
 	asked, failure := page.ReadRequest(r, page.Options{})
 	if failure != nil {
-		problem.Write(w, r, *failure)
+		problem.Write(w, r, failure)
 
 		return
 	}

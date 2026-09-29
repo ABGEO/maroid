@@ -162,7 +162,10 @@ func (w *problemWriter) flush() {
 		return
 	}
 
-	body, err := json.Marshal(problem.Fill(w.request, transportProblem(w.status)))
+	failure := transportProblem(w.status)
+	problem.Fill(w.request, failure)
+
+	body, err := json.Marshal(failure)
 	if err != nil {
 		return
 	}
@@ -172,7 +175,7 @@ func (w *problemWriter) flush() {
 
 // transportProblem names the failure of one status. Section 4.5 of the MCPHUB
 // specification gives the two that the transport answers.
-func transportProblem(status int) problem.Problem {
+func transportProblem(status int) *problem.Problem {
 	switch status {
 	case http.StatusUnauthorized:
 		return problem.NewAccessDenied()

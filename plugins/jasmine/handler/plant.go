@@ -78,7 +78,7 @@ func (h *PlantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.PlantRequest
 	if err := render.Bind(r, &req); err != nil {
-		problem.Write(w, r, requestProblem(err))
+		writeRequestProblem(w, r, err)
 
 		return
 	}
@@ -116,7 +116,7 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	var req dto.PlantRequest
 	if err := render.Bind(r, &req); err != nil {
-		problem.Write(w, r, requestProblem(err))
+		writeRequestProblem(w, r, err)
 
 		return
 	}

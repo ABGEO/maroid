@@ -38,7 +38,7 @@ func pagedRequest(t *testing.T, items []string, target string) *httptest.Respons
 	router.Get("/plugins", func(w http.ResponseWriter, r *http.Request) {
 		_, failure := page.ReadRequest(r, page.Options{Bounded: true})
 		if failure != nil {
-			problem.Write(w, r, *failure)
+			problem.Write(w, r, failure)
 
 			return
 		}

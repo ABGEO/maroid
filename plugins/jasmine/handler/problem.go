@@ -3,19 +3,22 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/go-playground/validator/v10"
 
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
-// requestProblem names a body that the route refuses. A body that does not decode
-// is body-invalid, and a body that breaks a rule is validation-failed with one
-// item for each field.
-func requestProblem(err error) problem.Problem {
+// writeRequestProblem answers a body that the route refuses. A body that does not
+// decode is body-invalid, and a body that breaks a rule is validation-failed with
+// one item for each field.
+func writeRequestProblem(w http.ResponseWriter, r *http.Request, err error) {
 	var invalid validator.ValidationErrors
 	if !errors.As(err, &invalid) {
-		return problem.NewBodyInvalid()
+		problem.Write(w, r, problem.NewBodyInvalid())
+
+		return
 	}
 
 	failures := make([]problem.FieldFailure, 0, len(invalid))
@@ -26,7 +29,7 @@ func requestProblem(err error) problem.Problem {
 		})
 	}
 
-	return problem.NewValidationFailed().WithErrors(failures...)
+	problem.Write(w, r, problem.NewValidationFailed(failures...))
 }
 
 // validationDetail renders the reason that one rule gives.

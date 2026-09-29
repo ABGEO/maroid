@@ -109,7 +109,7 @@ func (h *Plugin) Register(router chi.Router) {
 func (h *Plugin) List(w http.ResponseWriter, r *http.Request) error {
 	// @todo: consider caching the data.
 	if _, failure := page.ReadRequest(r, page.Options{Bounded: true}); failure != nil {
-		problem.Write(w, r, *failure)
+		problem.Write(w, r, failure)
 
 		return nil
 	}
@@ -243,7 +243,7 @@ func (h *Plugin) failSettings(w http.ResponseWriter, r *http.Request, err error)
 	case errors.Is(err, errs.ErrSettingsSchemaNotFound):
 		problem.Write(w, r, problems.NewSettingsAbsent())
 	case errors.As(err, &invalid):
-		problem.Write(w, r, problems.NewSettingsInvalid().WithErrors(fieldFailures(invalid)...))
+		problem.Write(w, r, problems.NewSettingsInvalid(fieldFailures(invalid)...))
 	case errors.Is(err, precondition.ErrModified):
 		problem.Write(w, r, problem.NewPreconditionFailed())
 	default:

@@ -14,12 +14,14 @@ import (
 const fallbackBody = `{"type":"` + TypeInternal +
 	`","title":"The request failed.","status":500}`
 
-// Fill returns the problem that belongs on the wire for this request. It takes
-// the instance from the request, and it drops the detail of an internal problem,
+// Fill sets the members that belong on the wire for this request. It takes the
+// instance from the request, and it drops the detail of an internal problem,
 // because the cause of one belongs in the log and not in a body.
 //
 // Write calls it. A caller that writes the body itself calls it first.
-func Fill(r *http.Request, prob Problem) Problem {
+func Fill(r *http.Request, body Body) {
+	prob := body.Base()
+
 	if prob.Type == TypeInternal {
 		prob.Detail = ""
 	}
@@ -27,8 +29,6 @@ func Fill(r *http.Request, prob Problem) Problem {
 	if prob.Instance == "" {
 		prob.Instance = flow.Instance(flow.IDFromContext(r.Context()))
 	}
-
-	return prob
 }
 
 // Write answers the request with the problem.
@@ -37,14 +37,15 @@ func Fill(r *http.Request, prob Problem) Problem {
 // leaves the answer well formed. It reports nothing, because the one failure
 // that remains is a peer that has gone, and the answer has left by then. The
 // access record of that request carries the status and the bytes that arrived.
-func Write(w http.ResponseWriter, r *http.Request, prob Problem) {
-	filled := Fill(r, prob)
-	status := filled.Status
+func Write(w http.ResponseWriter, r *http.Request, body Body) {
+	Fill(r, body)
 
-	var body bytes.Buffer
-	if err := json.NewEncoder(&body).Encode(filled); err != nil {
-		body.Reset()
-		body.WriteString(fallbackBody)
+	status := body.Base().Status
+
+	var encoded bytes.Buffer
+	if err := json.NewEncoder(&encoded).Encode(body); err != nil {
+		encoded.Reset()
+		encoded.WriteString(fallbackBody)
 
 		status = http.StatusInternalServerError
 	}
@@ -52,5 +53,5 @@ func Write(w http.ResponseWriter, r *http.Request, prob Problem) {
 	w.Header().Set("Content-Type", MediaType)
 	w.WriteHeader(status)
 
-	_, _ = io.Copy(w, &body)
+	_, _ = io.Copy(w, &encoded)
 }

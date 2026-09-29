@@ -258,7 +258,7 @@ type providerState struct {
 // Identities reports every provider that Maroid offers, attached or not.
 func (h *Auth) Identities(w http.ResponseWriter, r *http.Request) error {
 	if _, failure := page.ReadRequest(r, page.Options{Bounded: true}); failure != nil {
-		problem.Write(w, r, *failure)
+		problem.Write(w, r, failure)
 
 		return nil
 	}

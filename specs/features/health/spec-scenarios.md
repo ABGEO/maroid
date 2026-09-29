@@ -163,20 +163,11 @@ process exits between 5 and 6 seconds after the signal.
 **Verifies:** `HEALTH-FR-007`
 **Layer:** unit
 
-**Given** `problem.NewValidationFailed().WithErrors(...)` with one failed field, and
+**Given** `problem.NewValidationFailed(...)` with one failed field, and
 `problems.NewNotReady(nil)`.
 **When** `problem.Write` answers each one.
 **Then** the first body holds `errors` with one item at the top level. The second
-holds `"dependencies": []`. Neither holds a member named `extension`.
-
-## `HEALTH-SC-017`
-
-**Verifies:** `HEALTH-FR-007`
-**Layer:** unit
-
-**Given** a problem whose extension declares a member named `status`.
-**When** `problem.Write` answers it.
-**Then** the answer is 500 with the type `/problems/http/internal`.
+holds `"dependencies": []`. Neither body nests a member named `Problem`.
 
 ## `HEALTH-SC-018`
 
@@ -191,6 +182,19 @@ holds `"dependencies": []`. Neither holds a member named `extension`.
 one with `dependency` set to `idp` and `error` set to `Timeout during health check`,
 and one for `database` with its text. The drain case of `HEALTH-SC-011` writes none.
 
+## `HEALTH-SC-019`
+
+**Verifies:** `HEALTH-FR-007`
+**Layer:** unit
+
+**Given** a `ValidationProblem` of the type `internal` with a `detail`, and a request
+with a flow identifier.
+**When** `problem.Write` answers it.
+**Then** the body holds the `instance` of the flow, holds no `detail`, and holds
+`errors`. The status is the status of the embedded `Problem`.
+
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID               | Retired    | Reason                                                              |
+| ---------------- | ---------- | ------------------------------------------------------------------- |
+| `HEALTH-SC-017`  | 2026-09-29 | `HEALTH-DD-010` embeds `Problem`, so no type encodes to a non-object. |
