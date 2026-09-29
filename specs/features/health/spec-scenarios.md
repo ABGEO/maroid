@@ -139,8 +139,10 @@ process exits between 5 and 6 seconds after the signal.
 **Layer:** unit
 
 **Given** the router of `server.NewHTTPRouter` with a logger that records every entry.
-**When** `GET /livez` answers 200, `GET /readyz` answers 503, and `GET /plugins` answers 200.
-**Then** the log holds an access record for `/readyz` and for `/plugins`, and none for `/livez`.
+**When** `GET /livez` answers 200, `GET /readyz` answers 503, and a route that is no
+probe answers 200.
+**Then** the log holds an access record for `/readyz` and for the other route, and
+none for `/livez`.
 
 ## `HEALTH-SC-014`
 
