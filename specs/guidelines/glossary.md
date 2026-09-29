@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-09-28
+updated: 2026-09-29
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -72,6 +72,12 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-component-library` | component library | The one shared set of components and styling that the deck and every remote import.                       |
 | `GLO-component`     | component         | One reusable control of the component library. It receives every value it shows from its caller.                  |
 | `GLO-catalog`       | catalog           | A page that shows each component alone, with sample values, outside the deck.                                     |
+| `GLO-orchestrator`  | orchestrator      | The system that starts, stops, and routes traffic to a hub process.                                               |
+| `GLO-liveness`      | liveness          | The state of a hub process that still answers a request.                                                          |
+| `GLO-readiness`     | readiness         | The state of a hub process that can serve a request of a person.                                                  |
+| `GLO-dependency`    | dependency        | A service outside the hub that every request path reads: the database, the IdP, and the secret store.            |
+| `GLO-secret-store`  | secret store      | The service that gives each secret its protection. OpenBao is the secret store today.                             |
+| `GLO-drain-period`  | drain period      | The time from the start of a shutdown to the close of the listener.                                               |
 
 ## Retired identifiers
 

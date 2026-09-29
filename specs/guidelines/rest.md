@@ -4,7 +4,7 @@ title: The REST conventions
 type: guideline
 status: active
 created: 2026-09-22
-updated: 2026-09-24
+updated: 2026-09-29
 scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, plugins/, libs/api-client/, libs/plugin-sdk/, apps/deck/, specs/features/*/api.yaml, specs/templates/api.yaml, specs/api/, build/openapi/]
 related: [API, ERR, SPC, DAT, EXT, SEC, OWN, UI, TG, MQT, CFG, BLD, CLI]
 ---
@@ -45,7 +45,7 @@ registers. Every rule that neither table names binds in full.
 | `Z-223`, `Z-224` | A hostname comes from the deployment. `Z-224` asks for one under `zalandoapis.com`, and no name resolves for every reader of Maroid. The rule binds every document at the level of a must, because `RES-007` gives each one the audience `external-public`. |
 | `Z-192`        | `RES-008` writes each document into the build tree, and a release carries it. The rule asks for the `/zalando-apis` directory of a deployment, which feeds a portal that Maroid has no equal of. It binds every document, because it exempts a component-internal API only. |
 | `Z-129`, `Z-134` | `RES-004` exempts the one address that a client derives from a standard. `.well-known` opens with a stop, which `Z-129` forbids, and `oauth-protected-resource` is singular, which `Z-134` forbids. |
-| `Z-134`        | `callback`, `schema`, `api`, `ui`, `auth`, `telegram`, and `webhook` are singular, and Maroid picks each name. Each one names one thing, and none is a collection. |
+| `Z-134`        | `callback`, `schema`, `api`, `ui`, `auth`, `telegram`, `webhook`, `livez`, and `readyz` are singular, and Maroid picks each name. Each one names one thing, and none is a collection. An orchestrator reads `livez` and `readyz` by the names that Kubernetes gives its own probes. |
 | `Z-148`, `Z-149` | `GET /auth/callback` writes, and a `GET` reads. RFC 6749 section 4.1.2 makes the redirection endpoint a `GET` that carries `code` and `state` as query parameters, and the browser arrives there by redirect. Maroid picks the address of that route, and it does not pick the method. |
 | `Z-150`        | `ERR-003` answers 422 for a body that fails validation and for settings that fail their schema. `Z-150` marks 422 do-not-use and prefers 400. A client of Maroid branches on the problem type, and the two conditions differ from a body that does not parse, which already answers 400. |
 | `Z-150`, `Z-251` | `GET /auth/callback` answers 302. `Z-150` marks 302 do-not-use and `Z-251` advises against a redirection code. The browser arrives at that route by redirect and leaves by one, which RFC 6749 section 4.1.2 fixes. |
@@ -61,7 +61,7 @@ registers. Every rule that neither table names binds in full.
 | `Z-102`        | Maroid publishes no user manual, so no document carries `externalDocs`. The repository holds the documentation that a reader needs. |
 | `Z-183`        | `X-Telegram-Bot-Api-Secret-Token` is not on the list of proprietary headers that the rule allows. Telegram names the header, `TG-001` records it, and `SEC-010` reads it. `X-Flow-ID` is on the list, and `ERR-006` uses it. |
 | `Z-105`        | The rule gives the pseudo permission `uid` to every endpoint that needs no permission of its own. `uid` names a user behind the call. Telegram calls `/telegram/webhook` under the secret of `SEC-010`, and a route that declares an empty requirement carries no scheme to hang a permission on, so neither carries `uid`. |
-| `Z-104`        | The rule names the `http` bearer scheme and the `oauth2` scheme. `hub.yaml` guards a route with the session cookie of `SEC-005`, which `ADR-0004` chose, and `telegram.yaml` with the header of `SEC-010`. OpenAPI describes each as `apiKey`. `mcp.yaml` uses bearer and meets the rule. Separately, these routes carry no credential, and each one must: the sign in, the sign out, the redemption of an invitation, `GET /auth/callback`, the two discovery routes, and the assets of a plugin that `SEC-006` publishes. A person holds no session before a sign in, and RFC 9728 asks a client that holds no account to read discovery. |
+| `Z-104`        | The rule names the `http` bearer scheme and the `oauth2` scheme. `hub.yaml` guards a route with the session cookie of `SEC-005`, which `ADR-0004` chose, and `telegram.yaml` with the header of `SEC-010`. OpenAPI describes each as `apiKey`. `mcp.yaml` uses bearer and meets the rule. Separately, these routes carry no credential, and each one must: the sign in, the sign out, the redemption of an invitation, `GET /auth/callback`, the two discovery routes, the two probe routes, and the assets of a plugin that `SEC-006` publishes. A person holds no session before a sign in, RFC 9728 asks a client that holds no account to read discovery, and an orchestrator holds no account. |
 
 A rule whose condition Maroid does not meet is not a deviation, and takes no row.
 A rule that offers an optional capability waits for a client that asks for it,

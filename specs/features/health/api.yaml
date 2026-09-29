@@ -1,0 +1,126 @@
+# The routes that HEALTH adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The health of the hub
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+paths:
+  /livez:
+    get:
+      operationId: getLiveness
+      summary: Report whether the hub process answers.
+      description: >
+        Realizes `HEALTH-FR-001`, `HEALTH-FR-002`, and `HEALTH-FR-009`. The route
+        reads no dependency, so a failed dependency never restarts the process.
+        An answer of 200 writes no access record. `LOG-010`.
+      security: []
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          description: The process answers.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        default:
+          $ref: "../../api/components.yaml#/components/responses/Default"
+
+  /readyz:
+    get:
+      operationId: getReadiness
+      summary: Report whether the hub can serve a request.
+      description: >
+        Realizes `HEALTH-FR-003`, `HEALTH-FR-004`, `HEALTH-FR-009`, and
+        `HEALTH-FR-010`. The hub checks the database, the IdP, and the secret
+        store. From the start of a shutdown the route answers 503 and checks
+        nothing. An answer of 200 writes no access record. `LOG-010`.
+      security: []
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          description: Every dependency answers.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Check"
+        "503":
+          description: >
+            One dependency or more does not answer, or the hub is shutting down.
+            The body names each failed dependency and never the error text.
+            `HEALTH-FR-007`, `HEALTH-FR-008`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/NotReady"
+        default:
+          $ref: "../../api/components.yaml#/components/responses/Default"
+
+components:
+  schemas:
+    Check:
+      type: object
+      description: The measurement that the health library gives. `HEALTH-DD-003`.
+      required: [status, timestamp, component]
+      properties:
+        status:
+          type: string
+          enum: [OK]
+        timestamp:
+          type: string
+          format: date-time
+          description: The moment of the measurement, in UTC. `RES-001`.
+        component:
+          type: object
+          required: [name]
+          properties:
+            name:
+              type: string
+              examples: [maroid-hub]
+            version:
+              type: string
+      examples:
+        - status: OK
+          timestamp: "2026-09-29T10:30:00Z"
+          component:
+            name: maroid-hub
+            version: ""
+
+    NotReady:
+      description: The problem `not-ready`. `HEALTH-DD-004`.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Problem"
+        - type: object
+          required: [dependencies]
+          properties:
+            dependencies:
+              type: array
+              description: >
+                The name of each dependency that failed, sorted. Empty while the
+                hub is shutting down.
+              items:
+                type: string
+                enum: [database, idp, secret-store]
+      examples:
+        - type: /problems/hub/not-ready
+          title: The hub cannot serve a request.
+          status: 503
+          instance: /flows/01a0c611-c3d9-710d-84de-7df920aa9a5f
+          dependencies: [database, idp]

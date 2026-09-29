@@ -4,7 +4,7 @@ title: Logging
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-23
+updated: 2026-09-29
 scope: [apps/hub/internal/logger/, apps/, libs/, plugins/]
 related: [ERR, LIF, SEC, LNG]
 ---
@@ -76,7 +76,8 @@ is the way back to the cause.
 
 ## LOG-010
 
-The hub writes one record for each request that it answers. `go-chi/httplog`
+The hub writes one record for each request that it answers, except a probe of
+`GET /livez` or `GET /readyz` that answers 200. `go-chi/httplog`
 writes it, through the logger that `LOG-001` gives, so the record carries the
 attribute of `LOG-009` like every other:
 
@@ -95,11 +96,12 @@ attribute of `LOG-009` like every other:
 
 | Setting              | Value        | Reason                                                     |
 | ---------------------- | -------------- | ------------------------------------------------------------ |
-| `Schema`             | `SchemaECS`  | One name for each attribute. `SchemaOTEL` replaces it when a deployment collects traces. |
+| `Schema`             | `SchemaOTEL` | One name for each attribute, from the semantic conventions of OpenTelemetry. The example above uses them. |
 | `RecoverPanics`      | `false`      | It answers a bare 500, and `ERR-001` asks every failure for a problem. The recoverer of the hub answers instead. |
 | `LogRequestBody`     | Absent       | A body of the hub carries a token and a secret. `LOG-008`.  |
 | `LogResponseBody`    | Absent       | The same reason.                                            |
 | `Level`              | `Debug`      | The logger holds the level of the configuration, so this one filters nothing of its own. |
+| `Skip`               | A probe that answers 200 | An orchestrator probes every few seconds, and a success says nothing. A failed probe still writes its record. |
 
 The message of this record is the one exception to `LOG-007`. `httplog` builds it
 by concatenation, as `GET /plugins => HTTP 200 (1.2ms)`, and no option changes it.

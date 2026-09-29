@@ -4,7 +4,7 @@ title: Errors
 type: guideline
 status: active
 created: 2026-09-21
-updated: 2026-09-27
+updated: 2026-09-29
 scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, libs/rest/, libs/api-client/, plugins/]
 related: [API, DAT, LOG, OWN, PLG, RES, UI]
 ---
@@ -125,6 +125,7 @@ identity, the secret of the bot.
 | `identity-last`          | 409    | The last external account cannot be detached.       |
 | `webhook-secret-invalid` | 401    | The update carries no valid secret of the bot.      |
 | `settings-invalid`       | 422    | The settings do not match the schema.               |
+| `not-ready`              | 503    | The hub cannot serve a request.                     |
 
 A body that carries a member which the schema does not declare answers
 `member-unknown`. `Z-109` and `Z-111` ask a document to say how a route handles an
@@ -137,6 +138,11 @@ declares a type of its own only for a failure of its own domain. The `api.yaml` 
 its feature holds that declaration.
 
 ## ERR-004
+
+A problem type can add members to the five of `ERR-001`, as RFC 9457 section 3.2
+allows. The type declares them in one struct of its own, and a problem carries
+one such struct at most. No added member repeats the name of a member of
+`ERR-001`. The encoder refuses one that does, and the answer is `internal`.
 
 A problem that reports a failed field carries `errors`. Each item holds `detail`
 and `pointer`. `pointer` is a JSON Pointer in the fragment form of RFC 6901, so it

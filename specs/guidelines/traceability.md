@@ -4,7 +4,7 @@ title: Traceability
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-24
+updated: 2026-09-29
 scope: [specs/, code comments]
 related: [LNG, PRC, GIT, RES]
 ---
@@ -279,6 +279,7 @@ Add a row before you create the file or the directory.
 | `WEBSESS` | `features/websess/` | The session of a person at the web shell. | Approved |
 | `APIFMT` | `features/apifmt/` | The answer that a client reads, and the platform that carries it. | Approved |
 | `UIKIT` | `features/uikit/` | The shared components and styling of every web user interface. | Approved |
+| `HEALTH` | `features/health/` | The liveness and the readiness that the hub reports. | Approved |
 
 ## Retired identifiers
 

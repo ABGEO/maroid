@@ -4,7 +4,7 @@ title: The HTTP API
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-28
+updated: 2026-09-29
 scope: [apps/hub/internal/server/, apps/hub/internal/handler/, apps/hub/internal/middleware/]
 related: [ARC, ERR, PLG, RES, SEC, UI]
 ---
@@ -90,6 +90,8 @@ The hub fixes these routes:
 | `/telegram/webhook`                      | The Telegram updates                      | Secret token, allowlist |
 | `/.well-known/oauth-protected-resource*` | The discovery of the IdP for an MCP client | Public                |
 | `/mcp`                                   | The Model Context Protocol tools          | Bearer, MCP audience   |
+| `GET /livez`                             | The liveness of the process               | Public                 |
+| `GET /readyz`                            | The readiness of the process              | Public                 |
 
 A path holds no verb, as `Z-141` asks. `RES-002` holds the method, the status,
 and the name that `GET /auth/callback` deviates on, and `RES-004` the one address

@@ -89,7 +89,6 @@ components:
       required: []
       properties: {}
 
-    # Delete `errors` when no route of the feature reports a failed field.
     Problem:
       type: object
       description: A problem detail document. See `ERR-001` and RFC 9457.
@@ -108,21 +107,30 @@ components:
         instance:
           type: string
           format: uri
-        errors:
-          type: array
-          description: One item for each field that caused the rejection. See `ERR-004`.
-          items:
-            type: object
-            required: [detail, pointer]
-            properties:
-              detail:
-                type: string
-              pointer:
-                type: string
-                description: A JSON Pointer in the fragment form of RFC 6901.
-          examples:
-            - - detail: the field is required
-                pointer: "#/<field>"
+
+    # Delete this schema when no route of the feature reports a failed field.
+    ValidationProblem:
+      description: A problem that names each failed field. See `ERR-004`.
+      allOf:
+        - $ref: "#/components/schemas/Problem"
+        - type: object
+          required: [errors]
+          properties:
+            errors:
+              type: array
+              description: One item for each field that caused the rejection.
+              items:
+                type: object
+                required: [detail, pointer]
+                properties:
+                  detail:
+                    type: string
+                  pointer:
+                    type: string
+                    description: A JSON Pointer in the fragment form of RFC 6901.
+              examples:
+                - - detail: the field is required
+                    pointer: "#/<field>"
 
   responses:
     Unauthorized:
@@ -146,4 +154,4 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "#/components/schemas/ValidationProblem"

@@ -4,7 +4,7 @@ title: The settings of a user for a plugin
 type: spec
 status: approved
 created: 2026-09-14
-updated: 2026-09-22
+updated: 2026-09-29
 approved_by: Temuri
 approved_on: 2026-09-14
 constrained_by: [CFG, PLG, OWN, ARC, API, ERR, EXT, PRC, DAT, REP, PKG, LIF, DEP, LOG, JOB, TST, SPC]

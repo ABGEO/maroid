@@ -38,18 +38,26 @@ components:
           format: uri-reference
           description: The flow identifier of the request. `ERR-006` gives the form.
           examples: ["/flows/0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77"]
-        errors:
-          type: array
-          description: One item for each field that caused the rejection. See `ERR-004`.
-          items:
-            type: object
-            required: [detail, pointer]
-            properties:
-              detail:
-                type: string
-              pointer:
-                type: string
-                description: A JSON Pointer in the fragment form of RFC 6901.
+
+    ValidationProblem:
+      description: A problem that names each failed field. See `ERR-004`.
+      allOf:
+        - $ref: "#/components/schemas/Problem"
+        - type: object
+          required: [errors]
+          properties:
+            errors:
+              type: array
+              description: One item for each field that caused the rejection. See `ERR-004`.
+              items:
+                type: object
+                required: [detail, pointer]
+                properties:
+                  detail:
+                    type: string
+                  pointer:
+                    type: string
+                    description: A JSON Pointer in the fragment form of RFC 6901.
 
     FlowId:
       type: string
@@ -135,7 +143,7 @@ components:
       content:
         application/problem+json:
           schema:
-            $ref: "#/components/schemas/Problem"
+            $ref: "#/components/schemas/ValidationProblem"
     Default:
       description: A failure. `ERR-001` gives the body.
       headers:
