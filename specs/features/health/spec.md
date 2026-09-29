@@ -77,18 +77,18 @@ the readiness answers 503, and the listener stays open for the drain period.
 
 | Path                                              | Action | Holds                                                           |
 | ------------------------------------------------- | ------ | --------------------------------------------------------------- |
-| `apps/hub/internal/healthcheck/doc.go`            | keep   | The package comment.                                            |
-| `apps/hub/internal/healthcheck/service.go`        | change | `Checker`, `Service`, `New`, `Drain`, the path constants, the name and the version of the component. |
-| `apps/hub/internal/healthcheck/postgres.go`       | change | The check `database`. It wraps the error as `pinging the database: %w`. |
-| `apps/hub/internal/healthcheck/idp.go`            | keep   | The check `idp`.                                                |
-| `apps/hub/internal/healthcheck/openbao.go`        | change | The check `secret-store`.                                       |
-| `apps/hub/internal/handler/health.go`             | change | The two routes and the map from a measurement to an answer.     |
+| `apps/hub/internal/healthcheck/doc.go`            | create | The package comment.                                            |
+| `apps/hub/internal/healthcheck/service.go`        | create | `Checker`, `Service`, `New`, `Drain`, the path constants, the name and the version of the component, and `limited`, which ends a check at its limit. |
+| `apps/hub/internal/healthcheck/postgres.go`       | create | The check `database`. It wraps the error as `pinging the database: %w`. |
+| `apps/hub/internal/healthcheck/idp.go`            | create | The check `idp`.                                                |
+| `apps/hub/internal/healthcheck/openbao.go`        | create | The check `secret-store`.                                       |
+| `apps/hub/internal/handler/health.go`             | create | The two routes and the map from a measurement to an answer.     |
 | `libs/rest/problem/`                              | change | `Body`, `ValidationProblem`, and pointer constructors. `Errors` leaves `Problem`. |
 | `apps/hub/internal/domain/problems/problems.go`   | change | `TypeNotReady`, `NotReadyProblem`, `NewNotReady`, and pointer constructors. |
 | Every caller of a constructor or of `Fill`        | change | The hub, `libs/rest`, and `plugins/jasmine` take `*Problem`.    |
 | `apps/hub/internal/server/access.go`              | change | `Skip` of the access log.                                       |
 | `apps/hub/internal/config/config.go`              | change | `Server.DrainPeriod`.                                           |
-| `apps/hub/internal/depresolver/health.go`         | keep   | `HealthService`.                                                |
+| `apps/hub/internal/depresolver/health.go`         | create | `HealthService`. `resolver.go` and `server.go` register it.     |
 | `apps/hub/internal/command/serve/http.go`         | change | The drain step at the start of the shutdown.                    |
 
 `healthcheck` declares:
@@ -105,7 +105,7 @@ type Checker interface {
     Draining() bool
 }
 
-func New(cfg *config.Config, db *sqlx.DB, openBao *api.Client, httpClient *http.Client) (*Service, error)
+func New(cfg *config.Config, db *sqlx.DB, secretStore *api.Client, httpClient *http.Client) (*Service, error)
 func (s *Service) Drain()
 ```
 
@@ -149,10 +149,10 @@ sequenceDiagram
     C->>H: Shutdown(ctx)
 ```
 
-`HTTPCommand.startServices` calls `shutdownStep` with the title
-`draining the HTTP server` before its two present steps. The step calls
-`Drain`, then waits `server.drain_period` or the end of the context of the step,
-whichever comes first.
+`HTTPCommand.startServices` gives `shutdown` an ordered list of `shutdownStep`
+values. The step `draining the HTTP server` comes before the two present steps. It
+calls `Drain`, then waits `server.drain_period` or the end of the context of the
+step, whichever comes first.
 
 ### 4.5 Errors
 
