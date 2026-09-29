@@ -18,6 +18,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
+	"github.com/abgeo/maroid/apps/hub/internal/healthcheck"
 	"github.com/abgeo/maroid/apps/hub/internal/logger"
 	"github.com/abgeo/maroid/apps/hub/internal/migrator"
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
@@ -52,6 +53,7 @@ type Resolver interface {
 	AuthService() (*auth.Service, error)
 	OpenBaoClient() (*api.Client, error)
 	SecretCipher() (secret.Cipher, error)
+	HealthService() (*healthcheck.Service, error)
 	SettingsRegistry() *registry.SettingsRegistry
 	SettingsService() (settings.Service, error)
 	IdempotencyStore() (idempotency.Store, error)
@@ -143,6 +145,12 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *api.Client
+	}
+
+	healthService struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *healthcheck.Service
 	}
 
 	secretCipher struct {

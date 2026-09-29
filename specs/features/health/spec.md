@@ -356,7 +356,7 @@ the hub.
 | 1   | Add `Body` and `ValidationProblem` to `libs/rest/problem`. Build every plugin and load each one. `BLD-004`. | `HEALTH-FR-007`                  | [x]  |
 | 2   | Add `TypeNotReady`, `NotReadyProblem`, and `NewNotReady`.                            | `HEALTH-FR-007`                            | [x]  |
 | 3   | Rename the checks, set `WithMaxConcurrent`, add `Drain`, `Draining`, the paths. | `HEALTH-FR-005`, `HEALTH-FR-006`, `HEALTH-NFR-001` | [x]  |
-| 4   | Map a measurement to an answer in `handler.Health`.                           | `HEALTH-FR-001` to `HEALTH-FR-004`, `HEALTH-FR-007` to `HEALTH-FR-009` | [ ]  |
+| 4   | Map a measurement to an answer in `handler.Health`.                           | `HEALTH-FR-001` to `HEALTH-FR-004`, `HEALTH-FR-007` to `HEALTH-FR-009` | [x]  |
 | 5   | Set `Skip` in `accessLog`.                                                    | `HEALTH-FR-012`                            | [ ]  |
 | 6   | Add `Server.DrainPeriod`, and the drain step in `serve http`.                 | `HEALTH-FR-010`, `HEALTH-FR-011`, `HEALTH-NFR-003` | [ ]  |
 | 7   | Build `hub.yaml` and lint it, when step 13 of the APIFMT build plan adds the commands of `RES-008`. | `HEALTH-FR-009`                            | [ ]  |

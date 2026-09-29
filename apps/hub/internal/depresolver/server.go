@@ -177,8 +177,14 @@ func (c *Container) buildHandlers() (map[string]handler.Handler, error) {
 		return nil, err
 	}
 
+	healthService, err := c.HealthService()
+	if err != nil {
+		return nil, err
+	}
+
 	return map[string]handler.Handler{
-		"auth": authHandler,
+		"health": handler.NewHealth(logger, healthService),
+		"auth":   authHandler,
 		"plugin": handler.NewPlugin(
 			logger,
 			verifier,

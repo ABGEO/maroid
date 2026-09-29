@@ -108,7 +108,8 @@ text, and the `flow_id` of the answer.
 **Verifies:** `HEALTH-FR-009`
 **Layer:** unit
 
-**Given** the router of `server.NewHTTPRouter` with every handler of the hub.
+**Given** the router of `server.NewHTTPRouter` with the health handler. Each handler
+mounts its own access check inside its own routes, so the chain holds none.
 **When** a client sends `GET /livez` and `GET /readyz` with no cookie and no header.
 **Then** neither answer is 401.
 
@@ -117,10 +118,10 @@ text, and the `flow_id` of the answer.
 **Verifies:** `HEALTH-FR-010`
 **Layer:** unit
 
-**Given** a `Service` whose three dependencies answer, and a call to `Drain`.
+**Given** a `Checker` that drains, and whose readiness would be `OK`.
 **When** a client sends `GET /readyz`.
 **Then** the answer is 503 with `not-ready`, no member `dependencies`, and the
-`detail` of section 4.5. No dependency receives a request.
+`detail` of section 4.5. The handler measures no readiness.
 
 ## `HEALTH-SC-012`
 
