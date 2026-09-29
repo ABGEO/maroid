@@ -13,9 +13,16 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
+	"github.com/abgeo/maroid/apps/hub/internal/healthcheck"
 )
 
 const shutdownTimeout = 10 * time.Second
+
+// shutdownStep is one step of the shutdown, in the reverse order of the start.
+type shutdownStep struct {
+	title string
+	run   func(ctx context.Context) error
+}
 
 // HTTPCommand represents a command for running HTTP Server.
 type HTTPCommand struct {
@@ -69,6 +76,11 @@ func (c *HTTPCommand) startServices(ctx context.Context) error {
 		return fmt.Errorf("resolving Telegram updates handler: %w", err)
 	}
 
+	healthService, err := c.depResolver.HealthService()
+	if err != nil {
+		return fmt.Errorf("resolving the health service: %w", err)
+	}
+
 	errGroup.Go(func() error {
 		c.logger.InfoContext(ctx, "starting HTTP server",
 			slog.String("address", c.cfg.Server.ListenAddr),
@@ -99,13 +111,11 @@ func (c *HTTPCommand) startServices(ctx context.Context) error {
 		return nil
 	})
 
-	go func() {
-		<-ctx.Done()
-		c.logger.Info("termination signal received")
-
-		c.shutdownStep(ctx, "stopping telegram updates handler", telegramUpdatesHandler.Stop)
-		c.shutdownStep(ctx, "shutting down HTTP server", server.Shutdown)
-	}()
+	go c.shutdown(ctx, []shutdownStep{
+		{"draining the HTTP server", c.drain(healthService)},
+		{"stopping telegram updates handler", telegramUpdatesHandler.Stop},
+		{"shutting down HTTP server", server.Shutdown},
+	})
 
 	err = errGroup.Wait()
 	if err != nil && !errors.Is(err, context.Canceled) {
@@ -115,21 +125,45 @@ func (c *HTTPCommand) startServices(ctx context.Context) error {
 	return nil
 }
 
-func (c *HTTPCommand) shutdownStep(
-	ctx context.Context,
-	title string,
-	step func(ctx context.Context) error,
-) {
+// drain fails the readiness, then keeps serving for the drain period, so that the
+// orchestrator stops the traffic before the listener closes.
+func (c *HTTPCommand) drain(healthService *healthcheck.Service) func(ctx context.Context) error {
+	return func(ctx context.Context) error {
+		healthService.Drain()
+
+		timer := time.NewTimer(c.cfg.Server.DrainPeriod)
+		defer timer.Stop()
+
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+		}
+
+		return nil
+	}
+}
+
+// shutdown waits for the cancellation, then runs each step in turn.
+func (c *HTTPCommand) shutdown(ctx context.Context, steps []shutdownStep) {
+	<-ctx.Done()
+	c.logger.Info("termination signal received")
+
+	for _, step := range steps {
+		c.runShutdownStep(ctx, step)
+	}
+}
+
+func (c *HTTPCommand) runShutdownStep(ctx context.Context, step shutdownStep) {
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownTimeout)
 	defer cancel()
 
-	c.logger.InfoContext(ctx, title)
+	c.logger.InfoContext(ctx, step.title)
 
-	if err := step(ctx); err != nil {
+	if err := step.run(ctx); err != nil {
 		c.logger.ErrorContext(
 			ctx,
 			"shutdown step failed",
-			slog.String("step", title),
+			slog.String("step", step.title),
 			slog.Any("error", err),
 		)
 	}

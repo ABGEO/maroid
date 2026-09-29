@@ -69,6 +69,8 @@ type Server struct {
 	ReadHeaderTimeout time.Duration `default:"5s"   mapstructure:"read_header_timeout"`
 	WriteTimeout      time.Duration `default:"15s"  mapstructure:"write_timeout"`
 	IdleTimeout       time.Duration `default:"120s" mapstructure:"idle_timeout"`
+
+	DrainPeriod time.Duration `default:"5s" mapstructure:"drain_period" validate:"gte=0s,lte=10s"`
 }
 
 // Address returns the full server address in host:port format.
