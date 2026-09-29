@@ -3,12 +3,12 @@ module github.com/abgeo/maroid/apps/hub
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/notifier v0.0.0-20260921174859-594a9a680178
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260921174859-594a9a680178
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20260921174859-594a9a680178
-	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20260921174859-594a9a680178
-	github.com/abgeo/maroid/libs/rest v0.0.0-20260928193233-edde2b9de6e9
-	github.com/abgeo/maroid/libs/testdb v0.0.0-20260921174859-594a9a680178
+	github.com/abgeo/maroid/libs/notifier v0.0.0-20260929175758-01199b0c542d
+	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260929175758-01199b0c542d
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20260929175758-01199b0c542d
+	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20260929175758-01199b0c542d
+	github.com/abgeo/maroid/libs/rest v0.0.0-20260929175758-01199b0c542d
+	github.com/abgeo/maroid/libs/testdb v0.0.0-20260929175758-01199b0c542d
 	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/go-chi/chi/v5 v5.3.0
@@ -67,7 +67,7 @@ require (
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/locales v0.14.2 // indirect
 	github.com/go-playground/universal-translator v0.18.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/google/jsonschema-go v0.4.3 // indirect
@@ -92,7 +92,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgtype v1.14.4 // indirect
 	github.com/jackc/pgx/v4 v4.18.3 // indirect
-	github.com/klauspost/compress v1.20.0 // indirect
+	github.com/klauspost/compress v1.20.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/lib/pq v1.12.3 // indirect

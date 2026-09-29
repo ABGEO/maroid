@@ -3,7 +3,7 @@ module github.com/abgeo/maroid/libs/pluginconfig
 go 1.26.7
 
 require (
-	github.com/go-playground/validator/v10 v10.30.4
+	github.com/go-playground/validator/v10 v10.30.5
 	github.com/go-viper/mapstructure/v2 v2.5.0
 	github.com/mcuadros/go-defaults v1.2.0
 	github.com/stretchr/testify v1.12.1
@@ -11,8 +11,8 @@ require (
 
 require (
 	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
-	github.com/go-playground/locales v0.14.1 // indirect
-	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/locales v0.14.2 // indirect
+	github.com/go-playground/universal-translator v0.18.2 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect

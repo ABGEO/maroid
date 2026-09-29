@@ -1,5 +1,5 @@
-github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260921174859-594a9a680178 h1:iTCU0gM0c7m8UYWkmhCU2oAkrOEHz5H5NqHT5fuUy88=
-github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260921174859-594a9a680178/go.mod h1:eAkT4x31SwNKNAQOvzqAjsBcqI13W9A1RRnT6w4/cQI=
+github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260929175758-01199b0c542d h1:C+qnFKtTpcyuWy1KKOJAjrRpRITVdpbvm4YIQmxADr4=
+github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260929175758-01199b0c542d/go.mod h1:eAkT4x31SwNKNAQOvzqAjsBcqI13W9A1RRnT6w4/cQI=
 github.com/bytedance/gopkg v0.1.4 h1:oZnQwnX82KAIWb7033bEwtxvTqXcYMxDBaQxo5JJHWM=
 github.com/bytedance/gopkg v0.1.4/go.mod h1:v1zWfPm21Fb+OsyXN2VAHdL6TBb2L88anLQgdyje6R4=
 github.com/bytedance/sonic v1.15.4 h1:FgtV/4aBHpla9AxuMpuuzVUpa/Cf3izufkxNmnEzdI8=
@@ -14,12 +14,10 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/grbit/go-json v0.11.0 h1:bAbyMdYrYl/OjYsSqLH99N2DyQ291mHy726Mx+sYrnc=
 github.com/grbit/go-json v0.11.0/go.mod h1:IYpHsdybQ386+6g3VE6AXQ3uTGa5mquBme5/ZWmtzek=
-github.com/klauspost/compress v1.20.0 h1:a3C1ke2ohxFymNlb2HWAHjDeKCI90scRskErZkR0ezA=
-github.com/klauspost/compress v1.20.0/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
+github.com/klauspost/compress v1.20.1 h1:T7kKElXUMXrUJ2E9QhQhxFtcK5rPyLdsGZvdbLMPdiQ=
 github.com/klauspost/cpuid/v2 v2.4.0 h1:S6Hrbc7+ywsr0r+RLapfGBHfyefhCTwEh3A0tV913Dw=
 github.com/klauspost/cpuid/v2 v2.4.0/go.mod h1:19jmZ9mjzoF//ddRSUsv0zfBTJWh3QJh9FNxZTMrGxU=
-github.com/molecule-man/go-brrr v1.1.0 h1:rLBGSXA393y+5ttCBLkW34CHESop5tahrOFxVv/XDEU=
-github.com/molecule-man/go-brrr v1.1.0/go.mod h1:7ybW6/7gA3oKY45jOfVNjSJDtrr6ea4tzbsTkjmQDC4=
+github.com/molecule-man/go-brrr v1.1.1 h1:KYwusQhjtV3smALnhmafZf4OBrh7vP4p8O47DyUmmuY=
 github.com/mymmrac/telego v1.12.1 h1:yx1T5pPSNsU3BjLR7jnfY0D4dtL9caH58Y9e8uzjR88=
 github.com/mymmrac/telego v1.12.1/go.mod h1:K4z3Z3Qr6AA8yEjSry3JGScu506NlLl1O4Gqascmop4=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=

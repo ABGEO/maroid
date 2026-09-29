@@ -3,8 +3,8 @@ module github.com/abgeo/maroid/libs/pluginapi
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260921174859-594a9a680178
-	github.com/abgeo/maroid/libs/testdb v0.0.0-20260921174859-594a9a680178
+	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260929175758-01199b0c542d
+	github.com/abgeo/maroid/libs/testdb v0.0.0-20260929175758-01199b0c542d
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/mymmrac/telego v1.12.1
 	github.com/spf13/cobra v1.10.2
@@ -48,7 +48,7 @@ require (
 	github.com/jackc/pgtype v1.14.4 // indirect
 	github.com/jackc/pgx v3.6.2+incompatible // indirect
 	github.com/jackc/pgx/v4 v4.18.3 // indirect
-	github.com/klauspost/compress v1.20.0 // indirect
+	github.com/klauspost/compress v1.20.1 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/lib/pq v1.12.3 // indirect
 	github.com/lufia/plan9stats v0.0.0-20260802145828-341c2f0c90b5 // indirect
@@ -62,7 +62,7 @@ require (
 	github.com/moby/sys/user v0.4.1 // indirect
 	github.com/moby/sys/userns v0.2.1 // indirect
 	github.com/moby/term v0.5.2 // indirect
-	github.com/molecule-man/go-brrr v1.1.0 // indirect
+	github.com/molecule-man/go-brrr v1.1.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

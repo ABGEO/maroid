@@ -11,10 +11,10 @@ github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030I
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
-github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260921174859-594a9a680178 h1:iTCU0gM0c7m8UYWkmhCU2oAkrOEHz5H5NqHT5fuUy88=
-github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260921174859-594a9a680178/go.mod h1:eAkT4x31SwNKNAQOvzqAjsBcqI13W9A1RRnT6w4/cQI=
-github.com/abgeo/maroid/libs/testdb v0.0.0-20260921174859-594a9a680178 h1:JzUu9uMpjXbHdtPuTPI59X6jPuyslaYO4hSQk/ILwn8=
-github.com/abgeo/maroid/libs/testdb v0.0.0-20260921174859-594a9a680178/go.mod h1:04v9RWP8oGTiNEFqayQ3PXbdVZiBsbc/fOVeO/Eu6jc=
+github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260929175758-01199b0c542d h1:C+qnFKtTpcyuWy1KKOJAjrRpRITVdpbvm4YIQmxADr4=
+github.com/abgeo/maroid/libs/notifierapi v0.0.0-20260929175758-01199b0c542d/go.mod h1:eAkT4x31SwNKNAQOvzqAjsBcqI13W9A1RRnT6w4/cQI=
+github.com/abgeo/maroid/libs/testdb v0.0.0-20260929175758-01199b0c542d h1:s90MM/CVQ6Tve9enW1CS38ZS3ZzY27qqjTx1O/bCJV0=
+github.com/abgeo/maroid/libs/testdb v0.0.0-20260929175758-01199b0c542d/go.mod h1:fF4NpT1qtJMTI2L9WxdAvPzDq3iKEa+ywy2uXaq1NFY=
 github.com/bytedance/gopkg v0.1.4 h1:oZnQwnX82KAIWb7033bEwtxvTqXcYMxDBaQxo5JJHWM=
 github.com/bytedance/gopkg v0.1.4/go.mod h1:v1zWfPm21Fb+OsyXN2VAHdL6TBb2L88anLQgdyje6R4=
 github.com/bytedance/sonic v1.15.4 h1:FgtV/4aBHpla9AxuMpuuzVUpa/Cf3izufkxNmnEzdI8=
@@ -154,8 +154,8 @@ github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFr
 github.com/jmoiron/sqlx v1.4.0 h1:1PLqN7S1UYp5t4SrVVnt4nUVNemrDAtxlulVe+Qgm3o=
 github.com/jmoiron/sqlx v1.4.0/go.mod h1:ZrZ7UsYB/weZdl2Bxg6jCRO9c3YHl8r3ahlKmRT4JLY=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
-github.com/klauspost/compress v1.20.0 h1:a3C1ke2ohxFymNlb2HWAHjDeKCI90scRskErZkR0ezA=
-github.com/klauspost/compress v1.20.0/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
+github.com/klauspost/compress v1.20.1 h1:T7kKElXUMXrUJ2E9QhQhxFtcK5rPyLdsGZvdbLMPdiQ=
+github.com/klauspost/compress v1.20.1/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
 github.com/klauspost/cpuid/v2 v2.4.0 h1:S6Hrbc7+ywsr0r+RLapfGBHfyefhCTwEh3A0tV913Dw=
 github.com/klauspost/cpuid/v2 v2.4.0/go.mod h1:19jmZ9mjzoF//ddRSUsv0zfBTJWh3QJh9FNxZTMrGxU=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
@@ -206,8 +206,7 @@ github.com/moby/sys/userns v0.2.1 h1:4OvdM7BcPkASbuouHsbW3aeMJSFlYDldBRnXVZhaRk8
 github.com/moby/sys/userns v0.2.1/go.mod h1:IHUYgu/kao6N8YZlp9Cf444ySSvCmDlmzUcYfDHOl28=
 github.com/moby/term v0.5.2 h1:6qk3FJAFDs6i/q3W/pQ97SX192qKfZgGjCQqfCJkgzQ=
 github.com/moby/term v0.5.2/go.mod h1:d3djjFCrjnB+fl8NJux+EJzu0msscUP+f8it8hPkFLc=
-github.com/molecule-man/go-brrr v1.1.0 h1:rLBGSXA393y+5ttCBLkW34CHESop5tahrOFxVv/XDEU=
-github.com/molecule-man/go-brrr v1.1.0/go.mod h1:7ybW6/7gA3oKY45jOfVNjSJDtrr6ea4tzbsTkjmQDC4=
+github.com/molecule-man/go-brrr v1.1.1 h1:KYwusQhjtV3smALnhmafZf4OBrh7vP4p8O47DyUmmuY=
 github.com/morikuni/aec v1.0.0 h1:nP9CBfwrvYnBRgY6qfDQkygYDmYwOilePFkwzv4dU8A=
 github.com/morikuni/aec v1.0.0/go.mod h1:BbKIizmSmc5MMPqRYbxO4ZU0S0+P200+tUnFx7PXmsc=
 github.com/mymmrac/telego v1.12.1 h1:yx1T5pPSNsU3BjLR7jnfY0D4dtL9caH58Y9e8uzjR88=
