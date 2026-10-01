@@ -126,6 +126,18 @@ components:
         application/problem+json:
           schema:
             $ref: "#/components/schemas/Problem"
+    Forbidden:
+      description: >
+        The workspace role of the acting user does not hold the permission that
+        the operation declares. The type is `/problems/http/permission-denied`.
+        `SEC-013`.
+      headers:
+        X-Flow-ID:
+          $ref: "#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
     NotFound:
       description: The resource does not exist.
       headers:
@@ -168,6 +180,18 @@ components:
         $ref: "#/components/schemas/FlowId"
 
   parameters:
+    WorkspaceId:
+      name: workspaceId
+      in: path
+      required: true
+      description: >
+        The UUID of the acting workspace. `OWN-003`. A workspace that the acting
+        user is not a member of answers `not-found`.
+      schema:
+        type: string
+        format: uuid
+        examples: [01927f4e-3c2a-7b1d-9e8f-0a1b2c3d4e5f]
+
     FlowId:
       name: X-Flow-ID
       in: header

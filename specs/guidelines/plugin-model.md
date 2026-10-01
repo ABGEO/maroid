@@ -4,7 +4,7 @@ title: The plugin model
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-10-01
 scope: [plugins/, apps/hub/internal/plugin/, libs/pluginapi/]
 related: [ARC, DAT, UI, BLD]
 ---
@@ -81,8 +81,11 @@ Durable state goes into the schema of the plugin. See `DAT-001`.
 
 ## PLG-010
 
-The configuration lists every plugin to load. An entry gives a path, an enabled
-flag, and a configuration map. The hub skips an entry that is not enabled.
+The configuration lists every plugin to load. An entry gives a path, a flag that
+loads it, and a configuration map. The hub skips an entry whose flag is off.
+
+Loading is not enablement. A loaded plugin serves only the workspaces that enable
+it. See `SEC-012`.
 
 The hub loads the plugins before it builds the command tree.
 

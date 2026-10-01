@@ -4,7 +4,7 @@ title: The hub as a Model Context Protocol server
 type: requirements
 status: approved
 created: 2026-09-17
-updated: 2026-09-21
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-18
 constrained_by: [SEC, OWN, API, ARC, PLG, LOG, DAT]
@@ -37,7 +37,7 @@ agent by hand.
 - The owner: connects an agent of their choice to Maroid, and asks it to read
   or to change something that only their own account can reach.
 - A Maroid user who is not the owner: connects their own agent the same way,
-  and reaches only their own data.
+  and reaches only the data of the workspaces they belong to.
 - The author of a plugin: declares the functions of that plugin once, and they
   reach every agent that any Maroid user connects.
 
@@ -51,7 +51,8 @@ agent by hand.
   one JSON response.
 - A tool that a plugin declares after the hub loaded that plugin. The set of the
   tools of a plugin is fixed at the load.
-- A tool list that differs by acting user. Every acting user reads one list.
+- A tool list that differs by acting user or by workspace. Every acting user reads
+  one list.
 - A prompt and a resource of the Model Context Protocol. This feature exposes a
   tool and nothing else.
 - A confirmation step before a tool changes data. The MCP client of the person
@@ -191,31 +192,34 @@ which part of Maroid answered, and where to change it.
 
 ### `MCPHUB-FR-010`
 
-The hub must give the acting user of the call to the tool of a plugin.
+The hub must give the acting user and the acting workspace of the call to the
+tool of a plugin.
 
-**Why:** A tool that reaches a scoped table with no acting user reads no row.
-An agent then reports an empty result, which reads like an answer and is not
-one. See `OWN-003`, `OWN-006`.
+**Why:** A tool that reaches a scoped table with no acting workspace reads no
+row. An agent then reports an empty result, which reads like an answer and is
+not one. See `OWN-003`, `OWN-006`.
 
 **Examples:**
 
-- Normal case: two people each call the same tool of the same plugin, and each
-  reads only their own rows.
-- Unwanted case: the tool reaches a scoped table with no acting user. The hub
-  does not reach this state, because `MCPHUB-INV-001` holds at the entry point.
+- Normal case: two people each call the same tool of the same plugin, each in
+  their own workspace, and each reads only the rows of that workspace.
+- Unwanted case: the tool reaches a scoped table with no acting workspace. The
+  hub does not reach this state, because `MCPHUB-INV-003` holds at the entry
+  point.
 
 ### `MCPHUB-FR-011`
 
-The hub must let a tool of a plugin change data that belongs to the acting user.
+The hub must let a tool of a plugin change data that belongs to the acting
+workspace.
 
 **Why:** The owner connects an agent to act, not only to read.
 
 **Examples:**
 
 - Normal case: an agent calls a tool that records an action, and the row names
-  the acting user.
-- Limit case: the change names a row of another person. It changes no row.
-- Unwanted case: a tool changes data and names no acting user. The change
+  the acting workspace.
+- Limit case: the change names a row of another workspace. It changes no row.
+- Unwanted case: a tool changes data and names no acting workspace. The change
   reaches no row.
 
 ### `MCPHUB-FR-012`
@@ -236,24 +240,24 @@ which call changes something to ask at the right moment.
 ### `MCPHUB-FR-013`
 
 The hub must answer a tool call with a failure that names the plugin and the
-place to fill its settings, when the acting user holds no complete settings for
-that plugin.
+place to fill its settings, when the acting workspace and the acting user hold
+no complete settings for that plugin.
 
 **Why:** A plugin that reads an external account cannot act before that person
 fills its settings. A bare failure tells the person nothing they can act on.
 
 **Examples:**
 
-- Normal case: the acting user filled every required field, and the call runs.
-- Unwanted case: the acting user filled none of them. The failure names the
-  plugin and the place to fill them.
+- Normal case: the members filled every required field, and the call runs.
+- Unwanted case: nobody filled any of them. The failure names the plugin and the
+  place to fill them.
 - Limit case: the plugin declares no settings at all. The call runs, and this
   failure never happens.
 
 ### `MCPHUB-FR-014`
 
-The hub must list a tool of a plugin whether or not the acting user filled the
-settings of that plugin.
+The hub must list a tool of a plugin whether or not any workspace filled the
+settings of that plugin, and whether or not any workspace enables it.
 
 **Why:** One tool list serves every person. A list that changes by person costs
 a read of every setting on every listing, and an agent that keeps the list holds
@@ -262,8 +266,57 @@ a stale one.
 **Examples:**
 
 - Normal case: two people read the tool list, and both read the same tools.
-- Limit case: the acting user filled no setting of any plugin. The list still
-  holds every tool, and `MCPHUB-FR-013` answers the call.
+- Limit case: no workspace of the acting user filled a setting of any plugin. The
+  list still holds every tool, and `MCPHUB-FR-013` answers the call.
+- Limit case: no workspace of the acting user enables a plugin. The list still
+  holds its tools, and `MCPHUB-FR-022` answers the call.
+
+### `MCPHUB-FR-020`
+
+The hub must report the workspaces of the acting user, with the workspace role in
+each, when an MCP client calls the workspace list tool.
+
+**Why:** An agent names a workspace in every call that reads one. It learns the
+names from this report, and from no other place.
+
+**Examples:**
+
+- Normal case: the acting user is a member of two workspaces. The report names
+  both, with the role in each.
+- Limit case: the acting user is a member of no workspace. The report is an
+  empty list, not an error.
+
+### `MCPHUB-FR-021`
+
+The hub must run a tool that acts in a workspace in the workspace that the call
+names.
+
+**Why:** One token reaches every workspace of its user, so the call names the
+place. See `OWN-003`.
+
+**Examples:**
+
+- Normal case: the call names the workspace of the household, and the tool reads
+  the bills of the household.
+- Unwanted case: the call names no workspace. The hub rejects it, and the failure
+  names the missing argument.
+
+### `MCPHUB-FR-022`
+
+The hub must answer a call that names a workspace of which the acting user is no
+member, or a workspace that does not enable the plugin, as it answers a call to a
+tool that does not exist.
+
+**Why:** A different answer tells the caller that the workspace exists, or that
+the plugin serves it. See `OWN-003`, `SEC-012`.
+
+### `MCPHUB-FR-023`
+
+The hub must refuse a call to a tool when the workspace role of the acting user
+does not hold the permission of that tool.
+
+**Why:** A viewer that connects an agent reads and changes nothing that the deck
+denies them. See `SEC-013`.
 
 ## 5. Non-functional requirements
 
@@ -277,7 +330,8 @@ dependency of every read. See `EXTID-NFR-001`.
 
 ### `MCPHUB-NFR-002`
 
-A report of the tool list reads no user record and no setting of a plugin.
+A report of the tool list reads no user record, no workspace, and no setting of a
+plugin.
 Measure at the hub: zero database statements while the hub answers a request
 for the tool list.
 
@@ -295,22 +349,29 @@ One MCP tool call resolves to exactly one acting user.
 
 Two loaded plugins never expose one tool name.
 
+### `MCPHUB-INV-003`
+
+A call to a tool that acts in a workspace runs in exactly one workspace, and the
+acting user is a member of it.
+
 ## 7. Constraints from the guidelines
 
 | Rule      | Guideline        | Effect on this feature                                                                                  |
 | --------- | ----------------- | --------------------------------------------------------------------------------------------------------- |
 | `SEC-002` | Security          | A verified token's audience names the MCP client's own identifier of the IdP, distinct from the hub's. `ADR-0003` widens the rule. |
 | `SEC-004` | Security          | `MCPHUB-FR-003` enforces it at the new entry point.                                                     |
-| `OWN-003` | Record ownership  | An MCP tool call becomes a third entry point that resolves an acting user. `ADR-0003` adds the row.     |
+| `OWN-003` | Record ownership  | An MCP tool call becomes a third entry point that resolves an acting user. `ADR-0003` adds the row. The `workspace` argument gives the acting workspace. `ADR-0008`. |
+| `SEC-012` | Security          | `MCPHUB-FR-022`. A plugin that the workspace does not enable answers as a missing tool.                 |
+| `SEC-013` | Security          | `MCPHUB-FR-023`. Each tool that acts in a workspace declares one permission.                            |
 | `API-003` | HTTP API          | The MCP route and the discovery route take a place in the fixed list of prefixes.                       |
 | `API-006` | HTTP API          | A response body is JSON. This feature answers a tool call with one JSON response, and needs no exception to the rule. |
 | `ARC-008` | Architecture      | The plugin list tool reports every loaded plugin through the existing registry. It names no plugin by hand. |
 | `PLG-006` | Plugin model      | This iteration adds the interface and the registrar. The registry already exists.                       |
 | `PLG-007` | Plugin model      | A plugin declares a tool through the plugin interface, and imports no package of the hub.                |
 | `PLG-011` | Plugin model      | `MCPHUB-INV-002` is the outcome. A second tool under one name is refused at the load.                    |
-| `OWN-005` | Record ownership  | A change that a tool makes names no user. The policy sets it.                                           |
-| `OWN-006` | Record ownership  | A tool that reaches a scoped table with no acting user reads no row. `MCPHUB-FR-010` prevents that state. |
-| `OWN-007` | Record ownership  | `MCPHUB-FR-010` carries the acting user into the transaction of the plugin.                             |
+| `OWN-005` | Record ownership  | A change that a tool makes names no workspace. The policy sets it.                                      |
+| `OWN-006` | Record ownership  | A tool that reaches a scoped table with no acting workspace reads no row. `MCPHUB-FR-010` prevents that state. |
+| `OWN-007` | Record ownership  | `MCPHUB-FR-010` carries the acting user and the acting workspace into the transaction of the plugin.    |
 | `DAT-004` | Data              | A plugin reaches the database on one path. A tool adds no other.                                        |
 | `LOG-003` | Logging           | A log line of the MCP server carries its own component attribute.                                       |
 
@@ -324,7 +385,7 @@ Two loaded plugins never expose one tool name.
 | 1   | Does a tool call ever stream more than one response (progress, a partial result), or does every call answer with one JSON response? Streaming needs an exception to `API-006`. | Temuri | No streaming this iteration. Every tool call answers with one JSON response. |
 | 2   | Does the plugin list tool report whether a plugin declares settings, the way `GET /plugins` does, or only the identifier and the version that `MCPHUB-FR-005` gives? | Temuri | The same shape `GET /plugins` gives: the identifier, the version, the settings flag, and the user interface manifest. |
 | 3   | May a tool of a plugin change data, or does this iteration keep every tool a report? | Temuri | A tool may change data. `MCPHUB-FR-011` and `MCPHUB-FR-012` state it. |
-| 4   | Does a tool of a plugin disappear from the list when the acting user filled no setting for that plugin, or does it stay and fail at the call? | Temuri | It stays. `MCPHUB-FR-013` and `MCPHUB-FR-014` state it. |
+| 4   | Does a tool of a plugin disappear from the list when the acting workspace filled no setting for that plugin, or does it stay and fail at the call? | Temuri | It stays. `MCPHUB-FR-013` and `MCPHUB-FR-014` state it. |
 
 Answer every question before the approval. An open question blocks stage 2.
 

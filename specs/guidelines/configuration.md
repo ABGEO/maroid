@@ -4,7 +4,7 @@ title: Configuration and secrets
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-10-01
 scope: [apps/hub/internal/config/, libs/pluginconfig/, config.yaml, chart/values.yaml]
 related: [ARC, PLG, OWN]
 ---
@@ -52,22 +52,22 @@ the load, not the first job.
 
 ## CFG-007
 
-Configuration holds a value of the installation. A value that belongs to one person
-lives in the database, in a scoped record. See `OWN-004`.
+Configuration holds a value of the installation. A value that belongs to one
+workspace or to one person lives in the database, in a scoped record. See `OWN-004`.
 
-| Value                                    | Place         |
-| ---------------------------------------- | ------------- |
-| The address of an external service       | Configuration |
-| A token that the installation shares     | Configuration |
-| The credential of one person             | The database  |
-| The account or the vehicle of one person | The database  |
+| Value                                                   | Place         |
+| ------------------------------------------------------- | ------------- |
+| The address of an external service                      | Configuration |
+| A token that the installation shares                    | Configuration |
+| The credential of one workspace or one person           | The database  |
+| The account or the vehicle of one workspace or one person | The database |
 
-A plugin that keeps a per-user value in its configuration serves one person.
-Moving that value is the step that makes the plugin serve everybody, and a plugin
-moves one value at a time.
+A plugin that keeps such a value in its configuration serves one workspace.
+Moving that value is the step that makes the plugin serve every workspace, and a
+plugin moves one value at a time.
 
-**Why:** A configuration file has one copy for the process. A per-user value in it
-caps the plugin at one user.
+**Why:** A configuration file has one copy for the process. Such a value in it
+caps the plugin at one workspace.
 
 ## Retired identifiers
 

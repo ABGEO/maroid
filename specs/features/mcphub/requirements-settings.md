@@ -4,7 +4,7 @@ title: The settings of a plugin over the Model Context Protocol
 type: requirements
 status: approved
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-21
 constrained_by: [SEC, OWN, LOG, ARC]
@@ -18,8 +18,9 @@ because `requirements.md` reached the size that `LNG-013` gives.
 
 ## 1. Problem
 
-A plugin that reads an external account needs the credential of the acting user.
-That person fills it in the deck, and in no other place. `PSET` gave the field,
+A plugin that reads an external account needs the credential of the acting
+workspace or of the acting user. A member fills it in the deck, and in no other
+place. `PSET` gave the field,
 the protection, and the two routes that the deck calls.
 
 An agent reaches none of it. It reports which plugin the hub loaded, and it
@@ -31,12 +32,14 @@ change.
 
 - The owner: asks an agent to read the settings of a plugin, and to change a
   value that is no secret.
-- A Maroid user who is not the owner: reads and changes their own settings the
-  same way, and reaches the settings of no other person.
+- A Maroid user who is not the owner: reads and changes the settings of their
+  workspaces, and their own, the same way, and reaches the settings of no other
+  workspace and no other person.
 
 ## 3. Out of scope
 
 - The settings of one user that another user reads or changes.
+- The settings of a workspace that a person who is not its member reads or changes.
 - A history of the changes of a setting.
 - A tool that removes every stored value of a plugin in one call.
 - A report of each plugin whose settings are absent. An agent reads the settings
@@ -61,8 +64,8 @@ before it sends one value.
 
 ### `MCPHUB-FR-016`
 
-The hub must report the settings that the acting user stored for a plugin that
-an MCP client names.
+The hub must report the settings that the acting workspace and the acting user
+stored for a plugin that an MCP client names.
 
 **Why:** An agent that changes one field keeps every other field. It reads the
 stored values to know which field holds a value. `PSET-FR-004` and `PSET-FR-005`
@@ -70,18 +73,19 @@ govern what that report holds, so a secret stays unreadable.
 
 **Examples:**
 
-- Normal case: the acting user stored two of three fields. The report names the
-  two values, and it marks the third as empty.
-- Limit case: the acting user stored no value. The report holds no value, and it
-  is no failure.
-- Unwanted case: another user stored a value for the same plugin. The report
-  holds no value of that user.
+- Normal case: the acting workspace stored two of three fields. The report names
+  the two values, and it marks the third as empty.
+- Limit case: neither the acting workspace nor the acting user stored a value.
+  The report holds no value, and it is no failure.
+- Unwanted case: another workspace stored a value for the same plugin. The
+  report holds no value of that workspace.
 
 ### `MCPHUB-FR-017`
 
-The hub must store the settings that an MCP client sends for the acting user.
+The hub must store the settings that an MCP client sends for the acting
+workspace and the acting user.
 
-**Why:** The owner corrects a wrong value in the session that found it.
+**Why:** A member corrects a wrong value in the session that found it.
 `MCPHUB-FR-019` bounds which field a save changes.
 
 **Examples:**
@@ -116,8 +120,8 @@ that starts at the person and ends at the hub.
   stores every other field, and it keeps the stored secret. See `PSET-FR-006`.
 - Unwanted case: the call names a secret field, and the value is a credential.
   The hub stores nothing, and the failure names that field.
-- Limit case: the settings schema requires a secret field, and the acting user
-  stored no value for it. The hub stores nothing. See `PSET-FR-008`.
+- Limit case: the settings schema requires a secret field, and nobody stored a
+  value for it. The hub stores nothing. See `PSET-FR-008`.
 
 ## 5. Constraints from the guidelines
 
@@ -125,9 +129,10 @@ that starts at the person and ends at the hub.
 | --------- | ----------------- | ------------------------------------------------------------------------------------------ |
 | `ARC-008` | Architecture      | The two tools read the registry that holds the settings schema of each plugin. They name no plugin. |
 | `SEC-004` | Security          | The user record grants the call. The verification that `MCPHUB-FR-002` gives applies with no change. |
-| `OWN-003` | Record ownership  | `MCPHUB-INV-001` gives the call one acting user. The settings of that user answer it.      |
-| `OWN-005` | Record ownership  | A save names no user. The policy sets the owner of the row.                                |
-| `OWN-006` | Record ownership  | A call with no acting user reads no row and writes no row.                                 |
+| `OWN-003` | Record ownership  | `MCPHUB-INV-001` and `MCPHUB-INV-003` give the call one acting user and one acting workspace. Their settings answer it. |
+| `OWN-005` | Record ownership  | A save names no workspace and no user. The policy sets the scope column of each row.       |
+| `OWN-006` | Record ownership  | A call with no acting workspace reads no row of the workspace and writes none.             |
+| `SEC-013` | Security          | The two tools of the settings declare the permissions that `PSET-DD-013` gives.            |
 | `LOG-008` | Logging           | An MCP client can send a credential that `MCPHUB-FR-019` rejects. No log line holds that value. |
 
 ## 6. Open questions

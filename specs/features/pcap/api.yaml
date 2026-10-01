@@ -118,6 +118,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MCPTool"
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
 
     UIManifest:
       type: object
@@ -138,13 +142,19 @@ components:
 
     APIRoute:
       type: object
-      required: [method, path]
+      required: [method, path, permission]
       properties:
         method:
           type: string
         path:
           type: string
-          description: The path that a client calls, with the prefix that `API-004` gives it.
+          description: >
+            The path that a client calls, with the prefix that `API-004` gives it.
+            The prefix keeps `{workspaceId}` as a template segment.
+          examples: ["/workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/plants"]
+        permission:
+          type: string
+          description: The permission that a call needs. `SEC-013`.
 
     CLICommand:
       type: object
@@ -174,13 +184,16 @@ components:
 
     TelegramCommand:
       type: object
-      required: [command, description]
+      required: [command, description, permission]
       properties:
         command:
           type: string
           description: The command with the prefix of the plugin, as the bot answers it.
         description:
           type: string
+        permission:
+          type: string
+          description: The permission that the command needs. `SEC-013`.
 
     TelegramConversation:
       type: object
@@ -193,10 +206,25 @@ components:
 
     MCPTool:
       type: object
-      required: [name, description]
+      required: [name, description, permission]
       properties:
         name:
           type: string
           description: The tool name with the prefix of the plugin. `MCPHUB-FR-008`.
         description:
           type: string
+        permission:
+          type: string
+          description: The permission that a call needs. `SEC-013`.
+
+    Permission:
+      type: object
+      required: [name, role]
+      properties:
+        name:
+          type: string
+          description: The permission with the prefix of the plugin. `SEC-013`.
+        role:
+          type: string
+          enum: [manager, editor, viewer]
+          description: The lowest workspace role that holds the permission. `OWN-011`.

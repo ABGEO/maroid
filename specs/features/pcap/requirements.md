@@ -4,7 +4,7 @@ title: The capabilities that a plugin declares
 type: requirements
 status: approved
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-21
 constrained_by: [PLG, ARC, API, UI]
@@ -47,8 +47,8 @@ shape, and every client would learn a ninth rule.
 - The fields of the settings of a plugin. The settings capability names itself,
   and the surface that already serves the schema holds the fields.
 - The content of a migration. The migrations capability names itself.
-- A permission or a scope on one capability. Every capability of a loaded plugin
-  reaches every person who may read the plugin list.
+- A report that differs by workspace. The report describes each loaded plugin,
+  and `SEC-012` decides which workspace it serves.
 - Turning a capability off for one plugin from the configuration.
 
 ## 4. Functional requirements
@@ -106,6 +106,9 @@ capability makes ten requests to render one page.
   the method and the path of each route.
 - Normal case: a plugin answers two bot commands. The report names the
   capability, and each command with the text that describes it.
+- Normal case: a plugin declares two permissions. The report names the
+  capability, and each permission with the lowest workspace role that holds it.
+  Each route, command, and function for an agent names the permission it needs.
 - Limit case: a plugin declares settings. The report names the capability and no
   item, because the surface that serves the schema holds the fields.
 - Unwanted case: the report names a capability and omits items that the plugin

@@ -4,7 +4,7 @@ title: The specification artifacts
 type: guideline
 status: active
 created: 2026-09-12
-updated: 2026-09-23
+updated: 2026-10-01
 scope: [specs/features/, specs/api/]
 related: [PRC, TRC, LNG, API, RES, MQT, JOB, TG, CLI, NTF, CFG]
 ---
@@ -77,16 +77,18 @@ One table for each surface. These columns are the minimum:
 | Surface               | Columns                                            | Governed by                     |
 | --------------------- | -------------------------------------------------- | ------------------------------- |
 | Data model            | Table, Schema, Scope, Migration, Realizes          | `DAT-001`, `DAT-005`, `OWN-004` |
-| HTTP route            | Method, Path, Access, Realizes                     | `API-003`, `API-004`            |
+| HTTP route            | Method, Path, Access, Permission, Realizes         | `API-003`, `API-004`, `SEC-013` |
 | MQTT subscriber       | Identifier, Relative topic, QoS, Handles, Realizes | `MQT-001`, `MQT-003`            |
-| Cron job              | Identifier, Schedule, Acts for, Behavior, Realizes | `JOB-005`, `OWN-009`            |
+| Cron job              | Identifier, Schedule, Runs in, Behavior, Realizes  | `JOB-005`, `OWN-009`            |
 | Background worker     | Name, Prepare verifies, Start runs, Realizes       | `JOB-001`                       |
-| Telegram command      | Command, Scope, Validates, Handles, Realizes       | `TG-003`, `TG-004`              |
+| Telegram command      | Command, Scope, Permission, Validates, Handles, Realizes | `TG-003`, `TG-004`, `SEC-013` |
 | Telegram conversation | Identifier, Entry step, Steps, Realizes            | `TG-005`                        |
 | CLI command           | Command, Flags, Does, Realizes                     | `CLI-001`                       |
 | Notification channel  | Channel, Sent when, Realizes                       | `NTF-002`                       |
 | Configuration scheme  | Key, Type, Default, Secret, Realizes               | `CFG-003`, `CFG-006`            |
-| MCP tool              | Tool, Declared by, Annotations, Realizes           | `PLG-006`, `PLG-011`            |
+| MCP tool              | Tool, Declared by, Annotations, Permission, Realizes | `PLG-006`, `PLG-011`, `SEC-013` |
+
+The Permission column holds "none" for a surface that acts in no workspace.
 
 Delete a table that the feature does not need. Keep no empty heading. See `LNG-013`.
 

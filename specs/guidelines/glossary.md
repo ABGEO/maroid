@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-09-29
+updated: 2026-10-01
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -36,7 +36,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-idp`           | IdP               | The external identity provider that authenticates every person for Maroid. Dex is the IdP today.                  |
 | `GLO-provider`      | provider          | One account system that Dex federates. Telegram is one.                                                          |
 | `GLO-external-account` | external account | The account that one person holds at one provider.                                                            |
-| `GLO-invitation`    | invitation        | A grant that the owner issues. It lets one sign in create the first identity of one user record.                  |
+| `GLO-invitation`    | invitation        | A grant that an administrator issues. It lets one sign in create the first identity of one user record.          |
 | `GLO-attach`        | attach            | The operation that creates an identity.                                                                          |
 | `GLO-detach`        | detach            | The operation that removes an identity.                                                                          |
 | `GLO-session`       | session           | The period from one sign in of a person at the deck to the end of it.                                            |
@@ -45,12 +45,20 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-session-cookie` | session cookie   | The cookie that carries the credential of a session.                                                             |
 | `GLO-access-token`  | access token      | The value that the IdP issues for a call to Maroid.                                                              |
 | `GLO-identity-token` | identity token   | The value that the IdP issues to describe a person to the client that signed them in.                            |
-| `GLO-acting-user`   | acting user       | The user that one unit of work runs for. Every request, update, and job run has exactly one.                      |
-| `GLO-scoped-table`  | scoped table      | A table whose every row belongs to one user. It carries `user_id` and row level security.                         |
-| `GLO-shared-table`  | shared table      | A table whose rows belong to no user. It carries no `user_id`.                                                    |
-| `GLO-scoped-record` | scoped record     | A record that belongs to exactly one user.                                                                        |
-| `GLO-shared-record` | shared record     | A record that belongs to no user. Every user reads it.                                                            |
-| `GLO-setting`       | setting           | One value that one user stores for one field of one plugin.                                                       |
+| `GLO-acting-user`   | acting user       | The user that one unit of work runs for. A request, an update, a tool call, and the run of a job for each user each have exactly one. Any other cron run has none. |
+| `GLO-workspace` | workspace | The place that owns the records of a plugin. Its members share them. `OWN-010` gives it. |
+| `GLO-member` | member | A user who belongs to a workspace, with one workspace role. `OWN-011` gives it. |
+| `GLO-workspace-role` | workspace role | The access of a member: manager, editor, or viewer, in that order. |
+| `GLO-acting-workspace` | acting workspace | The workspace that one unit of work runs in. |
+| `GLO-administrator` | administrator | A user who manages the users, the plugin allowlists, and every workspace of the instance. |
+| `GLO-plugin-allowlist` | plugin allowlist | The plugins that one user may enable in a workspace that they manage. |
+| `GLO-enablement` | enablement | The fact that one plugin serves one workspace. |
+| `GLO-permission` | permission | One action that the hub or a plugin checks, with the lowest workspace role that holds it. |
+| `GLO-scoped-table`  | scoped table      | A table whose every row belongs to one workspace or to one user. It carries the scope column and row level security. |
+| `GLO-shared-table`  | shared table      | A table whose rows belong to no workspace and to no user. It carries no scope column. |
+| `GLO-scoped-record` | scoped record     | A record that belongs to exactly one workspace or exactly one user. |
+| `GLO-shared-record` | shared record     | A record that belongs to nobody. Every user reads it. |
+| `GLO-setting`       | setting           | One value that a user or a workspace stores for one field of one plugin. The plugin declares which. |
 | `GLO-settings-schema` | settings schema | The list of the fields that one plugin declares.                                                                  |
 | `GLO-secret-field`  | secret field      | A field whose value Maroid returns to nobody after the user stores it.                                            |
 | `GLO-secret`        | secret            | The value of a secret field.                                                                                      |

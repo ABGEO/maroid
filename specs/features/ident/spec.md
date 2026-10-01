@@ -4,7 +4,7 @@ title: The user record and the ownership of a row
 type: spec
 status: approved
 created: 2026-09-12
-updated: 2026-09-22
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-12
 constrained_by: [OWN, DAT, SEC, TG, JOB, REP, PLG, API, ERR, CFG, PKG, TST]
@@ -15,11 +15,16 @@ requirements: features/ident/requirements.md
 
 ## 1. Summary
 
-The hub gains the table `public.users` and resolves one acting user for every
-request, every Telegram update, and every cron run. `pluginapi.PluginDB` puts that
-user into the transaction as `app.user_id`, and the row level security policy of a
-scoped table reads it. The configuration loses its list of Telegram identifiers,
-and the user record becomes the only allowlist.
+The hub gains the table `public.users` and resolves the acting user and the
+acting workspace that `OWN-003` gives for every request, every Telegram update,
+every MCP tool call, and every cron run. `pluginapi.PluginDB` puts both into the
+transaction as `app.user_id` and `app.workspace_id`, and the row level security
+policy of a scoped table reads the one that its scope names. The configuration
+loses its list of Telegram identifiers, and the user record becomes the only
+allowlist.
+
+`ADR-0008` moved the ownership of a row from the user to the workspace. Steps 13
+to 15 of the build plan carry that change into the code.
 
 ## 2. Coverage
 
@@ -30,8 +35,8 @@ and the user record becomes the only allowlist.
 | `IDENT-FR-003`   | Section 4.2, `IDENT-DD-001`, `IDENT-SC-002`            |
 | `IDENT-FR-004`   | Section 4.2, `IDENT-SC-001`                            |
 | `IDENT-FR-005`   | Section 4.2, `IDENT-SC-003`                            |
-| `IDENT-FR-006`   | Section 4.5, `IDENT-SC-004`                            |
-| `IDENT-FR-007`   | Section 4.3, `IDENT-DD-007`, `IDENT-SC-009`            |
+| `IDENT-FR-006`   | Section 4.5, `IDENT-SC-004`, `IDENT-SC-013`            |
+| `IDENT-FR-007`   | Section 4.3, `IDENT-DD-007`, `IDENT-SC-009`, `IDENT-SC-014` |
 | `IDENT-FR-008`   | Section 4.2, `IDENT-SC-010`                            |
 | `IDENT-FR-009`   | Section 4.2, `IDENT-SC-007`                            |
 | `IDENT-FR-010`   | `IDENT-DD-003`, `IDENT-SC-008`                         |
@@ -46,17 +51,18 @@ and the user record becomes the only allowlist.
 | Rule       | Guideline        | How this specification obeys it                                                  |
 | ---------- | ---------------- | -------------------------------------------------------------------------------- |
 | `OWN-001`  | Record ownership | Section 4.2 creates `public.users`. `EXTID` adds `public.identities`, the natural key. |
-| `OWN-003`  | Record ownership | Section 4.4 resolves the acting user at each of the four entry points.          |
-| `OWN-005`  | Record ownership | Section 4.2 gives the `user_id` column that every scoped table carries.          |
+| `OWN-003`  | Record ownership | Section 4.4 resolves the acting user and the acting workspace at each of the four entry points, and checks the membership. |
+| `OWN-005`  | Record ownership | Section 4.2 gives the `workspace_id` column and the `user_id` column of a scoped table. |
 | `OWN-006`  | Record ownership | Section 4.2 gives the policy. `IDENT-DD-006` makes the policy apply to the hub.  |
-| `OWN-007`  | Record ownership | `IDENT-DD-002`. `PluginDB.WithTx` is the only place that sets `app.user_id`.     |
+| `OWN-007`  | Record ownership | `IDENT-DD-002`. `PluginDB.WithTx` and `database.WithScopeTx` are the only places that set `app.user_id` and `app.workspace_id`. |
+| `OWN-009`  | Record ownership | `IDENT-DD-007`. A job runs one time, one time for each workspace that enables the plugin, or one time for each active user. |
 | `DAT-004`  | Data             | `IDENT-DD-002` keeps the search path on the same statement.                      |
 | `DAT-009`  | Data             | `public.users.id` declares `DEFAULT uuidv7()`, and no Go code names it.          |
 | `SEC-003`  | Security         | `EXTID` maps `federated_claims` to the record. `ADR-0002` retired `IDENT-DD-004`. |
 | `SEC-004`  | Security         | `IDENT-DD-003`. The hub reads the record on each request, and the configuration loses its list. |
 | `TG-006`   | Telegram         | The conversation store keeps the Telegram identifier as its key.                |
 | `JOB-005`  | Jobs             | Section 4.3 adds `Scope` to `CronJobMeta`.                                        |
-| `JOB-007`  | Jobs             | Section 4.5. One user that fails does not stop the run for the next user.        |
+| `JOB-007`  | Jobs             | Section 4.5. One workspace or one user that fails does not stop the run for the next. |
 | `PLG-007`  | Plugin model     | `IDENT-DD-001` puts the context helpers in `libs/pluginapi`, not in the hub.     |
 | `ARC-008`  | Architecture     | No rule in this design names a plugin.                                            |
 | `REP-003`  | Repository       | The rule binds `plugins/*/repository/`. The hub repository holds the pool, because each operation is one statement on the request path. `IDENT-DD-003` gives the reason. |
@@ -81,11 +87,12 @@ and the user record becomes the only allowlist.
 | `apps/hub/internal/telegram/middleware/allowed_users.go`    | delete | `ActingUser` replaces it                                           |
 | `apps/hub/internal/telegram/handler.go`                     | change | The new middleware, and the context reaches the engine             |
 | `apps/hub/internal/telegram/conversation/engine.go`         | change | `HandleMessage(ctx, update)`, `Start(ctx, update, id)`             |
-| `apps/hub/internal/worker/cron.go`                          | change | The run for each user                                              |
+| `apps/hub/internal/worker/cron.go`                          | change | The run for each active user, and for each workspace that enables the plugin |
 | `apps/hub/internal/command/worker.go`                       | change | Resolves the repository for the cron worker                        |
 | `apps/hub/internal/depresolver/{resolver,database,server,telegram,plugin}.go` | change | `UserRepository()` joins the `Resolver` interface, and each consumer receives it |
-| `libs/pluginapi/actinguser.go`                              | create | `ContextWithActingUser`, `ActingUserFromContext`                   |
-| `libs/pluginapi/database.go`                                | change | `WithTx` sets `app.user_id`                                        |
+| `libs/pluginapi/actinguser.go`                              | create | `ContextWithActingUser`, `ActingUserFromContext`, `ContextWithActingWorkspace`, `ActingWorkspaceFromContext` |
+| `libs/pluginapi/database.go`                                | change | `WithTx` sets `app.user_id` and `app.workspace_id`                 |
+| `apps/hub/internal/database/`                               | change | `WithScopeTx` replaces `WithUserTx`                                |
 | `libs/pluginapi/cron.go`                                    | change | `CronScope`, `CronJobMeta.Scope`                                   |
 | `libs/pluginapi/telegram/conversation/conversation.go`      | change | `Context` embeds `context.Context`. `Engine` takes a context.      |
 | `libs/testdb/`                                              | create | `testdb.Start`, a new Go module. `IDENT-DD-009`                    |
@@ -100,6 +107,8 @@ The signatures:
 // libs/pluginapi/actinguser.go
 func ContextWithActingUser(ctx context.Context, userID string) context.Context
 func ActingUserFromContext(ctx context.Context) string
+func ContextWithActingWorkspace(ctx context.Context, workspaceID string) context.Context
+func ActingWorkspaceFromContext(ctx context.Context) string
 
 // apps/hub/internal/repository/user.go
 type UserRepository interface {
@@ -123,7 +132,7 @@ record.
 | ------- | -------- | ------ | --------------------------------------- | --------------------------------------------------- |
 | `users` | `public` | shared | `20260912143000_table_users_create.up.sql` | `IDENT-FR-001`, `IDENT-FR-011`                   |
 
-`users` is shared because it holds the owners themselves. `OWN-004` names it.
+`users` is shared because it holds the members themselves. `OWN-004` names it.
 
 ```sql
 CREATE TABLE public.users
@@ -152,8 +161,8 @@ replaces. That feature extracts one identity from `telegram_id`, splits
 `display_name` into `first_name` and `last_name`, then drops all four. The retired
 identifiers of this file name the two decisions that went with them.
 
-The owner creates a record with one statement, and blocks a person with one
-statement. The block keeps every record of that person, which realizes
+An administrator creates a record with one statement, and blocks a person with
+one statement. The block removes no row of any workspace, which realizes
 `IDENT-FR-009` and `IDENT-FR-011`.
 
 ```sql
@@ -167,13 +176,15 @@ record needs an invitation. The block keeps its statement.
 **A scoped table.** This feature adds none, because `IDENT-FR-008` keeps every
 record that exists today shared, and the requirements put the plugins of today out
 of scope. A scoped table that a later feature adds takes the shape that `OWN-005`
-and `OWN-006` give. The scenarios build that table in the test schema `test_scope`
-and measure the policy against it.
+and `OWN-006` give: a table of a plugin carries `workspace_id`, and a table of the
+hub that holds a value of one person carries `user_id`. The scenarios build a
+table of each scope in the test schema `test_scope` and measure the policy against
+it.
 
 The column and the policy realize `IDENT-INV-001`, `IDENT-FR-003`, `IDENT-FR-004`,
-and `IDENT-FR-005`: `NOT NULL` with the reference gives each row exactly one owner,
-`USING` filters every read, and `WITH CHECK` refuses every write of a row that
-names another user.
+and `IDENT-FR-005`: `NOT NULL` with the reference gives each row exactly one
+workspace or one user, `USING` filters every read, and `WITH CHECK` refuses every
+write of a row that names another workspace or another user.
 
 **The connection role.** `IDENT-DD-006` gives it. The hub connects as a role that
 is not a superuser and does not hold `BYPASSRLS`, and that role owns the tables.
@@ -186,17 +197,20 @@ is not a superuser and does not hold `BYPASSRLS`, and that role owns the tables.
 | ----------------------------- | ----------------------------------------------------------------- | -------------- |
 | `ContextWithActingUser`       | New. The hub puts the acting user into the context.               | `IDENT-FR-003` |
 | `ActingUserFromContext`       | New. `PluginDB` reads it.                                          | `IDENT-FR-003` |
-| `PluginDB.WithTx`             | Sets `app.user_id` with the search path, in one statement.        | `IDENT-INV-002` |
-| `CronJobMeta.Scope`           | New. `CronScopeShared` or `CronScopePerUser`.                     | `IDENT-FR-007` |
+| `ContextWithActingWorkspace`  | New. The hub puts the acting workspace into the context.          | `IDENT-FR-003` |
+| `ActingWorkspaceFromContext`  | New. `PluginDB` reads it.                                          | `IDENT-FR-003` |
+| `PluginDB.WithTx`             | Sets `app.user_id` and `app.workspace_id` with the search path, in one statement. | `IDENT-INV-002` |
+| `CronJobMeta.Scope`           | New. `CronScopeShared`, `CronScopePerUser`, or `CronScopePerWorkspace`. | `IDENT-FR-007` |
 | `conversation.Context`        | Embeds `context.Context`, so a step reaches `WithTx`.             | `IDENT-FR-003` |
 | `conversation.Engine`         | `Start` and `HandleMessage` take a `context.Context`.             | `IDENT-FR-003` |
 
 **Cron jobs.** This feature adds no job. It adds the declaration that a job makes.
 
-| Scope              | Acts for                    | The scheduler                                                     | Realizes       |
-| ------------------ | --------------------------- | ------------------------------------------------------------------ | -------------- |
-| `CronScopeShared`  | Nobody. The default value.  | Runs `Run` one time with no acting user.                           | `IDENT-FR-007` |
-| `CronScopePerUser` | Each active user            | Reads `ListActive`, then runs `Run` one time for each user, with that user in the context. | `IDENT-FR-007` |
+| Scope                   | Runs in                                       | The scheduler                                                     | Realizes       |
+| ----------------------- | --------------------------------------------- | ------------------------------------------------------------------ | -------------- |
+| `CronScopeShared`       | No workspace. The default value.              | Runs `Run` one time with no acting workspace and no acting user.   | `IDENT-FR-007` |
+| `CronScopePerUser`      | Each active user. A job of the hub alone.     | Reads `ListActive`, then runs `Run` one time for each user, with that user in the context. | `IDENT-FR-007` |
+| `CronScopePerWorkspace` | Each workspace that enables the plugin        | Reads the enablements of the plugin, then runs `Run` one time for each workspace, with that workspace in the context and no acting user. | `IDENT-FR-007` |
 
 **Configuration.**
 
@@ -210,7 +224,8 @@ no second list. The key leaves `config.yaml` and `chart/values.yaml`.
 ### 4.4 Flow
 
 The HTTP request. The same order serves `/plugins`, `/auth/me`, and every route of
-a plugin.
+a plugin. A route under `/workspaces/{workspaceId}` adds the membership check of
+`OWN-003`, and `SEC-012` and `SEC-013` add their checks after it.
 
 ```mermaid
 sequenceDiagram
@@ -228,9 +243,13 @@ sequenceDiagram
     alt No row
         M-->>C: 401
     else One row
-        M->>H: The request, the acting user in the context
+        M->>R: The membership of the user in {workspaceId}
+        alt Not a member
+            M-->>C: 404
+        end
+        M->>H: The request, the acting user and the acting workspace in the context
         H->>D: WithTx(ctx, fn)
-        D->>P: set_config('search_path'), set_config('app.user_id')
+        D->>P: set_config('search_path'), set_config('app.user_id'), set_config('app.workspace_id')
         D->>P: The statements of the repository
         P-->>D: The rows that the policy allows
         H-->>C: 200
@@ -238,8 +257,9 @@ sequenceDiagram
 ```
 
 The Telegram update. `TG-006` keeps the Telegram identifier as the store key, and
-the acting user travels in the context beside it. `EXTID` gives the resolver that
-both flows call.
+the acting user travels in the context beside it. The acting workspace is the one
+that the chat selected, as `OWN-003` gives. `EXTID` gives the resolver that both
+flows call.
 
 ```mermaid
 sequenceDiagram
@@ -252,7 +272,7 @@ sequenceDiagram
     T->>M: The update
         M->>R: Resolve the Telegram identity of the sender
     Note over M: No row drops the update with one warning
-    M->>E: ctx.WithContext(acting user), Next
+    M->>E: ctx.WithContext(acting user, acting workspace), Next
     E->>S: OnMessage(conversation context, update)
     S->>S: WithTx(ctx, fn) reaches the scoped table
 ```
@@ -275,17 +295,21 @@ sequenceDiagram
         V-->>C: 401
     else One row
         V->>T: The call, the acting user in req.Extra.TokenInfo
+        T->>T: The workspace argument, checked against the membership
         T-->>C: 200, one JSON response
     end
 ```
 
-The cron run of a job that declares `CronScopePerUser`:
+A job that declares `CronScopePerUser` runs the same steps, with the active users
+from `ListActive` in place of the workspaces.
+
+The cron run of a job that declares `CronScopePerWorkspace`:
 
 1. The scheduler fires the entry. `JOB-006` skips the fire while the previous run
    is active.
-2. The worker calls `ListActive`.
-3. For each user, the worker builds a context with that user and calls `Run`.
-4. The worker logs an error and continues with the next user. See `JOB-007`.
+2. The worker reads the workspaces that enable the plugin of the job.
+3. For each workspace, the worker builds a context with that workspace and calls `Run`.
+4. The worker logs an error and continues with the next workspace. See `JOB-007`.
 
 ### 4.5 Errors
 
@@ -296,20 +320,24 @@ The cron run of a job that declares `CronScopePerUser`:
 | No identity names an active record                     | Status 401, one info line in the log              | `access-denied`                    |
 | The login finds no identity for the external account   | Redirect. `EXTID-FR-002` gives the distinct reason | `error=auth_failed`               |
 | The update sender holds no active record               | The update is dropped, one warning in the log     | `sender holds no active user record` |
-| A read names a row of another user                     | The row does not reach the handler. The handler answers as it answers a missing row: status 404. Realizes `IDENT-FR-006`. | `not-found` |
-| A write names a row of another user                    | The policy refuses it. `UPDATE` and `DELETE` change no row, and `INSERT` fails with `new row violates row-level security policy`. | The plugin answers 404, `not-found` |
-| A transaction carries no acting user                   | `app.user_id` is set to the empty string. Every scoped table returns no row, and a write fails. The work on a shared table continues. | None |
-| One user of a per-user cron run fails                  | One error line, and the run continues with the next user | `cron job execution failed`  |
+| The acting user is not a member of the workspace of the path | Status 404. Realizes `IDENT-FR-006`.        | `not-found`                        |
+| A read names a row of another workspace                | The row does not reach the handler. The handler answers as it answers a missing row: status 404. Realizes `IDENT-FR-006`. | `not-found` |
+| A write names a row of another workspace               | The policy refuses it. `UPDATE` and `DELETE` change no row, and `INSERT` fails with `new row violates row-level security policy`. | The plugin answers 404, `not-found` |
+| A transaction carries no acting workspace              | `app.workspace_id` is set to the empty string. Every table that a workspace scopes returns no row, and a write fails. The work on a shared table continues. | None |
+| A transaction carries no acting user                   | `app.user_id` is set to the empty string. Every table that a user scopes returns no row, and a write fails. | None |
+| One workspace or one user of a cron run fails          | One error line, and the run continues with the next one | `cron job execution failed` |
 
 ## 5. Design decisions
 
 ### `IDENT-DD-001`
 
 **Realizes:** `IDENT-FR-003`, `IDENT-INV-002`
-**Decision:** The acting user travels in the `context.Context`.
-`libs/pluginapi` exports `ContextWithActingUser` and `ActingUserFromContext`, the
-hub sets the value at each entry point, and `PluginDB.WithTx` reads it.
-**Rationale:** `OWN-007` makes `WithTx` the only place that sets `app.user_id`, and
+**Decision:** The acting user and the acting workspace travel in the
+`context.Context`. `libs/pluginapi` exports `ContextWithActingUser`,
+`ActingUserFromContext`, `ContextWithActingWorkspace`, and
+`ActingWorkspaceFromContext`. The hub sets each value at each entry point that
+carries it, and `PluginDB.WithTx` reads both.
+**Rationale:** `OWN-007` makes `WithTx` the plugin's only place that sets the scope, and
 `WithTx(ctx, fn)` already takes a context. A plugin passes the request context
 today, so 0 call sites change. A conversation step has no argument to hold a second
 value, so the context is the only place that reaches every entry point.
@@ -320,24 +348,29 @@ for the value, because `Step.OnMessage` takes no context today.
 ### `IDENT-DD-002`
 
 **Realizes:** `IDENT-INV-002`
-**Decision:** `WithTx` sets the search path and the acting user in one statement,
-with both values as bind parameters:
+**Decision:** `WithTx` sets the search path, the acting user, and the acting
+workspace in one statement, with every value as a bind parameter:
 
 ```go
 _, err = tx.ExecContext(
     ctx,
-    "SELECT set_config('search_path', $1, true), set_config('app.user_id', $2, true)",
+    "SELECT set_config('search_path', $1, true), set_config('app.user_id', $2, true), "+
+        "set_config('app.workspace_id', $3, true)",
     p.pluginID.ToSafeName("_")+", public",
     pluginapi.ActingUserFromContext(ctx),
+    pluginapi.ActingWorkspaceFromContext(ctx),
 )
 ```
 
-**Rationale:** One round trip instead of two, which serves `IDENT-NFR-002`. The
-third argument of `set_config` keeps both values inside the transaction, so the
+A value that the unit of work does not carry is the empty string, and the policy
+of its scope then shows no row.
+
+**Rationale:** One round trip instead of three, which serves `IDENT-NFR-002`. The
+third argument of `set_config` keeps every value inside the transaction, so the
 pool cannot carry a value to the next caller. The bind parameter also removes the
 `fmt.Sprintf` that builds the search path today.
 **Alternatives:** Two statements, one `SET LOCAL search_path` and one `set_config`.
-It costs a second round trip and gives nothing.
+It costs a round trip for each value and gives nothing.
 
 ### `IDENT-DD-003`
 
@@ -388,17 +421,20 @@ does nothing without a role of this shape.
 ### `IDENT-DD-007`
 
 **Realizes:** `IDENT-FR-007`
-**Decision:** `CronJobMeta` gains `Scope`, and the cron worker runs a job that
-declares `CronScopePerUser` one time for each active user, with that user in the
-context of the run.
-**Rationale:** `IDENT-FR-007` demands that a scheduled task state the user that it
-acts for. A declaration with no scheduler behind it leaves the requirement half
-built and moves the work into a later feature. The fan-out is about 40 lines in
-`apps/hub/internal/worker/cron.go`. No job declares `CronScopePerUser` today,
-because open question 1 keeps every current job on shared records.
-**Alternatives:** The declaration alone, with the worker refusing a per-user job.
-It is smaller, and `IDENT-FR-007` then waits for the feature that moves plugin
-configuration to the user.
+**Decision:** `CronJobMeta` gains `Scope`. The cron worker runs a job that
+declares `CronScopePerWorkspace` one time for each workspace that enables the
+plugin, with that workspace in the context of the run and no acting user. It runs
+a job that declares `CronScopePerUser` one time for each active user, with that
+user in the context of the run.
+**Rationale:** `IDENT-FR-007` and `OWN-009` demand that a scheduled task run for one
+workspace or one user at a time. A job of a plugin reaches a table of the
+workspace, and a job of the hub can reach a table that a user scopes. A declaration with no scheduler behind it leaves the
+requirement half built and moves the work into a later feature. The fan-out is
+about 40 lines in `apps/hub/internal/worker/cron.go`. No job declares
+`CronScopePerWorkspace` today, because open question 1 keeps every current job on
+shared records.
+**Alternatives:** One run for each member, for a job of a plugin. A record that a
+workspace shares is then fetched and written one time for each member.
 
 ### `IDENT-DD-008`
 
@@ -427,7 +463,7 @@ the test when `testing.Short()` reports true. The helper lives in the new module
 
 The handle that `Start` returns connects as a role of the shape that
 `IDENT-DD-006` gives, and that role owns every object the test creates. A handle
-that connects as a superuser reads every row of every user, so each isolation
+that connects as a superuser reads every row of every workspace, so each isolation
 scenario would pass and measure nothing.
 
 The caller passes the migration filesystem. `libs/testdb` imports no package from
@@ -444,7 +480,7 @@ for would then carry no automated proof.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `IDENT-SC-001` through `IDENT-SC-012`, without
+`spec-scenarios.md` holds `IDENT-SC-001` through `IDENT-SC-014`, without
 `IDENT-SC-011`, which the retired identifiers name.
 
 ## 7. Build plan
@@ -464,8 +500,13 @@ for would then carry no automated proof.
 | 11  | Remove `telegram.allowed_users` from the configuration struct, `config.yaml`, and `chart/values.yaml`.        | `IDENT-FR-002`, `SEC-004`         | [x]  |
 | 12  | Run `IDENT-SC-007`, `IDENT-SC-008`, and `IDENT-SC-012` against the running hub.                               | `IDENT-FR-009` to `IDENT-FR-011`, `IDENT-NFR-002` | [x]  |
 
+| 13  | Write the scenarios of `IDENT-SC-001` to `IDENT-SC-005` for a table that a workspace scopes, then add the acting workspace to `libs/pluginapi/actinguser.go` and to `PluginDB.WithTx`, and replace `WithUserTx` with `WithScopeTx`. | `IDENT-FR-003` to `IDENT-FR-006`, `IDENT-INV-001`, `IDENT-INV-002` | [ ]  |
+| 14  | Write `IDENT-SC-013`, then resolve the acting workspace at each entry point of `OWN-003`, with the membership check. It needs the tables of `OWN-010` and `OWN-011`. | `IDENT-FR-004` to `IDENT-FR-006`, `IDENT-NFR-002` | [ ]  |
+| 15  | Write `IDENT-SC-014`, then add `CronScopePerWorkspace` to `libs/pluginapi/cron.go` and to the cron worker. It needs the enablements of `SEC-012`. | `IDENT-FR-007` | [ ]  |
+
 Step 2 comes before every other database step, because a policy written under a
-superuser passes every test and isolates nothing.
+superuser passes every test and isolates nothing. Steps 14 and 15 wait for the
+feature that adds the workspaces, the members, and the enablements.
 
 ## 8. Out of scope for this specification
 
@@ -474,7 +515,8 @@ superuser passes every test and isolates nothing.
 | Scoping the tables of the plugins that exist today.                      | `IDENT-FR-008` keeps them shared. One feature for each plugin adds the column, the policy, and the migration.       |
 | The shape of `/auth/me`.                                                 | `EXTID-FR-009` names it now, and `EXTID` gives the shape.                                                            |
 | A command that creates or blocks a user record.                          | `EXTID-FR-010` adds it, because the first identity of a record needs an invitation.                                  |
-| A cron job that declares `CronScopePerUser`.                             | Open question 1 answers it: the feature that moves plugin configuration to the user declares the first one.         |
+| A cron job that declares `CronScopePerWorkspace`.                        | Open question 1 answers it: the feature that moves plugin configuration to the database declares the first one.     |
+| The workspaces, the members, the plugin allowlists, and the enablements. | `OWN-010`, `OWN-011`, `SEC-011`, and `SEC-012` give them. A feature of their own adds the tables and the routes.    |
 | Converting the identifier column of the existing plugin tables to `UUID`. | `ADR-0001` records the contradiction. One feature for each plugin converts it.                                      |
 
 ## Retired identifiers

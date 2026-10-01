@@ -4,7 +4,7 @@ title: The HTTP API
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-29
+updated: 2026-10-01
 scope: [apps/hub/internal/server/, apps/hub/internal/handler/, apps/hub/internal/middleware/]
 related: [ARC, ERR, PLG, RES, SEC, UI]
 ---
@@ -84,8 +84,10 @@ The hub fixes these routes:
 | `GET /auth/identities`                   | The external accounts of the acting user  | Authenticated          |
 | `DELETE /auth/identities/{provider}`     | The removal of one external account       | Authenticated          |
 | `/plugins`                               | The list of loaded plugins                | Authenticated          |
-| `/plugins/{id}/api/*`                    | The routes of a plugin                    | Authenticated          |
-| `/plugins/{id}/settings*`                | The settings of a user for a plugin       | Authenticated          |
+| `/workspaces*`                           | The workspaces, the members, and the enablements | Authenticated   |
+| `/workspaces/{workspaceId}/plugins/{id}/api/*` | The routes of a plugin              | Member, enabled        |
+| `/workspaces/{workspaceId}/plugins/{id}/settings*` | The settings of a plugin        | Member, enabled        |
+| `/users*`                                | The user records and the plugin allowlists | Administrator         |
 | `/plugins/{id}/ui/*`                     | The assets of a plugin                    | Public. See `SEC-006`. |
 | `/telegram/webhook`                      | The Telegram updates                      | Secret token, allowlist |
 | `/.well-known/oauth-protected-resource*` | The discovery of the IdP for an MCP client | Public                |
@@ -113,7 +115,7 @@ answers 401 for a dead cookie. A second sign out must answer as the first one di
 ## API-004
 
 A plugin declares a route as `pluginapi.Route` with a method, a pattern, and a handler.
-The hub mounts every route of a plugin under `/plugins/{id}/api`.
+The hub mounts every route of a plugin under `/workspaces/{workspaceId}/plugins/{id}/api`.
 A plugin does not choose its own prefix.
 
 **Why:** The prefix comes from the plugin identifier, so two plugins cannot collide.

@@ -4,7 +4,7 @@ openapi: 3.1.0
 x-maroid-document: hub
 
 info:
-  title: The settings of a user for a plugin
+  title: The settings of a plugin
   version: 0.1.0
 
 servers:
@@ -15,8 +15,9 @@ security:
   - sessionCookie: []
 
 paths:
-  /plugins/{pluginId}/settings/schema:
+  /workspaces/{workspaceId}/plugins/{pluginId}/settings/schema:
     parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
       - $ref: "#/components/parameters/PluginId"
     get:
       parameters:
@@ -24,33 +25,39 @@ paths:
       operationId: getSettingsSchema
       summary: Read the settings schema that the plugin declares.
       description: >
-        Realizes `PSET-FR-001` and `PSET-FR-002`.
-        The deck reads the kind of a field from the keywords of the property.
+        Realizes `PSET-FR-001`, `PSET-FR-002`, and `PSET-FR-021`.
+        The deck reads the kind of a field from the keywords of the property, and
+        its scope from `x-maroid-scope`. The permission is `settings.read`.
       responses:
         "200":
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
-          description: The schema. It holds no value of any user.
+          description: The schema. It holds no value of any workspace or user.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/SettingsSchema"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NoSchema"
 
-  /plugins/{pluginId}/settings:
+  /workspaces/{workspaceId}/plugins/{pluginId}/settings:
     parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
       - $ref: "#/components/parameters/PluginId"
     get:
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       operationId: getSettings
-      summary: Read the settings of the acting user for the plugin.
+      summary: Read the settings of the plugin in the acting workspace.
       description: >
         Realizes `PSET-FR-004`, `PSET-FR-005`, and `PSET-FR-010`.
+        The answer holds the fields of the acting workspace and the fields of the
+        acting user. The permission is `settings.read`.
         A secret field carries the mask and never its value.
         A field that the current schema does not declare is absent.
       responses:
@@ -61,15 +68,18 @@ paths:
             ETag:
               $ref: "../../api/components.yaml#/components/headers/ETag"
               description: >
-                The validator of the stored settings. It is absent while the user
-                stores none, and a save that then names no `If-Match` lands.
-          description: The stored settings of the acting user.
+                The validator of the stored settings. It is absent while the
+                workspace and the user store none, and a save that then names no
+                `If-Match` lands.
+          description: The stored settings of the acting workspace and the acting user.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/SettingsValues"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NoSchema"
     put:
@@ -77,14 +87,16 @@ paths:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
         - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
       operationId: saveSettings
-      summary: Store the settings of the acting user for the plugin.
+      summary: Store the settings of the plugin in the acting workspace.
       description: >
         Realizes `PSET-FR-003`, `PSET-FR-006`, `PSET-FR-007`, `PSET-FR-008`,
         `PSET-FR-009`, and `PSET-FR-011`.
         A secret field that the body does not name keeps its stored value, and so does
         one whose value is the mask.
         A field whose value is null or the empty string loses its stored value.
-        The session gives the owner of the row. See `OWN-005`.
+        A field of the workspace goes to the row of the acting workspace, and a
+        field of the user to the row of the acting user. The session gives each
+        scope column. See `OWN-005`. The permission is `settings.write`.
       requestBody:
         required: true
         content:
@@ -106,6 +118,8 @@ paths:
           $ref: "#/components/responses/MalformedRequest"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NoSchema"
         "412":
@@ -144,7 +158,9 @@ components:
         for the help, `default`, and `maxLength`. A secret property carries
         `"format": "password"` and `"writeOnly": true`. A choice property carries
         `enum`. The document sets `additionalProperties` to false, and its `required`
-        array names every required field. See `PSET-DD-001`.
+        array names every required field. A property of a field of the user carries
+        `"x-maroid-scope": "user"`, and a property with no such member belongs to the
+        workspace. See `PSET-DD-001` and `PSET-DD-012`.
       examples:
         - $schema: https://json-schema.org/draft/2020-12/schema
           type: object
@@ -162,6 +178,7 @@ components:
               format: password
               writeOnly: true
               maxLength: 4096
+              x-maroid-scope: user
             period:
               type: string
               title: Billing period
@@ -169,12 +186,13 @@ components:
               default: month
             notify:
               type: boolean
-              title: Send me the monthly bill
+              title: Send the monthly bill
 
     SettingsValues:
       type: object
       description: >
-        One member for each field that the current schema declares and the user stored.
+        One member for each field that the current schema declares and the acting
+        workspace or the acting user stored.
         A text or a choice field carries a string, a switch field carries a boolean, and
         a secret field carries the mask `******` when it holds a value, or the empty
         string when it holds none. The mask holds the same six characters for every
@@ -228,7 +246,9 @@ components:
       description: >
         The hub loaded no plugin with that identifier, or the plugin declares no
         settings schema. The two cases answer the same way.
-        The type is `/problems/hub/settings-absent`.
+        The type is `/problems/hub/settings-absent`. A workspace that the acting
+        user is not a member of, or one that does not enable the plugin, answers
+        `/problems/http/not-found`. `OWN-003`, `SEC-012`.
       content:
         application/problem+json:
           schema:
@@ -252,7 +272,8 @@ components:
         X-Flow-ID:
           $ref: "../../api/components.yaml#/components/headers/FlowId"
       description: >
-        The hub reached no key for the acting user, or the protection service refused
+        The hub reached no key for the acting workspace or the acting user, or the
+        protection service refused
         the call. The hub stored nothing.
         The type is `/problems/http/internal`.
       content:

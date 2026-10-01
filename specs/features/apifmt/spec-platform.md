@@ -4,7 +4,7 @@ title: The platform that carries the API
 type: spec
 status: approved
 created: 2026-09-24
-updated: 2026-09-28
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-25
 constrained_by: [RES, ERR, API, DAT, CFG, SEC, TG, LOG, BLD, OWN, CLI, GO, UI]
@@ -446,8 +446,8 @@ the limit. A stored row older than 24 hours expires, and an hourly job of the hu
 removes it. `Z-230` gives that lifetime and calls the store a key cache, not a
 request log. The read serves what the table holds, so the job is the one thing
 that expires a row. The job declares `CronScopePerUser`, which `OWN-009` gives for
-a scoped table, so the scheduler names the user and nothing bypasses row level
-security.
+a table that a user scopes, so the scheduler names the user and nothing bypasses
+row level security.
 
 `Z-230` also gives the schema of the header. `specs/api/components.yaml` gains
 it as a parameter, and each authenticated write references it.
@@ -462,8 +462,8 @@ answer, and a handler overrides it by setting the header itself.
 **Rationale:** `Z-227` makes that string the default and asks a service to attach
 it rather than assume a framework does. A route added later then carries it
 without anyone deciding, which is the safe direction: `OWN-006` scopes every
-collection to the acting user, so a shared cache holding one of those answers
-would hand one person the rows of another.
+collection to the acting workspace or the acting user, so a shared cache holding
+one of those answers would hand one person the rows of another workspace.
 
 **Alternatives:** Set the header in each handler. A handler added later sets
 nothing, and a proxy then decides.

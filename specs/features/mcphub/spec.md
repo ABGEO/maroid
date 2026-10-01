@@ -4,7 +4,7 @@ title: The hub as a Model Context Protocol server
 type: spec
 status: approved
 created: 2026-09-17
-updated: 2026-09-22
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-18
 constrained_by: [SEC, OWN, API, ERR, ARC, PLG, LOG, GO, PKG, CFG]
@@ -24,8 +24,9 @@ them.
 The hub becomes a Model Context Protocol server. It serves discovery metadata
 so an MCP client finds the IdP with no client secret, verifies the bearer
 token that the IdP mints for the "mcp" client against the key set of the IdP,
-resolves the acting user the same way an HTTP request does, and answers three
-tools: identity, plugin list, and connectivity.
+resolves the acting user the same way an HTTP request does, and answers four
+tools: identity, plugin list, connectivity, and workspace list. None of the four
+acts in a workspace.
 
 ## 2. Coverage
 
@@ -37,6 +38,7 @@ tools: identity, plugin list, and connectivity.
 | `MCPHUB-FR-004`   | Section 4.4, `MCPHUB-DD-006`, `MCPHUB-DD-008`, `MCPHUB-SC-004` |
 | `MCPHUB-FR-005`   | Section 4.3, `MCPHUB-DD-007`, `MCPHUB-DD-008`, `MCPHUB-SC-005` |
 | `MCPHUB-FR-006`   | Section 4.4, `MCPHUB-DD-008`, `MCPHUB-SC-006` |
+| `MCPHUB-FR-020`   | Section 4.3, `MCPHUB-DD-021`, `MCPHUB-SC-026` |
 | `MCPHUB-NFR-001`  | `MCPHUB-DD-001`, `MCPHUB-SC-007`          |
 | `MCPHUB-INV-001`  | `MCPHUB-DD-002`, `MCPHUB-SC-003`          |
 
@@ -53,7 +55,8 @@ tools: identity, plugin list, and connectivity.
 | `SEC-002` | Security     | `MCPHUB-DD-001` verifies against the key set of the IdP, with the audience of the "mcp" client. |
 | `SEC-004` | Security     | `MCPHUB-DD-002` rejects a call whose identity holds no active user record. |
 | `OWN-003` | Record ownership | `MCPHUB-DD-002` resolves the acting user through the same `auth.IdentityResolver` an HTTP request uses. |
-| `OWN-007` | Record ownership | A tool that reaches a scoped table sets `app.user_id` through `pluginapi.ContextWithActingUser` before its first statement. No tool of this iteration does. |
+| `OWN-007` | Record ownership | A tool that acts in a workspace receives the acting user and the acting workspace in its context, and `PluginDB.WithTx` sets both. `spec-plugin-tools.md` gives it. No tool of this file acts in a workspace. |
+| `SEC-013` | Security     | No tool of this file acts in a workspace, so each declares no permission. |
 | `LOG-003` | Logging      | The logging middleware of the MCP server adds `component=middleware`, `middleware=mcp`, both already in use. |
 | `PLG-006` | Plugin model | `MCPHUB-DD-008` builds the registry. `spec-plugin-tools.md` adds the interface and the registrar. |
 | `PKG-001` | Package layout | `mcpserver/tools/` holds one file for each tool, the layout the table already gives `telegram/command/`. |
@@ -77,6 +80,7 @@ tools: identity, plugin list, and connectivity.
 | `apps/hub/internal/mcpserver/tools/whoami.go` | Create | `NewWhoAmI`, the identity tool.                                        |
 | `apps/hub/internal/mcpserver/tools/plugins.go` | Create | `NewListPlugins`, the plugin list tool.                               |
 | `apps/hub/internal/mcpserver/tools/ping.go`   | Create | `NewPing`, the connectivity tool.                                      |
+| `apps/hub/internal/mcpserver/tools/workspaces.go` | Create | `NewListWorkspaces`, the workspace list tool. `MCPHUB-DD-021`.     |
 | `apps/hub/internal/handler/mcp.go`            | Create | `MCP`, `NewMCP`. Takes `cfg`, `logger`, `oidcSvc`, a `resolver auth.IdentityResolver`, and a `toolRegistry *registry.MCPToolRegistry`. `StreamableHTTPOptions` sets `Stateless`, `JSONResponse`, `Logger`. |
 | `apps/hub/internal/depresolver/mcp.go`        | Create | `MCPToolRegistry()`. Builds the registry and registers each tool of `mcpserver/tools`, one constructor at a time. |
 | `apps/hub/internal/depresolver/server.go`     | Change | `buildMCPHandler` resolves `IdentityResolver` and `MCPToolRegistry()`, and passes both to `handler.NewMCP`. |
@@ -87,7 +91,8 @@ tools: identity, plugin list, and connectivity.
 that lists every tool. `apps/hub/internal/depresolver/telegram.go` calls
 `tgcommand.NewHelp(...)` and `tgcommand.NewStart(...)` by name, one at a
 time; `depresolver/mcp.go` calls `tools.NewWhoAmI()`,
-`tools.NewListPlugins(...)`, and `tools.NewPing()` the same way.
+`tools.NewListPlugins(...)`, `tools.NewPing()`, and `tools.NewListWorkspaces(...)`
+the same way.
 
 `registry.PluginEntry` replaces `handler.pluginEntry`. The two handlers that
 report a loaded plugin, `GET /plugins` and the plugin list tool, read one
@@ -190,10 +195,20 @@ func NewListPlugins(
 func NewPing() registry.MCPTool
 ```
 
+```go
+// apps/hub/internal/mcpserver/tools/workspaces.go
+
+// NewListWorkspaces builds the workspace list tool: each workspace of the acting
+// user, with the workspace role in it.
+func NewListWorkspaces(members repository.WorkspaceMemberRepository) registry.MCPTool
+```
+
 ### 4.2 Data model
 
 This feature adds no table. It reads `public.identities` and `public.users`
-through the `auth.IdentityResolver` that `EXTID-DD-012` already built. `DAT`
+through the `auth.IdentityResolver` that `EXTID-DD-012` already built, and
+`public.workspace_members` through the repository that the feature of `OWN-011`
+builds. `DAT`
 and `OWN-004` through `OWN-008` govern no new surface.
 
 ### 4.3 Declarations
@@ -206,6 +221,15 @@ and `OWN-004` through `OWN-008` govern no new surface.
 | `GET`     | `/.well-known/oauth-protected-resource/mcp`   | Public                 | `MCPHUB-FR-001`                  |
 | `POST`    | `/mcp`                                        | Bearer, MCP audience   | `MCPHUB-FR-002` through `MCPHUB-FR-006` |
 | `GET`, `DELETE` | `/mcp`                                   | Bearer, MCP audience   | Rejected. See section 4.5.       |
+
+**MCP tools.** `SPC-003` gives the columns.
+
+| Tool              | Declared by | Annotations          | Permission | Realizes        |
+| ----------------- | ----------- | -------------------- | ---------- | --------------- |
+| `whoami`          | The hub     | `ReadOnlyHint: true` | None       | `MCPHUB-FR-004` |
+| `list_plugins`    | The hub     | `ReadOnlyHint: true` | None       | `MCPHUB-FR-005` |
+| `ping`            | The hub     | `ReadOnlyHint: true` | None       | `MCPHUB-FR-006` |
+| `list_workspaces` | The hub     | `ReadOnlyHint: true` | None       | `MCPHUB-FR-020` |
 
 ### 4.4 Flow
 
@@ -443,6 +467,22 @@ and every line of it moves or deletes the day a plugin's tool needs the same
 install path, because the server constructor would then hold both a fixed
 list and a registry read.
 
+### `MCPHUB-DD-021`
+
+**Realizes:** `MCPHUB-FR-020`
+
+**Decision:** The hub declares `list_workspaces`. It acts in no workspace. It
+reads the memberships of the acting user and answers, for each one, the
+identifier, the name, and the workspace role.
+
+**Rationale:** Every tool that acts in a workspace takes the identifier of that
+workspace, and `spec-plugin-tools.md` gives the argument. An agent learns the
+identifiers here. The role tells the agent which call `MCPHUB-FR-023` refuses
+before it makes one.
+
+**Alternatives:** The workspaces in the answer of `whoami`. One tool fewer, and
+the identity tool then reads a table that identity does not need.
+
 ## 6. Scenarios
 
 ### `MCPHUB-SC-001` (verifies `MCPHUB-FR-001`)
@@ -508,6 +548,16 @@ the current sign in.
 calls to the JWKS endpoint of the IdP during the run is zero or one, only for
 a key that was not yet in memory.
 
+### `MCPHUB-SC-026` (verifies `MCPHUB-FR-020`)
+
+**Layer:** integration
+
+**Given** the acting user is the manager of one workspace and a viewer in a
+second, and a third workspace exists that the acting user is no member of.
+**When** an MCP client calls `list_workspaces`.
+**Then** the result names the two workspaces, each with its role, and does not
+name the third.
+
 ## 7. Build plan
 
 | #   | Step                                                                 | Realizes                         | Done |
@@ -524,6 +574,7 @@ a key that was not yet in memory.
 | 10  | Create `depresolver.MCPToolRegistry()`. Change `depresolver.buildMCPHandler` to resolve `IdentityResolver` and `MCPToolRegistry()`, and pass both to `handler.NewMCP`. | `MCPHUB-DD-002`, `MCPHUB-DD-008` | [x]  |
 | 11  | Write `api.yaml`.                                                    | `SPC-002`                        | [x]  |
 | 12  | Add the MCP flow to `ident/spec.md` section 4.4, and raise the entry point counts in `ident/spec.md` and `extid/spec.md`. | `ADR-0003` | [x]  |
+| 13  | Write `MCPHUB-SC-026`, then create `tools/workspaces.go` and register it. It needs the table of `OWN-011`. | `MCPHUB-FR-020`, `MCPHUB-DD-021` | [ ]  |
 
 ## 8. Out of scope for this specification
 

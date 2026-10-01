@@ -4,7 +4,7 @@ title: External identities and the delegated sign in
 type: spec
 status: approved
 created: 2026-09-15
-updated: 2026-09-22
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-16
 constrained_by: [OWN, SEC, API, ERR, TG, CLI, DAT, REP, PKG, CFG, GO, TST, LOG]
@@ -34,6 +34,7 @@ identity for the HTTP path and for the Telegram path.
 | `EXTID-FR-008`  | Section 4.2, `EXTID-DD-003`, `EXTID-SC-010`, `EXTID-SC-022`     |
 | `EXTID-FR-009`  | Section 4.3, `EXTID-DD-009`, `EXTID-DD-016`, `EXTID-SC-011`     |
 | `EXTID-FR-010`  | Section 4.3, `EXTID-DD-010`, `EXTID-DD-015`, `EXTID-SC-012`     |
+| `EXTID-FR-018`  | Section 4.3, `EXTID-DD-010`, `EXTID-SC-025`                     |
 | `EXTID-FR-011`  | Section 4.3, `EXTID-SC-013`                                     |
 | `EXTID-FR-012`  | Section 4.4, `EXTID-DD-008`, `EXTID-DD-015`, `EXTID-SC-014`     |
 | `EXTID-FR-013`  | Section 4.2, `EXTID-DD-007`, `EXTID-DD-008`, `EXTID-SC-015`     |
@@ -56,7 +57,8 @@ identity for the HTTP path and for the Telegram path.
 | `SEC-004` | Security         | Section 4.4 reads the user record on each request. The status decides.                       |
 | `SEC-005` | Security         | `ADR-0004` changed the rule. The cookie and the token it holds moved to `WEBSESS`.           |
 | `OWN-001` | Record ownership | Section 4.2 gives `public.identities`, the natural key.                                      |
-| `OWN-002` | Record ownership | `EXTID-DD-010`. The command of the owner creates the record. No sign in creates one.         |
+| `OWN-002` | Record ownership | `EXTID-DD-010`. The command of an administrator creates the record. No sign in creates one. |
+| `OWN-010` | Record ownership | `EXTID-DD-010`. The command creates the first workspace of the record in the same transaction. |
 | `OWN-003` | Record ownership | `EXTID-DD-012`. One resolver serves the HTTP entry point, the Telegram entry point, and the MCP tool call. |
 | `OWN-004` | Record ownership | Section 4.2 states the reason that each of the three tables is shared.                       |
 | `API-003` | HTTP API         | Section 4.3 uses the prefixes that the rule fixes, and adds none.                            |
@@ -199,7 +201,7 @@ ALTER TABLE public.users
 The split takes the first space as the delimiter. The first word becomes
 `first_name`, and the rest becomes `last_name`. `Temuri Takalandze Jr` gives
 `Temuri` and `Takalandze Jr`. A value with no space gives a first name and a null
-last name. The owner corrects any row that the split gets wrong, because
+last name. An administrator corrects any row that the split gets wrong, because
 `EXTID-FR-015` makes the two columns theirs.
 
 **`public.identities`.**
@@ -328,7 +330,7 @@ it builds today, and this feature adds no page to it. `/auth/invite` reads `toke
 
 | Command              | Flags                                             | Does                                                                  | Realizes                       |
 | -------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------- |
-| `maroid user invite` | `--first-name`, `--last-name`, `--user`, `--ttl` | Creates a user record and an invitation for it, then prints the address of the deck. | `EXTID-FR-010`, `EXTID-FR-011` |
+| `maroid user invite` | `--first-name`, `--last-name`, `--user`, `--ttl` | Creates a user record, its first workspace, and an invitation for it, then prints the address of the deck. | `EXTID-FR-010`, `EXTID-FR-011`, `EXTID-FR-018` |
 
 `--user` names a record that exists, and it excludes `--first-name` and
 `--last-name`. `--ttl` defaults to the configured lifetime. `EXTID-DD-010` gives the
@@ -576,24 +578,28 @@ the Dex API. No such endpoint exists.
 
 ### `EXTID-DD-010`
 
-**Realizes:** `EXTID-FR-010`, `EXTID-FR-011`
-**Decision:** `maroid user invite` writes the user record and the invitation in one
-transaction, then prints the address. With `--user` it writes the invitation only.
+**Realizes:** `EXTID-FR-010`, `EXTID-FR-011`, `EXTID-FR-018`
+**Decision:** `maroid user invite` writes the user record, its first workspace, the
+membership of the record as the manager of that workspace, and the invitation in one
+transaction, then prints the address. The workspace takes the first name of the
+record as its name. With `--user` it writes the invitation only.
 **Rationale:** `EXTID-FR-010` asks for one action, and two statements by hand are two
-actions. The owner cannot write the first identity, because the identifier of an
-external account exists only after that person signs in one time. `OWN-002` still
-holds: the command is the owner, and no interaction of a person creates a record.
+actions. An administrator cannot write the first identity, because the identifier of
+an external account exists only after that person signs in one time. `OWN-002` still
+holds: the command acts for an administrator, and no interaction of a person creates
+a record. `OWN-010` puts the first workspace in the same transaction, so no record
+exists without one.
 A record whose invitation expires holds no identity and reaches nobody, so a partial
 result is safe.
 **Alternatives:** A statement against the database. It cannot generate the token or
-print the address. A route that the deck calls. `EXTID-FR-010` names the owner, and
-no requirement asks for a screen.
+print the address. A route that the deck calls. `EXTID-FR-010` names an
+administrator, and no requirement asks for a screen.
 
 ### `EXTID-DD-011`
 
 **Realizes:** `EXTID-FR-015`, `EXTID-FR-016`
-**Decision:** `public.users` holds `first_name` and `last_name`, and only the owner
-writes them. `public.identities` holds `username`, `display_name`, and `picture_url`,
+**Decision:** `public.users` holds `first_name` and `last_name`, and only an
+administrator writes them. `public.identities` holds `username`, `display_name`, and `picture_url`,
 and each sign in with that provider writes them.
 **Rationale:** Two providers give two names and two pictures for one person, and no
 rule picks a winner. The user record answers "who is this person" once, and the
@@ -601,7 +607,7 @@ identity answers "which account is this" for each provider. `EXTID-FR-015` then
 holds by construction: the sign in touches no column of `public.users`.
 **Alternatives:** One profile on the user record, written by the last sign in. The
 name of a person then changes when they use a different provider. A chosen provider
-on the user record. It adds a column and a rule, and the owner can type a name.
+on the user record. It adds a column and a rule, and an administrator can type a name.
 
 ### `EXTID-DD-012`
 
@@ -704,7 +710,7 @@ needs a rule that no statement asks for.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `EXTID-SC-001` through `EXTID-SC-024`.
+`spec-scenarios.md` holds `EXTID-SC-001` through `EXTID-SC-025`.
 
 ## 7. Build plan
 
@@ -724,6 +730,7 @@ needs a rule that no statement asks for.
 | 12  | Remove the `JWT` block from the configuration. Set the token lifetime of Dex to seven days.       | `EXTID-NFR-002`                  | [ ]  |
 | 13  | Build the invite page of the deck. Point the command at it, and drop the target flag.             | `EXTID-DD-015`                   | [x]  |
 | 14  | Run `EXTID-SC-019` and `EXTID-SC-021` against the running hub.                                    | `EXTID-FR-017`, `EXTID-NFR-002`  | [ ]  |
+| 15  | Write `EXTID-SC-025`, then the first workspace in `maroid user invite`. It needs the tables of `OWN-010` and `OWN-011`. | `EXTID-FR-018`                   | [ ]  |
 
 Step 5 changes no behavior that a person sees, because the hub still reads the same
 records. A failure in step 6 then names the flow row and nothing else.
@@ -737,7 +744,7 @@ records. A failure in step 6 then names the flow row and nothing else.
 | The renewal of a session.                                       | Open question 1 answers it. The lifetime that `EXTID-NFR-002` gives must hurt first.                        |
 | `Host.UserCapabilities` and the provider that carries a notification. | The requirements put both out of scope. It is a change to `libs/pluginapi`, so it takes its own feature. |
 | The scopes of a token and the MCP surface.                      | `ADR-0002` puts them after this feature. An agent that reaches the hub must ask for `federated:id` as well, or its token resolves to nobody. |
-| A merge of two user records.                                    | The requirements put it out of scope. It reassigns every scoped row of two records.                         |
+| A merge of two user records.                                    | The requirements put it out of scope. It reassigns every membership and every row that a user scopes, of two records. |
 | The removal of an expired flow row and an expired invitation.   | Neither row grants anything after its expiry. A cron job arrives when the count of the rows matters.        |
 
 ## Retired identifiers

@@ -4,7 +4,7 @@ title: The user record and the ownership of a row
 type: requirements
 status: approved
 created: 2026-09-11
-updated: 2026-09-15
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-12
 constrained_by: [OWN, DAT, SEC, TG, JOB, REP, PLG]
@@ -24,15 +24,17 @@ the first person. Today each person needs a separate instance.
 ## 2. Users
 
 - The owner: a second person uses the instance and reads none of the owner's data.
-- A household member: their own bills, plants, and contributions, and nobody else's.
+- A household member: the bills, plants, and contributions of the workspaces they belong to,
+  and of no other workspace.
 - A plugin author: isolation that they get without writing it into each query.
 
 ## 3. Out of scope
 
 - Moving a per-user value of a plugin into the database. See `CFG-007`.
-- Sharing one record between two people, or a role beyond the ownership of a record.
+- The creation of a workspace, its members, and their roles. `OWN-010`, `OWN-011`, and
+  `SEC-013` give them.
 - Scoping the records of the plugins that exist today. They stay shared for now.
-- Self-registration. The owner creates each user record. See `SEC-004`.
+- Self-registration. An administrator creates each user record. See `SEC-004`.
 - Per-user routing of a notification, and any tool that creates a user record.
 
 ## 4. Functional requirements
@@ -41,7 +43,7 @@ the first person. Today each person needs a separate instance.
 
 Maroid must hold one permanent record for each user that it serves.
 
-**Why:** A scoped record needs an owner that outlives a change of a Telegram profile.
+**Why:** A workspace needs members that outlive a change of a Telegram profile.
 
 ### `IDENT-FR-002`
 
@@ -52,33 +54,37 @@ in the web shell and in the bot.
 
 ### `IDENT-FR-003`
 
-A scoped record that a user creates must belong to that user, and to nobody else.
+A scoped record that a user creates must belong to the acting workspace, and to no other
+workspace.
 
 
 ### `IDENT-FR-004`
 
-A user must read only the records that belong to them, and the shared records.
+A user must read only the records of the acting workspace, and the shared records.
 
 **Examples:**
 
-- Normal case: two people each hold three plants, and each of them lists three plants.
-- Unwanted case: a list shows six plants to both people, or hides the shared list of
-  transaction types from one of them.
+- Normal case: two workspaces each hold three plants, and a member of each lists three plants.
+- Normal case: two people are members of one workspace, and both list the same three plants.
+- Unwanted case: a list shows the six plants of both workspaces, or hides the shared list of
+  transaction types from one member.
 
 ### `IDENT-FR-005`
 
-A user must not write a record that belongs to another user. A delete is a write.
+A user must not write a record that belongs to a workspace other than the acting workspace.
+A delete is a write.
 
 ### `IDENT-FR-006`
 
-Maroid must answer a request for the record of another user exactly as it answers a
+Maroid must answer a request for the record of another workspace exactly as it answers a
 request for a record that does not exist.
 
 **Why:** A different answer tells the requester that the record exists.
 
 ### `IDENT-FR-007`
 
-A scheduled task that creates a scoped record must state the user that it acts for.
+A scheduled task that creates a scoped record must run for one workspace or for one user at
+a time.
 
 ### `IDENT-FR-008`
 
@@ -87,49 +93,52 @@ every user.
 
 ### `IDENT-FR-009`
 
-Maroid must keep the records of a user that the owner blocked.
+Maroid must keep the records of a workspace when an administrator blocks one of its members.
 
 **Why:** Removing a person from the household must not delete the history of the household.
 
 ### `IDENT-FR-010`
 
-Maroid must serve a person whose record the owner created outside the product, at their
-next interaction and with no restart.
+Maroid must serve a person whose record an administrator created outside the product, at
+their next interaction and with no restart.
 
 **Why:** The record appears with no interaction, so no value that the hub holds in
 memory can decide the access.
 
 ### `IDENT-FR-011`
 
-The owner must block the access of a user without deleting their records.
+An administrator must block the access of a user without deleting any record.
 
 ## 5. Non-functional requirements
 
 ### `IDENT-NFR-001`
 
-Read every scoped record as user A, while user B holds scoped records. The count of the
-records of user B in the result must be zero.
+Read every scoped record as a member of workspace A, while workspace B holds scoped records.
+The count of the records of workspace B in the result must be zero.
 
 ### `IDENT-NFR-002`
 
-Resolving the acting user must add no more than 10 milliseconds to an HTTP request, at
-the 95th percentile, measured from its arrival to its first statement at the database.
+Resolving the acting user and the acting workspace must add no more than 10 milliseconds to
+an HTTP request, at the 95th percentile, measured from its arrival to its first statement at
+the database.
 
 ## 6. Invariants
 
 ### `IDENT-INV-001`
 
-A record names exactly one user, or it is a shared record.
+A record names exactly one workspace or exactly one user, or it is a shared record.
 
 ### `IDENT-INV-002`
 
-No unit of work reaches a scoped record without an acting user.
+No unit of work reaches a scoped record without the acting workspace or the acting user that
+its scope names.
 
 ## 7. Constraints from the guidelines
 
 | Rule      | Guideline        | Effect on this feature                                              |
 | --------- | ---------------- | ------------------------------------------------------------------- |
-| `OWN-002` | Record ownership | The owner creates the record. It is active or blocked.              |
+| `OWN-002` | Record ownership | An administrator creates the record. It is active or blocked.       |
+| `OWN-003` | Record ownership | Each unit of work carries an acting workspace, an acting user, or both. |
 | `OWN-006` | Record ownership | The isolation runs in the database and fails closed.                |
 | `SEC-003` | Security         | The token names an identity. The hub maps it to the record.         |
 | `SEC-004` | Security         | The user record is the allowlist. The configuration loses its list. |
@@ -138,8 +147,8 @@ No unit of work reaches a scoped record without an acting user.
 
 | #   | Question                                                                                                 | Owner  | Answer                                                                                                                                                      |
 | --- | -------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Which user owns the rows that the utility jobs collect, given that the credentials are global?           | Temuri | Nobody. Those records stay shared. A later feature moves the configuration of a plugin to the user, and then a job runs once for each user that enabled it. |
-| 2   | Does the owner create a user record with a command of the hub, or with a statement against the database? | Temuri | With a statement against the database. `EXTID-FR-010` adds the command later, because the first identity needs an invitation.                               |
+| 1   | Which user owns the rows that the utility jobs collect, given that the credentials are global?           | Temuri | Nobody. Those records stay shared. A later feature moves the configuration of a plugin to the database, and then a job runs once for each workspace that enables the plugin. `ADR-0008`. |
+| 2   | Does an administrator create a user record with a command of the hub, or with a statement against the database? | Temuri | With a statement against the database. `EXTID-FR-010` adds the command later, because the first identity needs an invitation.                               |
 
 ## Retired identifiers
 

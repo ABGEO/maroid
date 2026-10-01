@@ -4,7 +4,7 @@ title: Authentication and authorization
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-24
+updated: 2026-10-01
 scope: [apps/hub/internal/auth/, apps/hub/internal/middleware/]
 related: [ARC, API, TG, CFG, OWN, RES]
 ---
@@ -17,8 +17,8 @@ Identity comes from Dex. Dex is the authorization server, and the hub is its
 consumer. Telegram is one connector of Dex, and it is not the only one.
 Maroid holds no password.
 
-Maroid holds a local user record, and that record owns the data. `OWN-001` gives it.
-The record carries no credential.
+Maroid holds a local user record. The record carries no credential. A workspace
+owns the data, and `OWN-010` gives it.
 
 **Why:** One person holds several external accounts. A further connector costs one
 entry in the configuration of Dex, and no flow inside the hub.
@@ -147,6 +147,47 @@ secret.
 
 **Why:** An address is a weaker claim than a secret. A service that publishes the
 ranges it sends from lets any caller inside those ranges past an allowlist.
+
+## SEC-011
+
+A user record is an administrator or not. An administrator creates and blocks a
+user record, and sets the plugin allowlist of a user. An administrator manages every
+workspace of the instance through the management API: its members and its
+enablements. The plugin allowlist does not limit an administrator. An administrator
+reads the rows of a workspace only as a member of it. The CLI makes the first
+administrator.
+
+**Why:** The person who runs the instance is not entitled to the pension of each
+person on it.
+
+## SEC-012
+
+A plugin serves a workspace only where it is enabled. A plugin starts disabled
+in every workspace. A manager enables a plugin that the plugin allowlist of the
+manager holds. `SEC-011` gives the access of an administrator. A member uses every plugin
+that the workspace enables, and the hub reads no plugin allowlist of the member.
+
+A plugin that is disabled in the acting workspace is absent from it. Its routes
+answer `not-found`, a call to its MCP tools in that workspace answers `not-found`,
+its Telegram commands are absent from the menu of the chat, and its jobs skip the
+workspace. The list of MCP tools names no workspace, so it stays one list for every
+person.
+
+## SEC-013
+
+A plugin declares each permission that it checks, and names the lowest role
+that holds it. The hub declares its own permissions the same way. The hub
+prefixes a permission of a plugin with the plugin identifier.
+
+Every route, MCP tool, and Telegram command that acts in a workspace declares
+one permission. The hub checks the role of the acting user in the acting
+workspace against it before it calls the handler. A route of the hub that acts
+in no workspace declares none. A member whose role does not hold the permission
+gets `permission-denied`. A plugin whose entry declares no permission, or a
+permission that the plugin does not declare, fails to load.
+
+**Why:** A check that the hub runs is a check that no handler forgets. A load
+that fails names the gap before any person meets it.
 
 ## Retired identifiers
 

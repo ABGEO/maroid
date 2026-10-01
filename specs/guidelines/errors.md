@@ -4,7 +4,7 @@ title: Errors
 type: guideline
 status: active
 created: 2026-09-21
-updated: 2026-09-29
+updated: 2026-10-01
 scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, libs/rest/, libs/api-client/, plugins/]
 related: [API, DAT, LOG, OWN, PLG, RES, UI]
 ---
@@ -94,6 +94,7 @@ the type of a stale cursor lives in the library.
 | `member-unknown`         | 400    | The body carries a member that the schema does not declare. |
 | `cursor-stale`           | 400    | The cursor does not match this request.             |
 | `access-denied`          | 401    | The request carries no active user record.          |
+| `permission-denied`      | 403    | The workspace role does not hold the permission.    |
 | `not-found`              | 404    | The resource does not exist.                        |
 | `method-not-allowed`     | 405    | The method does not reach this resource.            |
 | `request-in-progress`    | 409    | An earlier request under this key is still running. |
@@ -105,8 +106,13 @@ the type of a stale cursor lives in the library.
 The title of `access-denied` says how Maroid reads the condition. The condition is
 the one that HTTP gives every 401, so the type is of the first kind.
 
-A record that is absent and one that belongs to another user both answer
-`not-found`, because the policy of `OWN-006` hides the second from the query.
+A record that is absent and one that belongs to another workspace both answer
+`not-found`, because the policy of `OWN-006` hides the second from the query. A
+workspace that the acting user is not a member of answers `not-found` too, and
+`OWN-003` gives the check. A plugin that is disabled in the acting workspace answers
+`not-found`, and `SEC-012` gives it. A member whose workspace role does not hold
+the permission of `SEC-013` answers `permission-denied`, because the member already
+knows that the workspace exists.
 
 `cursor-stale` and `request-invalid` share a status. 409 names a conflict with
 the state of a target resource, and `Z-150` applies it to a method that changes

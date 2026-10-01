@@ -4,7 +4,7 @@ title: The settings tools of the hub
 type: spec
 status: approved
 created: 2026-09-21
-updated: 2026-09-22
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-21
 constrained_by: [SEC, OWN, LOG, ARC, PLG, GO, TST]
@@ -22,8 +22,10 @@ settings of a plugin. `SPC-001` divides them.
 
 The hub declares two more tools of its own: `get_plugin_settings` reports the
 settings schema of one plugin, the key of each secret field, and the stored
-values of the acting user; `save_plugin_settings` stores the values that the
-call names and answers with the row that the save left. Both call the
+values of the acting workspace and the acting user; `save_plugin_settings`
+stores the values that the call names and answers with the rows that the save
+left. Both act in a workspace, so each takes the `workspace` argument that
+`MCPHUB-DD-022` adds. Both call the
 `settings.Service` that the deck already calls, so the mask, the merge, and the
 validation of `PSET` hold with no second copy. The save refuses a call that
 changes a secret field, and it names the page of the deck that fills one.
@@ -44,9 +46,10 @@ changes a secret field, and it names the page of the deck that fills one.
 | --------- | ---------------- | -------------------------------------------------------------------------------------- |
 | `ARC-008` | Architecture     | Both tools take a plugin identifier from the call and read `settings.Service`. Neither names a plugin. |
 | `PLG-011` | Plugin model     | `MCPToolRegistry.Register` refuses a second tool under one name. The two names are bare, and a tool of a plugin carries its plugin identifier, so neither can collide. |
-| `OWN-006` | Record ownership | `database.WithUserTx` sets `app.user_id` before the first statement of a read and of a save. The policy filters the row. |
-| `OWN-007` | Record ownership | `actingUserMiddleware` already puts the acting user into the context of every tool call. Both tools pass that context to the service. |
-| `OWN-005` | Record ownership | `repository.PluginSettings` names no user in a statement. The policy sets the owner. |
+| `OWN-006` | Record ownership | `database.WithScopeTx` sets `app.user_id` and `app.workspace_id` before the first statement of a read and of a save. The policy filters each row. |
+| `OWN-007` | Record ownership | `actingUserMiddleware` puts the acting user, and `workspaceTool` the acting workspace, into the context of the call. Both tools pass that context to the service. |
+| `OWN-005` | Record ownership | `repository.PluginSettings` names no workspace and no user in a statement. The policy sets each scope column. |
+| `SEC-013` | Security         | `get_plugin_settings` declares `settings.read`, and `save_plugin_settings` declares `settings.write`. `PSET-DD-013` gives both. |
 | `LOG-008` | Logging          | `MCPHUB-DD-020` maps every failure to a text that names a field and never a value. |
 | `GO-005`  | Go style         | The design adds no sentinel error. It reuses `errs.ErrSettingsSchemaNotFound` and `settings.InvalidError`. |
 | `TST-004` | Testing          | Section 6 gives the layer of each scenario.                                          |
@@ -79,7 +82,8 @@ type settingsAccess struct {
     settingsSvc settings.Service
 }
 
-// stored reads the key of each secret field and the values of the acting user.
+// stored reads the key of each secret field and the values of the acting
+// workspace and the acting user.
 func (a *settingsAccess) stored(
     ctx context.Context,
     pluginID string,
@@ -154,15 +158,15 @@ each input are required.
 
 ### 4.2 Data model
 
-This feature adds no table. It reads and writes `public.plugin_settings` through
-the service that `PSET` built. `DAT` and `OWN-004` govern no new surface.
+This feature adds no table. It reads and writes `public.plugin_workspace_settings`
+and `public.plugin_user_settings` through the service that `PSET` built. `DAT` and `OWN-004` govern no new surface.
 
 ### 4.3 Declarations
 
-| Tool                   | Declared by | Annotations                          | Realizes                                          |
-| ---------------------- | ----------- | ------------------------------------ | ------------------------------------------------- |
-| `get_plugin_settings`  | The hub     | `ReadOnlyHint: true`                 | `MCPHUB-FR-015`, `MCPHUB-FR-016`                  |
-| `save_plugin_settings` | The hub     | `IdempotentHint: true`               | `MCPHUB-FR-017`, `MCPHUB-FR-018`, `MCPHUB-FR-019` |
+| Tool                   | Declared by | Annotations                          | Permission       | Realizes                                          |
+| ---------------------- | ----------- | ------------------------------------ | ---------------- | ------------------------------------------------- |
+| `get_plugin_settings`  | The hub     | `ReadOnlyHint: true`                 | `settings.read`  | `MCPHUB-FR-015`, `MCPHUB-FR-016`, `MCPHUB-FR-021` |
+| `save_plugin_settings` | The hub     | `IdempotentHint: true`               | `settings.write` | `MCPHUB-FR-017`, `MCPHUB-FR-018`, `MCPHUB-FR-019`, `MCPHUB-FR-021` |
 
 `save_plugin_settings` leaves `DestructiveHint` at the default that the protocol
 gives it, which is true. A save overwrites a value that a person stored, so the
@@ -179,7 +183,7 @@ sequenceDiagram
     participant S as settings.Service
     participant D as Database
 
-    C->>T: plugin, values
+    C->>T: workspace, plugin, values
     T->>S: ChangedSecrets(plugin, values)
     alt The input changes a secret field
         S-->>T: the key of each one
@@ -187,7 +191,7 @@ sequenceDiagram
     else The input changes no secret field
         S-->>T: no key
         T->>S: Save(ctx, plugin, values)
-        S->>D: WithUserTx, app.user_id from the context
+        S->>D: WithScopeTx, app.user_id and app.workspace_id from the context
         D-->>S: the stored row
         T->>S: Read(ctx, plugin)
         S-->>T: the values, each secret masked
@@ -215,7 +219,7 @@ so two identical calls read one text.
 
 **Decision:** Two tools carry this feature. `get_plugin_settings` answers the
 settings schema, the key of each secret field, and the stored values of the
-acting user in one result.
+acting workspace and the acting user in one result.
 
 **Rationale:** An agent that changes one field needs all three facts: the fields
 that exist, the field it must not touch, and the values that the row holds. One
@@ -232,7 +236,8 @@ result that no agent uses on its own.
 **Realizes:** `MCPHUB-FR-015`, `MCPHUB-FR-019`
 
 **Decision:** The result carries the JSON Schema document that
-`GET /plugins/{id}/settings/schema` serves, decoded into a `map[string]any`, and
+`GET /workspaces/{workspaceId}/plugins/{id}/settings/schema` serves, decoded into a
+`map[string]any`, and
 beside it `secretFields`, the key of each secret field.
 
 **Rationale:** `PSET-DD-001` made the document the one contract of a settings
@@ -309,8 +314,8 @@ line, and it sends the text of a validation library to an agent and to a log.
 
 **Layer:** unit
 
-**Given** a plugin declares a text field and a secret field, and the acting user
-stored a value for each.
+**Given** a plugin declares a text field and a secret field, and the acting
+workspace stored a value for each.
 **When** an MCP client calls `get_plugin_settings` with that plugin.
 **Then** the result carries the schema document, `secretFields` names the secret
 field, and the values name the text and the mask.
@@ -328,7 +333,7 @@ carries no schema.
 
 **Layer:** integration
 
-**Given** the acting user stored two fields of a plugin.
+**Given** the acting workspace stored two fields of a plugin.
 **When** an MCP client calls `save_plugin_settings` with one of them changed.
 **Then** the row holds the new value and the value of the other field, and the
 result reports both.
@@ -346,7 +351,7 @@ settings schema does not declare.
 
 **Layer:** integration
 
-**Given** the acting user stored a secret for a plugin.
+**Given** the acting workspace stored a secret for a plugin.
 **When** an MCP client calls `save_plugin_settings` with a new value for that
 secret field and a new value for a text field.
 **Then** the call fails, the row holds the secret that it held, and the row holds
@@ -356,7 +361,7 @@ the text value that it held.
 
 **Layer:** integration
 
-**Given** the acting user stored a secret for a plugin.
+**Given** the acting workspace stored a secret for a plugin.
 **When** an MCP client calls `save_plugin_settings` with the mask for that secret
 field and a new value for a text field.
 **Then** the hub stores the text value, and the row holds the secret that it
@@ -384,10 +389,12 @@ reads holds no part of it.
 
 **Layer:** integration
 
-**Given** two users each stored a value for one field of one plugin.
-**When** each calls `get_plugin_settings` for that plugin.
-**Then** each reads the value that they stored, and neither reads the value of
-the other.
+**Given** two workspaces each stored a value for one field of one plugin, and
+each has one member.
+**When** each member calls `get_plugin_settings` for that plugin in their own
+workspace.
+**Then** each reads the value of their own workspace, and neither reads the
+value of the other.
 
 ## 7. Build plan
 
@@ -400,6 +407,7 @@ the other.
 | 5   | Create `tools/settings_save.go`.                                                                  | `MCPHUB-FR-017`, `MCPHUB-FR-019`, `MCPHUB-DD-018`, `MCPHUB-DD-019` | [x]  |
 | 6   | Register both tools in `depresolver.MCPToolRegistry`, which resolves `SettingsService` and passes `Logger`. | `MCPHUB-DD-016`        | [x]  |
 | 7   | Check the item off in `specs/work/todo.md`.                                                       | None                            | [x]  |
+| 8   | Mark both tools as acting in a workspace, with the permissions of `PSET-DD-013`. It needs `workspaceTool` of `spec-plugin-tools.md`. | `MCPHUB-FR-021`, `SEC-013` | [ ]  |
 
 `TST-002` puts the test of each step before the code of that step.
 

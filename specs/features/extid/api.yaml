@@ -270,17 +270,17 @@ components:
       required: [provider]
       description: >
         The person of the current session. The two names come from the record that
-        the owner set, and the picture from the token of the session.
+        an administrator set, and the picture from the token of the session.
       properties:
         first_name:
           type: string
           description: >
-            The first name that the owner set on the record. The member is
+            The first name that an administrator set on the record. The member is
             absent when the record holds none. `APIFMT-FR-009`.
         last_name:
           type: string
           description: >
-            The last name that the owner set on the record. The member is
+            The last name that an administrator set on the record. The member is
             absent when the record holds none. `APIFMT-FR-009`.
         picture:
           type: string

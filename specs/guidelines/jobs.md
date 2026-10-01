@@ -4,14 +4,14 @@ title: Background jobs
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-10-01
 scope: [apps/hub/internal/worker/, apps/hub/internal/command/worker.go, plugins/*/job/]
 related: [ARC, PLG, MQT, OWN]
 ---
 
 # Background jobs
 
-A job runs with no request, so it declares the user that it acts for. See `OWN-009`.
+A job runs with no request, so it declares the scope that it runs in. See `OWN-009`.
 
 ## JOB-001
 

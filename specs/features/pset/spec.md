@@ -1,27 +1,32 @@
 ---
 id: PSET
-title: The settings of a user for a plugin
+title: The settings of a plugin
 type: spec
 status: approved
 created: 2026-09-14
-updated: 2026-09-29
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-14
-constrained_by: [CFG, PLG, OWN, ARC, API, ERR, EXT, PRC, DAT, REP, PKG, LIF, DEP, LOG, JOB, TST, SPC]
+constrained_by: [CFG, PLG, OWN, SEC, ARC, API, ERR, EXT, PRC, DAT, REP, PKG, LIF, DEP, LOG, JOB, TST, SPC]
 requirements: features/pset/requirements.md
 ---
 
-# Specification: The settings of a user for a plugin
+# Specification: The settings of a plugin
 
 ## 1. Summary
 
 A plugin declares a settings schema as one tagged Go struct, and the hub infers a JSON
-Schema document from it.
-The table `public.plugin_settings` holds one scoped row for each pair of a user and a
-plugin, in one JSONB column where every entry carries the kind of its field. The hub
-encrypts the entry of a secret field through the transit engine of OpenBao, with one
-named key for each user. Three routes under `/plugins/{id}/settings` serve the deck,
-and a plugin reads the values of the acting user through `Host.Settings()`.
+Schema document from it. Each field names its scope: the workspace or the user.
+The table `public.plugin_workspace_settings` holds one row for each pair of a workspace
+and a plugin, and `public.plugin_user_settings` holds one row for each pair of a user
+and a plugin. Each row holds one JSONB column where every entry carries the kind of its
+field. The hub encrypts the entry of a secret field through the transit engine of
+OpenBao, with one named key for each workspace and one for each user. Three routes under
+`/workspaces/{workspaceId}/plugins/{id}/settings` serve the deck, and a plugin reads the
+values of the acting workspace and of the acting user through `Host.Settings()`.
+
+`ADR-0008` split the one table that a user scoped. Steps 12 to 15 of the build plan
+carry that change into the code.
 
 ## 2. Coverage
 
@@ -29,7 +34,8 @@ and a plugin reads the values of the acting user through `Host.Settings()`.
 | --------------- | ----------------------------------------------- |
 | `PSET-FR-001`   | `PSET-DD-001`, Section 4.1, `PSET-SC-001`       |
 | `PSET-FR-002`   | `PSET-DD-001`, `PSET-SC-002`                    |
-| `PSET-FR-003`   | `PSET-DD-010`, Section 4.3, `PSET-SC-003`       |
+| `PSET-FR-021`   | `PSET-DD-012`, Section 4.2, `PSET-SC-023`       |
+| `PSET-FR-003`   | `PSET-DD-010`, `PSET-DD-013`, Section 4.3, `PSET-SC-003` |
 | `PSET-FR-004`   | `PSET-DD-010`, `PSET-SC-004`                    |
 | `PSET-FR-005`   | `PSET-DD-010`, `PSET-SC-004`                    |
 | `PSET-FR-006`   | `PSET-DD-010`, `PSET-SC-005`, `PSET-SC-021`     |
@@ -49,7 +55,7 @@ and a plugin reads the values of the acting user through `Host.Settings()`.
 | `PSET-FR-020`   | `PSET-DD-009`, `PSET-SC-018`                    |
 | `PSET-NFR-001`  | `PSET-DD-011`, `PSET-SC-019`                    |
 | `PSET-NFR-002`  | `PSET-DD-011`, `PSET-SC-020`                    |
-| `PSET-INV-001`  | `PSET-DD-003`, Section 4.2, `PSET-SC-010`       |
+| `PSET-INV-001`  | `PSET-DD-003`, Section 4.2, `PSET-SC-010`, `PSET-SC-023` |
 | `PSET-INV-002`  | `PSET-DD-002`, `PSET-SC-013`                    |
 
 ## 3. Guideline compliance
@@ -62,16 +68,18 @@ and a plugin reads the values of the acting user through `Host.Settings()`.
 | `ARC-008` | Architecture     | Every rule in this design reads the schema of a plugin. No rule names a plugin.    |
 | `DAT-002` | Data             | The table lives in `public`, which the hub owns.                                   |
 | `DAT-009` | Data             | `id` declares `DEFAULT uuidv7()`. No Go code names it.                             |
-| `OWN-004` | Record ownership | The table is scoped. Section 4.2 states it.                                        |
-| `OWN-005` | Record ownership | `user_id` takes its value from `app.user_id`. No insert names it.                  |
-| `OWN-006` | Record ownership | Section 4.2 gives the policy, and it forces it on the owner of the table.          |
-| `OWN-007` | Record ownership | `PSET-DD-003` amends the rule. Two functions set `app.user_id`, and no other does. |
-| `REP-003` | Repository       | The repository takes `*sqlx.Tx`. `database.WithUserTx` creates it.                 |
-| `REP-006` | Repository       | The save is one `INSERT ... ON CONFLICT (user_id, plugin_id) DO UPDATE`.           |
-| `API-003` | The HTTP API     | The rule gains the row `/plugins/{id}/settings`, and `handler.Plugin` is the one owner of the prefix. |
+| `OWN-004` | Record ownership | One table is scoped to a workspace, and one to a user. Section 4.2 states it.      |
+| `OWN-005` | Record ownership | `workspace_id` takes its value from `app.workspace_id`, and `user_id` from `app.user_id`. No insert names either. |
+| `OWN-006` | Record ownership | Section 4.2 gives the policy of each table, and forces it on the owner of the table. |
+| `OWN-007` | Record ownership | `PSET-DD-003`. `database.WithScopeTx` sets both values for the hub, and no other function of the hub does. |
+| `SEC-012` | Security         | Each route answers `not-found` for a plugin that the acting workspace does not enable. |
+| `SEC-013` | Security         | `PSET-DD-013` declares the permission of each route.                               |
+| `REP-003` | Repository       | The repository takes `*sqlx.Tx`. `database.WithScopeTx` creates it.                |
+| `REP-006` | Repository       | The save is one `INSERT ... ON CONFLICT (<scope column>, plugin_id) DO UPDATE` for each table that the save touches. |
+| `API-003` | The HTTP API     | The row `/workspaces/{workspaceId}/plugins/{id}/settings*`, and `handler.Plugin` is the one owner of the prefix. |
 | `API-006` | The HTTP API     | Section 4.5. A rejected save answers with a body that names each field.            |
 | `CFG-003` | Configuration    | Section 4.3 gives the configuration scheme with a `default` and a `validate` tag.  |
-| `CFG-007` | Configuration    | The credential of one person leaves the file and reaches the scoped row.           |
+| `CFG-007` | Configuration    | The credential of one workspace or one person leaves the file and reaches a scoped row. |
 | `EXT-005` | External         | A status that is not a success from the protection service is an error.            |
 | `DEP-005` | Dependencies     | `PSET-DD-005`. The login fails the build of the provider, and that stops the process. |
 | `LOG-005` | Logging          | `PSET-DD-009`. An error is an attribute, and it carries no secret.                 |
@@ -88,15 +96,16 @@ and a plugin reads the values of the acting user through `Host.Settings()`.
 | `libs/pluginconfig/config.go`                                       | change | `DecodeAndValidateSettings`, which reads the `json` tag                  |
 | `libs/pluginapi/host.go`                                            | change | `Settings() (SettingsProvider, error)` joins `Host`                      |
 | `apps/hub/db/migrations/20260914090000_table_plugin_settings_create.*` | create | `public.plugin_settings`, its policy, its trigger                     |
+| `apps/hub/db/migrations/<timestamp>_table_plugin_settings_split.*`     | create | `public.plugin_workspace_settings`, and the rename to `public.plugin_user_settings`. `PSET-DD-012` |
 | `apps/hub/internal/model/plugin_settings.go`                        | create | `model.PluginSettings`, `model.Fields`, `model.SettingEntry`, `model.FieldKind`, `LogValue` |
 | `apps/hub/internal/repository/plugin_settings.go`                   | create | `repository.PluginSettingsRepository`, `repository.PluginSettings`       |
-| `apps/hub/internal/database/tx.go`                                  | create | `database.WithUserTx`                                                    |
+| `apps/hub/internal/database/tx.go`                                  | create | `database.WithScopeTx`                                                   |
 | `apps/hub/internal/openbao/{doc,client}.go`                         | create | `openbao.New`, which builds the client and logs in                       |
-| `apps/hub/internal/secret/{doc,cipher,transit}.go`                  | create | `secret.Cipher`, `secret.Transit`, `secret.Key`, `secret.UserKey`, `secret.UserKeyPrefix` |
+| `apps/hub/internal/secret/{doc,cipher,transit}.go`                  | create | `secret.Cipher`, `secret.Transit`, `secret.Key`, `secret.UserKey`, `secret.UserKeyPrefix`, `secret.WorkspaceKey`, `secret.WorkspaceKeyPrefix` |
 | `apps/hub/internal/settings/{doc,service,schema,validate}.go`       | create | `settings.Service`, `settings.Manager`, `settings.SchemaSource`, `settings.Schema`, `settings.Infer`, `settings.Validate`, `settings.InvalidError`, `settings.MaxValueLength`, `settings.SecretMask` |
 | `apps/hub/internal/registry/settings.go`                            | create | `registry.SettingsRegistry`, `registry.SettingsEntry`                    |
 | `apps/hub/internal/plugin/registrar/settings.go`                    | create | `registrar.SettingsRegistrar`                                            |
-| `apps/hub/internal/handler/plugin.go`                               | change | `handler.Plugin` takes the settings service, and it owns every route under `/plugins` |
+| `apps/hub/internal/handler/plugin.go`                               | change | `handler.Plugin` takes the settings service, and it owns every settings route of a plugin |
 | `apps/hub/internal/depresolver/{secret,settings}.go`                | create | `OpenBaoClient`, `SecretCipher`, `SettingsRegistry`, `SettingsService`   |
 | `apps/hub/internal/config/config.go`                                | change | `OpenBao`, and the `OpenBao` field of `Config`                           |
 | `apps/hub/internal/depresolver/resolver.go`                         | change | The four providers join `Resolver`, and four fields join `Container`     |
@@ -119,14 +128,15 @@ The signatures:
 ```go
 // libs/pluginapi/settings.go
 
-// ConfigurablePlugin is a plugin that declares the fields a user fills for it.
+// ConfigurablePlugin is a plugin that declares the fields a workspace or a user fills for it.
 // SettingsModel returns a zero value of the struct that carries those fields.
 type ConfigurablePlugin interface {
     Plugin
     SettingsModel() (any, error)
 }
 
-// SettingsProvider reads the settings of the acting user. The hub implements it.
+// SettingsProvider reads the settings of the acting workspace and of the acting
+// user, merged into one map. The hub implements it.
 type SettingsProvider interface {
     Settings(ctx context.Context, pluginID *PluginID) (map[string]any, error)
 }
@@ -136,8 +146,8 @@ type PluginSettings struct { /* provider, pluginID */ }
 func NewPluginSettings(provider SettingsProvider, pluginID *PluginID) *PluginSettings
 func (p *PluginSettings) Get(ctx context.Context) (map[string]any, error)
 
-// ErrSettingsAbsent reports that the acting user holds no complete settings record.
-var ErrSettingsAbsent = errors.New("settings: absent for the acting user")
+// ErrSettingsAbsent reports that the run holds no complete settings record.
+var ErrSettingsAbsent = errors.New("settings: absent for the run")
 
 // libs/pluginconfig/config.go
 // It decodes with the `json` tag, so one tag names the field in the schema,
@@ -160,11 +170,15 @@ func New(ctx context.Context, cfg *config.OpenBao) (*api.Client, error)
 // The name is this prefix followed by the identifier of the user record.
 const UserKeyPrefix = "maroid-user-"
 
+// WorkspaceKeyPrefix starts the name of the transit key that protects one workspace.
+const WorkspaceKeyPrefix = "maroid-workspace-"
+
 // Key names a key that a Cipher uses. A variable of the type string does not satisfy
 // it, so a caller cannot pass a user identifier where a key belongs.
 type Key string
 
 func UserKey(userID string) Key
+func WorkspaceKey(workspaceID string) Key
 
 // Cipher holds no rule about what a Key names. A second use of the protection adds
 // its own constructor beside UserKey and reaches the same Cipher.
@@ -183,6 +197,7 @@ type Schema struct {
     Document json.RawMessage            // the document that the route serves
     Compiled *jsonvalidate.Schema       // the same document without its required array
     Kinds    map[string]model.FieldKind // the kind of each field
+    Scopes   map[string]model.SettingScope // the scope of each field
     Required map[string]struct{}        // the key of each required field
 }
 
@@ -227,68 +242,86 @@ type Service interface {
 // Manager satisfies pluginapi.SettingsProvider, so the host hands it to a plugin
 // with no adapter. Settings is the method that the interface names.
 
+// apps/hub/internal/model/plugin_settings.go
+type SettingScope string
+
+const (
+    SettingScopeWorkspace SettingScope = "workspace"
+    SettingScopeUser      SettingScope = "user"
+)
+
 // apps/hub/internal/repository/plugin_settings.go
-// REP-003: The caller creates it inside database.WithUserTx, so it holds the
-// transaction and never the pool.
+// REP-003: The caller creates it inside database.WithScopeTx, so it holds the
+// transaction and never the pool. The scope selects the table.
 type PluginSettingsRepository interface {
-    Get(ctx context.Context, pluginID string) (*model.PluginSettings, error)
-    Upsert(ctx context.Context, pluginID string, fields model.Fields) error
+    Get(ctx context.Context, scope model.SettingScope, pluginID string) (*model.PluginSettings, error)
+    Upsert(ctx context.Context, scope model.SettingScope, pluginID string, fields model.Fields) error
 }
 
 func NewPluginSettings(tx *sqlx.Tx) *PluginSettings
 
 // apps/hub/internal/database/tx.go
-func WithUserTx(ctx context.Context, db *sqlx.DB, fn func(*sqlx.Tx) error) error
+// It sets app.user_id and app.workspace_id from the context. See OWN-007.
+func WithScopeTx(ctx context.Context, db *sqlx.DB, fn func(*sqlx.Tx) error) error
 ```
 
 `Read` serves the route and returns the mask in place of each secret. `Settings` serves a
 plugin and returns the plaintext. One method cannot do both, because the caller of one
 must never receive what the caller of the other needs.
 
-A plugin writes one struct, and the tags carry every part of the form:
+A plugin writes one struct, and the tags carry every part of the form. A field with
+no scope tag belongs to the workspace. `PSET-DD-012` gives the tag.
 
 ```go
-type UserSettings struct {
-    Email    string `json:"email"    jsonschema:"title=Email,description=The address you sign in with,required"`
-    Password string `json:"password" jsonschema:"title=Password,format=password,writeOnly=true,required"`
+type Settings struct {
+    Email    string `json:"email"    jsonschema:"title=Email,description=The address you sign in with,required" jsonschema_extras:"x-maroid-scope=user"`
+    Password string `json:"password" jsonschema:"title=Password,format=password,writeOnly=true,required" jsonschema_extras:"x-maroid-scope=user"`
     Period   string `json:"period"   jsonschema:"title=Billing period,enum=month,enum=year,default=month"`
-    Notify   bool   `json:"notify"   jsonschema:"title=Send me the monthly bill"`
+    Notify   bool   `json:"notify"   jsonschema:"title=Send the monthly bill"`
 }
 ```
 
 ### 4.2 Data model
 
-| Table                    | Schema   | Scope  | Migration                                        | Realizes                      |
-| ------------------------ | -------- | ------ | ------------------------------------------------ | ----------------------------- |
-| `plugin_settings`        | `public` | scoped | `20260914090000_table_plugin_settings_create.up.sql` | `PSET-FR-003`, `PSET-INV-001` |
+| Table                       | Schema   | Scope               | Migration                                              | Realizes                                     |
+| --------------------------- | -------- | ------------------- | ------------------------------------------------------ | -------------------------------------------- |
+| `plugin_workspace_settings` | `public` | scoped to a workspace | `<timestamp>_table_plugin_settings_split.up.sql`     | `PSET-FR-003`, `PSET-FR-021`, `PSET-INV-001` |
+| `plugin_user_settings`      | `public` | scoped to a user    | `20260914090000_table_plugin_settings_create.up.sql`, renamed by `<timestamp>_table_plugin_settings_split.up.sql` | `PSET-FR-003`, `PSET-FR-021`, `PSET-INV-001` |
 
 ```sql
-CREATE TABLE public.plugin_settings
+CREATE TABLE public.plugin_workspace_settings
 (
-    id         UUID        NOT NULL PRIMARY KEY DEFAULT uuidv7(),
-    user_id    UUID        NOT NULL
-        DEFAULT NULLIF(current_setting('app.user_id', true), '')::uuid
-        REFERENCES public.users (id),
-    plugin_id  TEXT        NOT NULL,
-    fields     JSONB       NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT plugin_settings_user_plugin_key UNIQUE (user_id, plugin_id)
+    id           UUID        NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    workspace_id UUID        NOT NULL
+        DEFAULT NULLIF(current_setting('app.workspace_id', true), '')::uuid
+        REFERENCES public.workspaces (id),
+    plugin_id    TEXT        NOT NULL,
+    fields       JSONB       NOT NULL DEFAULT '{}'::jsonb,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT plugin_workspace_settings_workspace_plugin_key UNIQUE (workspace_id, plugin_id)
 );
 
-ALTER TABLE public.plugin_settings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.plugin_settings FORCE ROW LEVEL SECURITY;
+ALTER TABLE public.plugin_workspace_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.plugin_workspace_settings FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY plugin_settings_user_isolation ON public.plugin_settings
-    USING (user_id = NULLIF(current_setting('app.user_id', true), '')::uuid)
-    WITH CHECK (user_id = NULLIF(current_setting('app.user_id', true), '')::uuid);
+CREATE POLICY plugin_workspace_settings_workspace_isolation ON public.plugin_workspace_settings
+    USING (workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::uuid)
+    WITH CHECK (workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::uuid);
 
 CREATE TRIGGER set_updated_at
-    BEFORE UPDATE ON public.plugin_settings
+    BEFORE UPDATE ON public.plugin_workspace_settings
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 ```
 
-`fields` holds one entry for each field, keyed by the field key. An entry carries the
+`public.plugin_user_settings` keeps the shape of the table that a user scoped before
+`ADR-0008`: the column `user_id`, the unique constraint on `(user_id, plugin_id)`, and
+the policy on `app.user_id`. The migration renames the table, its constraint, and its
+policy, and moves no row. `ADR-0008` gives every existing user one workspace. A plugin
+that declares a field of the workspace moves its stored value in the feature that moves
+the plugin to the workspace.
+
+In each table, `fields` holds one entry for each field of its scope, keyed by the field key. An entry carries the
 kind and the value, so the read path finds every ciphertext without the schema:
 
 ```json
@@ -303,11 +336,11 @@ kind and the value, so the read path finds every ciphertext without the schema:
 
 **HTTP routes.** `api.yaml` holds the bodies and the status codes. See `SPC-002`.
 
-| Method | Path                           | Access        | Realizes                                      |
-| ------ | ------------------------------ | ------------- | --------------------------------------------- |
-| `GET`  | `/plugins/{id}/settings/schema` | Authenticated | `PSET-FR-001`, `PSET-FR-002`                 |
-| `GET`  | `/plugins/{id}/settings`        | Authenticated | `PSET-FR-004`, `PSET-FR-005`, `PSET-FR-010`  |
-| `PUT`  | `/plugins/{id}/settings`        | Authenticated | `PSET-FR-003`, `PSET-FR-006`, `PSET-FR-007`, `PSET-FR-008`, `PSET-FR-009`, `PSET-FR-011` |
+| Method | Path                                                     | Access          | Permission       | Realizes                                      |
+| ------ | -------------------------------------------------------- | --------------- | ---------------- | --------------------------------------------- |
+| `GET`  | `/workspaces/{workspaceId}/plugins/{id}/settings/schema` | Member, enabled | `settings.read`  | `PSET-FR-001`, `PSET-FR-002`, `PSET-FR-021`  |
+| `GET`  | `/workspaces/{workspaceId}/plugins/{id}/settings`        | Member, enabled | `settings.read`  | `PSET-FR-004`, `PSET-FR-005`, `PSET-FR-010`  |
+| `PUT`  | `/workspaces/{workspaceId}/plugins/{id}/settings`        | Member, enabled | `settings.write` | `PSET-FR-003`, `PSET-FR-006`, `PSET-FR-007`, `PSET-FR-008`, `PSET-FR-009`, `PSET-FR-011` |
 
 **Configuration scheme.**
 
@@ -319,7 +352,8 @@ kind and the value, so the read path finds every ciphertext without the schema:
 | `openbao.transit_mount` | string | `transit`      | no     | `PSET-FR-015` |
 
 `openbao` names the server, not one use of it. The name of a transit key is a naming
-convention of Maroid, so `secret.UserKeyPrefix` holds it and no operator sets it.
+convention of Maroid, so `secret.UserKeyPrefix` and `secret.WorkspaceKeyPrefix` hold it
+and no operator sets it.
 `transit_mount` stays configurable, because an operator can mount the transit engine at
 a path that is not the default. The key names the engine, so a later use of OpenBao
 adds its own key beside this one.
@@ -335,18 +369,20 @@ sequenceDiagram
     participant S as Settings manager
     participant B as OpenBao transit
     participant P as PostgreSQL
-    D->>H: PUT /plugins/{id}/settings
+    D->>H: PUT /workspaces/{workspaceId}/plugins/{id}/settings
     H->>S: Save(ctx, pluginID, input)
-    S->>S: Validate against the schema
-    S->>B: Encrypt each secret with maroid-user-<uuid>
+    S->>S: Validate against the schema, then split the fields by scope
+    S->>B: Encrypt each secret with maroid-workspace-<uuid> or maroid-user-<uuid>
     B-->>S: vault:v1:...
-    S->>P: WithUserTx, then upsert on (user_id, plugin_id)
-    P-->>S: The policy accepts the row
+    S->>P: WithScopeTx, then upsert each table on (scope column, plugin_id)
+    P-->>S: Each policy accepts its row
     S-->>H: nil
     H-->>D: 204
 ```
 
-The read of a plugin. The acting user comes from the context of the run.
+The read of a plugin. The acting workspace and the acting user come from the context
+of the run. A cron run carries no acting user, so a field of the user holds no value
+in it.
 
 ```mermaid
 sequenceDiagram
@@ -357,8 +393,8 @@ sequenceDiagram
     participant B as OpenBao transit
     J->>PS: Get(ctx)
     PS->>S: Settings(ctx, pluginID)
-    S->>P: WithUserTx, then select by plugin_id
-    P-->>S: The row of the acting user, or none
+    S->>P: WithScopeTx, then select by plugin_id from each table
+    P-->>S: The row of the acting workspace and the row of the acting user, or none
     S->>B: Decrypt each secret entry
     B-->>S: The plaintext
     S-->>J: The map, or ErrSettingsAbsent
@@ -369,6 +405,9 @@ sequenceDiagram
 | Condition                                             | Status | Type                | The text, and the keyword or the behavior   |
 | ----------------------------------------------------- | ------ | --------------------- | ------------------------------------------- |
 | The request carries no active user record             | 401    | `access-denied`     | See `SEC-004`.                              |
+| The acting user is not a member of the workspace      | 404    | `not-found`         | See `OWN-003`.                              |
+| The acting workspace does not enable the plugin       | 404    | `not-found`         | See `SEC-012`.                              |
+| The role of the member does not hold the permission   | 403    | `permission-denied` | See `SEC-013`.                              |
 | The plugin declares no settings schema                | 404    | `settings-absent`   |                                             |
 | The body does not decode as a JSON object             | 400    | `body-invalid`      | The hub stored nothing                      |
 | The save names a field the schema declares no property for | 422 | `settings-invalid` | `the field is unknown`. `additionalProperties` |
@@ -376,7 +415,7 @@ sequenceDiagram
 | The save gives a value outside the list of a choice   | 422    | `settings-invalid`  | `the value is not in the list`. `enum`      |
 | The save gives a value longer than 4096 characters    | 422    | `settings-invalid`  | `the value is too long`. `maxLength`        |
 | The save gives a value whose type is not the kind     | 422    | `settings-invalid`  | `the value has the wrong type`. `type`      |
-| OpenBao holds no key for the acting user              | 500    | `internal`          | `protecting the value failed`, with the key name |
+| OpenBao holds no key for the acting workspace or the acting user | 500 | `internal` | `protecting the value failed`, with the key name |
 | OpenBao refuses the login or answers nothing          | 500    | `internal`          | `reaching the protection failed`. The process stops at the start |
 | A stored entry does not decrypt                       | 500    | `internal`          | `reading the protected value failed`. The read returns no value |
 | A required field of the schema holds no stored value  | None   | None                | `ErrSettingsAbsent` to the plugin. The run ends |
@@ -421,8 +460,8 @@ that travels, and the hub would write that serializer.
 ### `PSET-DD-002`
 
 **Realizes:** `PSET-FR-003`, `PSET-FR-015`, `PSET-INV-002`
-**Decision:** One row holds one pair of a user and a plugin, in the single JSONB column
-`fields`. Every entry carries `kind` and `value`, and the entry of a secret field holds
+**Decision:** One row holds one pair of a workspace and a plugin, or one pair of a user
+and a plugin, in the single JSONB column `fields`. Every entry carries `kind` and `value`, and the entry of a secret field holds
 the ciphertext in `value`.
 **Rationale:** One read and one write serve a plugin run. The kind travels with the
 value, so the read path finds every ciphertext with no lookup, and a schema that drops
@@ -434,11 +473,12 @@ kind then lives in the schema alone, and a schema change orphans a stored cipher
 ### `PSET-DD-003`
 
 **Realizes:** `PSET-INV-001`
-**Decision:** `database.WithUserTx` opens a transaction and sets `app.user_id` from the
-acting user of the context. `OWN-007` changes to name two functions: this one for the
-hub, and `PluginDB.WithTx` for a plugin. No other place sets the value.
-**Rationale:** `plugin_settings` is the first scoped table that the hub owns, and the
-hub reads and writes it from its own handler. The policy of `OWN-006` fails closed, so
+**Decision:** `database.WithScopeTx` opens a transaction and sets `app.user_id` and
+`app.workspace_id` from the acting user and the acting workspace of the context.
+`OWN-007` names two functions: this one for the hub, and `PluginDB.WithTx` for a
+plugin. No other place sets either value.
+**Rationale:** The two settings tables are the first scoped tables that the hub owns,
+and the hub reads and writes them from its own handler. The policy of `OWN-006` fails closed, so
 a transaction with no setting reads no row. One function for the hub keeps the count of
 the places at two, and a reader finds both by the name of the setting.
 **Alternatives:** Reach the table through `pluginapi.PluginDB` with a plugin identifier
@@ -450,17 +490,19 @@ connection to the next statement, so the setting does not reach it.
 
 **Realizes:** `PSET-FR-015`, `PSET-FR-016`, `PSET-FR-017`
 **Decision:** The protection is the transit engine of OpenBao. One named key protects
-one user, and its name is the constant `secret.UserKeyPrefix` followed by the identifier
-of the user record. `settings.Manager` chooses that key and the `Cipher` takes it, so
-the cipher holds no rule about a user. The owner creates each key. The hub calls encrypt
-and decrypt, and it creates no key.
+one workspace, and one named key protects one user. The name is the constant
+`secret.WorkspaceKeyPrefix` followed by the identifier of the workspace, or
+`secret.UserKeyPrefix` followed by the identifier of the user record. `settings.Manager`
+chooses the key from the scope of the field and the `Cipher` takes it, so the cipher
+holds no rule about a workspace or a user. An administrator creates each key. The hub
+calls encrypt and decrypt, and it creates no key.
 **Rationale:** Transit returns `vault:v<n>:<payload>`, and the version prefix selects
 the key version on decrypt. A rotation therefore needs no column of ours, and
-`PSET-FR-017` holds with no work. A key for each user makes the destruction of one key
-the destruction of the secrets of one person. A hub that creates no key needs no create
+`PSET-FR-017` holds with no work. A key for each workspace and each user makes the
+destruction of one key the destruction of the secrets of one household or one person. A hub that creates no key needs no create
 permission, so a hub that an attacker reaches cannot mint a key.
-**Alternatives:** One key with `derived: true` and the user identifier as the context.
-One key cannot be destroyed for one person. Store the secret in KV v2. One settings
+**Alternatives:** One key with `derived: true` and the identifier as the context.
+One key cannot be destroyed for one workspace or one person. Store the secret in KV v2. One settings
 record then spans two stores with no transaction. A data key for each record. A
 password is not large enough to pay for the extra step.
 
@@ -501,16 +543,16 @@ serves no HTTP handler of a plugin, and `JOB-005` changes for every plugin.
 
 **Realizes:** `PSET-FR-013`, `PSET-FR-014`
 **Decision:** The manager returns `pluginapi.ErrSettingsAbsent` when a required field of
-the current schema holds no value. `CronWorker.runForEachUser` checks the sentinel and
-logs at the info level with no error attribute.
-**Rationale:** A per-user job runs for every active user at every tick, and few users
-hold a record for one plugin. Without the check, one configured plugin writes an error
-for every other person at every tick, and `JOB-007` then fills the log with work that
+the current schema holds no value. `CronWorker.runForEachWorkspace` checks the sentinel
+and logs at the info level with no error attribute.
+**Rationale:** A job runs for every workspace that enables the plugin at every tick, and
+few of them hold a record. Without the check, one configured workspace writes an error
+for every other workspace at every tick, and `JOB-007` then fills the log with work that
 nobody must act on. A record that nobody filled and a record that a new required field
 made incomplete give the plugin one condition, as `PSET-FR-013` demands.
 **Alternatives:** Return an empty map. A plugin then fails inside its own validation,
 and the reason reaches the log as a failure. Filter the run by the users that hold a
-record. The owner chose the plugin as the place that decides.
+record. The owner of the repository chose the plugin as the place that decides.
 
 ### `PSET-DD-008`
 
@@ -519,10 +561,10 @@ record. The owner chose the plugin as the place that decides.
 The save writes the full set of the declared fields, so an entry of a field that the
 schema dropped leaves the row at the next save.
 **Rationale:** One rule covers both directions with no scheduled cleanup and no
-migration. A plugin that returns to an older version finds its value until the user
+migration. A plugin that returns to an older version finds its value until a member
 saves again.
 **Alternatives:** Remove the entry as soon as the hub loads the new schema. A plugin
-that fails to load looks like a schema with no field, and the values of the user go.
+that fails to load looks like a schema with no field, and the stored values go.
 
 ### `PSET-DD-009`
 
@@ -539,7 +581,8 @@ review rule.
 ### `PSET-DD-010`
 
 **Realizes:** `PSET-FR-003` to `PSET-FR-007`
-**Decision:** `GET /plugins/{id}/settings` returns each value that is not a secret. For
+**Decision:** `GET /workspaces/{workspaceId}/plugins/{id}/settings` returns each value
+that is not a secret, of the acting workspace and of the acting user. For
 a secret field it returns the fixed mask `settings.SecretMask`, which is `******`, when
 the field holds a value, and the empty string when it holds none. `PUT` takes the full
 object. A secret field that the body does not name keeps its stored value, and so does
@@ -573,9 +616,39 @@ one run, and not between two runs.
 **Alternatives:** Cache the decrypted values with a short expiry. It buys nothing that
 `PSET-NFR-002` asks for, and it holds a credential in memory while nothing reads it.
 
+### `PSET-DD-012`
+
+**Realizes:** `PSET-FR-021`, `PSET-INV-001`
+**Decision:** A field names its scope with the schema extension `x-maroid-scope`, which
+the tag `jsonschema_extras:"x-maroid-scope=user"` writes. A field with no extension
+belongs to the workspace. `settings.Infer` reads the extension into `Schema.Scopes`,
+and the document that the route serves keeps it, so the deck labels each field. The
+hub holds one table for each scope, because `OWN-004` lets one table carry one scope.
+**Rationale:** `OWN-004` makes a new table of a plugin a table of the workspace, so the
+default of a field follows the default of a table. The extension travels in the
+document that the route already serves, and needs no second declaration. Two tables
+keep each policy one equality check.
+**Alternatives:** One table with both columns and a policy that reads either. A row
+then carries a column that it never fills, and the policy holds two branches. A second
+struct for the fields of the user. It doubles the declaration, and a field can move
+between scopes only by moving between structs.
+
+### `PSET-DD-013`
+
+**Realizes:** `PSET-FR-003`, `PSET-FR-004`
+**Decision:** The hub declares two permissions under `SEC-013`: `settings.read`, whose
+lowest role is `viewer`, and `settings.write`, whose lowest role is `editor`. The two
+`GET` routes declare the first, and `PUT` declares the second.
+**Rationale:** A viewer reads the settings and every secret stays masked, so a read
+leaks no credential. A credential of the workspace changes what every job of the
+workspace does, so a viewer writes none.
+**Alternatives:** `settings.write` at `manager`. An editor who fixes a wrong credential
+then waits for a manager. A permission for each scope. A viewer could then store a
+field of their own, and the route would split one save into two checks.
+
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `PSET-SC-001` through `PSET-SC-020`.
+`spec-scenarios.md` holds `PSET-SC-001` through `PSET-SC-023`.
 
 ## 7. Build plan
 
@@ -592,6 +665,10 @@ one run, and not between two runs.
 | 9   | Add `Settings()` to the host, and the providers to the container.                 | `PSET-FR-012`                 | [x]  |
 | 10  | Change the cron worker.                                                           | `PSET-FR-014`                 | [x]  |
 | 11  | Rebuild every plugin. `BLD-004` binds a change in `libs/pluginapi`.               | `PSET-FR-012`                 | [x]  |
+| 12  | Write `PSET-SC-023`, then the scope in `settings.Infer` and `settings.Schema`.     | `PSET-FR-021`                 | [ ]  |
+| 13  | Write the migration that splits the table, then the scope of the repository and `database.WithScopeTx`. It needs the table of `OWN-010`. | `PSET-FR-003`, `PSET-INV-001` | [ ]  |
+| 14  | Add `secret.WorkspaceKey`, then choose the key by the scope of the field in `settings.Manager`. | `PSET-FR-016`, `PSET-FR-017` | [ ]  |
+| 15  | Move the three routes under `/workspaces/{workspaceId}`, with the permissions of `PSET-DD-013`, in `api.yaml` and in `handler.Plugin`. It needs the membership check of `OWN-003`. | `PSET-FR-003` to `PSET-FR-009` | [ ]  |
 
 Write the test of each step before the code of that step. See `TST-002`.
 
@@ -602,7 +679,7 @@ Write the test of each step before the code of that step. See `TST-002`.
 | The form in the deck                                                    | The requirements exclude it. The routes and `api.yaml` are its contract. |
 | Moving a value of an existing plugin out of `config.yaml`               | `CFG-007` moves one value at a time. One feature for each plugin.        |
 | A plugin that reads the settings of another plugin through the provider | A plugin is trusted code in the process, as `PluginDB` already is.       |
-| A command that creates or destroys the protection of a user             | Open question 1 of the requirements gives the call to the service.       |
+| A command that creates or destroys the protection of a workspace or a user | Open question 1 of the requirements gives the call to the service.     |
 
 ## Retired identifiers
 

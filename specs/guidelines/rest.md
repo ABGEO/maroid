@@ -4,7 +4,7 @@ title: The REST conventions
 type: guideline
 status: active
 created: 2026-09-22
-updated: 2026-09-29
+updated: 2026-10-01
 scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, plugins/, libs/api-client/, libs/plugin-sdk/, apps/deck/, specs/features/*/api.yaml, specs/templates/api.yaml, specs/api/, build/openapi/]
 related: [API, ERR, SPC, DAT, EXT, SEC, OWN, UI, TG, MQT, CFG, BLD, CLI]
 ---
@@ -50,13 +50,13 @@ registers. Every rule that neither table names binds in full.
 | `Z-150`        | `ERR-003` answers 422 for a body that fails validation and for settings that fail their schema. `Z-150` marks 422 do-not-use and prefers 400. A client of Maroid branches on the problem type, and the two conditions differ from a body that does not parse, which already answers 400. |
 | `Z-150`, `Z-251` | `GET /auth/callback` answers 302. `Z-150` marks 302 do-not-use and `Z-251` advises against a redirection code. The browser arrives at that route by redirect and leaves by one, which RFC 6749 section 4.1.2 fixes. |
 | `Z-217`        | The first sentence of `Z-217` is a must, and `RES-005` meets it with an absolute address. The deviation is from the second, a should: it asks for the scheme, the host, and the port of the request. A proxy sets the `Host` header, and a caller sets it behind a proxy that passes it, so a link built from it points where the caller chose. |
-| `Z-110`        | `GET /plugins/{id}/settings` answers a map at the top level, which `Z-110` forbids because a map grows no member. The settings of a user hold that shape, and an envelope changes the route and the deck together. `Z-110` binds a response body, so the request body of the `PUT` is not in scope, and that `PUT` answers 204 with no body at all. |
+| `Z-110`        | `GET /workspaces/{workspaceId}/plugins/{id}/settings` answers a map at the top level, which `Z-110` forbids because a map grows no member. The settings of a plugin hold that shape, and an envelope changes the route and the deck together. `Z-110` binds a response body, so the request body of the `PUT` is not in scope, and that `PUT` answers 204 with no body at all. |
 | `Z-143`        | `Z-143` asks that every intermediate path resolve. `/plugins/{id}`, `/auth`, `/.well-known`, the mount prefix of `API-004`, and the asset prefix of `SEC-006` answer nothing. `/plugins/{id}` would repeat one row of the list that `/plugins` answers, and the other four name no resource of their own. |
 | `Z-144`        | `DAT-009` gives every row a UUID version 7, and `Z-144` discourages a UUID as the primary key of configuration data. Version 7 sorts by time, so the primary key answers the keyset page of `RES-006` at no index cost, which is the case that the hint of `Z-144` concedes. |
 | `Z-186`        | The rule asks every external partner to consent to the window before it uses the API. `RES-007` gives the audience `external-public`, so no deployment can tell whether a consumer is a partner. The condition cannot be discharged, rather than being unmet. `RES-011` publishes the window, which answers the first sentence of the rule and not the second. |
 | `Z-185`        | The rule asks for the consent of every client before a route goes. `RES-007` gives the audience `external-public`, so a deployment cannot enumerate its clients. `RES-011` publishes a window in place of the consent. |
 | `Z-188`, `Z-193` | The rules ask a producer to monitor the usage of an API and of a route that a sunset date names. Maroid collects no usage of its own, and a deployment reads its own log. |
-| `Z-135`, `Z-142` | `/plugins/{id}/api` and `/plugins/{id}/ui` carry the two most general segments in the tree. `API-004` makes the first the base path of the API of a plugin, which is where `Z-135` reaches it. `SEC-006` gives the second. `API-004` builds the prefix from the plugin identifier so that two plugins cannot collide, and the segment says which surface answers. |
+| `Z-135`, `Z-142` | The segment `api` that ends the mount prefix of `API-004`, and the segment `ui` of `/plugins/{id}/ui`, carry the two most general names in the tree. `API-004` makes the first prefix the base path of the API of a plugin, which is where `Z-135` reaches it. `SEC-006` gives the second. `API-004` builds the prefix from the workspace and the plugin identifier so that two plugins cannot collide, and the segment says which surface answers. |
 | `Z-156`        | No middleware of `API-002` compresses an answer. The route that would gain most serves the bundle of a plugin, and a deployment puts a proxy in front of the hub that compresses for it. |
 | `Z-102`        | Maroid publishes no user manual, so no document carries `externalDocs`. The repository holds the documentation that a reader needs. |
 | `Z-183`        | `X-Telegram-Bot-Api-Secret-Token` is not on the list of proprietary headers that the rule allows. Telegram names the header, `TG-001` records it, and `SEC-010` reads it. `X-Flow-ID` is on the list, and `ERR-006` uses it. |
@@ -169,7 +169,7 @@ A collection that a deployment bounds answers every item in one page, and neithe
 number reaches it. `Z-159` asks for a page when a collection can pass a few
 hundred entries, and one of these cannot.
 
-A route that answers the rows of the acting user alone records that in its
+A route that answers the rows of the acting workspace alone records that in its
 description. `OWN-006` filters every scoped collection in the database, and
 `Z-226` asks the specification to say so.
 
@@ -304,9 +304,9 @@ An operation whose caller is the acting user declares the pseudo permission
 `uid`, whatever the access column of `API-003` says. `DELETE /auth/sessions/self` is public in `API-003`
 and its caller is the acting user, so it declares `uid` too. `/telegram/webhook`
 resolves a user from the update and its caller is Telegram, so it declares none.
-`Z-105` gives it to an operation whose authorization sits at the level of one
-object, and `OWN-006` puts it there. The policy of the database answers each
-row, so no permission of the route can.
+`Z-105` gives it to an operation that needs no scope of the token. The
+permission of `SEC-013` is a check of the workspace role, not a scope of the
+token, and the policy of `OWN-006` answers each row.
 
 A route that carries no credential declares an empty requirement. `RES-002` holds
 its deviation from `Z-104`.

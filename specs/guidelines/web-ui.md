@@ -4,7 +4,7 @@ title: The web user interface
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-10-01
 scope: [apps/deck/, plugins/*/ui/, libs/plugin-sdk/, libs/api-client/]
 related: [ARC, PLG, TS, BLD, API]
 ---
@@ -61,7 +61,7 @@ It does not build a request URL itself.
 | Member     | Gives                                             |
 | ---------- | ------------------------------------------------- |
 | `user`     | The current user, or null.                        |
-| `api`      | A client already scoped to `/plugins/{id}/api`.   |
+| `api`      | A client already scoped to the mount prefix of `API-004`, for the acting workspace. |
 | `href`     | A deck URL for a plugin-relative path.            |
 | `navigate` | Client-side navigation to a plugin-relative path. |
 

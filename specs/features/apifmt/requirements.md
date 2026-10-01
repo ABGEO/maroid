@@ -4,7 +4,7 @@ title: The answer that a client reads
 type: requirements
 status: approved
 created: 2026-09-24
-updated: 2026-09-24
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-24
 constrained_by: [RES, ERR, DAT, OWN]
@@ -255,7 +255,7 @@ third-party service chose.
 | `ERR-003` | Errors           | Holds `cursor-stale`, which `APIFMT-FR-005` names.                       |
 | `DAT-009` | Data             | Every row carries an identifier that sorts by time, which `APIFMT-NFR-001` rests on. |
 | `DAT-010` | Data             | Stores a point in time in UTC, which `APIFMT-FR-008` answers.            |
-| `OWN-006` | Ownership        | A collection answers the rows of the acting user, and a page counts those rows only. |
+| `OWN-006` | Ownership        | A collection answers the rows of the acting workspace, and a page counts those rows only. |
 
 ## 9. Open questions
 

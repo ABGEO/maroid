@@ -3,7 +3,7 @@ title: The Maroid guidelines
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-09-23
+updated: 2026-10-01
 ---
 
 # The Maroid guidelines
@@ -28,13 +28,13 @@ The identifier is the prefix of every rule in that file.
 | `ARC` | [architecture.md](./architecture.md)           | The shape of the system. The technology of each layer.      | 10    |
 | `PLG` | [plugin-model.md](./plugin-model.md)           | The contract between the hub and a plugin.                  | 11    |
 | `DAT` | [data.md](./data.md)                           | The schemas, the migrations, the database access.           | 11    |
-| `OWN` | [ownership.md](./ownership.md)                 | The user record, the acting user, the isolation of a row.   | 9     |
+| `OWN` | [ownership.md](./ownership.md)                 | The user record, the workspace, the isolation of a row.     | 11    |
 | `UI`  | [web-ui.md](./web-ui.md)                       | The contract between the shell and a plugin user interface. | 9     |
 | `CFG` | [configuration.md](./configuration.md)         | The configuration and the secrets.                          | 7     |
 | `API` | [http-api.md](./http-api.md)                   | The HTTP routes, the middleware, the responses.             | 7     |
 | `ERR` | [errors.md](./errors.md)                       | The shape of a failure. The problem types.                  | 7     |
 | `RES` | [rest.md](./rest.md)                           | The REST standard, the deviations, the page, the payload.   | 11    |
-| `SEC` | [security.md](./security.md)                   | The identity, the token, the allowlists.                    | 10    |
+| `SEC` | [security.md](./security.md)                   | The identity, the token, the allowlists, the permissions.   | 13    |
 | `TG`  | [telegram.md](./telegram.md)                   | The bot, the commands, the conversations.                   | 7     |
 | `MQT` | [mqtt.md](./mqtt.md)                           | The topics, the namespaces, the delivery.                   | 7     |
 | `JOB` | [jobs.md](./jobs.md)                           | The workers and the cron jobs.                              | 8     |
@@ -80,8 +80,8 @@ A guideline identifier is permanent. A retired guideline identifier never repeat
 | An HTTP route, a prefix, or the middleware      | `API`     |
 | An error response or a problem type             | `ERR`     |
 | The API standard, a deviation from it, a success body, a page, a cursor, a property name, an OpenAPI document, or a client of the API | `RES` |
-| A token, an identity, or an allowlist           | `SEC`     |
-| A user, the owner of a row, or row isolation    | `OWN`     |
+| A token, an identity, an allowlist, a permission, or an administrator | `SEC` |
+| A user, a workspace, a member, or row isolation | `OWN`     |
 | A bot command or a conversation                 | `TG`      |
 | An MQTT topic or a subscriber                   | `MQT`     |
 | A cron job or a background worker               | `JOB`     |

@@ -4,7 +4,7 @@ title: The platform that carries the API
 type: requirements
 status: approved
 created: 2026-09-24
-updated: 2026-09-27
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-27
 constrained_by: [RES, ERR, API, DAT, CFG, SEC, TG, LOG, BLD, OWN]
@@ -264,7 +264,7 @@ attempt makes for itself lets that second press create a second record.
 | `TG-002`  | Telegram         | The value of `APIFMT-FR-013` feeds the webhook registration.             |
 | `LOG-009` | Logging          | Carries the identifier of `APIFMT-FR-018` on every record.               |
 | `BLD-001` | Build            | Holds the command that `APIFMT-FR-017` runs.                             |
-| `OWN-006` | Ownership        | Filters every collection by the acting user, which `APIFMT-FR-021` answers for. |
+| `OWN-006` | Ownership        | Filters every collection by the acting workspace or the acting user, which `APIFMT-FR-021` answers for. |
 
 ## 7. Open questions
 

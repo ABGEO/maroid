@@ -4,7 +4,7 @@ title: The repository layer
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-10-01
 scope: [plugins/*/repository/, plugins/*/model/]
 related: [DAT, PKG, GO, OWN]
 ---
@@ -12,7 +12,7 @@ related: [DAT, PKG, GO, OWN]
 # The repository layer
 
 `DAT` gives the schema and the migrations. This guideline gives the Go code that
-reads and writes them. `OWN-008` keeps the user filter out of that code.
+reads and writes them. `OWN-008` keeps the scope filter out of that code.
 
 ## REP-001
 

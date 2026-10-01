@@ -4,7 +4,7 @@ title: Telegram
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-24
+updated: 2026-10-01
 scope: [apps/hub/internal/telegram/, libs/pluginapi/telegram/]
 related: [PLG, SEC, API, OWN]
 ---
@@ -12,7 +12,7 @@ related: [PLG, SEC, API, OWN]
 # Telegram
 
 The library is telego.
-The hub resolves the acting user before it dispatches an update. See `OWN-003`.
+The hub resolves the acting user and the acting workspace before it dispatches an update. See `OWN-003`.
 
 ## TG-001
 

@@ -4,7 +4,7 @@ title: The answer that a client reads
 type: spec
 status: approved
 created: 2026-09-24
-updated: 2026-09-27
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-25
 constrained_by: [RES, ERR, DAT, OWN, GO, TS, PLG, ARC]
@@ -110,8 +110,8 @@ trigger.
 | ------------------------------------ | ------------- | --------------------------------- | --------------- |
 | `GET /plugins`                       | Authenticated | One page, no cursor               | `APIFMT-FR-004` |
 | `GET /auth/identities`               | Authenticated | One page, no cursor               | `APIFMT-FR-004` |
-| `GET /plugins/{id}/api/plants`       | Authenticated | A page, with a cursor             | `APIFMT-FR-002` |
-| `GET /plugins/{id}/api/environments` | Authenticated | A page, with a cursor             | `APIFMT-FR-002` |
+| `GET /workspaces/{workspaceId}/plugins/{id}/api/plants`       | Member, enabled | A page, with a cursor | `APIFMT-FR-002` |
+| `GET /workspaces/{workspaceId}/plugins/{id}/api/environments` | Member, enabled | A page, with a cursor | `APIFMT-FR-002` |
 
 Every route above takes `limit` and `cursor` from `specs/api/components.yaml`,
 except the two that answer one page. `RES-005` holds the default of 20 and the

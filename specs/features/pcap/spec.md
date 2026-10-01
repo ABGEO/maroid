@@ -4,7 +4,7 @@ title: The capabilities that a plugin declares
 type: spec
 status: approved
 created: 2026-09-21
-updated: 2026-09-22
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-21
 constrained_by: [PLG, ARC, API, ERR, UI, TS, PKG, GO, DEP]
@@ -160,19 +160,25 @@ of `/plugins` do not change.
 | `settings`               | `true`                                       | `SettingsRegistrar`                | `PCAP-FR-007`                |
 | `migrations`             | `true`                                       | `MigrationRegistrar`               | `PCAP-FR-007`                |
 | `ui`                     | The `UIManifest`                             | `UIRegistrar`                      | `PCAP-FR-004`                |
-| `api`                    | `[{ method, path }]`                         | `HandlerRegistrar`                 | `PCAP-FR-004`                |
+| `api`                    | `[{ method, path, permission }]`             | `HandlerRegistrar`                 | `PCAP-FR-004`                |
 | `cli`                    | `[{ command }]`                              | `CommandRegistrar`                 | `PCAP-FR-004`                |
 | `cron`                   | `[{ id, schedule }]`                         | `CronRegistrar`                    | `PCAP-FR-004`                |
 | `mqtt`                   | `[{ id, topic }]`                            | `MQTTSubscriberRegistrar`          | `PCAP-FR-004`                |
-| `telegramCommands`       | `[{ command, description }]`                 | `TelegramCommandRegistrar`         | `PCAP-FR-004`                |
+| `telegramCommands`       | `[{ command, description, permission }]`     | `TelegramCommandRegistrar`         | `PCAP-FR-004`                |
 | `telegramConversations`  | `[{ id, entry }]`                            | `TelegramConversationRegistrar`    | `PCAP-FR-004`                |
-| `mcpTools`               | `[{ name, description }]`                    | `MCPToolRegistrar`                 | `PCAP-FR-004`                |
+| `mcpTools`               | `[{ name, description, permission }]`        | `MCPToolRegistrar`                 | `PCAP-FR-004`                |
+| `permissions`            | `[{ name, role }]`                           | The registrar of the permission capability | `PCAP-FR-004`, `SEC-013` |
 
 Every field name above is one word, so `tagliatelle` reads each of them as camel
 case already. See section 3.
 
 `api` carries the path that a client calls, which is the pattern of the plugin
-under the prefix that `API-004` gives it, not the bare pattern.
+under the prefix that `API-004` gives it, not the bare pattern. The prefix keeps
+`{workspaceId}` as a template segment, because the report names no workspace.
+
+`permission` names the permission of `SEC-013` with the prefix of the plugin.
+`role` is the lowest workspace role that holds it. The feature that adds the
+permission capability builds its registrar, and `PLG-006` gives its parts.
 
 ### 4.4 Flow
 
@@ -374,9 +380,10 @@ name of a registrar.
 
 **Given** a loaded plugin that serves two routes and answers one bot command.
 **When** a client reads the plugin list.
-**Then** the `api` capability carries the method and the path of both routes, and
-the `telegramCommands` capability carries the command and the description of the
-one command.
+**Then** the `api` capability carries the method, the path, and the permission of
+both routes, each path under `/workspaces/{workspaceId}`, and the
+`telegramCommands` capability carries the command, the description, and the
+permission of the one command.
 
 ### `PCAP-SC-005` (verifies `PCAP-FR-005`)
 
@@ -427,6 +434,7 @@ capability is absent from the map.
 | 9   | Create `capabilities.ts` in the deck, and move the eleven readers of `plugin.ui` onto it. | `PCAP-DD-007`                 | [x]  |
 | 10  | Render one chip for each capability on the page that lists the plugins.                 | `PCAP-FR-006`                   | [x]  |
 | 11  | Add the capabilities to the coverage of `MCPHUB-FR-005` in `mcphub/spec.md`.             | `TRC-007`                       | [x]  |
+| 12  | Write the `{workspaceId}` prefix into the path of each `api` item, and the `permission` of each item. Record the `permissions` capability. It needs the permission capability of `SEC-013`. | `PCAP-FR-004`, `SEC-013` | [ ]  |
 
 ## 8. Out of scope for this specification
 

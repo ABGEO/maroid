@@ -1,23 +1,23 @@
 ---
 id: PSET
-title: The settings of a user for a plugin
+title: The settings of a plugin
 type: requirements
 status: approved
 created: 2026-09-13
-updated: 2026-09-14
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-14
 constrained_by: [CFG, PLG, OWN, ARC, API, EXT, PRC]
 ---
 
-# Requirements: The settings of a user for a plugin
+# Requirements: The settings of a plugin
 
 ## 1. Problem
 
 A plugin that reads a bill needs the credential of the person who owns the bill.
 That credential lives in the configuration file today, and the file holds one copy for
-the process. The plugin serves one person. `IDENT` gave every row an owner and made a
-job run for each user, and the job still reads one credential. `CFG-007` names the move
+the process. The plugin serves one person. `IDENT` gave every row an owner, `ADR-0008`
+made a job run for each workspace, and the job still reads one credential. `CFG-007` names the move
 that this feature makes.
 
 A credential in the database is a credential that a reader of the database reads.
@@ -27,9 +27,12 @@ that a user stores.
 
 ## 2. Users
 
-- A household member: enters their own credential one time, and no reader of the database reads it.
-- The owner: adds a second person with no second instance and no change in the configuration file.
-- The owner: removes the credentials of one person with no change for the other people.
+- A household member: enters the credential of the household, or their own, one time, and no
+  reader of the database reads it.
+- An administrator: adds a second person with no second instance and no change in the
+  configuration file.
+- An administrator: removes the credentials of one workspace or one person with no change for
+  the others.
 - A plugin author: declares the fields one time, and writes no cryptography.
 
 ## 3. Out of scope
@@ -37,11 +40,12 @@ that a user stores.
 - The form in the deck that renders a settings schema.
 - Moving the value of a person out of the configuration of a plugin that exists today.
 - A field kind beyond the four that `PSET-FR-002` gives.
-- An owner that reads or edits the settings of another user.
+- An administrator who reads or edits the settings of a workspace that they are not a member
+  of, or of another user.
 - A history of the changes of a setting.
 - A settings record that a user fills through the bot.
-- A job run restricted to the users that hold a settings record.
-- A command that replaces the protection of a user.
+- A job run restricted to the workspaces that hold a settings record.
+- A command that replaces the protection of a workspace or a user.
 - A record of each read of a secret.
 - A protected value that no settings record holds.
 
@@ -49,9 +53,23 @@ that a user stores.
 
 ### `PSET-FR-001`
 
-A plugin must declare the fields that a user fills for it.
+A plugin must declare the fields that a workspace or a user fills for it.
 
 **Why:** Maroid validates a value for every plugin, and `ARC-008` forbids a rule that names one plugin.
+
+### `PSET-FR-021`
+
+A plugin must declare for each field whether the workspace or the user holds its value.
+
+**Why:** The credential of a household serves every member, and the credential of a pension
+account serves one person.
+
+**Examples:**
+
+- Normal case: the account number of an electricity bill is a field of the workspace. Every
+  member of the household reads the same value.
+- Normal case: the password of a pension account is a field of the user. A second member of
+  the workspace reads no value for it.
 
 ### `PSET-FR-002`
 
@@ -59,27 +77,30 @@ A field must declare one kind. The kinds are a free text, a secret, a true or fa
 
 ### `PSET-FR-003`
 
-A user must store a value for a field that a plugin declares.
+A member must store a value for a field that a plugin declares. The value of a field that
+the acting workspace holds belongs to that workspace. The value of a field that a user holds
+belongs to the acting user.
 
 ### `PSET-FR-004`
 
-Maroid must return the stored settings to the user that stored them, except each secret.
+Maroid must return the stored settings of the acting workspace to its members, and the stored
+settings of a user to that user, except each secret.
 
 **Why:** A reader that receives a credential can leak it, and no reader needs it.
 
 ### `PSET-FR-005`
 
-Maroid must tell the user whether a secret field holds a value.
+Maroid must tell the member whether a secret field holds a value.
 
 ### `PSET-FR-006`
 
 Maroid must keep the stored secret of a field when the save names no value for that field.
 
-**Why:** A user changes one field, and the sender holds no other secret to send back.
+**Why:** A member changes one field, and the sender holds no other secret to send back.
 
 ### `PSET-FR-007`
 
-A user must remove the stored value of a field.
+A member must remove the stored value of a field.
 
 ### `PSET-FR-008`
 
@@ -106,19 +127,20 @@ Maroid must remove a stored value that the current settings schema does not decl
 
 ### `PSET-FR-012`
 
-A plugin must read the settings of the acting user during a run.
+A plugin must read the settings of the acting workspace and of the acting user during a run.
 
 ### `PSET-FR-013`
 
-Maroid must report the settings of the acting user as absent when a required field holds no value.
+Maroid must report the settings of a run as absent when a required field holds no value.
 
 **Why:** A record that nobody filled and one that a new field made incomplete give one condition.
 
 ### `PSET-FR-014`
 
-Maroid must report no failure when a plugin ends a run because the settings of the acting user are absent.
+Maroid must report no failure when a plugin ends a run because the settings of the run are absent.
 
-**Why:** A job runs for each active user at each tick, and few users hold a record.
+**Why:** A job runs for each workspace that enables the plugin at each tick, and few of them
+hold a record.
 
 ### `PSET-FR-015`
 
@@ -126,13 +148,16 @@ Maroid must store a secret so that a reader of the database cannot read it.
 
 ### `PSET-FR-016`
 
-Maroid must protect the secrets of one user with a protection that applies to no other user.
+Maroid must protect the secrets of one workspace, and of one user, with a protection that
+applies to no other workspace and to no other user.
 
-**Why:** The owner destroys the protection of one person with no change for the other people.
+**Why:** An administrator destroys the protection of one workspace or one person with no change
+for the others.
 
 ### `PSET-FR-017`
 
-Maroid must return a secret that it stored before the owner replaced the protection of that user.
+Maroid must return a secret that it stored before an administrator replaced the protection of
+that workspace or that user.
 
 **Why:** A replacement that loses a stored credential is a replacement that nobody runs.
 
@@ -166,18 +191,19 @@ Maroid must write a secret to no log.
 Maroid must give a plugin the value that a user saved more than 1 second earlier.
 Measure from the response of the save to the start of the run.
 
-**Why:** A user that corrects a wrong credential must see the next run use it.
+**Why:** A member that corrects a wrong credential must see the next run use it.
 
 ### `PSET-NFR-002`
 
-A plugin must read the settings of one user in no more than 200 milliseconds, at the 95th
+A plugin must read the settings of one run in no more than 200 milliseconds, at the 95th
 percentile. Measure from the call of the plugin to the return of the values.
 
 ## 6. Invariants
 
 ### `PSET-INV-001`
 
-The settings of one user reach no other user.
+The settings of one workspace reach no member of another workspace. The settings of one user
+reach no other user.
 
 ### `PSET-INV-002`
 
@@ -191,7 +217,8 @@ The database holds a secret in a protected form only.
 | `CFG-007` | Configuration     | The value of one person leaves the configuration file.                      |
 | `PLG-006` | Plugin model      | The settings schema is a capability: an interface, a registry, a registrar. |
 | `PLG-007` | Plugin model      | A plugin reads a setting through the host.                                  |
-| `OWN-003` | Record ownership  | The run that reads a setting carries one acting user.                       |
+| `OWN-003` | Record ownership  | The run that reads a setting carries an acting workspace, an acting user, or both. |
+| `OWN-004` | Record ownership  | The value of a field belongs to a workspace or to a user, as the plugin declares. |
 | `OWN-006` | Record ownership  | The isolation of a setting runs in the database and fails closed.           |
 | `API-006` | The HTTP API      | A rejected save answers with a body that names each field.                  |
 | `EXT-005` | External services | A failure of the protection service is an error, never an empty result.     |
@@ -201,7 +228,7 @@ The database holds a secret in a protected form only.
 
 | #   | Question                                                                                                 | Owner  | Answer                                                                                 |
 | --- | ---------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------- |
-| 1   | Does the owner destroy the protection of a user with a command of Maroid, or with a call to the service? | Temuri | With a call to the service. `IDENT` set the precedent for the user record.   |
+| 1   | Does an administrator destroy the protection of a workspace or a user with a command of Maroid, or with a call to the service? | Temuri | With a call to the service. `IDENT` set the precedent for the user record.   |
 | 2   | Does a plugin that declares no required field read an absent settings record as an empty one?            | Temuri | Yes. `PSET-FR-013` reports absent only when a required field holds no value. |
 
 ## Retired identifiers

@@ -4,7 +4,7 @@ title: External identities and the delegated sign in
 type: requirements
 status: approved
 created: 2026-09-15
-updated: 2026-09-15
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-15
 constrained_by: [OWN, SEC, API, TG, CLI, DAT]
@@ -24,7 +24,7 @@ flow inside the hub, and the hub keeps a signing key that nothing else needs.
 
 ## 2. Users
 
-- The owner: gives a person access before that person ever opened Maroid.
+- An administrator: gives a person access before that person ever opened Maroid.
 - A household member: signs in with whichever account they hold, and reaches the same
   data every time.
 - A person who lost an account: signs in with a second one and loses nothing.
@@ -36,7 +36,7 @@ flow inside the hub, and the hub keeps a signing key that nothing else needs.
 - An agent, a machine token, and the scopes that limit one.
 - A capability that a plugin asks for, and the choice of the provider that carries a notification.
 - Merging two user records into one.
-- Registration that the owner did not start.
+- Registration that an administrator did not start.
 - Copying the name of a user from a provider.
 - Deleting a user record.
 
@@ -110,14 +110,14 @@ external account of that provider holds an identity for their record.
 
 ### `EXTID-FR-010`
 
-The owner must create a user record and obtain an invitation for it in one action.
+An administrator must create a user record and obtain an invitation for it in one action.
 
 **Why:** The identifier of an external account exists only after that person signs in
-one time. The owner cannot write the first identity by hand.
+one time. An administrator cannot write the first identity by hand.
 
 ### `EXTID-FR-011`
 
-The owner must obtain an invitation for a user record that already exists.
+An administrator must obtain an invitation for a user record that already exists.
 
 **Why:** An invitation expires, and a person who lost their only external account
 needs a second one.
@@ -144,8 +144,8 @@ Maroid must refuse an invitation after its validity ends.
 
 Maroid must keep the name of a user unchanged when that person signs in.
 
-**Why:** Two providers give two different names for one person. The owner chose the
-one that Maroid holds.
+**Why:** Two providers give two different names for one person. An administrator chose
+the one that Maroid holds.
 
 ### `EXTID-FR-016`
 
@@ -162,6 +162,14 @@ A person must reach the same user record from the bot and from the web shell.
 
 - Normal case: a person attaches their Telegram account, writes to the bot, and reads the same plants in the shell.
 - Unwanted case: the bot serves a person whose record holds no Telegram identity.
+
+### `EXTID-FR-018`
+
+Maroid must give a user record that an administrator creates its first workspace, with
+that user as its manager, in the same action.
+
+**Why:** A user with no workspace reaches no plugin. The first sign in then lands in a
+place to work. See `OWN-010`.
 
 ## 5. Non-functional requirements
 
@@ -201,7 +209,8 @@ One session and one bot conversation each resolve to exactly one user record.
 
 | Rule      | Guideline        | Effect on this feature                                                          |
 | --------- | ---------------- | --------------------------------------------------------------------------------- |
-| `OWN-002` | Record ownership | The owner creates every record. `EXTID-FR-010` is an action of the owner, not of the person who signs in. |
+| `OWN-002` | Record ownership | An administrator creates every record. `EXTID-FR-010` is an action of an administrator, not of the person who signs in. |
+| `OWN-010` | Record ownership | `EXTID-FR-018`. The record and its first workspace come from one action.          |
 | `OWN-003` | Record ownership | Each entry point carries one acting user, and the identity resolves it.          |
 | `OWN-004` | Record ownership | A table that the resolver reads before an acting user exists is shared, and states its reason. |
 | `SEC-004` | Security         | The user record is the allowlist, and the hub reads it on each request.          |
@@ -222,8 +231,8 @@ succeeds it.
 | 1   | What happens when the token of the identity provider expires during a session?      | Temuri | the person signs in again. Maroid holds no renewal and stores no second token. The identity provider carries the lifetime that `EXTID-NFR-002` gives. |
 | 2   | Which providers does the first iteration offer?                                     | Temuri | the providers that the identity provider federates today. A further one costs configuration only, because `EXTID-FR-009` reads the list. A provider that holds a password is not one of them, because no statement asks Maroid to serve a password. |
 | 3   | Does an invitation name the provider that redeems it?                                | Temuri | no. The person uses whichever account they hold.                                                                                                     |
-| 4   | What becomes of a user record whose invitation expired with no sign in?             | Temuri | nothing. The record holds no identity, so it reaches nobody. The owner issues a second invitation or blocks the record.                              |
-| 5   | How does the invitation reach the person?                                           | Temuri | the owner sends it by hand. Maroid delivers nothing.                                                                                                 |
+| 4   | What becomes of a user record whose invitation expired with no sign in?             | Temuri | nothing. The record holds no identity, so it reaches nobody. An administrator issues a second invitation or blocks the record.                              |
+| 5   | How does the invitation reach the person?                                           | Temuri | the administrator sends it by hand. Maroid delivers nothing.                                                                                                 |
 | 6   | Does a detached external account keep the handle and the picture that it gave?       | Temuri | no. A detach removes the identity and everything on it.                                                                                              |
 
 ## Retired identifiers

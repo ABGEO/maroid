@@ -4,7 +4,7 @@ title: The scenarios of the external identities and the delegated sign in
 type: spec
 status: approved
 created: 2026-09-15
-updated: 2026-09-16
+updated: 2026-10-01
 approved_by: Temuri
 approved_on: 2026-09-16
 constrained_by: [TST, SEC, OWN, TRC]
@@ -137,7 +137,7 @@ and marks `cloud` as not attached.
 **Layer:** integration
 
 **Given** a database with no record for the person.
-**When** the owner runs `maroid user invite --first-name Nino --last-name Beridze`.
+**When** an administrator runs `maroid user invite --first-name Nino --last-name Beridze`.
 **Then** `public.users` holds one new record, `public.invitations` holds one valid row
 for it, and the command prints an address that carries the token.
 
@@ -147,9 +147,9 @@ for it, and the command prints an address that carries the token.
 **Layer:** integration
 
 **Given** the record U, whose only invitation expired.
-**When** the owner runs `maroid user invite --user <the identifier of U>`.
+**When** an administrator runs `maroid user invite --user <the identifier of U>`.
 **Then** `public.invitations` holds a second valid row for U, and the count of the
-records in `public.users` does not change.
+records in `public.users` and in `public.workspaces` does not change.
 
 ## `EXTID-SC-014`
 
@@ -204,9 +204,9 @@ not change.
 **Verifies:** `EXTID-FR-017`
 **Layer:** manual
 
-**Given** U holds an identity at `telegram`, and U created one scoped record in the
-web shell.
-**When** U sends an update to the bot that lists that record.
+**Given** U holds an identity at `telegram`, and U created one scoped record in
+workspace W in the web shell.
+**When** U selects W in the chat and sends an update to the bot that lists that record.
 **Then** the bot lists the record that U created in the shell.
 
 ## `EXTID-SC-020`
@@ -262,6 +262,17 @@ the Telegram identifiers 111 and 222, and the display names `Temuri Takalandze` 
 identifiers `111` and `222`, each one naming the record that it came from.
 **And** the first record holds `Temuri` and `Takalandze`, and the second holds `Nino`
 with a null last name.
+
+## `EXTID-SC-025`
+
+**Verifies:** `EXTID-FR-018`
+**Layer:** integration
+
+**Given** a database with no record for the person.
+**When** an administrator runs `maroid user invite --first-name Nino --last-name Beridze`.
+**Then** `public.workspaces` holds one new workspace named `Nino`, and
+`public.workspace_members` holds one row that binds the new record to it with the role
+`manager`. A failure of any write leaves no record, no workspace, and no invitation.
 
 ## Retired identifiers
 
