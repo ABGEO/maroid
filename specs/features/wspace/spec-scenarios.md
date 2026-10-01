@@ -18,8 +18,8 @@ requirements: features/wspace/requirements.md
 
 Every integration scenario runs against the container that `testdb.Start` gives, with
 the migrations of the hub applied. Unless a scenario says otherwise, four active user
-records exist: Ana, Beka, Gio, and Nino. Workspace H has Ana, Beka, and Gio as
-members. Nino is a member of nothing.
+records exist: Ana, Beka, Gio, and Nino. Workspace H has Ana as `manager`, Beka as
+`editor`, and Gio as `viewer`, which `PERMS` gives. Nino is a member of nothing.
 
 ## `WSPACE-SC-001`
 
@@ -47,8 +47,8 @@ answer 422 with the pointer `/name`, and no row appears.
 **Layer:** integration
 
 **Given** workspace H.
-**When** Beka renames it to "Flat", then renames it with a name of 65 characters, then
-Ana renames it with an `If-Match` from before the first rename.
+**When** Ana renames it to "Flat", then renames it with a name of 65 characters, then
+renames it with an `If-Match` from before the first rename.
 **Then** the first answers 200 with "Flat", the second 422 with the pointer `/name`,
 and the third 412. The name stays "Flat".
 
@@ -58,8 +58,8 @@ and the third 412. The name stays "Flat".
 **Layer:** integration
 
 **Given** a fifth user record, Levan, who is blocked.
-**When** Gio reads the candidates of H.
-**Then** Gio reads Nino and nobody else.
+**When** Ana reads the candidates of H.
+**Then** Ana reads Nino and nobody else.
 
 ## `WSPACE-SC-005`
 
@@ -67,7 +67,7 @@ and the third 412. The name stays "Flat".
 **Layer:** integration
 
 **Given** Levan, who is blocked.
-**When** Gio adds Nino, then adds Nino again, then adds Levan.
+**When** Ana adds Nino, then adds Nino again, then adds Levan.
 **Then** the first answers 201, the second 409 `member-exists`, and the third 422 with
 the pointer `/user_id`. H holds one row for Nino.
 
@@ -77,7 +77,7 @@ the pointer `/user_id`. H holds one row for Nino.
 **Layer:** integration
 
 **Given** H holds three rows of a scoped test table, and one of them came from Beka.
-**When** Gio removes Beka, then Gio leaves.
+**When** Ana removes Beka, then Gio leaves.
 **Then** both answer 204, H has Ana alone, and the three rows stay in H.
 
 ## `WSPACE-SC-007`
@@ -95,9 +95,10 @@ the pointer `/user_id`. H holds one row for Nino.
 **Verifies:** `WSPACE-FR-012`
 **Layer:** integration
 
-**Given** workspace G with Gio as its one member, and two rows of a scoped test table.
+**Given** workspace G with Ana as `manager` and Gio as `viewer`, and two rows of a
+scoped test table, one of them from Gio.
 **When** Gio leaves G.
-**Then** the answer is 204, G holds no member, the two rows stay in G, and
+**Then** the answer is 204, Ana is the one member of G, Ana reads both rows, and
 `GET /workspaces` of Gio no longer names G.
 
 ## `WSPACE-SC-009`

@@ -1,0 +1,102 @@
+# The route that PERMS adds. See `SPC-002` and `PERMS-DD-010`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The workspace roles
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/members/{userId}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "#/components/parameters/UserId"
+    patch:
+      operationId: changeMemberRole
+      summary: Change the role of a member.
+      description: >
+        Realizes `PERMS-FR-007` and `PERMS-FR-008`. The permission is
+        `members.write`, whose lowest role is manager. A change that leaves the
+        workspace with no manager answers `/problems/hub/manager-last`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/RoleInput"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The membership after the change.
+          content:
+            application/json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Member"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/ManagerLast"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: >
+        The access token that the IdP issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.
+
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: The identifier of the user record of the member.
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    RoleInput:
+      type: object
+      required: [role]
+      properties:
+        role:
+          $ref: "../../api/components.yaml#/components/schemas/Role"
+
+  responses:
+    ManagerLast:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      description: >
+        The change leaves the workspace with no manager. The type is
+        `/problems/hub/manager-last`, and the hub changed nothing.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"

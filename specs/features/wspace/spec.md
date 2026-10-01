@@ -169,19 +169,20 @@ erDiagram
 
 **HTTP routes.** `api.yaml` holds the bodies and the status codes. Every route sits
 behind `auth.Middleware`. A route under `/workspaces/{workspaceId}` also sits behind
-`workspace.Middleware`. The Permission column holds "none" until `PERMS`.
+`workspace.Middleware`. `features/perms/spec.md` section 4.3 gives each permission and
+its lowest role, and `PERMS` builds the check.
 
-| Method   | Path                                          | Access        | Permission | Realizes                          |
-| -------- | --------------------------------------------- | ------------- | ---------- | --------------------------------- |
-| `GET`    | `/workspaces`                                 | Authenticated | None       | `WSPACE-FR-003`                   |
-| `POST`   | `/workspaces`                                 | Authenticated | None       | `WSPACE-FR-001`, `WSPACE-FR-002`  |
-| `GET`    | `/workspaces/{workspaceId}`                   | Member        | None       | `WSPACE-FR-020`                   |
-| `PATCH`  | `/workspaces/{workspaceId}`                   | Member        | None       | `WSPACE-FR-004`                   |
-| `GET`    | `/workspaces/{workspaceId}/members`           | Member        | None       | `WSPACE-FR-011`                   |
-| `POST`   | `/workspaces/{workspaceId}/members`           | Member        | None       | `WSPACE-FR-006`                   |
-| `GET`    | `/workspaces/{workspaceId}/members/{userId}`  | Member        | None       | `WSPACE-FR-011`                   |
-| `DELETE` | `/workspaces/{workspaceId}/members/{userId}`  | Member        | None       | `WSPACE-FR-008`, `WSPACE-FR-009`, `WSPACE-FR-012` |
-| `GET`    | `/workspaces/{workspaceId}/member-candidates` | Member        | None       | `WSPACE-FR-005`                   |
+| Method   | Path                                          | Access        | Permission         | Realizes                          |
+| -------- | --------------------------------------------- | ------------- | ------------------ | --------------------------------- |
+| `GET`    | `/workspaces`                                 | Authenticated | None               | `WSPACE-FR-003`                   |
+| `POST`   | `/workspaces`                                 | Authenticated | None               | `WSPACE-FR-001`, `WSPACE-FR-002`  |
+| `GET`    | `/workspaces/{workspaceId}`                   | Member        | `workspace.read`   | `WSPACE-FR-020`                   |
+| `PATCH`  | `/workspaces/{workspaceId}`                   | Member        | `workspace.write`  | `WSPACE-FR-004`                   |
+| `GET`    | `/workspaces/{workspaceId}/members`           | Member        | `workspace.read`   | `WSPACE-FR-011`                   |
+| `POST`   | `/workspaces/{workspaceId}/members`           | Member        | `members.write`    | `WSPACE-FR-006`                   |
+| `GET`    | `/workspaces/{workspaceId}/members/{userId}`  | Member        | `workspace.read`   | `WSPACE-FR-011`                   |
+| `DELETE` | `/workspaces/{workspaceId}/members/{userId}`  | Member        | `membership.leave` for the acting user, `members.write` for another | `WSPACE-FR-008`, `WSPACE-FR-009`, `WSPACE-FR-012` |
+| `GET`    | `/workspaces/{workspaceId}/member-candidates` | Member        | `members.write`    | `WSPACE-FR-005`                   |
 
 `DELETE` on the membership of the acting user is a leave, and on another membership a
 removal. `GET /workspaces` answers each workspace of the acting user, ordered by the

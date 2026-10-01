@@ -4,7 +4,7 @@ title: The workspaces, their members, and the workspace that a unit of work acts
 type: requirements
 status: approved
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-02
 approved_by: Temuri
 approved_on: 2026-10-01
 constrained_by: [OWN, SEC, ERR, API, TG]
@@ -69,29 +69,29 @@ A user must list the workspaces that they are a member of.
 
 ### `WSPACE-FR-004`
 
-A member must rename a workspace, within the limits of `WSPACE-FR-001`.
+A manager must rename a workspace, within the limits of `WSPACE-FR-001`.
 
 **Why:** Two workspaces can share a name. Each person sees their own list only.
 
 ### `WSPACE-FR-005`
 
-A member must list the name of every active user record.
+A manager must list the name of every active user record.
 
-**Why:** A member picks a new member from that list.
+**Why:** A manager picks a new member from that list.
 
 ### `WSPACE-FR-006`
 
-A member must add an active user record as a member.
+A manager must add an active user record as a member.
 
 **Examples:**
 
-- Normal case: a member adds a person.
+- Normal case: a manager adds a person.
 - Unwanted case: the person is already a member. Maroid changes nothing and says so.
 - Unwanted case: the user record is blocked. Maroid adds nothing.
 
 ### `WSPACE-FR-008`
 
-A member must remove another member.
+A manager must remove another member.
 
 ### `WSPACE-FR-009`
 
@@ -105,15 +105,16 @@ A member must list the members of the workspace.
 
 ### `WSPACE-FR-012`
 
-Maroid must keep every record of a workspace when a member leaves or another member
-removes one.
+Maroid must keep every record of a workspace when a member leaves or a manager removes
+one.
 
 **Why:** The household keeps its bills when a person moves out.
 
 **Examples:**
 
 - Normal case: one of two members leaves. The other reads every record.
-- Limit case: the last member leaves. The records stay, and nobody reaches them.
+- Unwanted case: the last manager leaves. `PERMS-FR-008` refuses it, so a workspace with
+  records always keeps a member who reaches them.
 
 ### `WSPACE-FR-013`
 

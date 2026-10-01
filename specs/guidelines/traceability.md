@@ -4,7 +4,7 @@ title: Traceability
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-01
+updated: 2026-10-02
 scope: [specs/, code comments]
 related: [LNG, PRC, GIT, RES]
 ---
@@ -282,7 +282,7 @@ Add a row before you create the file or the directory.
 | `HEALTH` | `features/health/` | The liveness and the readiness that the hub reports. | Approved |
 | `WSPACE` | `features/wspace/` | The workspaces, their members, and the workspace that a unit of work acts in. | Approved |
 | `PLUGACC` | `features/plugacc/` | The administrator, the plugin allowlist, and the enablement of a plugin. | Planned |
-| `PERMS` | `features/perms/` | The permission that a plugin declares, and its check. | Planned |
+| `PERMS` | `features/perms/` | The workspace roles, and the permission that every action needs. | Approved |
 
 ## Retired identifiers
 

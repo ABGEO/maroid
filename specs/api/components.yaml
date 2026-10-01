@@ -67,6 +67,35 @@ components:
         The restriction that `ERR-006` applies. `Z-233` asks a specification to
         declare it.
 
+    Role:
+      type: string
+      enum: [manager, editor, viewer]
+      description: The workspace role, from the most access to the least. `OWN-011`.
+
+    Member:
+      type: object
+      description: >
+        One membership of a workspace. `WSPACE` and `PERMS` both answer it.
+      required: [user_id, role, created_at, updated_at]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+          description: Absent when the user record holds none. `APIFMT-FR-009`.
+        last_name:
+          type: string
+          description: Absent when the user record holds none. `APIFMT-FR-009`.
+        role:
+          $ref: "#/components/schemas/Role"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
     Page:
       type: object
       description: >

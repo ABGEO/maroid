@@ -92,7 +92,8 @@ paths:
     get:
       operationId: getWorkspace
       summary: Read one workspace.
-      description: Realizes `WSPACE-FR-020`.
+      description: >
+        Realizes `WSPACE-FR-020`. The permission is `workspace.read`. `PERMS-DD-010`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       responses:
@@ -109,12 +110,15 @@ paths:
                 $ref: "#/components/schemas/Workspace"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
     patch:
       operationId: renameWorkspace
       summary: Rename a workspace.
-      description: Realizes `WSPACE-FR-004`.
+      description: >
+        Realizes `WSPACE-FR-004`. The permission is `workspace.write`. `PERMS-DD-010`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
         - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
@@ -138,6 +142,8 @@ paths:
                 $ref: "#/components/schemas/Workspace"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
         "412":
@@ -153,6 +159,7 @@ paths:
       summary: List the members of the workspace.
       description: >
         Realizes `WSPACE-FR-011`. One page holds every member.
+        The permission is `workspace.read`. `PERMS-DD-010`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       responses:
@@ -171,17 +178,20 @@ paths:
                       items:
                         type: array
                         items:
-                          $ref: "#/components/schemas/Member"
+                          $ref: "../../api/components.yaml#/components/schemas/Member"
         "400":
           $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
     post:
       operationId: addMember
       summary: Add an active user record as a member.
-      description: Realizes `WSPACE-FR-006`.
+      description: >
+        Realizes `WSPACE-FR-006`. The permission is `members.write`. `PERMS-DD-010`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
         - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
@@ -207,9 +217,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Member"
+                $ref: "../../api/components.yaml#/components/schemas/Member"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
         "409":
@@ -224,7 +236,8 @@ paths:
     get:
       operationId: getMember
       summary: Read one membership.
-      description: Realizes `WSPACE-FR-011`.
+      description: >
+        Realizes `WSPACE-FR-011`. The permission is `workspace.read`. `PERMS-DD-010`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       responses:
@@ -238,9 +251,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Member"
+                $ref: "../../api/components.yaml#/components/schemas/Member"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
     delete:
@@ -249,6 +264,7 @@ paths:
       description: >
         Realizes `WSPACE-FR-008`, `WSPACE-FR-009`, and `WSPACE-FR-012`. Every
         record of the workspace stays, even when the last member leaves.
+        The permission is `membership.leave` for the acting user, and `members.write` for another member. `PERMS-DD-010`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       responses:
@@ -259,6 +275,8 @@ paths:
           description: The membership is gone.
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
 
@@ -271,6 +289,7 @@ paths:
       description: >
         Realizes `WSPACE-FR-005`. Ordered by the last name, then by the first
         name. One page holds every candidate.
+        The permission is `members.write`. `PERMS-DD-010`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       responses:
@@ -294,6 +313,8 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
 
@@ -320,7 +341,7 @@ components:
   schemas:
     Workspace:
       type: object
-      required: [id, name, created_at, updated_at]
+      required: [id, name, role, created_at, updated_at]
       properties:
         id:
           type: string
@@ -329,6 +350,17 @@ components:
           type: string
           minLength: 1
           maxLength: 64
+        role:
+          $ref: "../../api/components.yaml#/components/schemas/Role"
+          description: The role of the acting user in the workspace. `PERMS-FR-009`.
+        permissions:
+          type: array
+          items:
+            type: string
+          description: >
+            Every permission that the role of the acting user holds in the
+            workspace. Present in the answer of `getWorkspace` alone.
+            `PERMS-FR-017`.
         created_at:
           type: string
           format: date-time
@@ -346,33 +378,15 @@ components:
           minLength: 1
           maxLength: 64
 
-    Member:
-      type: object
-      required: [user_id, created_at, updated_at]
-      properties:
-        user_id:
-          type: string
-          format: uuid
-        first_name:
-          type: string
-          description: Absent when the user record holds none. `APIFMT-FR-009`.
-        last_name:
-          type: string
-          description: Absent when the user record holds none. `APIFMT-FR-009`.
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
     MemberInput:
       type: object
-      required: [user_id]
+      required: [user_id, role]
       properties:
         user_id:
           type: string
           format: uuid
+        role:
+          $ref: "../../api/components.yaml#/components/schemas/Role"
 
     Candidate:
       type: object

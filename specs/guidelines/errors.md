@@ -130,6 +130,7 @@ identity, the secret of the bot.
 | `settings-absent`        | 404    | The plugin declares no settings.                    |
 | `identity-last`          | 409    | The last external account cannot be detached.       |
 | `member-exists`          | 409    | The user record is already a member of the workspace. |
+| `manager-last`           | 409    | The change leaves the workspace with no manager.    |
 | `webhook-secret-invalid` | 401    | The update carries no valid secret of the bot.      |
 | `settings-invalid`       | 422    | The settings do not match the schema.               |
 | `not-ready`              | 503    | The hub cannot serve a request.                     |

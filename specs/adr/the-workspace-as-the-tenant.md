@@ -356,12 +356,12 @@ decision.
 | ------------------------ | ----------------------------------------------------------------------- |
 | `OWN-001`                | An administrator gives the name of a user record.                       |
 | `CFG-007`                | A value of one workspace or one person lives in a scoped record.        |
-| `ERR-003`                | A row of another workspace, a workspace of no membership, and a disabled plugin each answer `not-found`. The registry gains `permission-denied`, status 403, for `SEC-013`, and `member-exists`, status 409, for `WSPACE`. |
+| `ERR-003`                | A row of another workspace, a workspace of no membership, and a disabled plugin each answer `not-found`. The registry gains `permission-denied`, status 403, for `SEC-013`, `member-exists`, status 409, for `WSPACE`, and `manager-last`, status 409, for `PERMS`. |
 | `RES-002`                | The `Z-110` row and the `Z-135` row name the new prefix. The `Z-143` row stays, because `/plugins/{id}` still leads to the assets of `SEC-006`. |
 | `RES-005`                | A collection answers the rows of the acting workspace.                  |
 | `RES-009`                | `uid` stays, because the permission of `SEC-013` is no scope of the token. |
 | `SPC-003`                | A route, an MCP tool, and a Telegram command declare a permission. A cron job declares where it runs. |
-| `UI-008`                 | The client of a plugin user interface reaches the acting workspace.     |
+| `UI-008`                 | The client of a plugin user interface reaches the acting workspace, and `can` answers a permission of `PERMS`. |
 | `PLG-010`                | Loading a plugin is not enablement.                                     |
 | `GLO-invitation`         | An administrator issues an invitation.                                  |
 
