@@ -4,7 +4,7 @@ title: The workspace as the tenant
 type: adr
 status: accepted
 created: 2026-10-01
-updated: 2026-10-01
+updated: 2026-10-02
 decided: 2026-10-01
 changes: [OWN-001, OWN-002, OWN-003, OWN-004, OWN-005, OWN-006, OWN-007, OWN-008,
   OWN-009, OWN-010, OWN-011, SEC-001, SEC-011, SEC-012, SEC-013, API-003, API-004,
@@ -356,7 +356,7 @@ decision.
 | ------------------------ | ----------------------------------------------------------------------- |
 | `OWN-001`                | An administrator gives the name of a user record.                       |
 | `CFG-007`                | A value of one workspace or one person lives in a scoped record.        |
-| `ERR-003`                | A row of another workspace, a workspace of no membership, and a disabled plugin each answer `not-found`. The registry gains `permission-denied`, status 403, for `SEC-013`. |
+| `ERR-003`                | A row of another workspace, a workspace of no membership, and a disabled plugin each answer `not-found`. The registry gains `permission-denied`, status 403, for `SEC-013`, and `member-exists`, status 409, for `WSPACE`. |
 | `RES-002`                | The `Z-110` row and the `Z-135` row name the new prefix. The `Z-143` row stays, because `/plugins/{id}` still leads to the assets of `SEC-006`. |
 | `RES-005`                | A collection answers the rows of the acting workspace.                  |
 | `RES-009`                | `uid` stays, because the permission of `SEC-013` is no scope of the token. |

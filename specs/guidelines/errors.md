@@ -4,7 +4,7 @@ title: Errors
 type: guideline
 status: active
 created: 2026-09-21
-updated: 2026-10-01
+updated: 2026-10-02
 scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, libs/rest/, libs/api-client/, plugins/]
 related: [API, DAT, LOG, OWN, PLG, RES, UI]
 ---
@@ -129,6 +129,7 @@ identity, the secret of the bot.
 | `network-not-allowed`    | 403    | The caller is not on the network allowlist.         |
 | `settings-absent`        | 404    | The plugin declares no settings.                    |
 | `identity-last`          | 409    | The last external account cannot be detached.       |
+| `member-exists`          | 409    | The user record is already a member of the workspace. |
 | `webhook-secret-invalid` | 401    | The update carries no valid secret of the bot.      |
 | `settings-invalid`       | 422    | The settings do not match the schema.               |
 | `not-ready`              | 503    | The hub cannot serve a request.                     |

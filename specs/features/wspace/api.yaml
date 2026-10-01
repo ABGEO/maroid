@@ -1,0 +1,402 @@
+# The routes that WSPACE adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The workspaces and their members
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces:
+    get:
+      operationId: listWorkspaces
+      summary: List the workspaces of the acting user.
+      description: >
+        Realizes `WSPACE-FR-003`. Acts in no workspace, so it declares no permission.
+        Ordered by the name, then by the identifier. The user bounds the set, so
+        one page holds every item, and a request that names `limit` or `cursor`
+        answers `/problems/http/request-invalid`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the memberships of the acting user.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Workspace"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+    post:
+      operationId: createWorkspace
+      summary: Create a workspace, with the acting user as its first member.
+      description: >
+        Realizes `WSPACE-FR-001` and `WSPACE-FR-002`. A member that the schema does
+        not declare answers `/problems/http/member-unknown`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkspaceInput"
+      responses:
+        "201":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            Location:
+              description: The address of the new workspace.
+              schema:
+                type: string
+                format: uri
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The workspace.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+    get:
+      operationId: getWorkspace
+      summary: Read one workspace.
+      description: Realizes `WSPACE-FR-020`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The workspace.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    patch:
+      operationId: renameWorkspace
+      summary: Rename a workspace.
+      description: Realizes `WSPACE-FR-004`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/WorkspaceInput"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The workspace after the change.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workspace"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}/members:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+    get:
+      operationId: listMembers
+      summary: List the members of the workspace.
+      description: >
+        Realizes `WSPACE-FR-011`. One page holds every member.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the members.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Member"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    post:
+      operationId: addMember
+      summary: Add an active user record as a member.
+      description: Realizes `WSPACE-FR-006`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberInput"
+      responses:
+        "201":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            Location:
+              description: The address of the new membership.
+              schema:
+                type: string
+                format: uri
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The membership.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/MembershipConflict"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}/members/{userId}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "#/components/parameters/UserId"
+    get:
+      operationId: getMember
+      summary: Read one membership.
+      description: Realizes `WSPACE-FR-011`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The membership.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    delete:
+      operationId: removeMember
+      summary: Remove a member, or leave when it names the acting user.
+      description: >
+        Realizes `WSPACE-FR-008`, `WSPACE-FR-009`, and `WSPACE-FR-012`. Every
+        record of the workspace stays, even when the last member leaves.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The membership is gone.
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/member-candidates:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+    get:
+      operationId: listMemberCandidates
+      summary: List every active user record that is not a member of the workspace.
+      description: >
+        Realizes `WSPACE-FR-005`. Ordered by the last name, then by the first
+        name. One page holds every candidate.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the candidates.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Candidate"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: >
+        The access token that Dex issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.
+
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: The identifier of the user record of the member.
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Workspace:
+      type: object
+      required: [id, name, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    WorkspaceInput:
+      type: object
+      required: [name]
+      description: The hub counts the length in characters, not in bytes. `WSPACE-DD-005`.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+
+    Member:
+      type: object
+      required: [user_id, created_at, updated_at]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+          description: Absent when the user record holds none. `APIFMT-FR-009`.
+        last_name:
+          type: string
+          description: Absent when the user record holds none. `APIFMT-FR-009`.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MemberInput:
+      type: object
+      required: [user_id]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+
+    Candidate:
+      type: object
+      required: [user_id]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+          description: Absent when the user record holds none. `APIFMT-FR-009`.
+        last_name:
+          type: string
+          description: Absent when the user record holds none. `APIFMT-FR-009`.
+
+  responses:
+    MembershipConflict:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      description: >
+        The person is already a member. The type is `/problems/hub/member-exists`,
+        and the hub changed nothing.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"

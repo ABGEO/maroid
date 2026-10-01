@@ -50,6 +50,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-member` | member | A user who belongs to a workspace, with one workspace role. `OWN-011` gives it. |
 | `GLO-workspace-role` | workspace role | The access of a member: manager, editor, or viewer, in that order. |
 | `GLO-acting-workspace` | acting workspace | The workspace that one unit of work runs in. |
+| `GLO-selected-workspace` | selected workspace | The workspace that one Telegram chat acts in. `OWN-003` reads it. |
 | `GLO-administrator` | administrator | A user who manages the users, the plugin allowlists, and every workspace of the instance. |
 | `GLO-plugin-allowlist` | plugin allowlist | The plugins that one user may enable in a workspace that they manage. |
 | `GLO-enablement` | enablement | The fact that one plugin serves one workspace. |

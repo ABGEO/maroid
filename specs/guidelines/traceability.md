@@ -280,6 +280,9 @@ Add a row before you create the file or the directory.
 | `APIFMT` | `features/apifmt/` | The answer that a client reads, and the platform that carries it. | Approved |
 | `UIKIT` | `features/uikit/` | The shared components and styling of every web user interface. | Approved |
 | `HEALTH` | `features/health/` | The liveness and the readiness that the hub reports. | Approved |
+| `WSPACE` | `features/wspace/` | The workspaces, their members, and the workspace that a unit of work acts in. | Approved |
+| `PLUGACC` | `features/plugacc/` | The administrator, the plugin allowlist, and the enablement of a plugin. | Planned |
+| `PERMS` | `features/perms/` | The permission that a plugin declares, and its check. | Planned |
 
 ## Retired identifiers
 
