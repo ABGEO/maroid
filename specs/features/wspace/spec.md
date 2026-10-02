@@ -64,7 +64,7 @@ release together. A migration gives every existing user record one workspace.
 | `API-007` | HTTP API         | A workspace carries `ETag`, and its rename reads `If-Match`. `POST` reads `Idempotency-Key`. |
 | `RES-005` | REST             | Every collection of this feature is bounded and answers one page.                 |
 | `Z-148`   | REST             | A rename uses `PATCH` with `application/merge-patch+json`.                         |
-| `DAT-009` | Data             | Every table declares `id UUID DEFAULT uuidv7()`. The migration of `WSPACE-DD-004` names no `id`. |
+| `DAT-009` | Data             | `workspaces` declares `id UUID DEFAULT uuidv7()`, and `workspace_members` takes the pair as its key. The migration of `WSPACE-DD-004` names no `id`. |
 | `REP-002` | Repository       | `WorkspaceRepository` and `WorkspaceMemberRepository`, each with its implementation. |
 | `PKG-004` | Package layout   | `apps/hub/internal/workspace` holds the service and the middleware.               |
 
@@ -140,19 +140,19 @@ CREATE TABLE public.workspaces
 
 CREATE TABLE public.workspace_members
 (
-    id           UUID        NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     workspace_id UUID        NOT NULL REFERENCES public.workspaces (id),
     user_id      UUID        NOT NULL REFERENCES public.users (id),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT workspace_members_workspace_user_key UNIQUE (workspace_id, user_id)
+    PRIMARY KEY (workspace_id, user_id)
 );
 
 CREATE INDEX workspace_members_user_id_idx ON public.workspace_members (user_id);
 ```
 
-Each table takes the `set_updated_at` trigger. The unique constraint realizes
-`WSPACE-INV-002`. No foreign key cascades, because `OWN-002` and `OWN-010` delete no
+Each table takes the `set_updated_at` trigger. `workspace_members` relates two
+records and no table references it, so the pair is its primary key and it carries no
+`id`, as `DAT-009` gives. The primary key realizes `WSPACE-INV-002`. No foreign key cascades, because `OWN-002` and `OWN-010` delete no
 user record and no workspace. A removal deletes one membership row and touches no
 record of the workspace, which realizes `WSPACE-FR-012`. The last member leaves like
 any other, and the workspace stays with no member.
@@ -185,7 +185,8 @@ its lowest role, and `PERMS` builds the check.
 | `GET`    | `/workspaces/{workspaceId}/member-candidates` | Member        | `members.write`    | `WSPACE-FR-005`                   |
 
 `DELETE` on the membership of the acting user is a leave, and on another membership a
-removal. `GET /workspaces` answers each workspace of the acting user, ordered by the
+removal. The members answer in the order of joining, then by the user identifier,
+because `workspace_members` carries no `id` to sort by. `DAT-009`. `GET /workspaces` answers each workspace of the acting user, ordered by the
 name, then by the identifier. Every collection answers one page, because a household
 bounds it.
 
@@ -248,7 +249,7 @@ type, status, and body, which realizes `WSPACE-FR-014`.
 indexed statement on each request, and holds no cache.
 **Rationale:** `IDENT-DD-003` reads the user record on each request for the same
 reason: a cache keeps a removed member inside for its lifetime, which breaks
-`WSPACE-NFR-001`. The statement reads one row through the unique constraint, under
+`WSPACE-NFR-001`. The statement reads one row through the primary key, under
 1 millisecond on a household-sized table, inside the 10 milliseconds of
 `IDENT-NFR-002`. `PERMS` extends the same middleware with the role.
 **Alternatives:** The workspaces of the user in the session token. A removal then

@@ -4,7 +4,7 @@ title: Data
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-23
+updated: 2026-10-02
 scope: [apps/hub/db/, apps/hub/internal/migrator/, plugins/*/db/, plugins/*/repository/]
 related: [ARC, PLG, OWN, RES]
 ---
@@ -77,8 +77,16 @@ An insert does not name `id`. A caller that needs the value reads it with
 A natural key or a content hash becomes a unique constraint, never the primary key.
 A hypertable puts the partitioning column in the key: `PRIMARY KEY (id, time)`.
 
+A table that relates other records, and that no other table references, has no
+`id`. The columns that name the related records form its primary key:
+`PRIMARY KEY (workspace_id, user_id)`. A column that names a plugin by its identifier
+counts as a reference. A route that lists such a table declares its sort, because
+`RES-005` sorts by `id` when a route declares none.
+
 **Why:** Version 7 sorts by time, so the index keeps its locality and the row
 carries its creation order. One source for the value means no caller can omit it.
+A relation is the pair that it names. An `id` beside the pair adds a second index and
+a second identity that no reader uses.
 
 ## DAT-010
 

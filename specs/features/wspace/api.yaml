@@ -23,15 +23,29 @@ paths:
         Realizes `WSPACE-FR-003`. Acts in no workspace, so it declares no permission.
         Ordered by the name, then by the identifier. The user bounds the set, so
         one page holds every item, and a request that names `limit` or `cursor`
-        answers `/problems/http/request-invalid`.
+        answers `/problems/http/request-invalid`. With `scope=all`, an
+        administrator reads every workspace of the instance instead.
+        `PLUGACC-FR-009`, `PLUGACC-DD-006`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - name: scope
+          in: query
+          required: false
+          description: >
+            `all` answers every workspace of the instance, and an administrator
+            alone names it. Any other user gets `/problems/http/permission-denied`
+            with the permission `administration`.
+          schema:
+            type: string
+            enum: [all]
       responses:
         "200":
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
-          description: One page of the memberships of the acting user.
+          description: >
+            One page of the memberships of the acting user, or of every workspace
+            of the instance with `scope=all`.
           content:
             application/json:
               schema:
@@ -42,11 +56,15 @@ paths:
                       items:
                         type: array
                         items:
-                          $ref: "#/components/schemas/Workspace"
+                          oneOf:
+                            - $ref: "#/components/schemas/Workspace"
+                            - $ref: "#/components/schemas/InstanceWorkspace"
         "400":
           $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
     post:
       operationId: createWorkspace
       summary: Create a workspace, with the acting user as its first member.
@@ -158,7 +176,8 @@ paths:
       operationId: listMembers
       summary: List the members of the workspace.
       description: >
-        Realizes `WSPACE-FR-011`. One page holds every member.
+        Realizes `WSPACE-FR-011`. One page holds every member, ordered by the
+        moment of joining, then by the user identifier. `DAT-009`.
         The permission is `workspace.read`. `PERMS-DD-010`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
@@ -361,6 +380,32 @@ components:
             Every permission that the role of the acting user holds in the
             workspace. Present in the answer of `getWorkspace` alone.
             `PERMS-FR-017`.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    InstanceWorkspace:
+      type: object
+      description: One workspace in the answer of `scope=all`. `PLUGACC-DD-006`.
+      required: [id, name, member_count, plugin_ids, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        member_count:
+          type: integer
+          format: int32
+          minimum: 0
+        plugin_ids:
+          type: array
+          items:
+            type: string
+          description: The plugins that the workspace enables, by identifier.
         created_at:
           type: string
           format: date-time

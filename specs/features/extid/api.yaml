@@ -267,7 +267,7 @@ components:
   schemas:
     CurrentUser:
       type: object
-      required: [provider]
+      required: [provider, is_administrator]
       description: >
         The person of the current session. The two names come from the record that
         an administrator set, and the picture from the token of the session.
@@ -291,11 +291,17 @@ components:
         provider:
           type: string
           description: The connector that authenticated this session.
+        is_administrator:
+          type: boolean
+          description: >
+            Whether the record holds the mark of an administrator. The deck shows
+            the pages of `/admin` when it does. `PLUGACC-FR-023`.
       examples:
         - first_name: Temuri
           last_name: Takalandze
           picture: https://example.com/a.jpg
           provider: telegram
+          is_administrator: true
 
     Handoff:
       type: object

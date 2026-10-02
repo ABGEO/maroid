@@ -1,0 +1,527 @@
+# The routes that PLUGACC adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The administrator and the enablement of a plugin
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /users:
+    get:
+      operationId: listUsers
+      summary: List every user record.
+      description: >
+        Realizes `PLUGACC-FR-002`. An administrator alone. One page holds every
+        record, ordered by the last name, then by the first name.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the user records.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/User"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+    post:
+      operationId: createUser
+      summary: Create a user record, its first workspace, and its invitation.
+      description: >
+        Realizes `PLUGACC-FR-003` and `PLUGACC-FR-029`. An administrator alone.
+        The answer carries the address of the invitation one time. `PLUGACC-DD-004`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            Location:
+              description: The address of the new user record.
+              schema:
+                type: string
+                format: uri
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The user record and its invitation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvitedUser"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /users/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    get:
+      operationId: getUser
+      summary: Read one user record.
+      description: Realizes `PLUGACC-FR-002`. An administrator alone.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The user record.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    patch:
+      operationId: changeUser
+      summary: Block or unblock a user record, or change its mark of an administrator.
+      description: >
+        Realizes `PLUGACC-FR-005`, `PLUGACC-FR-006`, `PLUGACC-FR-007`,
+        `PLUGACC-FR-029`, and `PLUGACC-FR-030`. An administrator alone. A change that
+        leaves no active administrator answers `/problems/hub/administrator-last`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/UserChange"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The user record after the change.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/AdministratorLast"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /users/{userId}/invitations:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    post:
+      operationId: inviteUser
+      summary: Issue a new invitation for a user record that exists.
+      description: Realizes `PLUGACC-FR-004`. An administrator alone.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      responses:
+        "201":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The invitation. The address shows this one time.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invitation"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /users/{userId}/allowed-plugins:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    get:
+      operationId: listAllowedPlugins
+      summary: List the plugin allowlist of a user.
+      description: >
+        Realizes `PLUGACC-FR-008`. An administrator alone. One page holds every
+        item, ordered by the plugin identifier. `DAT-009`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the allowlist.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/PluginRef"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    post:
+      operationId: allowPlugin
+      summary: Put a loaded plugin on the allowlist of a user.
+      description: >
+        Realizes `PLUGACC-FR-008`. An administrator alone. A plugin that the list
+        already holds answers 200 with the item.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PluginRef"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The list already held the plugin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginRef"
+        "201":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The plugin is on the list.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginRef"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /users/{userId}/allowed-plugins/{pluginId}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+      - $ref: "#/components/parameters/PluginId"
+    delete:
+      operationId: disallowPlugin
+      summary: Take a plugin off the allowlist of a user.
+      description: >
+        Realizes `PLUGACC-FR-008` and `PLUGACC-FR-016`. An administrator alone. No
+        enablement changes.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The list no longer holds the plugin.
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+    get:
+      operationId: listEnabledPlugins
+      summary: List the plugins that the workspace enables.
+      description: >
+        Realizes `PLUGACC-FR-017`. The permission is `workspace.read`. Admits an
+        administrator. One page holds every item, ordered by the plugin
+        identifier. `DAT-009`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the enablements.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/PluginRef"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/{pluginId}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "#/components/parameters/PluginId"
+    get:
+      operationId: getEnabledPlugin
+      summary: Read one enablement.
+      description: >
+        Realizes `PLUGACC-FR-017`. The permission is `workspace.read`. A plugin that
+        the workspace does not enable answers `not-found`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The enablement.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginRef"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    put:
+      operationId: enablePlugin
+      summary: Enable a plugin in the workspace.
+      description: >
+        Realizes `PLUGACC-FR-012` and `PLUGACC-FR-013`. The permission is
+        `plugins.write`. A manager enables a plugin of their allowlist, and an
+        administrator any loaded plugin. A plugin off the allowlist answers
+        `/problems/http/permission-denied` with the permission `plugin-allowlist`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The workspace already enabled the plugin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginRef"
+        "201":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The workspace enables the plugin.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PluginRef"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+    delete:
+      operationId: disablePlugin
+      summary: Disable a plugin in the workspace. Its records and settings stay.
+      description: >
+        Realizes `PLUGACC-FR-014`, `PLUGACC-FR-015`, and `PLUGACC-FR-027`. The
+        permission is `plugins.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The workspace no longer enables the plugin.
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: >
+        The access token that Dex issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.
+
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: The identifier of the user record.
+      schema:
+        type: string
+        format: uuid
+    PluginId:
+      name: pluginId
+      in: path
+      required: true
+      description: The plugin identifier. See `PLG-003`.
+      schema:
+        type: string
+        examples: [dev.maroid.jasmine]
+
+  schemas:
+    User:
+      type: object
+      required: [id, status, is_administrator, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+          description: Absent when the record holds none. `APIFMT-FR-009`.
+        last_name:
+          type: string
+          description: Absent when the record holds none. `APIFMT-FR-009`.
+        status:
+          type: string
+          enum: [active, blocked]
+        is_administrator:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserInput:
+      type: object
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        is_administrator:
+          type: boolean
+          default: false
+
+    UserChange:
+      type: object
+      description: A merge patch. A member that the body leaves out changes nothing.
+      properties:
+        status:
+          type: string
+          enum: [active, blocked]
+        is_administrator:
+          type: boolean
+
+    Invitation:
+      type: object
+      required: [address, expires_at]
+      properties:
+        address:
+          type: string
+          format: uri
+          description: The address of the deck that redeems the invitation.
+        expires_at:
+          type: string
+          format: date-time
+
+    InvitedUser:
+      type: object
+      required: [user, invitation]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        invitation:
+          $ref: "#/components/schemas/Invitation"
+
+    PluginRef:
+      type: object
+      required: [plugin_id]
+      properties:
+        plugin_id:
+          type: string
+          description: The plugin identifier. See `PLG-003`.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+  responses:
+    AdministratorLast:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      description: >
+        The change leaves the instance with no active administrator. The type is
+        `/problems/hub/administrator-last`, and the hub changed nothing.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"

@@ -281,7 +281,7 @@ Add a row before you create the file or the directory.
 | `UIKIT` | `features/uikit/` | The shared components and styling of every web user interface. | Approved |
 | `HEALTH` | `features/health/` | The liveness and the readiness that the hub reports. | Approved |
 | `WSPACE` | `features/wspace/` | The workspaces, their members, and the workspace that a unit of work acts in. | Approved |
-| `PLUGACC` | `features/plugacc/` | The administrator, the plugin allowlist, and the enablement of a plugin. | Planned |
+| `PLUGACC` | `features/plugacc/` | The administrator, the plugin allowlist, and the enablement of a plugin. | Approved |
 | `PERMS` | `features/perms/` | The workspace roles, and the permission that every action needs. | Approved |
 
 ## Retired identifiers

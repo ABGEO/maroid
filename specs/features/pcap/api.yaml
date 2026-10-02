@@ -23,7 +23,9 @@ paths:
       description: >
         Realizes `PCAP-FR-001` and `PCAP-FR-004`. The plugin list tool of the
         Model Context Protocol answers with the same entries. See
-        `MCPHUB-FR-005`.
+        `MCPHUB-FR-005`. An administrator reads every loaded plugin, and any other
+        user the plugins of their plugin allowlist. `PLUGACC-FR-021`,
+        `PLUGACC-FR-028`.
       responses:
         "200":
           headers:
