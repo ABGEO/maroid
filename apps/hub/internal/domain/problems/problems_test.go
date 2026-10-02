@@ -24,6 +24,9 @@ func TestEveryHubTypeIsARelativeReference(t *testing.T) {
 		"identity-last":       problems.NewIdentityLast,
 		"settings-invalid":    func() *problem.Problem { return problems.NewSettingsInvalid().Base() },
 		"not-ready":           func() *problem.Problem { return problems.NewNotReady().Base() },
+		"member-exists":       problems.NewMemberExists,
+		"manager-last":        problems.NewManagerLast,
+		"administrator-last":  problems.NewAdministratorLast,
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -70,6 +73,27 @@ func TestNotReadyAnswersItsDependencies(t *testing.T) {
 			}
 
 			assert.NotContains(t, body, "Problem")
+		})
+	}
+}
+
+// WSPACE-SC-005, PERMS-SC-008, PLUGACC-SC-005: Each conflict of a membership or of
+// the mark of an administrator answers 409, with the title that ERR-003 gives.
+func TestConflictsOfTheWorkspaceFeatures(t *testing.T) {
+	t.Parallel()
+
+	for title, build := range map[string]func() *problem.Problem{
+		"The user record is already a member of the workspace.":        problems.NewMemberExists,
+		"The change leaves the workspace with no manager.":             problems.NewManagerLast,
+		"The change leaves the instance with no active administrator.": problems.NewAdministratorLast,
+	} {
+		t.Run(title, func(t *testing.T) {
+			t.Parallel()
+
+			failure := build()
+
+			assert.Equal(t, http.StatusConflict, failure.Status)
+			assert.Equal(t, title, failure.Title)
 		})
 	}
 }

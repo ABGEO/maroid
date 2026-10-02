@@ -386,7 +386,7 @@ members of one workspace when the person opens it.
 
 | #   | Step                                                                                     | Realizes                                       | Done |
 | --- | ---------------------------------------------------------------------------------------- | ---------------------------------------------- | ---- |
-| 1   | Add `NewAdministratorLast` to the hub. `ERR-003` holds its row.                          | `ERR-003`                                      | [ ]  |
+| 1   | Add `NewAdministratorLast` to the hub. `ERR-003` holds its row.                          | `ERR-003`                                      | [x]  |
 | 2   | Write `PLUGACC-SC-019`, then the three migrations.                                       | `PLUGACC-FR-011`, `PLUGACC-FR-026`             | [ ]  |
 | 3   | Write the models and the three repositories, and the mark in every query of a user.     | `PLUGACC-FR-002`, `PLUGACC-FR-008`             | [ ]  |
 | 4   | Write `PLUGACC-SC-005` and `PLUGACC-SC-018`, then the mark in the context, `RequireAdministrator`, and the lock. | `PLUGACC-FR-007`, `PLUGACC-FR-022` | [ ]  |

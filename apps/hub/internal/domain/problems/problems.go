@@ -16,6 +16,9 @@ const (
 	TypeIdentityLast      = "/problems/hub/identity-last"
 	TypeSettingsInvalid   = "/problems/hub/settings-invalid"
 	TypeNotReady          = "/problems/hub/not-ready"
+	TypeMemberExists      = "/problems/hub/member-exists"
+	TypeManagerLast       = "/problems/hub/manager-last"
+	TypeAdministratorLast = "/problems/hub/administrator-last"
 )
 
 // NotReadyProblem reports a hub that cannot serve a request, with the name of each
@@ -49,6 +52,35 @@ func NewIdentityLast() *problem.Problem {
 	return &problem.Problem{
 		Type:   TypeIdentityLast,
 		Title:  "The last external account cannot be detached.",
+		Status: http.StatusConflict,
+	}
+}
+
+// NewMemberExists reports an addition of a user record that is already a member
+// of the workspace.
+func NewMemberExists() *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeMemberExists,
+		Title:  "The user record is already a member of the workspace.",
+		Status: http.StatusConflict,
+	}
+}
+
+// NewManagerLast reports a change that leaves a workspace with no manager.
+func NewManagerLast() *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeManagerLast,
+		Title:  "The change leaves the workspace with no manager.",
+		Status: http.StatusConflict,
+	}
+}
+
+// NewAdministratorLast reports a change that leaves the instance with no active
+// administrator.
+func NewAdministratorLast() *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeAdministratorLast,
+		Title:  "The change leaves the instance with no active administrator.",
 		Status: http.StatusConflict,
 	}
 }

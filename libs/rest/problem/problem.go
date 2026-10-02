@@ -26,6 +26,15 @@ type ValidationProblem struct {
 	Errors []FieldFailure `json:"errors"`
 }
 
+// PermissionDeniedProblem is a problem that names the permission that an action
+// needs, and the lowest role that holds it.
+type PermissionDeniedProblem struct {
+	Problem
+
+	Permission   string `json:"permission"`
+	RequiredRole string `json:"required_role,omitempty"`
+}
+
 // FieldFailure names one field that caused a rejection.
 type FieldFailure struct {
 	Detail  string `json:"detail"`
@@ -35,6 +44,7 @@ type FieldFailure struct {
 var (
 	_ Body = (*Problem)(nil)
 	_ Body = (*ValidationProblem)(nil)
+	_ Body = (*PermissionDeniedProblem)(nil)
 )
 
 // Base returns the problem itself. A type that embeds a problem gets it through

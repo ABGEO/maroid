@@ -1,6 +1,9 @@
 package problem
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 // The problem types that any component of Maroid answers. Each one names a
 // failure of the protocol and carries no fact of a domain, so the hub and a
@@ -17,6 +20,7 @@ const (
 	TypePreconditionFailed = "/problems/http/precondition-failed"
 	TypeContentTooLarge    = "/problems/http/content-too-large"
 	TypeValidationFailed   = "/problems/http/validation-failed"
+	TypePermissionDenied   = "/problems/http/permission-denied"
 	TypeInternal           = "/problems/http/internal"
 )
 
@@ -118,6 +122,30 @@ func NewValidationFailed(failures ...FieldFailure) *ValidationProblem {
 			http.StatusUnprocessableEntity,
 		),
 		Errors: failures,
+	}
+}
+
+// NewPermissionDenied reports an action that the acting user does not reach. It
+// names the permission, and the lowest workspace role that holds it when a role
+// decides, so a client tells the person whom to ask without reading the detail.
+func NewPermissionDenied(permission, requiredRole string) *PermissionDeniedProblem {
+	detail := fmt.Sprintf("The action needs the permission %s.", permission)
+	if requiredRole != "" {
+		detail = fmt.Sprintf(
+			"The action needs the permission %s, which the role %s holds.",
+			permission,
+			requiredRole,
+		)
+	}
+
+	return &PermissionDeniedProblem{
+		Problem: *newProblem(
+			TypePermissionDenied,
+			"The workspace role does not hold the permission.",
+			http.StatusForbidden,
+		).WithDetail(detail),
+		Permission:   permission,
+		RequiredRole: requiredRole,
 	}
 }
 

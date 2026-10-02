@@ -423,7 +423,7 @@ plant that died.
 
 | #   | Step                                                                                          | Realizes                          | Done |
 | --- | --------------------------------------------------------------------------------------------- | --------------------------------- | ---- |
-| 1   | Add `NewPermissionDenied` to `libs/rest` and `NewManagerLast` to the hub. `ERR-003` and `UI-008` hold their rows. | `ERR-003`, `UI-008` | [ ]  |
+| 1   | Add `NewPermissionDenied` to `libs/rest` and `NewManagerLast` to the hub. `ERR-003` and `UI-008` hold their rows. | `ERR-003`, `UI-008` | [x]  |
 | 2   | Write `PERMS-SC-004`, then the migration.                                                     | `PERMS-FR-001`, `PERMS-FR-004`    | [ ]  |
 | 3   | Write `PERMS-SC-002`, then `libs/pluginapi/permission.go` and the three `Permission` fields.  | `PERMS-FR-002`, `PERMS-FR-012`    | [ ]  |
 | 4   | Write `PERMS-SC-010` to `PERMS-SC-012`, then the registry, the registrar, and the checks of the three registrars. | `PERMS-FR-011` to `PERMS-FR-014` | [ ] |

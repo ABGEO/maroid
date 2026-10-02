@@ -313,7 +313,7 @@ ADR to write and later to remove. Roles in this feature. The owner moved them ou
 
 | #   | Step                                                                                         | Realizes                                     | Done |
 | --- | -------------------------------------------------------------------------------------------- | -------------------------------------------- | ---- |
-| 1   | Add `member-exists` to the hub. `ERR-003` holds its row.                                     | `ERR-003`                                    | [ ]  |
+| 1   | Add `member-exists` to the hub. `ERR-003` holds its row.                                     | `ERR-003`                                    | [x]  |
 | 2   | Write the migration of section 4.2, with `WSPACE-SC-011`.                                    | `WSPACE-FR-026`, `WSPACE-INV-002`            | [ ]  |
 | 3   | Write `model.Workspace`, `model.Member`, and the two repositories.                           | `WSPACE-FR-001` to `WSPACE-FR-012`           | [ ]  |
 | 4   | Write `WSPACE-SC-009`, `WSPACE-SC-010`, and `WSPACE-SC-012`, then `workspace.Middleware`.    | `WSPACE-FR-013`, `WSPACE-FR-014`, `WSPACE-NFR-001` | [ ]  |
