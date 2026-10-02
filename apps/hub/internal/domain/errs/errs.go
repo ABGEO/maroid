@@ -57,6 +57,13 @@ var (
 	// ErrLastIdentity indicates that the identity is the last one of its user
 	// record, so the detach refuses it.
 	ErrLastIdentity = errors.New("identity: the last external account cannot be detached")
+	// ErrWorkspaceNotFound indicates that no workspace holds the given identifier.
+	ErrWorkspaceNotFound = errors.New("workspace: not found")
+	// ErrMemberNotFound indicates that the user record is no member of the workspace.
+	ErrMemberNotFound = errors.New("workspace member: not found")
+	// ErrMemberExists indicates that the user record is already a member of the
+	// workspace.
+	ErrMemberExists = errors.New("workspace member: already a member")
 	// ErrInvitationNotValid indicates that the invitation is absent, consumed, or
 	// expired. The three cases answer the same way.
 	ErrInvitationNotValid = errors.New("invitation: not valid")

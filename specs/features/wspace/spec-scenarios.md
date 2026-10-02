@@ -127,11 +127,12 @@ their bodies differ in the flow identifier alone.
 **Verifies:** `WSPACE-FR-026`
 **Layer:** integration
 
-**Given** a database before the migration, with Ana, and a user record with no first
-name.
+**Given** a database before the migration, with Ana, a user record with no first
+name, and a user record whose first name holds 70 characters.
 **When** the migration runs.
-**Then** two workspaces exist: "Ana" with Ana as its member, and "Workspace" with the
-second record as its member. The down migration removes both tables.
+**Then** three workspaces exist: "Ana" with Ana as its member, "Workspace" with the
+second record as its member, and one named by the first 64 characters of the long
+name with the third record as its member. The down migration removes both tables.
 
 ## `WSPACE-SC-012`
 

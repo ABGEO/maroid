@@ -283,9 +283,10 @@ audiences with two shapes.
 
 **Realizes:** `WSPACE-FR-026`
 **Decision:** The migration loops over `public.users` in a `DO` block. For each record
-it inserts one workspace, named by the first name of the record or `Workspace` when
-the record holds none, reads the identifier with `RETURNING id`, and inserts the
-membership.
+it inserts one workspace, named by the first 64 characters of the first name of the
+record or `Workspace` when the record holds none, reads the identifier with
+`RETURNING id`, and inserts the membership. The cut keeps a long first name within
+the limit of `WSPACE-FR-001`, so the migration never fails on one.
 **Rationale:** A loop reads each identifier from `RETURNING`, so no statement names
 `id`, as `DAT-009` demands. An installation holds a household of records, so the loop
 costs nothing.
@@ -314,8 +315,8 @@ ADR to write and later to remove. Roles in this feature. The owner moved them ou
 | #   | Step                                                                                         | Realizes                                     | Done |
 | --- | -------------------------------------------------------------------------------------------- | -------------------------------------------- | ---- |
 | 1   | Add `member-exists` to the hub. `ERR-003` holds its row.                                     | `ERR-003`                                    | [x]  |
-| 2   | Write the migration of section 4.2, with `WSPACE-SC-011`.                                    | `WSPACE-FR-026`, `WSPACE-INV-002`            | [ ]  |
-| 3   | Write `model.Workspace`, `model.Member`, and the two repositories.                           | `WSPACE-FR-001` to `WSPACE-FR-012`           | [ ]  |
+| 2   | Write the migration of section 4.2, with `WSPACE-SC-011`.                                    | `WSPACE-FR-026`, `WSPACE-INV-002`            | [x]  |
+| 3   | Write `model.Workspace`, `model.Member`, and the two repositories.                           | `WSPACE-FR-001` to `WSPACE-FR-012`           | [x]  |
 | 4   | Write `WSPACE-SC-009`, `WSPACE-SC-010`, and `WSPACE-SC-012`, then `workspace.Middleware`.    | `WSPACE-FR-013`, `WSPACE-FR-014`, `WSPACE-NFR-001` | [ ]  |
 | 5   | Write `WSPACE-SC-001` to `WSPACE-SC-008`, then `workspace.Service`, then `api.yaml` and `handler.Workspace`. | `WSPACE-FR-001` to `WSPACE-FR-012` | [ ]  |
 | 6   | Carry out steps 13 and 14 of `features/ident/spec.md`: the acting workspace in `libs/pluginapi`, `WithScopeTx`, and the move of the routes of a plugin. Build every plugin. | `WSPACE-FR-013`, `BLD-004` | [ ]  |
