@@ -93,6 +93,16 @@ var (
 	// ErrUnsupportedFieldsSource indicates that the driver returned a type that the
 	// settings fields cannot decode.
 	ErrUnsupportedFieldsSource = errors.New("plugin settings: unsupported fields source")
+	// ErrPermissionAlreadyRegistered indicates a permission name that the registry
+	// already holds.
+	ErrPermissionAlreadyRegistered = errors.New("permission: already registered")
+	// ErrInvalidPermission indicates a permission with no name or with no known lowest role.
+	ErrInvalidPermission = errors.New("permission: invalid")
+	// ErrPermissionMissing indicates an entry of a plugin that names no permission.
+	ErrPermissionMissing = errors.New("permission: missing")
+	// ErrPermissionUndeclared indicates an entry that names a permission that its
+	// plugin does not declare.
+	ErrPermissionUndeclared = errors.New("permission: undeclared")
 	// ErrUnknownSettingScope indicates a scope of a settings field that the hub holds
 	// no table for.
 	ErrUnknownSettingScope = errors.New("plugin settings: unknown scope")

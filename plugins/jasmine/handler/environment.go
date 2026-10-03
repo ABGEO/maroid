@@ -18,6 +18,7 @@ import (
 	"github.com/abgeo/maroid/libs/rest/problem"
 	"github.com/abgeo/maroid/plugins/jasmine/dto"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
+	"github.com/abgeo/maroid/plugins/jasmine/permission"
 	"github.com/abgeo/maroid/plugins/jasmine/repository"
 )
 
@@ -40,11 +41,36 @@ func NewEnvironmentHandler(logger *slog.Logger, db *pluginapi.PluginDB) *Environ
 // Routes returns the HTTP routes for environment management.
 func (h *EnvironmentHandler) Routes() []pluginapi.Route {
 	return []pluginapi.Route{
-		{Method: http.MethodGet, Pattern: pathEnvironments, Handler: h.List},
-		{Method: http.MethodPost, Pattern: pathEnvironments, Handler: h.Create},
-		{Method: http.MethodGet, Pattern: pathEnvironmentByID, Handler: h.GetByID},
-		{Method: http.MethodPut, Pattern: pathEnvironmentByID, Handler: h.Update},
-		{Method: http.MethodDelete, Pattern: pathEnvironmentByID, Handler: h.Delete},
+		{
+			Method:     http.MethodGet,
+			Pattern:    pathEnvironments,
+			Handler:    h.List,
+			Permission: permission.EnvironmentsRead,
+		},
+		{
+			Method:     http.MethodPost,
+			Pattern:    pathEnvironments,
+			Handler:    h.Create,
+			Permission: permission.EnvironmentsWrite,
+		},
+		{
+			Method:     http.MethodGet,
+			Pattern:    pathEnvironmentByID,
+			Handler:    h.GetByID,
+			Permission: permission.EnvironmentsRead,
+		},
+		{
+			Method:     http.MethodPut,
+			Pattern:    pathEnvironmentByID,
+			Handler:    h.Update,
+			Permission: permission.EnvironmentsWrite,
+		},
+		{
+			Method:     http.MethodDelete,
+			Pattern:    pathEnvironmentByID,
+			Handler:    h.Delete,
+			Permission: permission.EnvironmentsWrite,
+		},
 	}
 }
 

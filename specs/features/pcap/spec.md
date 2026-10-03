@@ -4,7 +4,7 @@ title: The capabilities that a plugin declares
 type: spec
 status: approved
 created: 2026-09-21
-updated: 2026-10-01
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-09-21
 constrained_by: [PLG, ARC, API, ERR, UI, TS, PKG, GO, DEP]
@@ -434,7 +434,7 @@ capability is absent from the map.
 | 9   | Create `capabilities.ts` in the deck, and move the eleven readers of `plugin.ui` onto it. | `PCAP-DD-007`                 | [x]  |
 | 10  | Render one chip for each capability on the page that lists the plugins.                 | `PCAP-FR-006`                   | [x]  |
 | 11  | Add the capabilities to the coverage of `MCPHUB-FR-005` in `mcphub/spec.md`.             | `TRC-007`                       | [x]  |
-| 12  | Write the `{workspaceId}` prefix into the path of each `api` item, and the `permission` of each item. Record the `permissions` capability. It needs the permission capability of `SEC-013`. | `PCAP-FR-004`, `SEC-013` | [ ]  |
+| 12  | Write the `{workspaceId}` prefix into the path of each `api` item, and the `permission` of each item. Record the `permissions` capability. It needs the permission capability of `SEC-013`. | `PCAP-FR-004`, `SEC-013` | [x]  |
 
 ## 8. Out of scope for this specification
 

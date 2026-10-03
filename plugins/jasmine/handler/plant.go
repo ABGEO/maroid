@@ -18,6 +18,7 @@ import (
 	"github.com/abgeo/maroid/libs/rest/problem"
 	"github.com/abgeo/maroid/plugins/jasmine/dto"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
+	"github.com/abgeo/maroid/plugins/jasmine/permission"
 	"github.com/abgeo/maroid/plugins/jasmine/repository"
 )
 
@@ -40,11 +41,36 @@ func NewPlantHandler(logger *slog.Logger, db *pluginapi.PluginDB) *PlantHandler 
 // Routes returns the HTTP routes for plant management.
 func (h *PlantHandler) Routes() []pluginapi.Route {
 	return []pluginapi.Route{
-		{Method: http.MethodGet, Pattern: pathPlants, Handler: h.List},
-		{Method: http.MethodPost, Pattern: pathPlants, Handler: h.Create},
-		{Method: http.MethodGet, Pattern: pathPlantByID, Handler: h.GetByID},
-		{Method: http.MethodPut, Pattern: pathPlantByID, Handler: h.Update},
-		{Method: http.MethodDelete, Pattern: pathPlantByID, Handler: h.Delete},
+		{
+			Method:     http.MethodGet,
+			Pattern:    pathPlants,
+			Handler:    h.List,
+			Permission: permission.PlantsRead,
+		},
+		{
+			Method:     http.MethodPost,
+			Pattern:    pathPlants,
+			Handler:    h.Create,
+			Permission: permission.PlantsWrite,
+		},
+		{
+			Method:     http.MethodGet,
+			Pattern:    pathPlantByID,
+			Handler:    h.GetByID,
+			Permission: permission.PlantsRead,
+		},
+		{
+			Method:     http.MethodPut,
+			Pattern:    pathPlantByID,
+			Handler:    h.Update,
+			Permission: permission.PlantsWrite,
+		},
+		{
+			Method:     http.MethodDelete,
+			Pattern:    pathPlantByID,
+			Handler:    h.Delete,
+			Permission: permission.PlantsWrite,
+		},
 	}
 }
 

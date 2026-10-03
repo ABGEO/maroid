@@ -14,6 +14,7 @@ type TelegramCommandRegistrar struct {
 	registry     *registry.TelegramCommandRegistry
 	capabilities *registry.CapabilityRegistry
 	prompter     tgcommand.Prompter
+	permissions  *registry.PermissionRegistry
 }
 
 var _ Registrar = (*TelegramCommandRegistrar)(nil)
@@ -23,11 +24,13 @@ func NewTelegramCommandRegistrar(
 	reg *registry.TelegramCommandRegistry,
 	capabilities *registry.CapabilityRegistry,
 	prompter tgcommand.Prompter,
+	permissions *registry.PermissionRegistry,
 ) *TelegramCommandRegistrar {
 	return &TelegramCommandRegistrar{
 		registry:     reg,
 		capabilities: capabilities,
 		prompter:     prompter,
+		permissions:  permissions,
 	}
 }
 
@@ -62,22 +65,35 @@ func (r *TelegramCommandRegistrar) Register(plugin pluginapi.Plugin) error {
 	}
 
 	wrappedCommands := make([]pluginapi.TelegramCommand, 0, len(commands))
+	items := make([]registry.TelegramCommand, 0, len(commands))
+
 	for _, cmd := range commands {
-		wrappedCommands = append(wrappedCommands, tgcommand.NewWrapper(cmd, id, r.prompter))
+		local := cmd.Meta()
+
+		permission, permissionErr := permissionOf(
+			r.permissions,
+			id,
+			local.Command,
+			local.Permission,
+		)
+		if permissionErr != nil {
+			return permissionErr
+		}
+
+		wrapped := tgcommand.NewWrapper(cmd, id, r.prompter)
+		meta := wrapped.Meta()
+
+		wrappedCommands = append(wrappedCommands, wrapped)
+		items = append(items, registry.TelegramCommand{
+			Command:     meta.Command,
+			Description: meta.Description,
+			Permission:  permission,
+		})
 	}
 
 	err = r.registry.Register(wrappedCommands...)
 	if err != nil {
 		return fmt.Errorf("registering telegram commands for plugin %s: %w", id, err)
-	}
-
-	items := make([]registry.TelegramCommand, 0, len(wrappedCommands))
-	for _, cmd := range wrappedCommands {
-		meta := cmd.Meta()
-		items = append(items, registry.TelegramCommand{
-			Command:     meta.Command,
-			Description: meta.Description,
-		})
 	}
 
 	r.capabilities.Record(id, registry.CapTelegramCommands, items)

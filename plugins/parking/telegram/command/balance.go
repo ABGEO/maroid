@@ -7,6 +7,7 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
 )
 
@@ -31,6 +32,7 @@ func (c *Balance) Meta() pluginapi.TelegramCommandMeta {
 	return pluginapi.TelegramCommandMeta{
 		Command:     "balance",
 		Description: "Check parking balance",
+		Permission:  permission.SessionsRead,
 	}
 }
 

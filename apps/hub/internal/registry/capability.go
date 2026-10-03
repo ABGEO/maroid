@@ -21,6 +21,7 @@ const (
 	CapTelegramCommands      Capability = "telegram_commands"
 	CapTelegramConversations Capability = "telegram_conversations"
 	CapMCPTools              Capability = "mcp_tools"
+	CapPermissions           Capability = "permissions"
 )
 
 // Present is the value of a capability that a plugin declares and that holds no

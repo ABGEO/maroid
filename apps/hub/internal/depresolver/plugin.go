@@ -157,6 +157,7 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		c.SettingsRegistry(),
 		registries.mcpTool,
 		c.CapabilityRegistry(),
+		c.PermissionRegistry(),
 	), nil
 }
 

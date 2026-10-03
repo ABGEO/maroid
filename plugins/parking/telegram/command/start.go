@@ -11,6 +11,7 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/dto"
+	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
 )
 
@@ -38,6 +39,7 @@ func (c *Parking) Meta() pluginapi.TelegramCommandMeta {
 	return pluginapi.TelegramCommandMeta{
 		Command:     "start",
 		Description: "Start a parking session",
+		Permission:  permission.SessionsWrite,
 	}
 }
 

@@ -1,9 +1,12 @@
 package registry
 
+import "github.com/abgeo/maroid/libs/pluginapi"
+
 // APIRoute is one route that a plugin serves.
 type APIRoute struct {
-	Method string `json:"method"`
-	Path   string `json:"path"`
+	Method     string `json:"method"`
+	Path       string `json:"path"`
+	Permission string `json:"permission"`
 }
 
 // CLICommand is one command that a plugin adds to the command tree.
@@ -27,6 +30,7 @@ type MQTTSubscriber struct {
 type TelegramCommand struct {
 	Command     string `json:"command"`
 	Description string `json:"description"`
+	Permission  string `json:"permission"`
 }
 
 // TelegramConversation is one conversation that a plugin drives.
@@ -39,4 +43,12 @@ type TelegramConversation struct {
 type MCPToolItem struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Permission  string `json:"permission"`
+}
+
+// PermissionItem is one permission that a plugin declares, with the lowest role that
+// holds it.
+type PermissionItem struct {
+	Name string         `json:"name"`
+	Role pluginapi.Role `json:"role"`
 }

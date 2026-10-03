@@ -101,8 +101,8 @@ a guideline, and both follow `ADR-0008` at the approval of this specification.
 | `libs/plugin-sdk/src/types.ts`                                     | change | `PluginHost.can`                                              |
 | `apps/deck/src/lib/state/workspaces.svelte.ts`                     | change | The role and the permissions of the acting workspace          |
 | `apps/deck/src/routes/(dashboard)/w/[workspace]/members/+page.svelte` | change | The role of each member, the select of a manager, the add form on viewer |
-| `plugins/jasmine/{main.go,handler/*.go}`                           | change | Declares its permissions. Each route names one                |
-| `plugins/parking/{main.go,telegram/command/*.go}`                  | change | Declares its permissions. Each command names one              |
+| `plugins/jasmine/{main.go,permission/permission.go,handler/*.go}`  | change | `main.go` declares its permissions, `permission` names them, and each route names one |
+| `plugins/parking/{main.go,permission/permission.go,telegram/command/*.go}` | change | `main.go` declares its permissions, `permission` names them, and each command names one |
 | `specs/features/perms/api.yaml`                                    | create | `PATCH /workspaces/{workspaceId}/members/{userId}`. `PERMS-DD-010` |
 
 ```go
@@ -426,15 +426,15 @@ plant that died.
 | 1   | Add `NewPermissionDenied` to `libs/rest` and `NewManagerLast` to the hub. `ERR-003` and `UI-008` hold their rows. | `ERR-003`, `UI-008` | [x]  |
 | 2   | Write `PERMS-SC-004`, then the migration.                                                     | `PERMS-FR-001`, `PERMS-FR-004`    | [x]  |
 | 3   | Write `PERMS-SC-002`, then `libs/pluginapi/permission.go` and the three `Permission` fields.  | `PERMS-FR-002`, `PERMS-FR-012`    | [x]  |
-| 4   | Write `PERMS-SC-010` to `PERMS-SC-012`, then the registry, the registrar, and the checks of the three registrars. | `PERMS-FR-011` to `PERMS-FR-014` | [ ] |
+| 4   | Write `PERMS-SC-010` to `PERMS-SC-012`, then the registry, the registrar, and the checks of the three registrars. | `PERMS-FR-011` to `PERMS-FR-014` | [x] |
 | 5   | Write `PERMS-SC-018`, then `authz.RoleAuthorizer` and the permissions of the hub.             | `PERMS-NFR-002`                   | [ ]  |
 | 6   | Write `PERMS-SC-005`, `PERMS-SC-013`, and `PERMS-SC-017`, then the role in the membership check, `workspace.Require`, and each route of section 4.3. | `PERMS-FR-005`, `PERMS-FR-015`, `PERMS-NFR-001` | [ ] |
 | 7   | Write `PERMS-SC-006` to `PERMS-SC-009`, then the role in the service, `PATCH` on a membership, and the lock. | `PERMS-FR-003`, `PERMS-FR-006` to `PERMS-FR-010` | [ ] |
 | 8   | The check in `workspaceMiddleware` and in `command.Wrapper`, and the refusal of `PERMS-DD-006`.      | `PERMS-FR-015`, `PERMS-FR-016`    | [ ]  |
-| 9   | Declare the permissions of `jasmine` and `parking`, and name one on each entry. Build every plugin. | `PERMS-FR-012`, `BLD-004`   | [ ]  |
+| 9   | Declare the permissions of `jasmine` and `parking`, and name one on each entry. Build every plugin. | `PERMS-FR-012`, `BLD-004`   | [x]  |
 | 10  | Write `PERMS-SC-014`, then `permissions` on the workspace and `PluginHost.can`.               | `PERMS-FR-017`                    | [ ]  |
 | 11  | The deck: the role in each list, the select of a manager, and the hidden controls.             | `PERMS-FR-018` to `PERMS-FR-020`  | [ ]  |
-| 12  | Record the `permissions` capability of `PCAP`, step 12 of `features/pcap/spec.md`.             | `PCAP-FR-004`                     | [ ]  |
+| 12  | Record the `permissions` capability of `PCAP`, step 12 of `features/pcap/spec.md`.             | `PCAP-FR-004`                     | [x]  |
 
 ## 8. Out of scope for this specification
 

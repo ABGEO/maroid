@@ -14,6 +14,7 @@ import (
 type MCPToolRegistrar struct {
 	registry     *registry.MCPToolRegistry
 	capabilities *registry.CapabilityRegistry
+	permissions  *registry.PermissionRegistry
 }
 
 var _ Registrar = (*MCPToolRegistrar)(nil)
@@ -22,10 +23,12 @@ var _ Registrar = (*MCPToolRegistrar)(nil)
 func NewMCPToolRegistrar(
 	reg *registry.MCPToolRegistry,
 	capabilities *registry.CapabilityRegistry,
+	permissions *registry.PermissionRegistry,
 ) *MCPToolRegistrar {
 	return &MCPToolRegistrar{
 		registry:     reg,
 		capabilities: capabilities,
+		permissions:  permissions,
 	}
 }
 
@@ -60,26 +63,31 @@ func (r *MCPToolRegistrar) Register(plugin pluginapi.Plugin) error {
 	}
 
 	adapted := make([]registry.MCPTool, 0, len(tools))
+	items := make([]registry.MCPToolItem, 0, len(tools))
 
 	for _, tool := range tools {
+		meta := tool.Meta()
+
+		permission, permissionErr := permissionOf(r.permissions, id, meta.Name, meta.Permission)
+		if permissionErr != nil {
+			return permissionErr
+		}
+
 		entry, adaptErr := mcpserver.NewPluginTool(id, tool)
 		if adaptErr != nil {
 			return fmt.Errorf("adapting the MCP tools for plugin %s: %w", id, adaptErr)
 		}
 
 		adapted = append(adapted, entry)
+		items = append(items, registry.MCPToolItem{
+			Name:        entry.Name,
+			Description: meta.Description,
+			Permission:  permission,
+		})
 	}
 
 	if err = r.registry.Register(adapted...); err != nil {
 		return fmt.Errorf("registering the MCP tools for plugin %s: %w", id, err)
-	}
-
-	items := make([]registry.MCPToolItem, 0, len(adapted))
-	for index, entry := range adapted {
-		items = append(items, registry.MCPToolItem{
-			Name:        entry.Name,
-			Description: tools[index].Meta().Description,
-		})
 	}
 
 	r.capabilities.Record(id, registry.CapMCPTools, items)

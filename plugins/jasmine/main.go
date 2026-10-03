@@ -10,6 +10,7 @@ import (
 	"github.com/abgeo/maroid/plugins/jasmine/db"
 	jasminehandler "github.com/abgeo/maroid/plugins/jasmine/handler"
 	"github.com/abgeo/maroid/plugins/jasmine/mqtt/subscriber"
+	"github.com/abgeo/maroid/plugins/jasmine/permission"
 )
 
 type JasminePlugin struct {
@@ -23,6 +24,7 @@ var (
 	_ pluginapi.MigrationPlugin      = (*JasminePlugin)(nil)
 	_ pluginapi.UIPlugin             = (*JasminePlugin)(nil)
 	_ pluginapi.RoutePlugin          = (*JasminePlugin)(nil)
+	_ pluginapi.PermissionPlugin     = (*JasminePlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -84,6 +86,31 @@ func (p *JasminePlugin) UIManifest() (*pluginapi.UIManifest, error) {
 			{Path: "/environments/add", Label: "Add Environment"},
 		},
 		Assets: assets,
+	}, nil
+}
+
+func (p *JasminePlugin) Permissions() ([]pluginapi.Permission, error) {
+	return []pluginapi.Permission{
+		{
+			Name:        permission.EnvironmentsRead,
+			Description: "Read the environments",
+			Lowest:      pluginapi.RoleViewer,
+		},
+		{
+			Name:        permission.EnvironmentsWrite,
+			Description: "Create, change, and delete the environments",
+			Lowest:      pluginapi.RoleEditor,
+		},
+		{
+			Name:        permission.PlantsRead,
+			Description: "Read the plants",
+			Lowest:      pluginapi.RoleViewer,
+		},
+		{
+			Name:        permission.PlantsWrite,
+			Description: "Create, change, and delete the plants",
+			Lowest:      pluginapi.RoleEditor,
+		},
 	}, nil
 }
 

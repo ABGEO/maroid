@@ -23,6 +23,15 @@ func (c *Container) CapabilityRegistry() *registry.CapabilityRegistry {
 	return c.capabilityRegistry.instance
 }
 
+// PermissionRegistry initializes and returns the registry of the permissions.
+func (c *Container) PermissionRegistry() *registry.PermissionRegistry {
+	c.permissionRegistry.once.Do(func() {
+		c.permissionRegistry.instance = registry.NewPermissionRegistry()
+	})
+
+	return c.permissionRegistry.instance
+}
+
 // UIRegistry initializes and returns the plugin UI registry.
 func (c *Container) UIRegistry() *registry.UIRegistry {
 	c.uiRegistry.once.Do(func() {

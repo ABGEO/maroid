@@ -69,5 +69,11 @@ func (h *PluginWrapper) Register(router chi.Router) {
 }
 
 func (h *PluginWrapper) pathPrefix() string {
-	return "/workspaces/{" + workspace.PathParam + "}/plugins/" + h.pluginID.String() + "/api"
+	return PluginAPIPath(h.pluginID, "")
+}
+
+// PluginAPIPath answers the address of one route of a plugin, with the workspace as a
+// template segment.
+func PluginAPIPath(pluginID *pluginapi.PluginID, pattern string) string {
+	return "/workspaces/{" + workspace.PathParam + "}/plugins/" + pluginID.String() + "/api" + pattern
 }

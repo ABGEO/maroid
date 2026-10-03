@@ -10,6 +10,7 @@ import (
 	telegramconversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/parking/config"
+	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
 	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 	"github.com/abgeo/maroid/plugins/parking/telegram/conversation"
@@ -33,6 +34,7 @@ var (
 	_ pluginapi.ConfigurablePlugin         = (*ParkingPlugin)(nil)
 	_ pluginapi.TelegramCommandPlugin      = (*ParkingPlugin)(nil)
 	_ pluginapi.TelegramConversationPlugin = (*ParkingPlugin)(nil)
+	_ pluginapi.PermissionPlugin           = (*ParkingPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -82,6 +84,21 @@ func (p *ParkingPlugin) Meta() pluginapi.Metadata {
 
 func (p *ParkingPlugin) SettingsModel() (any, error) {
 	return config.UserSettings{}, nil
+}
+
+func (p *ParkingPlugin) Permissions() ([]pluginapi.Permission, error) {
+	return []pluginapi.Permission{
+		{
+			Name:        permission.SessionsRead,
+			Description: "Read the active session and the balance",
+			Lowest:      pluginapi.RoleViewer,
+		},
+		{
+			Name:        permission.SessionsWrite,
+			Description: "Start and stop a parking session",
+			Lowest:      pluginapi.RoleEditor,
+		},
+	}, nil
 }
 
 func (p *ParkingPlugin) TelegramCommands() ([]pluginapi.TelegramCommand, error) {

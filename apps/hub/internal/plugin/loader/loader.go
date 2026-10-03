@@ -47,6 +47,7 @@ func New(
 	settingsRegistry *registry.SettingsRegistry,
 	mcpToolRegistry *registry.MCPToolRegistry,
 	capabilityRegistry *registry.CapabilityRegistry,
+	permissionRegistry *registry.PermissionRegistry,
 ) *Loader {
 	logger := host.Logger()
 
@@ -55,6 +56,7 @@ func New(
 
 		registrars: []registrar.Registrar{
 			registrar.NewPluginRegistrar(pluginRegistry),
+			registrar.NewPermissionRegistrar(permissionRegistry, capabilityRegistry),
 			registrar.NewCommandRegistrar(commandRegistry, capabilityRegistry),
 			registrar.NewCronRegistrar(cronRegistry, capabilityRegistry),
 			registrar.NewHandlerRegistrar(
@@ -63,6 +65,7 @@ func New(
 				resolver,
 				handlerRegistry,
 				capabilityRegistry,
+				permissionRegistry,
 				idempotency,
 				members,
 			),
@@ -72,6 +75,7 @@ func New(
 				telegramCommandRegistry,
 				capabilityRegistry,
 				workspacePrompter,
+				permissionRegistry,
 			),
 			registrar.NewTelegramConversationRegistrar(
 				telegramConversationRegistry,
@@ -79,7 +83,7 @@ func New(
 			),
 			registrar.NewUIRegistrar(uiRegistry, capabilityRegistry),
 			registrar.NewSettingsRegistrar(settingsRegistry, capabilityRegistry),
-			registrar.NewMCPToolRegistrar(mcpToolRegistry, capabilityRegistry),
+			registrar.NewMCPToolRegistrar(mcpToolRegistry, capabilityRegistry, permissionRegistry),
 		},
 	}
 }

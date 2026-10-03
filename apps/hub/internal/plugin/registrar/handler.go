@@ -20,6 +20,7 @@ type HandlerRegistrar struct {
 	resolver     auth.IdentityResolver
 	registry     *handler.Registry
 	capabilities *registry.CapabilityRegistry
+	permissions  *registry.PermissionRegistry
 	idempotency  idempotency.Store
 	members      repository.WorkspaceMemberRepository
 }
@@ -33,6 +34,7 @@ func NewHandlerRegistrar(
 	resolver auth.IdentityResolver,
 	reg *handler.Registry,
 	capabilities *registry.CapabilityRegistry,
+	permissions *registry.PermissionRegistry,
 	idempotency idempotency.Store,
 	members repository.WorkspaceMemberRepository,
 ) *HandlerRegistrar {
@@ -44,6 +46,7 @@ func NewHandlerRegistrar(
 		capabilities: capabilities,
 		idempotency:  idempotency,
 		members:      members,
+		permissions:  permissions,
 	}
 }
 
@@ -77,6 +80,23 @@ func (r *HandlerRegistrar) Register(plugin pluginapi.Plugin) error {
 		return fmt.Errorf("retrieving routes for plugin %s: %w", id, err)
 	}
 
+	items := make([]registry.APIRoute, 0, len(routes))
+
+	for _, route := range routes {
+		entry := route.Method + " " + route.Pattern
+
+		permission, permissionErr := permissionOf(r.permissions, id, entry, route.Permission)
+		if permissionErr != nil {
+			return permissionErr
+		}
+
+		items = append(items, registry.APIRoute{
+			Method:     route.Method,
+			Path:       handler.PluginAPIPath(id, route.Pattern),
+			Permission: permission,
+		})
+	}
+
 	pluginHandler := handler.NewPluginWrapper(
 		r.logger,
 		r.verifier,
@@ -90,14 +110,6 @@ func (r *HandlerRegistrar) Register(plugin pluginapi.Plugin) error {
 	err = r.registry.Register(id.String(), pluginHandler)
 	if err != nil {
 		return fmt.Errorf("registering handler for plugin %s: %w", id, err)
-	}
-
-	items := make([]registry.APIRoute, 0, len(routes))
-	for _, route := range routes {
-		items = append(items, registry.APIRoute{
-			Method: route.Method,
-			Path:   "/plugins/" + id.String() + "/api" + route.Pattern,
-		})
 	}
 
 	r.capabilities.Record(id, registry.CapAPI, items)

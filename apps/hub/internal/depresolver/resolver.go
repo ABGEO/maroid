@@ -78,6 +78,7 @@ type Resolver interface {
 	MCPToolRegistry() (*registry.MCPToolRegistry, error)
 	UIRegistry() *registry.UIRegistry
 	CapabilityRegistry() *registry.CapabilityRegistry
+	PermissionRegistry() *registry.PermissionRegistry
 	Cron() *cron.Cron
 	NotifierRegistry() (*notifierregistry.SchemeRegistry, error)
 	NotifierDispatcher() (*dispatcher.ChannelDispatcher, error)
@@ -299,6 +300,11 @@ type Container struct {
 	capabilityRegistry struct {
 		once     sync.Once
 		instance *registry.CapabilityRegistry
+	}
+
+	permissionRegistry struct {
+		once     sync.Once
+		instance *registry.PermissionRegistry
 	}
 
 	notifierRegistry struct {

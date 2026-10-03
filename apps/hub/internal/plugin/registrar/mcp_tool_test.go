@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	codesRead     = "codes.read"
 	toolPluginID  = "dev.maroid.probe"
 	pluginVersion = "0.1.0"
 	getCodeName   = "get_code"
@@ -50,7 +51,7 @@ func (p *toolPlugin) MCPTools() ([]pluginapi.MCPTool, error) {
 	tools := make([]pluginapi.MCPTool, 0, len(p.names))
 	for _, name := range p.names {
 		tools = append(tools, pluginapi.NewTypedTool(
-			pluginapi.MCPToolMeta{Name: name},
+			pluginapi.MCPToolMeta{Name: name, Permission: codesRead},
 			func(_ context.Context, _ codeInput) (codeOutput, error) {
 				return codeOutput{Code: "1234"}, nil
 			},
@@ -58,6 +59,19 @@ func (p *toolPlugin) MCPTools() ([]pluginapi.MCPTool, error) {
 	}
 
 	return tools, nil
+}
+
+// codePermissions holds the one permission that every tool of toolPlugin names.
+func codePermissions(t *testing.T) *registry.PermissionRegistry {
+	t.Helper()
+
+	permissions := registry.NewPermissionRegistry()
+	require.NoError(t, permissions.Register(registry.PermissionEntry{
+		Name:   toolPluginID + ":" + codesRead,
+		Lowest: pluginapi.RoleViewer,
+	}))
+
+	return permissions
 }
 
 // plainPlugin declares no tool.
@@ -80,7 +94,7 @@ func TestTheRegistrarPutsEveryToolOfAPluginIntoTheRegistry(t *testing.T) {
 
 	toolRegistry := registry.NewMCPToolRegistry()
 	capabilities := registry.NewCapabilityRegistry()
-	reg := registrar.NewMCPToolRegistrar(toolRegistry, capabilities)
+	reg := registrar.NewMCPToolRegistrar(toolRegistry, capabilities, codePermissions(t))
 
 	plugin := &toolPlugin{names: []string{getCodeName, "get_qr"}}
 
@@ -107,6 +121,7 @@ func TestTheRegistrarSkipsAPluginThatDeclaresNoTool(t *testing.T) {
 	reg := registrar.NewMCPToolRegistrar(
 		registry.NewMCPToolRegistry(),
 		registry.NewCapabilityRegistry(),
+		registry.NewPermissionRegistry(),
 	)
 
 	require.False(t, reg.Supports(&plainPlugin{}))
@@ -119,7 +134,7 @@ func TestTheRegistrarRefusesTwoToolsOfOnePluginUnderOneName(t *testing.T) {
 
 	toolRegistry := registry.NewMCPToolRegistry()
 	capabilities := registry.NewCapabilityRegistry()
-	reg := registrar.NewMCPToolRegistrar(toolRegistry, capabilities)
+	reg := registrar.NewMCPToolRegistrar(toolRegistry, capabilities, codePermissions(t))
 
 	err := reg.Register(&toolPlugin{names: []string{getCodeName, getCodeName}})
 
