@@ -24,6 +24,9 @@ export const workspaces = {
 	rename: (workspaceId: string, name: string, ifMatch?: string): Promise<Workspace | null> =>
 		client.patch<Workspace>(path(workspaceId), { name }, { ifMatch }),
 
+	changeRole: (workspaceId: string, userId: string, role: Role): Promise<Member | null> =>
+		client.patch<Member>(`${path(workspaceId)}/members/${encodeURIComponent(userId)}`, { role }),
+
 	members: (workspaceId: string): Promise<Member[] | null> =>
 		client.get<Page<Member>>(`${path(workspaceId)}/members`).then((page) => page?.items ?? null),
 

@@ -29,9 +29,10 @@
 		initialValue: SettingsValues;
 		onsubmit: (value: SettingsValues) => void;
 		footer: Snippet;
+		disabled?: boolean;
 	}
 
-	let { schema, uiSchema, initialValue, onsubmit, footer }: Props = $props();
+	let { schema, uiSchema, initialValue, onsubmit, footer, disabled = false }: Props = $props();
 
 	// The parent remounts this component when the loaded settings change, so the form
 	// captures them once and never reads them again.
@@ -46,6 +47,7 @@
 		merger: createFormMerger,
 		validator: createFormValidator,
 		idBuilder: createFormIdBuilder,
+		disabled,
 		onSubmit: (value) => onsubmit(value)
 	});
 

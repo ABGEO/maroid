@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
 	import {
@@ -13,6 +13,7 @@
 		type Role
 	} from '$lib/api';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import { PERMISSION, ROLES, holds, roleLabel } from '$lib/permissions';
 	import { userState } from '$lib/state/user.svelte';
 	import { loadWorkspaces } from '$lib/state/workspaces.svelte';
 
@@ -20,11 +21,12 @@
 
 	let { data }: PageProps = $props();
 
-	const newMemberRole: Role = 'viewer';
+	let newMemberRole = $state<Role>('viewer');
 
 	const intent = createWriteIntent();
 	const workspaceId = $derived(data.workspace.id);
 	const selfId = $derived(userState.user?.id ?? '');
+	const canManage = $derived(holds(data.workspace, PERMISSION.membersWrite));
 
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let members = $state<Member[]>([]);
@@ -44,6 +46,10 @@
 				return 'That person is already a member.';
 			}
 
+			if (error.body.type === PROBLEM_TYPE.managerLast) {
+				return 'A workspace keeps one manager. Make another member a manager first.';
+			}
+
 			return error.body.errors?.[0]?.detail ?? error.body.title;
 		}
 
@@ -56,7 +62,7 @@
 		try {
 			const [memberList, candidateList] = await Promise.all([
 				api.workspaces.members(workspaceId),
-				api.workspaces.candidates(workspaceId)
+				canManage ? api.workspaces.candidates(workspaceId) : Promise.resolve([])
 			]);
 			if (memberList === null || candidateList === null) {
 				return;
@@ -94,11 +100,34 @@
 			}
 
 			intent.settle();
+			newMemberRole = 'viewer';
 			await load();
 		} catch (error) {
 			banner = failureMessage(error, 'The hub added nobody. Try again.');
 		} finally {
 			busy = false;
+		}
+	}
+
+	async function changeRole(member: Member, role: Role): Promise<void> {
+		if (role === member.role) {
+			return;
+		}
+
+		busy = true;
+		banner = null;
+
+		try {
+			await api.workspaces.changeRole(workspaceId, member.user_id, role);
+
+			if (member.user_id === selfId) {
+				await Promise.all([invalidateAll(), loadWorkspaces()]);
+			}
+		} catch (error) {
+			banner = failureMessage(error, 'The role stays. Try again.');
+		} finally {
+			busy = false;
+			await load();
 		}
 	}
 
@@ -177,39 +206,69 @@
 							<span class="badge badge-ghost badge-sm ml-2">You</span>
 						{/if}
 					</span>
-					<button
-						type="button"
-						class="btn btn-ghost btn-xs text-error"
-						disabled={busy}
-						onclick={() => remove(member)}
-					>
-						{member.user_id === selfId ? 'Leave' : 'Remove'}
-					</button>
+					<span class="flex items-center gap-2">
+						{#if canManage}
+							<select
+								class="select select-bordered select-xs"
+								aria-label="The role of {nameOf(member)}"
+								value={member.role}
+								disabled={busy}
+								onchange={(event) => changeRole(member, event.currentTarget.value as Role)}
+							>
+								{#each ROLES as role (role)}
+									<option value={role}>{roleLabel(role)}</option>
+								{/each}
+							</select>
+						{:else}
+							<span class="badge badge-outline badge-sm">{roleLabel(member.role)}</span>
+						{/if}
+						{#if canManage || member.user_id === selfId}
+							<button
+								type="button"
+								class="btn btn-ghost btn-xs text-error"
+								disabled={busy}
+								onclick={() => remove(member)}
+							>
+								{member.user_id === selfId ? 'Leave' : 'Remove'}
+							</button>
+						{/if}
+					</span>
 				</li>
 			{/each}
 		</ul>
 
-		<section class="mt-8">
-			<h2 class="text-base-content/70 font-mono text-[11px] tracking-wider uppercase">
-				Add a member
-			</h2>
+		{#if canManage}
+			<section class="mt-8">
+				<h2 class="text-base-content/70 font-mono text-[11px] tracking-wider uppercase">
+					Add a member
+				</h2>
 
-			{#if candidates.length === 0}
-				<p class="text-base-content/60 mt-3 text-sm">Every person on this hub is a member.</p>
-			{:else}
-				<form class="mt-3 flex gap-2" onsubmit={add}>
-					<select class="select select-bordered select-sm w-full max-w-xs" bind:value={chosen}>
-						<option value="" disabled>Choose a person</option>
-						{#each candidates as candidate (candidate.user_id)}
-							<option value={candidate.user_id}>{nameOf(candidate)}</option>
-						{/each}
-					</select>
-					<button type="submit" class="btn btn-primary btn-sm" disabled={busy || chosen === ''}>
-						Add
-					</button>
-				</form>
-			{/if}
-		</section>
+				{#if candidates.length === 0}
+					<p class="text-base-content/60 mt-3 text-sm">Every person on this hub is a member.</p>
+				{:else}
+					<form class="mt-3 flex gap-2" onsubmit={add}>
+						<select class="select select-bordered select-sm w-full max-w-xs" bind:value={chosen}>
+							<option value="" disabled>Choose a person</option>
+							{#each candidates as candidate (candidate.user_id)}
+								<option value={candidate.user_id}>{nameOf(candidate)}</option>
+							{/each}
+						</select>
+						<select
+							class="select select-bordered select-sm"
+							aria-label="The role of the new member"
+							bind:value={newMemberRole}
+						>
+							{#each ROLES as role (role)}
+								<option value={role}>{roleLabel(role)}</option>
+							{/each}
+						</select>
+						<button type="submit" class="btn btn-primary btn-sm" disabled={busy || chosen === ''}>
+							Add
+						</button>
+					</form>
+				{/if}
+			</section>
+		{/if}
 	{/if}
 </div>
 

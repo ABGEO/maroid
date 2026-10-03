@@ -2,6 +2,7 @@
 	import type { PageProps } from './$types';
 	import SettingsForm from '$lib/components/settings/SettingsForm.svelte';
 	import { pluginState } from '$lib/state/plugins.svelte';
+	import { PERMISSION, holds } from '$lib/permissions';
 	import { displayNameOf } from '$lib/plugins/capabilities';
 
 	let { data }: PageProps = $props();
@@ -14,11 +15,15 @@
 	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">{name}</h1>
 	<p class="text-base-content/50 mt-1 font-mono text-[11px]">{data.pluginId}</p>
 	<p class="text-base-content/60 mt-3 text-sm">
-		These values belong to you. Nobody else reads them, and a secret never leaves the hub once you
-		store it.
+		These values belong to this workspace, and a field that names you belongs to you alone. A secret
+		never leaves the hub once you store it.
 	</p>
 
 	<div class="mt-8">
-		<SettingsForm workspaceId={data.workspace.id} pluginId={data.pluginId} />
+		<SettingsForm
+			workspaceId={data.workspace.id}
+			pluginId={data.pluginId}
+			readonly={!holds(data.workspace, PERMISSION.settingsWrite)}
+		/>
 	</div>
 </div>

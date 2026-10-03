@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 
 	import { ApiError, PROBLEM_TYPE, api, isProblem } from '$lib/api';
+	import { PERMISSION, holds } from '$lib/permissions';
 	import { loadWorkspaces } from '$lib/state/workspaces.svelte';
 
 	import type { PageProps } from './$types';
@@ -73,17 +74,22 @@
 		</div>
 	{/if}
 
-	<form class="mt-6 flex max-w-md flex-col gap-3" onsubmit={save}>
-		<label class="form-control">
-			<span class="label-text mb-1 block text-xs">Name</span>
-			<input type="text" class="input input-bordered w-full" bind:value={name} required />
-			<span class="text-base-content/50 mt-1 text-[11px]">{length} / {MAX_NAME}</span>
-		</label>
+	{#if !holds(data.workspace, PERMISSION.workspaceWrite)}
+		<p class="mt-6 text-sm">{data.workspace.name}</p>
+		<p class="text-base-content/60 mt-1 text-sm">A manager renames the workspace.</p>
+	{:else}
+		<form class="mt-6 flex max-w-md flex-col gap-3" onsubmit={save}>
+			<label class="form-control">
+				<span class="label-text mb-1 block text-xs">Name</span>
+				<input type="text" class="input input-bordered w-full" bind:value={name} required />
+				<span class="text-base-content/50 mt-1 text-[11px]">{length} / {MAX_NAME}</span>
+			</label>
 
-		<div>
-			<button type="submit" class="btn btn-primary btn-sm" disabled={saving || !valid}>
-				Save
-			</button>
-		</div>
-	</form>
+			<div>
+				<button type="submit" class="btn btn-primary btn-sm" disabled={saving || !valid}>
+					Save
+				</button>
+			</div>
+		</form>
+	{/if}
 </div>

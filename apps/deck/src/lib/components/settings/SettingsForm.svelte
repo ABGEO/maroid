@@ -9,9 +9,10 @@
 	interface Props {
 		workspaceId: string;
 		pluginId: string;
+		readonly?: boolean;
 	}
 
-	let { workspaceId, pluginId }: Props = $props();
+	let { workspaceId, pluginId, readonly = false }: Props = $props();
 
 	let status = $state<'loading' | 'ready' | 'absent' | 'error'>('loading');
 	let schema = $state<Schema>({});
@@ -103,25 +104,31 @@
 		</div>
 	{/if}
 
-	<div class="border-base-300 mt-6 flex items-center gap-3 border-t pt-4">
-		<button type="submit" class="btn btn-primary btn-sm" disabled={saving}>
-			{#if saving}
-				<span class="loading loading-spinner loading-xs"></span>
+	{#if readonly}
+		<p class="border-base-300 text-base-content/60 mt-6 border-t pt-4 text-sm">
+			Your role reads these settings. An editor or a manager changes them.
+		</p>
+	{:else}
+		<div class="border-base-300 mt-6 flex items-center gap-3 border-t pt-4">
+			<button type="submit" class="btn btn-primary btn-sm" disabled={saving}>
+				{#if saving}
+					<span class="loading loading-spinner loading-xs"></span>
+				{/if}
+				Save
+			</button>
+			<button
+				type="button"
+				class="btn btn-ghost btn-sm"
+				disabled={saving}
+				onclick={() => void load(workspaceId, pluginId)}
+			>
+				Reset
+			</button>
+			{#if saved}
+				<span class="text-success font-mono text-[11px]">Saved.</span>
 			{/if}
-			Save
-		</button>
-		<button
-			type="button"
-			class="btn btn-ghost btn-sm"
-			disabled={saving}
-			onclick={() => void load(workspaceId, pluginId)}
-		>
-			Reset
-		</button>
-		{#if saved}
-			<span class="text-success font-mono text-[11px]">Saved.</span>
-		{/if}
-	</div>
+		</div>
+	{/if}
 {/snippet}
 
 {#if status === 'loading'}
@@ -164,6 +171,7 @@
 				initialValue={values}
 				onsubmit={(value) => void save(value)}
 				{footer}
+				disabled={readonly}
 			/>
 		{/key}
 	</div>

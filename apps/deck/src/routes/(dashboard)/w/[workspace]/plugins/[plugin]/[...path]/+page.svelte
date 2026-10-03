@@ -6,6 +6,7 @@
 
 	import type { PageProps } from './$types';
 	import { createPluginClient } from '$lib/api';
+	import { pluginCan } from '$lib/permissions';
 	import { displayName, userState } from '$lib/state/user.svelte';
 
 	let { data }: PageProps = $props();
@@ -30,6 +31,7 @@
 		get api() {
 			return api;
 		},
+		can: (permission) => pluginCan(data.workspace, data.pluginId, permission),
 		href: (path) => pluginPath(path),
 		navigate: (path) => {
 			void goto(

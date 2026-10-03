@@ -9,6 +9,8 @@ export interface PluginHost {
   user: User | null;
   /** Client already scoped to the prefix /workspaces/{workspaceId}/plugins/{id}/api. */
   api: ApiClient;
+  /** Whether the role of the person holds a permission of this plugin, named without its prefix. */
+  can(permission: string): boolean;
   /** Turn a plugin-relative path into a deck URL. */
   href(path: string): string;
   /** Client-side navigation to a plugin-relative path. */

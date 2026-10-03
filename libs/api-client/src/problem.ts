@@ -34,6 +34,8 @@ export const PROBLEM_TYPE = {
   notFound: '/problems/http/not-found',
   settingsAbsent: '/problems/hub/settings-absent',
   memberExists: '/problems/hub/member-exists',
+  managerLast: '/problems/hub/manager-last',
+  permissionDenied: '/problems/http/permission-denied',
   methodNotAllowed: '/problems/http/method-not-allowed',
   requestInProgress: '/problems/http/request-in-progress',
   preconditionFailed: '/problems/http/precondition-failed',
