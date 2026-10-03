@@ -3,6 +3,7 @@
 
 	import { api, type Plugin } from '$lib/api';
 	import { pluginState } from '$lib/state/plugins.svelte';
+	import { actingWorkspaceId } from '$lib/state/workspaces.svelte';
 	import { fieldsOf, missingFields } from '$lib/settings/schema';
 	import {
 		capabilitiesOf,
@@ -16,11 +17,13 @@
 
 	let health = $state<Record<string, Health>>({});
 
-	async function check(plugin: Plugin): Promise<void> {
+	const workspaceId = $derived(actingWorkspaceId(undefined));
+
+	async function check(workspace: string, plugin: Plugin): Promise<void> {
 		try {
 			const [schema, values] = await Promise.all([
-				api.settings.schema(plugin.id),
-				api.settings.read(plugin.id)
+				api.settings.schema(workspace, plugin.id),
+				api.settings.read(workspace, plugin.id)
 			]);
 
 			if (schema === null || values === null) {
@@ -35,8 +38,12 @@
 	}
 
 	$effect(() => {
+		if (workspaceId === null) {
+			return;
+		}
+
 		for (const plugin of pluginState.plugins.filter((p) => hasCapability(p, 'settings'))) {
-			void check(plugin);
+			void check(workspaceId, plugin);
 		}
 	});
 </script>
@@ -85,10 +92,13 @@
 						{/if}
 					</div>
 
-					{#if hasCapability(plugin, 'settings')}
+					{#if hasCapability(plugin, 'settings') && workspaceId !== null}
 						<a
 							class="btn btn-ghost btn-sm"
-							href={resolve('/(dashboard)/plugins/[plugin]/settings', { plugin: plugin.id })}
+							href={resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/settings', {
+								workspace: workspaceId,
+								plugin: plugin.id
+							})}
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"

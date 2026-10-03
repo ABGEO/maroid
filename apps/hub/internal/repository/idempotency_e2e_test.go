@@ -39,7 +39,7 @@ func TestARepeatedWriteReachesTheHandlerOnce(t *testing.T) {
 		request := httptest.NewRequestWithContext(
 			pluginapi.ContextWithActingUser(t.Context(), user),
 			http.MethodPost,
-			"/plugins/dev.maroid.jasmine/api/environments",
+			"/workspaces/01a0cae5-eb36-777a-824e-6e7e28d7a6b1/plugins/dev.maroid.jasmine/api/environments",
 			strings.NewReader(`{"name":"Balcony"}`),
 		)
 		request.Header.Set(restidempotency.KeyHeader, "key-1")
@@ -88,7 +88,7 @@ func TestOneKeyOfTwoPeopleAnswersEachOfThem(t *testing.T) {
 		request := httptest.NewRequestWithContext(
 			pluginapi.ContextWithActingUser(t.Context(), user),
 			http.MethodPost,
-			"/plugins/dev.maroid.jasmine/api/environments",
+			"/workspaces/01a0cae5-eb36-777a-824e-6e7e28d7a6b1/plugins/dev.maroid.jasmine/api/environments",
 			strings.NewReader(`{"name":"Balcony"}`),
 		)
 		// The same key, picked by two different people.

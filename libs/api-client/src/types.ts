@@ -31,7 +31,7 @@ export interface Tagged<T> {
 export interface ClientConfig {
   /** Hub origin, e.g. https://hub.example.com. Trailing slashes are trimmed. */
   baseUrl: string;
-  /** Path prepended to every request, e.g. /plugins/dev.maroid.jasmine/api. */
+  /** Path prepended to every request, e.g. /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api. */
   prefix?: string;
   /** Called when the hub answers 401. The request then resolves to null. */
   onUnauthorized?: () => void;

@@ -30,9 +30,9 @@ type apiRoute struct {
 const redirect = "redirect=http%3A%2F%2Fmaroid.localhost"
 
 // apiRoutes answers one request for each row of API-003. A row that names a
-// prefix takes one route under it.
-func apiRoutes() []apiRoute {
-	return append(authRoutes(), platformRoutes()...)
+// prefix takes one route under it, in the workspace of the person.
+func apiRoutes(workspaceID string) []apiRoute {
+	return append(authRoutes(), platformRoutes(workspaceID)...)
 }
 
 func authRoutes() []apiRoute {
@@ -78,20 +78,23 @@ func authRoutes() []apiRoute {
 	}
 }
 
-func platformRoutes() []apiRoute {
+func platformRoutes(workspaceID string) []apiRoute {
+	plugin := "/workspaces/" + workspaceID + "/plugins/" + probePlugin
+
 	return []apiRoute{
 		{"/plugins", http.MethodGet, "/plugins", true, http.StatusOK},
+		{"/workspaces*", http.MethodGet, "/workspaces/" + workspaceID, true, http.StatusOK},
 		{
-			"/plugins/{id}/api/*",
+			"/workspaces/{workspaceId}/plugins/{id}/api/*",
 			http.MethodGet,
-			"/plugins/" + probePlugin + "/api/records",
+			plugin + "/api/records",
 			true,
 			http.StatusOK,
 		},
 		{
-			"/plugins/{id}/settings*",
+			"/workspaces/{workspaceId}/plugins/{id}/settings*",
 			http.MethodGet,
-			"/plugins/" + probePlugin + "/settings",
+			plugin + "/settings",
 			false,
 			http.StatusUnauthorized,
 		},
@@ -109,6 +112,11 @@ func platformRoutes() []apiRoute {
 		},
 		{"/mcp", http.MethodPost, "/mcp", false, http.StatusUnauthorized},
 	}
+}
+
+// pluginPath answers the address of the probe plugin in the workspace of the person.
+func pluginPath(fixture *hubFixture, rest string) string {
+	return "/workspaces/" + fixture.workspace + "/plugins/" + probePlugin + rest
 }
 
 func (f *hubFixture) send(t *testing.T, route apiRoute) *httptest.ResponseRecorder {
@@ -149,7 +157,7 @@ func TestEveryRouteOfTheTableAnswers(t *testing.T) {
 
 	fixture := hubUnderTest(t)
 
-	for _, route := range apiRoutes() {
+	for _, route := range apiRoutes(fixture.workspace) {
 		t.Run(route.row, func(t *testing.T) {
 			t.Parallel()
 
@@ -165,7 +173,7 @@ func TestEveryRouteOfTheTableAnswers(t *testing.T) {
 		"login", "logout", "signin", "signout", "redeem", "attach", "detach", "list", "ping",
 	}
 
-	for _, route := range apiRoutes() {
+	for _, route := range apiRoutes(fixture.workspace) {
 		path := route.row
 		if _, after, hasMethod := strings.Cut(route.row, " "); hasMethod {
 			path = after
@@ -202,7 +210,7 @@ func TestEveryRouteSaysHowLongAReaderKeepsTheAnswer(t *testing.T) {
 
 	fixture := hubUnderTest(t)
 
-	for _, route := range apiRoutes() {
+	for _, route := range apiRoutes(fixture.workspace) {
 		t.Run(route.row, func(t *testing.T) {
 			t.Parallel()
 
@@ -247,7 +255,7 @@ func TestARepeatedWriteMakesOneRecord(t *testing.T) {
 
 	write := func(body string) *httptest.ResponseRecorder {
 		request := httptest.NewRequestWithContext(t.Context(), http.MethodPost,
-			"/plugins/"+probePlugin+"/api/records", strings.NewReader(body))
+			pluginPath(fixture, "/api/records"), strings.NewReader(body))
 		request.AddCookie(fixture.session)
 		request.Header.Set(idempotency.KeyHeader, "one-write")
 
@@ -280,7 +288,7 @@ func TestASaveAnswersTheValidatorOfTheNextSave(t *testing.T) {
 	t.Parallel()
 
 	fixture := hubUnderTest(t)
-	settingsPath := "/plugins/" + probePlugin + "/settings"
+	settingsPath := pluginPath(fixture, "/settings")
 
 	send := func(method string, ifMatch string) *httptest.ResponseRecorder {
 		request := httptest.NewRequestWithContext(
@@ -360,7 +368,7 @@ func TestARepeatDuringTheFirstWriteMakesNoSecondRecord(t *testing.T) {
 
 	write := func() *httptest.ResponseRecorder {
 		request := httptest.NewRequestWithContext(t.Context(), http.MethodPost,
-			"/plugins/"+probePlugin+"/api/held-records", strings.NewReader(`{"name":"Fern"}`))
+			pluginPath(fixture, "/api/held-records"), strings.NewReader(`{"name":"Fern"}`))
 		request.AddCookie(fixture.session)
 		request.Header.Set(idempotency.KeyHeader, "slow-write")
 

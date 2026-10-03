@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -72,6 +73,8 @@ type workspaceFixture struct {
 	gio      person
 	nino     person
 	h        string
+	// probeRuns counts the requests that reached the route of the probe plugin.
+	probeRuns *atomic.Int32
 }
 
 func workspaceUnderTest(t *testing.T) *workspaceFixture {
@@ -97,10 +100,12 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 		repository.NewInvitation(instance.DB),
 	)
 
+	runs := &atomic.Int32{}
 	fixture := &workspaceFixture{
-		router:   workspaceRouter(t, instance, provider, identityRepo, userRepo),
-		database: instance.DB,
-		provider: provider,
+		router:    workspaceRouter(t, instance, provider, identityRepo, userRepo, runs),
+		database:  instance.DB,
+		provider:  provider,
+		probeRuns: runs,
 	}
 
 	signable := func(name string, account string) person {
@@ -125,13 +130,15 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 	return fixture
 }
 
-// workspaceRouter mounts the handler of the workspaces with every real dependency.
+// workspaceRouter mounts the handler of the workspaces and the routes of the probe
+// plugin with every real dependency, the way the hub mounts both on one router.
 func workspaceRouter(
 	t *testing.T,
 	instance *testdb.Instance,
 	provider *authtest.Provider,
 	identityRepo repository.IdentityRepository,
 	userRepo repository.UserRepository,
+	probeRuns *atomic.Int32,
 ) *chi.Mux {
 	t.Helper()
 
@@ -145,14 +152,32 @@ func workspaceRouter(
 
 	memberRepo := repository.NewWorkspaceMember(instance.DB)
 
+	logger := slog.New(slog.DiscardHandler)
+	verifier := auth.NewTokenVerifier(oidcSvc)
+	resolver := auth.NewResolver(identityRepo)
+
 	router := chi.NewRouter()
 	router.Use(address.Middleware("https://hub.example.com"))
 	router.Use(precondition.IfMatch)
 
+	handler.NewPluginWrapper(
+		logger,
+		verifier,
+		resolver,
+		noIdempotency{},
+		memberRepo,
+		pluginapi.ParsePluginID(probePluginID),
+		[]pluginapi.Route{{
+			Method:  http.MethodGet,
+			Pattern: "/notes",
+			Handler: listNotes(instance.DB, probeRuns),
+		}},
+	).Register(router)
+
 	handler.NewWorkspace(
-		slog.New(slog.DiscardHandler),
-		auth.NewTokenVerifier(oidcSvc),
-		auth.NewResolver(identityRepo),
+		logger,
+		verifier,
+		resolver,
 		noIdempotency{},
 		memberRepo,
 		workspace.NewManager(

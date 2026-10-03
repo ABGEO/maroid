@@ -10,6 +10,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/registrar"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
 )
@@ -31,6 +32,7 @@ func New(
 	verifier auth.TokenVerifier,
 	resolver auth.IdentityResolver,
 	idempotency idempotency.Store,
+	members repository.WorkspaceMemberRepository,
 	commandRegistry *registry.CommandRegistry,
 	cronRegistry *registry.CronRegistry,
 	handlerRegistry *handler.Registry,
@@ -60,6 +62,7 @@ func New(
 				handlerRegistry,
 				capabilityRegistry,
 				idempotency,
+				members,
 			),
 			registrar.NewMigrationRegistrar(migrationRegistry, capabilityRegistry),
 			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry, capabilityRegistry),

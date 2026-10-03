@@ -14,8 +14,9 @@ import (
 	"github.com/abgeo/maroid/libs/rest/address"
 )
 
-// API-003: One handler owns the prefix /plugins, and the routes under it must each
-// resolve. A route that falls behind the wildcard of the asset mount answers 404.
+// API-003: One handler owns the list of plugins, the assets of a plugin, and the
+// settings of a plugin under its workspace. Each route must resolve. A route that
+// falls behind the wildcard of the asset mount answers 404.
 //
 // The request carries no token, so the middleware refuses it before it reads the JWT
 // service. An authenticated route therefore answers 401, and a public one does not.
@@ -37,17 +38,21 @@ func TestTheRoutesOfThePluginHandlerResolve(t *testing.T) {
 			registry.NewCapabilityRegistry(),
 			nil,
 			noIdempotency{},
+			nil,
 		),
 	)
+
+	settings := "/workspaces/01a0cae5-eb36-777a-824e-6e7e28d7a6b1" +
+		"/plugins/dev.maroid.probe/settings"
 
 	authenticated := []struct {
 		method string
 		path   string
 	}{
 		{http.MethodGet, "/plugins"},
-		{http.MethodGet, "/plugins/dev.maroid.probe/settings/schema"},
-		{http.MethodGet, "/plugins/dev.maroid.probe/settings"},
-		{http.MethodPut, "/plugins/dev.maroid.probe/settings"},
+		{http.MethodGet, settings + "/schema"},
+		{http.MethodGet, settings},
+		{http.MethodPut, settings},
 	}
 
 	for _, one := range authenticated {

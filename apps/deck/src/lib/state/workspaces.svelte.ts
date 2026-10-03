@@ -59,3 +59,11 @@ export function landingWorkspace(workspaces: Workspace[]): Workspace | null {
 export function workspaceById(workspaceId: string | undefined): Workspace | undefined {
 	return workspaceState.workspaces.find((workspace) => workspace.id === workspaceId);
 }
+
+/**
+ * The workspace that a page acts in: the one that its address names, or else the
+ * one to land on. A person with no workspace has none.
+ */
+export function actingWorkspaceId(addressed: string | undefined): string | null {
+	return addressed ?? landingWorkspace(workspaceState.workspaces)?.id ?? null;
+}

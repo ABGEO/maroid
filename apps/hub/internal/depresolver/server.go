@@ -13,6 +13,8 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
+	"github.com/abgeo/maroid/apps/hub/internal/settings"
+	"github.com/abgeo/maroid/libs/rest/idempotency"
 )
 
 // HandlerRegistry initializes and returns the handler registry.
@@ -191,21 +193,45 @@ func (c *Container) buildHandlers() (map[string]handler.Handler, error) {
 		return nil, err
 	}
 
+	pluginHandler, err := c.buildPluginHandler(
+		logger, verifier, identityResolver, settingsSvc, idempotencyStore,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return map[string]handler.Handler{
 		"health": handler.NewHealth(logger, healthService),
 		"auth":   authHandler,
-		"plugin": handler.NewPlugin(
-			logger,
-			verifier,
-			identityResolver,
-			c.PluginRegistry(),
-			c.UIRegistry(),
-			c.CapabilityRegistry(),
-			settingsSvc,
-			idempotencyStore,
-		),
-		"mcp": mcpHandler,
+		"plugin": pluginHandler,
+		"mcp":    mcpHandler,
 	}, nil
+}
+
+// buildPluginHandler resolves the member repository of the plugin handler.
+func (c *Container) buildPluginHandler(
+	logger *slog.Logger,
+	verifier auth.TokenVerifier,
+	identityResolver auth.IdentityResolver,
+	settingsSvc settings.Service,
+	idempotencyStore idempotency.Store,
+) (*handler.Plugin, error) {
+	members, err := c.WorkspaceMemberRepository()
+	if err != nil {
+		return nil, err
+	}
+
+	return handler.NewPlugin(
+		logger,
+		verifier,
+		identityResolver,
+		c.PluginRegistry(),
+		c.UIRegistry(),
+		c.CapabilityRegistry(),
+		settingsSvc,
+		idempotencyStore,
+		members,
+	), nil
 }
 
 // buildWorkspaceHandler resolves every dependency of the handler of the workspaces.

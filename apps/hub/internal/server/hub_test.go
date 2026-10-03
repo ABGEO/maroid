@@ -28,6 +28,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/server"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/testdb"
@@ -45,12 +46,13 @@ const (
 )
 
 // hubFixture holds the router of the hub, with every handler that the hub
-// mounts, and a session of one person who holds an identity.
+// mounts, and a session of one person who holds an identity and one workspace.
 type hubFixture struct {
-	router   http.Handler
-	database *sqlx.DB
-	session  *http.Cookie
-	gate     *gate
+	router    http.Handler
+	database  *sqlx.DB
+	session   *http.Cookie
+	workspace string
+	gate      *gate
 }
 
 // gate holds a write of the probe plugin until the test lets it through, so a
@@ -73,12 +75,7 @@ func newGate() *gate {
 func hubUnderTest(t *testing.T) *hubFixture {
 	t.Helper()
 
-	instance := testdb.Start(t)
-
-	migrations, err := fs.Sub(db.GetMigrationsFS(), "migrations")
-	require.NoError(t, err)
-	instance.Migrate(t, "public", migrations)
-
+	instance := migratedDatabase(t)
 	provider := authtest.StartProvider(t)
 	cfg := hubConfig(provider.URL)
 	logger := slog.New(slog.DiscardHandler)
@@ -93,6 +90,8 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	verifier := auth.NewTokenVerifier(oidcSvc)
 	resolver := auth.NewResolver(identityRepo)
 	store := idempotency.NewStore(instance.DB)
+	members := repository.NewWorkspaceMember(instance.DB)
+	workspaces := workspaceManager(instance.DB, members, userRepo)
 
 	router, err := server.NewHTTPRouter(cfg, logger)
 	require.NoError(t, err)
@@ -109,23 +108,59 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		handler.NewPlugin(
 			logger, verifier, resolver,
 			registry.NewPluginRegistry(), probeUI(), registry.NewCapabilityRegistry(),
-			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store,
+			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store, members,
 		),
+		handler.NewWorkspace(logger, verifier, resolver, store, members, workspaces),
 		handler.NewMCP(cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry()),
 		handler.NewPluginWrapper(
-			logger, verifier, resolver, store,
+			logger, verifier, resolver, store, members,
 			pluginapi.ParsePluginID(probePlugin), probeRoutes(t, instance.DB, held),
 		),
 	)
 
 	mountWebhook(t, cfg, logger, router, resolver)
 
+	person, session := sessionOfAPerson(t, instance.DB, service, provider)
+
 	return &hubFixture{
-		router:   router,
-		database: instance.DB,
-		session:  sessionOfAPerson(t, instance.DB, service, provider),
-		gate:     held,
+		router:    router,
+		database:  instance.DB,
+		session:   session,
+		workspace: workspaceOf(t, workspaces, person),
+		gate:      held,
 	}
+}
+
+// workspaceManager builds the service of the workspaces on the database.
+func workspaceManager(
+	database *sqlx.DB,
+	members repository.WorkspaceMemberRepository,
+	users repository.UserRepository,
+) *workspace.Manager {
+	return workspace.NewManager(database, repository.NewWorkspace(database), members, users)
+}
+
+// workspaceOf creates a workspace of the person and answers its identifier.
+func workspaceOf(t *testing.T, workspaces workspace.Service, person string) string {
+	t.Helper()
+
+	created, err := workspaces.Create(pluginapi.ContextWithActingUser(t.Context(), person), "Home")
+	require.NoError(t, err)
+
+	return created.ID
+}
+
+// migratedDatabase starts a database that holds every migration of the hub.
+func migratedDatabase(t *testing.T) *testdb.Instance {
+	t.Helper()
+
+	instance := testdb.Start(t)
+
+	migrations, err := fs.Sub(db.GetMigrationsFS(), "migrations")
+	require.NoError(t, err)
+	instance.Migrate(t, "public", migrations)
+
+	return instance
 }
 
 // mountWebhook mounts the Telegram webhook the way the hub does.
@@ -147,14 +182,14 @@ func mountWebhook(
 	require.NoError(t, err)
 }
 
-// sessionOfAPerson answers the session cookie of one person who holds a
-// Telegram identity.
+// sessionOfAPerson answers the user record and the session cookie of one person
+// who holds a Telegram identity.
 func sessionOfAPerson(
 	t *testing.T,
 	database *sqlx.DB,
 	service *auth.Service,
 	provider *authtest.Provider,
-) *http.Cookie {
+) (string, *http.Cookie) {
 	t.Helper()
 
 	var person string
@@ -167,7 +202,7 @@ func sessionOfAPerson(
 	))
 
 	//nolint:gosec // G124: a request carries a name and a value, and no attribute.
-	return &http.Cookie{
+	return person, &http.Cookie{
 		Name:  auth.SessionCookieName,
 		Value: provider.Sign(t, auth.ProviderTelegram, "111"),
 	}

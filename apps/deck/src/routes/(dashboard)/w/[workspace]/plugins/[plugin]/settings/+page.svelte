@@ -19,6 +19,6 @@
 	</p>
 
 	<div class="mt-8">
-		<SettingsForm pluginId={data.pluginId} />
+		<SettingsForm workspaceId={data.workspace.id} pluginId={data.pluginId} />
 	</div>
 </div>

@@ -30,8 +30,8 @@ const PLUGINS: Crumb = { label: 'Plugins', href: resolve('/plugins') };
  */
 export function needsPlugins(routeId: RouteId | null): boolean {
 	return (
-		routeId === '/(dashboard)/plugins/[plugin]/settings' ||
-		routeId === '/(dashboard)/plugins/[plugin]/[...path]'
+		routeId === '/(dashboard)/w/[workspace]/plugins/[plugin]/settings' ||
+		routeId === '/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]'
 	);
 }
 
@@ -84,28 +84,33 @@ export function crumbsFor(
 		case '/(dashboard)/plugins':
 			return [HUB, PLUGINS];
 
-		case '/(dashboard)/plugins/[plugin]/settings': {
+		case '/(dashboard)/w/[workspace]/plugins/[plugin]/settings': {
+			const workspaceId = params.workspace ?? '';
 			const pluginId = params.plugin ?? '';
 
 			return [
 				HUB,
-				PLUGINS,
+				workspaceCrumb(workspaceId, workspaces),
 				pluginCrumb(pluginId, plugins),
 				{
 					label: 'Settings',
-					href: resolve('/(dashboard)/plugins/[plugin]/settings', { plugin: pluginId })
+					href: resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/settings', {
+						workspace: workspaceId,
+						plugin: pluginId
+					})
 				}
 			];
 		}
 
-		case '/(dashboard)/plugins/[plugin]/[...path]': {
+		case '/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]': {
+			const workspaceId = params.workspace ?? '';
 			const pluginId = params.plugin ?? '';
 
 			return [
 				HUB,
-				PLUGINS,
+				workspaceCrumb(workspaceId, workspaces),
 				pluginCrumb(pluginId, plugins),
-				...routeCrumbs(pluginId, params.path ?? '', plugins)
+				...routeCrumbs(workspaceId, pluginId, params.path ?? '', plugins)
 			];
 		}
 
@@ -134,7 +139,12 @@ function pluginCrumb(pluginId: string, plugins: Plugin[]): Crumb {
  * the plugin declares takes the label and the target of that route. A segment
  * that no route declares reads as a title and carries no target.
  */
-function routeCrumbs(pluginId: string, path: string, plugins: Plugin[]): Crumb[] {
+function routeCrumbs(
+	workspaceId: string,
+	pluginId: string,
+	path: string,
+	plugins: Plugin[]
+): Crumb[] {
 	const routes = uiOf(find(plugins, pluginId))?.routes ?? [];
 	const segments = path.split('/').filter(Boolean);
 
@@ -148,7 +158,11 @@ function routeCrumbs(pluginId: string, path: string, plugins: Plugin[]): Crumb[]
 
 		return {
 			label: route.label,
-			href: resolve('/(dashboard)/plugins/[plugin]/[...path]', { plugin: pluginId, path: subpath })
+			href: resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]', {
+				workspace: workspaceId,
+				plugin: pluginId,
+				path: subpath
+			})
 		};
 	});
 }

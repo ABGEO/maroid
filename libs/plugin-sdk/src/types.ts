@@ -7,7 +7,7 @@ export interface User {
 
 export interface PluginHost {
   user: User | null;
-  /** Client already scoped to this plugin's /plugins/{id}/api prefix. */
+  /** Client already scoped to the prefix /workspaces/{workspaceId}/plugins/{id}/api. */
   api: ApiClient;
   /** Turn a plugin-relative path into a deck URL. */
   href(path: string): string;

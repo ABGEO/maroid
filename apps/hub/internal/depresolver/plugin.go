@@ -127,11 +127,17 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		return nil, err
 	}
 
+	members, err := c.WorkspaceMemberRepository()
+	if err != nil {
+		return nil, err
+	}
+
 	return pluginloader.New(
 		pluginHost,
 		verifier,
 		identityResolver,
 		idempotencyStore,
+		members,
 		registries.command,
 		registries.cron,
 		registries.handler,

@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { pluginState } from '$lib/state/plugins.svelte';
-	import { workspaceState } from '$lib/state/workspaces.svelte';
+	import { actingWorkspaceId, workspaceState } from '$lib/state/workspaces.svelte';
 	import { uiOf } from '$lib/plugins/capabilities';
 
 	function isActive(href: string) {
@@ -13,8 +13,11 @@
 		return hrefs.some((h) => isActive(h));
 	}
 
-	function routeHref(pluginId: string, path: string) {
-		return resolve('/(dashboard)/plugins/[plugin]/[...path]', {
+	const workspaceId = $derived(actingWorkspaceId(page.params.workspace));
+
+	function routeHref(workspace: string, pluginId: string, path: string) {
+		return resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]', {
+			workspace,
 			plugin: pluginId,
 			path: path.replace(/^\//, '')
 		});
@@ -31,7 +34,7 @@
 	);
 
 	const pluginsGroupIsOpen = $derived(
-		page.url.pathname === resolve('/plugins') || page.url.pathname.startsWith('/plugins/')
+		page.url.pathname === resolve('/plugins') || page.route.id?.includes('/plugins/') === true
 	);
 
 	function letterFromName(name: string) {
@@ -129,12 +132,14 @@
 										</div>
 									</li>
 								{/each}
-							{:else if pluginState.status === 'ready'}
+							{:else if pluginState.status === 'ready' && workspaceId !== null}
 								{#each uiPlugins as plugin (plugin.id)}
 									<li>
 										<details
 											open={groupIsOpen(
-												plugin.manifest!.routes.map((r) => routeHref(plugin.id, r.path))
+												plugin.manifest!.routes.map((r) =>
+													routeHref(workspaceId, plugin.id, r.path)
+												)
 											)}
 										>
 											<summary>
@@ -152,11 +157,17 @@
 												{#each plugin.manifest!.routes as route (route.path)}
 													<li>
 														<a
-															href={resolve('/(dashboard)/plugins/[plugin]/[...path]', {
-																plugin: plugin.id,
-																path: route.path.replace(/^\//, '')
-															})}
-															class:menu-active={isActive(routeHref(plugin.id, route.path))}
+															href={resolve(
+																'/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]',
+																{
+																	workspace: workspaceId,
+																	plugin: plugin.id,
+																	path: route.path.replace(/^\//, '')
+																}
+															)}
+															class:menu-active={isActive(
+																routeHref(workspaceId, plugin.id, route.path)
+															)}
 														>
 															{route.label}
 														</a>

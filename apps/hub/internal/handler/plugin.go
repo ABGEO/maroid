@@ -18,7 +18,9 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/rest/cache"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
 	"github.com/abgeo/maroid/libs/rest/page"
@@ -50,6 +52,7 @@ type Plugin struct {
 	capabilityRegistry *registry.CapabilityRegistry
 	settingsSvc        settings.Service
 	idempotency        idempotency.Store
+	members            repository.WorkspaceMemberRepository
 	// assetTags holds the entity tag of each plugin asset. An asset is embedded
 	// in the shared object, so its tag cannot change while the hub runs.
 	assetTags sync.Map
@@ -67,9 +70,11 @@ func NewPlugin(
 	capabilityRegistry *registry.CapabilityRegistry,
 	settingsSvc settings.Service,
 	idempotency idempotency.Store,
+	members repository.WorkspaceMemberRepository,
 ) *Plugin {
 	return &Plugin{
 		idempotency: idempotency,
+		members:     members,
 		logger: logger.With(
 			slog.String("component", "handler"),
 			slog.String("handler", "plugin"),
@@ -87,15 +92,22 @@ func NewPlugin(
 func (h *Plugin) Register(router chi.Router) {
 	h.logger.Debug("registering routes")
 
+	router.Route("/workspaces/{"+workspace.PathParam+"}/plugins/{id}/settings", func(r chi.Router) {
+		r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
+		r.Use(idempotency.Middleware(h.logger, h.idempotency))
+		r.Use(workspace.Middleware(h.logger, h.members))
+
+		r.Get("/schema", Wrap(h.logger, h.SettingsSchema))
+		r.Get("/", Wrap(h.logger, h.ReadSettings))
+		r.Put("/", Wrap(h.logger, h.SaveSettings))
+	})
+
 	router.Route("/plugins", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
 			r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
 			r.Use(idempotency.Middleware(h.logger, h.idempotency))
 
 			r.Get("/", Wrap(h.logger, h.List))
-			r.Get("/{id}/settings/schema", Wrap(h.logger, h.SettingsSchema))
-			r.Get("/{id}/settings", Wrap(h.logger, h.ReadSettings))
-			r.Put("/{id}/settings", Wrap(h.logger, h.SaveSettings))
 		})
 
 		// @todo: find a workaround to authenticate requests on FE.

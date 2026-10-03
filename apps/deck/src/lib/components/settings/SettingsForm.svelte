@@ -7,10 +7,11 @@
 	import { fieldsOf, missingFields, type SettingsField } from '$lib/settings/schema';
 
 	interface Props {
+		workspaceId: string;
 		pluginId: string;
 	}
 
-	let { pluginId }: Props = $props();
+	let { workspaceId, pluginId }: Props = $props();
 
 	let status = $state<'loading' | 'ready' | 'absent' | 'error'>('loading');
 	let schema = $state<Schema>({});
@@ -34,11 +35,11 @@
 		return fallback;
 	}
 
-	async function load(id: string): Promise<void> {
+	async function load(workspace: string, id: string): Promise<void> {
 		try {
 			const [document, stored] = await Promise.all([
-				api.settings.schema(id),
-				api.settings.read(id)
+				api.settings.schema(workspace, id),
+				api.settings.read(workspace, id)
 			]);
 
 			if (document === null || stored === null) {
@@ -71,15 +72,15 @@
 		failure = null;
 
 		try {
-			await api.settings.save(pluginId, toInput(fields, value), etag);
-			await load(pluginId);
+			await api.settings.save(workspaceId, pluginId, toInput(fields, value), etag);
+			await load(workspaceId, pluginId);
 			saved = true;
 		} catch (error) {
 			if (error instanceof ApiError && error.is(PROBLEM_TYPE.settingsInvalid)) {
 				child?.showFieldErrors(error.fields);
 				failure = reasonOf(error, 'The settings do not match the schema.');
 			} else if (error instanceof ApiError && error.is(PROBLEM_TYPE.preconditionFailed)) {
-				await load(pluginId);
+				await load(workspaceId, pluginId);
 				failure = 'These settings changed elsewhere. The form now shows the stored values.';
 			} else {
 				console.error('Failed to save the settings', error);
@@ -91,7 +92,7 @@
 	}
 
 	$effect(() => {
-		void load(pluginId);
+		void load(workspaceId, pluginId);
 	});
 </script>
 
@@ -113,7 +114,7 @@
 			type="button"
 			class="btn btn-ghost btn-sm"
 			disabled={saving}
-			onclick={() => void load(pluginId)}
+			onclick={() => void load(workspaceId, pluginId)}
 		>
 			Reset
 		</button>
@@ -139,7 +140,9 @@
 {:else if status === 'error'}
 	<div class="alert alert-error">
 		<span>Failed to load the settings.</span>
-		<button type="button" class="btn btn-sm" onclick={() => void load(pluginId)}>Retry</button>
+		<button type="button" class="btn btn-sm" onclick={() => void load(workspaceId, pluginId)}
+			>Retry</button
+		>
 	</div>
 {:else}
 	{#if missing.length > 0}

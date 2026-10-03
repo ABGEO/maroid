@@ -62,6 +62,8 @@ export const client: ApiClient = createClient({
 	onUnauthorized: redirectToAuth
 });
 
-export function createPluginClient(pluginId: string): ApiClient {
-	return client.scope(`/plugins/${encodeURIComponent(pluginId)}/api`);
+export function createPluginClient(workspaceId: string, pluginId: string): ApiClient {
+	return client.scope(
+		`/workspaces/${encodeURIComponent(workspaceId)}/plugins/${encodeURIComponent(pluginId)}/api`
+	);
 }

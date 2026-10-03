@@ -11,14 +11,15 @@
 	let { data }: PageProps = $props();
 
 	function pluginPath(path: string): string {
-		return resolve('/(dashboard)/plugins/[plugin]/[...path]', {
+		return resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]', {
+			workspace: data.workspace.id,
 			plugin: data.pluginId,
 			path: path.replace(/^\//, '')
 		});
 	}
 	let target: HTMLElement | undefined = $state();
 
-	const api = $derived(createPluginClient(data.pluginId));
+	const api = $derived(createPluginClient(data.workspace.id, data.pluginId));
 
 	const host: PluginHost = {
 		get user() {
@@ -32,7 +33,8 @@
 		href: (path) => pluginPath(path),
 		navigate: (path) => {
 			void goto(
-				resolve('/(dashboard)/plugins/[plugin]/[...path]', {
+				resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]', {
+					workspace: data.workspace.id,
 					plugin: data.pluginId,
 					path: path.replace(/^\//, '')
 				})

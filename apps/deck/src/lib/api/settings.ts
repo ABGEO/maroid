@@ -3,17 +3,22 @@ import type { Tagged } from '@maroid/api-client';
 import { client } from './client';
 import type { SettingsInput, SettingsSchema, SettingsValues } from './types';
 
-function base(pluginId: string): string {
-	return `/plugins/${encodeURIComponent(pluginId)}/settings`;
+function base(workspaceId: string, pluginId: string): string {
+	return `/workspaces/${encodeURIComponent(workspaceId)}/plugins/${encodeURIComponent(pluginId)}/settings`;
 }
 
 export const settings = {
-	schema: (pluginId: string): Promise<SettingsSchema | null> =>
-		client.get<SettingsSchema>(`${base(pluginId)}/schema`),
+	schema: (workspaceId: string, pluginId: string): Promise<SettingsSchema | null> =>
+		client.get<SettingsSchema>(`${base(workspaceId, pluginId)}/schema`),
 
-	read: (pluginId: string): Promise<Tagged<SettingsValues> | null> =>
-		client.getTagged<SettingsValues>(base(pluginId)),
+	read: (workspaceId: string, pluginId: string): Promise<Tagged<SettingsValues> | null> =>
+		client.getTagged<SettingsValues>(base(workspaceId, pluginId)),
 
-	save: (pluginId: string, input: SettingsInput, ifMatch?: string): Promise<void> =>
-		client.put<void>(base(pluginId), input, { ifMatch }).then(() => undefined)
+	save: (
+		workspaceId: string,
+		pluginId: string,
+		input: SettingsInput,
+		ifMatch?: string
+	): Promise<void> =>
+		client.put<void>(base(workspaceId, pluginId), input, { ifMatch }).then(() => undefined)
 };
