@@ -6,19 +6,22 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 )
 
 const (
-	userColumns = `id, first_name, last_name, status, created_at, updated_at`
+	userColumns = `id, first_name, last_name, status, is_administrator, created_at, updated_at`
 
 	// userColumnsOfU repeats userColumns for a join, where a bare name is
 	// ambiguous. The two lists change together.
-	userColumnsOfU = `u.id, u.first_name, u.last_name, u.status, u.created_at, u.updated_at`
+	userColumnsOfU = `u.id, u.first_name, u.last_name, u.status, u.is_administrator, ` +
+		`u.created_at, u.updated_at`
 )
 
 // UserRepository defines the data access contract for the user record.
@@ -26,6 +29,18 @@ type UserRepository interface {
 	GetActiveByID(ctx context.Context, id string) (*model.User, error)
 	ListActive(ctx context.Context) ([]model.User, error)
 	Create(ctx context.Context, tx *sqlx.Tx, firstName string, lastName string) (*model.User, error)
+	Change(ctx context.Context, tx *sqlx.Tx, id string, change UserChange) (*model.User, error)
+	LockAdministrators(ctx context.Context, tx *sqlx.Tx) error
+	CountActiveAdministrators(ctx context.Context, tx *sqlx.Tx) (int, error)
+}
+
+// UserChange holds the columns that one change of a user record writes. A nil
+// member keeps its column. A non-nil IfMatch changes the row only while the row
+// still carries it.
+type UserChange struct {
+	Status        *model.Status
+	Administrator *bool
+	IfMatch       *time.Time
 }
 
 // User is a SQL based implementation of UserRepository.
@@ -86,6 +101,74 @@ func (r *User) Create(
 	}
 
 	return &entity, nil
+}
+
+// Change writes the status and the mark of a user record, and answers the record.
+func (r *User) Change(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	id string,
+	change UserChange,
+) (*model.User, error) {
+	var entity model.User
+
+	query := `
+		UPDATE public.users
+		SET status = COALESCE($2, status), is_administrator = COALESCE($3, is_administrator)
+		WHERE id = $1 AND ($4::timestamptz IS NULL OR updated_at = $4)
+		RETURNING ` + userColumns + `;`
+
+	err := tx.GetContext(
+		ctx,
+		&entity,
+		query,
+		id,
+		change.Status,
+		change.Administrator,
+		change.IfMatch,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		if change.IfMatch != nil {
+			return nil, fmt.Errorf("changing a User: %w", precondition.ErrModified)
+		}
+
+		return nil, fmt.Errorf("changing a User: %w", errs.ErrUserNotFound)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("changing a User: %w", err)
+	}
+
+	return &entity, nil
+}
+
+// LockAdministrators holds every active administrator until the transaction ends,
+// so two changes that each count the administrators run one after the other.
+func (r *User) LockAdministrators(ctx context.Context, tx *sqlx.Tx) error {
+	_, err := tx.ExecContext(ctx, `
+		SELECT id FROM public.users
+		WHERE is_administrator AND status = $1
+		FOR UPDATE;`, model.StatusActive)
+	if err != nil {
+		return fmt.Errorf("locking the administrators: %w", err)
+	}
+
+	return nil
+}
+
+// CountActiveAdministrators counts the active administrators, as the transaction sees
+// them.
+func (r *User) CountActiveAdministrators(ctx context.Context, tx *sqlx.Tx) (int, error) {
+	var count int
+
+	err := tx.GetContext(ctx, &count,
+		`SELECT count(*) FROM public.users WHERE is_administrator AND status = $1;`,
+		model.StatusActive)
+	if err != nil {
+		return 0, fmt.Errorf("counting the administrators: %w", err)
+	}
+
+	return count, nil
 }
 
 func (r *User) get(

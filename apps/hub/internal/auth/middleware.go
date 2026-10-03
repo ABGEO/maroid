@@ -20,9 +20,10 @@ var (
 type contextKey string
 
 const (
-	tokenContextKey contextKey = "token"
-	claimsKey       contextKey = "claims"
-	userIDKey       contextKey = "user_id"
+	tokenContextKey  contextKey = "token"
+	claimsKey        contextKey = "claims"
+	userIDKey        contextKey = "user_id"
+	administratorKey contextKey = "administrator"
 )
 
 // Middleware returns a HTTP middleware that verifies a access token and resolves
@@ -53,6 +54,7 @@ func Middleware(
 			ctx = context.WithValue(ctx, userIDKey, user.ID)
 			ctx = context.WithValue(ctx, claimsKey, claims)
 			ctx = pluginapi.ContextWithActingUser(ctx, user.ID)
+			ctx = ContextWithAdministrator(ctx, user.IsAdministrator)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -132,4 +134,17 @@ func UserIDFromContext(ctx context.Context) string {
 	userID, _ := ctx.Value(userIDKey).(string)
 
 	return userID
+}
+
+// ContextWithAdministrator returns a context that carries whether the acting user is
+// an administrator.
+func ContextWithAdministrator(ctx context.Context, administrator bool) context.Context {
+	return context.WithValue(ctx, administratorKey, administrator)
+}
+
+// IsAdministratorFromContext reports whether the acting user is an administrator.
+func IsAdministratorFromContext(ctx context.Context) bool {
+	administrator, _ := ctx.Value(administratorKey).(bool)
+
+	return administrator
 }

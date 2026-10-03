@@ -715,3 +715,24 @@ func TestTheCurrentUserCarriesTheRecordID(t *testing.T) {
 
 	assert.Equal(t, record, fixture.me(t, auth.ProviderTelegram, "303")["id"])
 }
+
+// PLUGACC-FR-001: The current user answers the mark of an administrator, so the deck
+// shows the administration to an administrator alone.
+func TestTheCurrentUserCarriesTheMarkOfAnAdministrator(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+
+	record := addUserRecord(t, fixture.database, "Zura")
+	require.NoError(t, fixture.service.Attach(
+		t.Context(), record, auth.ProviderTelegram, "404", model.Profile{},
+	))
+
+	assert.Equal(t, false, fixture.me(t, auth.ProviderTelegram, "404")["is_administrator"])
+
+	_, err := fixture.database.ExecContext(t.Context(),
+		`UPDATE public.users SET is_administrator = true WHERE id = $1;`, record)
+	require.NoError(t, err)
+
+	assert.Equal(t, true, fixture.me(t, auth.ProviderTelegram, "404")["is_administrator"])
+}

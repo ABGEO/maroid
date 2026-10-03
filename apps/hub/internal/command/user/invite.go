@@ -27,6 +27,7 @@ type InviteCommand struct {
 	firstName string
 	lastName  string
 	ttl       time.Duration
+	admin     bool
 }
 
 // NewInviteCommand creates a new InviteCommand.
@@ -57,6 +58,7 @@ func (c *InviteCommand) Command() *cobra.Command {
 	cmd.Flags().StringVar(&c.firstName, "first-name", "", "The first name of a new record")
 	cmd.Flags().StringVar(&c.lastName, "last-name", "", "The last name of a new record")
 	cmd.Flags().DurationVar(&c.ttl, "ttl", 0, "How long the invitation stays valid")
+	cmd.Flags().BoolVar(&c.admin, "admin", false, "Mark the record as an administrator")
 
 	return cmd
 }
@@ -84,9 +86,10 @@ func (c *InviteCommand) run(ctx context.Context) error {
 	}
 
 	result, err := authSvc.Invite(ctx, auth.InviteRequest{
-		UserID:    c.userID,
-		FirstName: c.firstName,
-		LastName:  c.lastName,
+		UserID:        c.userID,
+		FirstName:     c.firstName,
+		LastName:      c.lastName,
+		Administrator: c.admin,
 	}, ttl)
 	if err != nil {
 		return fmt.Errorf("issuing the invitation: %w", err)
@@ -101,6 +104,7 @@ func (c *InviteCommand) run(ctx context.Context) error {
 		ctx,
 		"issued an invitation",
 		slog.String("user_id", result.UserID),
+		slog.Bool("administrator", c.admin),
 		slog.Time("expires_at", time.Now().Add(ttl)),
 	)
 

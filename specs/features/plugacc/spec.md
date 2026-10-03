@@ -4,7 +4,7 @@ title: The administrator, the plugin allowlist, and the enablement of a plugin
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-10-02
 constrained_by: [SEC, OWN, ERR, API, RES, DAT, REP, JOB, TG, CLI, UI, ARC, TST, SPC, LNG]
@@ -95,7 +95,7 @@ specification.
 
 | Path                                                                  | Action | Holds                                                         |
 | --------------------------------------------------------------------- | ------ | ------------------------------------------------------------- |
-| `apps/hub/db/migrations/20261002110000_table_users_alter.*`           | create | `public.users.is_administrator`                               |
+| `apps/hub/db/migrations/20261003130000_table_users_alter.*`           | create | `public.users.is_administrator`                               |
 | `apps/hub/db/migrations/20261002110100_table_allowed_plugins_create.*` | create | `public.allowed_plugins`                                     |
 | `apps/hub/db/migrations/20261002110200_table_workspace_plugins_create.*` | create | `public.workspace_plugins`                                 |
 | `apps/hub/internal/model/user.go`                                     | change | `User.IsAdministrator`                                        |
@@ -106,7 +106,8 @@ specification.
 | `apps/hub/internal/administration/{doc,service}.go`                   | create | `administration.Service`: the users, the mark, the allowlists |
 | `apps/hub/internal/workspace/enablement.go`                           | create | `workspace.EnablementService`, `workspace.RequireEnabled`     |
 | `apps/hub/internal/workspace/middleware.go`                           | change | An administrator passes a route that admits one, as `manager` |
-| `apps/hub/internal/auth/middleware.go`                                | change | `auth.IsAdministratorFromContext`, `auth.RequireAdministrator` |
+| `apps/hub/internal/auth/middleware.go`                                | change | `auth.ContextWithAdministrator`, `auth.IsAdministratorFromContext` |
+| `apps/hub/internal/administration/require.go`                         | create | `administration.Require`, the guard of a route of the administration |
 | `apps/hub/internal/handler/administration.go`                         | create | `handler.Administration`, the routes under `/users`           |
 | `apps/hub/internal/handler/workspace.go`                              | change | The routes of the enablements, and `scope=all`                |
 | `apps/hub/internal/handler/plugin.go`                                 | change | `List` filters the catalog by the allowlist                   |
@@ -122,7 +123,7 @@ type Service interface {
     User(ctx context.Context, userID string) (*model.User, error)
     CreateUser(ctx context.Context, request auth.InviteRequest, administrator bool) (*auth.InviteResult, error)
     Invite(ctx context.Context, userID string) (*auth.InviteResult, error)
-    ChangeUser(ctx context.Context, userID string, change UserChange, version time.Time) (*model.User, error)
+    ChangeUser(ctx context.Context, userID string, change UserChange, version *time.Time) (*model.User, error)
     AllowedPlugins(ctx context.Context, userID string) ([]model.AllowedPlugin, error)
     AllowPlugin(ctx context.Context, userID string, pluginID string) (*model.AllowedPlugin, error)
     DisallowPlugin(ctx context.Context, userID string, pluginID string) error
@@ -155,7 +156,7 @@ answers 200.
 
 | Table               | Schema   | Scope  | Migration                                                  | Realizes                                         |
 | ------------------- | -------- | ------ | ---------------------------------------------------------- | ------------------------------------------------ |
-| `users`             | `public` | shared | `20261002110000_table_users_alter.up.sql`                  | `PLUGACC-FR-001`, `PLUGACC-FR-029`, `PLUGACC-FR-030` |
+| `users`             | `public` | shared | `20261003130000_table_users_alter.up.sql`                  | `PLUGACC-FR-001`, `PLUGACC-FR-029`, `PLUGACC-FR-030` |
 | `allowed_plugins`   | `public` | shared | `20261002110100_table_allowed_plugins_create.up.sql`       | `PLUGACC-FR-008`, `PLUGACC-FR-021`, `PLUGACC-FR-026` |
 | `workspace_plugins` | `public` | shared | `20261002110200_table_workspace_plugins_create.up.sql`     | `PLUGACC-FR-011` to `PLUGACC-FR-017`, `PLUGACC-FR-026` |
 
@@ -232,7 +233,7 @@ erDiagram
 | `GET`    | `/plugins`                                      | Authenticated | None              | `PLUGACC-FR-021`, `PLUGACC-FR-028` |
 
 A route under `/users` acts in no workspace, so it declares no permission. It passes
-`auth.RequireAdministrator` instead. `plugins.write` holds the lowest role `manager`,
+`administration.Require` instead. `plugins.write` holds the lowest role `manager`,
 and `authz` declares it beside the permissions of `PERMS`.
 
 An allowlist and the enablements of a workspace answer in the order of the plugin
@@ -328,7 +329,7 @@ filters on it, and the table holds a row for every plugin that was ever tried.
 
 **Realizes:** `PLUGACC-FR-010`, `PLUGACC-FR-022`, `PLUGACC-INV-002`
 **Decision:** `auth.Middleware` puts the mark of the administrator into the context.
-`auth.RequireAdministrator` guards the routes of `/users` and `scope=all`. A route of a
+`administration.Require` guards the routes of `/users` and `scope=all`. A route of a
 workspace declares whether it admits an administrator, and `workspace.Middleware`
 then lets an administrator with no membership pass as `manager`.
 **Rationale:** An administrator reaches the membership and the enablement of every
@@ -389,7 +390,7 @@ members of one workspace when the person opens it.
 | 1   | Add `NewAdministratorLast` to the hub. `ERR-003` holds its row.                          | `ERR-003`                                      | [x]  |
 | 2   | Write `PLUGACC-SC-019`, then the three migrations.                                       | `PLUGACC-FR-011`, `PLUGACC-FR-026`             | [ ]  |
 | 3   | Write the models and the three repositories, and the mark in every query of a user.     | `PLUGACC-FR-002`, `PLUGACC-FR-008`             | [ ]  |
-| 4   | Write `PLUGACC-SC-005` and `PLUGACC-SC-018`, then the mark in the context, `RequireAdministrator`, and the lock. | `PLUGACC-FR-007`, `PLUGACC-FR-022` | [ ]  |
+| 4   | Write `PLUGACC-SC-005` and `PLUGACC-SC-018`, then the mark in the context, `administration.Require`, and the lock. | `PLUGACC-FR-007`, `PLUGACC-FR-022` | [x]  |
 | 5   | Write `PLUGACC-SC-002` to `PLUGACC-SC-007`, then `administration.Service`, the routes of `/users`, and `scope=all`. | `PLUGACC-FR-002` to `PLUGACC-FR-009`, `PLUGACC-FR-029`, `PLUGACC-FR-030` | [ ] |
 | 6   | Write `PLUGACC-SC-008` to `PLUGACC-SC-013` and `PLUGACC-SC-020`, then the enablement service, its routes, `RequireEnabled`, and the admission of an administrator. | `PLUGACC-FR-010` to `PLUGACC-FR-018`, `PLUGACC-FR-027`, `PLUGACC-NFR-001` | [ ] |
 | 7   | Write `PLUGACC-SC-017`, then the filter of `GET /plugins`.                               | `PLUGACC-FR-021`, `PLUGACC-FR-028`             | [ ]  |

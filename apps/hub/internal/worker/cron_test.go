@@ -57,8 +57,10 @@ func (j *recordingJob) actingUsers() []string {
 }
 
 // fakeUserRepo lists the records that the test gives. The methods that a cron
-// run does not reach report a missing record.
+// run does not reach report a missing record, or reach the nil interface.
 type fakeUserRepo struct {
+	repository.UserRepository
+
 	users []model.User
 	err   error
 }

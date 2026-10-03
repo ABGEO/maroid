@@ -403,11 +403,12 @@ func (h *Auth) Logout(w http.ResponseWriter, r *http.Request) error {
 
 // meResponse is the body of GET /auth/sessions/self.
 type meResponse struct {
-	ID        string  `json:"id"`
-	FirstName *string `json:"first_name,omitempty"`
-	LastName  *string `json:"last_name,omitempty"`
-	Picture   string  `json:"picture,omitempty"`
-	Provider  string  `json:"provider"`
+	ID              string  `json:"id"`
+	IsAdministrator bool    `json:"is_administrator"`
+	FirstName       *string `json:"first_name,omitempty"`
+	LastName        *string `json:"last_name,omitempty"`
+	Picture         string  `json:"picture,omitempty"`
+	Provider        string  `json:"provider"`
 }
 
 // Me returns the identifier and the name of the acting user, the picture of the
@@ -421,11 +422,12 @@ func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	render.JSON(w, r, meResponse{
-		ID:        user.ID,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Picture:   claims.Picture,
-		Provider:  claims.Federated.ConnectorID,
+		ID:              user.ID,
+		IsAdministrator: user.IsAdministrator,
+		FirstName:       user.FirstName,
+		LastName:        user.LastName,
+		Picture:         claims.Picture,
+		Provider:        claims.Federated.ConnectorID,
 	})
 
 	return nil

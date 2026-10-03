@@ -674,7 +674,7 @@ field of their own, and the route would split one save into two checks.
 | 12  | Write `PSET-SC-023`, then the scope in `settings.Infer` and `settings.Schema`.     | `PSET-FR-021`                 | [x]  |
 | 13  | Write the migration that splits the table, then the scope of the repository and `database.WithScopeTx`. It needs the table of `OWN-010`. | `PSET-FR-003`, `PSET-INV-001` | [x]  |
 | 14  | Add `secret.WorkspaceKey`, then choose the key by the scope of the field in `settings.Manager`. | `PSET-FR-016`, `PSET-FR-017` | [x]  |
-| 15  | Move the three routes under `/workspaces/{workspaceId}`, with the permissions of `PSET-DD-013`, in `api.yaml` and in `handler.Plugin`. It needs the membership check of `OWN-003`. | `PSET-FR-003` to `PSET-FR-009` | [ ]  |
+| 15  | Move the three routes under `/workspaces/{workspaceId}`, with the permissions of `PSET-DD-013`, in `api.yaml` and in `handler.Plugin`. It needs the membership check of `OWN-003`. | `PSET-FR-003` to `PSET-FR-009` | [x]  |
 
 Write the test of each step before the code of that step. See `TST-002`.
 

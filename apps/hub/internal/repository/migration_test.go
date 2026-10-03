@@ -18,6 +18,10 @@ import (
 // public.users. A test that measures the reshape stops here and writes rows.
 const versionBeforeUsersAlter = uint(20260915120200)
 
+// versionUsersAlter reshapes the user record. A later feature adds its own columns, so
+// a test of this reshape stops here.
+const versionUsersAlter = uint(20260915120300)
+
 // newMigrator drives the core migrations of an instance one version at a time.
 func newMigrator(t *testing.T, instance *testdb.Instance) *migrate.Migrate {
 	t.Helper()
@@ -108,7 +112,7 @@ func TestTheMigrationDropsTheProviderColumns(t *testing.T) {
 	instance := testdb.Start(t)
 	migrator := newMigrator(t, instance)
 
-	require.NoError(t, migrator.Up())
+	require.NoError(t, migrator.Migrate(versionUsersAlter))
 
 	var columns []string
 

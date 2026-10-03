@@ -85,9 +85,10 @@ func (s *Service) Detach(ctx context.Context, userID string, provider string) er
 // InviteRequest names what the owner wants an invitation for. An empty UserID
 // asks for a new user record, and the two names then apply to it.
 type InviteRequest struct {
-	UserID    string
-	FirstName string
-	LastName  string
+	UserID        string
+	FirstName     string
+	LastName      string
+	Administrator bool
 }
 
 // InviteResult holds the record that the invitation names and the token that
@@ -122,6 +123,20 @@ func (s *Service) Invite(
 			}
 
 			result.UserID = userID
+		}
+
+		if request.Administrator {
+			marked := true
+
+			_, markErr := s.userRepo.Change(
+				ctx,
+				tx,
+				result.UserID,
+				repository.UserChange{Administrator: &marked},
+			)
+			if markErr != nil {
+				return fmt.Errorf("marking the administrator: %w", markErr)
+			}
 		}
 
 		_, createErr := s.invitationRepo.Create(
