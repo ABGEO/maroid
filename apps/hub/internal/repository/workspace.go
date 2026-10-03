@@ -30,6 +30,7 @@ type WorkspaceRepository interface {
 		name string,
 		ifMatch *time.Time,
 	) (*model.Workspace, error)
+	Lock(ctx context.Context, tx *sqlx.Tx, id string) error
 }
 
 // Workspace is a SQL based implementation of WorkspaceRepository.
@@ -127,4 +128,26 @@ func (r *Workspace) Rename(
 	}
 
 	return &entity, nil
+}
+
+// Lock holds the row of the workspace until the transaction ends, so two changes of
+// its memberships run one after the other.
+func (r *Workspace) Lock(ctx context.Context, tx *sqlx.Tx, id string) error {
+	var held string
+
+	err := tx.GetContext(
+		ctx,
+		&held,
+		`SELECT id FROM public.workspaces WHERE id = $1 FOR UPDATE;`,
+		id,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("locking a Workspace: %w", errs.ErrWorkspaceNotFound)
+	}
+
+	if err != nil {
+		return fmt.Errorf("locking a Workspace: %w", err)
+	}
+
+	return nil
 }

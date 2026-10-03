@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/database"
+	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -25,6 +26,12 @@ type Service interface {
 	Candidates(ctx context.Context) ([]model.User, error)
 	AddMember(ctx context.Context, userID string, role pluginapi.Role) (*model.Member, error)
 	RemoveMember(ctx context.Context, userID string) error
+	ChangeRole(
+		ctx context.Context,
+		userID string,
+		role pluginapi.Role,
+		version *time.Time,
+	) (*model.Member, error)
 }
 
 // Manager is the implementation of Service over the repositories of the hub.
@@ -186,13 +193,75 @@ func (m *Manager) AddMember(
 }
 
 // RemoveMember takes one membership out of the acting workspace. When userID names
-// the acting user, it is a leave.
+// the acting user, it is a leave. A removal that leaves no manager answers
+// errs.ErrManagerLast and removes nothing.
 func (m *Manager) RemoveMember(ctx context.Context, userID string) error {
-	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
-		return m.members.Remove(ctx, tx, pluginapi.ActingWorkspaceFromContext(ctx), userID)
+	err := m.keepingAManager(ctx, func(tx *sqlx.Tx, workspaceID string) error {
+		return m.members.Remove(ctx, tx, workspaceID, userID)
 	})
 	if err != nil {
 		return fmt.Errorf("removing a member from the acting workspace: %w", err)
+	}
+
+	return nil
+}
+
+// ChangeRole sets the role of a member of the acting workspace. A change that leaves
+// no manager answers errs.ErrManagerLast and changes nothing.
+func (m *Manager) ChangeRole(
+	ctx context.Context,
+	userID string,
+	role pluginapi.Role,
+	version *time.Time,
+) (*model.Member, error) {
+	var changed *model.Member
+
+	err := m.keepingAManager(ctx, func(tx *sqlx.Tx, workspaceID string) error {
+		var err error
+
+		changed, err = m.members.ChangeRole(ctx, tx, workspaceID, userID, role, version)
+
+		return err //nolint:wrapcheck // keepingAManager wraps it.
+	})
+	if err != nil {
+		return nil, fmt.Errorf("changing the role of a member of the acting workspace: %w", err)
+	}
+
+	return changed, nil
+}
+
+// keepingAManager runs one change of the memberships of the acting workspace after a
+// lock of the workspace, and rolls it back when it leaves no manager. Without the
+// lock, two managers who demote each other at the same moment each count two
+// managers, and both commits leave none.
+func (m *Manager) keepingAManager(
+	ctx context.Context,
+	change func(tx *sqlx.Tx, workspaceID string) error,
+) error {
+	workspaceID := pluginapi.ActingWorkspaceFromContext(ctx)
+
+	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
+		if err := m.workspaces.Lock(ctx, tx, workspaceID); err != nil {
+			return fmt.Errorf("locking the workspace: %w", err)
+		}
+
+		if err := change(tx, workspaceID); err != nil {
+			return err
+		}
+
+		managers, err := m.members.CountManagers(ctx, tx, workspaceID)
+		if err != nil {
+			return fmt.Errorf("counting the managers: %w", err)
+		}
+
+		if managers == 0 {
+			return errs.ErrManagerLast
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("changing the memberships: %w", err)
 	}
 
 	return nil

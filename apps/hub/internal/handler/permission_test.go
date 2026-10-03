@@ -174,24 +174,28 @@ func TestALoweredRoleTakesEffectAtTheNextRequest(t *testing.T) {
 	assert.Zero(t, fixture.probeWrites.Load())
 }
 
-// PERMS-FR-006: A manager names the role of each member that they add, and a role
-// that is absent or unknown fails on the member role.
+// PERMS-SC-006: A manager names the role of each member that they add. A role that is
+// absent or unknown fails on the member role, and adds nobody.
 func TestAnAddNamesTheRole(t *testing.T) {
 	t.Parallel()
 
 	fixture := workspaceUnderTest(t)
 
+	added := fixture.call(t, fixture.ana, http.MethodPost, fixture.inH("/members"),
+		map[string]any{memberUserID: fixture.nino.id, memberRole: roleEditor}, "")
+	require.Equal(t, http.StatusCreated, added.Code, added.Body.String())
+	assert.Equal(t, roleEditor, decode(t, added)[memberRole])
+
+	fifth := addUserRecord(t, fixture.database, "Levan")
+
 	for _, body := range []map[string]any{
-		{memberUserID: fixture.nino.id},
-		{memberUserID: fixture.nino.id, memberRole: "owner"},
+		{memberUserID: fifth},
+		{memberUserID: fifth, memberRole: "owner"},
 	} {
 		requirePointer(t,
 			fixture.call(t, fixture.ana, http.MethodPost, fixture.inH("/members"), body, ""),
 			"/role")
 	}
 
-	added := fixture.call(t, fixture.ana, http.MethodPost, fixture.inH("/members"),
-		map[string]any{memberUserID: fixture.nino.id, memberRole: roleEditor}, "")
-	require.Equal(t, http.StatusCreated, added.Code, added.Body.String())
-	assert.Equal(t, roleEditor, decode(t, added)[memberRole])
+	assert.NotContains(t, fixture.memberIDs(t, fixture.ana, fixture.h), fifth)
 }

@@ -61,6 +61,8 @@ var (
 	ErrWorkspaceNotFound = errors.New("workspace: not found")
 	// ErrMemberNotFound indicates that the user record is no member of the workspace.
 	ErrMemberNotFound = errors.New("workspace member: not found")
+	// ErrManagerLast indicates a change that would leave a workspace with no manager.
+	ErrManagerLast = errors.New("workspace member: the last manager")
 	// ErrMemberExists indicates that the user record is already a member of the
 	// workspace.
 	ErrMemberExists = errors.New("workspace member: already a member")

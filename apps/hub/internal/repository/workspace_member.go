@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 )
 
 const (
@@ -30,6 +32,15 @@ type WorkspaceMemberRepository interface {
 	Get(ctx context.Context, workspaceID string, userID string) (*model.Member, error)
 	List(ctx context.Context, workspaceID string) ([]model.Member, error)
 	Remove(ctx context.Context, tx *sqlx.Tx, workspaceID string, userID string) error
+	ChangeRole(
+		ctx context.Context,
+		tx *sqlx.Tx,
+		workspaceID string,
+		userID string,
+		role pluginapi.Role,
+		ifMatch *time.Time,
+	) (*model.Member, error)
+	CountManagers(ctx context.Context, tx *sqlx.Tx, workspaceID string) (int, error)
 	Candidates(ctx context.Context, workspaceID string) ([]model.User, error)
 }
 
@@ -179,4 +190,61 @@ func (r *WorkspaceMember) Candidates(
 	}
 
 	return entities, nil
+}
+
+// ChangeRole sets the role of the membership, and answers it with the names of the
+// record. With a validator it changes the row only while the row still carries it.
+func (r *WorkspaceMember) ChangeRole(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	workspaceID string,
+	userID string,
+	role pluginapi.Role,
+	ifMatch *time.Time,
+) (*model.Member, error) {
+	var entity model.Member
+
+	query := `
+		WITH m AS (
+			UPDATE public.workspace_members SET role = $3
+			WHERE workspace_id = $1 AND user_id = $2
+				AND ($4::timestamptz IS NULL OR updated_at = $4)
+			RETURNING workspace_id, user_id, role, created_at, updated_at
+		)
+		SELECT ` + memberColumnsOfM + `
+		FROM m
+		JOIN public.users u ON u.id = m.user_id;`
+
+	err := tx.GetContext(ctx, &entity, query, workspaceID, userID, role, ifMatch)
+	if errors.Is(err, sql.ErrNoRows) {
+		if ifMatch != nil {
+			return nil, fmt.Errorf("changing the role of a Member: %w", precondition.ErrModified)
+		}
+
+		return nil, fmt.Errorf("changing the role of a Member: %w", errs.ErrMemberNotFound)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("changing the role of a Member: %w", err)
+	}
+
+	return &entity, nil
+}
+
+// CountManagers counts the managers of the workspace, as the transaction sees them.
+func (r *WorkspaceMember) CountManagers(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	workspaceID string,
+) (int, error) {
+	var count int
+
+	err := tx.GetContext(ctx, &count,
+		`SELECT count(*) FROM public.workspace_members WHERE workspace_id = $1 AND role = $2;`,
+		workspaceID, pluginapi.RoleManager)
+	if err != nil {
+		return 0, fmt.Errorf("counting the managers of a Workspace: %w", err)
+	}
+
+	return count, nil
 }

@@ -93,6 +93,7 @@ func (h *Workspace) Register(router chi.Router) {
 			r.With(workspaceRead).Get("/members", Wrap(h.logger, h.Members))
 			r.With(membersWrite).Post("/members", Wrap(h.logger, h.AddMember))
 			r.With(workspaceRead).Get("/members/{"+userIDParam+"}", Wrap(h.logger, h.Member))
+			r.With(membersWrite).Patch("/members/{"+userIDParam+"}", Wrap(h.logger, h.ChangeRole))
 			r.With(membersRemove).
 				Delete("/members/{"+userIDParam+"}", Wrap(h.logger, h.RemoveMember))
 			r.With(membersWrite).Get("/member-candidates", Wrap(h.logger, h.Candidates))
@@ -126,6 +127,10 @@ type candidateBody struct {
 
 type workspaceInput struct {
 	Name *string `json:"name"`
+}
+
+type roleInput struct {
+	Role *string `json:"role"`
 }
 
 type memberInput struct {
@@ -338,6 +343,39 @@ func (h *Workspace) AddMember(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// ChangeRole sets the role of one member of the acting workspace.
+func (h *Workspace) ChangeRole(w http.ResponseWriter, r *http.Request) error {
+	var input roleInput
+
+	if failure := decodeObject(r, &input); failure != nil {
+		problem.Write(w, r, failure)
+
+		return nil
+	}
+
+	role, failure := roleOf(input.Role)
+	if failure != nil {
+		problem.Write(w, r, failure)
+
+		return nil
+	}
+
+	changed, err := h.service.ChangeRole(
+		r.Context(),
+		chi.URLParam(r, userIDParam),
+		role,
+		precondition.IfMatchFromContext(r.Context()),
+	)
+	if err != nil {
+		return h.fail(w, r, err, "changing the role")
+	}
+
+	w.Header().Set(precondition.ETagHeader, precondition.ETag(changed.UpdatedAt))
+	render.JSON(w, r, toMemberBody(changed))
+
+	return nil
+}
+
 // RemoveMember takes one membership out of the acting workspace. A membership of
 // the acting user is a leave.
 func (h *Workspace) RemoveMember(w http.ResponseWriter, r *http.Request) error {
@@ -399,6 +437,8 @@ func (h *Workspace) fail(w http.ResponseWriter, r *http.Request, err error, doin
 		problem.Write(w, r, problem.NewNotFound())
 	case errors.Is(err, errs.ErrMemberExists):
 		problem.Write(w, r, problems.NewMemberExists())
+	case errors.Is(err, errs.ErrManagerLast):
+		problem.Write(w, r, problems.NewManagerLast())
 	case errors.Is(err, errs.ErrUserNotFound):
 		problem.Write(w, r, userFailure("no active user record holds this identifier"))
 	case errors.Is(err, precondition.ErrModified):
