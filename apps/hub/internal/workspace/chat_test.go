@@ -61,9 +61,12 @@ func newChatWorld(t *testing.T) *chatWorld {
 			`INSERT INTO public.workspaces (name) VALUES ('`+name+`') RETURNING id;`)
 
 		for _, member := range people {
-			_, err := instance.DB.ExecContext(t.Context(),
-				`INSERT INTO public.workspace_members (workspace_id, user_id) VALUES ($1, $2);`,
-				id, member)
+			_, err := instance.DB.ExecContext(
+				t.Context(),
+				`INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES ($1, $2, 'manager');`,
+				id,
+				member,
+			)
 			require.NoError(t, err)
 		}
 

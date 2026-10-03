@@ -14,6 +14,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // ErrNoDeckURL indicates that the configuration names no address for the deck, so
@@ -224,7 +225,13 @@ func (s *Service) createWithWorkspace(
 		return "", fmt.Errorf("creating the first workspace: %w", err)
 	}
 
-	if _, err = s.memberRepo.Add(ctx, tx, workspace.ID, user.ID); err != nil {
+	if _, err = s.memberRepo.Add(
+		ctx,
+		tx,
+		workspace.ID,
+		user.ID,
+		pluginapi.RoleManager,
+	); err != nil {
 		return "", fmt.Errorf("adding the record to its first workspace: %w", err)
 	}
 

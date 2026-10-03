@@ -4,7 +4,7 @@ title: The workspace roles, and the permission that every action needs
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-10-02
 constrained_by: [OWN, SEC, ERR, PLG, ARC, TG, UI, API, DAT, REP, PKG, TST, SPC, LNG]
@@ -95,7 +95,7 @@ a guideline, and both follow `ADR-0008` at the approval of this specification.
 | `apps/hub/internal/mcpserver/workspace.go`                         | change | `workspaceMiddleware` checks the permission of `MCPHUB-DD-023`      |
 | `apps/hub/internal/telegram/command/wrapper.go`                    | change | `Wrapper.Handle` checks the permission before the command     |
 | `apps/hub/internal/telegram/middleware/acting_workspace.go`        | change | Puts the role into the context beside the workspace           |
-| `apps/hub/db/migrations/20261002100000_table_workspace_members_alter.*` | create | The column `role`. `PERMS-DD-009`                        |
+| `apps/hub/db/migrations/20261003120000_table_workspace_members_alter.*` | create | The column `role`. `PERMS-DD-009`                        |
 | `apps/hub/internal/domain/problems/problems.go`                    | change | `NewManagerLast`                                              |
 | `libs/rest/problem/registry.go`                                    | change | `NewPermissionDenied`                                         |
 | `libs/plugin-sdk/src/types.ts`                                     | change | `PluginHost.can`                                              |
@@ -151,7 +151,7 @@ func Require(authorizer authz.Authorizer, permission string) func(http.Handler) 
 
 | Table               | Schema   | Scope  | Migration                                             | Realizes                       |
 | ------------------- | -------- | ------ | ----------------------------------------------------- | ------------------------------ |
-| `workspace_members` | `public` | shared | `20261002100000_table_workspace_members_alter.up.sql` | `PERMS-FR-001`, `PERMS-FR-004` |
+| `workspace_members` | `public` | shared | `20261003120000_table_workspace_members_alter.up.sql` | `PERMS-FR-001`, `PERMS-FR-004` |
 
 ```sql
 ALTER TABLE public.workspace_members
@@ -424,8 +424,8 @@ plant that died.
 | #   | Step                                                                                          | Realizes                          | Done |
 | --- | --------------------------------------------------------------------------------------------- | --------------------------------- | ---- |
 | 1   | Add `NewPermissionDenied` to `libs/rest` and `NewManagerLast` to the hub. `ERR-003` and `UI-008` hold their rows. | `ERR-003`, `UI-008` | [x]  |
-| 2   | Write `PERMS-SC-004`, then the migration.                                                     | `PERMS-FR-001`, `PERMS-FR-004`    | [ ]  |
-| 3   | Write `PERMS-SC-002`, then `libs/pluginapi/permission.go` and the three `Permission` fields.  | `PERMS-FR-002`, `PERMS-FR-012`    | [ ]  |
+| 2   | Write `PERMS-SC-004`, then the migration.                                                     | `PERMS-FR-001`, `PERMS-FR-004`    | [x]  |
+| 3   | Write `PERMS-SC-002`, then `libs/pluginapi/permission.go` and the three `Permission` fields.  | `PERMS-FR-002`, `PERMS-FR-012`    | [x]  |
 | 4   | Write `PERMS-SC-010` to `PERMS-SC-012`, then the registry, the registrar, and the checks of the three registrars. | `PERMS-FR-011` to `PERMS-FR-014` | [ ] |
 | 5   | Write `PERMS-SC-018`, then `authz.RoleAuthorizer` and the permissions of the hub.             | `PERMS-NFR-002`                   | [ ]  |
 | 6   | Write `PERMS-SC-005`, `PERMS-SC-013`, and `PERMS-SC-017`, then the role in the membership check, `workspace.Require`, and each route of section 4.3. | `PERMS-FR-005`, `PERMS-FR-015`, `PERMS-NFR-001` | [ ] |

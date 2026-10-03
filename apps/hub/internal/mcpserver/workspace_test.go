@@ -79,9 +79,12 @@ func newWorkspaceWorld(t *testing.T) *workspaceWorld {
 		return id
 	}
 	member := func(workspace string, user string) {
-		_, execErr := instance.DB.ExecContext(t.Context(),
-			`INSERT INTO public.workspace_members (workspace_id, user_id) VALUES ($1, $2);`,
-			workspace, user)
+		_, execErr := instance.DB.ExecContext(
+			t.Context(),
+			`INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES ($1, $2, 'manager');`,
+			workspace,
+			user,
+		)
 		require.NoError(t, execErr)
 	}
 

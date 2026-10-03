@@ -9,6 +9,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
@@ -30,7 +31,7 @@ func createWorkspace(
 	workspace, err := workspaceRepo.Create(t.Context(), tx, name)
 	require.NoError(t, err)
 
-	_, err = memberRepo.Add(t.Context(), tx, workspace.ID, firstMember)
+	_, err = memberRepo.Add(t.Context(), tx, workspace.ID, firstMember, pluginapi.RoleManager)
 	require.NoError(t, err)
 	require.NoError(t, tx.Commit())
 
@@ -44,7 +45,9 @@ func addMember(t *testing.T, instance *testdb.Instance, workspaceID string, user
 	tx, err := instance.DB.BeginTxx(t.Context(), nil)
 	require.NoError(t, err)
 
-	_, err = repository.NewWorkspaceMember(instance.DB).Add(t.Context(), tx, workspaceID, userID)
+	_, err = repository.NewWorkspaceMember(instance.DB).Add(
+		t.Context(), tx, workspaceID, userID, pluginapi.RoleManager,
+	)
 	require.NoError(t, err)
 	require.NoError(t, tx.Commit())
 }
@@ -145,7 +148,9 @@ func TestWorkspaceMemberRefusesASecondMembership(t *testing.T) {
 
 	t.Cleanup(func() { _ = tx.Rollback() })
 
-	_, err = repository.NewWorkspaceMember(instance.DB).Add(t.Context(), tx, home.ID, nino)
+	_, err = repository.NewWorkspaceMember(instance.DB).Add(
+		t.Context(), tx, home.ID, nino, pluginapi.RoleManager,
+	)
 	require.ErrorIs(t, err, errs.ErrMemberExists)
 }
 

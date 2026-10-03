@@ -66,7 +66,7 @@ func newWorld(t *testing.T) *world {
 
 	_, err = instance.DB.ExecContext(
 		t.Context(),
-		`INSERT INTO public.workspace_members (workspace_id, user_id) VALUES ($1, $2);`,
+		`INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES ($1, $2, 'manager');`,
 		scene.workspace,
 		scene.ana,
 	)
@@ -196,7 +196,7 @@ func TestARemovedMemberReachesNothingAtTheNextRequest(t *testing.T) {
 
 	_, err := scene.instance.DB.ExecContext(
 		t.Context(),
-		`INSERT INTO public.workspace_members (workspace_id, user_id) VALUES ($1, $2);`,
+		`INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES ($1, $2, 'manager');`,
 		scene.workspace,
 		scene.nino,
 	)

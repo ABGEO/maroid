@@ -3,6 +3,8 @@ package model
 import (
 	"strings"
 	"time"
+
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // WorkspaceNameMaxLength is the longest name of a workspace, in characters.
@@ -39,10 +41,11 @@ type Workspace struct {
 // Member is one membership of a user record in a workspace, with the names of the
 // record.
 type Member struct {
-	WorkspaceID string    `db:"workspace_id"`
-	UserID      string    `db:"user_id"`
-	FirstName   *string   `db:"first_name"`
-	LastName    *string   `db:"last_name"`
-	CreatedAt   time.Time `db:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"`
+	WorkspaceID string         `db:"workspace_id"`
+	UserID      string         `db:"user_id"`
+	Role        pluginapi.Role `db:"role"`
+	FirstName   *string        `db:"first_name"`
+	LastName    *string        `db:"last_name"`
+	CreatedAt   time.Time      `db:"created_at"`
+	UpdatedAt   time.Time      `db:"updated_at"`
 }

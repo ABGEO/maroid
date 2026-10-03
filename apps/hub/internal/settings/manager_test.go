@@ -227,8 +227,9 @@ func addWorkspace(t *testing.T, instance *testdb.Instance, name string, members 
 
 	for _, member := range members {
 		_, err := instance.DB.Exec(
-			`INSERT INTO public.workspace_members (workspace_id, user_id) VALUES ($1, $2);`,
-			id, member,
+			`INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES ($1, $2, 'manager');`,
+			id,
+			member,
 		)
 		require.NoError(t, err)
 	}

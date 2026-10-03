@@ -36,6 +36,7 @@ type TelegramCommandMeta struct {
 	Command     string `json:"command"`
 	Description string `json:"description"`
 	Scope       telego.BotCommandScope
+	Permission  string
 }
 
 // TelegramCommand defines the interface for a Telegram bot command.

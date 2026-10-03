@@ -63,6 +63,7 @@ func (m *Manager) Create(ctx context.Context, name string) (*model.Workspace, er
 			tx,
 			workspace.ID,
 			pluginapi.ActingUserFromContext(ctx),
+			pluginapi.RoleManager,
 		); err != nil {
 			return fmt.Errorf("adding the first member: %w", err)
 		}
@@ -158,7 +159,11 @@ func (m *Manager) AddMember(ctx context.Context, userID string) (*model.Member, 
 	var added *model.Member
 
 	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
-		member, err := m.members.Add(ctx, tx, pluginapi.ActingWorkspaceFromContext(ctx), userID)
+		// The route takes no role yet, and no check reads one, so a new member holds
+		// what every member that the migration kept holds.
+		member, err := m.members.Add(
+			ctx, tx, pluginapi.ActingWorkspaceFromContext(ctx), userID, pluginapi.RoleManager,
+		)
 		if err != nil {
 			return fmt.Errorf("adding the member: %w", err)
 		}

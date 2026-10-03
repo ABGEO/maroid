@@ -64,16 +64,19 @@ func TestInviteGivesTheNewRecordItsFirstWorkspace(t *testing.T) {
 	var workspaces []struct {
 		Name   string `db:"name"`
 		UserID string `db:"user_id"`
+		Role   string `db:"role"`
 	}
 
 	require.NoError(t, database.Select(&workspaces, `
-		SELECT w.name, m.user_id
+		SELECT w.name, m.user_id, m.role
 		FROM public.workspaces w
 		JOIN public.workspace_members m ON m.workspace_id = w.id
 		WHERE m.user_id = $1;`, result.UserID))
 
 	require.Len(t, workspaces, 1)
 	assert.Equal(t, nameOfInvitee+"'s Workspace", workspaces[0].Name)
+	// PERMS-SC-003: The invited record is the manager of its first workspace.
+	assert.Equal(t, "manager", workspaces[0].Role)
 }
 
 // EXTID-SC-025: An invitation for a record that exists writes the invitation alone.

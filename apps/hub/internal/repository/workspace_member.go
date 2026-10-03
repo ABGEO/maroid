@@ -10,16 +10,23 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 const (
 	workspaceMemberKey = "workspace_members_pkey"
-	memberColumnsOfM   = `m.workspace_id, m.user_id, u.first_name, u.last_name, m.created_at, m.updated_at`
+	memberColumnsOfM   = `m.workspace_id, m.user_id, m.role, u.first_name, u.last_name, m.created_at, m.updated_at`
 )
 
 // WorkspaceMemberRepository defines the data access contract for a membership.
 type WorkspaceMemberRepository interface {
-	Add(ctx context.Context, tx *sqlx.Tx, workspaceID string, userID string) (*model.Member, error)
+	Add(
+		ctx context.Context,
+		tx *sqlx.Tx,
+		workspaceID string,
+		userID string,
+		role pluginapi.Role,
+	) (*model.Member, error)
 	Get(ctx context.Context, workspaceID string, userID string) (*model.Member, error)
 	List(ctx context.Context, workspaceID string) ([]model.Member, error)
 	Remove(ctx context.Context, tx *sqlx.Tx, workspaceID string, userID string) error
@@ -38,26 +45,27 @@ func NewWorkspaceMember(db *sqlx.DB) *WorkspaceMember {
 	return &WorkspaceMember{db: db}
 }
 
-// Add writes one membership and answers it with the names of the record.
+// Add writes one membership with its role, and answers it with the names of the record.
 func (r *WorkspaceMember) Add(
 	ctx context.Context,
 	tx *sqlx.Tx,
 	workspaceID string,
 	userID string,
+	role pluginapi.Role,
 ) (*model.Member, error) {
 	var entity model.Member
 
 	query := `
 		WITH m AS (
-			INSERT INTO public.workspace_members (workspace_id, user_id)
-			VALUES ($1, $2)
-			RETURNING workspace_id, user_id, created_at, updated_at
+			INSERT INTO public.workspace_members (workspace_id, user_id, role)
+			VALUES ($1, $2, $3)
+			RETURNING workspace_id, user_id, role, created_at, updated_at
 		)
 		SELECT ` + memberColumnsOfM + `
 		FROM m
 		JOIN public.users u ON u.id = m.user_id;`
 
-	if err := tx.GetContext(ctx, &entity, query, workspaceID, userID); err != nil {
+	if err := tx.GetContext(ctx, &entity, query, workspaceID, userID, role); err != nil {
 		if isUniqueViolation(err, workspaceMemberKey) {
 			return nil, fmt.Errorf("adding a Member: %w", errs.ErrMemberExists)
 		}

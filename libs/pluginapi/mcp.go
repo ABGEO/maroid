@@ -30,6 +30,7 @@ type MCPToolMeta struct {
 	Annotations MCPToolAnnotations
 	InputModel  any
 	OutputModel any
+	Permission  string
 }
 
 // MCPToolAnnotations tells an MCP client what calling a tool does, so an agent

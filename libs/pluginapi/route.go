@@ -13,4 +13,5 @@ type Route struct {
 	Method  string
 	Pattern string
 	Handler http.HandlerFunc
+	Permission string
 }

@@ -607,3 +607,18 @@ func TestAMemberLeavesAndTheRecordsStay(t *testing.T) {
 		assert.NotEqual(t, garden, item[memberID])
 	}
 }
+
+// PERMS-SC-003: The person who creates a workspace is its manager.
+func TestTheCreatorOfAWorkspaceIsItsManager(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+	home := fixture.create(t, fixture.nino, "Home")
+
+	var role string
+
+	require.NoError(t, fixture.database.Get(&role,
+		`SELECT role FROM public.workspace_members WHERE workspace_id = $1 AND user_id = $2;`,
+		home, fixture.nino.id))
+	assert.Equal(t, "manager", role)
+}
