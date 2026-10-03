@@ -6,7 +6,7 @@ status: approved
 created: 2026-10-02
 updated: 2026-10-04
 approved_by: Temuri
-approved_on: 2026-10-02
+approved_on: 2026-10-04
 constrained_by: [SEC, OWN, TG, JOB, CLI, UI, TS, SPC, LNG]
 requirements: features/plugacc/requirements.md
 ---
@@ -62,23 +62,43 @@ declares `CronScopePerWorkspace` fails the preparation of the worker with
 
 | Path                                                                   | Action | Holds                                                        |
 | ---------------------------------------------------------------------- | ------ | ------------------------------------------------------------ |
+| `apps/deck/src/routes/(dashboard)/admin/+layout.svelte`                | create | Renders a page of `/admin` for an administrator alone        |
 | `apps/deck/src/routes/(dashboard)/admin/users/+page.svelte`            | create | The users: create, invite, block, unblock, mark, and the link to an allowlist |
 | `apps/deck/src/routes/(dashboard)/admin/users/[user]/+page.svelte`     | create | One user and their allowlist                                 |
 | `apps/deck/src/routes/(dashboard)/admin/workspaces/+page.svelte`       | create | Every workspace, with links to its members and its plugins   |
 | `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/+page.svelte`  | create | The plugins of the workspace, and the switch of each         |
 | `apps/deck/src/lib/api/{users,enablements}.ts`                         | create | The routes of `spec.md` section 4.3                          |
-| `apps/deck/src/lib/state/plugins.svelte.ts`                            | change | The plugins of the acting workspace, from `/workspaces/{id}/plugins` |
+| `apps/deck/src/lib/state/plugins.svelte.ts`                            | change | The entries of the plugins of the acting workspace, from `/workspaces/{id}/plugins` |
+| `apps/deck/src/lib/navigation/breadcrumbs.ts`                          | change | Names a plugin and a workspace from the page that loaded them |
+| `apps/deck/src/routes/(dashboard)/plugins/+page.svelte`                | change | Offers the settings of a plugin that the acting workspace enables alone |
+| `libs/api-client/src/problem.ts`                                       | change | `PROBLEM_TYPE.administratorLast`                             |
 | `apps/deck/src/lib/components/layout/Sidebar.svelte`                   | change | Names the plugins of the acting workspace alone, and links an administrator to the pages of `/admin` |
 
 The pages under `/admin` render for an administrator alone. `GET /auth/sessions/self`
 already answers the person of the session, and gains `is_administrator` for that test.
 The hub still guards each route, so a hidden link is a convenience.
 
-The page of the plugins of a workspace lists the catalog of `GET /plugins` and marks
-each plugin that the workspace enables. A manager switches a plugin of their allowlist
-on or off, and an administrator switches any plugin, which realizes `PLUGACC-FR-024`.
-The sidebar reads the enablements of the acting workspace, which realizes
-`PLUGACC-FR-025`.
+The page of the plugins of a workspace lists the catalog of `GET /plugins` and every
+plugin that the workspace enables, and marks each enabled one. A manager switches a
+plugin of their allowlist on or off, and an administrator switches any plugin, which
+realizes `PLUGACC-FR-024`. A manager switches off an enabled plugin that their
+allowlist does not hold, and cannot switch it on again.
+
+The sidebar, the breadcrumbs, and the pages of a plugin read the entry of each plugin
+from the list of the enablements of the acting workspace, as `PLUGACC-DD-009` gives,
+not from `GET /plugins`. A member reaches every enabled plugin whatever their allowlist
+holds, which realizes `PLUGACC-FR-017` and `PLUGACC-FR-025`.
+
+An administrator in a workspace that they are not a member of sees no page of a plugin
+in the sidebar, and the pages of the workspace say that they manage it as an
+administrator, which realizes `PLUGACC-FR-033`. The deck reads the membership from the
+list of `GET /workspaces`, and the name of the workspace from the read of
+`GET /workspaces/{id}`, so the header and the breadcrumbs name it.
+
+The form of a new user lists every loaded plugin, and the administrator picks the
+allowlist there. The form sends `allowed_plugins` with the record, which realizes
+`PLUGACC-FR-032`. The page of one user changes the allowlist after the creation, which
+realizes `PLUGACC-FR-008`.
 
 An administrator reaches every action of `PLUGACC-FR-023` from the pages of `/admin`,
 and the members and the plugins of any workspace through the pages of `/w/{id}`, which

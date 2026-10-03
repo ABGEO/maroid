@@ -6,7 +6,7 @@ status: approved
 created: 2026-10-02
 updated: 2026-10-04
 approved_by: Temuri
-approved_on: 2026-10-02
+approved_on: 2026-10-04
 constrained_by: [TST, OWN, TRC]
 requirements: features/plugacc/requirements.md
 ---
@@ -233,10 +233,44 @@ administrator.
 **Layer:** manual
 
 **Given** Zura and Ana.
-**When** Zura creates a user, copies the invitation, blocks and unblocks the user, marks
+**When** Zura creates a user with P on the allowlist, copies the invitation, blocks and unblocks the user, marks
 and unmarks them, edits their allowlist, and changes the members and the plugins of H,
 all from the deck. Ana switches P off and on in H from the deck.
 **Then** each action succeeds from the deck. Ana sees no page under `/admin`.
+
+## `PLUGACC-SC-023`
+
+**Verifies:** `PLUGACC-FR-032`
+**Layer:** integration
+
+**Given** Zura is an administrator, and the hub loaded P and Q.
+**When** Zura creates Nina with `allowed_plugins` [P], then creates Levan with
+`allowed_plugins` [Q, `dev.maroid.none`].
+**Then** the first creation answers 201, and the allowlist of Nina holds P alone. The
+second answers 422 with the pointer `/allowed_plugins/1`, and no record of Levan, no
+workspace, and no invitation exist.
+
+## `PLUGACC-SC-024`
+
+**Verifies:** `PLUGACC-FR-017`, `PLUGACC-FR-021`
+**Layer:** integration
+
+**Given** Zura enables Q in H. Gio is a member of H, and his allowlist is empty.
+**When** Gio reads `GET /workspaces/{H}/plugins` and `GET /plugins`.
+**Then** the enablements answer Q with `plugin` that carries its version and its
+capabilities. `GET /plugins` answers no Q. A route of Q in H answers Gio.
+
+## `PLUGACC-SC-025`
+
+**Verifies:** `PLUGACC-FR-025`, `PLUGACC-FR-033`
+**Layer:** manual
+
+**Given** Zura enables Q in H. Gio is a member of H with an empty allowlist. Zura is no
+member of H.
+**When** Gio opens H in the deck, then Zura opens the plugins of H.
+**Then** the sidebar of Gio names Q and opens its pages. The sidebar of Zura names no
+page of a plugin, the header and the breadcrumbs name H, and the page says that Zura
+manages H as an administrator.
 
 ## Retired identifiers
 

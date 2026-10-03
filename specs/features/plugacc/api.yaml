@@ -51,8 +51,12 @@ paths:
       operationId: createUser
       summary: Create a user record, its first workspace, and its invitation.
       description: >
-        Realizes `PLUGACC-FR-003` and `PLUGACC-FR-029`. An administrator alone.
-        The answer carries the address of the invitation one time. `PLUGACC-DD-004`.
+        Realizes `PLUGACC-FR-003`, `PLUGACC-FR-029`, and `PLUGACC-FR-032`. An
+        administrator alone. The answer carries the address of the invitation one
+        time. `PLUGACC-DD-004`. The record, its first workspace, its invitation, and
+        its allowlist are written in one transaction. A plugin that the hub did not
+        load answers 422 with the pointer `/allowed_plugins/{index}`, and no row is
+        written. `PLUGACC-DD-010`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
         - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
@@ -292,7 +296,8 @@ paths:
       description: >
         Realizes `PLUGACC-FR-017`. The permission is `workspace.read`. Admits an
         administrator. One page holds every item, ordered by the plugin
-        identifier. `DAT-009`.
+        identifier. `DAT-009`. Each item carries the entry of the plugin, whatever
+        the allowlist of the member holds. `PLUGACC-DD-009`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       responses:
@@ -311,7 +316,7 @@ paths:
                       items:
                         type: array
                         items:
-                          $ref: "#/components/schemas/PluginRef"
+                          $ref: "#/components/schemas/EnabledPlugin"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
@@ -340,7 +345,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PluginRef"
+                $ref: "#/components/schemas/EnabledPlugin"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
@@ -366,7 +371,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PluginRef"
+                $ref: "#/components/schemas/EnabledPlugin"
         "201":
           headers:
             X-Flow-ID:
@@ -375,7 +380,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PluginRef"
+                $ref: "#/components/schemas/EnabledPlugin"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
@@ -469,6 +474,13 @@ components:
         is_administrator:
           type: boolean
           default: false
+        allowed_plugins:
+          type: array
+          description: The plugin identifiers of the allowlist. See `PLG-003`.
+          default: []
+          items:
+            type: string
+            examples: [dev.maroid.jasmine]
 
     UserChange:
       type: object
@@ -500,6 +512,23 @@ components:
           $ref: "#/components/schemas/User"
         invitation:
           $ref: "#/components/schemas/Invitation"
+
+    EnabledPlugin:
+      type: object
+      required: [plugin_id, created_at]
+      description: >
+        A plugin that the workspace enables. `plugin` is absent when the hub did not
+        load the plugin at its start. `PLUGACC-DD-009`.
+      properties:
+        plugin_id:
+          type: string
+          description: The plugin identifier. See `PLG-003`.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        plugin:
+          $ref: "../pcap/api.yaml#/components/schemas/PluginEntry"
 
     PluginRef:
       type: object

@@ -4,9 +4,9 @@ title: The administrator, the plugin allowlist, and the enablement of a plugin
 type: requirements
 status: approved
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-04
 approved_by: Temuri
-approved_on: 2026-10-02
+approved_on: 2026-10-04
 constrained_by: [SEC, OWN, ERR, EXT, TG, JOB, ARC, CLI]
 ---
 
@@ -25,9 +25,11 @@ shell does any of it, and nothing limits which plugins a user turns on.
 ## 2. Users
 
 - An administrator: adds and blocks people, decides which plugins each person can turn
-  on, and fixes a workspace that lost its way.
+  on from the day they add the person, and manages the members and the plugins of any
+  workspace.
 - A manager: turns on the plugins that the workspace needs, from their allowlist.
-- A member: sees and uses the plugins that the workspace turned on, and no other.
+- A member: sees and uses every plugin that the workspace turned on, whoever turned it
+  on, and no other.
 
 ## 3. Out of scope
 
@@ -59,6 +61,22 @@ An administrator must create a user record and obtain its invitation from the we
 shell.
 
 **Why:** `EXTID-FR-010` gives the same action on the command line.
+
+### `PLUGACC-FR-032`
+
+An administrator must set the plugin allowlist of a user record when they create it.
+
+**Why:** Some plugins hold sensitive records. The administrator decides which plugins a
+person can turn on before the person signs in for the first time.
+
+**Examples:**
+
+- Normal case: an administrator creates a record for Nina with the garden plugin on
+  her allowlist. Nina turns the garden plugin on in her first workspace.
+- Limit case: an administrator creates a record with an empty allowlist. `PLUGACC-FR-008`
+  adds a plugin later.
+- Unwanted case: the allowlist names a plugin that the hub did not load. Maroid refuses
+  it, names the plugin, and creates no record.
 
 ### `PLUGACC-FR-004`
 
@@ -163,7 +181,18 @@ it no longer holds it.
 
 ### `PLUGACC-FR-017`
 
-A member must list the plugins that the workspace enables.
+A member must read every plugin that the workspace enables, whatever their own plugin
+allowlist holds.
+
+**Why:** The workspace acts on its enabled plugins, whoever enabled them. The allowlist
+decides who turns a plugin on, not who uses it. `PLUGACC-FR-016` gives the same rule.
+
+**Examples:**
+
+- Normal case: Ana enables the garden plugin in H. Gio, a member of H with an empty
+  allowlist, reads the garden plugin in H and uses it.
+- Normal case: an administrator enables the pension plugin in H. Every member of H reads
+  it, and no allowlist of a member holds it.
 
 ### `PLUGACC-FR-018`
 
@@ -204,9 +233,11 @@ for no other.
 
 ### `PLUGACC-FR-021`
 
-A user must read the loaded plugins that their plugin allowlist holds, and no other.
+A user must read, as the plugins that they can turn on, the loaded plugins that their
+plugin allowlist holds, and no other.
 
 **Why:** A person sees what they can turn on, and nothing that they never can.
+`PLUGACC-FR-017` gives the plugins that a workspace already uses.
 
 ### `PLUGACC-FR-028`
 
@@ -215,14 +246,14 @@ An administrator must read every loaded plugin.
 ### `PLUGACC-FR-022`
 
 Maroid must refuse every action of `PLUGACC-FR-002` to `PLUGACC-FR-010`,
-`PLUGACC-FR-013`, `PLUGACC-FR-027`, `PLUGACC-FR-029`, and `PLUGACC-FR-030` from a user
-who is no administrator.
+`PLUGACC-FR-013`, `PLUGACC-FR-027`, `PLUGACC-FR-029`, `PLUGACC-FR-030`, and
+`PLUGACC-FR-032` from a user who is no administrator.
 
 ### `PLUGACC-FR-023`
 
 An administrator must reach every action of `PLUGACC-FR-002` to `PLUGACC-FR-010`,
-`PLUGACC-FR-013`, `PLUGACC-FR-027`, `PLUGACC-FR-029`, and `PLUGACC-FR-030` from the web
-shell.
+`PLUGACC-FR-013`, `PLUGACC-FR-027`, `PLUGACC-FR-029`, `PLUGACC-FR-030`, and
+`PLUGACC-FR-032` from the web shell.
 
 ### `PLUGACC-FR-024`
 
@@ -232,6 +263,21 @@ A manager must enable and disable a plugin of their workspace from the web shell
 
 The navigation of the web shell must name only the plugins that the acting workspace
 enables.
+
+### `PLUGACC-FR-033`
+
+The web shell must offer an administrator no page of a plugin in a workspace that they
+are not a member of.
+
+**Why:** `PLUGACC-INV-002` closes the records of that workspace to the administrator. A
+page that the hub answers with not-found tells them nothing.
+
+**Examples:**
+
+- Normal case: an administrator opens the plugins of the workspace of John. The page
+  switches each plugin, and the navigation names no page of a plugin.
+- Normal case: the same administrator opens a workspace that they are a member of. The
+  navigation names each plugin that it enables.
 
 ### `PLUGACC-FR-026`
 
@@ -290,6 +336,9 @@ An instance that holds an administrator holds at least one active administrator.
 | 1   | What do the workspaces and the users that exist before this feature receive?    | Temuri | Nothing. `PLUGACC-FR-026`. |
 | 2   | How does a user become an administrator?                                         | Temuri | The command line makes the first one, `PLUGACC-FR-001`. An administrator marks the others, `PLUGACC-FR-029`. |
 | 3   | Does a command of the bot of a disabled plugin leave the menu?                   | Temuri | Yes, as `SEC-012` gives. A use of it gets no answer. |
+| 4   | Does a member use a plugin that their own allowlist does not hold?               | Temuri | Yes. The workspace acts on its enabled plugins, whoever enabled them. `PLUGACC-FR-017`. |
+| 5   | Does a removal from an allowlist disable the plugin where the person turned it on? | Temuri | No. The plugin stays on, and an administrator disables it by hand. `PLUGACC-FR-016`, `PLUGACC-FR-027`. |
+| 6   | Does an administrator keep the members and the plugins of any workspace?         | Temuri | Yes. `PLUGACC-FR-010`, `PLUGACC-FR-013`, `PLUGACC-FR-027`. |
 
 Answer every question before the approval. An open question blocks stage 2.
 
