@@ -29,6 +29,9 @@ var (
 	ErrTelegramCommandAlreadyRegistered = errors.New("telegram command: already registered")
 	// ErrCronAlreadyRegistered indicates that a cron job has already been registered.
 	ErrCronAlreadyRegistered = errors.New("cron: already registered")
+	// ErrCronScopeWithoutPlugin indicates a job of the hub that declares the scope
+	// per-workspace. No workspace enables the hub, so the job would never run.
+	ErrCronScopeWithoutPlugin = errors.New("cron: a job of the hub cannot run per workspace")
 	// ErrTelegramConversationNotFound indicates that a telegram conversation was not found.
 	ErrTelegramConversationNotFound = errors.New("telegram conversation: not found")
 	// ErrTelegramConversationStepNotFound indicates that a step within a telegram conversation was not found.

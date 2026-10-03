@@ -8,10 +8,17 @@ import (
 
 	"github.com/robfig/cron/v3"
 
+	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
+
+// WorkspaceLister answers the workspaces that enable a plugin.
+// workspace.EnablementService satisfies it.
+type WorkspaceLister interface {
+	WorkspacesEnabling(ctx context.Context, pluginID string) ([]string, error)
+}
 
 // CronWorker runs registered cron jobs using the cron scheduler.
 type CronWorker struct {
@@ -19,6 +26,7 @@ type CronWorker struct {
 	scheduler    *cron.Cron
 	cronRegistry *registry.CronRegistry
 	userRepo     repository.UserRepository
+	workspaces   WorkspaceLister
 }
 
 var _ Worker = (*CronWorker)(nil)
@@ -29,6 +37,7 @@ func NewCronWorker(
 	scheduler *cron.Cron,
 	cronRegistry *registry.CronRegistry,
 	userRepo repository.UserRepository,
+	workspaces WorkspaceLister,
 ) *CronWorker {
 	return &CronWorker{
 		logger: logger.With(
@@ -38,6 +47,7 @@ func NewCronWorker(
 		scheduler:    scheduler,
 		cronRegistry: cronRegistry,
 		userRepo:     userRepo,
+		workspaces:   workspaces,
 	}
 }
 
@@ -48,10 +58,15 @@ func (w *CronWorker) Name() string { return "cron" }
 func (w *CronWorker) Prepare() error {
 	for _, job := range w.cronRegistry.All() {
 		meta := job.Meta()
+		pluginID := w.cronRegistry.PluginOf(meta.ID)
+
+		if meta.Scope == pluginapi.CronScopePerWorkspace && pluginID == "" {
+			return fmt.Errorf("scheduling cron job %s: %w", meta.ID, errs.ErrCronScopeWithoutPlugin)
+		}
 
 		logger := w.logger.With(slog.String("job_id", meta.ID))
 
-		baseJob := cron.FuncJob(w.wrapCronJob(logger, job))
+		baseJob := cron.FuncJob(w.wrapCronJob(logger, job, pluginID))
 		skippingJob := cron.NewChain(cron.SkipIfStillRunning(cron.DiscardLogger)).Then(baseJob)
 
 		entryID, err := w.scheduler.AddJob(meta.Schedule, skippingJob)
@@ -101,16 +116,26 @@ func (w *CronWorker) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (w *CronWorker) wrapCronJob(logger *slog.Logger, job pluginapi.CronJob) func() {
+func (w *CronWorker) wrapCronJob(
+	logger *slog.Logger,
+	job pluginapi.CronJob,
+	pluginID string,
+) func() {
 	return func() {
 		ctx := context.Background()
 
 		logger.InfoContext(ctx, "cron job execution started")
 
-		if job.Meta().Scope == pluginapi.CronScopePerUser {
+		switch job.Meta().Scope {
+		case pluginapi.CronScopePerUser:
 			w.runForEachUser(ctx, logger, job)
 
 			return
+		case pluginapi.CronScopePerWorkspace:
+			w.runForEachWorkspace(ctx, logger, job, pluginID)
+
+			return
+		case pluginapi.CronScopeShared:
 		}
 
 		if err := job.Run(ctx); err != nil {
@@ -138,24 +163,54 @@ func (w *CronWorker) runForEachUser(
 	}
 
 	for _, user := range users {
-		userLogger := logger.With(slog.String("user_id", user.ID))
+		runOne(
+			pluginapi.ContextWithActingUser(ctx, user.ID),
+			logger.With(slog.String("user_id", user.ID)),
+			job,
+		)
+	}
+}
 
-		if err := job.Run(pluginapi.ContextWithActingUser(ctx, user.ID)); err != nil {
-			if errors.Is(err, pluginapi.ErrSettingsAbsent) {
-				userLogger.InfoContext(ctx, "cron job skipped, the user stored no settings")
+// runForEachWorkspace runs the job one time for each workspace that enables its
+// plugin, with that workspace in the context of the run and no acting user.
+func (w *CronWorker) runForEachWorkspace(
+	ctx context.Context,
+	logger *slog.Logger,
+	job pluginapi.CronJob,
+	pluginID string,
+) {
+	workspaces, err := w.workspaces.WorkspacesEnabling(ctx, pluginID)
+	if err != nil {
+		logger.ErrorContext(
+			ctx,
+			"listing the workspaces that enable the plugin failed",
+			slog.Any("error", err),
+		)
 
-				continue
-			}
+		return
+	}
 
-			userLogger.ErrorContext(
-				ctx,
-				"cron job execution failed",
-				slog.Any("error", err),
-			)
+	for _, workspaceID := range workspaces {
+		runOne(
+			pluginapi.ContextWithActingWorkspace(ctx, workspaceID),
+			logger.With(slog.String("workspace_id", workspaceID)),
+			job,
+		)
+	}
+}
 
-			continue
-		}
+// runOne runs the job for one user or one workspace. A failure goes to the log, so
+// the run for the next one goes on. A run that ends because no settings exist is a
+// skip, not a failure.
+func runOne(ctx context.Context, logger *slog.Logger, job pluginapi.CronJob) {
+	err := job.Run(ctx)
 
-		userLogger.InfoContext(ctx, "cron job execution completed successfully")
+	switch {
+	case errors.Is(err, pluginapi.ErrSettingsAbsent):
+		logger.InfoContext(ctx, "cron job skipped, no settings are stored")
+	case err != nil:
+		logger.ErrorContext(ctx, "cron job execution failed", slog.Any("error", err))
+	default:
+		logger.InfoContext(ctx, "cron job execution completed successfully")
 	}
 }

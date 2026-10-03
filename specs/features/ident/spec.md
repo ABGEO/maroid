@@ -4,7 +4,7 @@ title: The user record and the ownership of a row
 type: spec
 status: approved
 created: 2026-09-12
-updated: 2026-10-03
+updated: 2026-10-04
 approved_by: Temuri
 approved_on: 2026-09-12
 constrained_by: [OWN, DAT, SEC, TG, JOB, REP, PLG, API, ERR, CFG, PKG, TST]
@@ -502,7 +502,7 @@ for would then carry no automated proof.
 
 | 13  | Write the scenarios of `IDENT-SC-001` to `IDENT-SC-005` for a table that a workspace scopes, then add the acting workspace to `libs/pluginapi/actinguser.go` and to `PluginDB.WithTx`, and replace `WithUserTx` with `WithScopeTx`. | `IDENT-FR-003` to `IDENT-FR-006`, `IDENT-INV-001`, `IDENT-INV-002` | [x]  |
 | 14  | Write `IDENT-SC-013`, then resolve the acting workspace at each entry point of `OWN-003`, with the membership check. It needs the tables of `OWN-010` and `OWN-011`. | `IDENT-FR-004` to `IDENT-FR-006`, `IDENT-NFR-002` | [x]  |
-| 15  | Write `IDENT-SC-014`, then add `CronScopePerWorkspace` to `libs/pluginapi/cron.go` and to the cron worker. It needs the enablements of `SEC-012`. | `IDENT-FR-007` | [ ]  |
+| 15  | Write `IDENT-SC-014`, then add `CronScopePerWorkspace` to `libs/pluginapi/cron.go` and to the cron worker. It needs the enablements of `SEC-012`. | `IDENT-FR-007` | [x]  |
 
 Step 2 comes before every other database step, because a policy written under a
 superuser passes every test and isolates nothing. Steps 14 and 15 wait for the

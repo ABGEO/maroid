@@ -2,7 +2,7 @@ package pluginapi
 
 import "context"
 
-// CronScope tells the scheduler which user a run of a job acts for.
+// CronScope tells the scheduler which user or which workspace a run of a job acts for.
 type CronScope string
 
 const (
@@ -11,6 +11,9 @@ const (
 	CronScopeShared CronScope = "shared"
 	// CronScopePerUser runs the job one time for each active user.
 	CronScopePerUser CronScope = "per-user"
+	// CronScopePerWorkspace runs the job one time for each workspace that enables its
+	// plugin, with no acting user.
+	CronScopePerWorkspace CronScope = "per-workspace"
 )
 
 // CronJobMeta represents the CronJob metadata.

@@ -110,8 +110,13 @@ func (c *WorkerCommand) getWorkers() ([]worker.Worker, error) {
 		return nil, fmt.Errorf("resolving user repository: %w", err)
 	}
 
+	enablements, err := c.depResolver.EnablementService()
+	if err != nil {
+		return nil, fmt.Errorf("resolving enablement service: %w", err)
+	}
+
 	return []worker.Worker{
-		worker.NewCronWorker(c.logger, cronScheduler, cronRegistry, userRepo),
+		worker.NewCronWorker(c.logger, cronScheduler, cronRegistry, userRepo, enablements),
 		worker.NewMQTTWorker(c.logger, cfg, mqttSubscriberRegistry),
 	}, nil
 }

@@ -24,18 +24,23 @@ const (
 	idOfA = "01998aa0-1111-7000-8000-00000000000a"
 	idOfB = "01998aa0-1111-7000-8000-00000000000b"
 
+	workspaceH = "01998aa0-2222-7000-8000-0000000000aa"
+	workspaceG = "01998aa0-2222-7000-8000-0000000000bb"
+	pluginP    = "dev.maroid.p"
+
 	everyMorning = "0 6 * * *"
 )
 
 var errJobFailed = errors.New("the job failed")
 
-// recordingJob keeps the acting user of each run.
+// recordingJob keeps the acting user and the acting workspace of each run.
 type recordingJob struct {
 	meta pluginapi.CronJobMeta
 	err  error
 
-	mu   sync.Mutex
-	seen []string
+	mu         sync.Mutex
+	seen       []string
+	workspaces []string
 }
 
 func (j *recordingJob) Meta() pluginapi.CronJobMeta { return j.meta }
@@ -45,8 +50,16 @@ func (j *recordingJob) Run(ctx context.Context) error {
 	defer j.mu.Unlock()
 
 	j.seen = append(j.seen, pluginapi.ActingUserFromContext(ctx))
+	j.workspaces = append(j.workspaces, pluginapi.ActingWorkspaceFromContext(ctx))
 
 	return j.err
+}
+
+func (j *recordingJob) actingWorkspaces() []string {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+
+	return append([]string(nil), j.workspaces...)
 }
 
 func (j *recordingJob) actingUsers() []string {
@@ -81,6 +94,18 @@ func (f fakeUserRepo) GetActiveByID(context.Context, string) (*model.User, error
 	return nil, errs.ErrUserNotFound
 }
 
+// fakeEnablements answers the workspaces that enable each plugin.
+type fakeEnablements map[string][]string
+
+func (f fakeEnablements) WorkspacesEnabling(_ context.Context, pluginID string) ([]string, error) {
+	return f[pluginID], nil
+}
+
+// pAndBothWorkspaces holds two workspaces that enable P.
+func pAndBothWorkspaces() fakeEnablements {
+	return fakeEnablements{pluginP: {workspaceH, workspaceG}}
+}
+
 func twoActiveUsers() fakeUserRepo {
 	return fakeUserRepo{
 		users: []model.User{{ID: idOfA}, {ID: idOfB}},
@@ -92,17 +117,26 @@ func twoActiveUsers() fakeUserRepo {
 func fire(t *testing.T, job pluginapi.CronJob, userRepo repository.UserRepository) {
 	t.Helper()
 
+	fireOf(t, slog.New(slog.DiscardHandler), job, userRepo, fakeEnablements{})
+}
+
+// fireOf registers the job as a job of P, prepares the worker, and runs the one
+// entry that the scheduler holds.
+func fireOf(
+	t *testing.T,
+	logger *slog.Logger,
+	job pluginapi.CronJob,
+	userRepo repository.UserRepository,
+	enablements worker.WorkspaceLister,
+) {
+	t.Helper()
+
 	registryInstance := registry.NewCronRegistry()
-	require.NoError(t, registryInstance.Register(job))
+	require.NoError(t, registryInstance.RegisterOf(pluginP, job))
 
 	scheduler := cron.New()
 
-	instance := worker.NewCronWorker(
-		slog.New(slog.DiscardHandler),
-		scheduler,
-		registryInstance,
-		userRepo,
-	)
+	instance := worker.NewCronWorker(logger, scheduler, registryInstance, userRepo, enablements)
 	require.NoError(t, instance.Prepare())
 
 	entries := scheduler.Entries()
@@ -227,13 +261,13 @@ func (h *levelRecorder) holds(level slog.Level) bool {
 	return slices.Contains(h.levels, level)
 }
 
-// absentForFirstJob reports an absent settings record for the first user it runs for.
+// absentForFirstJob reports an absent settings record for its first run.
 type absentForFirstJob struct {
 	recordingJob
 }
 
 func (j *absentForFirstJob) Run(ctx context.Context) error {
-	first := len(j.actingUsers()) == 0
+	first := len(j.actingWorkspaces()) == 0
 
 	_ = j.recordingJob.Run(ctx)
 
@@ -244,8 +278,119 @@ func (j *absentForFirstJob) Run(ctx context.Context) error {
 	return nil
 }
 
-// PSET-SC-012: A job that ends because the acting user stored no settings writes no
-// record at the error level, and the worker runs the job for the next user.
+// PSET-SC-012: A job that ends because the first workspace stored no settings writes
+// no record at the error level, and the worker runs the job for the second workspace.
+func TestPerWorkspaceJobReportsNoFailureWhenTheSettingsAreAbsent(t *testing.T) {
+	t.Parallel()
+
+	job := &absentForFirstJob{
+		recordingJob: recordingJob{
+			meta: pluginapi.CronJobMeta{
+				ID:       "absent-settings",
+				Schedule: everyMorning,
+				Scope:    pluginapi.CronScopePerWorkspace,
+			},
+			err: nil,
+		},
+	}
+
+	recorder := &levelRecorder{}
+
+	fireOf(t, slog.New(recorder), job, twoActiveUsers(), pAndBothWorkspaces())
+
+	require.Equal(t, []string{workspaceH, workspaceG}, job.actingWorkspaces())
+	require.False(t, recorder.holds(slog.LevelError), "a skip is not a failure")
+}
+
+// IDENT-SC-014: A job that declares CronScopePerWorkspace runs one time for each
+// workspace that enables its plugin. Each run carries a different workspace and no
+// acting user.
+func TestPerWorkspaceJobRunsForEachEnablingWorkspace(t *testing.T) {
+	t.Parallel()
+
+	job := &recordingJob{
+		meta: pluginapi.CronJobMeta{
+			ID:       "per-workspace",
+			Schedule: everyMorning,
+			Scope:    pluginapi.CronScopePerWorkspace,
+		},
+		err: nil,
+	}
+
+	fireOf(t, slog.New(slog.DiscardHandler), job, twoActiveUsers(), pAndBothWorkspaces())
+
+	require.Equal(t, []string{workspaceH, workspaceG}, job.actingWorkspaces())
+	require.Equal(t, []string{"", ""}, job.actingUsers())
+}
+
+// PLUGACC-SC-016: A job of P runs for H, which enables P, and not for G, which does not.
+func TestPerWorkspaceJobSkipsAWorkspaceThatDoesNotEnableThePlugin(t *testing.T) {
+	t.Parallel()
+
+	job := &recordingJob{
+		meta: pluginapi.CronJobMeta{
+			ID:       "per-workspace",
+			Schedule: everyMorning,
+			Scope:    pluginapi.CronScopePerWorkspace,
+		},
+		err: nil,
+	}
+
+	fireOf(t, slog.New(slog.DiscardHandler), job, twoActiveUsers(),
+		fakeEnablements{pluginP: {workspaceH}, "dev.maroid.q": {workspaceG}})
+
+	require.Equal(t, []string{workspaceH}, job.actingWorkspaces())
+}
+
+// JOB-007: The run for one workspace that fails does not stop the run for the next.
+func TestPerWorkspaceJobContinuesAfterAFailure(t *testing.T) {
+	t.Parallel()
+
+	job := &recordingJob{
+		meta: pluginapi.CronJobMeta{
+			ID:       "failing",
+			Schedule: everyMorning,
+			Scope:    pluginapi.CronScopePerWorkspace,
+		},
+		err: errJobFailed,
+	}
+
+	fireOf(t, slog.New(slog.DiscardHandler), job, twoActiveUsers(), pAndBothWorkspaces())
+
+	require.Equal(t, []string{workspaceH, workspaceG}, job.actingWorkspaces())
+}
+
+// A job of the hub names no plugin, so no workspace enables it. A declaration of
+// CronScopePerWorkspace fails the preparation, instead of a job that never runs.
+func TestAPerWorkspaceJobOfTheHubFailsThePreparation(t *testing.T) {
+	t.Parallel()
+
+	job := &recordingJob{
+		meta: pluginapi.CronJobMeta{
+			ID:       "hub",
+			Schedule: everyMorning,
+			Scope:    pluginapi.CronScopePerWorkspace,
+		},
+		err: nil,
+	}
+
+	registryInstance := registry.NewCronRegistry()
+	require.NoError(t, registryInstance.Register(job))
+
+	instance := worker.NewCronWorker(
+		slog.New(
+			slog.DiscardHandler,
+		),
+		cron.New(),
+		registryInstance,
+		twoActiveUsers(),
+		pAndBothWorkspaces(),
+	)
+	require.ErrorIs(t, instance.Prepare(), errs.ErrCronScopeWithoutPlugin)
+}
+
+// PSET-FR-014: A per-user job that ends because the first user stored no settings
+// writes no record at the error level, and the worker runs the job for the next user.
 func TestPerUserJobReportsNoFailureWhenTheSettingsAreAbsent(t *testing.T) {
 	t.Parallel()
 
@@ -262,21 +407,7 @@ func TestPerUserJobReportsNoFailureWhenTheSettingsAreAbsent(t *testing.T) {
 
 	recorder := &levelRecorder{}
 
-	registryInstance := registry.NewCronRegistry()
-	require.NoError(t, registryInstance.Register(job))
-
-	scheduler := cron.New()
-	instance := worker.NewCronWorker(
-		slog.New(recorder),
-		scheduler,
-		registryInstance,
-		twoActiveUsers(),
-	)
-	require.NoError(t, instance.Prepare())
-
-	entries := scheduler.Entries()
-	require.Len(t, entries, 1)
-	entries[0].Job.Run()
+	fireOf(t, slog.New(recorder), job, twoActiveUsers(), fakeEnablements{})
 
 	require.Equal(t, []string{idOfA, idOfB}, job.actingUsers())
 	require.False(t, recorder.holds(slog.LevelError), "a skip is not a failure")

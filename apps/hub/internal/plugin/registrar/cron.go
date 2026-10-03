@@ -52,7 +52,14 @@ func (r *CronRegistrar) Register(plugin pluginapi.Plugin) error {
 		)
 	}
 
-	jobs, err := registerItems(id, "cron jobs", cronPlugin.CronJobs, r.registry.Register)
+	jobs, err := registerItems(
+		id,
+		"cron jobs",
+		cronPlugin.CronJobs,
+		func(jobs ...pluginapi.CronJob) error {
+			return r.registry.RegisterOf(id.String(), jobs...)
+		},
+	)
 	if err != nil {
 		return err
 	}

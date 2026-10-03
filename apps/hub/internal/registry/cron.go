@@ -11,17 +11,37 @@ import (
 
 // CronRegistry is a registry for cron jobs.
 type CronRegistry struct {
-	jobs map[string]pluginapi.CronJob
+	jobs    map[string]pluginapi.CronJob
+	plugins map[string]string
 }
 
 // NewCronRegistry creates a new CronRegistry.
 func NewCronRegistry() *CronRegistry {
 	return &CronRegistry{
-		jobs: make(map[string]pluginapi.CronJob),
+		jobs:    make(map[string]pluginapi.CronJob),
+		plugins: make(map[string]string),
 	}
 }
 
-// Register registers one or more cron jobs.
+// RegisterOf registers one or more cron jobs of the plugin.
+func (r *CronRegistry) RegisterOf(pluginID string, jobs ...pluginapi.CronJob) error {
+	if err := r.Register(jobs...); err != nil {
+		return err
+	}
+
+	for _, job := range jobs {
+		r.plugins[job.Meta().ID] = pluginID
+	}
+
+	return nil
+}
+
+// PluginOf names the plugin of the job, or the empty string for a job of the hub.
+func (r *CronRegistry) PluginOf(jobID string) string {
+	return r.plugins[jobID]
+}
+
+// Register registers one or more cron jobs of the hub.
 func (r *CronRegistry) Register(jobs ...pluginapi.CronJob) error {
 	for _, job := range jobs {
 		id := job.Meta().ID

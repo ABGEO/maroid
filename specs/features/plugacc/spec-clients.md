@@ -51,7 +51,12 @@ plugin of the job, so a job runs for those and for no other, which realizes
 | Path                                  | Action | Holds                                                     |
 | ------------------------------------- | ------ | --------------------------------------------------------- |
 | `libs/pluginapi/cron.go`              | change | `CronScopePerWorkspace`                                   |
+| `apps/hub/internal/registry/cron.go`  | change | `RegisterOf` keeps the plugin of each job. `PluginOf` names it |
 | `apps/hub/internal/worker/cron.go`    | change | `runForEachWorkspace`, from `WorkspacesEnabling`          |
+
+A job of the hub names no plugin, so no workspace enables it. A job of the hub that
+declares `CronScopePerWorkspace` fails the preparation of the worker with
+`ErrCronScopeWithoutPlugin`, in place of a job that never runs.
 
 ## 4. The deck
 
