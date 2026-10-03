@@ -6,12 +6,21 @@ import "context"
 // The owner creates each key under this prefix.
 const UserKeyPrefix = "maroid-user-"
 
+// WorkspaceKeyPrefix starts the name of the key that protects one workspace.
+// The owner creates each key under this prefix.
+const WorkspaceKeyPrefix = "maroid-workspace-"
+
 // Key names a key that a Cipher uses.
 type Key string
 
 // UserKey returns the Key that protects the secrets of one user.
 func UserKey(userID string) Key {
 	return Key(UserKeyPrefix + userID)
+}
+
+// WorkspaceKey returns the Key that protects the secrets of one workspace.
+func WorkspaceKey(workspaceID string) Key {
+	return Key(WorkspaceKeyPrefix + workspaceID)
 }
 
 // Cipher protects a value under a Key.

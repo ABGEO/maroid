@@ -15,7 +15,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
@@ -27,47 +26,144 @@ const (
 	secondAddress = "second@example.com"
 )
 
-func storeFields(t *testing.T, instance *testdb.Instance, user string, fields model.Fields) {
-	t.Helper()
-
-	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
-
-	require.NoError(t, database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
-		return errorOf(repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, fields, nil))
-	}))
+// actingIn is the context of a request by the user inside the workspace.
+func actingIn(ctx context.Context, user string, workspace string) context.Context {
+	return pluginapi.ContextWithActingWorkspace(
+		pluginapi.ContextWithActingUser(ctx, user),
+		workspace,
+	)
 }
 
-// PSET-SC-003: A save stores every declared field, and the session gives the owner.
+// inScope runs one unit of work as the user inside the workspace, the way a request does.
+func inScope(
+	t *testing.T,
+	instance *testdb.Instance,
+	user string,
+	workspace string,
+	work func(ctx context.Context, tx *sqlx.Tx) error,
+) error {
+	t.Helper()
+
+	ctx := actingIn(t.Context(), user, workspace)
+
+	//nolint:wrapcheck // the test reads the error that the repository answered.
+	return database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
+		return work(ctx, tx)
+	})
+}
+
+func storeFields(
+	t *testing.T,
+	instance *testdb.Instance,
+	user string,
+	workspace string,
+	scope model.SettingScope,
+	fields model.Fields,
+) {
+	t.Helper()
+
+	require.NoError(
+		t,
+		inScope(t, instance, user, workspace, func(ctx context.Context, tx *sqlx.Tx) error {
+			return errorOf(
+				repository.NewPluginSettings(tx).Upsert(ctx, scope, probePluginID, fields),
+			)
+		}),
+	)
+}
+
+func readFields(
+	t *testing.T,
+	instance *testdb.Instance,
+	user string,
+	workspace string,
+	scope model.SettingScope,
+) *model.PluginSettings {
+	t.Helper()
+
+	var stored *model.PluginSettings
+
+	require.NoError(
+		t,
+		inScope(t, instance, user, workspace, func(ctx context.Context, tx *sqlx.Tx) error {
+			var err error
+
+			stored, err = repository.NewPluginSettings(tx).Get(ctx, scope, probePluginID)
+			if err != nil {
+				return fmt.Errorf("reading the stored settings: %w", err)
+			}
+
+			return nil
+		}),
+	)
+
+	return stored
+}
+
+// ownerOf reads the scope column of the one row of the table as the user inside the
+// workspace.
+func ownerOf(
+	t *testing.T,
+	instance *testdb.Instance,
+	user string,
+	workspace string,
+	query string,
+) string {
+	t.Helper()
+
+	var owner string
+
+	require.NoError(
+		t,
+		inScope(t, instance, user, workspace, func(ctx context.Context, tx *sqlx.Tx) error {
+			return tx.GetContext(ctx, &owner, query)
+		}),
+	)
+
+	return owner
+}
+
+// PSET-SC-003: A save of a field of the workspace stores one row, and the session
+// gives the workspace.
+func TestUpsertCarriesTheActingWorkspace(t *testing.T) {
+	t.Parallel()
+
+	instance := startWithCoreMigrations(t)
+	userA := insertUser(t, instance, nameOfA)
+	workspaceA := createWorkspace(t, instance, "A", userA).ID
+
+	storeFields(t, instance, userA, workspaceA, model.SettingScopeWorkspace, model.Fields{
+		keyEmail:   {Kind: model.FieldKindText, Value: "person@example.com"},
+		"password": {Kind: model.FieldKindSecret, Value: "vault:v1:abc"},
+	})
+
+	stored := readFields(t, instance, userA, workspaceA, model.SettingScopeWorkspace)
+
+	require.Len(t, stored.Fields, 2)
+	require.Equal(t, "vault:v1:abc", stored.Fields["password"].Value)
+	require.Equal(t, model.FieldKindSecret, stored.Fields["password"].Kind)
+	require.Equal(t, workspaceA, ownerOf(t, instance, userA, workspaceA,
+		`SELECT workspace_id FROM public.plugin_workspace_settings;`))
+	require.Nil(t, readFields(t, instance, userA, workspaceA, model.SettingScopeUser),
+		"a field of the workspace reaches no row of the user")
+}
+
+// PSET-SC-023: A save of a field of the user stores one row that the session gives
+// to the user.
 func TestUpsertCarriesTheActingUser(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
 	userA := insertUser(t, instance, nameOfA)
+	workspaceA := createWorkspace(t, instance, "A", userA).ID
 
-	storeFields(t, instance, userA, model.Fields{
-		keyEmail:   {Kind: model.FieldKindText, Value: "person@example.com"},
-		"password": {Kind: model.FieldKindSecret, Value: "vault:v1:abc"},
+	storeFields(t, instance, userA, workspaceA, model.SettingScopeUser, model.Fields{
+		"pin": {Kind: model.FieldKindSecret, Value: "vault:v1:pin"},
 	})
 
-	ctx := pluginapi.ContextWithActingUser(t.Context(), userA)
-
-	var stored *model.PluginSettings
-
-	require.NoError(t, database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
-		var err error
-
-		stored, err = repository.NewPluginSettings(tx).Get(ctx, probePluginID)
-		if err != nil {
-			return fmt.Errorf("reading the stored settings: %w", err)
-		}
-
-		return nil
-	}))
-
-	require.Equal(t, userA, stored.UserID)
-	require.Len(t, stored.Fields, 2)
-	require.Equal(t, "vault:v1:abc", stored.Fields["password"].Value)
-	require.Equal(t, model.FieldKindSecret, stored.Fields["password"].Kind)
+	require.Equal(t, userA, ownerOf(t, instance, userA, workspaceA,
+		`SELECT user_id FROM public.plugin_user_settings;`))
+	require.Nil(t, readFields(t, instance, userA, workspaceA, model.SettingScopeWorkspace))
 }
 
 // PSET-SC-003: A second save of the same pair replaces the row and adds no second one.
@@ -76,56 +172,93 @@ func TestUpsertReplacesTheRowOfThePair(t *testing.T) {
 
 	instance := startWithCoreMigrations(t)
 	userA := insertUser(t, instance, nameOfA)
+	workspaceA := createWorkspace(t, instance, "A", userA).ID
 
-	storeFields(t, instance, userA, model.Fields{
-		keyEmail: {Kind: model.FieldKindText, Value: firstAddress},
-	})
-	storeFields(t, instance, userA, model.Fields{
-		keyEmail: {Kind: model.FieldKindText, Value: secondAddress},
-	})
-
-	ctx := pluginapi.ContextWithActingUser(t.Context(), userA)
+	for _, address := range []string{firstAddress, secondAddress} {
+		storeFields(t, instance, userA, workspaceA, model.SettingScopeWorkspace, model.Fields{
+			keyEmail: {Kind: model.FieldKindText, Value: address},
+		})
+	}
 
 	var count, unscoped int
 
-	require.NoError(t, database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
-		return tx.GetContext(ctx, &count, `SELECT count(*) FROM public.plugin_settings;`)
-	}))
+	require.NoError(
+		t,
+		inScope(t, instance, userA, workspaceA, func(ctx context.Context, tx *sqlx.Tx) error {
+			return tx.GetContext(
+				ctx,
+				&count,
+				`SELECT count(*) FROM public.plugin_workspace_settings;`,
+			)
+		}),
+	)
 	require.Equal(t, 1, count)
 
-	require.NoError(t, instance.DB.Get(&unscoped, `SELECT count(*) FROM public.plugin_settings;`))
-	require.Equal(t, 0, unscoped, "a session with no acting user reads no row")
+	require.NoError(t, instance.DB.Get(
+		&unscoped, `SELECT count(*) FROM public.plugin_workspace_settings;`,
+	))
+	require.Equal(t, 0, unscoped, "a session with no acting workspace reads no row")
 }
 
-// PSET-SC-010: A read as user A returns no row of user B.
-// PSET-INV-001: The settings of one user reach no other user.
-func TestGetReturnsNoRowOfAnotherUser(t *testing.T) {
+// PSET-SC-010: A read in workspace A returns no row of workspace B, and a read as
+// user A returns no row of user B.
+// PSET-INV-001: The settings of one workspace and of one user reach no other.
+func TestGetReturnsNoRowOfAnotherScope(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
 	userA := insertUser(t, instance, nameOfA)
 	userB := insertUser(t, instance, nameOfB)
+	workspaceA := createWorkspace(t, instance, "A", userA).ID
+	workspaceB := createWorkspace(t, instance, "B", userB).ID
 
-	storeFields(t, instance, userB, model.Fields{
+	storeFields(t, instance, userB, workspaceB, model.SettingScopeWorkspace, model.Fields{
 		keyEmail: {Kind: model.FieldKindText, Value: "b@example.com"},
 	})
+	storeFields(t, instance, userB, workspaceB, model.SettingScopeUser, model.Fields{
+		"pin": {Kind: model.FieldKindText, Value: "vault:v1:b"},
+	})
 
-	ctx := pluginapi.ContextWithActingUser(t.Context(), userA)
+	assert.Nil(t, readFields(t, instance, userA, workspaceA, model.SettingScopeWorkspace),
+		"the row of another workspace reads as a row that does not exist")
+	assert.Nil(t, readFields(t, instance, userA, workspaceA, model.SettingScopeUser),
+		"the row of another user reads as a row that does not exist")
+}
 
-	var stored *model.PluginSettings
+// APIFMT-SC-019: A write answers the moment it stored, so the answer of a save
+// carries the validator that the next save names. Two writes in a row answer
+// two moments, and each equals what a read then finds.
+func TestAnUpsertAnswersTheMomentItStored(t *testing.T) {
+	t.Parallel()
 
-	require.NoError(t, database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
-		var err error
+	instance := startWithCoreMigrations(t)
+	user := insertUser(t, instance, nameOfA)
+	workspace := createWorkspace(t, instance, "A", user).ID
 
-		stored, err = repository.NewPluginSettings(tx).Get(ctx, probePluginID)
-		if err != nil {
-			return fmt.Errorf("reading the stored settings: %w", err)
-		}
+	for _, value := range []string{firstAddress, secondAddress} {
+		var written time.Time
 
-		return nil
-	}))
+		require.NoError(
+			t,
+			inScope(t, instance, user, workspace, func(ctx context.Context, tx *sqlx.Tx) error {
+				var err error
 
-	require.Nil(t, stored, "the row of another user reads as a row that does not exist")
+				written, err = repository.NewPluginSettings(tx).Upsert(
+					ctx, model.SettingScopeWorkspace, probePluginID, model.Fields{
+						keyEmail: {Kind: model.FieldKindText, Value: value},
+					},
+				)
+				if err != nil {
+					return fmt.Errorf("storing the settings: %w", err)
+				}
+
+				return nil
+			}),
+		)
+
+		stored := readFields(t, instance, user, workspace, model.SettingScopeWorkspace)
+		assert.True(t, written.Equal(stored.UpdatedAt), "the answer names the stored moment")
+	}
 }
 
 // asUser runs one unit of work as the acting user, the way a request does.
@@ -140,137 +273,6 @@ func asUser(t *testing.T, instance *testdb.Instance, user string,
 	return database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
 		return work(ctx, tx)
 	})
-}
-
-// APIFMT-SC-019: Two clients read one record and both write it back. The first
-// write lands and the second answers that the record moved. APIFMT-DD-014.
-func TestAConditionalUpsertRefusesARecordThatMoved(t *testing.T) {
-	t.Parallel()
-
-	instance := startWithCoreMigrations(t)
-	user := insertUser(t, instance, nameOfA)
-
-	storeFields(t, instance, user, model.Fields{
-		keyEmail: {Kind: model.FieldKindText, Value: firstAddress},
-	})
-
-	var held time.Time
-
-	require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
-		row, err := repository.NewPluginSettings(tx).Get(ctx, probePluginID)
-		if err != nil {
-			return fmt.Errorf("reading the row that the test wrote: %w", err)
-		}
-
-		held = row.UpdatedAt
-
-		return nil
-	}))
-
-	// The first write holds the validator that the client read, and it lands.
-	require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
-		return errorOf(repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
-			keyEmail: {Kind: model.FieldKindText, Value: secondAddress},
-		}, &held))
-	}))
-
-	// The second write holds the validator that the first one retired.
-	err := asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
-		return errorOf(repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
-			keyEmail: {Kind: model.FieldKindText, Value: "third@example.com"},
-		}, &held))
-	})
-
-	require.ErrorIs(t, err, precondition.ErrModified)
-}
-
-// APIFMT-SC-019: A write that names a validator for a record that does not exist
-// answers that the record moved, and stores nothing. RFC 9110 fails If-Match
-// when no current representation exists. APIFMT-DD-014.
-func TestAConditionalUpsertRefusesARecordThatIsAbsent(t *testing.T) {
-	t.Parallel()
-
-	instance := startWithCoreMigrations(t)
-	user := insertUser(t, instance, nameOfA)
-	held := time.Now()
-
-	err := asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
-		return errorOf(repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
-			keyEmail: {Kind: model.FieldKindText, Value: firstAddress},
-		}, &held))
-	})
-
-	require.ErrorIs(t, err, precondition.ErrModified)
-
-	var stored *model.PluginSettings
-
-	require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
-		var readErr error
-
-		stored, readErr = repository.NewPluginSettings(tx).Get(ctx, probePluginID)
-		if readErr != nil {
-			return fmt.Errorf("reading the settings: %w", readErr)
-		}
-
-		return nil
-	}))
-
-	assert.Nil(t, stored, "the refused write stores no row")
-}
-
-// APIFMT-SC-019: A write answers the moment it stored, so the answer of a save
-// carries the validator that the next save names. Two writes in a row answer
-// two moments, and each equals what a read then finds.
-func TestAnUpsertAnswersTheMomentItStored(t *testing.T) {
-	t.Parallel()
-
-	instance := startWithCoreMigrations(t)
-	user := insertUser(t, instance, nameOfA)
-
-	for _, value := range []string{firstAddress, secondAddress} {
-		var written, stored time.Time
-
-		require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
-			var err error
-
-			written, err = repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, model.Fields{
-				keyEmail: {Kind: model.FieldKindText, Value: value},
-			}, nil)
-			if err != nil {
-				return fmt.Errorf("storing the settings: %w", err)
-			}
-
-			return nil
-		}))
-
-		require.NoError(t, asUser(t, instance, user, func(ctx context.Context, tx *sqlx.Tx) error {
-			row, err := repository.NewPluginSettings(tx).Get(ctx, probePluginID)
-			if err != nil {
-				return fmt.Errorf("reading the row that the test wrote: %w", err)
-			}
-
-			stored = row.UpdatedAt
-
-			return nil
-		}))
-
-		assert.True(t, written.Equal(stored), "the answer names the stored moment")
-	}
-}
-
-// APIFMT-SC-019: A write that names no validator lands. Z-182 asks for the
-// optimistic path and does not make the header mandatory.
-func TestAnUnconditionalUpsertLands(t *testing.T) {
-	t.Parallel()
-
-	instance := startWithCoreMigrations(t)
-	user := insertUser(t, instance, nameOfA)
-
-	for _, value := range []string{firstAddress, secondAddress} {
-		storeFields(t, instance, user, model.Fields{
-			keyEmail: {Kind: model.FieldKindText, Value: value},
-		})
-	}
 }
 
 // APIFMT-SC-020: The cache keeps what the first write answered, so a repeat

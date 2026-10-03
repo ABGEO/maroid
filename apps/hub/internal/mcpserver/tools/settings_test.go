@@ -39,11 +39,14 @@ const (
 )
 
 // probeModel declares one required text field, one required secret field, and
-// one optional switch.
+// one optional switch. Each field belongs to the user, because a call of a tool
+// carries an acting user and no acting workspace.
+//
+//nolint:lll // the tags of one field share one line.
 type probeModel struct {
-	Email    string `json:"email"    jsonschema:"title=Email,required"`
-	Password string `json:"password" jsonschema:"title=Password,format=password,writeOnly=true,required"`
-	Notify   bool   `json:"notify"   jsonschema:"title=Notify me"`
+	Email    string `json:"email"    jsonschema:"title=Email,required"                                   jsonschema_extras:"x-maroid-scope=user"`
+	Password string `json:"password" jsonschema:"title=Password,format=password,writeOnly=true,required" jsonschema_extras:"x-maroid-scope=user"`
+	Notify   bool   `json:"notify"   jsonschema:"title=Notify me"                                        jsonschema_extras:"x-maroid-scope=user"`
 }
 
 // fakeCipher marks a value instead of protecting it, so a scenario that reads the

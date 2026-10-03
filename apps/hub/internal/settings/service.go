@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"slices"
 	"time"
 
@@ -23,7 +24,8 @@ import (
 // stored secret, and Save reads it as the instruction to keep the stored value.
 const SecretMask = "******"
 
-// Service reads and writes the settings that one user stores for one plugin.
+// Service reads and writes the settings that one workspace and one user store for
+// one plugin.
 type Service interface {
 	Declares(pluginID string) bool
 	Schema(pluginID string) (json.RawMessage, error)
@@ -128,9 +130,9 @@ func (m *Manager) ChangedSecrets(pluginID string, input map[string]any) ([]strin
 	return changed, nil
 }
 
-// Read returns the settings of the acting user, for the person who stored them.
-// The second answer is the moment of the last write, which an entity tag names.
-// It is the zero time when no row exists.
+// Read returns the settings of the acting workspace and of the acting user, for a
+// member who reads them. The second answer is the moment of the last write to
+// either row, which an entity tag names. It is the zero time when no row exists.
 func (m *Manager) Read(
 	ctx context.Context,
 	pluginID string,
@@ -140,7 +142,7 @@ func (m *Manager) Read(
 		return nil, time.Time{}, err
 	}
 
-	stored, version, err := m.stored(ctx, pluginID)
+	stored, err := m.stored(ctx, pluginID)
 	if err != nil {
 		return nil, time.Time{}, err
 	}
@@ -148,7 +150,7 @@ func (m *Manager) Read(
 	values := make(map[string]any, len(schema.Kinds))
 
 	for key, kind := range schema.Kinds {
-		entry, held := stored[key]
+		entry, held := stored.entry(schema, key)
 
 		if kind == model.FieldKindSecret {
 			values[key] = maskOf(held)
@@ -161,10 +163,11 @@ func (m *Manager) Read(
 		}
 	}
 
-	return values, version, nil
+	return values, stored.version, nil
 }
 
-// Settings returns the settings of the acting user, for the plugin that reads them.
+// Settings returns the settings of the acting workspace and of the acting user, for
+// the plugin that reads them. A run with no acting user reads no field of a user.
 func (m *Manager) Settings(
 	ctx context.Context,
 	pluginID *pluginapi.PluginID,
@@ -176,13 +179,13 @@ func (m *Manager) Settings(
 		return nil, err
 	}
 
-	stored, _, err := m.stored(ctx, id)
+	stored, err := m.stored(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
 	for key := range schema.Required {
-		if _, held := stored[key]; !held {
+		if _, held := stored.entry(schema, key); !held {
 			return nil, fmt.Errorf(
 				"the field %q holds no value: %w",
 				key,
@@ -194,9 +197,10 @@ func (m *Manager) Settings(
 	return m.reveal(ctx, schema, stored)
 }
 
-// Save stores the settings of the acting user for the plugin, and answers the
-// moment of the write. A non-nil ifMatch refuses a write to a record that
-// changed after the client read it.
+// Save stores the settings of the acting workspace and of the acting user for the
+// plugin, and answers the moment of the write. Each field reaches the row of its
+// scope, and a row that the save leaves as it was is not written. A non-nil ifMatch
+// refuses a write to a record that changed after the client read it.
 func (m *Manager) Save(
 	ctx context.Context,
 	pluginID string,
@@ -215,26 +219,18 @@ func (m *Manager) Save(
 	var written time.Time
 
 	err = database.WithScopeTx(ctx, m.db, func(tx *sqlx.Tx) error {
-		settingsRepo := repository.NewPluginSettings(tx)
+		var saveErr error
 
-		current, readErr := settingsRepo.Get(ctx, pluginID)
-		if readErr != nil {
-			return fmt.Errorf("reading the stored settings: %w", readErr)
-		}
+		written, saveErr = m.saveIn(
+			ctx,
+			repository.NewPluginSettings(tx),
+			schema,
+			pluginID,
+			input,
+			ifMatch,
+		)
 
-		fields, mergeErr := m.merge(ctx, schema, input, storedFields(current))
-		if mergeErr != nil {
-			return mergeErr
-		}
-
-		var upsertErr error
-
-		written, upsertErr = settingsRepo.Upsert(ctx, pluginID, fields, ifMatch)
-		if upsertErr != nil {
-			return fmt.Errorf("storing the settings: %w", upsertErr)
-		}
-
-		return nil
+		return saveErr
 	})
 	if err != nil {
 		if errors.Is(err, precondition.ErrModified) {
@@ -247,23 +243,71 @@ func (m *Manager) Save(
 	return written, nil
 }
 
-// merge builds the row from the input and from the fields that the row already holds.
+// saveIn holds the row of each scope, checks the version that the client read, and
+// writes each row that the save changes. It answers the version after the save.
+func (m *Manager) saveIn(
+	ctx context.Context,
+	settingsRepo repository.PluginSettingsRepository,
+	schema *Schema,
+	pluginID string,
+	input map[string]any,
+	ifMatch *time.Time,
+) (time.Time, error) {
+	current, err := readScopes(ctx, settingsRepo.GetForUpdate, pluginID)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	if ifMatch != nil && !current.version.Equal(*ifMatch) {
+		return time.Time{}, precondition.ErrModified
+	}
+
+	fields, err := m.merge(ctx, schema, input, current)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	written := current.version
+
+	for _, scope := range settingScopes() {
+		if reflect.DeepEqual(fields[scope], current.fields[scope]) {
+			continue
+		}
+
+		moment, upsertErr := settingsRepo.Upsert(ctx, scope, pluginID, fields[scope])
+		if upsertErr != nil {
+			return time.Time{}, fmt.Errorf("storing the settings: %w", upsertErr)
+		}
+
+		written = later(written, moment)
+	}
+
+	return written, nil
+}
+
+// merge builds the row of each scope from the input and from the fields that the
+// rows already hold.
 func (m *Manager) merge(
 	ctx context.Context,
 	schema *Schema,
 	input map[string]any,
-	stored model.Fields,
-) (model.Fields, error) {
-	fields := make(model.Fields, len(schema.Kinds))
+	stored *scopedSettings,
+) (map[model.SettingScope]model.Fields, error) {
+	fields := make(map[model.SettingScope]model.Fields, len(settingScopes()))
+	for _, scope := range settingScopes() {
+		fields[scope] = model.Fields{}
+	}
 
 	for key, kind := range schema.Kinds {
-		entry, held, err := m.resolve(ctx, kind, input, stored, key)
+		scope := schema.Scopes[key]
+
+		entry, held, err := m.resolve(ctx, scope, kind, input, stored.fields[scope], key)
 		if err != nil {
 			return nil, fmt.Errorf("protecting the field %q: %w", key, err)
 		}
 
 		if held {
-			fields[key] = entry
+			fields[scope][key] = entry
 		}
 	}
 
@@ -277,6 +321,7 @@ func (m *Manager) merge(
 // resolve returns the entry of one field, and whether the row holds it at all.
 func (m *Manager) resolve(
 	ctx context.Context,
+	scope model.SettingScope,
 	kind model.FieldKind,
 	input map[string]any,
 	stored model.Fields,
@@ -294,7 +339,7 @@ func (m *Manager) resolve(
 		return model.SettingEntry{}, false, nil
 	}
 
-	entry, err := m.protect(ctx, kind, value)
+	entry, err := m.protect(ctx, keyOf(ctx, scope), kind, value)
 	if err != nil {
 		return model.SettingEntry{}, false, err
 	}
@@ -302,12 +347,15 @@ func (m *Manager) resolve(
 	return entry, true, nil
 }
 
-// missingFields names each required field that the merged row does not hold.
-func missingFields(schema *Schema, fields model.Fields) map[string]string {
+// missingFields names each required field that the merged rows do not hold.
+func missingFields(
+	schema *Schema,
+	fields map[model.SettingScope]model.Fields,
+) map[string]string {
 	missing := make(map[string]string)
 
 	for key := range schema.Required {
-		if _, held := fields[key]; !held {
+		if _, held := fields[schema.Scopes[key]][key]; !held {
 			missing[Pointer([]string{key})] = reasonRequired
 		}
 	}
@@ -318,6 +366,7 @@ func missingFields(schema *Schema, fields model.Fields) map[string]string {
 // protect returns the entry that the row holds for one field.
 func (m *Manager) protect(
 	ctx context.Context,
+	key secret.Key,
 	kind model.FieldKind,
 	value any,
 ) (model.SettingEntry, error) {
@@ -333,7 +382,7 @@ func (m *Manager) protect(
 		)
 	}
 
-	ciphertext, err := m.cipher.Encrypt(ctx, m.keyOf(ctx), plaintext)
+	ciphertext, err := m.cipher.Encrypt(ctx, key, plaintext)
 	if err != nil {
 		return model.SettingEntry{}, fmt.Errorf("protecting the value: %w", err)
 	}
@@ -345,12 +394,12 @@ func (m *Manager) protect(
 func (m *Manager) reveal(
 	ctx context.Context,
 	schema *Schema,
-	stored model.Fields,
+	stored *scopedSettings,
 ) (map[string]any, error) {
 	values := make(map[string]any, len(schema.Kinds))
 
 	for key, kind := range schema.Kinds {
-		entry, held := stored[key]
+		entry, held := stored.entry(schema, key)
 		if !held {
 			continue
 		}
@@ -370,7 +419,7 @@ func (m *Manager) reveal(
 			)
 		}
 
-		plaintext, err := m.cipher.Decrypt(ctx, m.keyOf(ctx), ciphertext)
+		plaintext, err := m.cipher.Decrypt(ctx, keyOf(ctx, schema.Scopes[key]), ciphertext)
 		if err != nil {
 			return nil, fmt.Errorf("reading the protected field %q: %w", key, err)
 		}
@@ -381,9 +430,14 @@ func (m *Manager) reveal(
 	return values, nil
 }
 
-// keyOf names the key that protects the secrets of the acting user.
-func (m *Manager) keyOf(ctx context.Context) secret.Key {
-	return secret.UserKey(pluginapi.ActingUserFromContext(ctx))
+// keyOf names the key that protects the secrets of the scope: the key of the acting
+// workspace, or the key of the acting user.
+func keyOf(ctx context.Context, scope model.SettingScope) secret.Key {
+	if scope == model.SettingScopeUser {
+		return secret.UserKey(pluginapi.ActingUserFromContext(ctx))
+	}
+
+	return secret.WorkspaceKey(pluginapi.ActingWorkspaceFromContext(ctx))
 }
 
 func (m *Manager) schemaOf(pluginID string) (*Schema, error) {
@@ -395,32 +449,74 @@ func (m *Manager) schemaOf(pluginID string) (*Schema, error) {
 	return schema, nil
 }
 
-func (m *Manager) stored(
-	ctx context.Context,
-	pluginID string,
-) (model.Fields, time.Time, error) {
-	var entity *model.PluginSettings
+func (m *Manager) stored(ctx context.Context, pluginID string) (*scopedSettings, error) {
+	var stored *scopedSettings
 
 	err := database.WithScopeTx(ctx, m.db, func(tx *sqlx.Tx) error {
 		var readErr error
 
-		entity, readErr = repository.NewPluginSettings(tx).Get(ctx, pluginID)
-		if readErr != nil {
-			return fmt.Errorf("reading the stored settings: %w", readErr)
-		}
+		stored, readErr = readScopes(ctx, repository.NewPluginSettings(tx).Get, pluginID)
 
-		return nil
+		return readErr
 	})
 	if err != nil {
-		return nil, time.Time{}, fmt.Errorf("reading the settings of the acting user: %w", err)
+		return nil, fmt.Errorf("reading the settings of the acting scope: %w", err)
 	}
 
-	var version time.Time
-	if entity != nil {
-		version = entity.UpdatedAt
+	return stored, nil
+}
+
+// settingScopes returns every scope, in the order that a save writes them.
+func settingScopes() []model.SettingScope {
+	return []model.SettingScope{model.SettingScopeWorkspace, model.SettingScopeUser}
+}
+
+// scopedSettings holds the stored fields of each scope, and the moment of the last
+// write to either row.
+type scopedSettings struct {
+	fields  map[model.SettingScope]model.Fields
+	version time.Time
+}
+
+// entry returns the stored entry of one field, from the row of its scope.
+func (s *scopedSettings) entry(schema *Schema, key string) (model.SettingEntry, bool) {
+	entry, held := s.fields[schema.Scopes[key]][key]
+
+	return entry, held
+}
+
+// readScopes reads the row of each scope through the given read.
+func readScopes(
+	ctx context.Context,
+	read func(context.Context, model.SettingScope, string) (*model.PluginSettings, error),
+	pluginID string,
+) (*scopedSettings, error) {
+	stored := &scopedSettings{
+		fields: make(map[model.SettingScope]model.Fields, len(settingScopes())),
 	}
 
-	return storedFields(entity), version, nil
+	for _, scope := range settingScopes() {
+		entity, err := read(ctx, scope, pluginID)
+		if err != nil {
+			return nil, fmt.Errorf("reading the stored settings: %w", err)
+		}
+
+		stored.fields[scope] = storedFields(entity)
+
+		if entity != nil {
+			stored.version = later(stored.version, entity.UpdatedAt)
+		}
+	}
+
+	return stored, nil
+}
+
+func later(first time.Time, second time.Time) time.Time {
+	if second.After(first) {
+		return second
+	}
+
+	return first
 }
 
 func storedFields(entity *model.PluginSettings) model.Fields {

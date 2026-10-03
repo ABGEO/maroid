@@ -4,7 +4,7 @@ title: The settings of a plugin
 type: spec
 status: approved
 created: 2026-09-14
-updated: 2026-10-01
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-09-14
 constrained_by: [CFG, PLG, OWN, SEC, ARC, API, ERR, EXT, PRC, DAT, REP, PKG, LIF, DEP, LOG, JOB, TST, SPC]
@@ -255,7 +255,8 @@ const (
 // transaction and never the pool. The scope selects the table.
 type PluginSettingsRepository interface {
     Get(ctx context.Context, scope model.SettingScope, pluginID string) (*model.PluginSettings, error)
-    Upsert(ctx context.Context, scope model.SettingScope, pluginID string, fields model.Fields) error
+    GetForUpdate(ctx context.Context, scope model.SettingScope, pluginID string) (*model.PluginSettings, error)
+    Upsert(ctx context.Context, scope model.SettingScope, pluginID string, fields model.Fields) (time.Time, error)
 }
 
 func NewPluginSettings(tx *sqlx.Tx) *PluginSettings
@@ -264,6 +265,11 @@ func NewPluginSettings(tx *sqlx.Tx) *PluginSettings
 // It sets app.user_id and app.workspace_id from the context. See OWN-007.
 func WithScopeTx(ctx context.Context, db *sqlx.DB, fn func(*sqlx.Tx) error) error
 ```
+
+The version that the entity tag names is the later `updated_at` of the row of the
+acting workspace and the row of the acting user. A save holds both rows with
+`GetForUpdate`, compares that version with `If-Match`, and writes only a row that the
+save changes.
 
 `Read` serves the route and returns the mask in place of each secret. `Settings` serves a
 plugin and returns the plaintext. One method cannot do both, because the caller of one
@@ -665,9 +671,9 @@ field of their own, and the route would split one save into two checks.
 | 9   | Add `Settings()` to the host, and the providers to the container.                 | `PSET-FR-012`                 | [x]  |
 | 10  | Change the cron worker.                                                           | `PSET-FR-014`                 | [x]  |
 | 11  | Rebuild every plugin. `BLD-004` binds a change in `libs/pluginapi`.               | `PSET-FR-012`                 | [x]  |
-| 12  | Write `PSET-SC-023`, then the scope in `settings.Infer` and `settings.Schema`.     | `PSET-FR-021`                 | [ ]  |
-| 13  | Write the migration that splits the table, then the scope of the repository and `database.WithScopeTx`. It needs the table of `OWN-010`. | `PSET-FR-003`, `PSET-INV-001` | [ ]  |
-| 14  | Add `secret.WorkspaceKey`, then choose the key by the scope of the field in `settings.Manager`. | `PSET-FR-016`, `PSET-FR-017` | [ ]  |
+| 12  | Write `PSET-SC-023`, then the scope in `settings.Infer` and `settings.Schema`.     | `PSET-FR-021`                 | [x]  |
+| 13  | Write the migration that splits the table, then the scope of the repository and `database.WithScopeTx`. It needs the table of `OWN-010`. | `PSET-FR-003`, `PSET-INV-001` | [x]  |
+| 14  | Add `secret.WorkspaceKey`, then choose the key by the scope of the field in `settings.Manager`. | `PSET-FR-016`, `PSET-FR-017` | [x]  |
 | 15  | Move the three routes under `/workspaces/{workspaceId}`, with the permissions of `PSET-DD-013`, in `api.yaml` and in `handler.Plugin`. It needs the membership check of `OWN-003`. | `PSET-FR-003` to `PSET-FR-009` | [ ]  |
 
 Write the test of each step before the code of that step. See `TST-002`.

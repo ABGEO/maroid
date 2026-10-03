@@ -32,7 +32,7 @@ func TestSecretFieldsNamesEachSecretField(t *testing.T) {
 	fields, err := probeManager(t).SecretFields(probeID)
 
 	require.NoError(t, err)
-	require.Equal(t, []string{keyPassword}, fields)
+	require.Equal(t, []string{keyPassword, keyPin}, fields)
 }
 
 // MCPHUB-SC-018: A plugin that declares no settings schema answers no report.

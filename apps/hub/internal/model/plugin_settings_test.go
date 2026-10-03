@@ -21,7 +21,6 @@ func TestALogRecordOfTheSettingsHoldsNoValue(t *testing.T) {
 
 	entity := model.PluginSettings{
 		ID:       "01998aa0-1111-7000-8000-00000000000a",
-		UserID:   "01998aa0-1111-7000-8000-00000000000b",
 		PluginID: "dev.maroid.probe",
 		Fields: model.Fields{
 			"email":    {Kind: model.FieldKindText, Value: "person@example.com"},

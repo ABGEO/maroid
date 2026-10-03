@@ -93,6 +93,9 @@ var (
 	// ErrUnsupportedFieldsSource indicates that the driver returned a type that the
 	// settings fields cannot decode.
 	ErrUnsupportedFieldsSource = errors.New("plugin settings: unsupported fields source")
+	// ErrUnknownSettingScope indicates a scope of a settings field that the hub holds
+	// no table for.
+	ErrUnknownSettingScope = errors.New("plugin settings: unknown scope")
 	// ErrMCPToolAlreadyRegistered indicates that a Model Context Protocol tool has
 	// already been registered under the same name.
 	ErrMCPToolAlreadyRegistered = errors.New("mcp tool: already registered")

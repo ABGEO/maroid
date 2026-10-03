@@ -8,8 +8,8 @@ type Config struct {
 
 // UserSettings represents the fields that one user fills for the plugin.
 //
-//nolint:tagliatelle
+//nolint:tagliatelle,lll // the tags of one field share one line.
 type UserSettings struct {
-	AuthToken string `json:"authToken" jsonschema:"title=Auth token,format=password,writeOnly=true,required"`
-	VehicleID string `json:"vehicleId" jsonschema:"title=Vehicle identifier,required"`
+	AuthToken string `json:"authToken" jsonschema:"title=Auth token,format=password,writeOnly=true,required" jsonschema_extras:"x-maroid-scope=user"`
+	VehicleID string `json:"vehicleId" jsonschema:"title=Vehicle identifier,required"                        jsonschema_extras:"x-maroid-scope=user"`
 }

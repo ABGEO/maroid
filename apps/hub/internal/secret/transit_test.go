@@ -22,6 +22,8 @@ const (
 	startTimeout = 2 * time.Minute
 	userA        = "11111111-1111-1111-1111-111111111111"
 	userB        = "22222222-2222-2222-2222-222222222222"
+	workspaceA   = "33333333-3333-3333-3333-333333333333"
+	workspaceB   = "44444444-4444-4444-4444-444444444444"
 )
 
 // policy holds the capabilities that PSET-DD-004 gives the hub. It grants no create,
@@ -29,6 +31,8 @@ const (
 const policy = `
 path "transit/encrypt/maroid-user-*" { capabilities = ["update"] }
 path "transit/decrypt/maroid-user-*" { capabilities = ["update"] }
+path "transit/encrypt/maroid-workspace-*" { capabilities = ["update"] }
+path "transit/decrypt/maroid-workspace-*" { capabilities = ["update"] }
 `
 
 // startBao launches OpenBao in development mode, mounts the transit engine, creates
@@ -104,9 +108,13 @@ func prepare(t *testing.T, root *api.Client) {
 		root.Sys().MountWithContext(ctx, "transit", &api.MountInput{Type: "transit"}),
 	)
 
-	for _, user := range []string{userA, userB} {
-		_, err := root.Logical().
-			WriteWithContext(ctx, "transit/keys/"+string(secret.UserKey(user)), nil)
+	keys := []secret.Key{
+		secret.UserKey(userA), secret.UserKey(userB),
+		secret.WorkspaceKey(workspaceA), secret.WorkspaceKey(workspaceB),
+	}
+
+	for _, key := range keys {
+		_, err := root.Logical().WriteWithContext(ctx, "transit/keys/"+string(key), nil)
 		require.NoError(t, err)
 	}
 
@@ -168,7 +176,21 @@ func TestEncryptReturnsAProtectedForm(t *testing.T) {
 	require.Equal(t, "hunter2", plaintext)
 }
 
-// PSET-SC-014: A secret of user A does not decrypt under the key of user B.
+// PSET-SC-014: A secret of workspace A does not decrypt under the key of workspace B.
+func TestASecretDoesNotDecryptUnderTheKeyOfAnotherWorkspace(t *testing.T) {
+	t.Parallel()
+
+	cipher, _ := startBao(t)
+
+	ciphertext, err := cipher.Encrypt(t.Context(), secret.WorkspaceKey(workspaceA), "hunter2")
+	require.NoError(t, err)
+
+	plaintext, err := cipher.Decrypt(t.Context(), secret.WorkspaceKey(workspaceB), ciphertext)
+	require.Error(t, err)
+	require.Empty(t, plaintext)
+}
+
+// PSET-FR-016: A secret of user A does not decrypt under the key of user B.
 func TestASecretDoesNotDecryptUnderTheKeyOfAnotherUser(t *testing.T) {
 	t.Parallel()
 

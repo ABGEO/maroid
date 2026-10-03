@@ -23,6 +23,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
@@ -36,15 +37,27 @@ const (
 const policy = `
 path "transit/encrypt/maroid-user-*" { capabilities = ["update"] }
 path "transit/decrypt/maroid-user-*" { capabilities = ["update"] }
+path "transit/encrypt/maroid-workspace-*" { capabilities = ["update"] }
+path "transit/decrypt/maroid-workspace-*" { capabilities = ["update"] }
 `
 
-// world holds a database, a protection service, and two user records.
+const (
+	secondEmail    = "second@example.com"
+	workspaceTable = "public.plugin_workspace_settings"
+	userTable      = "public.plugin_user_settings"
+)
+
+// world holds a database, a protection service, and the records of spec-scenarios.md:
+// workspace A with user A and user C, and workspace B with user B.
 type world struct {
-	instance *testdb.Instance
-	manager  *settings.Manager
-	root     *api.Client
-	userA    string
-	userB    string
+	instance   *testdb.Instance
+	manager    *settings.Manager
+	root       *api.Client
+	userA      string
+	userB      string
+	userC      string
+	workspaceA string
+	workspaceB string
 }
 
 func newWorld(t *testing.T) *world {
@@ -59,11 +72,17 @@ func newWorld(t *testing.T) *world {
 
 	userA := addUser(t, instance, "Temuri")
 	userB := addUser(t, instance, "Nino")
+	userC := addUser(t, instance, "Gio")
+	workspaceA := addWorkspace(t, instance, "A", userA, userC)
+	workspaceB := addWorkspace(t, instance, "B", userB)
 
-	for _, user := range []string{userA, userB} {
-		_, err := root.Logical().WriteWithContext(
-			t.Context(), "transit/keys/"+string(secret.UserKey(user)), nil,
-		)
+	keys := []secret.Key{
+		secret.UserKey(userA), secret.UserKey(userB), secret.UserKey(userC),
+		secret.WorkspaceKey(workspaceA), secret.WorkspaceKey(workspaceB),
+	}
+
+	for _, key := range keys {
+		_, err := root.Logical().WriteWithContext(t.Context(), "transit/keys/"+string(key), nil)
 		require.NoError(t, err)
 	}
 
@@ -84,11 +103,14 @@ func newWorld(t *testing.T) *world {
 	require.NoError(t, schemas.Register(pluginapi.ParsePluginID(probeID), schema))
 
 	return &world{
-		instance: instance,
-		manager:  settings.NewManager(instance.DB, schemas, cipher),
-		root:     root,
-		userA:    userA,
-		userB:    userB,
+		instance:   instance,
+		manager:    settings.NewManager(instance.DB, schemas, cipher),
+		root:       root,
+		userA:      userA,
+		userB:      userB,
+		userC:      userC,
+		workspaceA: workspaceA,
+		workspaceB: workspaceB,
 	}
 }
 
@@ -193,50 +215,91 @@ func addUser(t *testing.T, instance *testdb.Instance, firstName string) string {
 	return id
 }
 
-func (w *world) as(user string) context.Context {
-	return pluginapi.ContextWithActingUser(context.Background(), user)
-}
-
-// storedValue reads the raw column, with no decryption. The read runs as the owner,
-// because the policy of OWN-006 hides the row from a session that names no user.
-func (w *world) storedValue(t *testing.T, user string, key string) string {
+// addWorkspace writes a workspace with its members, as the owner of the tables.
+func addWorkspace(t *testing.T, instance *testdb.Instance, name string, members ...string) string {
 	t.Helper()
 
-	ctx := w.as(user)
+	var id string
+
+	require.NoError(t, instance.DB.Get(
+		&id, `INSERT INTO public.workspaces (name) VALUES ($1) RETURNING id;`, name,
+	))
+
+	for _, member := range members {
+		_, err := instance.DB.Exec(
+			`INSERT INTO public.workspace_members (workspace_id, user_id) VALUES ($1, $2);`,
+			id, member,
+		)
+		require.NoError(t, err)
+	}
+
+	return id
+}
+
+// in is the context of a request by the user inside the workspace.
+func (w *world) in(user string, workspace string) context.Context {
+	return pluginapi.ContextWithActingWorkspace(
+		pluginapi.ContextWithActingUser(context.Background(), user), workspace,
+	)
+}
+
+// asA is the context of a request by user A inside workspace A.
+func (w *world) asA() context.Context {
+	return w.in(w.userA, w.workspaceA)
+}
+
+// run is the context of a cron run inside the workspace, which carries no acting user.
+func (w *world) run(workspace string) context.Context {
+	return pluginapi.ContextWithActingWorkspace(context.Background(), workspace)
+}
+
+// storedValue reads the raw column of the table, with no decryption, in the scope of
+// the context, because the policy of OWN-006 hides the row from a session of no scope.
+func (w *world) storedValue(ctx context.Context, t *testing.T, table string, key string) string {
+	t.Helper()
 
 	var raw string
 
 	require.NoError(t, database.WithScopeTx(ctx, w.instance.DB, func(tx *sqlx.Tx) error {
-		return tx.GetContext(
-			ctx, &raw,
-			`SELECT fields -> $1 ->> 'value' FROM public.plugin_settings;`, key,
-		)
+		return tx.GetContext(ctx, &raw, `SELECT fields -> $1 ->> 'value' FROM `+table+`;`, key)
 	}))
 
 	return raw
 }
 
-func (w *world) rowCount(t *testing.T, user string) int {
+func (w *world) rowCount(ctx context.Context, t *testing.T, table string) int {
 	t.Helper()
-
-	ctx := w.as(user)
 
 	var count int
 
 	require.NoError(t, database.WithScopeTx(ctx, w.instance.DB, func(tx *sqlx.Tx) error {
-		return tx.GetContext(ctx, &count, `SELECT count(*) FROM public.plugin_settings;`)
+		return tx.GetContext(ctx, &count, `SELECT count(*) FROM `+table+`;`)
 	}))
 
 	return count
 }
 
-// PSET-SC-003: A save stores every declared field, and the session gives the owner.
+// execIn runs one statement in the scope of the context.
+func (w *world) execIn(ctx context.Context, t *testing.T, statement string) {
+	t.Helper()
+
+	require.NoError(t, database.WithScopeTx(ctx, w.instance.DB, func(tx *sqlx.Tx) error {
+		if _, err := tx.ExecContext(ctx, statement); err != nil {
+			return fmt.Errorf("running the statement: %w", err)
+		}
+
+		return nil
+	}))
+}
+
+// PSET-SC-003: A save stores every declared field of the workspace in one row of
+// the workspace.
 // PSET-SC-013: The column holds the protected form and never the value.
 func TestSaveStoresEveryDeclaredField(t *testing.T) {
 	t.Parallel()
 
 	world := newWorld(t)
-	ctx := world.as(world.userA)
+	ctx := world.asA()
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail:    valueEmail,
@@ -245,27 +308,39 @@ func TestSaveStoresEveryDeclaredField(t *testing.T) {
 		keyNotify:   true,
 	}, nil)))
 
-	require.Equal(t, 1, world.rowCount(t, world.userA))
-	require.Equal(t, valueEmail, world.storedValue(t, world.userA, keyEmail))
+	require.Equal(t, 1, world.rowCount(ctx, t, workspaceTable))
+	require.Equal(t, valueEmail, world.storedValue(ctx, t, workspaceTable, keyEmail))
 
-	protected := world.storedValue(t, world.userA, keyPassword)
+	var (
+		owner   string
+		entries int
+	)
+
+	require.NoError(t, database.WithScopeTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
+		return tx.QueryRowxContext(ctx, `
+			SELECT workspace_id, (SELECT count(*) FROM jsonb_object_keys(fields))
+			FROM public.plugin_workspace_settings;`).Scan(&owner, &entries)
+	}))
+	require.Equal(t, world.workspaceA, owner)
+	require.Equal(t, 4, entries)
+
+	protected := world.storedValue(ctx, t, workspaceTable, keyPassword)
 	require.Contains(t, protected, "vault:v1:")
 	require.NotContains(t, protected, valuePassword)
 }
 
-// PSET-SC-004: The read returns the value that is not a secret, and the mask for the
-// secret field.
+// PSET-SC-004: Another member reads the value that is not a secret, and the mask for
+// the secret field.
 func TestReadReturnsNoSecret(t *testing.T) {
 	t.Parallel()
 
 	world := newWorld(t)
-	ctx := world.as(world.userA)
 
-	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
+	require.NoError(t, errorOf(world.manager.Save(world.asA(), probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: valuePassword,
 	}, nil)))
 
-	values, _, err := world.manager.Read(ctx, probeID)
+	values, _, err := world.manager.Read(world.in(world.userC, world.workspaceA), probeID)
 	require.NoError(t, err)
 
 	require.Equal(t, valueEmail, values[keyEmail])
@@ -278,19 +353,19 @@ func TestSaveKeepsAStoredSecretThatTheInputMasks(t *testing.T) {
 	t.Parallel()
 
 	world := newWorld(t)
-	ctx := world.as(world.userA)
+	ctx := world.asA()
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: "first@example.com", keyPassword: valuePassword,
 	}, nil)))
 
-	protected := world.storedValue(t, world.userA, keyPassword)
+	protected := world.storedValue(ctx, t, workspaceTable, keyPassword)
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
-		keyEmail: "second@example.com", keyPassword: settings.SecretMask,
+		keyEmail: secondEmail, keyPassword: settings.SecretMask,
 	}, nil)))
 
-	require.Equal(t, protected, world.storedValue(t, world.userA, keyPassword))
+	require.Equal(t, protected, world.storedValue(ctx, t, workspaceTable, keyPassword))
 
 	values, err := world.manager.Settings(ctx, pluginapi.ParsePluginID(probeID))
 	require.NoError(t, err)
@@ -302,12 +377,12 @@ func TestSaveRemovesAStoredValueThatTheInputEmpties(t *testing.T) {
 	t.Parallel()
 
 	world := newWorld(t)
-	ctx := world.as(world.userA)
+	ctx := world.asA()
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: valuePassword, keyAccount: "123456",
 	}, nil)))
-	require.Equal(t, "123456", world.storedValue(t, world.userA, keyAccount))
+	require.Equal(t, "123456", world.storedValue(ctx, t, workspaceTable, keyAccount))
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: settings.SecretMask, keyAccount: "",
@@ -323,23 +398,23 @@ func TestSaveKeepsAStoredSecretThatTheInputOmits(t *testing.T) {
 	t.Parallel()
 
 	world := newWorld(t)
-	ctx := world.as(world.userA)
+	ctx := world.asA()
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: "first@example.com", keyPassword: valuePassword,
 	}, nil)))
 
-	protected := world.storedValue(t, world.userA, keyPassword)
+	protected := world.storedValue(ctx, t, workspaceTable, keyPassword)
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
-		keyEmail: "second@example.com",
+		keyEmail: secondEmail,
 	}, nil)))
 
-	require.Equal(t, protected, world.storedValue(t, world.userA, keyPassword))
+	require.Equal(t, protected, world.storedValue(ctx, t, workspaceTable, keyPassword))
 
 	values, err := world.manager.Settings(ctx, pluginapi.ParsePluginID(probeID))
 	require.NoError(t, err)
-	require.Equal(t, "second@example.com", values[keyEmail])
+	require.Equal(t, secondEmail, values[keyEmail])
 	require.Equal(t, valuePassword, values[keyPassword])
 }
 
@@ -348,12 +423,12 @@ func TestSaveRemovesAFieldThatTheInputSetsToNull(t *testing.T) {
 	t.Parallel()
 
 	world := newWorld(t)
-	ctx := world.as(world.userA)
+	ctx := world.asA()
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: valuePassword, keyAccount: "8370764",
 	}, nil)))
-	require.Equal(t, "8370764", world.storedValue(t, world.userA, keyAccount))
+	require.Equal(t, "8370764", world.storedValue(ctx, t, workspaceTable, keyAccount))
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
 		keyAccount: nil,
@@ -371,7 +446,7 @@ func TestSaveRejectsAnEmptyRequiredField(t *testing.T) {
 
 	world := newWorld(t)
 
-	err := errorOf(world.manager.Save(world.as(world.userA), probeID, map[string]any{
+	err := errorOf(world.manager.Save(world.asA(), probeID, map[string]any{
 		keyEmail: valueEmail,
 	}, nil))
 
@@ -381,7 +456,7 @@ func TestSaveRejectsAnEmptyRequiredField(t *testing.T) {
 	require.Equal(t, []settings.FieldFailure{
 		{Pointer: settings.Pointer([]string{keyPassword}), Detail: "the field is required"},
 	}, invalid.Fields)
-	require.Equal(t, 0, world.rowCount(t, world.userA))
+	require.Equal(t, 0, world.rowCount(world.asA(), t, workspaceTable))
 }
 
 // PSET-SC-008: A field that the current schema does not declare reaches no answer.
@@ -390,29 +465,24 @@ func TestAnUndeclaredFieldReachesNoAnswerAndLeavesAtTheNextSave(t *testing.T) {
 	t.Parallel()
 
 	world := newWorld(t)
-	ctx := world.as(world.userA)
+	ctx := world.asA()
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: valuePassword,
 	}, nil)))
 
-	require.NoError(t, database.WithScopeTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
-		_, err := tx.ExecContext(ctx, `
-			UPDATE public.plugin_settings
-			SET fields = fields || '{"legacy": {"kind": "text", "value": "old"}}'::jsonb;`)
-		if err != nil {
-			return fmt.Errorf("adding the undeclared entry: %w", err)
-		}
-
-		return nil
-	}))
-	require.Equal(t, "old", world.storedValue(t, world.userA, "legacy"))
+	world.execIn(ctx, t, `
+		UPDATE public.plugin_workspace_settings
+		SET fields = fields || '{"legacy": {"kind": "text", "value": "old"}}'::jsonb;`)
+	require.Equal(t, "old", world.storedValue(ctx, t, workspaceTable, "legacy"))
 
 	values, _, err := world.manager.Read(ctx, probeID)
 	require.NoError(t, err)
 	require.NotContains(t, values, "legacy")
 
-	forPlugin, err := world.manager.Settings(ctx, pluginapi.ParsePluginID(probeID))
+	forPlugin, err := world.manager.Settings(
+		world.run(world.workspaceA), pluginapi.ParsePluginID(probeID),
+	)
 	require.NoError(t, err)
 	require.NotContains(t, forPlugin, "legacy")
 
@@ -423,27 +493,32 @@ func TestAnUndeclaredFieldReachesNoAnswerAndLeavesAtTheNextSave(t *testing.T) {
 	var held bool
 
 	require.NoError(t, database.WithScopeTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
-		return tx.GetContext(ctx, &held, `SELECT fields ? 'legacy' FROM public.plugin_settings;`)
+		return tx.GetContext(
+			ctx, &held, `SELECT fields ? 'legacy' FROM public.plugin_workspace_settings;`,
+		)
 	}))
 	require.False(t, held)
 }
 
-// PSET-SC-010: A run acting for user A reads the values of user A and none of user B.
-// PSET-INV-001: The settings of one user reach no other user.
-func TestSettingsReachNoOtherUser(t *testing.T) {
+// PSET-SC-010: A run in workspace A reads the values of workspace A and none of
+// workspace B.
+// PSET-INV-001: The settings of one workspace reach no member of another.
+func TestSettingsReachNoOtherWorkspace(t *testing.T) {
 	t.Parallel()
 
 	world := newWorld(t)
 
-	require.NoError(t, errorOf(world.manager.Save(world.as(world.userA), probeID, map[string]any{
+	require.NoError(t, errorOf(world.manager.Save(world.asA(), probeID, map[string]any{
 		keyEmail: "a@example.com", keyPassword: "secret-of-a",
 	}, nil)))
-	require.NoError(t, errorOf(world.manager.Save(world.as(world.userB), probeID, map[string]any{
-		keyEmail: "b@example.com", keyPassword: "secret-of-b",
-	}, nil)))
+	require.NoError(t, errorOf(world.manager.Save(
+		world.in(world.userB, world.workspaceB), probeID, map[string]any{
+			keyEmail: "b@example.com", keyPassword: "secret-of-b",
+		}, nil,
+	)))
 
 	values, err := world.manager.Settings(
-		world.as(world.userA), pluginapi.ParsePluginID(probeID),
+		world.run(world.workspaceA), pluginapi.ParsePluginID(probeID),
 	)
 	require.NoError(t, err)
 	require.Equal(t, "a@example.com", values[keyEmail])
@@ -458,7 +533,7 @@ func TestSettingsReportAnAbsentRecord(t *testing.T) {
 	world := newWorld(t)
 
 	values, err := world.manager.Settings(
-		world.as(world.userA), pluginapi.ParsePluginID(probeID),
+		world.run(world.workspaceA), pluginapi.ParsePluginID(probeID),
 	)
 
 	require.ErrorIs(t, err, pluginapi.ErrSettingsAbsent)
@@ -470,22 +545,15 @@ func TestSettingsFailWhenAStoredSecretDoesNotRead(t *testing.T) {
 	t.Parallel()
 
 	world := newWorld(t)
-	ctx := world.as(world.userA)
+	ctx := world.asA()
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: valuePassword,
 	}, nil)))
 
-	require.NoError(t, database.WithScopeTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
-		_, err := tx.ExecContext(ctx, `
-			UPDATE public.plugin_settings
-			SET fields = jsonb_set(fields, '{password,value}', '"vault:v1:not-a-ciphertext"');`)
-		if err != nil {
-			return fmt.Errorf("breaking the protected value: %w", err)
-		}
-
-		return nil
-	}))
+	world.execIn(ctx, t, `
+		UPDATE public.plugin_workspace_settings
+		SET fields = jsonb_set(fields, '{password,value}', '"vault:v1:not-a-ciphertext"');`)
 
 	values, err := world.manager.Settings(ctx, pluginapi.ParsePluginID(probeID))
 
@@ -500,7 +568,7 @@ func TestARunReadsTheValueThatTheUserJustSaved(t *testing.T) {
 	t.Parallel()
 
 	world := newWorld(t)
-	ctx := world.as(world.userA)
+	ctx := world.asA()
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
 		keyEmail: valueEmail, keyPassword: "old",
@@ -522,7 +590,7 @@ func TestARunReadsTheValueThatTheUserJustSaved(t *testing.T) {
 	require.Equal(t, "new", second[keyPassword])
 }
 
-// PSET-SC-020: A plugin reads the settings of one user in no more than 200
+// PSET-SC-020: A plugin reads the settings of one workspace in no more than 200
 // milliseconds at the 95th percentile, measured from the call to the return.
 func TestARunReadsTheSettingsWithinTheTimeLimit(t *testing.T) {
 	t.Parallel()
@@ -533,7 +601,7 @@ func TestARunReadsTheSettingsWithinTheTimeLimit(t *testing.T) {
 	)
 
 	world := newWorld(t)
-	ctx := world.as(world.userA)
+	ctx := world.asA()
 	pluginID := pluginapi.ParsePluginID(probeID)
 
 	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
@@ -565,7 +633,7 @@ func TestReadAnswersAVersionOnlyForARecordThatExists(t *testing.T) {
 	t.Parallel()
 
 	world := newWorld(t)
-	ctx := world.as(world.userA)
+	ctx := world.asA()
 
 	_, version, err := world.manager.Read(ctx, probeID)
 	require.NoError(t, err)
@@ -578,6 +646,121 @@ func TestReadAnswersAVersionOnlyForARecordThatExists(t *testing.T) {
 	_, version, err = world.manager.Read(ctx, probeID)
 	require.NoError(t, err)
 	require.False(t, version.IsZero(), "the row exists, so the read names its moment")
+}
+
+// PSET-SC-023: A field of the user reaches the row of the user who saved it. That
+// user reads its mask, another member reads nothing stored, and a run reads no value.
+// PSET-INV-001: The settings of one user reach no other user.
+func TestAFieldOfTheUserReachesThatUserAlone(t *testing.T) {
+	t.Parallel()
+
+	world := newWorld(t)
+	ctx := world.asA()
+
+	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
+		keyEmail: valueEmail, keyPassword: valuePassword, keyPin: "1234",
+	}, nil)))
+
+	require.Equal(t, 1, world.rowCount(ctx, t, userTable))
+
+	var owner string
+
+	require.NoError(t, database.WithScopeTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
+		return tx.GetContext(ctx, &owner, `SELECT user_id FROM public.plugin_user_settings;`)
+	}))
+	require.Equal(t, world.userA, owner)
+	require.Contains(t, world.storedValue(ctx, t, userTable, keyPin), "vault:v1:")
+
+	var held bool
+
+	require.NoError(t, database.WithScopeTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
+		return tx.GetContext(
+			ctx, &held, `SELECT fields ? 'pin' FROM public.plugin_workspace_settings;`,
+		)
+	}))
+	require.False(t, held)
+
+	own, _, err := world.manager.Read(ctx, probeID)
+	require.NoError(t, err)
+	require.Equal(t, settings.SecretMask, own[keyPin])
+
+	other, _, err := world.manager.Read(world.in(world.userC, world.workspaceA), probeID)
+	require.NoError(t, err)
+	require.Empty(t, other[keyPin])
+	require.Equal(t, settings.SecretMask, other[keyPassword])
+
+	forRun, err := world.manager.Settings(
+		world.run(world.workspaceA), pluginapi.ParsePluginID(probeID),
+	)
+	require.NoError(t, err)
+	require.NotContains(t, forRun, keyPin)
+	require.Equal(t, valuePassword, forRun[keyPassword])
+
+	forPerson, err := world.manager.Settings(ctx, pluginapi.ParsePluginID(probeID))
+	require.NoError(t, err)
+	require.Equal(t, "1234", forPerson[keyPin])
+}
+
+// APIFMT-SC-019: Two clients read one record and both write it back. The first
+// write lands and the second answers that the record moved. APIFMT-DD-014.
+func TestAConditionalSaveRefusesARecordThatMoved(t *testing.T) {
+	t.Parallel()
+
+	world := newWorld(t)
+	ctx := world.asA()
+
+	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
+		keyEmail: valueEmail, keyPassword: valuePassword,
+	}, nil)))
+
+	_, held, err := world.manager.Read(ctx, probeID)
+	require.NoError(t, err)
+
+	_, err = world.manager.Save(ctx, probeID, map[string]any{keyEmail: secondEmail}, &held)
+	require.NoError(t, err)
+
+	_, err = world.manager.Save(ctx, probeID, map[string]any{keyEmail: "third@example.com"}, &held)
+	require.ErrorIs(t, err, precondition.ErrModified)
+}
+
+// APIFMT-SC-019: A save of a field of the user moves the version that the user
+// reads, so the validator of either row guards the save.
+func TestAConditionalSaveSeesAChangeOfTheUserRow(t *testing.T) {
+	t.Parallel()
+
+	world := newWorld(t)
+	ctx := world.asA()
+
+	require.NoError(t, errorOf(world.manager.Save(ctx, probeID, map[string]any{
+		keyEmail: valueEmail, keyPassword: valuePassword,
+	}, nil)))
+
+	_, held, err := world.manager.Read(ctx, probeID)
+	require.NoError(t, err)
+
+	moved, err := world.manager.Save(ctx, probeID, map[string]any{keyPin: "1234"}, &held)
+	require.NoError(t, err)
+	require.True(t, moved.After(held), "the save names a later version")
+
+	_, err = world.manager.Save(ctx, probeID, map[string]any{keyPin: "5678"}, &held)
+	require.ErrorIs(t, err, precondition.ErrModified)
+}
+
+// APIFMT-SC-019: A save that names a validator for a record that does not exist
+// answers that the record moved, and stores nothing. RFC 9110 fails If-Match
+// when no current representation exists. APIFMT-DD-014.
+func TestAConditionalSaveRefusesARecordThatIsAbsent(t *testing.T) {
+	t.Parallel()
+
+	world := newWorld(t)
+	held := time.Now()
+
+	_, err := world.manager.Save(world.asA(), probeID, map[string]any{
+		keyEmail: valueEmail, keyPassword: valuePassword,
+	}, &held)
+
+	require.ErrorIs(t, err, precondition.ErrModified)
+	require.Equal(t, 0, world.rowCount(world.asA(), t, workspaceTable))
 }
 
 // errorOf drops the moment that a write answers, for a test that reads only

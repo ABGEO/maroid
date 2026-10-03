@@ -22,6 +22,9 @@ const secretFormat = "password"
 // resourceName names the document inside the compiler. No request reads it.
 const resourceName = "settings.json"
 
+// scopeExtension names the scope of a field in the document.
+const scopeExtension = "x-maroid-scope"
+
 // Schema is the settings schema of one plugin, in each form that the hub needs.
 type Schema struct {
 	// Document is the JSON Schema that the schema route serves.
@@ -30,6 +33,8 @@ type Schema struct {
 	Compiled *jsonvalidate.Schema
 	// Kinds names the kind of each field, keyed by the field key.
 	Kinds map[string]model.FieldKind
+	// Scopes names who holds the value of each field, keyed by the field key.
+	Scopes map[string]model.SettingScope
 	// Required holds the key of each field that must hold a value.
 	Required map[string]struct{}
 }
@@ -49,6 +54,11 @@ func Infer(settingsModel any) (*Schema, error) {
 	document := reflector.Reflect(settingsModel)
 	applyValueLimit(document)
 
+	fieldScopes, err := scopes(document)
+	if err != nil {
+		return nil, err
+	}
+
 	raw, err := json.Marshal(document)
 	if err != nil {
 		return nil, fmt.Errorf("encoding the settings schema: %w", err)
@@ -63,6 +73,7 @@ func Infer(settingsModel any) (*Schema, error) {
 		Document: raw,
 		Compiled: compiled,
 		Kinds:    kinds(document),
+		Scopes:   fieldScopes,
 		Required: required(document),
 	}, nil
 }
@@ -139,6 +150,33 @@ func kinds(document *jsonschema.Schema) map[string]model.FieldKind {
 	}
 
 	return found
+}
+
+// scopes reads the scope of each field. A field that names none belongs to the
+// workspace, as a table of a plugin does.
+func scopes(document *jsonschema.Schema) (map[string]model.SettingScope, error) {
+	found := make(map[string]model.SettingScope, document.Properties.Len())
+
+	for pair := document.Properties.Oldest(); pair != nil; pair = pair.Next() {
+		named, declared := pair.Value.Extras[scopeExtension]
+		if !declared {
+			found[pair.Key] = model.SettingScopeWorkspace
+
+			continue
+		}
+
+		switch scope := model.SettingScope(fmt.Sprint(named)); scope {
+		case model.SettingScopeWorkspace, model.SettingScopeUser:
+			found[pair.Key] = scope
+		default:
+			return nil, fmt.Errorf(
+				"%w: the field %q names the scope %q",
+				errs.ErrInvalidSettingsModel, pair.Key, scope,
+			)
+		}
+	}
+
+	return found, nil
 }
 
 func kindOf(property *jsonschema.Schema) model.FieldKind {

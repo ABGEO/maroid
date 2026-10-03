@@ -25,6 +25,16 @@ const (
 	FieldKindChoice FieldKind = "choice"
 )
 
+// SettingScope names who holds the value of one field: the workspace or the user.
+type SettingScope string
+
+const (
+	// SettingScopeWorkspace marks a field whose value every member of the workspace shares.
+	SettingScopeWorkspace SettingScope = "workspace"
+	// SettingScopeUser marks a field whose value belongs to one user.
+	SettingScopeUser SettingScope = "user"
+)
+
 // SettingEntry is one stored field of one plugin.
 type SettingEntry struct {
 	Kind  FieldKind `json:"kind"`
@@ -88,10 +98,10 @@ func (f Fields) LogValue() slog.Value {
 	)
 }
 
-// PluginSettings is the settings that one user stored for one plugin.
+// PluginSettings is the settings that one workspace or one user stored for one plugin.
+// The table of its scope holds the owner, so the entity carries none.
 type PluginSettings struct {
 	ID        string    `db:"id"`
-	UserID    string    `db:"user_id"`
 	PluginID  string    `db:"plugin_id"`
 	Fields    Fields    `db:"fields"`
 	CreatedAt time.Time `db:"created_at"`
