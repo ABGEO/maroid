@@ -32,10 +32,11 @@ func FirstWorkspaceName(firstName string) string {
 
 // Workspace is the place that owns the records of a plugin. Its members share them.
 type Workspace struct {
-	ID        string    `db:"id"`
-	Name      string    `db:"name"`
-	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"`
+	ID        string         `db:"id"`
+	Name      string         `db:"name"`
+	Role      pluginapi.Role `db:"role"`
+	CreatedAt time.Time      `db:"created_at"`
+	UpdatedAt time.Time      `db:"updated_at"`
 }
 
 // Member is one membership of a user record in a workspace, with the names of the

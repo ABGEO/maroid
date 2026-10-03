@@ -19,6 +19,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/db"
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/authtest"
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/idempotency"
@@ -39,6 +40,9 @@ const (
 	deckAddress = "http://maroid.localhost"
 	probePlugin = "dev.maroid.probe"
 	webhookPath = "/telegram/webhook"
+
+	recordsRead  = "records.read"
+	recordsWrite = "records.write"
 
 	// botToken has the shape that Telegram gives a token, so the client accepts
 	// it. The test never reaches Telegram.
@@ -93,6 +97,8 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	store := idempotency.NewStore(instance.DB)
 	workspaces := workspaceManager(instance.DB, members, userRepo)
 
+	authorizer := probeAuthorizer(t)
+
 	router, err := server.NewHTTPRouter(cfg, logger)
 	require.NoError(t, err)
 
@@ -108,12 +114,12 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		handler.NewPlugin(
 			logger, verifier, resolver,
 			registry.NewPluginRegistry(), probeUI(), registry.NewCapabilityRegistry(),
-			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store, members,
+			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store, members, authorizer,
 		),
-		handler.NewWorkspace(logger, verifier, resolver, store, members, workspaces),
+		handler.NewWorkspace(logger, verifier, resolver, store, members, workspaces, authorizer),
 		handler.NewMCP(cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry(), members),
 		handler.NewPluginWrapper(
-			logger, verifier, resolver, store, members,
+			logger, verifier, resolver, store, members, authorizer,
 			pluginapi.ParsePluginID(probePlugin), probeRoutes(t, instance.DB, held),
 		),
 	)
@@ -252,6 +258,26 @@ func hubConfig(issuer string) *config.Config {
 	return cfg
 }
 
+// probeAuthorizer answers the permissions of the hub and the two of the probe plugin.
+func probeAuthorizer(t *testing.T) *authz.RoleAuthorizer {
+	t.Helper()
+
+	permissions, err := authz.NewPermissionRegistry()
+	require.NoError(t, err)
+
+	probe := pluginapi.ParsePluginID(probePlugin)
+	require.NoError(t, permissions.Register(
+		registry.PermissionEntry{
+			Name: registry.PermissionName(probe, recordsRead), Lowest: pluginapi.RoleViewer,
+		},
+		registry.PermissionEntry{
+			Name: registry.PermissionName(probe, recordsWrite), Lowest: pluginapi.RoleEditor,
+		},
+	))
+
+	return authz.NewRoleAuthorizer(permissions)
+}
+
 // probeRoutes makes the table of the probe plugin and answers its routes. A POST
 // writes one record and answers it.
 func probeRoutes(t *testing.T, database *sqlx.DB, held *gate) []pluginapi.Route {
@@ -269,11 +295,13 @@ func probeRoutes(t *testing.T, database *sqlx.DB, held *gate) []pluginapi.Route 
 			Handler: func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			},
+			Permission: recordsRead,
 		},
-		{Method: http.MethodPost, Pattern: "/records", Handler: write},
+		{Method: http.MethodPost, Pattern: "/records", Handler: write, Permission: recordsWrite},
 		{
-			Method:  http.MethodPost,
-			Pattern: "/held-records",
+			Method:     http.MethodPost,
+			Pattern:    "/held-records",
+			Permission: recordsWrite,
 			Handler: func(w http.ResponseWriter, r *http.Request) {
 				held.entered <- struct{}{}
 

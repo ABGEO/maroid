@@ -1,7 +1,7 @@
 import type { Page, Tagged } from '@maroid/api-client';
 
 import { client } from './client';
-import type { Candidate, Member, Workspace } from './types';
+import type { Candidate, Member, Role, Workspace } from './types';
 
 function path(workspaceId: string): string {
 	return `/workspaces/${encodeURIComponent(workspaceId)}`;
@@ -35,9 +35,14 @@ export const workspaces = {
 	addMember: (
 		workspaceId: string,
 		userId: string,
+		role: Role,
 		idempotencyKey: string
 	): Promise<Member | null> =>
-		client.post<Member>(`${path(workspaceId)}/members`, { user_id: userId }, { idempotencyKey }),
+		client.post<Member>(
+			`${path(workspaceId)}/members`,
+			{ user_id: userId, role },
+			{ idempotencyKey }
+		),
 
 	removeMember: (workspaceId: string, userId: string): Promise<void> =>
 		client.del<void>(memberPath(workspaceId, userId)).then(() => undefined)

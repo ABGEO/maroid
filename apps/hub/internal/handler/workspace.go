@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
 	"time"
 	"unicode/utf8"
 
@@ -13,11 +14,13 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
+	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/address"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
 	"github.com/abgeo/maroid/libs/rest/page"
@@ -37,6 +40,7 @@ type Workspace struct {
 	idempotency idempotency.Store
 	members     repository.WorkspaceMemberRepository
 	service     workspace.Service
+	authorizer  authz.Authorizer
 }
 
 var _ Handler = (*Workspace)(nil)
@@ -49,6 +53,7 @@ func NewWorkspace(
 	idempotency idempotency.Store,
 	members repository.WorkspaceMemberRepository,
 	service workspace.Service,
+	authorizer authz.Authorizer,
 ) *Workspace {
 	return &Workspace{
 		logger: logger.With(
@@ -60,12 +65,18 @@ func NewWorkspace(
 		idempotency: idempotency,
 		members:     members,
 		service:     service,
+		authorizer:  authorizer,
 	}
 }
 
 // Register registers the routes of the workspaces.
 func (h *Workspace) Register(router chi.Router) {
 	h.logger.Debug("registering routes")
+
+	workspaceRead := h.require(authz.PermissionWorkspaceRead)
+	workspaceWrite := h.require(authz.PermissionWorkspaceWrite)
+	membersWrite := h.require(authz.PermissionMembersWrite)
+	membersRemove := workspace.RequireOf(h.logger, h.authorizer, removalPermission)
 
 	router.Route("/workspaces", func(r chi.Router) {
 		r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
@@ -77,30 +88,34 @@ func (h *Workspace) Register(router chi.Router) {
 		r.Route("/{"+workspace.PathParam+"}", func(r chi.Router) {
 			r.Use(workspace.Middleware(h.logger, h.members))
 
-			r.Get("/", Wrap(h.logger, h.Get))
-			r.Patch("/", Wrap(h.logger, h.Rename))
-			r.Get("/members", Wrap(h.logger, h.Members))
-			r.Post("/members", Wrap(h.logger, h.AddMember))
-			r.Get("/members/{"+userIDParam+"}", Wrap(h.logger, h.Member))
-			r.Delete("/members/{"+userIDParam+"}", Wrap(h.logger, h.RemoveMember))
-			r.Get("/member-candidates", Wrap(h.logger, h.Candidates))
+			r.With(workspaceRead).Get("/", Wrap(h.logger, h.Get))
+			r.With(workspaceWrite).Patch("/", Wrap(h.logger, h.Rename))
+			r.With(workspaceRead).Get("/members", Wrap(h.logger, h.Members))
+			r.With(membersWrite).Post("/members", Wrap(h.logger, h.AddMember))
+			r.With(workspaceRead).Get("/members/{"+userIDParam+"}", Wrap(h.logger, h.Member))
+			r.With(membersRemove).
+				Delete("/members/{"+userIDParam+"}", Wrap(h.logger, h.RemoveMember))
+			r.With(membersWrite).Get("/member-candidates", Wrap(h.logger, h.Candidates))
 		})
 	})
 }
 
 type workspaceBody struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Role        pluginapi.Role `json:"role"`
+	Permissions []string       `json:"permissions,omitempty"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
 }
 
 type memberBody struct {
-	UserID    string    `json:"user_id"`
-	FirstName *string   `json:"first_name,omitempty"`
-	LastName  *string   `json:"last_name,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	UserID    string         `json:"user_id"`
+	FirstName *string        `json:"first_name,omitempty"`
+	LastName  *string        `json:"last_name,omitempty"`
+	Role      pluginapi.Role `json:"role"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
 }
 
 type candidateBody struct {
@@ -115,6 +130,7 @@ type workspaceInput struct {
 
 type memberInput struct {
 	UserID *string `json:"user_id"`
+	Role   *string `json:"role"`
 }
 
 // encoding/json writes a time.Time in the zone that it carries, and the database
@@ -123,6 +139,7 @@ func toWorkspaceBody(entity *model.Workspace) workspaceBody {
 	return workspaceBody{
 		ID:        entity.ID,
 		Name:      entity.Name,
+		Role:      entity.Role,
 		CreatedAt: entity.CreatedAt.UTC(),
 		UpdatedAt: entity.UpdatedAt.UTC(),
 	}
@@ -133,6 +150,7 @@ func toMemberBody(entity *model.Member) memberBody {
 		UserID:    entity.UserID,
 		FirstName: entity.FirstName,
 		LastName:  entity.LastName,
+		Role:      entity.Role,
 		CreatedAt: entity.CreatedAt.UTC(),
 		UpdatedAt: entity.UpdatedAt.UTC(),
 	}
@@ -184,10 +202,13 @@ func (h *Workspace) Create(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("creating the workspace: %w", err)
 	}
 
+	body := toWorkspaceBody(created)
+	body.Role = pluginapi.RoleManager
+
 	w.Header().Set("Location", address.BaseFromContext(r.Context())+"/workspaces/"+created.ID)
 	w.Header().Set(precondition.ETagHeader, precondition.ETag(created.UpdatedAt))
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, toWorkspaceBody(created))
+	render.JSON(w, r, body)
 
 	return nil
 }
@@ -199,8 +220,13 @@ func (h *Workspace) Get(w http.ResponseWriter, r *http.Request) error {
 		return h.fail(w, r, err, "reading the workspace")
 	}
 
+	role := workspace.RoleFromContext(r.Context())
+	body := toWorkspaceBody(found)
+	body.Role = role
+	body.Permissions = h.authorizer.Held(role)
+
 	w.Header().Set(precondition.ETagHeader, precondition.ETag(found.UpdatedAt))
-	render.JSON(w, r, toWorkspaceBody(found))
+	render.JSON(w, r, body)
 
 	return nil
 }
@@ -230,8 +256,11 @@ func (h *Workspace) Rename(w http.ResponseWriter, r *http.Request) error {
 		return h.fail(w, r, err, "renaming the workspace")
 	}
 
+	body := toWorkspaceBody(renamed)
+	body.Role = workspace.RoleFromContext(r.Context())
+
 	w.Header().Set(precondition.ETagHeader, precondition.ETag(renamed.UpdatedAt))
-	render.JSON(w, r, toWorkspaceBody(renamed))
+	render.JSON(w, r, body)
 
 	return nil
 }
@@ -288,7 +317,14 @@ func (h *Workspace) AddMember(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	added, err := h.service.AddMember(r.Context(), *input.UserID)
+	role, failure := roleOf(input.Role)
+	if failure != nil {
+		problem.Write(w, r, failure)
+
+		return nil
+	}
+
+	added, err := h.service.AddMember(r.Context(), *input.UserID, role)
 	if err != nil {
 		return h.fail(w, r, err, "adding the member")
 	}
@@ -392,6 +428,38 @@ func validateName(name *string) *problem.ValidationProblem {
 	}
 }
 
+// require guards one route with one permission.
+func (h *Workspace) require(permission string) func(http.Handler) http.Handler {
+	return workspace.Require(h.logger, h.authorizer, permission)
+}
+
+// removalPermission picks the permission of a removal from its target: a member who
+// leaves needs less than a member who removes another.
+func removalPermission(r *http.Request) string {
+	if chi.URLParam(r, userIDParam) == pluginapi.ActingUserFromContext(r.Context()) {
+		return authz.PermissionMembershipLeave
+	}
+
+	return authz.PermissionMembersWrite
+}
+
+// roleOf reads the role of an add, which must name one of the three.
+func roleOf(named *string) (pluginapi.Role, *problem.ValidationProblem) {
+	if named == nil {
+		return "", roleFailure("the field is required")
+	}
+
+	role := pluginapi.Role(*named)
+	if !slices.Contains(
+		[]pluginapi.Role{pluginapi.RoleManager, pluginapi.RoleEditor, pluginapi.RoleViewer},
+		role,
+	) {
+		return "", roleFailure("the value is not manager, editor, or viewer")
+	}
+
+	return role, nil
+}
+
 // isUUID reports whether value is a UUID in its text form.
 func isUUID(value string) bool {
 	return uuid.Validate(value) == nil
@@ -403,4 +471,8 @@ func nameFailure(detail string) *problem.ValidationProblem {
 
 func userFailure(detail string) *problem.ValidationProblem {
 	return problem.NewValidationFailed(problem.FieldFailure{Detail: detail, Pointer: "/user_id"})
+}
+
+func roleFailure(detail string) *problem.ValidationProblem {
+	return problem.NewValidationFailed(problem.FieldFailure{Detail: detail, Pointer: "/role"})
 }

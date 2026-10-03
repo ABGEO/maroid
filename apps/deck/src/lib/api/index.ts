@@ -29,6 +29,7 @@ export type {
 	SettingsInput,
 	Workspace,
 	Member,
+	Role,
 	Candidate
 } from './types';
 

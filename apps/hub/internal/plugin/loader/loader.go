@@ -6,6 +6,7 @@ import (
 	"plugin"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/registrar"
@@ -48,6 +49,7 @@ func New(
 	mcpToolRegistry *registry.MCPToolRegistry,
 	capabilityRegistry *registry.CapabilityRegistry,
 	permissionRegistry *registry.PermissionRegistry,
+	authorizer authz.Authorizer,
 ) *Loader {
 	logger := host.Logger()
 
@@ -68,6 +70,7 @@ func New(
 				permissionRegistry,
 				idempotency,
 				members,
+				authorizer,
 			),
 			registrar.NewMigrationRegistrar(migrationRegistry, capabilityRegistry),
 			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry, capabilityRegistry),

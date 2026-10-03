@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
@@ -157,7 +158,8 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		c.SettingsRegistry(),
 		registries.mcpTool,
 		c.CapabilityRegistry(),
-		c.PermissionRegistry(),
+		registries.permission,
+		authz.NewRoleAuthorizer(registries.permission),
 	), nil
 }
 
@@ -171,6 +173,7 @@ type pluginRegistries struct {
 	telegramCommand      *registry.TelegramCommandRegistry
 	telegramConversation *registry.TelegramConversationRegistry
 	mcpTool              *registry.MCPToolRegistry
+	permission           *registry.PermissionRegistry
 }
 
 func (c *Container) buildPluginRegistries() (*pluginRegistries, error) {
@@ -214,6 +217,11 @@ func (c *Container) buildPluginRegistries() (*pluginRegistries, error) {
 		return nil, err
 	}
 
+	permissionRegistry, err := c.PermissionRegistry()
+	if err != nil {
+		return nil, err
+	}
+
 	return &pluginRegistries{
 		command:              commandRegistry,
 		cron:                 cronRegistry,
@@ -223,5 +231,6 @@ func (c *Container) buildPluginRegistries() (*pluginRegistries, error) {
 		telegramCommand:      telegramCommandRegistry,
 		telegramConversation: telegramConversationRegistry,
 		mcpTool:              mcpToolRegistry,
+		permission:           permissionRegistry,
 	}, nil
 }

@@ -138,9 +138,16 @@ export type SettingsValues = Record<string, SettingsValue>;
 export type SettingsInput = Record<string, string | boolean | null>;
 
 /** A workspace that the person is a member of. */
+/** The role of a member in a workspace, from the most access to the least. */
+export type Role = 'manager' | 'editor' | 'viewer';
+
 export interface Workspace {
 	id: string;
 	name: string;
+	/** The role of the person in the workspace. */
+	role: Role;
+	/** Every permission that the role holds. The read of one workspace answers it. */
+	permissions?: string[];
 	created_at: string;
 	updated_at: string;
 }
@@ -150,6 +157,7 @@ export interface Member {
 	user_id: string;
 	first_name?: string;
 	last_name?: string;
+	role: Role;
 	created_at: string;
 	updated_at: string;
 }

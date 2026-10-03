@@ -23,7 +23,7 @@ type Service interface {
 	Members(ctx context.Context) ([]model.Member, error)
 	Member(ctx context.Context, userID string) (*model.Member, error)
 	Candidates(ctx context.Context) ([]model.User, error)
-	AddMember(ctx context.Context, userID string) (*model.Member, error)
+	AddMember(ctx context.Context, userID string, role pluginapi.Role) (*model.Member, error)
 	RemoveMember(ctx context.Context, userID string) error
 }
 
@@ -149,9 +149,13 @@ func (m *Manager) Candidates(ctx context.Context) ([]model.User, error) {
 	return candidates, nil
 }
 
-// AddMember adds an active user record to the acting workspace. A record that is
-// absent or blocked answers errs.ErrUserNotFound.
-func (m *Manager) AddMember(ctx context.Context, userID string) (*model.Member, error) {
+// AddMember adds an active user record to the acting workspace with the role. A
+// record that is absent or blocked answers errs.ErrUserNotFound.
+func (m *Manager) AddMember(
+	ctx context.Context,
+	userID string,
+	role pluginapi.Role,
+) (*model.Member, error) {
 	if _, err := m.users.GetActiveByID(ctx, userID); err != nil {
 		return nil, fmt.Errorf("reading the record to add: %w", err)
 	}
@@ -159,10 +163,12 @@ func (m *Manager) AddMember(ctx context.Context, userID string) (*model.Member, 
 	var added *model.Member
 
 	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
-		// The route takes no role yet, and no check reads one, so a new member holds
-		// what every member that the migration kept holds.
 		member, err := m.members.Add(
-			ctx, tx, pluginapi.ActingWorkspaceFromContext(ctx), userID, pluginapi.RoleManager,
+			ctx,
+			tx,
+			pluginapi.ActingWorkspaceFromContext(ctx),
+			userID,
+			role,
 		)
 		if err != nil {
 			return fmt.Errorf("adding the member: %w", err)

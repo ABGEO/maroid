@@ -6,6 +6,8 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -19,6 +21,7 @@ type PluginWrapper struct {
 	resolver    auth.IdentityResolver
 	idempotency idempotency.Store
 	members     repository.WorkspaceMemberRepository
+	authorizer  authz.Authorizer
 	pluginID    *pluginapi.PluginID
 	routes      []pluginapi.Route
 }
@@ -32,6 +35,7 @@ func NewPluginWrapper(
 	resolver auth.IdentityResolver,
 	idempotency idempotency.Store,
 	members repository.WorkspaceMemberRepository,
+	authorizer authz.Authorizer,
 	pluginID *pluginapi.PluginID,
 	routes []pluginapi.Route,
 ) *PluginWrapper {
@@ -41,6 +45,7 @@ func NewPluginWrapper(
 		resolver:    resolver,
 		idempotency: idempotency,
 		members:     members,
+		authorizer:  authorizer,
 		pluginID:    pluginID,
 		routes:      routes,
 	}
@@ -63,7 +68,10 @@ func (h *PluginWrapper) Register(router chi.Router) {
 		r.Use(workspace.Middleware(h.logger, h.members))
 
 		for _, route := range h.routes {
-			r.MethodFunc(route.Method, route.Pattern, route.Handler)
+			permission := registry.PermissionName(h.pluginID, route.Permission)
+
+			r.With(workspace.Require(h.logger, h.authorizer, permission)).
+				MethodFunc(route.Method, route.Pattern, route.Handler)
 		}
 	})
 }

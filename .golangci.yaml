@@ -56,6 +56,7 @@ linters:
         - settings.Service
         - repository.WorkspaceMemberRepository
         - workspace.Service
+        - authz.Authorizer
         - pluginapi.SettingsProvider
 
     tagliatelle:

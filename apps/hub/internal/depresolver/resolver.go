@@ -16,6 +16,7 @@ import (
 	"github.com/robfig/cron/v3"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/healthcheck"
@@ -78,7 +79,8 @@ type Resolver interface {
 	MCPToolRegistry() (*registry.MCPToolRegistry, error)
 	UIRegistry() *registry.UIRegistry
 	CapabilityRegistry() *registry.CapabilityRegistry
-	PermissionRegistry() *registry.PermissionRegistry
+	PermissionRegistry() (*registry.PermissionRegistry, error)
+	Authorizer() (authz.Authorizer, error)
 	Cron() *cron.Cron
 	NotifierRegistry() (*notifierregistry.SchemeRegistry, error)
 	NotifierDispatcher() (*dispatcher.ChannelDispatcher, error)
@@ -303,6 +305,7 @@ type Container struct {
 	}
 
 	permissionRegistry struct {
+		mu       sync.Mutex
 		once     sync.Once
 		instance *registry.PermissionRegistry
 	}

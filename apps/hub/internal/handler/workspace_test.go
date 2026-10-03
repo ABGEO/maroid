@@ -23,6 +23,7 @@ import (
 	hubdatabase "github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -54,6 +55,11 @@ const (
 	memberName   = "name"
 	memberUserID = "user_id"
 	memberID     = "id"
+	memberRole   = "role"
+
+	roleManager = "manager"
+	roleEditor  = "editor"
+	roleViewer  = "viewer"
 )
 
 // person is a user record and the Telegram account that signs it in.
@@ -73,8 +79,10 @@ type workspaceFixture struct {
 	gio      person
 	nino     person
 	h        string
-	// probeRuns counts the requests that reached the route of the probe plugin.
+	// probeRuns counts the requests that reached the read route of the probe plugin.
 	probeRuns *atomic.Int32
+	// probeWrites counts the requests that reached the write route of the probe plugin.
+	probeWrites *atomic.Int32
 }
 
 func workspaceUnderTest(t *testing.T) *workspaceFixture {
@@ -102,12 +110,13 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 		repository.NewWorkspaceMember(instance.DB),
 	)
 
-	runs := &atomic.Int32{}
+	runs, writes := &atomic.Int32{}, &atomic.Int32{}
 	fixture := &workspaceFixture{
-		router:    workspaceRouter(t, instance, provider, identityRepo, userRepo, runs),
-		database:  instance.DB,
-		provider:  provider,
-		probeRuns: runs,
+		router:      workspaceRouter(t, instance, provider, identityRepo, userRepo, runs, writes),
+		database:    instance.DB,
+		provider:    provider,
+		probeRuns:   runs,
+		probeWrites: writes,
 	}
 
 	signable := func(name string, account string) person {
@@ -126,14 +135,15 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 	fixture.nino = signable("Nino", "104")
 
 	fixture.h = fixture.create(t, fixture.ana, "H")
-	fixture.add(t, fixture.ana, fixture.h, fixture.beka)
-	fixture.add(t, fixture.ana, fixture.h, fixture.gio)
+	fixture.add(t, fixture.ana, fixture.h, fixture.beka, roleEditor)
+	fixture.add(t, fixture.ana, fixture.h, fixture.gio, roleViewer)
 
 	return fixture
 }
 
-// workspaceRouter mounts the handler of the workspaces and the routes of the probe
-// plugin with every real dependency, the way the hub mounts both on one router.
+// workspaceRouter mounts the handler of the workspaces, the settings routes, and the
+// routes of the probe plugin with every real dependency, the way the hub mounts them
+// on one router.
 func workspaceRouter(
 	t *testing.T,
 	instance *testdb.Instance,
@@ -141,21 +151,15 @@ func workspaceRouter(
 	identityRepo repository.IdentityRepository,
 	userRepo repository.UserRepository,
 	probeRuns *atomic.Int32,
+	probeWrites *atomic.Int32,
 ) *chi.Mux {
 	t.Helper()
 
-	cfg := &config.Config{}
-	cfg.OIDC.Issuer = provider.URL
-	cfg.OIDC.ClientID = authtest.ClientID
-	cfg.OIDC.ClientSecret = "workspace-client-secret"
-
-	oidcSvc, err := auth.NewOIDCService(cfg)
-	require.NoError(t, err)
-
 	memberRepo := repository.NewWorkspaceMember(instance.DB)
+	authorizer := probeAuthorizer(t)
 
 	logger := slog.New(slog.DiscardHandler)
-	verifier := auth.NewTokenVerifier(oidcSvc)
+	verifier := workspaceVerifier(t, provider)
 	resolver := auth.NewResolver(identityRepo)
 
 	router := chi.NewRouter()
@@ -168,12 +172,15 @@ func workspaceRouter(
 		resolver,
 		noIdempotency{},
 		memberRepo,
+		authorizer,
 		pluginapi.ParsePluginID(probePluginID),
-		[]pluginapi.Route{{
-			Method:  http.MethodGet,
-			Pattern: "/notes",
-			Handler: listNotes(instance.DB, probeRuns),
-		}},
+		probeRoutes(instance.DB, probeRuns, probeWrites),
+	).Register(router)
+
+	handler.NewPlugin(
+		logger, verifier, resolver,
+		registry.NewPluginRegistry(), registry.NewUIRegistry(), registry.NewCapabilityRegistry(),
+		&stubSettings{}, noIdempotency{}, memberRepo, authorizer,
 	).Register(router)
 
 	handler.NewWorkspace(
@@ -188,9 +195,25 @@ func workspaceRouter(
 			memberRepo,
 			userRepo,
 		),
+		authorizer,
 	).Register(router)
 
 	return router
+}
+
+// workspaceVerifier verifies the session cookies that the provider signs.
+func workspaceVerifier(t *testing.T, provider *authtest.Provider) auth.TokenVerifier {
+	t.Helper()
+
+	cfg := &config.Config{}
+	cfg.OIDC.Issuer = provider.URL
+	cfg.OIDC.ClientID = authtest.ClientID
+	cfg.OIDC.ClientSecret = "workspace-client-secret"
+
+	oidcSvc, err := auth.NewOIDCService(cfg)
+	require.NoError(t, err)
+
+	return auth.NewTokenVerifier(oidcSvc)
 }
 
 // call sends one request as the person, with an optional body and If-Match.
@@ -245,11 +268,17 @@ func (f *workspaceFixture) create(t *testing.T, who person, name string) string 
 	return stringOf(t, decode(t, response)[memberID])
 }
 
-func (f *workspaceFixture) add(t *testing.T, who person, workspaceID string, member person) {
+func (f *workspaceFixture) add(
+	t *testing.T,
+	who person,
+	workspaceID string,
+	member person,
+	role string,
+) {
 	t.Helper()
 
 	response := f.call(t, who, http.MethodPost, "/workspaces/"+workspaceID+"/members",
-		map[string]any{memberUserID: member.id}, "")
+		map[string]any{memberUserID: member.id, memberRole: role}, "")
 	require.Equal(t, http.StatusCreated, response.Code, response.Body.String())
 }
 
@@ -495,7 +524,7 @@ func TestAMemberAddsAPersonOneTime(t *testing.T) {
 		fixture.ana,
 		http.MethodPost,
 		path,
-		map[string]any{memberUserID: fixture.nino.id},
+		map[string]any{memberUserID: fixture.nino.id, memberRole: roleEditor},
 		"",
 	)
 	require.Equal(t, http.StatusCreated, added.Code, added.Body.String())
@@ -510,7 +539,7 @@ func TestAMemberAddsAPersonOneTime(t *testing.T) {
 		fixture.ana,
 		http.MethodPost,
 		path,
-		map[string]any{memberUserID: fixture.nino.id},
+		map[string]any{memberUserID: fixture.nino.id, memberRole: roleEditor},
 		"",
 	)
 	require.Equal(t, http.StatusConflict, again.Code)
@@ -523,7 +552,7 @@ func TestAMemberAddsAPersonOneTime(t *testing.T) {
 			fixture.ana,
 			http.MethodPost,
 			path,
-			map[string]any{memberUserID: levan},
+			map[string]any{memberUserID: levan, memberRole: roleEditor},
 			"",
 		),
 		"/user_id",
@@ -586,7 +615,7 @@ func TestAMemberLeavesAndTheRecordsStay(t *testing.T) {
 
 	fixture := workspaceUnderTest(t)
 	garden := fixture.create(t, fixture.ana, "G")
-	fixture.add(t, fixture.ana, garden, fixture.gio)
+	fixture.add(t, fixture.ana, garden, fixture.gio, roleViewer)
 	fixture.writeNotes(t, garden, "from Ana", "from Gio")
 
 	left := fixture.call(

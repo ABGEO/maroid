@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/registrar"
@@ -122,7 +123,17 @@ func newRegistrars() *registrars {
 	set.list = []registrar.Registrar{
 		registrar.NewPermissionRegistrar(set.permissions, set.capabilities),
 		registrar.NewHandlerRegistrar(
-			slog.New(slog.DiscardHandler), nil, nil, set.handlers, set.capabilities, set.permissions, nil, nil,
+			slog.New(
+				slog.DiscardHandler,
+			),
+			nil,
+			nil,
+			set.handlers,
+			set.capabilities,
+			set.permissions,
+			nil,
+			nil,
+			authz.NewRoleAuthorizer(set.permissions),
 		),
 		registrar.NewTelegramCommandRegistrar(set.commands, set.capabilities, nil, set.permissions),
 		registrar.NewMCPToolRegistrar(set.tools, set.capabilities, set.permissions),

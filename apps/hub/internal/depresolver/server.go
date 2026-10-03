@@ -221,6 +221,11 @@ func (c *Container) buildPluginHandler(
 		return nil, err
 	}
 
+	authorizer, err := c.Authorizer()
+	if err != nil {
+		return nil, err
+	}
+
 	return handler.NewPlugin(
 		logger,
 		verifier,
@@ -231,6 +236,7 @@ func (c *Container) buildPluginHandler(
 		settingsSvc,
 		idempotencyStore,
 		members,
+		authorizer,
 	), nil
 }
 
@@ -261,6 +267,11 @@ func (c *Container) buildWorkspaceHandler() (*handler.Workspace, error) {
 		return nil, err
 	}
 
+	authorizer, err := c.Authorizer()
+	if err != nil {
+		return nil, err
+	}
+
 	return handler.NewWorkspace(
 		c.Logger(),
 		verifier,
@@ -268,6 +279,7 @@ func (c *Container) buildWorkspaceHandler() (*handler.Workspace, error) {
 		idempotencyStore,
 		members,
 		service,
+		authorizer,
 	), nil
 }
 

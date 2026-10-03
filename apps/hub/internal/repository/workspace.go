@@ -16,7 +16,7 @@ import (
 
 const (
 	workspaceColumns    = `id, name, created_at, updated_at`
-	workspaceColumnsOfW = `w.id, w.name, w.created_at, w.updated_at`
+	workspaceColumnsOfW = `w.id, w.name, w.created_at, w.updated_at, m.role`
 )
 
 // WorkspaceRepository defines the data access contract for a workspace.

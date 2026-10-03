@@ -2,6 +2,8 @@ package registry
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -58,4 +60,14 @@ func (r *PermissionRegistry) Get(name string) (PermissionEntry, bool) {
 	entry, found := r.entries[name]
 
 	return entry, found
+}
+
+// All returns every permission, in the order of the names.
+func (r *PermissionRegistry) All() []PermissionEntry {
+	entries := make([]PermissionEntry, 0, len(r.entries))
+	for _, name := range slices.Sorted(maps.Keys(r.entries)) {
+		entries = append(entries, r.entries[name])
+	}
+
+	return entries
 }

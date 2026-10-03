@@ -18,7 +18,7 @@ import (
 const PathParam = "workspaceId"
 
 // Middleware resolves the workspace of the path, checks the membership of the
-// acting user in it, and puts the acting workspace into the context. It runs
+// acting user in it, and puts the acting workspace and the role into the context. It runs
 // behind auth.Middleware, which puts the acting user into the context.
 //
 // It reads the membership on every request and holds no cache, so a member that a
@@ -45,7 +45,11 @@ func Middleware(
 				return
 			}
 
-			_, err = members.Get(ctx, workspaceID.String(), pluginapi.ActingUserFromContext(ctx))
+			member, err := members.Get(
+				ctx,
+				workspaceID.String(),
+				pluginapi.ActingUserFromContext(ctx),
+			)
 			if err != nil {
 				if !errors.Is(err, errs.ErrMemberNotFound) {
 					logger.ErrorContext(
@@ -64,6 +68,7 @@ func Middleware(
 			}
 
 			ctx = pluginapi.ContextWithActingWorkspace(ctx, workspaceID.String())
+			ctx = ContextWithRole(ctx, member.Role)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

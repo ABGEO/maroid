@@ -39,6 +39,7 @@ func TestTheRoutesOfThePluginHandlerResolve(t *testing.T) {
 			nil,
 			noIdempotency{},
 			nil,
+			nil,
 		),
 	)
 

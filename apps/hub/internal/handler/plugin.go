@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/render"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
@@ -53,6 +54,7 @@ type Plugin struct {
 	settingsSvc        settings.Service
 	idempotency        idempotency.Store
 	members            repository.WorkspaceMemberRepository
+	authorizer         authz.Authorizer
 	// assetTags holds the entity tag of each plugin asset. An asset is embedded
 	// in the shared object, so its tag cannot change while the hub runs.
 	assetTags sync.Map
@@ -71,10 +73,12 @@ func NewPlugin(
 	settingsSvc settings.Service,
 	idempotency idempotency.Store,
 	members repository.WorkspaceMemberRepository,
+	authorizer authz.Authorizer,
 ) *Plugin {
 	return &Plugin{
 		idempotency: idempotency,
 		members:     members,
+		authorizer:  authorizer,
 		logger: logger.With(
 			slog.String("component", "handler"),
 			slog.String("handler", "plugin"),
@@ -92,14 +96,17 @@ func NewPlugin(
 func (h *Plugin) Register(router chi.Router) {
 	h.logger.Debug("registering routes")
 
+	settingsRead := workspace.Require(h.logger, h.authorizer, authz.PermissionSettingsRead)
+	settingsWrite := workspace.Require(h.logger, h.authorizer, authz.PermissionSettingsWrite)
+
 	router.Route("/workspaces/{"+workspace.PathParam+"}/plugins/{id}/settings", func(r chi.Router) {
 		r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
 		r.Use(idempotency.Middleware(h.logger, h.idempotency))
 		r.Use(workspace.Middleware(h.logger, h.members))
 
-		r.Get("/schema", Wrap(h.logger, h.SettingsSchema))
-		r.Get("/", Wrap(h.logger, h.ReadSettings))
-		r.Put("/", Wrap(h.logger, h.SaveSettings))
+		r.With(settingsRead).Get("/schema", Wrap(h.logger, h.SettingsSchema))
+		r.With(settingsRead).Get("/", Wrap(h.logger, h.ReadSettings))
+		r.With(settingsWrite).Put("/", Wrap(h.logger, h.SaveSettings))
 	})
 
 	router.Route("/plugins", func(r chi.Router) {

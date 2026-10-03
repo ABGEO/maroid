@@ -9,7 +9,8 @@
 		createWriteIntent,
 		isProblem,
 		type Candidate,
-		type Member
+		type Member,
+		type Role
 	} from '$lib/api';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { userState } from '$lib/state/user.svelte';
@@ -18,6 +19,8 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+
+	const newMemberRole: Role = 'viewer';
 
 	const intent = createWriteIntent();
 	const workspaceId = $derived(data.workspace.id);
@@ -83,7 +86,8 @@
 			const added = await api.workspaces.addMember(
 				workspaceId,
 				chosen,
-				intent.keyFor({ user_id: chosen })
+				newMemberRole,
+				intent.keyFor({ user_id: chosen, role: newMemberRole })
 			);
 			if (added === null) {
 				return;

@@ -18,8 +18,9 @@ type ListWorkspacesInput struct{}
 
 // WorkspaceEntry names one workspace of the acting user.
 type WorkspaceEntry struct {
-	ID   string `json:"id"   jsonschema:"the identifier that a call names as its workspace"`
-	Name string `json:"name" jsonschema:"the name of the workspace"`
+	ID   string         `json:"id"   jsonschema:"the identifier that a call names as its workspace"`
+	Name string         `json:"name" jsonschema:"the name of the workspace"`
+	Role pluginapi.Role `json:"role" jsonschema:"the role of the acting user in the workspace"`
 }
 
 // ListWorkspacesOutput reports every workspace of the acting user.
@@ -62,7 +63,11 @@ func (t *listWorkspaces) handle(
 
 	entries := make([]WorkspaceEntry, 0, len(memberships))
 	for _, membership := range memberships {
-		entries = append(entries, WorkspaceEntry{ID: membership.ID, Name: membership.Name})
+		entries = append(entries, WorkspaceEntry{
+			ID:   membership.ID,
+			Name: membership.Name,
+			Role: membership.Role,
+		})
 	}
 
 	return nil, ListWorkspacesOutput{Workspaces: entries}, nil

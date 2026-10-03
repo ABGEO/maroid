@@ -211,8 +211,8 @@ func structured(t *testing.T, result *mcp.CallToolResult, target any) {
 	require.NoError(t, json.Unmarshal(encoded, target))
 }
 
-// MCPHUB-SC-026: list_workspaces names each workspace of the acting user, and no
-// workspace of another person. The role waits for PERMS.
+// MCPHUB-SC-026: list_workspaces names each workspace of the acting user with the
+// role, and no workspace of another person.
 func TestListWorkspacesNamesTheMembershipsOfTheActingUser(t *testing.T) {
 	t.Parallel()
 
@@ -230,10 +230,10 @@ func TestListWorkspacesNamesTheMembershipsOfTheActingUser(t *testing.T) {
 
 	names := map[string]string{}
 	for _, one := range answered.Workspaces {
-		names[one.ID] = one.Name
+		names[one.ID] = one.Name + " " + string(one.Role)
 	}
 
-	assert.Equal(t, map[string]string{scene.a: "A", scene.b: "B"}, names)
+	assert.Equal(t, map[string]string{scene.a: "A manager", scene.b: "B manager"}, names)
 }
 
 // MCPHUB-SC-027: A tool of a plugin reads the rows of the workspace of its call, and

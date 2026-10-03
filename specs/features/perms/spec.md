@@ -138,13 +138,22 @@ type PermissionPlugin interface {
 // policy engine would take. See PERMS-DD-004.
 type Authorizer interface {
     Allowed(role pluginapi.Role, permission string) (allowed bool, lowest pluginapi.Role, err error)
+    // Held names every permission that the role reaches, for the answer of PERMS-DD-007.
+    Held(role pluginapi.Role) []string
 }
+
+// apps/hub/internal/authz/hub.go
+
+// NewPermissionRegistry answers the registry with every permission of the hub in it.
+func NewPermissionRegistry() (*registry.PermissionRegistry, error)
 
 // apps/hub/internal/workspace/require.go
 
 // Require answers permission-denied unless the role of the acting user reaches the
-// permission.
-func Require(authorizer authz.Authorizer, permission string) func(http.Handler) http.Handler
+// permission. RequireOf picks the permission for each request, for DELETE on a
+// membership. See PERMS-DD-005.
+func Require(logger *slog.Logger, authorizer authz.Authorizer, permission string) func(http.Handler) http.Handler
+func RequireOf(logger *slog.Logger, authorizer authz.Authorizer, pick func(*http.Request) string) func(http.Handler) http.Handler
 ```
 
 ### 4.2 Data model
@@ -427,8 +436,8 @@ plant that died.
 | 2   | Write `PERMS-SC-004`, then the migration.                                                     | `PERMS-FR-001`, `PERMS-FR-004`    | [x]  |
 | 3   | Write `PERMS-SC-002`, then `libs/pluginapi/permission.go` and the three `Permission` fields.  | `PERMS-FR-002`, `PERMS-FR-012`    | [x]  |
 | 4   | Write `PERMS-SC-010` to `PERMS-SC-012`, then the registry, the registrar, and the checks of the three registrars. | `PERMS-FR-011` to `PERMS-FR-014` | [x] |
-| 5   | Write `PERMS-SC-018`, then `authz.RoleAuthorizer` and the permissions of the hub.             | `PERMS-NFR-002`                   | [ ]  |
-| 6   | Write `PERMS-SC-005`, `PERMS-SC-013`, and `PERMS-SC-017`, then the role in the membership check, `workspace.Require`, and each route of section 4.3. | `PERMS-FR-005`, `PERMS-FR-015`, `PERMS-NFR-001` | [ ] |
+| 5   | Write `PERMS-SC-018`, then `authz.RoleAuthorizer` and the permissions of the hub.             | `PERMS-NFR-002`                   | [x]  |
+| 6   | Write `PERMS-SC-005`, `PERMS-SC-013`, and `PERMS-SC-017`, then the role in the membership check, `workspace.Require`, and each route of section 4.3. | `PERMS-FR-005`, `PERMS-FR-015`, `PERMS-NFR-001` | [x] |
 | 7   | Write `PERMS-SC-006` to `PERMS-SC-009`, then the role in the service, `PATCH` on a membership, and the lock. | `PERMS-FR-003`, `PERMS-FR-006` to `PERMS-FR-010` | [ ] |
 | 8   | The check in `workspaceMiddleware` and in `command.Wrapper`, and the refusal of `PERMS-DD-006`.      | `PERMS-FR-015`, `PERMS-FR-016`    | [ ]  |
 | 9   | Declare the permissions of `jasmine` and `parking`, and name one on each entry. Build every plugin. | `PERMS-FR-012`, `BLD-004`   | [x]  |

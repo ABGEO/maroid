@@ -1,6 +1,10 @@
 package depresolver
 
 import (
+	"fmt"
+	"sync"
+
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 )
 
@@ -24,12 +28,33 @@ func (c *Container) CapabilityRegistry() *registry.CapabilityRegistry {
 }
 
 // PermissionRegistry initializes and returns the registry of the permissions.
-func (c *Container) PermissionRegistry() *registry.PermissionRegistry {
+func (c *Container) PermissionRegistry() (*registry.PermissionRegistry, error) {
+	c.permissionRegistry.mu.Lock()
+	defer c.permissionRegistry.mu.Unlock()
+
+	var err error
+
 	c.permissionRegistry.once.Do(func() {
-		c.permissionRegistry.instance = registry.NewPermissionRegistry()
+		c.permissionRegistry.instance, err = authz.NewPermissionRegistry()
 	})
 
-	return c.permissionRegistry.instance
+	if err != nil {
+		c.permissionRegistry.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing the permission registry: %w", err)
+	}
+
+	return c.permissionRegistry.instance, nil
+}
+
+// Authorizer returns the decision of a role against a permission.
+func (c *Container) Authorizer() (authz.Authorizer, error) {
+	permissions, err := c.PermissionRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	return authz.NewRoleAuthorizer(permissions), nil
 }
 
 // UIRegistry initializes and returns the plugin UI registry.

@@ -10,11 +10,64 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	hubdatabase "github.com/abgeo/maroid/apps/hub/internal/database"
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
-const probePluginID = "dev.maroid.probe"
+const (
+	probePluginID = "dev.maroid.probe"
+	notesRead     = "notes.read"
+	notesWrite    = "notes.write"
+)
+
+// probeAuthorizer answers the permissions of the hub and the two of the probe plugin.
+func probeAuthorizer(t *testing.T) *authz.RoleAuthorizer {
+	t.Helper()
+
+	permissions, err := authz.NewPermissionRegistry()
+	require.NoError(t, err)
+
+	probe := pluginapi.ParsePluginID(probePluginID)
+	require.NoError(t, permissions.Register(
+		registry.PermissionEntry{
+			Name: registry.PermissionName(probe, notesRead), Lowest: pluginapi.RoleViewer,
+		},
+		registry.PermissionEntry{
+			Name: registry.PermissionName(probe, notesWrite), Lowest: pluginapi.RoleEditor,
+		},
+	))
+
+	return authz.NewRoleAuthorizer(permissions)
+}
+
+// probeRoutes answers the read route and the write route of the probe plugin.
+func probeRoutes(database *sqlx.DB, runs *atomic.Int32, writes *atomic.Int32) []pluginapi.Route {
+	return []pluginapi.Route{
+		{
+			Method:     http.MethodGet,
+			Pattern:    "/notes",
+			Handler:    listNotes(database, runs),
+			Permission: notesRead,
+		},
+		{
+			Method:     http.MethodPost,
+			Pattern:    "/notes",
+			Handler:    countWrites(writes),
+			Permission: notesWrite,
+		},
+	}
+}
+
+// countWrites answers a write of the probe plugin, and counts it.
+func countWrites(writes *atomic.Int32) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		writes.Add(1)
+		w.WriteHeader(http.StatusCreated)
+	}
+}
 
 // listNotes answers the bodies of the notes that the acting workspace holds, as a
 // plugin reads its own scoped table.
