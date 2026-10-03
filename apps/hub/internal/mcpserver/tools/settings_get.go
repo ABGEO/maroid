@@ -7,6 +7,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 )
@@ -42,6 +43,7 @@ func NewGetPluginSettings(logger *slog.Logger, settingsSvc settings.Service) reg
 	return registry.MCPTool{
 		Name:            getPluginSettingsName,
 		ActsInWorkspace: true,
+		Permission:      authz.PermissionSettingsRead,
 		Install: func(server *mcp.Server) {
 			mcp.AddTool(server, &mcp.Tool{
 				Name:  getPluginSettingsName,

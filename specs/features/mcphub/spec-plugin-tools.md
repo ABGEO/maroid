@@ -580,7 +580,7 @@ permission whose lowest role is `editor`.
 | 7   | Change `depresolver.PluginLoader` to resolve `MCPToolRegistry()` and pass it. Build the server of `handler.MCP` in `Register`. | `MCPHUB-DD-015`                   | [x]  |
 | 8   | Build every plugin. `libs/pluginapi` changed.                                             | `BLD-004`                         | [x]  |
 | 9   | Declare one tool in one plugin, as the first caller of the contract.                      | `MCPHUB-FR-011`, `MCPHUB-SC-012`  | [x]  |
-| 10  | Add `Permission` to `MCPToolMeta`, and refuse a tool that declares none in the registrar. Build every plugin. | `MCPHUB-FR-023`, `SEC-013`, `BLD-004` | [ ]  |
+| 10  | Add `Permission` to `MCPToolMeta`, and refuse a tool that declares none in the registrar. Build every plugin. | `MCPHUB-FR-023`, `SEC-013`, `BLD-004` | [x]  |
 | 11  | Write `MCPHUB-SC-027`, then create `workspaceMiddleware` with the `workspace` argument, and mark each tool that acts in a workspace. | `MCPHUB-FR-021`, `MCPHUB-DD-022`  | [x]  |
 | 12  | Write `MCPHUB-SC-028` and `MCPHUB-SC-029`, then the three checks of `MCPHUB-DD-023`. They need the tables of `OWN-011` and `SEC-012`. | `MCPHUB-FR-022`, `MCPHUB-FR-023`, `MCPHUB-DD-023` | [ ]  |
 

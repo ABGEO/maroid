@@ -56,3 +56,9 @@ func (a *RoleAuthorizer) Held(role pluginapi.Role) []string {
 
 	return held
 }
+
+// Refusal names the permission that an action needs and the lowest role that holds it,
+// in the text that a command of the bot and a tool answer.
+func Refusal(permission string, lowest pluginapi.Role) string {
+	return fmt.Sprintf("This needs the role `%s` (`%s`)", lowest, permission)
+}

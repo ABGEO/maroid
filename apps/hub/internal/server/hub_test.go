@@ -117,7 +117,9 @@ func hubUnderTest(t *testing.T) *hubFixture {
 			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store, members, authorizer,
 		),
 		handler.NewWorkspace(logger, verifier, resolver, store, members, workspaces, authorizer),
-		handler.NewMCP(cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry(), members),
+		handler.NewMCP(
+			cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry(), members, authorizer,
+		),
 		handler.NewPluginWrapper(
 			logger, verifier, resolver, store, members, authorizer,
 			pluginapi.ParsePluginID(probePlugin), probeRoutes(t, instance.DB, held),

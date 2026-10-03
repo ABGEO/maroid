@@ -131,7 +131,7 @@ func TestAPickedWorkspaceServesEveryLaterUpdate(t *testing.T) {
 
 	scene := newChatWorld(t)
 
-	acting, err := scene.selection.Acting(as(scene.ana), chatID)
+	acting, _, err := scene.selection.Acting(as(scene.ana), chatID)
 	require.NoError(t, err)
 	assert.Empty(t, acting, "two memberships and no selection leave the choice to Ana")
 	assert.ElementsMatch(t, []string{"H", "G"}, names(t, scene, scene.ana))
@@ -141,7 +141,7 @@ func TestAPickedWorkspaceServesEveryLaterUpdate(t *testing.T) {
 	assert.Equal(t, "G", picked.Name)
 
 	for range 2 {
-		acting, err = scene.selection.Acting(as(scene.ana), chatID)
+		acting, _, err = scene.selection.Acting(as(scene.ana), chatID)
 		require.NoError(t, err)
 		assert.Equal(t, scene.g, acting)
 	}
@@ -157,9 +157,10 @@ func TestTheOnlyWorkspaceNeedsNoPick(t *testing.T) {
 
 	scene := newChatWorld(t)
 
-	acting, err := scene.selection.Acting(as(scene.gio), chatID)
+	acting, role, err := scene.selection.Acting(as(scene.gio), chatID)
 	require.NoError(t, err)
 	assert.Equal(t, scene.h, acting)
+	assert.Equal(t, pluginapi.RoleManager, role, "the chat carries the role of the membership")
 
 	require.NotNil(t, scene.stored(t, scene.gio))
 	assert.Equal(t, scene.h, *scene.stored(t, scene.gio))
@@ -180,7 +181,7 @@ func TestARemovedMemberLosesTheSelection(t *testing.T) {
 	require.NoError(t, scene.members.Remove(t.Context(), tx, scene.h, scene.beka))
 	require.NoError(t, tx.Commit())
 
-	acting, err := scene.selection.Acting(as(scene.beka), chatID)
+	acting, _, err := scene.selection.Acting(as(scene.beka), chatID)
 	require.NoError(t, err)
 	assert.Empty(t, acting)
 	assert.Nil(t, scene.stored(t, scene.beka), "the chat stores no selection")

@@ -9,6 +9,8 @@ import (
 
 	"github.com/mymmrac/telego"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 const (
@@ -21,14 +23,15 @@ var errStoreDown = errors.New("the store is down")
 // fakeChats answers the workspace that the test gives, and records the chat it read.
 type fakeChats struct {
 	workspace string
+	role      pluginapi.Role
 	err       error
 	asked     []int64
 }
 
-func (f *fakeChats) Acting(_ context.Context, chatID int64) (string, error) {
+func (f *fakeChats) Acting(_ context.Context, chatID int64) (string, pluginapi.Role, error) {
 	f.asked = append(f.asked, chatID)
 
-	return f.workspace, f.err
+	return f.workspace, f.role, f.err
 }
 
 func messageIn(chatID int64) telego.Update {
@@ -44,11 +47,17 @@ func TestAnUpdateActsInTheWorkspaceOfItsChat(t *testing.T) {
 	}}
 
 	for _, update := range []telego.Update{messageIn(chatOfTheUpdate), tap} {
-		chats := &fakeChats{workspace: workspaceH}
+		chats := &fakeChats{workspace: workspaceH, role: pluginapi.RoleEditor}
 
-		acting := resolveActingWorkspace(t.Context(), slog.New(slog.DiscardHandler), chats, update)
+		acting, role := resolveActingWorkspace(
+			t.Context(),
+			slog.New(slog.DiscardHandler),
+			chats,
+			update,
+		)
 
 		assert.Equal(t, workspaceH, acting)
+		assert.Equal(t, pluginapi.RoleEditor, role)
 		assert.Equal(t, []int64{chatOfTheUpdate}, chats.asked)
 	}
 }
@@ -59,7 +68,7 @@ func TestAnUpdateWithNoChatCarriesNoWorkspace(t *testing.T) {
 	t.Parallel()
 
 	chats := &fakeChats{workspace: workspaceH}
-	acting := resolveActingWorkspace(
+	acting, _ := resolveActingWorkspace(
 		t.Context(),
 		slog.New(slog.DiscardHandler),
 		chats,
@@ -70,7 +79,7 @@ func TestAnUpdateWithNoChatCarriesNoWorkspace(t *testing.T) {
 	assert.Empty(t, chats.asked)
 
 	failing := &fakeChats{err: errStoreDown}
-	acting = resolveActingWorkspace(
+	acting, _ = resolveActingWorkspace(
 		t.Context(), slog.New(slog.DiscardHandler), failing, messageIn(chatOfTheUpdate),
 	)
 

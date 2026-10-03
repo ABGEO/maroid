@@ -26,3 +26,17 @@ func sendMessage(ctx *th.Context, update telego.Update, text string) error {
 
 	return nil
 }
+
+// TextReply answers an update with one plain message in its chat.
+type TextReply struct{}
+
+var _ Replier = TextReply{}
+
+// Reply sends the text to the chat of the update.
+func (TextReply) Reply(ctx *th.Context, update telego.Update, text string) error {
+	if update.Message == nil {
+		return ErrNoMessage
+	}
+
+	return sendMessage(ctx, update, text)
+}

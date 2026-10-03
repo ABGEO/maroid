@@ -21,6 +21,7 @@ type MCPTool struct {
 	Name            string
 	Install         func(server *mcp.Server)
 	ActsInWorkspace bool
+	Permission      string
 }
 
 // MCPToolRegistry is a registry for Model Context Protocol tools.

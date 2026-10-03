@@ -207,6 +207,7 @@ func hubAt(
 
 	mcpHandler := handler.NewMCP(
 		cfg, slog.New(slog.DiscardHandler), oidcSvc, resolver, toolRegistry, stubMembers{},
+		probeAuthorizer(t),
 	)
 
 	// app.Run loads every plugin between the build of the handler and the build
@@ -334,7 +335,7 @@ func (stubMembers) Get(
 		return nil, errs.ErrMemberNotFound
 	}
 
-	return &model.Member{WorkspaceID: workspaceID, UserID: userID}, nil
+	return &model.Member{WorkspaceID: workspaceID, UserID: userID, Role: pluginapi.RoleViewer}, nil
 }
 
 // MCPHUB-SC-008: A tool that a plugin registers reaches an MCP client.
@@ -356,7 +357,9 @@ func TestAToolThatAPluginRegistersReachesTheClient(t *testing.T) {
 			late, err := mcpserver.NewPluginTool(
 				pluginapi.ParsePluginID(probeID),
 				pluginapi.NewTypedTool(
-					pluginapi.MCPToolMeta{Name: "late", Description: "From a plugin."},
+					pluginapi.MCPToolMeta{
+						Name: "late", Description: "From a plugin.", Permission: notesRead,
+					},
 					func(_ context.Context, _ struct{}) (struct {
 						Answer string `json:"answer"`
 					}, error,

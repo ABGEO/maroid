@@ -439,7 +439,7 @@ plant that died.
 | 5   | Write `PERMS-SC-018`, then `authz.RoleAuthorizer` and the permissions of the hub.             | `PERMS-NFR-002`                   | [x]  |
 | 6   | Write `PERMS-SC-005`, `PERMS-SC-013`, and `PERMS-SC-017`, then the role in the membership check, `workspace.Require`, and each route of section 4.3. | `PERMS-FR-005`, `PERMS-FR-015`, `PERMS-NFR-001` | [x] |
 | 7   | Write `PERMS-SC-006` to `PERMS-SC-009`, then the role in the service, `PATCH` on a membership, and the lock. | `PERMS-FR-003`, `PERMS-FR-006` to `PERMS-FR-010` | [x] |
-| 8   | The check in `workspaceMiddleware` and in `command.Wrapper`, and the refusal of `PERMS-DD-006`.      | `PERMS-FR-015`, `PERMS-FR-016`    | [ ]  |
+| 8   | The check in `workspaceMiddleware` and in `command.Wrapper`, and the refusal of `PERMS-DD-006`.      | `PERMS-FR-015`, `PERMS-FR-016`    | [x]  |
 | 9   | Declare the permissions of `jasmine` and `parking`, and name one on each entry. Build every plugin. | `PERMS-FR-012`, `BLD-004`   | [x]  |
 | 10  | Write `PERMS-SC-014`, then `permissions` on the workspace and `PluginHost.can`.               | `PERMS-FR-017`                    | [ ]  |
 | 11  | The deck: the role in each list, the select of a manager, and the hidden controls.             | `PERMS-FR-018` to `PERMS-FR-020`  | [ ]  |

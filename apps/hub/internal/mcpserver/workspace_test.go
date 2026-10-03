@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/db"
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver"
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver/tools"
@@ -42,20 +43,27 @@ CREATE POLICY mcp_test_notes_isolation ON public.mcp_test_notes
     WITH CHECK (workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::uuid);
 `
 
+const (
+	notesRead  = "notes.read"
+	notesWrite = "notes.write"
+)
+
 type notesInput struct{}
 
 type notesOutput struct {
 	Bodies []string `json:"bodies"`
 }
 
-// workspaceWorld holds Ana, a member of A and B, and workspace C of another person.
-// A holds two notes and B one.
+// workspaceWorld holds Ana, a manager of A and B, Gio, a viewer of A, and workspace C
+// of another person. A holds two notes and B one.
 type workspaceWorld struct {
 	instance *testdb.Instance
-	ana      string
+	ana, gio string
 	a, b, c  string
 	runs     *atomic.Int32
+	writes   *atomic.Int32
 	notes    registry.MCPTool
+	jot      registry.MCPTool
 }
 
 func newWorkspaceWorld(t *testing.T) *workspaceWorld {
@@ -71,25 +79,27 @@ func newWorkspaceWorld(t *testing.T) *workspaceWorld {
 	_, err = instance.DB.ExecContext(t.Context(), scopedNotes)
 	require.NoError(t, err)
 
-	insert := func(query string, args ...any) string {
+	insert := func(query string) string {
 		var id string
 
-		require.NoError(t, instance.DB.GetContext(t.Context(), &id, query, args...))
+		require.NoError(t, instance.DB.GetContext(t.Context(), &id, query))
 
 		return id
 	}
-	member := func(workspace string, user string) {
+	member := func(workspace string, user string, role pluginapi.Role) {
 		_, execErr := instance.DB.ExecContext(
 			t.Context(),
-			`INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES ($1, $2, 'manager');`,
+			`INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES ($1, $2, $3);`,
 			workspace,
 			user,
+			role,
 		)
 		require.NoError(t, execErr)
 	}
 
-	scene := &workspaceWorld{instance: instance, runs: &atomic.Int32{}}
+	scene := &workspaceWorld{instance: instance, runs: &atomic.Int32{}, writes: &atomic.Int32{}}
 	scene.ana = insert(`INSERT INTO public.users (first_name) VALUES ('Ana') RETURNING id;`)
+	scene.gio = insert(`INSERT INTO public.users (first_name) VALUES ('Gio') RETURNING id;`)
 	other := insert(`INSERT INTO public.users (first_name) VALUES ('Nino') RETURNING id;`)
 
 	for _, place := range []*string{&scene.a, &scene.b, &scene.c} {
@@ -104,16 +114,61 @@ func newWorkspaceWorld(t *testing.T) *workspaceWorld {
 	)
 	require.NoError(t, err)
 
-	member(scene.a, scene.ana)
-	member(scene.b, scene.ana)
-	member(scene.c, other)
+	member(scene.a, scene.ana, pluginapi.RoleManager)
+	member(scene.b, scene.ana, pluginapi.RoleManager)
+	member(scene.a, scene.gio, pluginapi.RoleViewer)
+	member(scene.c, other, pluginapi.RoleManager)
 
 	scene.write(t, scene.a, "first of A", "second of A")
 	scene.write(t, scene.b, "one of B")
 
 	scene.notes = scene.notesTool(t)
+	scene.jot = scene.jotTool(t)
 
 	return scene
+}
+
+// jotTool builds a tool of the probe plugin that writes, which an editor reaches,
+// and counts its runs.
+func (scene *workspaceWorld) jotTool(t *testing.T) registry.MCPTool {
+	t.Helper()
+
+	entry, err := mcpserver.NewPluginTool(probeID(t), pluginapi.NewTypedTool(
+		pluginapi.MCPToolMeta{
+			Name:        "jot",
+			Title:       "Write a note",
+			Description: "Write a note.",
+			Permission:  notesWrite,
+		},
+		func(context.Context, notesInput) (notesOutput, error) {
+			scene.writes.Add(1)
+
+			return notesOutput{}, nil
+		},
+	))
+	require.NoError(t, err)
+
+	return entry
+}
+
+// authorizer holds the permissions of the hub, and the two of the probe plugin.
+func (scene *workspaceWorld) authorizer(t *testing.T) *authz.RoleAuthorizer {
+	t.Helper()
+
+	permissions, err := authz.NewPermissionRegistry()
+	require.NoError(t, err)
+
+	probe := probeID(t)
+	require.NoError(t, permissions.Register(
+		registry.PermissionEntry{
+			Name: registry.PermissionName(probe, notesRead), Lowest: pluginapi.RoleViewer,
+		},
+		registry.PermissionEntry{
+			Name: registry.PermissionName(probe, notesWrite), Lowest: pluginapi.RoleEditor,
+		},
+	))
+
+	return authz.NewRoleAuthorizer(permissions)
 }
 
 // notesTool builds a tool of the probe plugin that lists the notes of the acting
@@ -126,6 +181,7 @@ func (scene *workspaceWorld) notesTool(t *testing.T) registry.MCPTool {
 			Name:        "notes",
 			Title:       "List the notes",
 			Description: "List the notes.",
+			Permission:  notesRead,
 		},
 		func(ctx context.Context, _ notesInput) (notesOutput, error) {
 			scene.runs.Add(1)
@@ -180,6 +236,7 @@ func (scene *workspaceWorld) sessionAs(
 		slog.New(slog.DiscardHandler),
 		toolRegistry,
 		repository.NewWorkspaceMember(scene.instance.DB),
+		scene.authorizer(t),
 	)
 	server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
 		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
@@ -310,4 +367,32 @@ func TestAModelThatDeclaresTheWorkspaceFailsTheLoad(t *testing.T) {
 // replaceName removes the name of the tool, which the error of the SDK quotes.
 func replaceName(text string, name string) string {
 	return strings.ReplaceAll(text, name, "<tool>")
+}
+
+// MCPHUB-SC-029: A viewer calls a tool whose permission needs an editor. The result
+// carries isError and names the permission and the role, and the tool runs zero times.
+// PERMS-SC-013: The tool of the probe refuses the viewer the same way as the route.
+func TestAToolOfARoleBelowItsPermissionRunsNothing(t *testing.T) {
+	t.Parallel()
+
+	scene := newWorkspaceWorld(t)
+	session := scene.sessionAs(t, scene.gio, scene.notes, scene.jot)
+
+	refused, err := session.CallTool(t.Context(), &mcp.CallToolParams{
+		Name: scene.jot.Name, Arguments: json.RawMessage(`{"workspace":"` + scene.a + `"}`),
+	})
+	require.NoError(t, err)
+	require.True(t, refused.IsError)
+
+	text, ok := refused.Content[0].(*mcp.TextContent)
+	require.True(t, ok)
+	assert.Contains(t, text.Text, "dev.maroid.probe:notes.write")
+	assert.Contains(t, text.Text, "editor")
+	assert.Zero(t, scene.writes.Load())
+
+	read, err := session.CallTool(t.Context(), &mcp.CallToolParams{
+		Name: scene.notes.Name, Arguments: json.RawMessage(`{"workspace":"` + scene.a + `"}`),
+	})
+	require.NoError(t, err)
+	assert.False(t, read.IsError, "a viewer reaches the read tool")
 }

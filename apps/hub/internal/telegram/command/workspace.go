@@ -25,7 +25,7 @@ var ErrNoMessage = errors.New("the update carries no message")
 // WorkspaceChats keeps the workspace that each chat of the acting user acts in.
 // workspace.ChatSelection satisfies it.
 type WorkspaceChats interface {
-	Acting(ctx context.Context, chatID int64) (string, error)
+	Acting(ctx context.Context, chatID int64) (string, pluginapi.Role, error)
 	Choices(ctx context.Context) ([]model.Workspace, error)
 	Select(ctx context.Context, chatID int64, workspaceID string) (*model.Workspace, error)
 }

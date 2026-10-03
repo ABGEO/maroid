@@ -407,7 +407,7 @@ value of the other.
 | 5   | Create `tools/settings_save.go`.                                                                  | `MCPHUB-FR-017`, `MCPHUB-FR-019`, `MCPHUB-DD-018`, `MCPHUB-DD-019` | [x]  |
 | 6   | Register both tools in `depresolver.MCPToolRegistry`, which resolves `SettingsService` and passes `Logger`. | `MCPHUB-DD-016`        | [x]  |
 | 7   | Check the item off in `specs/work/todo.md`.                                                       | None                            | [x]  |
-| 8   | Mark both tools as acting in a workspace, with the permissions of `PSET-DD-013`. It needs `workspaceMiddleware` of `spec-plugin-tools.md`. | `MCPHUB-FR-021`, `SEC-013` | [ ]  |
+| 8   | Mark both tools as acting in a workspace, with the permissions of `PSET-DD-013`. It needs `workspaceMiddleware` of `spec-plugin-tools.md`. | `MCPHUB-FR-021`, `SEC-013` | [x]  |
 
 `TST-002` puts the test of each step before the code of that step.
 

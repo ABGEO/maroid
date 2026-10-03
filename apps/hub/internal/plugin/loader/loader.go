@@ -79,6 +79,7 @@ func New(
 				capabilityRegistry,
 				workspacePrompter,
 				permissionRegistry,
+				authorizer,
 			),
 			registrar.NewTelegramConversationRegistrar(
 				telegramConversationRegistry,

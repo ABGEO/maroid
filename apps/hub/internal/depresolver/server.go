@@ -349,5 +349,12 @@ func (c *Container) buildMCPHandler(
 		return nil, err
 	}
 
-	return handler.NewMCP(cfg, logger, oidcSvc, identityResolver, toolRegistry, members), nil
+	authorizer, err := c.Authorizer()
+	if err != nil {
+		return nil, err
+	}
+
+	return handler.NewMCP(
+		cfg, logger, oidcSvc, identityResolver, toolRegistry, members, authorizer,
+	), nil
 }

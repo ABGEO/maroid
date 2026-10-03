@@ -8,27 +8,28 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 
 	teleupdate "github.com/abgeo/maroid/apps/hub/internal/telegram/update"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // ChatWorkspaces answers the workspace that a chat of the acting user acts in.
 type ChatWorkspaces interface {
-	Acting(ctx context.Context, chatID int64) (string, error)
+	Acting(ctx context.Context, chatID int64) (string, pluginapi.Role, error)
 }
 
-// ActingWorkspace returns a middleware that puts the workspace of the chat into the
-// context of the update. An update with no workspace still reaches the commands of
+// ActingWorkspace returns a middleware that puts the workspace of the chat and the
+// role of the sender in it into the context of the update. An update with no workspace still reaches the commands of
 // the hub, and the wrapper of a plugin command refuses it.
 func ActingWorkspace(logger *slog.Logger, chats ChatWorkspaces) th.Handler {
 	return func(ctx *th.Context, update telego.Update) error {
-		acting := resolveActingWorkspace(ctx, logger, chats, update)
+		acting, role := resolveActingWorkspace(ctx, logger, chats, update)
 		if acting == "" {
 			return ctx.Next(update)
 		}
 
-		return ctx.WithContext(
-			pluginapi.ContextWithActingWorkspace(ctx.Context(), acting),
-		).Next(update)
+		return ctx.WithContext(workspace.ContextWithRole(
+			pluginapi.ContextWithActingWorkspace(ctx.Context(), acting), role,
+		)).Next(update)
 	}
 }
 
@@ -37,13 +38,13 @@ func resolveActingWorkspace(
 	logger *slog.Logger,
 	chats ChatWorkspaces,
 	update telego.Update,
-) string {
+) (string, pluginapi.Role) {
 	chatID, ok := teleupdate.ChatOf(update)
 	if !ok {
-		return ""
+		return "", ""
 	}
 
-	acting, err := chats.Acting(ctx, chatID)
+	acting, role, err := chats.Acting(ctx, chatID)
 	if err != nil {
 		logger.ErrorContext(
 			ctx,
@@ -52,8 +53,8 @@ func resolveActingWorkspace(
 			slog.Any("error", err),
 		)
 
-		return ""
+		return "", ""
 	}
 
-	return acting
+	return acting, role
 }

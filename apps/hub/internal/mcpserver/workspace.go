@@ -9,9 +9,11 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -25,21 +27,31 @@ const (
 )
 
 // workspaceMiddleware reads the workspace of each call of a tool that acts in one,
-// checks the membership of the acting user, and puts the workspace into the context.
-// A call that names no workspace reaches the tool, whose schema then refuses it.
+// checks the membership of the acting user and the permission of the tool, and puts
+// the workspace and the role into the context. A call that names no workspace reaches
+// the tool, whose schema then refuses it.
 func workspaceMiddleware(
 	tools []registry.MCPTool,
 	members repository.WorkspaceMemberRepository,
+	authorizer authz.Authorizer,
 ) mcp.Middleware {
-	inWorkspace := make(map[string]bool, len(tools))
+	inWorkspace := make(map[string]registry.MCPTool, len(tools))
+
 	for _, tool := range tools {
-		inWorkspace[tool.Name] = tool.ActsInWorkspace
+		if tool.ActsInWorkspace {
+			inWorkspace[tool.Name] = tool
+		}
 	}
 
 	return func(next mcp.MethodHandler) mcp.MethodHandler {
 		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
 			call, ok := req.(*mcp.CallToolRequest)
-			if method != callToolMethod || !ok || !inWorkspace[call.Params.Name] {
+			if method != callToolMethod || !ok {
+				return next(ctx, method, req)
+			}
+
+			tool, guarded := inWorkspace[call.Params.Name]
+			if !guarded {
 				return next(ctx, method, req)
 			}
 
@@ -48,12 +60,36 @@ func workspaceMiddleware(
 				return next(ctx, method, req)
 			}
 
-			if !isMember(ctx, members, workspaceID) {
+			role, member := roleIn(ctx, members, workspaceID)
+			if !member {
 				return nil, unknownTool(call.Params.Name)
 			}
 
-			return next(pluginapi.ContextWithActingWorkspace(ctx, workspaceID), method, req)
+			allowed, lowest, err := authorizer.Allowed(role, tool.Permission)
+			if err != nil {
+				return nil, fmt.Errorf("checking the permission of the tool: %w", err)
+			}
+
+			if !allowed {
+				return refusal(tool.Permission, lowest), nil
+			}
+
+			ctx = workspace.ContextWithRole(
+				pluginapi.ContextWithActingWorkspace(ctx, workspaceID),
+				role,
+			)
+
+			return next(ctx, method, req)
 		}
+	}
+}
+
+// refusal is the result of a call whose role does not hold the permission of the
+// tool. A member knows the workspace, so the result names what they lack.
+func refusal(permission string, lowest pluginapi.Role) *mcp.CallToolResult {
+	return &mcp.CallToolResult{
+		IsError: true,
+		Content: []mcp.Content{&mcp.TextContent{Text: authz.Refusal(permission, lowest)}},
 	}
 }
 
@@ -70,18 +106,21 @@ func workspaceOf(arguments json.RawMessage) (string, bool) {
 	return workspaceID, ok
 }
 
-func isMember(
+func roleIn(
 	ctx context.Context,
 	members repository.WorkspaceMemberRepository,
 	workspaceID string,
-) bool {
+) (pluginapi.Role, bool) {
 	if uuid.Validate(workspaceID) != nil {
-		return false
+		return "", false
 	}
 
-	_, err := members.Get(ctx, workspaceID, pluginapi.ActingUserFromContext(ctx))
+	member, err := members.Get(ctx, workspaceID, pluginapi.ActingUserFromContext(ctx))
+	if err != nil {
+		return "", false
+	}
 
-	return err == nil
+	return member.Role, true
 }
 
 // unknownTool is the error that the SDK answers for a tool it does not hold, so a

@@ -135,7 +135,10 @@ func newRegistrars() *registrars {
 			nil,
 			authz.NewRoleAuthorizer(set.permissions),
 		),
-		registrar.NewTelegramCommandRegistrar(set.commands, set.capabilities, nil, set.permissions),
+		registrar.NewTelegramCommandRegistrar(
+			set.commands, set.capabilities, nil, set.permissions,
+			authz.NewRoleAuthorizer(set.permissions),
+		),
 		registrar.NewMCPToolRegistrar(set.tools, set.capabilities, set.permissions),
 	}
 
