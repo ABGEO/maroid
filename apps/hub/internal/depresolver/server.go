@@ -134,6 +134,15 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		}
 	}
 
+	workspaceHandler, err := c.buildWorkspaceHandler()
+	if err != nil {
+		return err
+	}
+
+	if err = reg.Register("workspace", workspaceHandler); err != nil {
+		return fmt.Errorf("register workspace handler: %w", err)
+	}
+
 	return nil
 }
 
@@ -197,6 +206,43 @@ func (c *Container) buildHandlers() (map[string]handler.Handler, error) {
 		),
 		"mcp": mcpHandler,
 	}, nil
+}
+
+// buildWorkspaceHandler resolves every dependency of the handler of the workspaces.
+func (c *Container) buildWorkspaceHandler() (*handler.Workspace, error) {
+	verifier, err := c.TokenVerifier()
+	if err != nil {
+		return nil, err
+	}
+
+	identityResolver, err := c.IdentityResolver()
+	if err != nil {
+		return nil, err
+	}
+
+	idempotencyStore, err := c.IdempotencyStore()
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := c.WorkspaceMemberRepository()
+	if err != nil {
+		return nil, err
+	}
+
+	service, err := c.WorkspaceService()
+	if err != nil {
+		return nil, err
+	}
+
+	return handler.NewWorkspace(
+		c.Logger(),
+		verifier,
+		identityResolver,
+		idempotencyStore,
+		members,
+		service,
+	), nil
 }
 
 // buildAuthHandler resolves every dependency of the auth handler.

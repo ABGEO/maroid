@@ -23,6 +23,7 @@ type WorkspaceMemberRepository interface {
 	Get(ctx context.Context, workspaceID string, userID string) (*model.Member, error)
 	List(ctx context.Context, workspaceID string) ([]model.Member, error)
 	Remove(ctx context.Context, tx *sqlx.Tx, workspaceID string, userID string) error
+	Candidates(ctx context.Context, workspaceID string) ([]model.User, error)
 }
 
 // WorkspaceMember is a SQL based implementation of WorkspaceMemberRepository.
@@ -139,4 +140,35 @@ func (r *WorkspaceMember) Remove(
 	}
 
 	return nil
+}
+
+// Candidates retrieves every active user record that is no member of the
+// workspace, ordered by the last name, then by the first name.
+func (r *WorkspaceMember) Candidates(
+	ctx context.Context,
+	workspaceID string,
+) ([]model.User, error) {
+	entities := []model.User{}
+
+	query := `
+		SELECT ` + userColumnsOfU + `
+		FROM public.users u
+		WHERE u.status = $2
+		  AND NOT EXISTS (
+			SELECT 1 FROM public.workspace_members m
+			WHERE m.workspace_id = $1 AND m.user_id = u.id
+		  )
+		ORDER BY u.last_name NULLS LAST, u.first_name NULLS LAST, u.id;`
+
+	if err := r.db.SelectContext(
+		ctx,
+		&entities,
+		query,
+		workspaceID,
+		model.StatusActive,
+	); err != nil {
+		return nil, fmt.Errorf("listing the candidates of a Workspace: %w", err)
+	}
+
+	return entities, nil
 }

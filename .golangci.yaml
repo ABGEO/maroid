@@ -54,6 +54,8 @@ linters:
         - auth.TokenVerifier
         - secret.Cipher
         - settings.Service
+        - repository.WorkspaceMemberRepository
+        - workspace.Service
         - pluginapi.SettingsProvider
 
     tagliatelle:

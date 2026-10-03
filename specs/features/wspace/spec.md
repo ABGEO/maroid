@@ -104,7 +104,8 @@ type Service interface {
     Create(ctx context.Context, name string) (*model.Workspace, error)
     ListOfUser(ctx context.Context) ([]model.Workspace, error)
     Get(ctx context.Context) (*model.Workspace, error)
-    Rename(ctx context.Context, name string, version time.Time) (*model.Workspace, error)
+    // Rename lands with no condition when version is nil, as API-007 gives.
+    Rename(ctx context.Context, name string, version *time.Time) (*model.Workspace, error)
     Members(ctx context.Context) ([]model.Member, error)
     Member(ctx context.Context, userID string) (*model.Member, error)
     Candidates(ctx context.Context) ([]model.User, error)
@@ -318,7 +319,7 @@ ADR to write and later to remove. Roles in this feature. The owner moved them ou
 | 2   | Write the migration of section 4.2, with `WSPACE-SC-011`.                                    | `WSPACE-FR-026`, `WSPACE-INV-002`            | [x]  |
 | 3   | Write `model.Workspace`, `model.Member`, and the two repositories.                           | `WSPACE-FR-001` to `WSPACE-FR-012`           | [x]  |
 | 4   | Write `WSPACE-SC-009`, `WSPACE-SC-010`, and `WSPACE-SC-012`, then `workspace.Middleware`.    | `WSPACE-FR-013`, `WSPACE-FR-014`, `WSPACE-NFR-001` | [x]  |
-| 5   | Write `WSPACE-SC-001` to `WSPACE-SC-008`, then `workspace.Service`, then `api.yaml` and `handler.Workspace`. | `WSPACE-FR-001` to `WSPACE-FR-012` | [ ]  |
+| 5   | Write `WSPACE-SC-001` to `WSPACE-SC-008`, then `workspace.Service`, then `api.yaml` and `handler.Workspace`. | `WSPACE-FR-001` to `WSPACE-FR-012` | [x]  |
 | 6   | Carry out steps 13 and 14 of `features/ident/spec.md`: the acting workspace in `libs/pluginapi`, `WithScopeTx`, and the move of the routes of a plugin. Build every plugin. | `WSPACE-FR-013`, `BLD-004` | [ ]  |
 | 7   | Carry out steps 13 and 15 of `features/pset/spec.md`, with the membership check alone.      | `WSPACE-FR-013`                              | [ ]  |
 | 8   | Carry out step 15 of `features/extid/spec.md`: the first workspace of an invitation.         | `EXTID-FR-018`                               | [ ]  |

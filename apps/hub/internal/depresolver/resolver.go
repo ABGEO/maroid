@@ -29,6 +29,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/conversation"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/notifier/dispatcher"
 	notifierregistry "github.com/abgeo/maroid/libs/notifier/registry"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
@@ -48,6 +49,8 @@ type Resolver interface {
 	UserRepository() (repository.UserRepository, error)
 	IdentityRepository() (repository.IdentityRepository, error)
 	InvitationRepository() (repository.InvitationRepository, error)
+	WorkspaceMemberRepository() (repository.WorkspaceMemberRepository, error)
+	WorkspaceService() (workspace.Service, error)
 	AuthFlowRepository() (repository.AuthFlowRepository, error)
 	IdentityResolver() (auth.IdentityResolver, error)
 	AuthService() (*auth.Service, error)
@@ -121,6 +124,18 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance repository.InvitationRepository
+	}
+
+	workspaceMemberRepository struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance repository.WorkspaceMemberRepository
+	}
+
+	workspaceService struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance workspace.Service
 	}
 
 	authFlowRepository struct {

@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 )
 
 const (
@@ -22,6 +24,12 @@ type WorkspaceRepository interface {
 	Create(ctx context.Context, tx *sqlx.Tx, name string) (*model.Workspace, error)
 	GetByID(ctx context.Context, id string) (*model.Workspace, error)
 	ListOfUser(ctx context.Context, userID string) ([]model.Workspace, error)
+	Rename(
+		ctx context.Context,
+		id string,
+		name string,
+		ifMatch *time.Time,
+	) (*model.Workspace, error)
 }
 
 // Workspace is a SQL based implementation of WorkspaceRepository.
@@ -87,4 +95,36 @@ func (r *Workspace) ListOfUser(ctx context.Context, userID string) ([]model.Work
 	}
 
 	return entities, nil
+}
+
+// Rename sets the name of the workspace. With a validator it changes the row only
+// while the row still carries that moment, and answers precondition.ErrModified
+// when the row moved since.
+func (r *Workspace) Rename(
+	ctx context.Context,
+	id string,
+	name string,
+	ifMatch *time.Time,
+) (*model.Workspace, error) {
+	var entity model.Workspace
+
+	query := `
+		UPDATE public.workspaces SET name = $2
+		WHERE id = $1 AND ($3::timestamptz IS NULL OR updated_at = $3)
+		RETURNING ` + workspaceColumns + `;`
+
+	err := r.db.GetContext(ctx, &entity, query, id, name, ifMatch)
+	if errors.Is(err, sql.ErrNoRows) {
+		if ifMatch != nil {
+			return nil, fmt.Errorf("renaming a Workspace: %w", precondition.ErrModified)
+		}
+
+		return nil, fmt.Errorf("renaming a Workspace: %w", errs.ErrWorkspaceNotFound)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("renaming a Workspace: %w", err)
+	}
+
+	return &entity, nil
 }
