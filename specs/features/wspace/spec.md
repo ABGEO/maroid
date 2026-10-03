@@ -325,7 +325,7 @@ ADR to write and later to remove. Roles in this feature. The owner moved them ou
 | 6   | Carry out steps 13 and 14 of `features/ident/spec.md`: the acting workspace in `libs/pluginapi`, `WithScopeTx`, and the move of the routes of a plugin. Build every plugin. | `WSPACE-FR-013`, `BLD-004` | [x]  |
 | 7   | Carry out steps 13 and 15 of `features/pset/spec.md`, with the membership check alone.      | `WSPACE-FR-013`                              | [ ]  |
 | 8   | Carry out step 15 of `features/extid/spec.md`: the first workspace of an invitation.         | `EXTID-FR-018`                               | [x]  |
-| 9   | Carry out `spec-clients.md`: the bot, the MCP server, and the deck.                         | `WSPACE-FR-015` to `WSPACE-FR-025`           | [ ]  |
+| 9   | Carry out `spec-clients.md`: the bot, the MCP server, and the deck.                         | `WSPACE-FR-015` to `WSPACE-FR-025`           | [x]  |
 | 10  | Before a release, confirm that `PERMS` is done.                                              | `WSPACE-DD-005`                              | [ ]  |
 
 ## 8. Out of scope for this specification

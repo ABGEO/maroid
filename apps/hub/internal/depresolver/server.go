@@ -332,5 +332,10 @@ func (c *Container) buildMCPHandler(
 		return nil, err
 	}
 
-	return handler.NewMCP(cfg, logger, oidcSvc, identityResolver, toolRegistry), nil
+	members, err := c.WorkspaceMemberRepository()
+	if err != nil {
+		return nil, err
+	}
+
+	return handler.NewMCP(cfg, logger, oidcSvc, identityResolver, toolRegistry, members), nil
 }

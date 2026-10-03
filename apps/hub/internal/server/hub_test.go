@@ -111,7 +111,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store, members,
 		),
 		handler.NewWorkspace(logger, verifier, resolver, store, members, workspaces),
-		handler.NewMCP(cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry()),
+		handler.NewMCP(cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry(), members),
 		handler.NewPluginWrapper(
 			logger, verifier, resolver, store, members,
 			pluginapi.ParsePluginID(probePlugin), probeRoutes(t, instance.DB, held),
@@ -190,7 +190,7 @@ func mountWebhook(
 	require.NoError(t, err)
 
 	_, err = telegram.NewUpdatesHandler(
-		cfg, logger, bot, router, registry.NewTelegramCommandRegistry(), nil, resolver,
+		cfg, logger, bot, router, registry.NewTelegramCommandRegistry(), nil, resolver, nil,
 	)
 	require.NoError(t, err)
 }

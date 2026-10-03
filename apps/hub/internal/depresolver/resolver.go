@@ -51,6 +51,7 @@ type Resolver interface {
 	InvitationRepository() (repository.InvitationRepository, error)
 	WorkspaceMemberRepository() (repository.WorkspaceMemberRepository, error)
 	WorkspaceService() (workspace.Service, error)
+	ChatSelection() (*workspace.ChatSelection, error)
 	AuthFlowRepository() (repository.AuthFlowRepository, error)
 	IdentityResolver() (auth.IdentityResolver, error)
 	AuthService() (*auth.Service, error)
@@ -136,6 +137,12 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance workspace.Service
+	}
+
+	chatSelection struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *workspace.ChatSelection
 	}
 
 	authFlowRepository struct {

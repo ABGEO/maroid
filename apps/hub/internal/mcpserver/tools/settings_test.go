@@ -16,6 +16,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/db"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/mcpserver"
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver/tools"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
@@ -25,8 +26,9 @@ import (
 )
 
 const (
-	probePluginID   = "dev.maroid.probe"
-	unknownPluginID = "dev.maroid.unknown"
+	harnessWorkspace = "01998aa0-1111-7000-8000-0000000000aa"
+	probePluginID    = "dev.maroid.probe"
+	unknownPluginID  = "dev.maroid.unknown"
 
 	keyEmail    = "email"
 	keyPassword = "password"
@@ -147,6 +149,30 @@ func actingUser(user string) mcp.Middleware {
 	}
 }
 
+// inWorkspace adds the member workspace that a tool which acts in one requires. The
+// harness runs no membership check, so any identifier serves.
+func inWorkspace(entry registry.MCPTool, arguments string) json.RawMessage {
+	if !entry.ActsInWorkspace {
+		return json.RawMessage(arguments)
+	}
+
+	var named map[string]any
+	if json.Unmarshal([]byte(arguments), &named) != nil {
+		return json.RawMessage(arguments)
+	}
+
+	if _, given := named[mcpserver.WorkspaceArgument]; !given {
+		named[mcpserver.WorkspaceArgument] = harnessWorkspace
+	}
+
+	encoded, err := json.Marshal(named)
+	if err != nil {
+		return json.RawMessage(arguments)
+	}
+
+	return encoded
+}
+
 func call(
 	t *testing.T,
 	entry registry.MCPTool,
@@ -157,7 +183,7 @@ func call(
 
 	result, err := session(t, entry, user).CallTool(t.Context(), &mcp.CallToolParams{
 		Name:      entry.Name,
-		Arguments: json.RawMessage(arguments),
+		Arguments: inWorkspace(entry, arguments),
 	})
 	require.NoError(t, err)
 

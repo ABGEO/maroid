@@ -4,7 +4,7 @@ title: The settings tools of the hub
 type: spec
 status: approved
 created: 2026-09-21
-updated: 2026-10-01
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-09-21
 constrained_by: [SEC, OWN, LOG, ARC, PLG, GO, TST]
@@ -47,7 +47,7 @@ changes a secret field, and it names the page of the deck that fills one.
 | `ARC-008` | Architecture     | Both tools take a plugin identifier from the call and read `settings.Service`. Neither names a plugin. |
 | `PLG-011` | Plugin model     | `MCPToolRegistry.Register` refuses a second tool under one name. The two names are bare, and a tool of a plugin carries its plugin identifier, so neither can collide. |
 | `OWN-006` | Record ownership | `database.WithScopeTx` sets `app.user_id` and `app.workspace_id` before the first statement of a read and of a save. The policy filters each row. |
-| `OWN-007` | Record ownership | `actingUserMiddleware` puts the acting user, and `workspaceTool` the acting workspace, into the context of the call. Both tools pass that context to the service. |
+| `OWN-007` | Record ownership | `actingUserMiddleware` puts the acting user, and `workspaceMiddleware` the acting workspace, into the context of the call. Both tools pass that context to the service. |
 | `OWN-005` | Record ownership | `repository.PluginSettings` names no workspace and no user in a statement. The policy sets each scope column. |
 | `SEC-013` | Security         | `get_plugin_settings` declares `settings.read`, and `save_plugin_settings` declares `settings.write`. `PSET-DD-013` gives both. |
 | `LOG-008` | Logging          | `MCPHUB-DD-020` maps every failure to a text that names a field and never a value. |
@@ -109,7 +109,7 @@ func (m *Manager) ChangedSecrets(pluginID string, input map[string]any) ([]strin
 // apps/hub/internal/mcpserver/settings_page.go
 
 // SettingsPath names the page where a person fills the settings of a plugin.
-func SettingsPath(pluginID string) string
+func SettingsPath(workspaceID string, pluginID string) string
 ```
 
 ```go
@@ -407,7 +407,7 @@ value of the other.
 | 5   | Create `tools/settings_save.go`.                                                                  | `MCPHUB-FR-017`, `MCPHUB-FR-019`, `MCPHUB-DD-018`, `MCPHUB-DD-019` | [x]  |
 | 6   | Register both tools in `depresolver.MCPToolRegistry`, which resolves `SettingsService` and passes `Logger`. | `MCPHUB-DD-016`        | [x]  |
 | 7   | Check the item off in `specs/work/todo.md`.                                                       | None                            | [x]  |
-| 8   | Mark both tools as acting in a workspace, with the permissions of `PSET-DD-013`. It needs `workspaceTool` of `spec-plugin-tools.md`. | `MCPHUB-FR-021`, `SEC-013` | [ ]  |
+| 8   | Mark both tools as acting in a workspace, with the permissions of `PSET-DD-013`. It needs `workspaceMiddleware` of `spec-plugin-tools.md`. | `MCPHUB-FR-021`, `SEC-013` | [ ]  |
 
 `TST-002` puts the test of each step before the code of that step.
 

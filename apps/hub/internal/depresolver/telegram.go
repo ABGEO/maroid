@@ -40,50 +40,7 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 	var err error
 
 	c.telegramUpdatesHandler.once.Do(func() {
-		bot, botErr := c.TelegramBot()
-		if botErr != nil {
-			err = botErr
-
-			return
-		}
-
-		commandsRegistry, regErr := c.TelegramCommandRegistry()
-		if regErr != nil {
-			err = regErr
-
-			return
-		}
-
-		telegramConversationEngine, telegramConversationEngineErr := c.TelegramConversationEngine()
-		if telegramConversationEngineErr != nil {
-			err = telegramConversationEngineErr
-
-			return
-		}
-
-		router, routerErr := c.HTTPRouter()
-		if routerErr != nil {
-			err = routerErr
-
-			return
-		}
-
-		identityResolver, identityResolverErr := c.IdentityResolver()
-		if identityResolverErr != nil {
-			err = identityResolverErr
-
-			return
-		}
-
-		c.telegramUpdatesHandler.instance, err = telegram.NewUpdatesHandler(
-			c.Config(),
-			c.Logger(),
-			bot,
-			router,
-			commandsRegistry,
-			telegramConversationEngine,
-			identityResolver,
-		)
+		c.telegramUpdatesHandler.instance, err = c.buildTelegramUpdatesHandler()
 	})
 
 	if err != nil {
@@ -93,6 +50,55 @@ func (c *Container) TelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
 	}
 
 	return c.telegramUpdatesHandler.instance, nil
+}
+
+// buildTelegramUpdatesHandler resolves every dependency of the updates handler.
+func (c *Container) buildTelegramUpdatesHandler() (*telegram.ChannelHandler, error) {
+	bot, err := c.TelegramBot()
+	if err != nil {
+		return nil, err
+	}
+
+	commandsRegistry, err := c.TelegramCommandRegistry()
+	if err != nil {
+		return nil, err
+	}
+
+	conversationEngine, err := c.TelegramConversationEngine()
+	if err != nil {
+		return nil, err
+	}
+
+	router, err := c.HTTPRouter()
+	if err != nil {
+		return nil, err
+	}
+
+	identityResolver, err := c.IdentityResolver()
+	if err != nil {
+		return nil, err
+	}
+
+	chats, err := c.ChatSelection()
+	if err != nil {
+		return nil, err
+	}
+
+	handler, err := telegram.NewUpdatesHandler(
+		c.Config(),
+		c.Logger(),
+		bot,
+		router,
+		commandsRegistry,
+		conversationEngine,
+		identityResolver,
+		chats,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("building the telegram updates handler: %w", err)
+	}
+
+	return handler, nil
 }
 
 // TelegramCommandRegistry initializes and returns the Telegram command registry.
@@ -137,8 +143,14 @@ func (c *Container) getTelegramCommands(
 		return nil, err
 	}
 
+	chats, err := c.ChatSelection()
+	if err != nil {
+		return nil, err
+	}
+
 	return []pluginapi.TelegramCommand{
 		tgcommand.NewHelp(bot, commandRegistry),
 		tgcommand.NewStart(commandRegistry),
+		tgcommand.NewWorkspace(chats),
 	}, nil
 }

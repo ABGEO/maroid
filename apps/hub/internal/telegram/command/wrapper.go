@@ -9,19 +9,29 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
-// Wrapper wraps a TelegramCommand to modify its Meta information with plugin ID.
+// noWorkspaceText asks for the pick that a command of a plugin needs.
+const noWorkspaceText = "Pick a workspace first"
+
+// Wrapper wraps a TelegramCommand to modify its Meta information with plugin ID, and
+// runs it only in an acting workspace.
 type Wrapper struct {
 	cmd      pluginapi.TelegramCommand
 	pluginID *pluginapi.PluginID
+	prompter Prompter
 }
 
 var _ pluginapi.TelegramCommand = (*Wrapper)(nil)
 
 // NewWrapper creates a wrapper for given command.
-func NewWrapper(cmd pluginapi.TelegramCommand, pluginID *pluginapi.PluginID) *Wrapper {
+func NewWrapper(
+	cmd pluginapi.TelegramCommand,
+	pluginID *pluginapi.PluginID,
+	prompter Prompter,
+) *Wrapper {
 	return &Wrapper{
 		cmd:      cmd,
 		pluginID: pluginID,
+		prompter: prompter,
 	}
 }
 
@@ -39,7 +49,12 @@ func (w *Wrapper) Validate(update telego.Update) error {
 	return w.cmd.Validate(update) //nolint:wrapcheck
 }
 
-// Handle executes the underlying command's Handle method.
+// Handle executes the underlying command's Handle method in the acting workspace.
+// An update with no acting workspace asks the person to pick one, and runs nothing.
 func (w *Wrapper) Handle(ctx *th.Context, update telego.Update) error {
+	if pluginapi.ActingWorkspaceFromContext(ctx) == "" {
+		return w.prompter.Prompt(ctx, update, noWorkspaceText) //nolint:wrapcheck
+	}
+
 	return w.cmd.Handle(ctx, update) //nolint:wrapcheck
 }

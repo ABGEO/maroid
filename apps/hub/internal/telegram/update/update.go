@@ -25,3 +25,16 @@ func SentFrom(update telego.Update) *telego.User {
 		return nil
 	}
 }
+
+// ChatOf returns the identifier of the chat of a message or of a tap on a button.
+// It reports false for an update that belongs to no chat.
+func ChatOf(update telego.Update) (int64, bool) {
+	switch {
+	case update.Message != nil:
+		return update.Message.Chat.ID, true
+	case update.CallbackQuery != nil && update.CallbackQuery.Message != nil:
+		return update.CallbackQuery.Message.GetChat().ID, true
+	default:
+		return 0, false
+	}
+}

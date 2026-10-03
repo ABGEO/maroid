@@ -17,8 +17,9 @@ const savePluginSettingsName = "save_plugin_settings"
 
 // SavePluginSettingsInput carries the values to store.
 type SavePluginSettingsInput struct {
-	Plugin string         `json:"plugin" jsonschema:"the plugin identifier"`
-	Values map[string]any `json:"values" jsonschema:"one member for each field to store"`
+	Workspace string         `json:"workspace" jsonschema:"the workspace of the call, from list_workspaces"`
+	Plugin    string         `json:"plugin"    jsonschema:"the plugin identifier"`
+	Values    map[string]any `json:"values"    jsonschema:"one member for each field to store"`
 }
 
 // SavePluginSettingsOutput reports the settings that the row holds after the save.
@@ -40,12 +41,13 @@ func NewSavePluginSettings(logger *slog.Logger, settingsSvc settings.Service) re
 	tool := &savePluginSettings{settingsAccess{logger: logger, settingsSvc: settingsSvc}}
 
 	return registry.MCPTool{
-		Name: savePluginSettingsName,
+		Name:            savePluginSettingsName,
+		ActsInWorkspace: true,
 		Install: func(server *mcp.Server) {
 			mcp.AddTool(server, &mcp.Tool{
 				Name:  savePluginSettingsName,
 				Title: "Store the settings of a plugin",
-				Description: "Store the settings of one plugin for the acting user. A field " +
+				Description: "Store the settings of one plugin in a workspace. A field " +
 					"that this call does not name keeps its stored value, and a null " +
 					"removes it. A secret field changes in the deck only, and a call that " +
 					"changes one stores nothing.",
@@ -97,6 +99,6 @@ func (t *savePluginSettings) refuseSecrets(
 		"%w: %s. Fill it at %s",
 		errSecretRefused,
 		strings.Join(changed, ", "),
-		mcpserver.SettingsPath(input.Plugin),
+		mcpserver.SettingsPath(input.Workspace, input.Plugin),
 	)
 }

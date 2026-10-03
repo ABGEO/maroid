@@ -32,7 +32,7 @@ This file holds the three clients that name a workspace. `SPC-001` divides them.
 
 | Table                      | Schema   | Scope            | Migration                                                   | Realizes                         |
 | -------------------------- | -------- | ---------------- | ----------------------------------------------------------- | -------------------------------- |
-| `telegram_chats` | `public` | scoped to a user | `20261001100100_table_telegram_chats_create.up.sql` | `WSPACE-FR-015`, `WSPACE-FR-016`, `WSPACE-FR-019` |
+| `telegram_chats` | `public` | scoped to a user | `20261003110000_table_telegram_chats_create.up.sql` | `WSPACE-FR-015`, `WSPACE-FR-016`, `WSPACE-FR-019` |
 
 ```sql
 CREATE TABLE public.telegram_chats
@@ -70,12 +70,13 @@ longer yours" and writes nothing.
 
 | Path                                                          | Action | Holds                                               |
 | ------------------------------------------------------------- | ------ | --------------------------------------------------- |
-| `apps/hub/db/migrations/20261001100100_table_telegram_chats_create.*` | create | The table and its policy             |
+| `apps/hub/db/migrations/20261003110000_table_telegram_chats_create.*` | create | The table and its policy             |
 | `apps/hub/internal/model/telegram_chat.go`                    | create | `model.TelegramChat`                                |
 | `apps/hub/internal/repository/telegram_chat.go`               | create | `repository.TelegramChatRepository`, `repository.TelegramChat` |
 | `apps/hub/internal/telegram/command/workspace.go`             | create | `command.Workspace`, `command.WorkspaceSelect`      |
+| `apps/hub/internal/workspace/chat.go`                         | create | `workspace.ChatSelection`: the rule of `WSPACE-DD-006`, the selection of a tap, and the memberships for the buttons |
 | `apps/hub/internal/telegram/middleware/acting_workspace.go`   | create | `middleware.ActingWorkspace`                        |
-| `apps/hub/internal/telegram/command/wrapper.go`               | change | `Wrapper.Handle` refuses an update with no acting workspace |
+| `apps/hub/internal/telegram/command/wrapper.go`               | change | `Wrapper.Handle` refuses an update with no acting workspace, and asks `command.Workspace` for the buttons |
 | `apps/hub/internal/telegram/update/update.go`                 | change | `ChatOf`, the chat of a message or of a callback    |
 | `apps/hub/internal/telegram/handler.go`                       | change | The middleware after `ActingUser`, and the callback handler |
 

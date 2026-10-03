@@ -79,3 +79,40 @@ func (c *Container) WorkspaceService() (workspace.Service, error) {
 
 	return c.workspaceService.instance, nil
 }
+
+// ChatSelection initializes and returns the selection of the workspace of each chat.
+func (c *Container) ChatSelection() (*workspace.ChatSelection, error) {
+	c.chatSelection.mu.Lock()
+	defer c.chatSelection.mu.Unlock()
+
+	var err error
+
+	c.chatSelection.once.Do(func() {
+		var (
+			dbInstance *sqlx.DB
+			members    repository.WorkspaceMemberRepository
+		)
+
+		if dbInstance, err = c.Database(); err != nil {
+			return
+		}
+
+		if members, err = c.WorkspaceMemberRepository(); err != nil {
+			return
+		}
+
+		c.chatSelection.instance = workspace.NewChatSelection(
+			dbInstance,
+			repository.NewWorkspace(dbInstance),
+			members,
+		)
+	})
+
+	if err != nil {
+		c.chatSelection.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing chat selection: %w", err)
+	}
+
+	return c.chatSelection.instance, nil
+}

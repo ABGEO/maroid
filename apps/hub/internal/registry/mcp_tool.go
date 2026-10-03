@@ -18,8 +18,9 @@ import (
 // so mcp.AddTool still infers the JSON schema of the tool from the Go types while
 // this registry stores one uniform value.
 type MCPTool struct {
-	Name    string
-	Install func(server *mcp.Server)
+	Name            string
+	Install         func(server *mcp.Server)
+	ActsInWorkspace bool
 }
 
 // MCPToolRegistry is a registry for Model Context Protocol tools.

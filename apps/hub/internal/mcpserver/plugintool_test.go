@@ -14,8 +14,10 @@ import (
 )
 
 const (
-	probePluginID = "dev.maroid.probe"
-	waterToolName = "water"
+	testVersion      = "0.0.1"
+	harnessWorkspace = "01998aa0-1111-7000-8000-0000000000aa"
+	probePluginID    = "dev.maroid.probe"
+	waterToolName    = "water"
 )
 
 type plantInput struct {
@@ -52,10 +54,10 @@ func waterTool(
 func session(t *testing.T, entry registry.MCPTool) *mcp.ClientSession {
 	t.Helper()
 
-	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: "0.0.1"}, nil)
+	server := mcp.NewServer(&mcp.Implementation{Name: "test", Version: testVersion}, nil)
 	entry.Install(server)
 
-	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "0.0.1"}, nil)
+	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: testVersion}, nil)
 	serverTransport, clientTransport := mcp.NewInMemoryTransports()
 
 	serverSession, err := server.Connect(t.Context(), serverTransport, nil)
@@ -71,12 +73,36 @@ func session(t *testing.T, entry registry.MCPTool) *mcp.ClientSession {
 	return clientSession
 }
 
+// inWorkspace adds the member workspace that a tool which acts in one requires. The
+// harness runs no membership check, so any identifier serves.
+func inWorkspace(entry registry.MCPTool, arguments string) json.RawMessage {
+	if !entry.ActsInWorkspace {
+		return json.RawMessage(arguments)
+	}
+
+	var named map[string]any
+	if json.Unmarshal([]byte(arguments), &named) != nil {
+		return json.RawMessage(arguments)
+	}
+
+	if _, given := named[mcpserver.WorkspaceArgument]; !given {
+		named[mcpserver.WorkspaceArgument] = harnessWorkspace
+	}
+
+	encoded, err := json.Marshal(named)
+	if err != nil {
+		return json.RawMessage(arguments)
+	}
+
+	return encoded
+}
+
 func call(t *testing.T, entry registry.MCPTool, arguments string) *mcp.CallToolResult {
 	t.Helper()
 
 	result, err := session(t, entry).CallTool(t.Context(), &mcp.CallToolParams{
 		Name:      entry.Name,
-		Arguments: json.RawMessage(arguments),
+		Arguments: inWorkspace(entry, arguments),
 	})
 	require.NoError(t, err)
 

@@ -37,6 +37,7 @@ type ChannelHandler struct {
 	commandsRegistry           *registry.TelegramCommandRegistry
 	telegramConversationEngine conversation.Engine
 	identityResolver           auth.IdentityResolver
+	chats                      command.WorkspaceChats
 	allowedNetworksMiddleware  func(http.Handler) http.Handler
 
 	updates    <-chan telego.Update
@@ -59,6 +60,7 @@ func NewUpdatesHandler(
 	commandsRegistry *registry.TelegramCommandRegistry,
 	telegramConversationEngine conversation.Engine,
 	identityResolver auth.IdentityResolver,
+	chats command.WorkspaceChats,
 ) (*ChannelHandler, error) {
 	logger = logger.With(
 		slog.String("component", "telegram-updates-handler"),
@@ -82,6 +84,7 @@ func NewUpdatesHandler(
 		commandsRegistry:           commandsRegistry,
 		telegramConversationEngine: telegramConversationEngine,
 		identityResolver:           identityResolver,
+		chats:                      chats,
 		allowedNetworksMiddleware:  allowedNetworksMiddleware,
 	}
 
@@ -128,6 +131,8 @@ func webhookParams(cfg *config.Config, secret string) *telego.SetWebhookParams {
 func (h *ChannelHandler) Handle(ctx context.Context) error {
 	//nolint:contextcheck // th.Context is the context of the update.
 	h.botHandler.Use(telegrammiddleware.ActingUser(h.logger, h.identityResolver))
+	//nolint:contextcheck // th.Context is the context of the update.
+	h.botHandler.Use(telegrammiddleware.ActingWorkspace(h.logger, h.chats))
 	h.registerHandlers()
 
 	err := h.setCommands(ctx)
@@ -200,6 +205,10 @@ func (h *ChannelHandler) registerHandlers() {
 		h.logger.Info("command handler has been registered", slog.String("command", cmdName))
 	}
 
+	h.botHandler.Handle(
+		command.NewWorkspaceSelect(h.chats).Handle,
+		th.CallbackDataPrefix(command.WorkspaceCallbackPrefix),
+	)
 	h.botHandler.Handle(unknownCommand.Handle, th.AnyCommand())
 }
 

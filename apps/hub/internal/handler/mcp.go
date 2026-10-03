@@ -17,6 +17,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
@@ -34,6 +35,7 @@ type MCP struct {
 	tokenOptions *mcpauth.RequireBearerTokenOptions
 	verifier     mcpauth.TokenVerifier
 	toolRegistry *registry.MCPToolRegistry
+	members      repository.WorkspaceMemberRepository
 }
 
 var _ Handler = (*MCP)(nil)
@@ -45,6 +47,7 @@ func NewMCP(
 	oidcSvc *auth.OIDCService,
 	resolver auth.IdentityResolver,
 	toolRegistry *registry.MCPToolRegistry,
+	members repository.WorkspaceMemberRepository,
 ) *MCP {
 	origin := cfg.Server.ExternalAddress("")
 	metadataURL := cfg.Server.ExternalAddress(discoveryPath + mcpPath)
@@ -71,6 +74,7 @@ func NewMCP(
 		},
 		verifier:     mcpserver.NewTokenVerifier(oidcSvc, resolver, cfg.MCP.ClientID),
 		toolRegistry: toolRegistry,
+		members:      members,
 	}
 }
 
@@ -78,7 +82,7 @@ func NewMCP(
 func (h *MCP) Register(router chi.Router) {
 	h.logger.Debug("registering routes")
 
-	server := mcpserver.NewServer(h.logger, h.toolRegistry)
+	server := mcpserver.NewServer(h.logger, h.toolRegistry, h.members)
 	discovery := mcpauth.ProtectedResourceMetadataHandler(h.metadata)
 
 	router.Method(http.MethodGet, discoveryPath, discovery)

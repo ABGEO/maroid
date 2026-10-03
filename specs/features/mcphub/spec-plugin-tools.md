@@ -4,7 +4,7 @@ title: The tools that a plugin declares
 type: spec
 status: approved
 created: 2026-09-18
-updated: 2026-10-01
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-09-18
 constrained_by: [PLG, OWN, SEC, ARC, PKG, DAT, GO, LOG, BLD]
@@ -79,7 +79,7 @@ interface, and a plugin that does not implement it loads unchanged, because
 | `libs/pluginapi/mcp.go`                              | Create | `MCPToolPlugin`, `MCPTool`, `MCPToolMeta`, `MCPToolAnnotations`, `NewTypedTool`. |
 | `apps/hub/internal/mcpserver/schema.go`              | Create | `inferSchema`, the input schema and its compiled form.                   |
 | `apps/hub/internal/mcpserver/plugintool.go`          | Create | `NewPluginTool`, the adapter from `pluginapi.MCPTool` to `registry.MCPTool`. |
-| `apps/hub/internal/mcpserver/workspace.go`           | Create | `workspaceTool`, which adds the `workspace` argument and runs the checks of `MCPHUB-DD-022` and `MCPHUB-DD-023`. |
+| `apps/hub/internal/mcpserver/workspace.go`           | Create | `workspaceMiddleware`, which adds the `workspace` argument and runs the checks of `MCPHUB-DD-022` and `MCPHUB-DD-023`. |
 | `apps/hub/internal/registry/mcp_tool.go`             | Change | `MCPTool` gains `ActsInWorkspace` and `Permission`.                      |
 | `apps/hub/internal/mcpserver/acting_user.go`         | Create | `actingUserMiddleware`.                                                  |
 | `apps/hub/internal/mcpserver/server.go`              | Change | `NewServer` adds `actingUserMiddleware`.                                 |
@@ -184,7 +184,7 @@ sequenceDiagram
     participant C as MCP client
     participant W as RequireBearerToken
     participant M as actingUserMiddleware
-    participant K as workspaceTool
+    participant K as workspaceMiddleware
     participant A as NewPluginTool
     participant T as The tool of the plugin
     participant D as PluginDB
@@ -413,11 +413,14 @@ reflects every schema again on every call.
 **Realizes:** `MCPHUB-FR-021`, `MCPHUB-INV-003`, `OWN-003`
 
 **Decision:** `registry.MCPTool` gains `ActsInWorkspace` and `Permission`. The
-server wraps each tool that acts in a workspace in `workspaceTool`. The wrapper
-adds the required member `workspace`, a UUID, to the input schema. On a call it
-reads the member, runs the checks of `MCPHUB-DD-023`, puts the workspace into the
-context with `pluginapi.ContextWithActingWorkspace`, and passes the arguments
-without that member to the tool. Every tool of a plugin acts in a workspace, and
+input schema of each tool that acts in a workspace holds the required member
+`workspace`, a UUID: `NewPluginTool` adds it to the model of a plugin, and a tool of
+the hub declares it in its input type. The receiving middleware `workspaceMiddleware`
+reads the member of each call of such a tool, runs the checks of `MCPHUB-DD-023`, and
+puts the workspace into the context with `pluginapi.ContextWithActingWorkspace`.
+`NewPluginTool` passes the arguments without that member to the plugin. An
+`Install` closure holds the types of its tool, so the server cannot wrap it, and a
+middleware sees every call before the SDK resolves the tool. Every tool of a plugin acts in a workspace, and
 so do the two settings tools of the hub. A model of a plugin that declares a
 member `workspace` fails the load.
 
@@ -435,7 +438,7 @@ workspace bound into the token at the consent. `ADR-0008` rejects it.
 
 **Realizes:** `MCPHUB-FR-022`, `MCPHUB-FR-023`, `SEC-012`, `SEC-013`
 
-**Decision:** `workspaceTool` reads the membership of the acting user in the
+**Decision:** `workspaceMiddleware` reads the membership of the acting user in the
 workspace of the call, the enablement of the plugin of the tool in it, and the
 lowest role of the permission of the tool. A missing membership or a missing
 enablement answers the protocol error that the SDK gives for an unknown tool. A
@@ -578,7 +581,7 @@ permission whose lowest role is `editor`.
 | 8   | Build every plugin. `libs/pluginapi` changed.                                             | `BLD-004`                         | [x]  |
 | 9   | Declare one tool in one plugin, as the first caller of the contract.                      | `MCPHUB-FR-011`, `MCPHUB-SC-012`  | [x]  |
 | 10  | Add `Permission` to `MCPToolMeta`, and refuse a tool that declares none in the registrar. Build every plugin. | `MCPHUB-FR-023`, `SEC-013`, `BLD-004` | [ ]  |
-| 11  | Write `MCPHUB-SC-027`, then create `workspaceTool` with the `workspace` argument, and wrap each tool that acts in a workspace. | `MCPHUB-FR-021`, `MCPHUB-DD-022`  | [ ]  |
+| 11  | Write `MCPHUB-SC-027`, then create `workspaceMiddleware` with the `workspace` argument, and mark each tool that acts in a workspace. | `MCPHUB-FR-021`, `MCPHUB-DD-022`  | [x]  |
 | 12  | Write `MCPHUB-SC-028` and `MCPHUB-SC-029`, then the three checks of `MCPHUB-DD-023`. They need the tables of `OWN-011` and `SEC-012`. | `MCPHUB-FR-022`, `MCPHUB-FR-023`, `MCPHUB-DD-023` | [ ]  |
 
 ## 8. Out of scope for this specification

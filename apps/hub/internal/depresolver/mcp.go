@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver/tools"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 )
 
@@ -25,6 +28,13 @@ func (c *Container) MCPToolRegistry() (*registry.MCPToolRegistry, error) {
 			return
 		}
 
+		var dbInstance *sqlx.DB
+
+		dbInstance, err = c.Database()
+		if err != nil {
+			return
+		}
+
 		c.mcpToolRegistry.instance = registry.NewMCPToolRegistry()
 
 		err = c.mcpToolRegistry.instance.Register(
@@ -33,6 +43,7 @@ func (c *Container) MCPToolRegistry() (*registry.MCPToolRegistry, error) {
 			tools.NewPing(),
 			tools.NewGetPluginSettings(c.Logger(), settingsSvc),
 			tools.NewSavePluginSettings(c.Logger(), settingsSvc),
+			tools.NewListWorkspaces(repository.NewWorkspace(dbInstance)),
 		)
 	})
 

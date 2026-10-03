@@ -24,6 +24,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver/tools"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/problem"
@@ -205,7 +206,7 @@ func hubAt(
 	))
 
 	mcpHandler := handler.NewMCP(
-		cfg, slog.New(slog.DiscardHandler), oidcSvc, resolver, toolRegistry,
+		cfg, slog.New(slog.DiscardHandler), oidcSvc, resolver, toolRegistry, stubMembers{},
 	)
 
 	// app.Run loads every plugin between the build of the handler and the build
@@ -251,6 +252,19 @@ func callTool(
 ) map[string]any {
 	t.Helper()
 
+	return callToolWith(t, router, token, name, `{}`)
+}
+
+// callToolWith calls the tool with the arguments, as a JSON object.
+func callToolWith(
+	t *testing.T,
+	router *chi.Mux,
+	token string,
+	name string,
+	arguments string,
+) map[string]any {
+	t.Helper()
+
 	initialize := rpc(t, router, token, `{
 		"jsonrpc": "2.0", "id": 1, "method": "initialize",
 		"params": {
@@ -263,7 +277,7 @@ func callTool(
 
 	recorder := rpc(t, router, token, `{
 		"jsonrpc": "2.0", "id": 2, "method": "tools/call",
-		"params": {"name": "`+name+`", "arguments": {}}
+		"params": {"name": "`+name+`", "arguments": `+arguments+`}
 	}`)
 	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
 
@@ -303,6 +317,26 @@ func problemOf(t *testing.T, recorder *httptest.ResponseRecorder) problem.Proble
 	return body
 }
 
+// memberWorkspace is the one workspace that the acting user of the fixture belongs to.
+const memberWorkspace = "01998aa0-1111-7000-8000-0000000000aa"
+
+// stubMembers holds the acting user of the fixture as a member of memberWorkspace.
+type stubMembers struct {
+	repository.WorkspaceMemberRepository
+}
+
+func (stubMembers) Get(
+	_ context.Context,
+	workspaceID string,
+	userID string,
+) (*model.Member, error) {
+	if workspaceID != memberWorkspace {
+		return nil, errs.ErrMemberNotFound
+	}
+
+	return &model.Member{WorkspaceID: workspaceID, UserID: userID}, nil
+}
+
 // MCPHUB-SC-008: A tool that a plugin registers reaches an MCP client.
 // MCPHUB-DD-015: depresolver builds the handler while it builds the plugin
 // loader, so the handler exists before any plugin registers a tool. HTTPRouter
@@ -338,7 +372,8 @@ func TestAToolThatAPluginRegistersReachesTheClient(t *testing.T) {
 		},
 	)
 
-	content := callTool(t, router, dex.SignClaims(t, mcpClaims(dex)), "dev_maroid_probe_late")
+	content := callToolWith(t, router, dex.SignClaims(t, mcpClaims(dex)), "dev_maroid_probe_late",
+		`{"workspace":"`+memberWorkspace+`"}`)
 
 	require.Equal(t, "reached", content["answer"])
 }

@@ -92,7 +92,7 @@ a guideline, and both follow `ADR-0008` at the approval of this specification.
 | `apps/hub/internal/workspace/require.go`                           | create | `workspace.Require`, the check of one route                   |
 | `apps/hub/internal/workspace/service.go`                           | change | `ChangeRole`, the role of `AddMember`, the lock of `PERMS-DD-008` |
 | `apps/hub/internal/handler/{workspace,plugin,plugin_wrapper}.go`   | change | Each route passes its permission to `workspace.Require`       |
-| `apps/hub/internal/mcpserver/workspace.go`                         | change | `workspaceTool` checks the permission of `MCPHUB-DD-023`      |
+| `apps/hub/internal/mcpserver/workspace.go`                         | change | `workspaceMiddleware` checks the permission of `MCPHUB-DD-023`      |
 | `apps/hub/internal/telegram/command/wrapper.go`                    | change | `Wrapper.Handle` checks the permission before the command     |
 | `apps/hub/internal/telegram/middleware/acting_workspace.go`        | change | Puts the role into the context beside the workspace           |
 | `apps/hub/db/migrations/20261002100000_table_workspace_members_alter.*` | create | The column `role`. `PERMS-DD-009`                        |
@@ -244,7 +244,7 @@ sequenceDiagram
     end
 ```
 
-The entry point is `workspace.Require` for a route, `workspaceTool` for an MCP tool,
+The entry point is `workspace.Require` for a route, `workspaceMiddleware` for an MCP tool,
 and `command.Wrapper` for a command of the bot. Each reads the role that the check of
 the membership put into the context.
 
@@ -430,7 +430,7 @@ plant that died.
 | 5   | Write `PERMS-SC-018`, then `authz.RoleAuthorizer` and the permissions of the hub.             | `PERMS-NFR-002`                   | [ ]  |
 | 6   | Write `PERMS-SC-005`, `PERMS-SC-013`, and `PERMS-SC-017`, then the role in the membership check, `workspace.Require`, and each route of section 4.3. | `PERMS-FR-005`, `PERMS-FR-015`, `PERMS-NFR-001` | [ ] |
 | 7   | Write `PERMS-SC-006` to `PERMS-SC-009`, then the role in the service, `PATCH` on a membership, and the lock. | `PERMS-FR-003`, `PERMS-FR-006` to `PERMS-FR-010` | [ ] |
-| 8   | The check in `workspaceTool` and in `command.Wrapper`, and the refusal of `PERMS-DD-006`.      | `PERMS-FR-015`, `PERMS-FR-016`    | [ ]  |
+| 8   | The check in `workspaceMiddleware` and in `command.Wrapper`, and the refusal of `PERMS-DD-006`.      | `PERMS-FR-015`, `PERMS-FR-016`    | [ ]  |
 | 9   | Declare the permissions of `jasmine` and `parking`, and name one on each entry. Build every plugin. | `PERMS-FR-012`, `BLD-004`   | [ ]  |
 | 10  | Write `PERMS-SC-014`, then `permissions` on the workspace and `PluginHost.can`.               | `PERMS-FR-017`                    | [ ]  |
 | 11  | The deck: the role in each list, the select of a manager, and the hidden controls.             | `PERMS-FR-018` to `PERMS-FR-020`  | [ ]  |

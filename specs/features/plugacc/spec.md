@@ -306,7 +306,7 @@ its settings admit no administrator, so they answer `not-found`, which realizes
 **Realizes:** `PLUGACC-FR-018`, `PLUGACC-NFR-001`, `PLUGACC-INV-001`
 **Decision:** `workspace.RequireEnabled` reads one row of `workspace_plugins` on each
 request, with no cache, after the membership and before the permission.
-`workspaceTool` of `MCPHUB-DD-023` reads the same row.
+`workspaceMiddleware` of `MCPHUB-DD-023` reads the same row.
 **Rationale:** The read is one probe of the unique index, under 1 millisecond. With no
 cache, a disable reaches the next request, which `PLUGACC-NFR-001` asks. The
 permission comes last, so a viewer of a workspace that does not enable the plugin reads

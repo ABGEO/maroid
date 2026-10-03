@@ -8,6 +8,7 @@ import (
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	tgcommand "github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 )
 
 // PluginRegistry initializes and returns the plugin registry instance.
@@ -132,12 +133,18 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		return nil, err
 	}
 
+	chats, err := c.ChatSelection()
+	if err != nil {
+		return nil, err
+	}
+
 	return pluginloader.New(
 		pluginHost,
 		verifier,
 		identityResolver,
 		idempotencyStore,
 		members,
+		tgcommand.NewWorkspace(chats),
 		registries.command,
 		registries.cron,
 		registries.handler,

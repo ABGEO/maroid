@@ -6,6 +6,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
 // The implementation that the hub reports to an MCP client at the initialization.
@@ -17,16 +18,26 @@ const (
 
 // NewServer builds the Model Context Protocol server of the hub, with every tool
 // of toolRegistry installed.
-func NewServer(logger *slog.Logger, toolRegistry *registry.MCPToolRegistry) *mcp.Server {
+func NewServer(
+	logger *slog.Logger,
+	toolRegistry *registry.MCPToolRegistry,
+	members repository.WorkspaceMemberRepository,
+) *mcp.Server {
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    serverName,
 		Title:   serverTitle,
 		Version: serverVersion,
 	}, &mcp.ServerOptions{Logger: logger})
 
-	server.AddReceivingMiddleware(loggingMiddleware(logger), actingUserMiddleware())
+	tools := toolRegistry.All()
 
-	for _, tool := range toolRegistry.All() {
+	server.AddReceivingMiddleware(
+		loggingMiddleware(logger),
+		actingUserMiddleware(),
+		workspaceMiddleware(tools, members),
+	)
+
+	for _, tool := range tools {
 		tool.Install(server)
 	}
 

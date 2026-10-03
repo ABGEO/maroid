@@ -11,10 +11,10 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
-// errSettingsAbsent is the text that an agent reads when the acting user filled
-// no settings for the plugin that holds the tool. The reason reaches a person
+// errSettingsAbsent is the text that an agent reads when the acting workspace holds
+// no complete settings for the plugin that holds the tool. The reason reaches a person
 // through the agent, so it names what to do next.
-var errSettingsAbsent = errors.New("the acting user holds no complete settings for the plugin")
+var errSettingsAbsent = errors.New("the acting workspace holds no complete settings for the plugin")
 
 // NewPluginTool adapts one tool of a plugin to the registry of the hub.
 //
@@ -27,6 +27,10 @@ func NewPluginTool(
 	meta := tool.Meta()
 
 	inputSchema, err := inferSchema(meta.InputModel)
+	if err == nil {
+		inputSchema, err = withWorkspaceMember(inputSchema)
+	}
+
 	if err != nil {
 		return registry.MCPTool{}, fmt.Errorf(
 			"reflecting the input of the tool %q of the plugin %s: %w", meta.Name, pluginID, err,
@@ -47,16 +51,17 @@ func NewPluginTool(
 		req *mcp.CallToolRequest,
 		_ map[string]any,
 	) (*mcp.CallToolResult, any, error) {
-		output, handleErr := tool.Handle(ctx, req.Params.Arguments)
+		output, handleErr := tool.Handle(ctx, withoutWorkspaceMember(req.Params.Arguments))
 		if handleErr != nil {
-			return nil, nil, reasonOf(pluginID, handleErr)
+			return nil, nil, reasonOf(ctx, pluginID, handleErr)
 		}
 
 		return nil, output, nil
 	}
 
 	return registry.MCPTool{
-		Name: name,
+		Name:            name,
+		ActsInWorkspace: true,
 		Install: func(server *mcp.Server) {
 			mcp.AddTool(server, &mcp.Tool{
 				Name:         name,
@@ -87,13 +92,13 @@ func pluginToolName(pluginID *pluginapi.PluginID, name string) string {
 }
 
 // reasonOf turns the failure of a tool into the text that an agent reads.
-func reasonOf(pluginID *pluginapi.PluginID, err error) error {
+func reasonOf(ctx context.Context, pluginID *pluginapi.PluginID, err error) error {
 	if errors.Is(err, pluginapi.ErrSettingsAbsent) {
 		return fmt.Errorf(
 			"%w %s. Fill them at %s",
 			errSettingsAbsent,
 			pluginID,
-			SettingsPath(pluginID.String()),
+			SettingsPath(pluginapi.ActingWorkspaceFromContext(ctx), pluginID.String()),
 		)
 	}
 

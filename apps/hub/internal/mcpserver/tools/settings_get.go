@@ -15,7 +15,8 @@ const getPluginSettingsName = "get_plugin_settings"
 
 // GetPluginSettingsInput names the plugin to report.
 type GetPluginSettingsInput struct {
-	Plugin string `json:"plugin" jsonschema:"the plugin identifier"`
+	Workspace string `json:"workspace" jsonschema:"the workspace of the call, from list_workspaces"`
+	Plugin    string `json:"plugin"    jsonschema:"the plugin identifier"`
 }
 
 // GetPluginSettingsOutput reports the settings schema of a plugin and the values
@@ -39,13 +40,14 @@ func NewGetPluginSettings(logger *slog.Logger, settingsSvc settings.Service) reg
 	tool := &getPluginSettings{settingsAccess{logger: logger, settingsSvc: settingsSvc}}
 
 	return registry.MCPTool{
-		Name: getPluginSettingsName,
+		Name:            getPluginSettingsName,
+		ActsInWorkspace: true,
 		Install: func(server *mcp.Server) {
 			mcp.AddTool(server, &mcp.Tool{
 				Name:  getPluginSettingsName,
 				Title: "Read the settings of a plugin",
 				Description: "Report the settings schema of one plugin, the key of each " +
-					"secret field, and the values that the acting user stored. A secret " +
+					"secret field, and the values that the workspace and the acting user stored. A secret " +
 					"carries a mask and never its value.",
 				Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true},
 			}, tool.handle)

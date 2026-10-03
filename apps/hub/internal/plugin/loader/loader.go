@@ -11,6 +11,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/registrar"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	tgcommand "github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
 )
@@ -33,6 +34,7 @@ func New(
 	resolver auth.IdentityResolver,
 	idempotency idempotency.Store,
 	members repository.WorkspaceMemberRepository,
+	workspacePrompter tgcommand.Prompter,
 	commandRegistry *registry.CommandRegistry,
 	cronRegistry *registry.CronRegistry,
 	handlerRegistry *handler.Registry,
@@ -66,7 +68,11 @@ func New(
 			),
 			registrar.NewMigrationRegistrar(migrationRegistry, capabilityRegistry),
 			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry, capabilityRegistry),
-			registrar.NewTelegramCommandRegistrar(telegramCommandRegistry, capabilityRegistry),
+			registrar.NewTelegramCommandRegistrar(
+				telegramCommandRegistry,
+				capabilityRegistry,
+				workspacePrompter,
+			),
 			registrar.NewTelegramConversationRegistrar(
 				telegramConversationRegistry,
 				capabilityRegistry,

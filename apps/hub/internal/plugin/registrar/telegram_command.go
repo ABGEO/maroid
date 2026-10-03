@@ -13,6 +13,7 @@ import (
 type TelegramCommandRegistrar struct {
 	registry     *registry.TelegramCommandRegistry
 	capabilities *registry.CapabilityRegistry
+	prompter     tgcommand.Prompter
 }
 
 var _ Registrar = (*TelegramCommandRegistrar)(nil)
@@ -21,10 +22,12 @@ var _ Registrar = (*TelegramCommandRegistrar)(nil)
 func NewTelegramCommandRegistrar(
 	reg *registry.TelegramCommandRegistry,
 	capabilities *registry.CapabilityRegistry,
+	prompter tgcommand.Prompter,
 ) *TelegramCommandRegistrar {
 	return &TelegramCommandRegistrar{
 		registry:     reg,
 		capabilities: capabilities,
+		prompter:     prompter,
 	}
 }
 
@@ -60,7 +63,7 @@ func (r *TelegramCommandRegistrar) Register(plugin pluginapi.Plugin) error {
 
 	wrappedCommands := make([]pluginapi.TelegramCommand, 0, len(commands))
 	for _, cmd := range commands {
-		wrappedCommands = append(wrappedCommands, tgcommand.NewWrapper(cmd, id))
+		wrappedCommands = append(wrappedCommands, tgcommand.NewWrapper(cmd, id, r.prompter))
 	}
 
 	err = r.registry.Register(wrappedCommands...)

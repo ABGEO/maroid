@@ -4,7 +4,7 @@ title: The hub as a Model Context Protocol server
 type: spec
 status: approved
 created: 2026-09-17
-updated: 2026-10-01
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-09-18
 constrained_by: [SEC, OWN, API, ERR, ARC, PLG, LOG, GO, PKG, CFG]
@@ -574,7 +574,7 @@ name the third.
 | 10  | Create `depresolver.MCPToolRegistry()`. Change `depresolver.buildMCPHandler` to resolve `IdentityResolver` and `MCPToolRegistry()`, and pass both to `handler.NewMCP`. | `MCPHUB-DD-002`, `MCPHUB-DD-008` | [x]  |
 | 11  | Write `api.yaml`.                                                    | `SPC-002`                        | [x]  |
 | 12  | Add the MCP flow to `ident/spec.md` section 4.4, and raise the entry point counts in `ident/spec.md` and `extid/spec.md`. | `ADR-0003` | [x]  |
-| 13  | Write `MCPHUB-SC-026`, then create `tools/workspaces.go` and register it. It needs the table of `OWN-011`. | `MCPHUB-FR-020`, `MCPHUB-DD-021` | [ ]  |
+| 13  | Write `MCPHUB-SC-026`, then create `tools/workspaces.go` and register it. It needs the table of `OWN-011`. | `MCPHUB-FR-020`, `MCPHUB-DD-021` | [x]  |
 
 ## 8. Out of scope for this specification
 
