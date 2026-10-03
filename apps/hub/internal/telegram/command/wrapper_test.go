@@ -2,6 +2,9 @@ package command_test
 
 import (
 	"context"
+	"log/slog"
+	"slices"
+	"sync"
 	"testing"
 
 	"github.com/mymmrac/telego"
@@ -75,12 +78,60 @@ func probeAuthorizer(t *testing.T) *authz.RoleAuthorizer {
 	return authz.NewRoleAuthorizer(permissions)
 }
 
+// enabledIn answers that only the named workspaces enable the probe plugin.
+type enabledIn []string
+
+func (e enabledIn) IsEnabled(_ context.Context, workspaceID string, pluginID string) (bool, error) {
+	if pluginID != probePluginID {
+		return false, nil
+	}
+
+	return slices.Contains(e, workspaceID), nil
+}
+
+// lines records each line of the log.
+type lines struct {
+	mu      sync.Mutex
+	records []slog.Record
+}
+
+func (l *lines) Enabled(context.Context, slog.Level) bool { return true }
+
+func (l *lines) Handle(_ context.Context, record slog.Record) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	l.records = append(l.records, record)
+
+	return nil
+}
+
+func (l *lines) WithAttrs([]slog.Attr) slog.Handler { return l }
+
+func (l *lines) WithGroup(string) slog.Handler { return l }
+
 func wrapped(t *testing.T, inner *countingCommand, answers *recorder) *command.Wrapper {
 	t.Helper()
 
-	return command.NewWrapper(
-		inner, pluginapi.ParsePluginID(probePluginID), answers, answers, probeAuthorizer(t),
-	)
+	return wrappedIn(t, inner, answers, enabledIn{workspaceH}, slog.New(slog.DiscardHandler))
+}
+
+func wrappedIn(
+	t *testing.T,
+	inner *countingCommand,
+	answers *recorder,
+	enabled enabledIn,
+	logger *slog.Logger,
+) *command.Wrapper {
+	t.Helper()
+
+	return command.NewWrapper(inner, pluginapi.ParsePluginID(probePluginID), command.Checks{
+		Logger:      logger,
+		Prompter:    answers,
+		Replier:     answers,
+		Enablements: enabled,
+		Authorizer:  probeAuthorizer(t),
+	})
 }
 
 // contextIn is the context of an update in the workspace, with the role of the sender.
@@ -143,4 +194,27 @@ func TestACommandOfARoleBelowItsPermissionRunsNothing(t *testing.T) {
 	require.Len(t, answers.replies, 1)
 	assert.Contains(t, answers.replies[0], "dev.maroid.probe:notes.write")
 	assert.Contains(t, answers.replies[0], "editor")
+}
+
+// PLUGACC-SC-014: A command of a plugin that the acting workspace does not enable sends
+// nothing, runs zero times, and writes one line at the level info. A viewer meets the
+// drop before the permission, so the answer names no role.
+func TestACommandOfADisabledPluginSendsNothing(t *testing.T) {
+	t.Parallel()
+
+	for _, role := range []pluginapi.Role{pluginapi.RoleEditor, pluginapi.RoleViewer} {
+		inner := &countingCommand{}
+		answers := &recorder{}
+		log := &lines{}
+		ctx := contextIn(t.Context(), workspaceH, role)
+
+		require.NoError(t, wrappedIn(t, inner, answers, enabledIn{}, slog.New(log)).
+			Handle(ctx, telego.Update{}))
+
+		assert.Zero(t, inner.runs, role)
+		assert.Empty(t, answers.prompts, role)
+		assert.Empty(t, answers.replies, role)
+		require.Len(t, log.records, 1, role)
+		assert.Equal(t, slog.LevelInfo, log.records[0].Level, role)
+	}
 }

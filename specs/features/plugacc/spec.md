@@ -61,9 +61,9 @@ answers a disabled plugin as absent.
 | `PLUGACC-FR-028`  | Section 4.3, `PLUGACC-SC-017`                                    |
 | `PLUGACC-FR-029`  | Section 4.3, `PLUGACC-SC-005`                                    |
 | `PLUGACC-FR-030`  | Section 4.3, `PLUGACC-SC-005`                                    |
-| `PLUGACC-FR-031`  | `spec-clients.md` section 2, `PLUGACC-DD-007`, `PLUGACC-SC-015`  |
+| `PLUGACC-FR-031`  | Postponed. Section 8                                             |
 | `PLUGACC-NFR-001` | `PLUGACC-DD-001`, `PLUGACC-SC-020`                               |
-| `PLUGACC-NFR-002` | `spec-clients.md` section 2, `PLUGACC-DD-008`, `PLUGACC-SC-015`  |
+| `PLUGACC-NFR-002` | Postponed. Section 8                                             |
 | `PLUGACC-INV-001` | Section 4.4, `PLUGACC-DD-001`, `PLUGACC-SC-013`                  |
 | `PLUGACC-INV-002` | `PLUGACC-DD-003`, `PLUGACC-SC-008`                               |
 | `PLUGACC-INV-003` | `PLUGACC-DD-005`, `PLUGACC-SC-005`                               |
@@ -423,11 +423,10 @@ members of one workspace when the person opens it.
 **Alternatives:** A route under `/users` that answers the workspaces. `API-003` gives
 `/workspaces*` the workspaces.
 
-`PLUGACC-DD-007` and `PLUGACC-DD-008` sit in `spec-clients.md`.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `PLUGACC-SC-001` through `PLUGACC-SC-022`.
+`spec-scenarios.md` holds `PLUGACC-SC-001` through `PLUGACC-SC-022`, less the retired `PLUGACC-SC-015`.
 
 ## 7. Build plan
 
@@ -440,7 +439,7 @@ members of one workspace when the person opens it.
 | 5   | Write `PLUGACC-SC-002` to `PLUGACC-SC-007`, then `user.Service`, the routes of `/users`, and `scope=all`. | `PLUGACC-FR-002` to `PLUGACC-FR-009`, `PLUGACC-FR-029`, `PLUGACC-FR-030` | [x] |
 | 6   | Write `PLUGACC-SC-008` to `PLUGACC-SC-013` and `PLUGACC-SC-020`, then the enablement service, its routes, `RequireEnabled`, and the admission of an administrator. | `PLUGACC-FR-010` to `PLUGACC-FR-018`, `PLUGACC-FR-027`, `PLUGACC-NFR-001` | [x] |
 | 7   | Write `PLUGACC-SC-017`, then the filter of `GET /plugins`.                               | `PLUGACC-FR-021`, `PLUGACC-FR-028`             | [x]  |
-| 8   | Carry out `spec-clients.md`: the command line, the bot, the scheduler, and the deck.    | `PLUGACC-FR-001`, `PLUGACC-FR-019`, `PLUGACC-FR-020`, `PLUGACC-FR-023` to `PLUGACC-FR-025`, `PLUGACC-FR-031`, `PLUGACC-NFR-002` | [ ] |
+| 8   | Carry out `spec-clients.md`: the command line, the bot, the scheduler, and the deck.    | `PLUGACC-FR-001`, `PLUGACC-FR-019`, `PLUGACC-FR-020`, `PLUGACC-FR-023` to `PLUGACC-FR-025` | [ ] |
 
 ## 8. Out of scope for this specification
 
@@ -448,6 +447,7 @@ members of one workspace when the person opens it.
 | ---------------------------------------------------------- | ---------------------------------------------------------------------- |
 | A job of a plugin that still declares `CronScopeShared`.   | Its plugin reads shared tables today, as `OWN-009` lets it. The feature that moves the plugin to the workspace moves the job to `CronScopePerWorkspace`, and `PLUGACC-FR-020` then reaches it. |
 | A history of the changes to an allowlist or an enablement. | The requirements put it out of scope.                                  |
+| The menu of each chat, `PLUGACC-FR-031` and `PLUGACC-NFR-002`. | The owner postponed it on 2026-10-04. The menu keeps every command, and the drop of `PLUGACC-FR-019` answers nothing for a disabled plugin. A later specification of the menu brings it back. |
 
 ## Retired identifiers
 

@@ -3,7 +3,6 @@ package registrar
 import (
 	"fmt"
 
-	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	tgcommand "github.com/abgeo/maroid/apps/hub/internal/telegram/command"
@@ -14,9 +13,8 @@ import (
 type TelegramCommandRegistrar struct {
 	registry     *registry.TelegramCommandRegistry
 	capabilities *registry.CapabilityRegistry
-	prompter     tgcommand.Prompter
 	permissions  *registry.PermissionRegistry
-	authorizer   authz.Authorizer
+	checks       tgcommand.Checks
 }
 
 var _ Registrar = (*TelegramCommandRegistrar)(nil)
@@ -25,16 +23,14 @@ var _ Registrar = (*TelegramCommandRegistrar)(nil)
 func NewTelegramCommandRegistrar(
 	reg *registry.TelegramCommandRegistry,
 	capabilities *registry.CapabilityRegistry,
-	prompter tgcommand.Prompter,
 	permissions *registry.PermissionRegistry,
-	authorizer authz.Authorizer,
+	checks tgcommand.Checks,
 ) *TelegramCommandRegistrar {
 	return &TelegramCommandRegistrar{
 		registry:     reg,
 		capabilities: capabilities,
-		prompter:     prompter,
 		permissions:  permissions,
-		authorizer:   authorizer,
+		checks:       checks,
 	}
 }
 
@@ -84,7 +80,7 @@ func (r *TelegramCommandRegistrar) Register(plugin pluginapi.Plugin) error {
 			return permissionErr
 		}
 
-		wrapped := tgcommand.NewWrapper(cmd, id, r.prompter, tgcommand.TextReply{}, r.authorizer)
+		wrapped := tgcommand.NewWrapper(cmd, id, r.checks)
 		meta := wrapped.Meta()
 
 		wrappedCommands = append(wrappedCommands, wrapped)

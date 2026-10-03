@@ -3,6 +3,7 @@ package loader
 
 import (
 	"fmt"
+	"log/slog"
 	"plugin"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
@@ -73,9 +74,8 @@ func New(
 			registrar.NewTelegramCommandRegistrar(
 				telegramCommandRegistry,
 				capabilityRegistry,
-				workspacePrompter,
 				permissionRegistry,
-				access.Authorizer,
+				telegramChecks(logger, workspacePrompter, access),
 			),
 			registrar.NewTelegramConversationRegistrar(
 				telegramConversationRegistry,
@@ -85,6 +85,22 @@ func New(
 			registrar.NewSettingsRegistrar(settingsRegistry, capabilityRegistry),
 			registrar.NewMCPToolRegistrar(mcpToolRegistry, capabilityRegistry, permissionRegistry),
 		},
+	}
+}
+
+// telegramChecks holds what a command of a plugin passes: the checks of a route of a
+// plugin, and the answers of the bot.
+func telegramChecks(
+	logger *slog.Logger,
+	prompter tgcommand.Prompter,
+	access handler.WorkspaceAccess,
+) tgcommand.Checks {
+	return tgcommand.Checks{
+		Logger:      logger,
+		Prompter:    prompter,
+		Replier:     tgcommand.TextReply{},
+		Enablements: access.Enablements,
+		Authorizer:  access.Authorizer,
 	}
 }
 

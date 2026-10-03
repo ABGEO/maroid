@@ -4,7 +4,7 @@ title: The scenarios of the administrator, the allowlist, and the enablement
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-10-04
 approved_by: Temuri
 approved_on: 2026-10-02
 constrained_by: [TST, OWN, TRC]
@@ -169,18 +169,6 @@ the tool answers the protocol error of an unknown tool. P runs zero times.
 **Then** the bot sends nothing, the command runs zero times, and the log holds one line
 at the level `info`.
 
-## `PLUGACC-SC-015`
-
-**Verifies:** `PLUGACC-FR-031`, `PLUGACC-NFR-002`
-**Layer:** integration
-
-**Given** a fake Telegram that records each `setMyCommands`. The chats of Ana and of Gio
-selected H, and H does not enable P.
-**When** Ana enables P, then Gio selects workspace G that enables nothing.
-**Then** within 10 seconds of the enable, the scope of each of the two chats holds the
-command of P beside the commands of the hub. After the selection, the scope of the
-chat of Gio holds the commands of the hub alone.
-
 ## `PLUGACC-SC-016`
 
 **Verifies:** `PLUGACC-FR-020`
@@ -252,4 +240,6 @@ all from the deck. Ana switches P off and on in H from the deck.
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID               | Retired    | Reason |
+| ---------------- | ---------- | ------ |
+| PLUGACC-SC-015   | 2026-10-04 | The owner postponed the menu of each chat (`PLUGACC-FR-031`, `PLUGACC-NFR-002`). Its later design takes new identifiers. |

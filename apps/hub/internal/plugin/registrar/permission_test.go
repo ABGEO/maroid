@@ -16,6 +16,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/registrar"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	tgcommand "github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -135,8 +136,8 @@ func newRegistrars() *registrars {
 			handler.WorkspaceAccess{Authorizer: authz.NewRoleAuthorizer(set.permissions)},
 		),
 		registrar.NewTelegramCommandRegistrar(
-			set.commands, set.capabilities, nil, set.permissions,
-			authz.NewRoleAuthorizer(set.permissions),
+			set.commands, set.capabilities, set.permissions,
+			tgcommand.Checks{Authorizer: authz.NewRoleAuthorizer(set.permissions)},
 		),
 		registrar.NewMCPToolRegistrar(set.tools, set.capabilities, set.permissions),
 	}
