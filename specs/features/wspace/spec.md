@@ -4,7 +4,7 @@ title: The workspaces, their members, and the workspace that a unit of work acts
 type: spec
 status: approved
 created: 2026-10-01
-updated: 2026-10-02
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-10-02
 constrained_by: [OWN, SEC, ERR, API, RES, DAT, REP, PKG, TG, UI, TST, SPC, LNG]
@@ -317,7 +317,7 @@ ADR to write and later to remove. Roles in this feature. The owner moved them ou
 | 1   | Add `member-exists` to the hub. `ERR-003` holds its row.                                     | `ERR-003`                                    | [x]  |
 | 2   | Write the migration of section 4.2, with `WSPACE-SC-011`.                                    | `WSPACE-FR-026`, `WSPACE-INV-002`            | [x]  |
 | 3   | Write `model.Workspace`, `model.Member`, and the two repositories.                           | `WSPACE-FR-001` to `WSPACE-FR-012`           | [x]  |
-| 4   | Write `WSPACE-SC-009`, `WSPACE-SC-010`, and `WSPACE-SC-012`, then `workspace.Middleware`.    | `WSPACE-FR-013`, `WSPACE-FR-014`, `WSPACE-NFR-001` | [ ]  |
+| 4   | Write `WSPACE-SC-009`, `WSPACE-SC-010`, and `WSPACE-SC-012`, then `workspace.Middleware`.    | `WSPACE-FR-013`, `WSPACE-FR-014`, `WSPACE-NFR-001` | [x]  |
 | 5   | Write `WSPACE-SC-001` to `WSPACE-SC-008`, then `workspace.Service`, then `api.yaml` and `handler.Workspace`. | `WSPACE-FR-001` to `WSPACE-FR-012` | [ ]  |
 | 6   | Carry out steps 13 and 14 of `features/ident/spec.md`: the acting workspace in `libs/pluginapi`, `WithScopeTx`, and the move of the routes of a plugin. Build every plugin. | `WSPACE-FR-013`, `BLD-004` | [ ]  |
 | 7   | Carry out steps 13 and 15 of `features/pset/spec.md`, with the membership check alone.      | `WSPACE-FR-013`                              | [ ]  |
