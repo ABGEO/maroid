@@ -4,7 +4,7 @@ title: The scenarios of the workspaces and their members
 type: spec
 status: approved
 created: 2026-10-01
-updated: 2026-10-02
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-10-02
 constrained_by: [TST, OWN, TRC]
@@ -130,9 +130,9 @@ their bodies differ in the flow identifier alone.
 **Given** a database before the migration, with Ana, a user record with no first
 name, and a user record whose first name holds 70 characters.
 **When** the migration runs.
-**Then** three workspaces exist: "Ana" with Ana as its member, "Workspace" with the
-second record as its member, and one named by the first 64 characters of the long
-name with the third record as its member. The down migration removes both tables.
+**Then** three workspaces exist: "Ana's Workspace" with Ana as its member, "Workspace"
+with the second record as its member, and one named by the first 52 characters of the
+long name followed by "'s Workspace", with the third record as its member. The down migration removes both tables.
 
 ## `WSPACE-SC-012`
 

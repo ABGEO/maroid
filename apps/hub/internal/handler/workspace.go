@@ -26,9 +26,6 @@ import (
 )
 
 const (
-	// maxWorkspaceName is the longest name of a workspace, in characters.
-	maxWorkspaceName = 64
-
 	userIDParam = "userId"
 )
 
@@ -388,7 +385,7 @@ func validateName(name *string) *problem.ValidationProblem {
 		return nameFailure("the field is required")
 	case *name == "":
 		return nameFailure("the value is empty")
-	case utf8.RuneCountInString(*name) > maxWorkspaceName:
+	case utf8.RuneCountInString(*name) > model.WorkspaceNameMaxLength:
 		return nameFailure("the value is too long")
 	default:
 		return nil

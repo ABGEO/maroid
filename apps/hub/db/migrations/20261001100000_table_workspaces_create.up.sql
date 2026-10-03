@@ -41,7 +41,7 @@ $$
         FOR person IN SELECT id, first_name FROM public.users ORDER BY id
             LOOP
                 INSERT INTO public.workspaces (name)
-                VALUES (COALESCE(left(NULLIF(trim(person.first_name), ''), 64), 'Workspace'))
+                VALUES (COALESCE(left(NULLIF(trim(person.first_name), ''), 52) || '''s Workspace', 'Workspace'))
                 RETURNING id INTO workspace_id;
 
                 INSERT INTO public.workspace_members (workspace_id, user_id)

@@ -4,7 +4,7 @@ title: The scenarios of the external identities and the delegated sign in
 type: spec
 status: approved
 created: 2026-09-15
-updated: 2026-10-01
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-09-16
 constrained_by: [TST, SEC, OWN, TRC]
@@ -270,7 +270,7 @@ with a null last name.
 
 **Given** a database with no record for the person.
 **When** an administrator runs `maroid user invite --first-name Nino --last-name Beridze`.
-**Then** `public.workspaces` holds one new workspace named `Nino`, and
+**Then** `public.workspaces` holds one new workspace named `Nino's Workspace`, and
 `public.workspace_members` holds one row that binds the new record to it with the role
 `manager`. A failure of any write leaves no record, no workspace, and no invitation.
 

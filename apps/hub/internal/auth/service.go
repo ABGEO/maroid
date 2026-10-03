@@ -26,6 +26,8 @@ type Service struct {
 	userRepo       repository.UserRepository
 	identityRepo   repository.IdentityRepository
 	invitationRepo repository.InvitationRepository
+	workspaceRepo  repository.WorkspaceRepository
+	memberRepo     repository.WorkspaceMemberRepository
 }
 
 // NewService creates a new Service instance.
@@ -34,12 +36,16 @@ func NewService(
 	userRepo repository.UserRepository,
 	identityRepo repository.IdentityRepository,
 	invitationRepo repository.InvitationRepository,
+	workspaceRepo repository.WorkspaceRepository,
+	memberRepo repository.WorkspaceMemberRepository,
 ) *Service {
 	return &Service{
 		db:             db,
 		userRepo:       userRepo,
 		identityRepo:   identityRepo,
 		invitationRepo: invitationRepo,
+		workspaceRepo:  workspaceRepo,
+		memberRepo:     memberRepo,
 	}
 }
 
@@ -109,12 +115,12 @@ func (s *Service) Invite(
 
 	err = database.WithTx(ctx, s.db, func(tx *sqlx.Tx) error {
 		if result.UserID == "" {
-			user, createErr := s.userRepo.Create(ctx, tx, request.FirstName, request.LastName)
+			userID, createErr := s.createWithWorkspace(ctx, tx, request)
 			if createErr != nil {
-				return fmt.Errorf("creating the user record: %w", createErr)
+				return createErr
 			}
 
-			result.UserID = user.ID
+			result.UserID = userID
 		}
 
 		_, createErr := s.invitationRepo.Create(
@@ -199,4 +205,28 @@ func InviteAddress(deckURL string, token string) (string, error) {
 	parsed.RawQuery = url.Values{"token": {token}}.Encode()
 
 	return parsed.String(), nil
+}
+
+// createWithWorkspace writes a new user record and its first workspace, with the
+// record as its member, so no record exists without a place to work.
+func (s *Service) createWithWorkspace(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	request InviteRequest,
+) (string, error) {
+	user, err := s.userRepo.Create(ctx, tx, request.FirstName, request.LastName)
+	if err != nil {
+		return "", fmt.Errorf("creating the user record: %w", err)
+	}
+
+	workspace, err := s.workspaceRepo.Create(ctx, tx, model.FirstWorkspaceName(request.FirstName))
+	if err != nil {
+		return "", fmt.Errorf("creating the first workspace: %w", err)
+	}
+
+	if _, err = s.memberRepo.Add(ctx, tx, workspace.ID, user.ID); err != nil {
+		return "", fmt.Errorf("adding the record to its first workspace: %w", err)
+	}
+
+	return user.ID, nil
 }

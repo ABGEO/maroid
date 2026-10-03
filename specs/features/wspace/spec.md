@@ -284,10 +284,12 @@ audiences with two shapes.
 
 **Realizes:** `WSPACE-FR-026`
 **Decision:** The migration loops over `public.users` in a `DO` block. For each record
-it inserts one workspace, named by the first 64 characters of the first name of the
-record or `Workspace` when the record holds none, reads the identifier with
-`RETURNING id`, and inserts the membership. The cut keeps a long first name within
-the limit of `WSPACE-FR-001`, so the migration never fails on one.
+it inserts one workspace, named `{first name}'s Workspace` with the first 52
+characters of the first name of the record, or `Workspace` when the record holds none.
+It reads the identifier with `RETURNING id`, and inserts the membership. The cut keeps
+the name within the 64 characters of `WSPACE-FR-001`, so the migration never fails on a
+long first name. `maroid user invite` names the first workspace of a new record by the
+same rule, through `model.FirstWorkspaceName`.
 **Rationale:** A loop reads each identifier from `RETURNING`, so no statement names
 `id`, as `DAT-009` demands. An installation holds a household of records, so the loop
 costs nothing.
@@ -322,7 +324,7 @@ ADR to write and later to remove. Roles in this feature. The owner moved them ou
 | 5   | Write `WSPACE-SC-001` to `WSPACE-SC-008`, then `workspace.Service`, then `api.yaml` and `handler.Workspace`. | `WSPACE-FR-001` to `WSPACE-FR-012` | [x]  |
 | 6   | Carry out steps 13 and 14 of `features/ident/spec.md`: the acting workspace in `libs/pluginapi`, `WithScopeTx`, and the move of the routes of a plugin. Build every plugin. | `WSPACE-FR-013`, `BLD-004` | [x]  |
 | 7   | Carry out steps 13 and 15 of `features/pset/spec.md`, with the membership check alone.      | `WSPACE-FR-013`                              | [ ]  |
-| 8   | Carry out step 15 of `features/extid/spec.md`: the first workspace of an invitation.         | `EXTID-FR-018`                               | [ ]  |
+| 8   | Carry out step 15 of `features/extid/spec.md`: the first workspace of an invitation.         | `EXTID-FR-018`                               | [x]  |
 | 9   | Carry out `spec-clients.md`: the bot, the MCP server, and the deck.                         | `WSPACE-FR-015` to `WSPACE-FR-025`           | [ ]  |
 | 10  | Before a release, confirm that `PERMS` is done.                                              | `WSPACE-DD-005`                              | [ ]  |
 

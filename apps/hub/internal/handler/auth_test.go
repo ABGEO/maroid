@@ -77,7 +77,10 @@ func authUnderTest(t *testing.T) *authFixture {
 	identityRepo := repository.NewIdentity(instance.DB)
 	invitationRepo := repository.NewInvitation(instance.DB)
 	userRepo := repository.NewUser(instance.DB)
-	service := auth.NewService(instance.DB, userRepo, identityRepo, invitationRepo)
+	service := auth.NewService(
+		instance.DB, userRepo, identityRepo, invitationRepo,
+		repository.NewWorkspace(instance.DB), repository.NewWorkspaceMember(instance.DB),
+	)
 
 	authHandler := handler.NewAuth(
 		cfg,

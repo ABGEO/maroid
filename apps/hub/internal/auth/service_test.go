@@ -35,6 +35,8 @@ func serviceUnderTest(t *testing.T) (*auth.Service, repository.IdentityRepositor
 		repository.NewUser(instance.DB),
 		identityRepo,
 		repository.NewInvitation(instance.DB),
+		repository.NewWorkspace(instance.DB),
+		repository.NewWorkspaceMember(instance.DB),
 	)
 
 	return service, identityRepo, instance.DB

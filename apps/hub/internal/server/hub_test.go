@@ -86,11 +86,11 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	identityRepo := repository.NewIdentity(instance.DB)
 	invitationRepo := repository.NewInvitation(instance.DB)
 	userRepo := repository.NewUser(instance.DB)
-	service := auth.NewService(instance.DB, userRepo, identityRepo, invitationRepo)
+	members := repository.NewWorkspaceMember(instance.DB)
+	service := authService(instance.DB, userRepo, identityRepo, invitationRepo, members)
 	verifier := auth.NewTokenVerifier(oidcSvc)
 	resolver := auth.NewResolver(identityRepo)
 	store := idempotency.NewStore(instance.DB)
-	members := repository.NewWorkspaceMember(instance.DB)
 	workspaces := workspaceManager(instance.DB, members, userRepo)
 
 	router, err := server.NewHTTPRouter(cfg, logger)
@@ -129,6 +129,19 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		workspace: workspaceOf(t, workspaces, person),
 		gate:      held,
 	}
+}
+
+// authService builds the auth service on the database.
+func authService(
+	database *sqlx.DB,
+	users repository.UserRepository,
+	identities repository.IdentityRepository,
+	invitations repository.InvitationRepository,
+	members repository.WorkspaceMemberRepository,
+) *auth.Service {
+	return auth.NewService(
+		database, users, identities, invitations, repository.NewWorkspace(database), members,
+	)
 }
 
 // workspaceManager builds the service of the workspaces on the database.

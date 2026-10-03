@@ -4,7 +4,7 @@ title: External identities and the delegated sign in
 type: spec
 status: approved
 created: 2026-09-15
-updated: 2026-10-01
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-09-16
 constrained_by: [OWN, SEC, API, ERR, TG, CLI, DAT, REP, PKG, CFG, GO, TST, LOG]
@@ -581,8 +581,8 @@ the Dex API. No such endpoint exists.
 **Realizes:** `EXTID-FR-010`, `EXTID-FR-011`, `EXTID-FR-018`
 **Decision:** `maroid user invite` writes the user record, its first workspace, the
 membership of the record as the manager of that workspace, and the invitation in one
-transaction, then prints the address. The workspace takes the first name of the
-record as its name. With `--user` it writes the invitation only.
+transaction, then prints the address. The workspace takes its name from the first
+name of the record by the rule of `WSPACE-DD-004`. With `--user` it writes the invitation only.
 **Rationale:** `EXTID-FR-010` asks for one action, and two statements by hand are two
 actions. An administrator cannot write the first identity, because the identifier of
 an external account exists only after that person signs in one time. `OWN-002` still
@@ -730,7 +730,7 @@ needs a rule that no statement asks for.
 | 12  | Remove the `JWT` block from the configuration. Set the token lifetime of Dex to seven days.       | `EXTID-NFR-002`                  | [ ]  |
 | 13  | Build the invite page of the deck. Point the command at it, and drop the target flag.             | `EXTID-DD-015`                   | [x]  |
 | 14  | Run `EXTID-SC-019` and `EXTID-SC-021` against the running hub.                                    | `EXTID-FR-017`, `EXTID-NFR-002`  | [ ]  |
-| 15  | Write `EXTID-SC-025`, then the first workspace in `maroid user invite`. It needs the tables of `OWN-010` and `OWN-011`. | `EXTID-FR-018`                   | [ ]  |
+| 15  | Write `EXTID-SC-025`, then the first workspace in `maroid user invite`. It needs the tables of `OWN-010` and `OWN-011`. | `EXTID-FR-018`                   | [x]  |
 
 Step 5 changes no behavior that a person sees, because the hub still reads the same
 records. A failure in step 6 then names the flow row and nothing else.

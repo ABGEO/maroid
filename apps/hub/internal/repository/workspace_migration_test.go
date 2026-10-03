@@ -24,8 +24,9 @@ type workspaceOfUser struct {
 	UserID string `db:"user_id"`
 }
 
-// WSPACE-SC-011: The migration gives every user record one workspace, named by the
-// first 64 characters of its first name, or Workspace when the record holds none.
+// WSPACE-SC-011: The migration gives every user record one workspace, named
+// "{first name}'s Workspace" with the first 52 characters of its first name, or
+// Workspace when the record holds none.
 func TestTheMigrationGivesEveryUserAWorkspace(t *testing.T) {
 	t.Parallel()
 
@@ -51,9 +52,9 @@ func TestTheMigrationGivesEveryUserAWorkspace(t *testing.T) {
 		ORDER BY m.user_id;`))
 
 	want := map[string]string{
-		ana:       "Ana",
+		ana:       "Ana's Workspace",
 		nameless:  "Workspace",
-		longNamed: strings.Repeat("ა", 64),
+		longNamed: strings.Repeat("ა", 52) + "'s Workspace",
 	}
 
 	require.Len(t, rows, len(want))

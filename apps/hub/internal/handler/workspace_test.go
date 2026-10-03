@@ -98,6 +98,8 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 		userRepo,
 		identityRepo,
 		repository.NewInvitation(instance.DB),
+		repository.NewWorkspace(instance.DB),
+		repository.NewWorkspaceMember(instance.DB),
 	)
 
 	runs := &atomic.Int32{}

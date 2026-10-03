@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
@@ -127,37 +125,7 @@ func (c *Container) AuthService() (*auth.Service, error) {
 	var err error
 
 	c.authService.once.Do(func() {
-		var dbInstance *sqlx.DB
-
-		dbInstance, err = c.Database()
-		if err != nil {
-			return
-		}
-
-		var userRepo repository.UserRepository
-
-		userRepo, err = c.UserRepository()
-		if err != nil {
-			return
-		}
-
-		var identityRepo repository.IdentityRepository
-
-		identityRepo, err = c.IdentityRepository()
-		if err != nil {
-			return
-		}
-
-		var invitationRepo repository.InvitationRepository
-
-		invitationRepo, err = c.InvitationRepository()
-		if err != nil {
-			return
-		}
-
-		c.authService.instance = auth.NewService(
-			dbInstance, userRepo, identityRepo, invitationRepo,
-		)
+		c.authService.instance, err = c.buildAuthService()
 	})
 
 	if err != nil {
@@ -167,4 +135,41 @@ func (c *Container) AuthService() (*auth.Service, error) {
 	}
 
 	return c.authService.instance, nil
+}
+
+// buildAuthService resolves every dependency of the auth service.
+func (c *Container) buildAuthService() (*auth.Service, error) {
+	dbInstance, err := c.Database()
+	if err != nil {
+		return nil, err
+	}
+
+	userRepo, err := c.UserRepository()
+	if err != nil {
+		return nil, err
+	}
+
+	identityRepo, err := c.IdentityRepository()
+	if err != nil {
+		return nil, err
+	}
+
+	invitationRepo, err := c.InvitationRepository()
+	if err != nil {
+		return nil, err
+	}
+
+	members, err := c.WorkspaceMemberRepository()
+	if err != nil {
+		return nil, err
+	}
+
+	return auth.NewService(
+		dbInstance,
+		userRepo,
+		identityRepo,
+		invitationRepo,
+		repository.NewWorkspace(dbInstance),
+		members,
+	), nil
 }
