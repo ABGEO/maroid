@@ -145,7 +145,43 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		return fmt.Errorf("register workspace handler: %w", err)
 	}
 
+	userHandler, err := c.buildUserHandler()
+	if err != nil {
+		return err
+	}
+
+	if err = reg.Register("user", userHandler); err != nil {
+		return fmt.Errorf("register user handler: %w", err)
+	}
+
 	return nil
+}
+
+// buildUserHandler resolves every dependency of the handler of /users.
+func (c *Container) buildUserHandler() (*handler.User, error) {
+	verifier, err := c.TokenVerifier()
+	if err != nil {
+		return nil, err
+	}
+
+	identityResolver, err := c.IdentityResolver()
+	if err != nil {
+		return nil, err
+	}
+
+	idempotencyStore, err := c.IdempotencyStore()
+	if err != nil {
+		return nil, err
+	}
+
+	service, err := c.UserService()
+	if err != nil {
+		return nil, err
+	}
+
+	return handler.NewUser(
+		c.Logger(), verifier, identityResolver, idempotencyStore, service, c.Config().Auth.DeckURL,
+	), nil
 }
 
 // buildHandlers resolves every handler of the HTTP API, keyed by its identifier.
@@ -280,6 +316,7 @@ func (c *Container) buildWorkspaceHandler() (*handler.Workspace, error) {
 		members,
 		service,
 		authorizer,
+		service,
 	), nil
 }
 

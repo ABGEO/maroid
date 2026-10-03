@@ -34,6 +34,12 @@ type Service interface {
 	) (*model.Member, error)
 }
 
+// Catalog lists every workspace of the instance, for an administrator. Manager
+// satisfies it beside Service, because it reads no acting workspace.
+type Catalog interface {
+	ListAll(ctx context.Context) ([]model.InstanceWorkspace, error)
+}
+
 // Manager is the implementation of Service over the repositories of the hub.
 type Manager struct {
 	db         *sqlx.DB
@@ -42,7 +48,10 @@ type Manager struct {
 	users      repository.UserRepository
 }
 
-var _ Service = (*Manager)(nil)
+var (
+	_ Service = (*Manager)(nil)
+	_ Catalog = (*Manager)(nil)
+)
 
 // NewManager creates a new Manager.
 func NewManager(
@@ -123,6 +132,18 @@ func (m *Manager) Rename(
 	}
 
 	return workspace, nil
+}
+
+// ListAll lists every workspace of the instance, each with the count of its members
+// and the plugins that it enables. An administrator reads it, and the caller checks
+// the mark.
+func (m *Manager) ListAll(ctx context.Context) ([]model.InstanceWorkspace, error) {
+	workspaces, err := m.workspaces.ListAll(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("listing the workspaces of the instance: %w", err)
+	}
+
+	return workspaces, nil
 }
 
 // Members lists the members of the acting workspace.

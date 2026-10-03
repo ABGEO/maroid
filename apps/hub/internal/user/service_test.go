@@ -1,4 +1,4 @@
-package administration_test
+package user_test
 
 import (
 	"io/fs"
@@ -9,17 +9,17 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/db"
-	"github.com/abgeo/maroid/apps/hub/internal/administration"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
 // world holds Zura, the only administrator, and Ana, who is none.
 type world struct {
 	instance *testdb.Instance
-	service  *administration.Manager
+	service  *user.Manager
 	zura     string
 	ana      string
 }
@@ -46,9 +46,13 @@ func newWorld(t *testing.T) *world {
 
 	return &world{
 		instance: instance,
-		service:  administration.NewManager(instance.DB, repository.NewUser(instance.DB)),
-		zura:     insert("Zura", true),
-		ana:      insert("Ana", false),
+		service: user.NewManager(
+			instance.DB,
+			user.Repositories{Users: repository.NewUser(instance.DB)},
+			nil, nil, 0,
+		),
+		zura: insert("Zura", true),
+		ana:  insert("Ana", false),
 	}
 }
 
@@ -63,8 +67,8 @@ func (w *world) activeAdministrators(t *testing.T) int {
 	return count
 }
 
-func marked(value bool) administration.UserChange {
-	return administration.UserChange{Administrator: &value}
+func marked(value bool) user.Change {
+	return user.Change{Administrator: &value}
 }
 
 // PLUGACC-SC-005: The last administrator keeps the mark and the active status, and a
@@ -75,16 +79,16 @@ func TestTheLastAdministratorStays(t *testing.T) {
 
 	scene := newWorld(t)
 
-	_, err := scene.service.ChangeUser(t.Context(), scene.zura, marked(false), nil)
+	_, err := scene.service.Change(t.Context(), scene.zura, marked(false), nil)
 	require.ErrorIs(t, err, errs.ErrAdministratorLast)
 
 	blocked := model.StatusBlocked
-	_, err = scene.service.ChangeUser(t.Context(), scene.zura,
-		administration.UserChange{Status: &blocked}, nil)
+	_, err = scene.service.Change(t.Context(), scene.zura,
+		user.Change{Status: &blocked}, nil)
 	require.ErrorIs(t, err, errs.ErrAdministratorLast)
 	assert.Equal(t, 1, scene.activeAdministrators(t))
 
-	ana, err := scene.service.ChangeUser(t.Context(), scene.ana, marked(true), nil)
+	ana, err := scene.service.Change(t.Context(), scene.ana, marked(true), nil)
 	require.NoError(t, err)
 	assert.True(t, ana.IsAdministrator)
 	assert.Equal(t, 2, scene.activeAdministrators(t))
@@ -97,7 +101,7 @@ func TestTwoAdministratorsWhoUnmarkEachOtherKeepOne(t *testing.T) {
 
 	scene := newWorld(t)
 
-	_, err := scene.service.ChangeUser(t.Context(), scene.ana, marked(true), nil)
+	_, err := scene.service.Change(t.Context(), scene.ana, marked(true), nil)
 	require.NoError(t, err)
 
 	failures := make([]error, 2)
@@ -106,7 +110,7 @@ func TestTwoAdministratorsWhoUnmarkEachOtherKeepOne(t *testing.T) {
 
 	for index, target := range []string{scene.zura, scene.ana} {
 		group.Go(func() {
-			_, failures[index] = scene.service.ChangeUser(t.Context(), target, marked(false), nil)
+			_, failures[index] = scene.service.Change(t.Context(), target, marked(false), nil)
 		})
 	}
 

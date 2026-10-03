@@ -41,6 +41,19 @@ type Workspace struct {
 	members     repository.WorkspaceMemberRepository
 	service     workspace.Service
 	authorizer  authz.Authorizer
+	catalog     workspace.Catalog
+}
+
+// scopeAll names every workspace of the instance in the scope of the list.
+const scopeAll = "all"
+
+type instanceWorkspaceBody struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	MemberCount int       `json:"member_count"`
+	PluginIDs   []string  `json:"plugin_ids"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 var _ Handler = (*Workspace)(nil)
@@ -54,6 +67,7 @@ func NewWorkspace(
 	members repository.WorkspaceMemberRepository,
 	service workspace.Service,
 	authorizer authz.Authorizer,
+	catalog workspace.Catalog,
 ) *Workspace {
 	return &Workspace{
 		logger: logger.With(
@@ -66,6 +80,7 @@ func NewWorkspace(
 		members:     members,
 		service:     service,
 		authorizer:  authorizer,
+		catalog:     catalog,
 	}
 }
 
@@ -161,10 +176,23 @@ func toMemberBody(entity *model.Member) memberBody {
 	}
 }
 
-// List answers the workspaces of the acting user.
+// List answers the workspaces of the acting user, or with scope=all every workspace
+// of the instance, for an administrator.
 func (h *Workspace) List(w http.ResponseWriter, r *http.Request) error {
-	if _, failure := page.ReadRequest(r, page.Options{Bounded: true}); failure != nil {
+	if _, failure := page.ReadRequest(r, page.Options{
+		Bounded: true, Filters: []string{"scope"},
+	}); failure != nil {
 		problem.Write(w, r, failure)
+
+		return nil
+	}
+
+	switch r.URL.Query().Get("scope") {
+	case "":
+	case scopeAll:
+		return h.listInstance(w, r)
+	default:
+		problem.Write(w, r, problem.NewRequestInvalid())
 
 		return nil
 	}
@@ -428,6 +456,36 @@ func answerPage[T any](w http.ResponseWriter, r *http.Request, bodies []T) error
 	render.JSON(w, r, answered)
 
 	return nil
+}
+
+// listInstance answers every workspace of the instance to an administrator.
+func (h *Workspace) listInstance(w http.ResponseWriter, r *http.Request) error {
+	if !auth.IsAdministratorFromContext(r.Context()) {
+		problem.Write(w, r, problem.NewPermissionDenied(auth.AdministrationPermission, ""))
+
+		return nil
+	}
+
+	workspaces, err := h.catalog.ListAll(r.Context())
+	if err != nil {
+		problem.Write(w, r, problem.NewInternal())
+
+		return fmt.Errorf("listing the workspaces of the instance: %w", err)
+	}
+
+	bodies := make([]instanceWorkspaceBody, 0, len(workspaces))
+	for _, one := range workspaces {
+		bodies = append(bodies, instanceWorkspaceBody{
+			ID:          one.ID,
+			Name:        one.Name,
+			MemberCount: one.MemberCount,
+			PluginIDs:   one.PluginIDs,
+			CreatedAt:   one.CreatedAt.UTC(),
+			UpdatedAt:   one.UpdatedAt.UTC(),
+		})
+	}
+
+	return answerPage(w, r, bodies)
 }
 
 // fail answers the problem that the failure carries.

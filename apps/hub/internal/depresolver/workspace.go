@@ -37,8 +37,9 @@ func (c *Container) WorkspaceMemberRepository() (repository.WorkspaceMemberRepos
 	return c.workspaceMemberRepository.instance, nil
 }
 
-// WorkspaceService initializes and returns the service of the workspaces.
-func (c *Container) WorkspaceService() (workspace.Service, error) {
+// WorkspaceService initializes and returns the service of the workspaces. It answers
+// the manager, which a caller takes as workspace.Service or as workspace.Catalog.
+func (c *Container) WorkspaceService() (*workspace.Manager, error) {
 	c.workspaceService.mu.Lock()
 	defer c.workspaceService.mu.Unlock()
 

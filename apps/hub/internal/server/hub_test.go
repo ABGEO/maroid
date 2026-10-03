@@ -84,9 +84,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	cfg := hubConfig(provider.URL)
 	logger := slog.New(slog.DiscardHandler)
 
-	oidcSvc, err := auth.NewOIDCService(cfg)
-	require.NoError(t, err)
-
+	oidcSvc := oidcOf(t, cfg)
 	identityRepo := repository.NewIdentity(instance.DB)
 	invitationRepo := repository.NewInvitation(instance.DB)
 	userRepo := repository.NewUser(instance.DB)
@@ -96,7 +94,6 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	resolver := auth.NewResolver(identityRepo)
 	store := idempotency.NewStore(instance.DB)
 	workspaces := workspaceManager(instance.DB, members, userRepo)
-
 	authorizer := probeAuthorizer(t)
 
 	router, err := server.NewHTTPRouter(cfg, logger)
@@ -116,7 +113,9 @@ func hubUnderTest(t *testing.T) *hubFixture {
 			registry.NewPluginRegistry(), probeUI(), registry.NewCapabilityRegistry(),
 			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store, members, authorizer,
 		),
-		handler.NewWorkspace(logger, verifier, resolver, store, members, workspaces, authorizer),
+		handler.NewWorkspace(
+			logger, verifier, resolver, store, members, workspaces, authorizer, workspaces,
+		),
 		handler.NewMCP(
 			cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry(), members, authorizer,
 		),
@@ -159,6 +158,16 @@ func workspaceManager(
 	users repository.UserRepository,
 ) *workspace.Manager {
 	return workspace.NewManager(database, repository.NewWorkspace(database), members, users)
+}
+
+// oidcOf builds the OIDC service of the configuration.
+func oidcOf(t *testing.T, cfg *config.Config) *auth.OIDCService {
+	t.Helper()
+
+	oidcSvc, err := auth.NewOIDCService(cfg)
+	require.NoError(t, err)
+
+	return oidcSvc
 }
 
 // workspaceOf creates a workspace of the person and answers its identifier.

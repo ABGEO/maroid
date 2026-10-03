@@ -31,6 +31,7 @@ type WorkspaceRepository interface {
 		ifMatch *time.Time,
 	) (*model.Workspace, error)
 	Lock(ctx context.Context, tx *sqlx.Tx, id string) error
+	ListAll(ctx context.Context) ([]model.InstanceWorkspace, error)
 }
 
 // Workspace is a SQL based implementation of WorkspaceRepository.
@@ -150,4 +151,46 @@ func (r *Workspace) Lock(ctx context.Context, tx *sqlx.Tx, id string) error {
 	}
 
 	return nil
+}
+
+// ListAll retrieves every workspace of the instance with the count of its members and
+// the plugins that it enables, ordered by the name, then by the identifier.
+func (r *Workspace) ListAll(ctx context.Context) ([]model.InstanceWorkspace, error) {
+	entities := []model.InstanceWorkspace{}
+
+	query := `
+		SELECT w.id, w.name, w.created_at, w.updated_at,
+			(SELECT count(*) FROM public.workspace_members m WHERE m.workspace_id = w.id) AS member_count
+		FROM public.workspaces w
+		ORDER BY w.name, w.id;`
+
+	if err := r.db.SelectContext(ctx, &entities, query); err != nil {
+		return nil, fmt.Errorf("listing every Workspace: %w", err)
+	}
+
+	enablements := []model.Enablement{}
+
+	err := r.db.SelectContext(ctx, &enablements, `
+		SELECT workspace_id, plugin_id, created_at, updated_at FROM public.workspace_plugins
+		ORDER BY workspace_id, plugin_id;`)
+	if err != nil {
+		return nil, fmt.Errorf("listing the plugins of every Workspace: %w", err)
+	}
+
+	enabled := make(map[string][]string, len(entities))
+	for _, enablement := range enablements {
+		enabled[enablement.WorkspaceID] = append(
+			enabled[enablement.WorkspaceID],
+			enablement.PluginID,
+		)
+	}
+
+	for index := range entities {
+		entities[index].PluginIDs = enabled[entities[index].ID]
+		if entities[index].PluginIDs == nil {
+			entities[index].PluginIDs = []string{}
+		}
+	}
+
+	return entities, nil
 }

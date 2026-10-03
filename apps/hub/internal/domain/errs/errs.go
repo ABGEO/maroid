@@ -61,6 +61,10 @@ var (
 	ErrWorkspaceNotFound = errors.New("workspace: not found")
 	// ErrMemberNotFound indicates that the user record is no member of the workspace.
 	ErrMemberNotFound = errors.New("workspace member: not found")
+	// ErrAllowedPluginNotFound indicates a plugin that the allowlist does not hold.
+	ErrAllowedPluginNotFound = errors.New("allowed plugin: not found")
+	// ErrPluginNotLoaded indicates a plugin identifier that the hub did not load.
+	ErrPluginNotLoaded = errors.New("plugin: not loaded")
 	// ErrAdministratorLast indicates a change that would leave the instance with no
 	// active administrator.
 	ErrAdministratorLast = errors.New("user: the last administrator")

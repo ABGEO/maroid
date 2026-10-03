@@ -27,6 +27,8 @@ const (
 // UserRepository defines the data access contract for the user record.
 type UserRepository interface {
 	GetActiveByID(ctx context.Context, id string) (*model.User, error)
+	GetByID(ctx context.Context, id string) (*model.User, error)
+	List(ctx context.Context) ([]model.User, error)
 	ListActive(ctx context.Context) ([]model.User, error)
 	Create(ctx context.Context, tx *sqlx.Tx, firstName string, lastName string) (*model.User, error)
 	Change(ctx context.Context, tx *sqlx.Tx, id string, change UserChange) (*model.User, error)
@@ -67,6 +69,27 @@ func (r *User) GetActiveByID(ctx context.Context, id string) (*model.User, error
 	query := `SELECT ` + userColumns + ` FROM public.users WHERE id = $1 AND status = $2;`
 
 	return r.get(ctx, "ID", query, id, model.StatusActive)
+}
+
+// GetByID retrieves the user record with the given identifier, active or blocked.
+func (r *User) GetByID(ctx context.Context, id string) (*model.User, error) {
+	query := `SELECT ` + userColumns + ` FROM public.users WHERE id = $1;`
+
+	return r.get(ctx, "ID", query, id)
+}
+
+// List retrieves every user record, ordered by the last name, then by the first name.
+func (r *User) List(ctx context.Context) ([]model.User, error) {
+	entities := []model.User{}
+
+	query := `SELECT ` + userColumns + ` FROM public.users
+		ORDER BY last_name NULLS LAST, first_name NULLS LAST, id;`
+
+	if err := r.db.SelectContext(ctx, &entities, query); err != nil {
+		return nil, fmt.Errorf("listing Users: %w", err)
+	}
+
+	return entities, nil
 }
 
 // ListActive retrieves every active user record, oldest first.

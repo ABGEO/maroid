@@ -26,6 +26,10 @@ const (
 	administratorKey contextKey = "administrator"
 )
 
+// AdministrationPermission names what a route of an administrator needs, in the
+// answer that refuses a person who is no administrator.
+const AdministrationPermission = "administration"
+
 // Middleware returns a HTTP middleware that verifies a access token and resolves
 // the acting user of the request.
 func Middleware(
@@ -147,4 +151,27 @@ func IsAdministratorFromContext(ctx context.Context) bool {
 	administrator, _ := ctx.Value(administratorKey).(bool)
 
 	return administrator
+}
+
+// RequireAdministrator answers permission-denied, with the permission administration,
+// to a person who is no administrator. It runs behind Middleware, which puts the mark
+// into the context.
+func RequireAdministrator(logger *slog.Logger) func(http.Handler) http.Handler {
+	logger = logger.With(
+		slog.String("component", "middleware"),
+		slog.String("middleware", "administrator"),
+	)
+
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !IsAdministratorFromContext(r.Context()) {
+				logger.InfoContext(r.Context(), "a route of an administrator refused a person")
+				problem.Write(w, r, problem.NewPermissionDenied(AdministrationPermission, ""))
+
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }

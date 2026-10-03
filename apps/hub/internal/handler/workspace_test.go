@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
@@ -25,6 +26,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/address"
@@ -79,6 +81,7 @@ type workspaceFixture struct {
 	gio      person
 	nino     person
 	h        string
+	authSvc  *auth.Service
 	// probeRuns counts the requests that reached the read route of the probe plugin.
 	probeRuns *atomic.Int32
 	// probeWrites counts the requests that reached the write route of the probe plugin.
@@ -101,18 +104,20 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 	provider := authtest.StartProvider(t)
 	identityRepo := repository.NewIdentity(instance.DB)
 	userRepo := repository.NewUser(instance.DB)
-	authSvc := auth.NewService(
-		instance.DB,
-		userRepo,
-		identityRepo,
-		repository.NewInvitation(instance.DB),
-		repository.NewWorkspace(instance.DB),
-		repository.NewWorkspaceMember(instance.DB),
-	)
+	authSvc := authServiceOf(instance.DB, identityRepo, userRepo)
 
 	runs, writes := &atomic.Int32{}, &atomic.Int32{}
 	fixture := &workspaceFixture{
-		router:      workspaceRouter(t, instance, provider, identityRepo, userRepo, runs, writes),
+		router: workspaceRouter(
+			t,
+			instance,
+			provider,
+			identityRepo,
+			usersOf(t, instance.DB, userRepo, authSvc),
+			userRepo,
+			runs,
+			writes,
+		),
 		database:    instance.DB,
 		provider:    provider,
 		probeRuns:   runs,
@@ -133,12 +138,47 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 	fixture.beka = signable("Beka", "102")
 	fixture.gio = signable("Gio", "103")
 	fixture.nino = signable("Nino", "104")
+	fixture.authSvc = authSvc
 
 	fixture.h = fixture.create(t, fixture.ana, "H")
 	fixture.add(t, fixture.ana, fixture.h, fixture.beka, roleEditor)
 	fixture.add(t, fixture.ana, fixture.h, fixture.gio, roleViewer)
 
 	return fixture
+}
+
+// administrator signs in Zura, an administrator who is a member of nothing. A test of
+// the routes of an administrator calls it, so the other scenarios keep their world.
+func (f *workspaceFixture) administrator(t *testing.T) person {
+	t.Helper()
+
+	id := addUserRecord(t, f.database, "Zura")
+	require.NoError(
+		t,
+		f.authSvc.Attach(t.Context(), id, auth.ProviderTelegram, "105", model.Profile{}),
+	)
+
+	_, err := f.database.ExecContext(t.Context(),
+		`UPDATE public.users SET is_administrator = true WHERE id = $1;`, id)
+	require.NoError(t, err)
+
+	return person{id: id, account: "105"}
+}
+
+// authServiceOf builds the auth service over the database.
+func authServiceOf(
+	database *sqlx.DB,
+	identityRepo repository.IdentityRepository,
+	userRepo repository.UserRepository,
+) *auth.Service {
+	return auth.NewService(
+		database,
+		userRepo,
+		identityRepo,
+		repository.NewInvitation(database),
+		repository.NewWorkspace(database),
+		repository.NewWorkspaceMember(database),
+	)
 }
 
 // workspaceRouter mounts the handler of the workspaces, the settings routes, and the
@@ -149,6 +189,7 @@ func workspaceRouter(
 	instance *testdb.Instance,
 	provider *authtest.Provider,
 	identityRepo repository.IdentityRepository,
+	users *user.Manager,
 	userRepo repository.UserRepository,
 	probeRuns *atomic.Int32,
 	probeWrites *atomic.Int32,
@@ -183,22 +224,50 @@ func workspaceRouter(
 		&stubSettings{}, noIdempotency{}, memberRepo, authorizer,
 	).Register(router)
 
-	handler.NewWorkspace(
-		logger,
-		verifier,
-		resolver,
-		noIdempotency{},
+	manager := workspace.NewManager(
+		instance.DB,
+		repository.NewWorkspace(instance.DB),
 		memberRepo,
-		workspace.NewManager(
-			instance.DB,
-			repository.NewWorkspace(instance.DB),
-			memberRepo,
-			userRepo,
-		),
-		authorizer,
+		userRepo,
+	)
+
+	handler.NewWorkspace(
+		logger, verifier, resolver, noIdempotency{}, memberRepo, manager, authorizer, manager,
+	).Register(router)
+
+	handler.NewUser(
+		logger, verifier, resolver, noIdempotency{}, users, "http://maroid.localhost",
 	).Register(router)
 
 	return router
+}
+
+// usersOf builds the service of the user records over the database, with the plugins
+// P and Q loaded.
+func usersOf(
+	t *testing.T,
+	database *sqlx.DB,
+	users repository.UserRepository,
+	inviter user.Inviter,
+) *user.Manager {
+	t.Helper()
+
+	plugins := registry.NewPluginRegistry()
+	require.NoError(
+		t,
+		plugins.Register(newStubPlugin(pluginP, "1.0.0"), newStubPlugin(pluginQ, "1.0.0")),
+	)
+
+	return user.NewManager(
+		database,
+		user.Repositories{
+			Users:   users,
+			Allowed: repository.NewAllowedPlugin(database),
+		},
+		inviter,
+		plugins,
+		time.Hour,
+	)
 }
 
 // workspaceVerifier verifies the session cookies that the provider signs.

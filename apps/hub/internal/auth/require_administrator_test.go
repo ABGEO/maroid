@@ -1,4 +1,4 @@
-package administration_test
+package auth_test
 
 import (
 	"encoding/json"
@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/apps/hub/internal/administration"
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 )
 
@@ -20,7 +19,7 @@ func TestARouteOfTheAdministrationAdmitsAnAdministratorAlone(t *testing.T) {
 	t.Parallel()
 
 	reached := false
-	guarded := administration.Require(slog.New(slog.DiscardHandler))(
+	guarded := auth.RequireAdministrator(slog.New(slog.DiscardHandler))(
 		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			reached = true
 
@@ -47,7 +46,7 @@ func TestARouteOfTheAdministrationAdmitsAnAdministratorAlone(t *testing.T) {
 
 	require.NoError(t, json.Unmarshal(refused.Body.Bytes(), &answered))
 	assert.Equal(t, "/problems/http/permission-denied", answered["type"])
-	assert.Equal(t, administration.Permission, answered["permission"])
+	assert.Equal(t, auth.AdministrationPermission, answered["permission"])
 
 	admitted := call(true)
 	assert.Equal(t, http.StatusOK, admitted.Code)
