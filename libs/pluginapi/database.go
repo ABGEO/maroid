@@ -29,7 +29,8 @@ func NewPluginDB(db *sqlx.DB, pluginID *PluginID) *PluginDB {
 }
 
 // WithTx executes a function within a database transaction, setting the search_path
-// to the plugin-specific schema and the acting user of the context.
+// to the plugin-specific schema, and the acting user and the acting workspace of the
+// context.
 func (p *PluginDB) WithTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	tx, err := p.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -40,12 +41,14 @@ func (p *PluginDB) WithTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 
 	_, err = tx.ExecContext(
 		ctx,
-		`SELECT set_config('search_path', $1, true), set_config('app.user_id', $2, true)`,
+		`SELECT set_config('search_path', $1, true), set_config('app.user_id', $2, true), `+
+			`set_config('app.workspace_id', $3, true)`,
 		p.pluginID.ToSafeName("_")+", public",
 		ActingUserFromContext(ctx),
+		ActingWorkspaceFromContext(ctx),
 	)
 	if err != nil {
-		return fmt.Errorf("setting the search path and the acting user: %w", err)
+		return fmt.Errorf("setting the search path and the scope: %w", err)
 	}
 
 	if err = fn(tx); err != nil {

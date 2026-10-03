@@ -14,27 +14,27 @@ import (
 )
 
 const fixture = `
-CREATE TABLE public.users (
-    id          UUID   NOT NULL PRIMARY KEY DEFAULT uuidv7(),
-    telegram_id BIGINT NOT NULL UNIQUE
+CREATE TABLE public.workspaces (
+    id   UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    name TEXT NOT NULL
 );
 
 CREATE SCHEMA test_scope;
 
 CREATE TABLE test_scope.notes (
-    id      UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
-    user_id UUID NOT NULL
-        DEFAULT NULLIF(current_setting('app.user_id', true), '')::uuid
-        REFERENCES public.users (id),
-    body    TEXT NOT NULL
+    id           UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    workspace_id UUID NOT NULL
+        DEFAULT NULLIF(current_setting('app.workspace_id', true), '')::uuid
+        REFERENCES public.workspaces (id),
+    body         TEXT NOT NULL
 );
 
 ALTER TABLE test_scope.notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE test_scope.notes FORCE ROW LEVEL SECURITY;
 
-CREATE POLICY notes_user_isolation ON test_scope.notes
-    USING (user_id = NULLIF(current_setting('app.user_id', true), '')::uuid)
-    WITH CHECK (user_id = NULLIF(current_setting('app.user_id', true), '')::uuid);
+CREATE POLICY notes_workspace_isolation ON test_scope.notes
+    USING (workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::uuid)
+    WITH CHECK (workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::uuid);
 
 CREATE SCHEMA dev_maroid_jasmine;
 
@@ -44,12 +44,13 @@ CREATE TABLE dev_maroid_jasmine.plants (
 );
 `
 
-// scope is a database that holds one scoped table and two user records.
+// scope is a database that holds one table that a workspace scopes, and two
+// workspaces.
 type scope struct {
-	instance *testdb.Instance
-	notes    *pluginapi.PluginDB
-	userA    string
-	userB    string
+	instance   *testdb.Instance
+	notes      *pluginapi.PluginDB
+	workspaceA string
+	workspaceB string
 }
 
 func newScope(t *testing.T) *scope {
@@ -61,14 +62,14 @@ func newScope(t *testing.T) *scope {
 	require.NoError(t, err)
 
 	return &scope{
-		instance: instance,
-		notes:    pluginapi.NewPluginDB(instance.DB, pluginapi.ParsePluginID("test.scope")),
-		userA:    addUser(t, instance, 111),
-		userB:    addUser(t, instance, 222),
+		instance:   instance,
+		notes:      pluginapi.NewPluginDB(instance.DB, pluginapi.ParsePluginID("test.scope")),
+		workspaceA: addWorkspace(t, instance, "A"),
+		workspaceB: addWorkspace(t, instance, "B"),
 	}
 }
 
-func addUser(t *testing.T, instance *testdb.Instance, telegramID int64) string {
+func addWorkspace(t *testing.T, instance *testdb.Instance, name string) string {
 	t.Helper()
 
 	var id string
@@ -76,26 +77,26 @@ func addUser(t *testing.T, instance *testdb.Instance, telegramID int64) string {
 	err := instance.DB.GetContext(
 		t.Context(),
 		&id,
-		`INSERT INTO public.users (telegram_id) VALUES ($1) RETURNING id;`,
-		telegramID,
+		`INSERT INTO public.workspaces (name) VALUES ($1) RETURNING id;`,
+		name,
 	)
 	require.NoError(t, err)
 
 	return id
 }
 
-// as returns a context that names the acting user.
-func as(t *testing.T, user string) context.Context {
+// in returns a context that names the acting workspace.
+func in(t *testing.T, workspace string) context.Context {
 	t.Helper()
 
-	return pluginapi.ContextWithActingUser(t.Context(), user)
+	return pluginapi.ContextWithActingWorkspace(t.Context(), workspace)
 }
 
-// write stores one note for each body, as the given user.
-func (s *scope) write(t *testing.T, user string, bodies ...string) {
+// write stores one note for each body, in the given workspace.
+func (s *scope) write(t *testing.T, workspace string, bodies ...string) {
 	t.Helper()
 
-	ctx := as(t, user)
+	ctx := in(t, workspace)
 
 	require.NoError(t, s.notes.WithTx(ctx, func(tx *sqlx.Tx) error {
 		for _, body := range bodies {
@@ -109,35 +110,39 @@ func (s *scope) write(t *testing.T, user string, bodies ...string) {
 	}))
 }
 
-// IDENT-SC-002: An insert that names no user_id carries the acting user.
-func TestAnInsertCarriesTheActingUser(t *testing.T) {
+// IDENT-SC-002: An insert that names no workspace_id carries the acting workspace.
+func TestAnInsertCarriesTheActingWorkspace(t *testing.T) {
 	t.Parallel()
 
 	scoped := newScope(t)
-	ctx := as(t, scoped.userA)
+	ctx := in(t, scoped.workspaceA)
 
-	scoped.write(t, scoped.userA, "carried")
+	scoped.write(t, scoped.workspaceA, "carried")
 
 	var owner string
 
 	require.NoError(t, scoped.notes.WithTx(ctx, func(tx *sqlx.Tx) error {
-		return tx.GetContext(ctx, &owner, `SELECT user_id FROM notes WHERE body = 'carried';`)
+		return tx.GetContext(
+			ctx,
+			&owner,
+			`SELECT workspace_id FROM notes WHERE body = 'carried';`,
+		)
 	}))
-	require.Equal(t, scoped.userA, owner)
+	require.Equal(t, scoped.workspaceA, owner)
 }
 
-// IDENT-SC-001: A read as user A returns the notes of user A and none of user B.
-// IDENT-NFR-001: The count of the records of user B in the result is zero.
-func TestAReadReturnsNoRecordOfAnotherUser(t *testing.T) {
+// IDENT-SC-001: A read in workspace A returns the notes of A and none of B.
+// IDENT-NFR-001: The count of the records of workspace B in the result is zero.
+func TestAReadReturnsNoRecordOfAnotherWorkspace(t *testing.T) {
 	t.Parallel()
 
 	scoped := newScope(t)
-	scoped.write(t, scoped.userA, "a1", "a2", "a3")
-	scoped.write(t, scoped.userB, "b1", "b2", "b3")
+	scoped.write(t, scoped.workspaceA, "a1", "a2", "a3")
+	scoped.write(t, scoped.workspaceB, "b1", "b2", "b3")
 
 	var mine, ofOther int
 
-	ctx := as(t, scoped.userA)
+	ctx := in(t, scoped.workspaceA)
 
 	require.NoError(t, scoped.notes.WithTx(ctx, func(tx *sqlx.Tx) error {
 		if err := tx.GetContext(ctx, &mine, `SELECT count(*) FROM notes;`); err != nil {
@@ -146,10 +151,10 @@ func TestAReadReturnsNoRecordOfAnotherUser(t *testing.T) {
 
 		err := tx.GetContext(
 			ctx, &ofOther,
-			`SELECT count(*) FROM notes WHERE user_id = $1;`, scoped.userB,
+			`SELECT count(*) FROM notes WHERE workspace_id = $1;`, scoped.workspaceB,
 		)
 		if err != nil {
-			return fmt.Errorf("counting the notes of the other user: %w", err)
+			return fmt.Errorf("counting the notes of the other workspace: %w", err)
 		}
 
 		return nil
@@ -159,14 +164,15 @@ func TestAReadReturnsNoRecordOfAnotherUser(t *testing.T) {
 	require.Equal(t, 0, ofOther)
 }
 
-// IDENT-SC-003: An update and a delete of the record of another user change no row.
-func TestAWriteDoesNotReachTheRecordOfAnotherUser(t *testing.T) {
+// IDENT-SC-003: An update and a delete of the record of another workspace change no
+// row.
+func TestAWriteDoesNotReachTheRecordOfAnotherWorkspace(t *testing.T) {
 	t.Parallel()
 
 	scoped := newScope(t)
-	scoped.write(t, scoped.userB, "untouched")
+	scoped.write(t, scoped.workspaceB, "untouched")
 
-	ctx := as(t, scoped.userA)
+	ctx := in(t, scoped.workspaceA)
 
 	var updated, deleted int64
 
@@ -189,7 +195,7 @@ func TestAWriteDoesNotReachTheRecordOfAnotherUser(t *testing.T) {
 	require.Equal(t, int64(0), updated)
 	require.Equal(t, int64(0), deleted)
 
-	ofOwner := as(t, scoped.userB)
+	ofOwner := in(t, scoped.workspaceB)
 
 	var body string
 
@@ -199,15 +205,15 @@ func TestAWriteDoesNotReachTheRecordOfAnotherUser(t *testing.T) {
 	require.Equal(t, "untouched", body)
 }
 
-// IDENT-SC-004: A read of the record of another user answers as a missing record.
-// IDENT-FR-006: Neither answer tells the requester that the record exists.
-func TestTheRecordOfAnotherUserReadsAsAMissingRecord(t *testing.T) {
+// IDENT-SC-004: A read of the record of another workspace answers as a missing
+// record. IDENT-FR-006: Neither answer tells the requester that the record exists.
+func TestTheRecordOfAnotherWorkspaceReadsAsAMissingRecord(t *testing.T) {
 	t.Parallel()
 
 	scoped := newScope(t)
-	scoped.write(t, scoped.userB, "hidden")
+	scoped.write(t, scoped.workspaceB, "hidden")
 
-	ctx := as(t, scoped.userA)
+	ctx := in(t, scoped.workspaceA)
 
 	read := func(body string) error {
 		var found string
@@ -221,13 +227,13 @@ func TestTheRecordOfAnotherUserReadsAsAMissingRecord(t *testing.T) {
 	require.ErrorIs(t, read("no such note"), sql.ErrNoRows)
 }
 
-// IDENT-SC-005: A transaction with no acting user reads no scoped record and its
+// IDENT-SC-005: A transaction with no acting workspace reads no scoped record and its
 // insert fails. IDENT-INV-002 holds even when the caller forgets.
-func TestNoActingUserReachesNoScopedRecord(t *testing.T) {
+func TestNoActingWorkspaceReachesNoScopedRecord(t *testing.T) {
 	t.Parallel()
 
 	scoped := newScope(t)
-	scoped.write(t, scoped.userA, "invisible")
+	scoped.write(t, scoped.workspaceA, "invisible")
 
 	ctx := t.Context()
 
@@ -241,7 +247,7 @@ func TestNoActingUserReachesNoScopedRecord(t *testing.T) {
 	err := scoped.notes.WithTx(ctx, func(tx *sqlx.Tx) error {
 		_, execErr := tx.ExecContext(ctx, `INSERT INTO notes (body) VALUES ('refused');`)
 		if execErr != nil {
-			return fmt.Errorf("inserting with no acting user: %w", execErr)
+			return fmt.Errorf("inserting with no acting workspace: %w", execErr)
 		}
 
 		return nil
@@ -249,7 +255,8 @@ func TestNoActingUserReachesNoScopedRecord(t *testing.T) {
 	require.ErrorContains(t, err, "row-level security policy")
 }
 
-// IDENT-SC-010: A table from before this feature answers every user with every row.
+// IDENT-SC-010: A table from before this feature answers every workspace with every
+// row.
 func TestATableFromBeforeThisFeatureStaysShared(t *testing.T) {
 	t.Parallel()
 
@@ -265,15 +272,15 @@ func TestATableFromBeforeThisFeatureStaysShared(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	for _, user := range []string{scoped.userA, scoped.userB} {
-		ctx := as(t, user)
+	for _, workspace := range []string{scoped.workspaceA, scoped.workspaceB} {
+		ctx := in(t, workspace)
 
 		var count int
 
 		require.NoError(t, shared.WithTx(ctx, func(tx *sqlx.Tx) error {
 			return tx.GetContext(ctx, &count, `SELECT count(*) FROM plants;`)
 		}))
-		require.Positive(t, count, "every user reads a shared table")
+		require.Positive(t, count, "every workspace reads a shared table")
 	}
 }
 

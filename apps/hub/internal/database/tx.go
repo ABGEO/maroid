@@ -9,8 +9,10 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
-// WithUserTx runs fn inside a transaction that carries the acting user of the context.
-func WithUserTx(ctx context.Context, db *sqlx.DB, fn func(*sqlx.Tx) error) error {
+// WithScopeTx runs fn inside a transaction that carries the acting user and the
+// acting workspace of the context. A value that the context does not carry is the
+// empty string, and the policy of its scope then shows no row.
+func WithScopeTx(ctx context.Context, db *sqlx.DB, fn func(*sqlx.Tx) error) error {
 	tx, err := db.BeginTxx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("beginning transaction: %w", err)
@@ -20,11 +22,12 @@ func WithUserTx(ctx context.Context, db *sqlx.DB, fn func(*sqlx.Tx) error) error
 
 	_, err = tx.ExecContext(
 		ctx,
-		`SELECT set_config('app.user_id', $1, true)`,
+		`SELECT set_config('app.user_id', $1, true), set_config('app.workspace_id', $2, true)`,
 		pluginapi.ActingUserFromContext(ctx),
+		pluginapi.ActingWorkspaceFromContext(ctx),
 	)
 	if err != nil {
-		return fmt.Errorf("setting the acting user: %w", err)
+		return fmt.Errorf("setting the scope: %w", err)
 	}
 
 	if err = fn(tx); err != nil {

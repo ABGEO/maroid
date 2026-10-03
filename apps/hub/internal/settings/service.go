@@ -214,7 +214,7 @@ func (m *Manager) Save(
 
 	var written time.Time
 
-	err = database.WithUserTx(ctx, m.db, func(tx *sqlx.Tx) error {
+	err = database.WithScopeTx(ctx, m.db, func(tx *sqlx.Tx) error {
 		settingsRepo := repository.NewPluginSettings(tx)
 
 		current, readErr := settingsRepo.Get(ctx, pluginID)
@@ -401,7 +401,7 @@ func (m *Manager) stored(
 ) (model.Fields, time.Time, error) {
 	var entity *model.PluginSettings
 
-	err := database.WithUserTx(ctx, m.db, func(tx *sqlx.Tx) error {
+	err := database.WithScopeTx(ctx, m.db, func(tx *sqlx.Tx) error {
 		var readErr error
 
 		entity, readErr = repository.NewPluginSettings(tx).Get(ctx, pluginID)

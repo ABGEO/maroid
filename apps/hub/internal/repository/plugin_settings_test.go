@@ -32,7 +32,7 @@ func storeFields(t *testing.T, instance *testdb.Instance, user string, fields mo
 
 	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
 
-	require.NoError(t, database.WithUserTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
 		return errorOf(repository.NewPluginSettings(tx).Upsert(ctx, probePluginID, fields, nil))
 	}))
 }
@@ -53,7 +53,7 @@ func TestUpsertCarriesTheActingUser(t *testing.T) {
 
 	var stored *model.PluginSettings
 
-	require.NoError(t, database.WithUserTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
 		var err error
 
 		stored, err = repository.NewPluginSettings(tx).Get(ctx, probePluginID)
@@ -88,7 +88,7 @@ func TestUpsertReplacesTheRowOfThePair(t *testing.T) {
 
 	var count, unscoped int
 
-	require.NoError(t, database.WithUserTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
 		return tx.GetContext(ctx, &count, `SELECT count(*) FROM public.plugin_settings;`)
 	}))
 	require.Equal(t, 1, count)
@@ -114,7 +114,7 @@ func TestGetReturnsNoRowOfAnotherUser(t *testing.T) {
 
 	var stored *model.PluginSettings
 
-	require.NoError(t, database.WithUserTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
 		var err error
 
 		stored, err = repository.NewPluginSettings(tx).Get(ctx, probePluginID)
@@ -137,7 +137,7 @@ func asUser(t *testing.T, instance *testdb.Instance, user string,
 	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
 
 	//nolint:wrapcheck // the test reads the error that the repository answered.
-	return database.WithUserTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
+	return database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
 		return work(ctx, tx)
 	})
 }

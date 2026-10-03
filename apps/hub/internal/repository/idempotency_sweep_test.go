@@ -47,7 +47,7 @@ func held(t *testing.T, instance *testdb.Instance, user string, key string) bool
 	var row *model.IdempotencyKey
 
 	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
-	require.NoError(t, database.WithUserTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
 		var err error
 
 		row, err = repository.NewIdempotency(tx).Answer(ctx, key)
@@ -70,7 +70,7 @@ func expire(t *testing.T, instance *testdb.Instance, user string, key string) {
 	ctx := pluginapi.ContextWithActingUser(t.Context(), user)
 	hours := int(idempotency.Lifetime.Hours()) + 1
 
-	require.NoError(t, database.WithUserTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithScopeTx(ctx, instance.DB, func(tx *sqlx.Tx) error {
 		result, err := tx.ExecContext(
 			ctx,
 			`UPDATE public.idempotency_keys

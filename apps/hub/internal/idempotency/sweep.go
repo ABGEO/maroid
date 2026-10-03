@@ -55,7 +55,7 @@ func (j *Sweep) Meta() pluginapi.CronJobMeta {
 func (j *Sweep) Run(ctx context.Context) error {
 	var removed int64
 
-	err := database.WithUserTx(ctx, j.db, func(tx *sqlx.Tx) error {
+	err := database.WithScopeTx(ctx, j.db, func(tx *sqlx.Tx) error {
 		var txErr error
 
 		removed, txErr = repository.NewIdempotency(tx).

@@ -206,7 +206,7 @@ func (w *world) storedValue(t *testing.T, user string, key string) string {
 
 	var raw string
 
-	require.NoError(t, database.WithUserTx(ctx, w.instance.DB, func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithScopeTx(ctx, w.instance.DB, func(tx *sqlx.Tx) error {
 		return tx.GetContext(
 			ctx, &raw,
 			`SELECT fields -> $1 ->> 'value' FROM public.plugin_settings;`, key,
@@ -223,7 +223,7 @@ func (w *world) rowCount(t *testing.T, user string) int {
 
 	var count int
 
-	require.NoError(t, database.WithUserTx(ctx, w.instance.DB, func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithScopeTx(ctx, w.instance.DB, func(tx *sqlx.Tx) error {
 		return tx.GetContext(ctx, &count, `SELECT count(*) FROM public.plugin_settings;`)
 	}))
 
@@ -396,7 +396,7 @@ func TestAnUndeclaredFieldReachesNoAnswerAndLeavesAtTheNextSave(t *testing.T) {
 		keyEmail: valueEmail, keyPassword: valuePassword,
 	}, nil)))
 
-	require.NoError(t, database.WithUserTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithScopeTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
 		_, err := tx.ExecContext(ctx, `
 			UPDATE public.plugin_settings
 			SET fields = fields || '{"legacy": {"kind": "text", "value": "old"}}'::jsonb;`)
@@ -422,7 +422,7 @@ func TestAnUndeclaredFieldReachesNoAnswerAndLeavesAtTheNextSave(t *testing.T) {
 
 	var held bool
 
-	require.NoError(t, database.WithUserTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithScopeTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
 		return tx.GetContext(ctx, &held, `SELECT fields ? 'legacy' FROM public.plugin_settings;`)
 	}))
 	require.False(t, held)
@@ -476,7 +476,7 @@ func TestSettingsFailWhenAStoredSecretDoesNotRead(t *testing.T) {
 		keyEmail: valueEmail, keyPassword: valuePassword,
 	}, nil)))
 
-	require.NoError(t, database.WithUserTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithScopeTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
 		_, err := tx.ExecContext(ctx, `
 			UPDATE public.plugin_settings
 			SET fields = jsonb_set(fields, '{password,value}', '"vault:v1:not-a-ciphertext"');`)

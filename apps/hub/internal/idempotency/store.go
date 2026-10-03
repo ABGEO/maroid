@@ -48,7 +48,7 @@ func (s *Store) Reserve(ctx context.Context, key string, hash string) (*idempote
 		held    *model.IdempotencyKey
 	)
 
-	err := database.WithUserTx(ctx, s.db, func(tx *sqlx.Tx) error {
+	err := database.WithScopeTx(ctx, s.db, func(tx *sqlx.Tx) error {
 		repo := repository.NewIdempotency(tx)
 
 		var claimErr error
@@ -94,7 +94,7 @@ func (s *Store) Reserve(ctx context.Context, key string, hash string) (*idempote
 
 // Complete stores the answer of the write that claimed the key.
 func (s *Store) Complete(ctx context.Context, key string, answer idempotency.Answer) error {
-	err := database.WithUserTx(ctx, s.db, func(tx *sqlx.Tx) error {
+	err := database.WithScopeTx(ctx, s.db, func(tx *sqlx.Tx) error {
 		return repository.NewIdempotency(tx).Complete(ctx, &model.IdempotencyKey{
 			Key:         key,
 			RequestHash: answer.RequestHash,
@@ -112,7 +112,7 @@ func (s *Store) Complete(ctx context.Context, key string, answer idempotency.Ans
 
 // Release frees the key of a write that failed.
 func (s *Store) Release(ctx context.Context, key string) error {
-	err := database.WithUserTx(ctx, s.db, func(tx *sqlx.Tx) error {
+	err := database.WithScopeTx(ctx, s.db, func(tx *sqlx.Tx) error {
 		return repository.NewIdempotency(tx).Release(ctx, key)
 	})
 	if err != nil {

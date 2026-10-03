@@ -4,7 +4,7 @@ title: The user record and the ownership of a row
 type: spec
 status: approved
 created: 2026-09-12
-updated: 2026-10-01
+updated: 2026-10-02
 approved_by: Temuri
 approved_on: 2026-09-12
 constrained_by: [OWN, DAT, SEC, TG, JOB, REP, PLG, API, ERR, CFG, PKG, TST]
@@ -500,7 +500,7 @@ for would then carry no automated proof.
 | 11  | Remove `telegram.allowed_users` from the configuration struct, `config.yaml`, and `chart/values.yaml`.        | `IDENT-FR-002`, `SEC-004`         | [x]  |
 | 12  | Run `IDENT-SC-007`, `IDENT-SC-008`, and `IDENT-SC-012` against the running hub.                               | `IDENT-FR-009` to `IDENT-FR-011`, `IDENT-NFR-002` | [x]  |
 
-| 13  | Write the scenarios of `IDENT-SC-001` to `IDENT-SC-005` for a table that a workspace scopes, then add the acting workspace to `libs/pluginapi/actinguser.go` and to `PluginDB.WithTx`, and replace `WithUserTx` with `WithScopeTx`. | `IDENT-FR-003` to `IDENT-FR-006`, `IDENT-INV-001`, `IDENT-INV-002` | [ ]  |
+| 13  | Write the scenarios of `IDENT-SC-001` to `IDENT-SC-005` for a table that a workspace scopes, then add the acting workspace to `libs/pluginapi/actinguser.go` and to `PluginDB.WithTx`, and replace `WithUserTx` with `WithScopeTx`. | `IDENT-FR-003` to `IDENT-FR-006`, `IDENT-INV-001`, `IDENT-INV-002` | [x]  |
 | 14  | Write `IDENT-SC-013`, then resolve the acting workspace at each entry point of `OWN-003`, with the membership check. It needs the tables of `OWN-010` and `OWN-011`. | `IDENT-FR-004` to `IDENT-FR-006`, `IDENT-NFR-002` | [ ]  |
 | 15  | Write `IDENT-SC-014`, then add `CronScopePerWorkspace` to `libs/pluginapi/cron.go` and to the cron worker. It needs the enablements of `SEC-012`. | `IDENT-FR-007` | [ ]  |
 
