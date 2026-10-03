@@ -19,6 +19,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
@@ -37,6 +38,7 @@ type MCP struct {
 	verifier     mcpauth.TokenVerifier
 	toolRegistry *registry.MCPToolRegistry
 	members      repository.WorkspaceMemberRepository
+	enablements  workspace.EnablementChecker
 	authorizer   authz.Authorizer
 }
 
@@ -50,6 +52,7 @@ func NewMCP(
 	resolver auth.IdentityResolver,
 	toolRegistry *registry.MCPToolRegistry,
 	members repository.WorkspaceMemberRepository,
+	enablements workspace.EnablementChecker,
 	authorizer authz.Authorizer,
 ) *MCP {
 	origin := cfg.Server.ExternalAddress("")
@@ -78,6 +81,7 @@ func NewMCP(
 		verifier:     mcpserver.NewTokenVerifier(oidcSvc, resolver, cfg.MCP.ClientID),
 		toolRegistry: toolRegistry,
 		members:      members,
+		enablements:  enablements,
 		authorizer:   authorizer,
 	}
 }
@@ -86,7 +90,7 @@ func NewMCP(
 func (h *MCP) Register(router chi.Router) {
 	h.logger.Debug("registering routes")
 
-	server := mcpserver.NewServer(h.logger, h.toolRegistry, h.members, h.authorizer)
+	server := mcpserver.NewServer(h.logger, h.toolRegistry, h.members, h.enablements, h.authorizer)
 	discovery := mcpauth.ProtectedResourceMetadataHandler(h.metadata)
 
 	router.Method(http.MethodGet, discoveryPath, discovery)

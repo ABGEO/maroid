@@ -38,7 +38,7 @@ func TestTheRoutesOfThePluginHandlerResolve(t *testing.T) {
 			registry.NewCapabilityRegistry(),
 			nil,
 			noIdempotency{},
-			nil,
+			handler.WorkspaceAccess{},
 			nil,
 		),
 	)

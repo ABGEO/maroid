@@ -1,13 +1,16 @@
 package workspace
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
+	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -28,11 +31,17 @@ const PathParam = "workspaceId"
 func Middleware(
 	logger *slog.Logger,
 	members repository.WorkspaceMemberRepository,
+	options ...MiddlewareOption,
 ) func(http.Handler) http.Handler {
 	logger = logger.With(
 		slog.String("component", "middleware"),
 		slog.String("middleware", "workspace"),
 	)
+
+	var settings middlewareSettings
+	for _, option := range options {
+		option(&settings)
+	}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -45,32 +54,73 @@ func Middleware(
 				return
 			}
 
-			member, err := members.Get(
-				ctx,
-				workspaceID.String(),
-				pluginapi.ActingUserFromContext(ctx),
-			)
+			role, found, err := settings.roleIn(ctx, members, workspaceID.String())
 			if err != nil {
-				if !errors.Is(err, errs.ErrMemberNotFound) {
-					logger.ErrorContext(
-						ctx,
-						"reading the membership failed",
-						slog.Any("error", err),
-					)
-					problem.Write(w, r, problem.NewInternal())
+				logger.ErrorContext(ctx, "reading the membership failed", slog.Any("error", err))
+				problem.Write(w, r, problem.NewInternal())
 
-					return
-				}
+				return
+			}
 
+			if !found {
 				problem.Write(w, r, problem.NewNotFound())
 
 				return
 			}
 
 			ctx = pluginapi.ContextWithActingWorkspace(ctx, workspaceID.String())
-			ctx = ContextWithRole(ctx, member.Role)
+			ctx = ContextWithRole(ctx, role)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+// MiddlewareOption changes what Middleware admits.
+type MiddlewareOption func(*middlewareSettings)
+
+type middlewareSettings struct {
+	workspaces repository.WorkspaceRepository
+}
+
+// AdmitAdministrator lets an administrator who is no member of the workspace pass as a
+// manager. A route of the members, of the enablements, and the read of the workspace
+// take it. A route of a plugin and of its settings never do, so an administrator reads
+// no record of a workspace that they are no member of.
+func AdmitAdministrator(workspaces repository.WorkspaceRepository) MiddlewareOption {
+	return func(settings *middlewareSettings) {
+		settings.workspaces = workspaces
+	}
+}
+
+// roleIn answers the role of the acting user in the workspace, and whether the request
+// reaches the workspace at all.
+func (settings middlewareSettings) roleIn(
+	ctx context.Context,
+	members repository.WorkspaceMemberRepository,
+	workspaceID string,
+) (pluginapi.Role, bool, error) {
+	member, err := members.Get(ctx, workspaceID, pluginapi.ActingUserFromContext(ctx))
+	if err == nil {
+		return member.Role, true, nil
+	}
+
+	if !errors.Is(err, errs.ErrMemberNotFound) {
+		return "", false, fmt.Errorf("reading the membership: %w", err)
+	}
+
+	if settings.workspaces == nil || !auth.IsAdministratorFromContext(ctx) {
+		return "", false, nil
+	}
+
+	_, err = settings.workspaces.GetByID(ctx, workspaceID)
+	if errors.Is(err, errs.ErrWorkspaceNotFound) {
+		return "", false, nil
+	}
+
+	if err != nil {
+		return "", false, fmt.Errorf("reading the workspace: %w", err)
+	}
+
+	return pluginapi.RoleManager, true, nil
 }

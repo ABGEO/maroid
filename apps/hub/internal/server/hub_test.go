@@ -94,11 +94,9 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	resolver := auth.NewResolver(identityRepo)
 	store := idempotency.NewStore(instance.DB)
 	workspaces := workspaceManager(instance.DB, members, userRepo)
-	authorizer := probeAuthorizer(t)
+	access, enablements := probeAccess(t, instance.DB, members)
 
-	router, err := server.NewHTTPRouter(cfg, logger)
-	require.NoError(t, err)
-
+	router := routerOf(t, cfg, logger)
 	held := newGate()
 
 	handler.RegisterHandlers(
@@ -111,16 +109,19 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		handler.NewPlugin(
 			logger, verifier, resolver,
 			registry.NewPluginRegistry(), probeUI(), registry.NewCapabilityRegistry(),
-			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store, members, authorizer,
+			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store, access,
+			repository.NewAllowedPlugin(instance.DB),
 		),
 		handler.NewWorkspace(
-			logger, verifier, resolver, store, members, workspaces, authorizer, workspaces,
+			logger, verifier, resolver, store, members, workspaces, access.Authorizer, workspaces,
+			enablements, repository.NewWorkspace(instance.DB),
 		),
 		handler.NewMCP(
-			cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry(), members, authorizer,
+			cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry(),
+			members, access.Enablements, access.Authorizer,
 		),
 		handler.NewPluginWrapper(
-			logger, verifier, resolver, store, members, authorizer,
+			logger, verifier, resolver, store, access,
 			pluginapi.ParsePluginID(probePlugin), probeRoutes(t, instance.DB, held),
 		),
 	)
@@ -133,7 +134,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		router:    router,
 		database:  instance.DB,
 		session:   session,
-		workspace: workspaceOf(t, workspaces, person),
+		workspace: enabledWorkspaceOf(t, instance.DB, workspaces, person),
 		gate:      held,
 	}
 }
@@ -168,6 +169,58 @@ func oidcOf(t *testing.T, cfg *config.Config) *auth.OIDCService {
 	require.NoError(t, err)
 
 	return oidcSvc
+}
+
+// routerOf builds the router of the hub, with the middleware of NewHTTPRouter.
+func routerOf(t *testing.T, cfg *config.Config, logger *slog.Logger) *chi.Mux {
+	t.Helper()
+
+	router, err := server.NewHTTPRouter(cfg, logger)
+	require.NoError(t, err)
+
+	return router
+}
+
+// probeAccess holds the checks of a route of the probe plugin over the database, and
+// the service of the enablements that the handler of the workspaces takes.
+func probeAccess(
+	t *testing.T,
+	database *sqlx.DB,
+	members repository.WorkspaceMemberRepository,
+) (handler.WorkspaceAccess, *workspace.Enablements) {
+	t.Helper()
+
+	enablements := workspace.NewEnablements(
+		repository.NewWorkspacePlugin(database),
+		repository.NewAllowedPlugin(database),
+		registry.NewPluginRegistry(),
+	)
+
+	return handler.WorkspaceAccess{
+		Members:     members,
+		Enablements: enablements,
+		Authorizer:  probeAuthorizer(t),
+	}, enablements
+}
+
+// enabledWorkspaceOf creates a workspace of the person that enables the probe plugin,
+// and answers its identifier.
+func enabledWorkspaceOf(
+	t *testing.T,
+	database *sqlx.DB,
+	workspaces workspace.Service,
+	person string,
+) string {
+	t.Helper()
+
+	created := workspaceOf(t, workspaces, person)
+
+	_, err := database.Exec(
+		`INSERT INTO public.workspace_plugins (workspace_id, plugin_id) VALUES ($1, $2);`,
+		created, probePlugin)
+	require.NoError(t, err)
+
+	return created
 }
 
 // workspaceOf creates a workspace of the person and answers its identifier.

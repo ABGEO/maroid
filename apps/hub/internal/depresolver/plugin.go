@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
@@ -129,12 +128,12 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		return nil, err
 	}
 
-	members, err := c.WorkspaceMemberRepository()
+	chats, err := c.ChatSelection()
 	if err != nil {
 		return nil, err
 	}
 
-	chats, err := c.ChatSelection()
+	access, err := c.workspaceAccess()
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +143,7 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		verifier,
 		identityResolver,
 		idempotencyStore,
-		members,
+		access,
 		tgcommand.NewWorkspace(chats),
 		registries.command,
 		registries.cron,
@@ -159,7 +158,6 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		registries.mcpTool,
 		c.CapabilityRegistry(),
 		registries.permission,
-		authz.NewRoleAuthorizer(registries.permission),
 	), nil
 }
 

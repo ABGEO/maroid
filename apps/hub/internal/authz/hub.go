@@ -15,6 +15,7 @@ const (
 	PermissionMembershipLeave = "membership.leave"
 	PermissionSettingsRead    = "settings.read"
 	PermissionSettingsWrite   = "settings.write"
+	PermissionPluginsWrite    = "plugins.write"
 )
 
 // NewPermissionRegistry creates the registry of the permissions, with every
@@ -47,6 +48,11 @@ func NewPermissionRegistry() (*registry.PermissionRegistry, error) {
 			Name:        PermissionSettingsRead,
 			Description: "Read the settings of a plugin",
 			Lowest:      pluginapi.RoleViewer,
+		},
+		registry.PermissionEntry{
+			Name:        PermissionPluginsWrite,
+			Description: "Enable and disable the plugins of the workspace",
+			Lowest:      pluginapi.RoleManager,
 		},
 		registry.PermissionEntry{
 			Name:        PermissionSettingsWrite,

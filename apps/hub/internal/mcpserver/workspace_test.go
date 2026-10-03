@@ -21,6 +21,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver/tools"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/testdb"
 )
@@ -86,17 +87,6 @@ func newWorkspaceWorld(t *testing.T) *workspaceWorld {
 
 		return id
 	}
-	member := func(workspace string, user string, role pluginapi.Role) {
-		_, execErr := instance.DB.ExecContext(
-			t.Context(),
-			`INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES ($1, $2, $3);`,
-			workspace,
-			user,
-			role,
-		)
-		require.NoError(t, execErr)
-	}
-
 	scene := &workspaceWorld{instance: instance, runs: &atomic.Int32{}, writes: &atomic.Int32{}}
 	scene.ana = insert(`INSERT INTO public.users (first_name) VALUES ('Ana') RETURNING id;`)
 	scene.gio = insert(`INSERT INTO public.users (first_name) VALUES ('Gio') RETURNING id;`)
@@ -114,13 +104,16 @@ func newWorkspaceWorld(t *testing.T) *workspaceWorld {
 	)
 	require.NoError(t, err)
 
-	member(scene.a, scene.ana, pluginapi.RoleManager)
-	member(scene.b, scene.ana, pluginapi.RoleManager)
-	member(scene.a, scene.gio, pluginapi.RoleViewer)
-	member(scene.c, other, pluginapi.RoleManager)
+	scene.member(t, scene.a, scene.ana, pluginapi.RoleManager)
+	scene.member(t, scene.b, scene.ana, pluginapi.RoleManager)
+	scene.member(t, scene.a, scene.gio, pluginapi.RoleViewer)
+	scene.member(t, scene.c, other, pluginapi.RoleManager)
 
 	scene.write(t, scene.a, "first of A", "second of A")
 	scene.write(t, scene.b, "one of B")
+
+	// A enables the probe plugin. B does not, so a call in B meets a disabled plugin.
+	scene.enable(t, scene.a)
 
 	scene.notes = scene.notesTool(t)
 	scene.jot = scene.jotTool(t)
@@ -203,6 +196,29 @@ func (scene *workspaceWorld) notesTool(t *testing.T) registry.MCPTool {
 	return entry
 }
 
+func (scene *workspaceWorld) member(
+	t *testing.T,
+	workspaceID string,
+	user string,
+	role pluginapi.Role,
+) {
+	t.Helper()
+
+	_, err := scene.instance.DB.ExecContext(t.Context(),
+		`INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES ($1, $2, $3);`,
+		workspaceID, user, role)
+	require.NoError(t, err)
+}
+
+func (scene *workspaceWorld) enable(t *testing.T, workspaceID string) {
+	t.Helper()
+
+	_, err := scene.instance.DB.ExecContext(t.Context(),
+		`INSERT INTO public.workspace_plugins (workspace_id, plugin_id) VALUES ($1, $2);`,
+		workspaceID, probePluginID)
+	require.NoError(t, err)
+}
+
 func (scene *workspaceWorld) write(t *testing.T, workspace string, bodies ...string) {
 	t.Helper()
 
@@ -236,6 +252,11 @@ func (scene *workspaceWorld) sessionAs(
 		slog.New(slog.DiscardHandler),
 		toolRegistry,
 		repository.NewWorkspaceMember(scene.instance.DB),
+		workspace.NewEnablements(
+			repository.NewWorkspacePlugin(scene.instance.DB),
+			repository.NewAllowedPlugin(scene.instance.DB),
+			registry.NewPluginRegistry(),
+		),
 		scene.authorizer(t),
 	)
 	server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
@@ -323,8 +344,8 @@ func TestAToolActsInTheWorkspaceOfItsCall(t *testing.T) {
 	assert.Contains(t, text.Text, "workspace")
 }
 
-// MCPHUB-SC-028: A workspace of no membership answers the error of a tool that does
-// not exist, and the tool runs zero times. The enablement waits for PLUGACC.
+// MCPHUB-SC-028: A workspace of no membership and a workspace that does not enable the
+// plugin answer the error of a tool that does not exist, and the tool runs zero times.
 func TestAWorkspaceOfNoMembershipAnswersAsAnUnknownTool(t *testing.T) {
 	t.Parallel()
 
@@ -345,6 +366,15 @@ func TestAWorkspaceOfNoMembershipAnswersAsAnUnknownTool(t *testing.T) {
 		replaceName(unknown.Error(), "dev_maroid_probe_absent"),
 		replaceName(refused.Error(), scene.notes.Name),
 		"both answers carry one error")
+
+	_, disabled := session.CallTool(t.Context(), &mcp.CallToolParams{
+		Name: scene.notes.Name, Arguments: json.RawMessage(`{"workspace":"` + scene.b + `"}`),
+	})
+	require.Error(t, disabled)
+	assert.Equal(t,
+		replaceName(unknown.Error(), "dev_maroid_probe_absent"),
+		replaceName(disabled.Error(), scene.notes.Name),
+		"a workspace that does not enable the plugin answers the same error")
 	assert.Zero(t, scene.runs.Load())
 }
 

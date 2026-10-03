@@ -20,8 +20,7 @@ type PluginWrapper struct {
 	verifier    auth.TokenVerifier
 	resolver    auth.IdentityResolver
 	idempotency idempotency.Store
-	members     repository.WorkspaceMemberRepository
-	authorizer  authz.Authorizer
+	access      WorkspaceAccess
 	pluginID    *pluginapi.PluginID
 	routes      []pluginapi.Route
 }
@@ -34,8 +33,7 @@ func NewPluginWrapper(
 	verifier auth.TokenVerifier,
 	resolver auth.IdentityResolver,
 	idempotency idempotency.Store,
-	members repository.WorkspaceMemberRepository,
-	authorizer authz.Authorizer,
+	access WorkspaceAccess,
 	pluginID *pluginapi.PluginID,
 	routes []pluginapi.Route,
 ) *PluginWrapper {
@@ -44,11 +42,19 @@ func NewPluginWrapper(
 		verifier:    verifier,
 		resolver:    resolver,
 		idempotency: idempotency,
-		members:     members,
-		authorizer:  authorizer,
+		access:      access,
 		pluginID:    pluginID,
 		routes:      routes,
 	}
+}
+
+// WorkspaceAccess holds the three checks that a route of a plugin passes before it
+// runs, in this order: the membership, the enablement of the plugin, and the
+// permission of the route.
+type WorkspaceAccess struct {
+	Members     repository.WorkspaceMemberRepository
+	Enablements workspace.EnablementChecker
+	Authorizer  authz.Authorizer
 }
 
 // Register registers the plugin's routes under the path prefix
@@ -65,12 +71,13 @@ func (h *PluginWrapper) Register(router chi.Router) {
 	router.Route(h.pathPrefix(), func(r chi.Router) {
 		r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
 		r.Use(idempotency.Middleware(h.logger, h.idempotency))
-		r.Use(workspace.Middleware(h.logger, h.members))
+		r.Use(workspace.Middleware(h.logger, h.access.Members))
+		r.Use(workspace.RequireEnabled(h.logger, h.access.Enablements, h.pluginID.String()))
 
 		for _, route := range h.routes {
 			permission := registry.PermissionName(h.pluginID, route.Permission)
 
-			r.With(workspace.Require(h.logger, h.authorizer, permission)).
+			r.With(workspace.Require(h.logger, h.access.Authorizer, permission)).
 				MethodFunc(route.Method, route.Pattern, route.Handler)
 		}
 	})

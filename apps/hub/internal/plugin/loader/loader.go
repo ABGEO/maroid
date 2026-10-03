@@ -6,12 +6,10 @@ import (
 	"plugin"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
-	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/registrar"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	tgcommand "github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
@@ -34,7 +32,7 @@ func New(
 	verifier auth.TokenVerifier,
 	resolver auth.IdentityResolver,
 	idempotency idempotency.Store,
-	members repository.WorkspaceMemberRepository,
+	access handler.WorkspaceAccess,
 	workspacePrompter tgcommand.Prompter,
 	commandRegistry *registry.CommandRegistry,
 	cronRegistry *registry.CronRegistry,
@@ -49,7 +47,6 @@ func New(
 	mcpToolRegistry *registry.MCPToolRegistry,
 	capabilityRegistry *registry.CapabilityRegistry,
 	permissionRegistry *registry.PermissionRegistry,
-	authorizer authz.Authorizer,
 ) *Loader {
 	logger := host.Logger()
 
@@ -69,8 +66,7 @@ func New(
 				capabilityRegistry,
 				permissionRegistry,
 				idempotency,
-				members,
-				authorizer,
+				access,
 			),
 			registrar.NewMigrationRegistrar(migrationRegistry, capabilityRegistry),
 			registrar.NewMQTTSubscriberRegistrar(mqttSubscriberRegistry, capabilityRegistry),
@@ -79,7 +75,7 @@ func New(
 				capabilityRegistry,
 				workspacePrompter,
 				permissionRegistry,
-				authorizer,
+				access.Authorizer,
 			),
 			registrar.NewTelegramConversationRegistrar(
 				telegramConversationRegistry,

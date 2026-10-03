@@ -132,8 +132,7 @@ func newRegistrars() *registrars {
 			set.capabilities,
 			set.permissions,
 			nil,
-			nil,
-			authz.NewRoleAuthorizer(set.permissions),
+			handler.WorkspaceAccess{Authorizer: authz.NewRoleAuthorizer(set.permissions)},
 		),
 		registrar.NewTelegramCommandRegistrar(
 			set.commands, set.capabilities, nil, set.permissions,

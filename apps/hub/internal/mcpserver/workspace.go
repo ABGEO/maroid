@@ -33,8 +33,10 @@ const (
 func workspaceMiddleware(
 	tools []registry.MCPTool,
 	members repository.WorkspaceMemberRepository,
+	enablements workspace.EnablementChecker,
 	authorizer authz.Authorizer,
 ) mcp.Middleware {
+	gate := toolGate{members: members, enablements: enablements, authorizer: authorizer}
 	inWorkspace := make(map[string]registry.MCPTool, len(tools))
 
 	for _, tool := range tools {
@@ -60,28 +62,55 @@ func workspaceMiddleware(
 				return next(ctx, method, req)
 			}
 
-			role, member := roleIn(ctx, members, workspaceID)
-			if !member {
-				return nil, unknownTool(call.Params.Name)
-			}
-
-			allowed, lowest, err := authorizer.Allowed(role, tool.Permission)
+			admitted, refused, err := gate.pass(ctx, tool, workspaceID)
 			if err != nil {
-				return nil, fmt.Errorf("checking the permission of the tool: %w", err)
+				return nil, err
 			}
 
-			if !allowed {
-				return refusal(tool.Permission, lowest), nil
+			if refused != nil {
+				return refused, nil
 			}
 
-			ctx = workspace.ContextWithRole(
-				pluginapi.ContextWithActingWorkspace(ctx, workspaceID),
-				role,
-			)
-
-			return next(ctx, method, req)
+			return next(admitted, method, req)
 		}
 	}
+}
+
+// toolGate holds the three checks of a call of a tool in a workspace: the membership,
+// the enablement of the plugin of the tool, and the permission of the tool.
+type toolGate struct {
+	members     repository.WorkspaceMemberRepository
+	enablements workspace.EnablementChecker
+	authorizer  authz.Authorizer
+}
+
+// pass answers the context of a call that passes every check, with the workspace and
+// the role in it. A call that fails answers either the error of an unknown tool, for a
+// workspace of no membership or a plugin it does not enable, or a refusal that names
+// the permission.
+func (gate toolGate) pass(
+	ctx context.Context,
+	tool registry.MCPTool,
+	workspaceID string,
+) (context.Context, *mcp.CallToolResult, error) {
+	role, member := roleIn(ctx, gate.members, workspaceID)
+	if !member || !enabledIn(ctx, gate.enablements, workspaceID, tool.PluginID) {
+		return nil, nil, unknownTool(tool.Name)
+	}
+
+	allowed, lowest, err := gate.authorizer.Allowed(role, tool.Permission)
+	if err != nil {
+		return nil, nil, fmt.Errorf("checking the permission of the tool: %w", err)
+	}
+
+	if !allowed {
+		return nil, refusal(tool.Permission, lowest), nil
+	}
+
+	return workspace.ContextWithRole(
+		pluginapi.ContextWithActingWorkspace(ctx, workspaceID),
+		role,
+	), nil, nil
 }
 
 // refusal is the result of a call whose role does not hold the permission of the
@@ -121,6 +150,24 @@ func roleIn(
 	}
 
 	return member.Role, true
+}
+
+// enabledIn reports whether the workspace enables the plugin of the tool. A tool of the
+// hub names no plugin. A failed read answers as a plugin that the workspace does not
+// enable, so the call reaches no record.
+func enabledIn(
+	ctx context.Context,
+	enablements workspace.EnablementChecker,
+	workspaceID string,
+	pluginID string,
+) bool {
+	if pluginID == "" {
+		return true
+	}
+
+	enabled, err := enablements.IsEnabled(ctx, workspaceID, pluginID)
+
+	return err == nil && enabled
 }
 
 // unknownTool is the error that the SDK answers for a tool it does not hold, so a

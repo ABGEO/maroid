@@ -63,6 +63,11 @@ var (
 	ErrMemberNotFound = errors.New("workspace member: not found")
 	// ErrAllowedPluginNotFound indicates a plugin that the allowlist does not hold.
 	ErrAllowedPluginNotFound = errors.New("allowed plugin: not found")
+	// ErrEnablementNotFound indicates a plugin that the workspace does not enable.
+	ErrEnablementNotFound = errors.New("enablement: not found")
+	// ErrPluginNotAllowed indicates a plugin that the allowlist of the acting user does
+	// not hold.
+	ErrPluginNotAllowed = errors.New("plugin: not on the allowlist")
 	// ErrPluginNotLoaded indicates a plugin identifier that the hub did not load.
 	ErrPluginNotLoaded = errors.New("plugin: not loaded")
 	// ErrAdministratorLast indicates a change that would leave the instance with no

@@ -161,15 +161,36 @@ func RequireAdministrator(logger *slog.Logger) func(http.Handler) http.Handler
 
 // apps/hub/internal/workspace/enablement.go
 type EnablementService interface {
+    EnablementChecker
     Enabled(ctx context.Context) ([]model.Enablement, error)
+    Enablement(ctx context.Context, pluginID string) (*model.Enablement, error)
     Enable(ctx context.Context, pluginID string) (*model.Enablement, bool, error)
     Disable(ctx context.Context, pluginID string) error
-    IsEnabled(ctx context.Context, workspaceID string, pluginID string) (bool, error)
     WorkspacesEnabling(ctx context.Context, pluginID string) ([]string, error)
 }
 
+// EnablementChecker is the one read that an entry point of a plugin needs.
+type EnablementChecker interface {
+    IsEnabled(ctx context.Context, workspaceID string, pluginID string) (bool, error)
+}
+
 // RequireEnabled answers not-found unless the acting workspace enables the plugin.
-func RequireEnabled(enablements EnablementService, pluginID *pluginapi.PluginID) func(http.Handler) http.Handler
+// RequireEnabledOf reads the plugin from the path, for the settings routes.
+func RequireEnabled(logger *slog.Logger, enablements EnablementChecker, pluginID string) func(http.Handler) http.Handler
+func RequireEnabledOf(logger *slog.Logger, enablements EnablementChecker, pick func(*http.Request) string) func(http.Handler) http.Handler
+
+// apps/hub/internal/workspace/middleware.go
+// AdmitAdministrator lets an administrator who is no member pass as a manager.
+func AdmitAdministrator(workspaces repository.WorkspaceRepository) MiddlewareOption
+
+// apps/hub/internal/handler/plugin_wrapper.go
+// WorkspaceAccess holds the three checks of a route of a plugin: the membership, the
+// enablement, and the permission. The wrapper, the settings routes, and the loader take it.
+type WorkspaceAccess struct {
+    Members     repository.WorkspaceMemberRepository
+    Enablements workspace.EnablementChecker
+    Authorizer  authz.Authorizer
+}
 ```
 
 `Enable` answers `true` in its second result when it created the row, so the handler
@@ -413,12 +434,12 @@ members of one workspace when the person opens it.
 | #   | Step                                                                                     | Realizes                                       | Done |
 | --- | ---------------------------------------------------------------------------------------- | ---------------------------------------------- | ---- |
 | 1   | Add `NewAdministratorLast` to the hub. `ERR-003` holds its row.                          | `ERR-003`                                      | [x]  |
-| 2   | Write `PLUGACC-SC-019`, then the three migrations.                                       | `PLUGACC-FR-011`, `PLUGACC-FR-026`             | [ ]  |
+| 2   | Write `PLUGACC-SC-019`, then the three migrations.                                       | `PLUGACC-FR-011`, `PLUGACC-FR-026`             | [x]  |
 | 3   | Write the models and the three repositories, and the mark in every query of a user.     | `PLUGACC-FR-002`, `PLUGACC-FR-008`             | [x]  |
 | 4   | Write `PLUGACC-SC-005` and `PLUGACC-SC-018`, then the mark in the context, `auth.RequireAdministrator`, and the lock. | `PLUGACC-FR-007`, `PLUGACC-FR-022` | [x]  |
 | 5   | Write `PLUGACC-SC-002` to `PLUGACC-SC-007`, then `user.Service`, the routes of `/users`, and `scope=all`. | `PLUGACC-FR-002` to `PLUGACC-FR-009`, `PLUGACC-FR-029`, `PLUGACC-FR-030` | [x] |
-| 6   | Write `PLUGACC-SC-008` to `PLUGACC-SC-013` and `PLUGACC-SC-020`, then the enablement service, its routes, `RequireEnabled`, and the admission of an administrator. | `PLUGACC-FR-010` to `PLUGACC-FR-018`, `PLUGACC-FR-027`, `PLUGACC-NFR-001` | [ ] |
-| 7   | Write `PLUGACC-SC-017`, then the filter of `GET /plugins`.                               | `PLUGACC-FR-021`, `PLUGACC-FR-028`             | [ ]  |
+| 6   | Write `PLUGACC-SC-008` to `PLUGACC-SC-013` and `PLUGACC-SC-020`, then the enablement service, its routes, `RequireEnabled`, and the admission of an administrator. | `PLUGACC-FR-010` to `PLUGACC-FR-018`, `PLUGACC-FR-027`, `PLUGACC-NFR-001` | [x] |
+| 7   | Write `PLUGACC-SC-017`, then the filter of `GET /plugins`.                               | `PLUGACC-FR-021`, `PLUGACC-FR-028`             | [x]  |
 | 8   | Carry out `spec-clients.md`: the command line, the bot, the scheduler, and the deck.    | `PLUGACC-FR-001`, `PLUGACC-FR-019`, `PLUGACC-FR-020`, `PLUGACC-FR-023` to `PLUGACC-FR-025`, `PLUGACC-FR-031`, `PLUGACC-NFR-002` | [ ] |
 
 ## 8. Out of scope for this specification

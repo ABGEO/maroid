@@ -404,3 +404,40 @@ func TestARepeatDuringTheFirstWriteMakesNoSecondRecord(t *testing.T) {
 	require.NoError(t, fixture.database.Get(&records, `SELECT count(*) FROM probe_records;`))
 	assert.Equal(t, 1, records)
 }
+
+// PLUGACC-SC-013: On the router of the hub, a route of a plugin that the workspace
+// does not enable answers exactly as a route that no plugin declares.
+func TestADisabledPluginAnswersAsAnAbsentRoute(t *testing.T) {
+	t.Parallel()
+
+	fixture := hubUnderTest(t)
+
+	_, err := fixture.database.Exec(
+		`DELETE FROM public.workspace_plugins WHERE workspace_id = $1;`, fixture.workspace)
+	require.NoError(t, err)
+
+	absent := fixture.send(t, apiRoute{
+		method: http.MethodGet, session: true,
+		target: "/workspaces/" + fixture.workspace + "/plugins/dev.maroid.none/api/records",
+	})
+	refused := fixture.send(t, apiRoute{
+		method: http.MethodGet, session: true, target: pluginPath(fixture, "/api/records"),
+	})
+
+	require.Equal(t, http.StatusNotFound, absent.Code)
+	require.Equal(t, http.StatusNotFound, refused.Code)
+	assert.Equal(t, withoutInstance(t, absent), withoutInstance(t, refused),
+		"each answer names its own flow in instance, and nothing else differs")
+}
+
+// withoutInstance decodes a problem and drops the member that names the flow.
+func withoutInstance(t *testing.T, recorder *httptest.ResponseRecorder) map[string]any {
+	t.Helper()
+
+	var body map[string]any
+
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &body))
+	delete(body, "instance")
+
+	return body
+}

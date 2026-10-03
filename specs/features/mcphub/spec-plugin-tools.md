@@ -4,7 +4,7 @@ title: The tools that a plugin declares
 type: spec
 status: approved
 created: 2026-09-18
-updated: 2026-10-03
+updated: 2026-10-04
 approved_by: Temuri
 approved_on: 2026-09-18
 constrained_by: [PLG, OWN, SEC, ARC, PKG, DAT, GO, LOG, BLD]
@@ -582,7 +582,7 @@ permission whose lowest role is `editor`.
 | 9   | Declare one tool in one plugin, as the first caller of the contract.                      | `MCPHUB-FR-011`, `MCPHUB-SC-012`  | [x]  |
 | 10  | Add `Permission` to `MCPToolMeta`, and refuse a tool that declares none in the registrar. Build every plugin. | `MCPHUB-FR-023`, `SEC-013`, `BLD-004` | [x]  |
 | 11  | Write `MCPHUB-SC-027`, then create `workspaceMiddleware` with the `workspace` argument, and mark each tool that acts in a workspace. | `MCPHUB-FR-021`, `MCPHUB-DD-022`  | [x]  |
-| 12  | Write `MCPHUB-SC-028` and `MCPHUB-SC-029`, then the three checks of `MCPHUB-DD-023`. They need the tables of `OWN-011` and `SEC-012`. | `MCPHUB-FR-022`, `MCPHUB-FR-023`, `MCPHUB-DD-023` | [ ]  |
+| 12  | Write `MCPHUB-SC-028` and `MCPHUB-SC-029`, then the three checks of `MCPHUB-DD-023`. They need the tables of `OWN-011` and `SEC-012`. | `MCPHUB-FR-022`, `MCPHUB-FR-023`, `MCPHUB-DD-023` | [x]  |
 
 ## 8. Out of scope for this specification
 

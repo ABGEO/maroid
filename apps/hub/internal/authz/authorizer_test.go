@@ -73,5 +73,6 @@ func TestARoleHoldsThePermissionsAtOrBelowIt(t *testing.T) {
 		authz.PermissionSettingsRead,
 		authz.PermissionWorkspaceRead,
 	}, authorizer.Held(pluginapi.RoleViewer))
-	assert.Len(t, authorizer.Held(pluginapi.RoleManager), 6)
+	assert.Len(t, authorizer.Held(pluginapi.RoleManager), len(permissions.All()),
+		"a manager holds every permission of the hub")
 }

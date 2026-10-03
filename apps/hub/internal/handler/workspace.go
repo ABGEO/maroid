@@ -42,6 +42,8 @@ type Workspace struct {
 	service     workspace.Service
 	authorizer  authz.Authorizer
 	catalog     workspace.Catalog
+	enablements workspace.EnablementService
+	workspaces  repository.WorkspaceRepository
 }
 
 // scopeAll names every workspace of the instance in the scope of the list.
@@ -68,6 +70,8 @@ func NewWorkspace(
 	service workspace.Service,
 	authorizer authz.Authorizer,
 	catalog workspace.Catalog,
+	enablements workspace.EnablementService,
+	workspaces repository.WorkspaceRepository,
 ) *Workspace {
 	return &Workspace{
 		logger: logger.With(
@@ -81,6 +85,8 @@ func NewWorkspace(
 		service:     service,
 		authorizer:  authorizer,
 		catalog:     catalog,
+		enablements: enablements,
+		workspaces:  workspaces,
 	}
 }
 
@@ -88,10 +94,7 @@ func NewWorkspace(
 func (h *Workspace) Register(router chi.Router) {
 	h.logger.Debug("registering routes")
 
-	workspaceRead := h.require(authz.PermissionWorkspaceRead)
 	workspaceWrite := h.require(authz.PermissionWorkspaceWrite)
-	membersWrite := h.require(authz.PermissionMembersWrite)
-	membersRemove := workspace.RequireOf(h.logger, h.authorizer, removalPermission)
 
 	router.Route("/workspaces", func(r chi.Router) {
 		r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
@@ -101,17 +104,10 @@ func (h *Workspace) Register(router chi.Router) {
 		r.Post("/", Wrap(h.logger, h.Create))
 
 		r.Route("/{"+workspace.PathParam+"}", func(r chi.Router) {
-			r.Use(workspace.Middleware(h.logger, h.members))
+			r.With(workspace.Middleware(h.logger, h.members), workspaceWrite).
+				Patch("/", Wrap(h.logger, h.Rename))
 
-			r.With(workspaceRead).Get("/", Wrap(h.logger, h.Get))
-			r.With(workspaceWrite).Patch("/", Wrap(h.logger, h.Rename))
-			r.With(workspaceRead).Get("/members", Wrap(h.logger, h.Members))
-			r.With(membersWrite).Post("/members", Wrap(h.logger, h.AddMember))
-			r.With(workspaceRead).Get("/members/{"+userIDParam+"}", Wrap(h.logger, h.Member))
-			r.With(membersWrite).Patch("/members/{"+userIDParam+"}", Wrap(h.logger, h.ChangeRole))
-			r.With(membersRemove).
-				Delete("/members/{"+userIDParam+"}", Wrap(h.logger, h.RemoveMember))
-			r.With(membersWrite).Get("/member-candidates", Wrap(h.logger, h.Candidates))
+			h.registerAdmitting(r)
 		})
 	})
 }
@@ -442,6 +438,33 @@ func (h *Workspace) Candidates(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return answerPage(w, r, bodies)
+}
+
+// registerAdmitting registers the routes of a workspace that an administrator who is
+// no member reaches as a manager: the read of the workspace, the members, and the
+// enablements.
+func (h *Workspace) registerAdmitting(router chi.Router) {
+	workspaceRead := h.require(authz.PermissionWorkspaceRead)
+	membersWrite := h.require(authz.PermissionMembersWrite)
+	membersRemove := workspace.RequireOf(h.logger, h.authorizer, removalPermission)
+	pluginsWrite := h.require(authz.PermissionPluginsWrite)
+
+	router.Group(func(r chi.Router) {
+		r.Use(workspace.Middleware(h.logger, h.members, workspace.AdmitAdministrator(h.workspaces)))
+
+		r.With(workspaceRead).Get("/", Wrap(h.logger, h.Get))
+		r.With(workspaceRead).Get("/plugins", Wrap(h.logger, h.EnabledPlugins))
+		r.With(workspaceRead).Get("/plugins/{"+pluginIDParam+"}", Wrap(h.logger, h.EnabledPlugin))
+		r.With(pluginsWrite).Put("/plugins/{"+pluginIDParam+"}", Wrap(h.logger, h.EnablePlugin))
+		r.With(pluginsWrite).Delete("/plugins/{"+pluginIDParam+"}", Wrap(h.logger, h.DisablePlugin))
+		r.With(workspaceRead).Get("/members", Wrap(h.logger, h.Members))
+		r.With(membersWrite).Post("/members", Wrap(h.logger, h.AddMember))
+		r.With(workspaceRead).Get("/members/{"+userIDParam+"}", Wrap(h.logger, h.Member))
+		r.With(membersWrite).Patch("/members/{"+userIDParam+"}", Wrap(h.logger, h.ChangeRole))
+		r.With(membersRemove).
+			Delete("/members/{"+userIDParam+"}", Wrap(h.logger, h.RemoveMember))
+		r.With(membersWrite).Get("/member-candidates", Wrap(h.logger, h.Candidates))
+	})
 }
 
 // answerPage answers one page that holds every item of a bounded collection.

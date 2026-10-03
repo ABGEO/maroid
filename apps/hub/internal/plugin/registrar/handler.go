@@ -5,11 +5,9 @@ import (
 	"log/slog"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
-	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
 )
@@ -23,8 +21,7 @@ type HandlerRegistrar struct {
 	capabilities *registry.CapabilityRegistry
 	permissions  *registry.PermissionRegistry
 	idempotency  idempotency.Store
-	members      repository.WorkspaceMemberRepository
-	authorizer   authz.Authorizer
+	access       handler.WorkspaceAccess
 }
 
 var _ Registrar = (*HandlerRegistrar)(nil)
@@ -38,8 +35,7 @@ func NewHandlerRegistrar(
 	capabilities *registry.CapabilityRegistry,
 	permissions *registry.PermissionRegistry,
 	idempotency idempotency.Store,
-	members repository.WorkspaceMemberRepository,
-	authorizer authz.Authorizer,
+	access handler.WorkspaceAccess,
 ) *HandlerRegistrar {
 	return &HandlerRegistrar{
 		logger:       logger,
@@ -48,9 +44,8 @@ func NewHandlerRegistrar(
 		registry:     reg,
 		capabilities: capabilities,
 		idempotency:  idempotency,
-		members:      members,
 		permissions:  permissions,
-		authorizer:   authorizer,
+		access:       access,
 	}
 }
 
@@ -106,8 +101,7 @@ func (r *HandlerRegistrar) Register(plugin pluginapi.Plugin) error {
 		r.verifier,
 		r.resolver,
 		r.idempotency,
-		r.members,
-		r.authorizer,
+		r.access,
 		id,
 		routes,
 	)

@@ -63,6 +63,7 @@ func NewPluginTool(
 		Name:            name,
 		ActsInWorkspace: true,
 		Permission:      registry.PermissionName(pluginID, meta.Permission),
+		PluginID:        pluginID.String(),
 		Install: func(server *mcp.Server) {
 			mcp.AddTool(server, &mcp.Tool{
 				Name:         name,

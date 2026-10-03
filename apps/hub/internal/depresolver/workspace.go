@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 )
@@ -116,4 +117,58 @@ func (c *Container) ChatSelection() (*workspace.ChatSelection, error) {
 	}
 
 	return c.chatSelection.instance, nil
+}
+
+// EnablementService initializes and returns the service of the enablements of a plugin.
+func (c *Container) EnablementService() (*workspace.Enablements, error) {
+	c.enablementService.mu.Lock()
+	defer c.enablementService.mu.Unlock()
+
+	var err error
+
+	c.enablementService.once.Do(func() {
+		var dbInstance *sqlx.DB
+
+		if dbInstance, err = c.Database(); err != nil {
+			return
+		}
+
+		c.enablementService.instance = workspace.NewEnablements(
+			repository.NewWorkspacePlugin(dbInstance),
+			repository.NewAllowedPlugin(dbInstance),
+			c.PluginRegistry(),
+		)
+	})
+
+	if err != nil {
+		c.enablementService.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing enablement service: %w", err)
+	}
+
+	return c.enablementService.instance, nil
+}
+
+// workspaceAccess resolves the three checks that a route of a plugin passes.
+func (c *Container) workspaceAccess() (handler.WorkspaceAccess, error) {
+	members, err := c.WorkspaceMemberRepository()
+	if err != nil {
+		return handler.WorkspaceAccess{}, err
+	}
+
+	enablements, err := c.EnablementService()
+	if err != nil {
+		return handler.WorkspaceAccess{}, err
+	}
+
+	authorizer, err := c.Authorizer()
+	if err != nil {
+		return handler.WorkspaceAccess{}, err
+	}
+
+	return handler.WorkspaceAccess{
+		Members:     members,
+		Enablements: enablements,
+		Authorizer:  authorizer,
+	}, nil
 }

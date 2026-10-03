@@ -183,9 +183,9 @@ func TestAnAdministratorReadsEveryWorkspace(t *testing.T) {
 	garden := fixture.create(t, fixture.nino, "G")
 
 	_, err := fixture.database.ExecContext(t.Context(),
-		`INSERT INTO public.workspace_plugins (workspace_id, plugin_id) VALUES ($1, $2);`,
-		fixture.h, pluginP)
+		`DELETE FROM public.workspace_plugins WHERE workspace_id = $1;`, fixture.h)
 	require.NoError(t, err)
+	fixture.enable(t, fixture.h, pluginP)
 
 	listed := fixture.call(t, zura, http.MethodGet, "/workspaces?scope=all", nil, "")
 	require.Equal(t, http.StatusOK, listed.Code, listed.Body.String())

@@ -19,6 +19,7 @@ import (
 // this registry stores one uniform value.
 type MCPTool struct {
 	Name            string
+	PluginID        string
 	Install         func(server *mcp.Server)
 	ActsInWorkspace bool
 	Permission      string

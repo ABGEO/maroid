@@ -124,3 +124,33 @@ func workspaceWithRoledMembers(t *testing.T, instance *testdb.Instance) string {
 
 	return workspace
 }
+
+// PLUGACC-SC-019: The migrations of the administration and of the enablement start
+// closed: no workspace enables a plugin, every allowlist is empty, and no record is an
+// administrator.
+func TestTheEnablementStartsClosed(t *testing.T) {
+	t.Parallel()
+
+	instance := testdb.Start(t)
+	migrator := newMigrator(t, instance)
+
+	require.NoError(t, migrator.Migrate(versionWorkspaceRoles))
+
+	workspaceWithRoledMembers(t, instance)
+	workspaceWithRoledMembers(t, instance)
+	insertUser(t, instance, "Gio")
+
+	require.NoError(t, migrator.Up())
+
+	for query, want := range map[string]int{
+		`SELECT count(*) FROM public.workspace_plugins;`:                0,
+		`SELECT count(*) FROM public.allowed_plugins;`:                  0,
+		`SELECT count(*) FROM public.users WHERE is_administrator;`:     0,
+		`SELECT count(*) FROM public.users WHERE NOT is_administrator;`: 7,
+	} {
+		var count int
+
+		require.NoError(t, instance.DB.Get(&count, query))
+		assert.Equal(t, want, count, query)
+	}
+}

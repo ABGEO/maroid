@@ -143,8 +143,20 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 	fixture.h = fixture.create(t, fixture.ana, "H")
 	fixture.add(t, fixture.ana, fixture.h, fixture.beka, roleEditor)
 	fixture.add(t, fixture.ana, fixture.h, fixture.gio, roleViewer)
+	fixture.enable(t, fixture.h, probePluginID)
 
 	return fixture
+}
+
+// enable writes the enablement of the plugin in the workspace, as the owner of the
+// tables.
+func (f *workspaceFixture) enable(t *testing.T, workspaceID string, pluginID string) {
+	t.Helper()
+
+	_, err := f.database.ExecContext(t.Context(),
+		`INSERT INTO public.workspace_plugins (workspace_id, plugin_id) VALUES ($1, $2);`,
+		workspaceID, pluginID)
+	require.NoError(t, err)
 }
 
 // administrator signs in Zura, an administrator who is a member of nothing. A test of
@@ -197,7 +209,7 @@ func workspaceRouter(
 	t.Helper()
 
 	memberRepo := repository.NewWorkspaceMember(instance.DB)
-	authorizer := probeAuthorizer(t)
+	access, enablements := probeAccessOf(t, instance.DB, memberRepo)
 
 	logger := slog.New(slog.DiscardHandler)
 	verifier := workspaceVerifier(t, provider)
@@ -208,20 +220,15 @@ func workspaceRouter(
 	router.Use(precondition.IfMatch)
 
 	handler.NewPluginWrapper(
-		logger,
-		verifier,
-		resolver,
-		noIdempotency{},
-		memberRepo,
-		authorizer,
+		logger, verifier, resolver, noIdempotency{}, access,
 		pluginapi.ParsePluginID(probePluginID),
 		probeRoutes(instance.DB, probeRuns, probeWrites),
 	).Register(router)
 
 	handler.NewPlugin(
 		logger, verifier, resolver,
-		registry.NewPluginRegistry(), registry.NewUIRegistry(), registry.NewCapabilityRegistry(),
-		&stubSettings{}, noIdempotency{}, memberRepo, authorizer,
+		loadedPlugins(t), registry.NewUIRegistry(), registry.NewCapabilityRegistry(),
+		&stubSettings{}, noIdempotency{}, access, repository.NewAllowedPlugin(instance.DB),
 	).Register(router)
 
 	manager := workspace.NewManager(
@@ -232,7 +239,16 @@ func workspaceRouter(
 	)
 
 	handler.NewWorkspace(
-		logger, verifier, resolver, noIdempotency{}, memberRepo, manager, authorizer, manager,
+		logger,
+		verifier,
+		resolver,
+		noIdempotency{},
+		memberRepo,
+		manager,
+		access.Authorizer,
+		manager,
+		enablements,
+		repository.NewWorkspace(instance.DB),
 	).Register(router)
 
 	handler.NewUser(
@@ -265,9 +281,47 @@ func usersOf(
 			Allowed: repository.NewAllowedPlugin(database),
 		},
 		inviter,
-		plugins,
+		loadedPlugins(t),
 		time.Hour,
 	)
+}
+
+// probeAccessOf holds the checks of a route of the probe plugin over the database, and
+// the service of the enablements that the handler of the workspaces takes.
+func probeAccessOf(
+	t *testing.T,
+	database *sqlx.DB,
+	members repository.WorkspaceMemberRepository,
+) (handler.WorkspaceAccess, *workspace.Enablements) {
+	t.Helper()
+
+	enablements := workspace.NewEnablements(
+		repository.NewWorkspacePlugin(
+			database,
+		),
+		repository.NewAllowedPlugin(database),
+		loadedPlugins(t),
+	)
+
+	return handler.WorkspaceAccess{
+		Members:     members,
+		Enablements: enablements,
+		Authorizer:  probeAuthorizer(t),
+	}, enablements
+}
+
+// loadedPlugins answers the plugins P, Q, and the probe, as the hub loaded them.
+func loadedPlugins(t *testing.T) *registry.PluginRegistry {
+	t.Helper()
+
+	plugins := registry.NewPluginRegistry()
+	require.NoError(t, plugins.Register(
+		newStubPlugin(pluginP, "1.0.0"),
+		newStubPlugin(pluginQ, "1.0.0"),
+		newStubPlugin(probePluginID, "1.0.0"),
+	))
+
+	return plugins
 }
 
 // workspaceVerifier verifies the session cookies that the provider signs.

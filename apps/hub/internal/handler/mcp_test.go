@@ -207,7 +207,7 @@ func hubAt(
 
 	mcpHandler := handler.NewMCP(
 		cfg, slog.New(slog.DiscardHandler), oidcSvc, resolver, toolRegistry, stubMembers{},
-		probeAuthorizer(t),
+		everyPluginEnabled{}, probeAuthorizer(t),
 	)
 
 	// app.Run loads every plugin between the build of the handler and the build
@@ -320,6 +320,13 @@ func problemOf(t *testing.T, recorder *httptest.ResponseRecorder) problem.Proble
 
 // memberWorkspace is the one workspace that the acting user of the fixture belongs to.
 const memberWorkspace = "01998aa0-1111-7000-8000-0000000000aa"
+
+// everyPluginEnabled answers that every workspace enables every plugin.
+type everyPluginEnabled struct{}
+
+func (everyPluginEnabled) IsEnabled(context.Context, string, string) (bool, error) {
+	return true, nil
+}
 
 // stubMembers holds the acting user of the fixture as a member of memberWorkspace.
 type stubMembers struct {

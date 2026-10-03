@@ -8,6 +8,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 )
 
 // The implementation that the hub reports to an MCP client at the initialization.
@@ -23,6 +24,7 @@ func NewServer(
 	logger *slog.Logger,
 	toolRegistry *registry.MCPToolRegistry,
 	members repository.WorkspaceMemberRepository,
+	enablements workspace.EnablementChecker,
 	authorizer authz.Authorizer,
 ) *mcp.Server {
 	server := mcp.NewServer(&mcp.Implementation{
@@ -36,7 +38,7 @@ func NewServer(
 	server.AddReceivingMiddleware(
 		loggingMiddleware(logger),
 		actingUserMiddleware(),
-		workspaceMiddleware(tools, members, authorizer),
+		workspaceMiddleware(tools, members, enablements, authorizer),
 	)
 
 	for _, tool := range tools {

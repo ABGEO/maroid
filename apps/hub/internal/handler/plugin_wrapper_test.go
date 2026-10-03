@@ -104,6 +104,7 @@ func TestARouteOfAPluginReadsTheWorkspaceOfItsAddress(t *testing.T) {
 
 	fixture := workspaceUnderTest(t)
 	garden := fixture.create(t, fixture.ana, "G")
+	fixture.enable(t, garden, probePluginID)
 	fixture.writeNotes(t, fixture.h, "first of H", "second of H")
 	fixture.writeNotes(t, garden, "one of G")
 

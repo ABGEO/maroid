@@ -252,12 +252,12 @@ func (c *Container) buildPluginHandler(
 	settingsSvc settings.Service,
 	idempotencyStore idempotency.Store,
 ) (*handler.Plugin, error) {
-	members, err := c.WorkspaceMemberRepository()
+	access, err := c.workspaceAccess()
 	if err != nil {
 		return nil, err
 	}
 
-	authorizer, err := c.Authorizer()
+	dbInstance, err := c.Database()
 	if err != nil {
 		return nil, err
 	}
@@ -271,8 +271,8 @@ func (c *Container) buildPluginHandler(
 		c.CapabilityRegistry(),
 		settingsSvc,
 		idempotencyStore,
-		members,
-		authorizer,
+		access,
+		repository.NewAllowedPlugin(dbInstance),
 	), nil
 }
 
@@ -308,6 +308,16 @@ func (c *Container) buildWorkspaceHandler() (*handler.Workspace, error) {
 		return nil, err
 	}
 
+	enablements, err := c.EnablementService()
+	if err != nil {
+		return nil, err
+	}
+
+	dbInstance, err := c.Database()
+	if err != nil {
+		return nil, err
+	}
+
 	return handler.NewWorkspace(
 		c.Logger(),
 		verifier,
@@ -317,6 +327,8 @@ func (c *Container) buildWorkspaceHandler() (*handler.Workspace, error) {
 		service,
 		authorizer,
 		service,
+		enablements,
+		repository.NewWorkspace(dbInstance),
 	), nil
 }
 
@@ -381,17 +393,13 @@ func (c *Container) buildMCPHandler(
 		return nil, err
 	}
 
-	members, err := c.WorkspaceMemberRepository()
-	if err != nil {
-		return nil, err
-	}
-
-	authorizer, err := c.Authorizer()
+	access, err := c.workspaceAccess()
 	if err != nil {
 		return nil, err
 	}
 
 	return handler.NewMCP(
-		cfg, logger, oidcSvc, identityResolver, toolRegistry, members, authorizer,
+		cfg, logger, oidcSvc, identityResolver, toolRegistry,
+		access.Members, access.Enablements, access.Authorizer,
 	), nil
 }
