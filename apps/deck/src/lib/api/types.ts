@@ -1,4 +1,6 @@
 export interface User {
+	/** The identifier of the user record. */
+	id: string;
 	first_name?: string;
 	last_name?: string;
 	picture?: string;
@@ -134,3 +136,27 @@ export type SettingsValue = string | boolean;
 export type SettingsValues = Record<string, SettingsValue>;
 
 export type SettingsInput = Record<string, string | boolean | null>;
+
+/** A workspace that the person is a member of. */
+export interface Workspace {
+	id: string;
+	name: string;
+	created_at: string;
+	updated_at: string;
+}
+
+/** One member of a workspace. A name is absent when the record holds none. */
+export interface Member {
+	user_id: string;
+	first_name?: string;
+	last_name?: string;
+	created_at: string;
+	updated_at: string;
+}
+
+/** An active user record that is no member of the workspace yet. */
+export interface Candidate {
+	user_id: string;
+	first_name?: string;
+	last_name?: string;
+}

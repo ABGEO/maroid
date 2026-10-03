@@ -267,11 +267,18 @@ components:
   schemas:
     CurrentUser:
       type: object
-      required: [provider, is_administrator]
+      required: [id, provider, is_administrator]
       description: >
         The person of the current session. The two names come from the record that
         an administrator set, and the picture from the token of the session.
       properties:
+        id:
+          type: string
+          format: uuid
+          description: >
+            The identifier of the user record. The deck names it to leave a
+            workspace, and to mark the row of the person among the members.
+            `WSPACE-FR-009`.
         first_name:
           type: string
           description: >
@@ -297,7 +304,8 @@ components:
             Whether the record holds the mark of an administrator. The deck shows
             the pages of `/admin` when it does. `PLUGACC-FR-023`.
       examples:
-        - first_name: Temuri
+        - id: 01998aa0-1111-7000-8000-000000000001
+          first_name: Temuri
           last_name: Takalandze
           picture: https://example.com/a.jpg
           provider: telegram

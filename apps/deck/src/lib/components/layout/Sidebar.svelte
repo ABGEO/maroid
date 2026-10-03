@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { pluginState } from '$lib/state/plugins.svelte';
+	import { workspaceState } from '$lib/state/workspaces.svelte';
 	import { uiOf } from '$lib/plugins/capabilities';
 
 	function isActive(href: string) {
@@ -23,6 +24,10 @@
 		pluginState.plugins
 			.map((plugin) => ({ id: plugin.id, manifest: uiOf(plugin) }))
 			.filter((entry) => entry.manifest !== undefined)
+	);
+
+	const hasNoWorkspace = $derived(
+		workspaceState.status === 'ready' && workspaceState.workspaces.length === 0
 	);
 
 	const pluginsGroupIsOpen = $derived(
@@ -90,80 +95,82 @@
 				</a>
 			</li>
 			<!-- @todo: move to a dedicated component -->
-			<li>
-				<details open={pluginsGroupIsOpen}>
-					<summary>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							width="16"
-							height="16"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.75"
-							class="shrink-0"
-						>
-							<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
-						</svg>
-						<span class="is-drawer-close:hidden">Plugins</span>
-					</summary>
-					<ul>
-						<li>
-							<a href={resolve('/plugins')} class:menu-active={isActive(resolve('/plugins'))}>
-								All plugins
-							</a>
-						</li>
+			{#if !hasNoWorkspace}
+				<li>
+					<details open={pluginsGroupIsOpen}>
+						<summary>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.75"
+								class="shrink-0"
+							>
+								<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
+							</svg>
+							<span class="is-drawer-close:hidden">Plugins</span>
+						</summary>
+						<ul>
+							<li>
+								<a href={resolve('/plugins')} class:menu-active={isActive(resolve('/plugins'))}>
+									All plugins
+								</a>
+							</li>
 
-						{#if pluginState.status === 'idle' || pluginState.status === 'loading'}
-							{#each [0, 1, 2] as i (i)}
-								<li>
-									<div class="flex items-center gap-2 px-3 py-1.5">
-										<span class="skeleton h-4 w-4 shrink-0 rounded" aria-hidden="true"></span>
-										<span class="skeleton h-4 w-24" aria-hidden="true"></span>
-									</div>
-								</li>
-							{/each}
-						{:else if pluginState.status === 'ready'}
-							{#each uiPlugins as plugin (plugin.id)}
-								<li>
-									<details
-										open={groupIsOpen(
-											plugin.manifest!.routes.map((r) => routeHref(plugin.id, r.path))
-										)}
-									>
-										<summary>
-											<span
-												class="grid h-4 w-4 shrink-0 place-items-center rounded font-mono text-[10px] font-semibold"
-												style="background:oklch(92% 0.04 {nameToHue(
-													plugin.manifest!.name
-												)});color:oklch(40% 0.1 {nameToHue(plugin.manifest!.name)})"
-											>
-												{letterFromName(plugin.manifest!.name)}
-											</span>
-											<span class="is-drawer-close:hidden">{plugin.manifest!.name}</span>
-										</summary>
-										<ul>
-											{#each plugin.manifest!.routes as route (route.path)}
-												<li>
-													<a
-														href={resolve('/(dashboard)/plugins/[plugin]/[...path]', {
-															plugin: plugin.id,
-															path: route.path.replace(/^\//, '')
-														})}
-														class:menu-active={isActive(routeHref(plugin.id, route.path))}
-													>
-														{route.label}
-													</a>
-												</li>
-											{/each}
-										</ul>
-									</details>
-								</li>
-							{/each}
-						{/if}
-					</ul>
-				</details>
-			</li>
+							{#if pluginState.status === 'idle' || pluginState.status === 'loading'}
+								{#each [0, 1, 2] as i (i)}
+									<li>
+										<div class="flex items-center gap-2 px-3 py-1.5">
+											<span class="skeleton h-4 w-4 shrink-0 rounded" aria-hidden="true"></span>
+											<span class="skeleton h-4 w-24" aria-hidden="true"></span>
+										</div>
+									</li>
+								{/each}
+							{:else if pluginState.status === 'ready'}
+								{#each uiPlugins as plugin (plugin.id)}
+									<li>
+										<details
+											open={groupIsOpen(
+												plugin.manifest!.routes.map((r) => routeHref(plugin.id, r.path))
+											)}
+										>
+											<summary>
+												<span
+													class="grid h-4 w-4 shrink-0 place-items-center rounded font-mono text-[10px] font-semibold"
+													style="background:oklch(92% 0.04 {nameToHue(
+														plugin.manifest!.name
+													)});color:oklch(40% 0.1 {nameToHue(plugin.manifest!.name)})"
+												>
+													{letterFromName(plugin.manifest!.name)}
+												</span>
+												<span class="is-drawer-close:hidden">{plugin.manifest!.name}</span>
+											</summary>
+											<ul>
+												{#each plugin.manifest!.routes as route (route.path)}
+													<li>
+														<a
+															href={resolve('/(dashboard)/plugins/[plugin]/[...path]', {
+																plugin: plugin.id,
+																path: route.path.replace(/^\//, '')
+															})}
+															class:menu-active={isActive(routeHref(plugin.id, route.path))}
+														>
+															{route.label}
+														</a>
+													</li>
+												{/each}
+											</ul>
+										</details>
+									</li>
+								{/each}
+							{/if}
+						</ul>
+					</details>
+				</li>
+			{/if}
 		</ul>
 	</div>
 </aside>

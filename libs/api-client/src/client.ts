@@ -4,6 +4,8 @@ import type { ApiClient, ClientConfig, LinkOptions, RequestOptions } from './typ
 
 const IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
 
+const MERGE_PATCH_MEDIA_TYPE = 'application/merge-patch+json';
+
 function trimTrailingSlashes(value: string): string {
   return value.replace(/\/+$/, '');
 }
@@ -187,6 +189,24 @@ export function createClient(config: ClientConfig): ApiClient {
           method: 'PUT',
           body: serializeBody(body),
           headers: options.headers,
+          signal: options.signal
+        },
+        options.ifMatch
+      );
+    },
+
+    patch<T>(path: string, body: unknown, options: RequestOptions = {}) {
+      const headers = new Headers(options.headers);
+      if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', MERGE_PATCH_MEDIA_TYPE);
+      }
+
+      return request<T>(
+        buildUrl(path, options.params),
+        {
+          method: 'PATCH',
+          body: serializeBody(body),
+          headers,
           signal: options.signal
         },
         options.ifMatch

@@ -33,6 +33,7 @@ export const PROBLEM_TYPE = {
   networkNotAllowed: '/problems/hub/network-not-allowed',
   notFound: '/problems/http/not-found',
   settingsAbsent: '/problems/hub/settings-absent',
+  memberExists: '/problems/hub/member-exists',
   methodNotAllowed: '/problems/http/method-not-allowed',
   requestInProgress: '/problems/http/request-in-progress',
   preconditionFailed: '/problems/http/precondition-failed',

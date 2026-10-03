@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 
 	import UserDropdown from '$lib/components/UserDropdown.svelte';
+	import WorkspaceSwitcher from '$lib/components/layout/WorkspaceSwitcher.svelte';
 </script>
 
 <header
@@ -32,6 +33,8 @@
 				<div class="text-base-content/50 -mt-0.5 font-mono text-[10px]">deck · v0.1.0</div>
 			</div>
 		</a>
+
+		<WorkspaceSwitcher />
 
 		<div class="flex-1"></div>
 

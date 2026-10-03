@@ -4,7 +4,7 @@ title: The workspace in the bot, in the MCP server, and in the deck
 type: spec
 status: approved
 created: 2026-10-01
-updated: 2026-10-02
+updated: 2026-10-03
 approved_by: Temuri
 approved_on: 2026-10-02
 constrained_by: [OWN, SEC, TG, UI, TS, SPC, LNG]
@@ -214,6 +214,10 @@ The switcher sits in the header of every page. It shows the name of the acting
 workspace, which realizes `WSPACE-FR-020`. One click opens its menu, and a second
 click on a workspace navigates to `/w/{workspaceId}`, which realizes
 `WSPACE-FR-021`. The menu ends with "New workspace".
+
+`GET /auth/sessions/self` answers `id`, the identifier of the user record. The members
+page sends it to leave, as `DELETE` on the membership of the acting user, and marks the
+row of the person with it.
 
 The members page and the settings page reach every action of `WSPACE-FR-025`. Every
 member sees every control until `PERMS` adds the roles.

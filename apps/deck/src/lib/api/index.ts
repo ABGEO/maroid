@@ -2,6 +2,7 @@ import { auth } from './auth';
 import { identities } from './identities';
 import { plugins } from './plugins';
 import { settings } from './settings';
+import { workspaces } from './workspaces';
 
 export {
 	ApiError,
@@ -11,6 +12,7 @@ export {
 	isProblem
 } from '@maroid/api-client';
 export type { ApiClient, FieldFailure, Problem, RequestOptions } from '@maroid/api-client';
+export { createWriteIntent } from '@maroid/api-client';
 export { createPluginClient, signedOutUrl, startSignIn } from './client';
 export { SECRET_MASK } from './types';
 export type {
@@ -24,12 +26,16 @@ export type {
 	SettingsSchema,
 	SettingsValue,
 	SettingsValues,
-	SettingsInput
+	SettingsInput,
+	Workspace,
+	Member,
+	Candidate
 } from './types';
 
 export const api = {
 	auth,
 	identities,
 	plugins,
-	settings
+	settings,
+	workspaces
 };

@@ -55,6 +55,11 @@ export interface ApiClient {
   follow<T>(link: string, options?: LinkOptions): Promise<T | null>;
   post<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T | null>;
   put<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T | null>;
+  /**
+   * Change part of a record with a JSON Merge Patch, RFC 7396. A member that the
+   * body leaves out keeps its value.
+   */
+  patch<T>(path: string, body: unknown, options?: RequestOptions): Promise<T | null>;
   del<T>(path: string, options?: RequestOptions): Promise<T | null>;
   /** Derive a client with an additional path prefix, sharing this client's config. */
   scope(prefix: string): ApiClient;

@@ -697,3 +697,18 @@ func addUserRecord(t *testing.T, database *sqlx.DB, firstName string) string {
 
 	return id
 }
+
+// WSPACE-SC-021: The person of the session carries the identifier of the user
+// record, so the deck names it to leave a workspace.
+func TestTheCurrentUserCarriesTheRecordID(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+
+	record := addUserRecord(t, fixture.database, "Gio")
+	require.NoError(t, fixture.service.Attach(
+		t.Context(), record, auth.ProviderTelegram, "303", model.Profile{},
+	))
+
+	assert.Equal(t, record, fixture.me(t, auth.ProviderTelegram, "303")["id"])
+}

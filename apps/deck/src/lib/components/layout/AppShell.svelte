@@ -5,12 +5,19 @@
 	import Header from '$lib/components/layout/Header.svelte';
 
 	import { loadPlugins, pluginState } from '$lib/state/plugins.svelte';
+	import { loadWorkspaces, workspaceState } from '$lib/state/workspaces.svelte';
 
 	let { children } = $props();
 
 	$effect(() => {
 		if (pluginState.status === 'idle') {
 			loadPlugins();
+		}
+	});
+
+	$effect(() => {
+		if (workspaceState.status === 'idle') {
+			loadWorkspaces();
 		}
 	});
 </script>

@@ -3,10 +3,13 @@
 
 	import { crumbsFor, needsPlugins } from '$lib/navigation/breadcrumbs';
 	import { pluginState } from '$lib/state/plugins.svelte';
+	import { workspaceState } from '$lib/state/workspaces.svelte';
 
 	const loading = $derived(pluginState.status === 'idle' || pluginState.status === 'loading');
 	const pending = $derived(loading && needsPlugins(page.route.id));
-	const crumbs = $derived(crumbsFor(page.route.id, page.params, pluginState.plugins));
+	const crumbs = $derived(
+		crumbsFor(page.route.id, page.params, pluginState.plugins, workspaceState.workspaces)
+	);
 </script>
 
 {#if pending}

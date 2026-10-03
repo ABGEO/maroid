@@ -1,7 +1,7 @@
 import { resolve } from '$app/paths';
 import type { ResolvedPathname, RouteId } from '$app/types';
 
-import type { Plugin } from '$lib/api/types';
+import type { Plugin, Workspace } from '$lib/api/types';
 import { displayNameOf, uiOf } from '$lib/plugins/capabilities';
 
 /**
@@ -17,6 +17,7 @@ export interface Crumb {
 export interface CrumbParams {
 	plugin?: string;
 	path?: string;
+	workspace?: string;
 }
 
 const HUB: Crumb = { label: 'hub', href: resolve('/') };
@@ -41,9 +42,42 @@ export function needsPlugins(routeId: RouteId | null): boolean {
 export function crumbsFor(
 	routeId: RouteId | null,
 	params: CrumbParams,
-	plugins: Plugin[]
+	plugins: Plugin[],
+	workspaces: Workspace[] = []
 ): Crumb[] {
 	switch (routeId) {
+		case '/(dashboard)/workspaces/new':
+			return [HUB, { label: 'New workspace', href: resolve('/workspaces/new') }];
+
+		case '/(dashboard)/w/[workspace]':
+			return [HUB, workspaceCrumb(params.workspace ?? '', workspaces)];
+
+		case '/(dashboard)/w/[workspace]/members': {
+			const workspaceId = params.workspace ?? '';
+
+			return [
+				HUB,
+				workspaceCrumb(workspaceId, workspaces),
+				{
+					label: 'Members',
+					href: resolve('/(dashboard)/w/[workspace]/members', { workspace: workspaceId })
+				}
+			];
+		}
+
+		case '/(dashboard)/w/[workspace]/settings': {
+			const workspaceId = params.workspace ?? '';
+
+			return [
+				HUB,
+				workspaceCrumb(workspaceId, workspaces),
+				{
+					label: 'Settings',
+					href: resolve('/(dashboard)/w/[workspace]/settings', { workspace: workspaceId })
+				}
+			];
+		}
+
 		case '/(dashboard)/profile':
 			return [HUB, { label: 'Profile', href: resolve('/profile') }];
 
@@ -78,6 +112,16 @@ export function crumbsFor(
 		default:
 			return [HUB];
 	}
+}
+
+/** The workspace, by its name once the list of workspaces arrived. */
+function workspaceCrumb(workspaceId: string, workspaces: Workspace[]): Crumb {
+	const workspace = workspaces.find((candidate) => candidate.id === workspaceId);
+
+	return {
+		label: workspace?.name ?? 'Workspace',
+		href: resolve('/(dashboard)/w/[workspace]', { workspace: workspaceId })
+	};
 }
 
 /** The plugin itself. The hub serves no page for it, so the crumb carries no target. */
