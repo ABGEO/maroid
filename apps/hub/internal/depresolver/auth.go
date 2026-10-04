@@ -171,5 +171,6 @@ func (c *Container) buildAuthService() (*auth.Service, error) {
 		invitationRepo,
 		repository.NewWorkspace(dbInstance),
 		members,
+		repository.NewAllowedPlugin(dbInstance),
 	), nil
 }

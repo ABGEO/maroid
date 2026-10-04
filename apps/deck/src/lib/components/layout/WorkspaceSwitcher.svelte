@@ -2,10 +2,12 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 
+	import type { Workspace } from '$lib/api';
 	import { workspaceById, workspaceState } from '$lib/state/workspaces.svelte';
 
 	const current = $derived(workspaceById(page.params.workspace));
-	const label = $derived(current?.name ?? 'Choose a workspace');
+	const loaded = $derived(page.data.workspace as Workspace | undefined);
+	const label = $derived(current?.name ?? loaded?.name ?? 'Choose a workspace');
 </script>
 
 {#if workspaceState.status === 'ready' && workspaceState.workspaces.length > 0}

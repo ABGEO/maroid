@@ -7,24 +7,42 @@ type PluginEntry struct {
 	Capabilities map[Capability]any `json:"capabilities"`
 }
 
-// PluginEntries reports every loaded plugin.
-func PluginEntries(
-	pluginRegistry *PluginRegistry,
-	capabilityRegistry *CapabilityRegistry,
-) []PluginEntry {
-	plugins := pluginRegistry.All()
+// Catalog answers the entry of each loaded plugin. GET /plugins, the enablements of a
+// workspace, and the MCP tool list_plugins read it, so an entry has one shape.
+type Catalog struct {
+	plugins      *PluginRegistry
+	capabilities *CapabilityRegistry
+}
+
+// NewCatalog creates a new Catalog.
+func NewCatalog(plugins *PluginRegistry, capabilities *CapabilityRegistry) *Catalog {
+	return &Catalog{plugins: plugins, capabilities: capabilities}
+}
+
+// Entries reports every loaded plugin.
+func (c *Catalog) Entries() []PluginEntry {
+	plugins := c.plugins.All()
 	entries := make([]PluginEntry, 0, len(plugins))
 
 	for _, plg := range plugins {
-		meta := plg.Meta()
-		id := meta.ID.String()
-
-		entries = append(entries, PluginEntry{
-			ID:           id,
-			Version:      meta.Version,
-			Capabilities: capabilityRegistry.Of(id),
-		})
+		entries = append(entries, c.entryOf(plg.Meta().ID.String(), plg.Meta().Version))
 	}
 
 	return entries
+}
+
+// Entry reports one loaded plugin. The second answer is false when the hub did not
+// load it.
+func (c *Catalog) Entry(pluginID string) (PluginEntry, bool) {
+	for _, plg := range c.plugins.All() {
+		if plg.Meta().ID.String() == pluginID {
+			return c.entryOf(pluginID, plg.Meta().Version), true
+		}
+	}
+
+	return PluginEntry{}, false
+}
+
+func (c *Catalog) entryOf(pluginID string, version string) PluginEntry {
+	return PluginEntry{ID: pluginID, Version: version, Capabilities: c.capabilities.Of(pluginID)}
 }

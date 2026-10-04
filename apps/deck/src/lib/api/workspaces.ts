@@ -1,7 +1,7 @@
 import type { Page, Tagged } from '@maroid/api-client';
 
 import { client } from './client';
-import type { Candidate, Member, Role, Workspace } from './types';
+import type { Candidate, InstanceWorkspace, Member, Role, Workspace } from './types';
 
 function path(workspaceId: string): string {
 	return `/workspaces/${encodeURIComponent(workspaceId)}`;
@@ -14,6 +14,11 @@ function memberPath(workspaceId: string, userId: string): string {
 export const workspaces = {
 	list: (): Promise<Workspace[] | null> =>
 		client.get<Page<Workspace>>('/workspaces').then((page) => page?.items ?? null),
+
+	listAll: (): Promise<InstanceWorkspace[] | null> =>
+		client
+			.get<Page<InstanceWorkspace>>('/workspaces', { params: { scope: 'all' } })
+			.then((page) => page?.items ?? null),
 
 	get: (workspaceId: string): Promise<Tagged<Workspace> | null> =>
 		client.getTagged<Workspace>(path(workspaceId)),

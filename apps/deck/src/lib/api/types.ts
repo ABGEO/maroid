@@ -6,6 +6,59 @@ export interface User {
 	picture?: string;
 	/** The connector that authenticated this session. */
 	provider: string;
+	/** Whether the person administers the instance. */
+	is_administrator: boolean;
+}
+
+export type UserStatus = 'active' | 'blocked';
+
+/** A user record, as an administrator reads it. */
+export interface UserRecord {
+	id: string;
+	first_name?: string;
+	last_name?: string;
+	status: UserStatus;
+	is_administrator: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+/** The address that redeems an invitation. The hub answers it one time. */
+export interface Invitation {
+	address: string;
+	expires_at: string;
+}
+
+/** A new user record and its first invitation. */
+export interface InvitedUser {
+	user: UserRecord;
+	invitation: Invitation;
+}
+
+/** A plugin on an allowlist, or a plugin that a workspace enables. */
+export interface PluginRef {
+	plugin_id: string;
+	created_at: string;
+}
+
+/**
+ * A plugin that a workspace enables. `plugin` is its entry, absent when the hub did not
+ * load the plugin. Every member reads it, whatever their allowlist holds.
+ */
+export interface EnabledPlugin {
+	plugin_id: string;
+	created_at: string;
+	plugin?: Plugin;
+}
+
+/** A workspace of the instance, as an administrator reads it. */
+export interface InstanceWorkspace {
+	id: string;
+	name: string;
+	member_count: number;
+	plugin_ids: string[];
+	created_at: string;
+	updated_at: string;
 }
 
 /**

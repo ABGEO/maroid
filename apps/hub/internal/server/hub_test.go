@@ -107,14 +107,14 @@ func hubUnderTest(t *testing.T) *hubFixture {
 			userRepo, identityRepo, resolver, invitationRepo, service,
 		),
 		handler.NewPlugin(
-			logger, verifier, resolver,
-			registry.NewPluginRegistry(), probeUI(), registry.NewCapabilityRegistry(),
+			logger, verifier, resolver, emptyCatalog(), probeUI(),
 			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store, access,
 			repository.NewAllowedPlugin(instance.DB),
 		),
 		handler.NewWorkspace(
 			logger, verifier, resolver, store, members, workspaces, access.Authorizer, workspaces,
-			enablements, repository.NewWorkspace(instance.DB),
+			handler.WorkspacePlugins{Enablements: enablements, Catalog: emptyCatalog()},
+			repository.NewWorkspace(instance.DB),
 		),
 		handler.NewMCP(
 			cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry(),
@@ -149,6 +149,7 @@ func authService(
 ) *auth.Service {
 	return auth.NewService(
 		database, users, identities, invitations, repository.NewWorkspace(database), members,
+		repository.NewAllowedPlugin(database),
 	)
 }
 
@@ -179,6 +180,12 @@ func routerOf(t *testing.T, cfg *config.Config, logger *slog.Logger) *chi.Mux {
 	require.NoError(t, err)
 
 	return router
+}
+
+// emptyCatalog answers no plugin. The probe plugin of these tests mounts its routes
+// alone, with no entry in a registry.
+func emptyCatalog() *registry.Catalog {
+	return registry.NewCatalog(registry.NewPluginRegistry(), registry.NewCapabilityRegistry())
 }
 
 // probeAccess holds the checks of a route of the probe plugin over the database, and

@@ -9,6 +9,8 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 var (
@@ -22,6 +24,26 @@ var (
 type settingsAccess struct {
 	logger      *slog.Logger
 	settingsSvc settings.Service
+	enablements workspace.EnablementChecker
+}
+
+// enabled answers the failure of a plugin that declares no settings when the acting
+// workspace does not enable the plugin, so a disabled plugin reads as an absent one.
+func (a *settingsAccess) enabled(ctx context.Context, pluginID string) error {
+	enabled, err := a.enablements.IsEnabled(
+		ctx,
+		pluginapi.ActingWorkspaceFromContext(ctx),
+		pluginID,
+	)
+	if err != nil {
+		return a.failure(ctx, pluginID, err)
+	}
+
+	if !enabled {
+		return a.failure(ctx, pluginID, errs.ErrSettingsSchemaNotFound)
+	}
+
+	return nil
 }
 
 // stored reads the key of each secret field and the values of the acting user.

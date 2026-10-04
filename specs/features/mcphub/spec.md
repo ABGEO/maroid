@@ -4,7 +4,7 @@ title: The hub as a Model Context Protocol server
 type: spec
 status: approved
 created: 2026-09-17
-updated: 2026-10-03
+updated: 2026-10-04
 approved_by: Temuri
 approved_on: 2026-09-18
 constrained_by: [SEC, OWN, API, ERR, ARC, PLG, LOG, GO, PKG, CFG]
@@ -524,10 +524,12 @@ the current sign in.
 
 **Layer:** integration
 
-**Given** two plugins are loaded, one of which declares a settings schema.
+**Given** two plugins are loaded, one of which declares a settings schema, and the
+acting user is an administrator.
 **When** an MCP client calls the plugin list tool.
 **Then** the result names both, and the settings flag of each matches what
-`GET /plugins` would answer for the same two plugins.
+`GET /plugins` would answer for the same two plugins. `PLUGACC-SC-029` gives a user who
+is no administrator.
 
 ### `MCPHUB-SC-006` (verifies `MCPHUB-FR-006`)
 

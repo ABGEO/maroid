@@ -27,6 +27,12 @@ func (c *Container) CapabilityRegistry() *registry.CapabilityRegistry {
 	return c.capabilityRegistry.instance
 }
 
+// PluginCatalog returns the entry of each loaded plugin, from the plugin and the
+// capability registries.
+func (c *Container) PluginCatalog() *registry.Catalog {
+	return registry.NewCatalog(c.PluginRegistry(), c.CapabilityRegistry())
+}
+
 // PermissionRegistry initializes and returns the registry of the permissions.
 func (c *Container) PermissionRegistry() (*registry.PermissionRegistry, error) {
 	c.permissionRegistry.mu.Lock()

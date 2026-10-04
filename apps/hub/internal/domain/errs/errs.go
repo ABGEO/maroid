@@ -76,6 +76,9 @@ var (
 	// ErrAdministratorLast indicates a change that would leave the instance with no
 	// active administrator.
 	ErrAdministratorLast = errors.New("user: the last administrator")
+	// ErrAdministratorAllowlist indicates a change to the allowlist of an administrator,
+	// who turns on every plugin.
+	ErrAdministratorAllowlist = errors.New("user: an administrator holds no allowlist")
 	// ErrManagerLast indicates a change that would leave a workspace with no manager.
 	ErrManagerLast = errors.New("workspace member: the last manager")
 	// ErrMemberExists indicates that the user record is already a member of the

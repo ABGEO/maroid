@@ -96,9 +96,12 @@ list of `GET /workspaces`, and the name of the workspace from the read of
 `GET /workspaces/{id}`, so the header and the breadcrumbs name it.
 
 The form of a new user lists every loaded plugin, and the administrator picks the
-allowlist there. The form sends `allowed_plugins` with the record, which realizes
-`PLUGACC-FR-032`. The page of one user changes the allowlist after the creation, which
-realizes `PLUGACC-FR-008`.
+allowlist there. The picker is disabled while the form marks an administrator, and the
+page of an administrator shows the allowlist disabled, with a note that an
+administrator reaches every plugin, which realizes `PLUGACC-FR-035`. The form sends `allowed_plugins` with the record, which realizes
+`PLUGACC-FR-032`. The page of one user changes the names, the mark of an administrator, the block, and
+the allowlist, which realizes `PLUGACC-FR-034`, `PLUGACC-FR-029`, `PLUGACC-FR-030`,
+`PLUGACC-FR-005`, `PLUGACC-FR-006`, and `PLUGACC-FR-008`.
 
 An administrator reaches every action of `PLUGACC-FR-023` from the pages of `/admin`,
 and the members and the plugins of any workspace through the pages of `/w/{id}`, which

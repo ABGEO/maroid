@@ -10,6 +10,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 )
 
 const getPluginSettingsName = "get_plugin_settings"
@@ -37,8 +38,14 @@ type getPluginSettings struct {
 }
 
 // NewGetPluginSettings builds the tool that reports the settings of a plugin.
-func NewGetPluginSettings(logger *slog.Logger, settingsSvc settings.Service) registry.MCPTool {
-	tool := &getPluginSettings{settingsAccess{logger: logger, settingsSvc: settingsSvc}}
+func NewGetPluginSettings(
+	logger *slog.Logger,
+	settingsSvc settings.Service,
+	enablements workspace.EnablementChecker,
+) registry.MCPTool {
+	tool := &getPluginSettings{settingsAccess{
+		logger: logger, settingsSvc: settingsSvc, enablements: enablements,
+	}}
 
 	return registry.MCPTool{
 		Name:            getPluginSettingsName,
@@ -62,6 +69,10 @@ func (t *getPluginSettings) handle(
 	_ *mcp.CallToolRequest,
 	input GetPluginSettingsInput,
 ) (*mcp.CallToolResult, GetPluginSettingsOutput, error) {
+	if err := t.enabled(ctx, input.Plugin); err != nil {
+		return nil, GetPluginSettingsOutput{}, err
+	}
+
 	document, err := t.settingsSvc.Schema(input.Plugin)
 	if err != nil {
 		return nil, GetPluginSettingsOutput{}, t.failure(ctx, input.Plugin, err)

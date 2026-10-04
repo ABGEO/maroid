@@ -2,10 +2,13 @@ package tools
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/user"
 )
 
 const listPluginsName = "list_plugins"
@@ -20,18 +23,18 @@ type ListPluginsOutput struct {
 
 // listPlugins holds the registries that the report reads.
 type listPlugins struct {
-	pluginRegistry     *registry.PluginRegistry
-	capabilityRegistry *registry.CapabilityRegistry
+	catalog *registry.Catalog
+	allowed repository.AllowedPluginRepository
 }
 
 // NewListPlugins builds the plugin list tool.
 func NewListPlugins(
-	pluginRegistry *registry.PluginRegistry,
-	capabilityRegistry *registry.CapabilityRegistry,
+	catalog *registry.Catalog,
+	allowed repository.AllowedPluginRepository,
 ) registry.MCPTool {
 	tool := &listPlugins{
-		pluginRegistry:     pluginRegistry,
-		capabilityRegistry: capabilityRegistry,
+		catalog: catalog,
+		allowed: allowed,
 	}
 
 	return registry.MCPTool{
@@ -40,8 +43,9 @@ func NewListPlugins(
 			mcp.AddTool(server, &mcp.Tool{
 				Name:  listPluginsName,
 				Title: "List the loaded plugins",
-				Description: "Report every plugin that the hub loaded, with its version, " +
-					"whether it declares settings, and its user interface manifest.",
+				Description: "Report the plugins that the acting user can turn on, with " +
+					"the version and the capabilities of each: every loaded plugin to an " +
+					"administrator, and the plugins of their allowlist to anyone else.",
 				Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true},
 			}, tool.handle)
 		},
@@ -49,11 +53,14 @@ func NewListPlugins(
 }
 
 func (t *listPlugins) handle(
-	_ context.Context,
+	ctx context.Context,
 	_ *mcp.CallToolRequest,
 	_ ListPluginsInput,
 ) (*mcp.CallToolResult, ListPluginsOutput, error) {
-	return nil, ListPluginsOutput{
-		Plugins: registry.PluginEntries(t.pluginRegistry, t.capabilityRegistry),
-	}, nil
+	visible, err := user.VisiblePlugins(ctx, t.catalog, t.allowed)
+	if err != nil {
+		return nil, ListPluginsOutput{}, fmt.Errorf("listing the plugins: %w", err)
+	}
+
+	return nil, ListPluginsOutput{Plugins: visible}, nil
 }

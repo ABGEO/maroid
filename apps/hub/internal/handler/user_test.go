@@ -2,6 +2,7 @@ package handler_test
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,6 +19,9 @@ const (
 	allowedID   = "plugin_id"
 	blocked     = "blocked"
 	invitationK = "invitation"
+	firstNameK  = "first_name"
+	allowlistK  = "allowed_plugins"
+	nameOfNina  = "Nina"
 )
 
 func (f *workspaceFixture) allowlist(t *testing.T, admin person, member person) []string {
@@ -73,7 +77,7 @@ func TestAnAdministratorCreatesAndInvitesAUser(t *testing.T) {
 	zura := fixture.administrator(t)
 
 	created := fixture.call(t, zura, http.MethodPost, "/users",
-		map[string]any{"first_name": "Nina", "last_name": "Beridze"}, "")
+		map[string]any{firstNameK: nameOfNina, "last_name": "Beridze"}, "")
 	require.Equal(t, http.StatusCreated, created.Code, created.Body.String())
 
 	body := decode(t, created)
@@ -220,4 +224,144 @@ func TestAPersonWhoIsNoAdministratorReachesNoAdministration(t *testing.T) {
 		fixture.call(t, fixture.ana, http.MethodGet, "/workspaces", nil, "").Body.String(),
 		"member_count",
 		"without scope the list answers the workspaces of the person")
+}
+
+// PLUGACC-SC-023: An administrator sets the allowlist of a user record at its
+// creation. A plugin that the hub did not load fails on its member, and the hub writes
+// no record, no workspace, and no invitation.
+func TestAnAdministratorCreatesAUserWithAnAllowlist(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+	zura := fixture.administrator(t)
+
+	created := fixture.call(t, zura, http.MethodPost, "/users",
+		map[string]any{firstNameK: nameOfNina, allowlistK: []string{pluginP}}, "")
+	require.Equal(t, http.StatusCreated, created.Code, created.Body.String())
+
+	record, ok := decode(t, created)["user"].(map[string]any)
+	require.True(t, ok)
+
+	nina := person{id: stringOf(t, record[memberID])}
+	assert.Equal(t, []string{pluginP}, fixture.allowlist(t, zura, nina))
+
+	count := func(query string) int {
+		var found int
+
+		require.NoError(t, fixture.database.Get(&found, query))
+
+		return found
+	}
+	workspacesBefore := count(`SELECT count(*) FROM public.workspaces;`)
+	invitationsBefore := count(`SELECT count(*) FROM public.invitations;`)
+
+	requirePointer(t, fixture.call(
+		t,
+		zura,
+		http.MethodPost,
+		"/users",
+		map[string]any{
+			"first_name": "Levan",
+			allowlistK:   []string{pluginQ, "dev.maroid.none"},
+		},
+		"",
+	),
+		"/allowed_plugins/1")
+
+	assert.Zero(t, count(`SELECT count(*) FROM public.users WHERE first_name = 'Levan';`))
+	assert.Equal(t, workspacesBefore, count(`SELECT count(*) FROM public.workspaces;`))
+	assert.Equal(t, invitationsBefore, count(`SELECT count(*) FROM public.invitations;`))
+}
+
+// PLUGACC-SC-026: An administrator changes the names of a user record. A string sets a
+// name, an empty string clears it, and the identities and the workspaces stay.
+func TestAnAdministratorChangesTheNamesOfAUser(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+	zura := fixture.administrator(t)
+	path := "/users/" + fixture.beka.id
+
+	_, err := fixture.database.ExecContext(t.Context(),
+		`UPDATE public.users SET first_name = 'Bkea', last_name = 'Kapanadze' WHERE id = $1;`,
+		fixture.beka.id)
+	require.NoError(t, err)
+
+	count := func(query string) int {
+		var found int
+
+		require.NoError(t, fixture.database.Get(&found, query, fixture.beka.id))
+
+		return found
+	}
+	identities := count(`SELECT count(*) FROM public.identities WHERE user_id = $1;`)
+	memberships := count(`SELECT count(*) FROM public.workspace_members WHERE user_id = $1;`)
+
+	renamed := fixture.call(t, zura, http.MethodPatch, path, map[string]any{firstNameK: "Beka"}, "")
+	require.Equal(t, http.StatusOK, renamed.Code, renamed.Body.String())
+	assert.Equal(t, "Beka", decode(t, renamed)[firstNameK])
+	assert.Equal(t, "Kapanadze", decode(t, renamed)["last_name"])
+
+	cleared := fixture.call(t, zura, http.MethodPatch, path, map[string]any{"last_name": ""}, "")
+	require.Equal(t, http.StatusOK, cleared.Code, cleared.Body.String())
+	assert.Equal(t, "Beka", decode(t, cleared)[firstNameK])
+	assert.NotContains(t, decode(t, cleared), "last_name", "a cleared name is absent")
+
+	assert.Equal(t, identities, count(`SELECT count(*) FROM public.identities WHERE user_id = $1;`))
+	assert.Equal(
+		t,
+		memberships,
+		count(`SELECT count(*) FROM public.workspace_members WHERE user_id = $1;`),
+	)
+
+	refused := fixture.call(
+		t,
+		fixture.ana,
+		http.MethodPatch,
+		path,
+		map[string]any{firstNameK: "Ana"},
+		"",
+	)
+	require.Equal(t, http.StatusForbidden, refused.Code)
+	assert.Equal(t, auth.AdministrationPermission, decode(t, refused)["permission"])
+}
+
+// PLUGACC-SC-027: An administrator holds no allowlist. A change to the allowlist of an
+// administrator, and an allowlist for a new administrator, answer
+// administrator-allowlist, and the hub changes nothing.
+func TestTheAllowlistOfAnAdministratorIsRefused(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+	zura := fixture.administrator(t)
+	levan := addUserRecord(t, fixture.database, "Levan")
+
+	_, err := fixture.database.ExecContext(t.Context(),
+		`UPDATE public.users SET is_administrator = true WHERE id = $1;`, levan)
+	require.NoError(t, err)
+
+	const refusal = "/problems/hub/administrator-allowlist"
+
+	path := "/users/" + levan + "/allowed-plugins"
+
+	for name, response := range map[string]*httptest.ResponseRecorder{
+		"add":    fixture.call(t, zura, http.MethodPost, path, map[string]any{allowedID: pluginP}, ""),
+		"remove": fixture.call(t, zura, http.MethodDelete, path+"/"+pluginP, nil, ""),
+		"create": fixture.call(t, zura, http.MethodPost, "/users", map[string]any{
+			firstNameK: nameOfNina, userMark: true, allowlistK: []string{pluginP},
+		}, ""),
+	} {
+		require.Equal(t, http.StatusConflict, response.Code, name)
+		assert.Equal(t, refusal, decode(t, response)[problemType], name)
+	}
+
+	var ninas int
+
+	require.NoError(t, fixture.database.Get(&ninas,
+		`SELECT count(*) FROM public.users WHERE first_name = 'Nina';`))
+	assert.Zero(t, ninas)
+
+	assert.Equal(t, http.StatusCreated, fixture.call(t, zura, http.MethodPost,
+		"/users/"+fixture.ana.id+"/allowed-plugins", map[string]any{allowedID: pluginP}, "").Code,
+		"a person who is no administrator holds an allowlist")
 }

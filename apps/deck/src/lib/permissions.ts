@@ -4,6 +4,7 @@ import type { Role, Workspace } from '$lib/api';
 export const PERMISSION = {
 	workspaceWrite: 'workspace.write',
 	membersWrite: 'members.write',
+	pluginsWrite: 'plugins.write',
 	settingsWrite: 'settings.write'
 } as const;
 

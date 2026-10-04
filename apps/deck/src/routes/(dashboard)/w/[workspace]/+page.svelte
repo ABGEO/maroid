@@ -19,6 +19,12 @@
 		</a>
 		<a
 			class="btn btn-sm"
+			href={resolve('/(dashboard)/w/[workspace]/plugins', { workspace: data.workspace.id })}
+		>
+			Plugins
+		</a>
+		<a
+			class="btn btn-sm"
 			href={resolve('/(dashboard)/w/[workspace]/settings', { workspace: data.workspace.id })}
 		>
 			Settings

@@ -11,14 +11,15 @@ import (
 
 // The problem types that the hub owns.
 const (
-	TypeNetworkNotAllowed = "/problems/hub/network-not-allowed"
-	TypeSettingsAbsent    = "/problems/hub/settings-absent"
-	TypeIdentityLast      = "/problems/hub/identity-last"
-	TypeSettingsInvalid   = "/problems/hub/settings-invalid"
-	TypeNotReady          = "/problems/hub/not-ready"
-	TypeMemberExists      = "/problems/hub/member-exists"
-	TypeManagerLast       = "/problems/hub/manager-last"
-	TypeAdministratorLast = "/problems/hub/administrator-last"
+	TypeNetworkNotAllowed      = "/problems/hub/network-not-allowed"
+	TypeSettingsAbsent         = "/problems/hub/settings-absent"
+	TypeIdentityLast           = "/problems/hub/identity-last"
+	TypeSettingsInvalid        = "/problems/hub/settings-invalid"
+	TypeNotReady               = "/problems/hub/not-ready"
+	TypeMemberExists           = "/problems/hub/member-exists"
+	TypeManagerLast            = "/problems/hub/manager-last"
+	TypeAdministratorLast      = "/problems/hub/administrator-last"
+	TypeAdministratorAllowlist = "/problems/hub/administrator-allowlist"
 )
 
 // NotReadyProblem reports a hub that cannot serve a request, with the name of each
@@ -81,6 +82,16 @@ func NewAdministratorLast() *problem.Problem {
 	return &problem.Problem{
 		Type:   TypeAdministratorLast,
 		Title:  "The change leaves the instance with no active administrator.",
+		Status: http.StatusConflict,
+	}
+}
+
+// NewAdministratorAllowlist reports a change to the allowlist of an administrator, who
+// turns on every plugin and holds no allowlist.
+func NewAdministratorAllowlist() *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeAdministratorAllowlist,
+		Title:  "An administrator turns on every plugin and holds no allowlist.",
 		Status: http.StatusConflict,
 	}
 }

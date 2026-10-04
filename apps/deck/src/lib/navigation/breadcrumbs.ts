@@ -17,12 +17,17 @@ export interface Crumb {
 export interface CrumbParams {
 	plugin?: string;
 	path?: string;
+	user?: string;
 	workspace?: string;
 }
 
 const HUB: Crumb = { label: 'hub', href: resolve('/') };
 
 const PLUGINS: Crumb = { label: 'Plugins', href: resolve('/plugins') };
+
+const ADMINISTRATION: Crumb = { label: 'Administration' };
+
+const USERS: Crumb = { label: 'Users', href: resolve('/admin/users') };
 
 /**
  * Reports whether a trail needs the loaded plugins to read correctly. A caller
@@ -64,6 +69,36 @@ export function crumbsFor(
 				}
 			];
 		}
+
+		case '/(dashboard)/w/[workspace]/plugins': {
+			const workspaceId = params.workspace ?? '';
+
+			return [
+				HUB,
+				workspaceCrumb(workspaceId, workspaces),
+				{
+					label: 'Plugins',
+					href: resolve('/(dashboard)/w/[workspace]/plugins', { workspace: workspaceId })
+				}
+			];
+		}
+
+		case '/(dashboard)/admin/users':
+			return [HUB, ADMINISTRATION, USERS];
+
+		case '/(dashboard)/admin/users/[user]':
+			return [
+				HUB,
+				ADMINISTRATION,
+				USERS,
+				{
+					label: 'User',
+					href: resolve('/(dashboard)/admin/users/[user]', { user: params.user ?? '' })
+				}
+			];
+
+		case '/(dashboard)/admin/workspaces':
+			return [HUB, ADMINISTRATION, { label: 'Workspaces', href: resolve('/admin/workspaces') }];
 
 		case '/(dashboard)/w/[workspace]/settings': {
 			const workspaceId = params.workspace ?? '';

@@ -1,15 +1,23 @@
 <script lang="ts">
 	import { page } from '$app/state';
 
+	import type { Workspace } from '$lib/api';
 	import { crumbsFor, needsPlugins } from '$lib/navigation/breadcrumbs';
-	import { pluginState } from '$lib/state/plugins.svelte';
+	import { enabledState } from '$lib/state/plugins.svelte';
 	import { workspaceState } from '$lib/state/workspaces.svelte';
 
-	const loading = $derived(pluginState.status === 'idle' || pluginState.status === 'loading');
+	const loading = $derived(enabledState.status === 'idle' || enabledState.status === 'loading');
 	const pending = $derived(loading && needsPlugins(page.route.id));
-	const crumbs = $derived(
-		crumbsFor(page.route.id, page.params, pluginState.plugins, workspaceState.workspaces)
+
+	// A workspace of another person is absent from the list, so its name comes from the
+	// read of the page.
+	const loaded = $derived(page.data.workspace as Workspace | undefined);
+	const workspaces = $derived(
+		loaded && !workspaceState.workspaces.some((workspace) => workspace.id === loaded.id)
+			? [...workspaceState.workspaces, loaded]
+			: workspaceState.workspaces
 	);
+	const crumbs = $derived(crumbsFor(page.route.id, page.params, enabledState.plugins, workspaces));
 </script>
 
 {#if pending}

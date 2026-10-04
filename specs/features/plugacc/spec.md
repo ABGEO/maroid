@@ -48,10 +48,10 @@ answers a disabled plugin as absent.
 | `PLUGACC-FR-015`  | Section 4.2, `PLUGACC-DD-002`, `PLUGACC-SC-011`                  |
 | `PLUGACC-FR-016`  | Section 4.2, `PLUGACC-SC-012`                                    |
 | `PLUGACC-FR-017`  | Section 4.3, `PLUGACC-DD-009`, `PLUGACC-SC-009`, `PLUGACC-SC-024` |
-| `PLUGACC-FR-018`  | Section 4.4, `PLUGACC-DD-001`, `PLUGACC-SC-013`                  |
+| `PLUGACC-FR-018`  | Section 4.4, `PLUGACC-DD-001`, `PLUGACC-SC-013`, `PLUGACC-SC-028` |
 | `PLUGACC-FR-019`  | `spec-clients.md` section 2, `PLUGACC-SC-014`                    |
 | `PLUGACC-FR-020`  | `spec-clients.md` section 3, `PLUGACC-SC-016`                    |
-| `PLUGACC-FR-021`  | Section 4.3, `PLUGACC-SC-017`                                    |
+| `PLUGACC-FR-021`  | Section 4.3, `PLUGACC-SC-017`, `PLUGACC-SC-029` |
 | `PLUGACC-FR-022`  | Section 4.5, `PLUGACC-DD-003`, `PLUGACC-SC-018`                  |
 | `PLUGACC-FR-023`  | `spec-clients.md` section 4, `PLUGACC-SC-022`                    |
 | `PLUGACC-FR-024`  | `spec-clients.md` section 4, `PLUGACC-SC-022`                    |
@@ -64,6 +64,8 @@ answers a disabled plugin as absent.
 | `PLUGACC-FR-031`  | Postponed. Section 8                                             |
 | `PLUGACC-FR-032`  | Section 4.3, `PLUGACC-DD-010`, `PLUGACC-SC-023`                  |
 | `PLUGACC-FR-033`  | `spec-clients.md` section 4, `PLUGACC-SC-025`                    |
+| `PLUGACC-FR-034`  | Section 4.3, `PLUGACC-SC-026`                                    |
+| `PLUGACC-FR-035`  | Section 4.5, `PLUGACC-SC-027`                                    |
 | `PLUGACC-NFR-001` | `PLUGACC-DD-001`, `PLUGACC-SC-020`                               |
 | `PLUGACC-NFR-002` | Postponed. Section 8                                             |
 | `PLUGACC-INV-001` | Section 4.4, `PLUGACC-DD-001`, `PLUGACC-SC-013`                  |
@@ -115,7 +117,8 @@ specification.
 | `apps/hub/internal/handler/user.go`                                   | create | `handler.User`, the routes under `/users`                     |
 | `apps/hub/internal/handler/workspace.go`                              | change | The routes of the enablements, and `scope=all`                |
 | `apps/hub/internal/handler/workspace_plugin.go`                       | create | The enablement answers the entry of the loaded plugin, `PLUGACC-DD-009` |
-| `apps/hub/internal/handler/plugin.go`                                 | change | `List` filters the catalog by the allowlist                   |
+| `apps/hub/internal/registry/plugin_entry.go`                          | change | `registry.Catalog`, the entry of each loaded plugin, in place of `PluginEntries` |
+| `apps/hub/internal/handler/plugin.go`                                 | change | `List` filters the catalog by the allowlist. Takes `registry.Catalog` in place of the plugin and the capability registries |
 | `apps/hub/internal/handler/plugin_wrapper.go`                         | change | `workspace.RequireEnabled` after the membership               |
 | `apps/hub/internal/authz/hub.go`                                      | change | The permission `plugins.write`                                |
 | `apps/hub/internal/domain/problems/problems.go`                       | change | `NewAdministratorLast`                                        |
@@ -137,31 +140,22 @@ type Service interface {
     DisallowPlugin(ctx context.Context, userID string, pluginID string) error
 }
 
-// Invitation is the token of an invitation and the moment it expires. The handler
-// turns the token into the address of the deck, and the hub keeps no copy.
-type Invitation struct {
-    UserID    string
-    Token     string
-    ExpiresAt time.Time
-}
+// Invitation holds UserID, Token, and ExpiresAt. The handler turns Token into an address.
 
 // Change holds the members of a merge patch. A nil member changes nothing.
 type Change struct {
-    Status        *model.Status
-    Administrator *bool
+    FirstName, LastName *string
+    Status              *model.Status
+    Administrator       *bool
 }
 
-// apps/hub/internal/workspace/service.go
-// Catalog answers scope=all: every workspace, with its member count and its plugins.
-// It stands beside Service, because it reads no acting workspace.
+// apps/hub/internal/workspace/service.go: Catalog answers scope=all, beside Service.
 type Catalog interface {
     ListAll(ctx context.Context) ([]model.InstanceWorkspace, error)
 }
 
-// apps/hub/internal/auth/middleware.go
-// RequireAdministrator answers permission-denied, with the permission
-// administration, to a person who is no administrator. The routes of /users and
-// scope=all both read it, so it sits beside the mark that auth.Middleware sets.
+// apps/hub/internal/auth/middleware.go: RequireAdministrator answers
+// permission-denied, with the permission administration, for /users and scope=all.
 func RequireAdministrator(logger *slog.Logger) func(http.Handler) http.Handler
 
 // apps/hub/internal/workspace/enablement.go
@@ -188,6 +182,12 @@ func RequireEnabledOf(logger *slog.Logger, enablements EnablementChecker, pick f
 // AdmitAdministrator lets an administrator who is no member pass as a manager.
 func AdmitAdministrator(workspaces repository.WorkspaceRepository) MiddlewareOption
 
+// apps/hub/internal/registry/plugin_entry.go: GET /plugins, the enablements, and the
+// MCP tool list_plugins read one Catalog, so an entry has one shape.
+func NewCatalog(plugins *PluginRegistry, capabilities *CapabilityRegistry) *Catalog
+func (c *Catalog) Entries() []PluginEntry
+func (c *Catalog) Entry(pluginID string) (PluginEntry, bool)
+
 // apps/hub/internal/handler/plugin_wrapper.go
 // WorkspaceAccess holds the three checks of a route of a plugin: the membership, the
 // enablement, and the permission. The wrapper, the settings routes, and the loader take it.
@@ -198,9 +198,8 @@ type WorkspaceAccess struct {
 }
 ```
 
-`Enable` answers `true` in its second result when it created the row, so the handler
-answers 201, and `false` for a plugin that the workspace already enables, so it
-answers 200.
+`Enable` answers `true` in its second result when it created the row (201), and
+`false` for a plugin that the workspace already enables (200).
 
 ### 4.2 Data model
 
@@ -268,13 +267,13 @@ erDiagram
 | Method   | Path                                            | Access        | Permission        | Realizes                          |
 | -------- | ----------------------------------------------- | ------------- | ----------------- | --------------------------------- |
 | `GET`    | `/users`                                        | Administrator | None              | `PLUGACC-FR-002`                  |
-| `POST`   | `/users`                                        | Administrator | None              | `PLUGACC-FR-003`, `PLUGACC-FR-029`, `PLUGACC-FR-032` |
+| `POST`   | `/users`                                        | Administrator | None              | `PLUGACC-FR-003`, `PLUGACC-FR-029`, `PLUGACC-FR-032`, `PLUGACC-FR-035` |
 | `GET`    | `/users/{userId}`                               | Administrator | None              | `PLUGACC-FR-002`                  |
-| `PATCH`  | `/users/{userId}`                               | Administrator | None              | `PLUGACC-FR-005`, `PLUGACC-FR-006`, `PLUGACC-FR-007`, `PLUGACC-FR-029`, `PLUGACC-FR-030` |
+| `PATCH`  | `/users/{userId}`                               | Administrator | None              | `PLUGACC-FR-005` to `PLUGACC-FR-007`, `PLUGACC-FR-029`, `PLUGACC-FR-030`, `PLUGACC-FR-034` |
 | `POST`   | `/users/{userId}/invitations`                   | Administrator | None              | `PLUGACC-FR-004`                  |
 | `GET`    | `/users/{userId}/allowed-plugins`               | Administrator | None              | `PLUGACC-FR-008`                  |
-| `POST`   | `/users/{userId}/allowed-plugins`               | Administrator | None              | `PLUGACC-FR-008`                  |
-| `DELETE` | `/users/{userId}/allowed-plugins/{pluginId}`    | Administrator | None              | `PLUGACC-FR-008`                  |
+| `POST`   | `/users/{userId}/allowed-plugins`               | Administrator | None              | `PLUGACC-FR-008`, `PLUGACC-FR-035` |
+| `DELETE` | `/users/{userId}/allowed-plugins/{pluginId}`    | Administrator | None              | `PLUGACC-FR-008`, `PLUGACC-FR-035` |
 | `GET`    | `/workspaces?scope=all`                         | Administrator | None              | `PLUGACC-FR-009`                  |
 | `GET`    | `/workspaces/{workspaceId}/plugins`             | Member        | `workspace.read`  | `PLUGACC-FR-017`                  |
 | `GET`    | `/workspaces/{workspaceId}/plugins/{pluginId}`  | Member        | `workspace.read`  | `PLUGACC-FR-017`                  |
@@ -282,16 +281,16 @@ erDiagram
 | `DELETE` | `/workspaces/{workspaceId}/plugins/{pluginId}`  | Member        | `plugins.write`   | `PLUGACC-FR-014`, `PLUGACC-FR-027` |
 | `GET`    | `/plugins`                                      | Authenticated | None              | `PLUGACC-FR-021`, `PLUGACC-FR-028` |
 
-A route under `/users` acts in no workspace, so it declares no permission. It passes
-`auth.RequireAdministrator` instead. `plugins.write` holds the lowest role `manager`,
+A route under `/users` declares no permission and passes `auth.RequireAdministrator`. `plugins.write` holds the lowest role `manager`,
 and `authz` declares it beside the permissions of `PERMS`.
 
-An allowlist and the enablements of a workspace answer in the order of the plugin
-identifier, because neither table carries an `id` to sort by. `DAT-009`.
+An allowlist and the enablements answer in the order of the plugin identifier. `DAT-009`.
 
 `PUT` on an enablement checks the plugin allowlist of the acting user, unless the
 acting user is an administrator. A plugin that the hub did not load answers 422 with
 the pointer `/plugin_id`, for an enablement and for an allowlist alike.
+
+`PATCH /users/{userId}` takes `first_name` and `last_name`: a string sets, "" clears.
 
 `POST /users` takes `allowed_plugins`, a list of plugin identifiers, and writes it with
 the record. A plugin that the hub did not load answers 422 with the pointer
@@ -308,11 +307,9 @@ every workspace of the instance, each with the count of its members and the
 identifiers of the plugins that it enables. Without `scope`, the route answers as
 `WSPACE` gives.
 
-`specs/features/plugacc/api.yaml` holds the routes that this feature adds. Three
-routes that other features describe change at the approval of this specification,
-as `PERMS-DD-010` did for its own: `GET /workspaces` gains `scope` in the fragment of
-`WSPACE`, `GET /plugins` gains the filter in the fragment of `PCAP`, and
-`GET /auth/sessions/self` gains `is_administrator` in the fragment of `EXTID`.
+`api.yaml` holds the new routes. As `PERMS-DD-010` did, three fragments change:
+`GET /workspaces` gains `scope` (`WSPACE`), `GET /plugins` the filter (`PCAP`), and
+`GET /auth/sessions/self` gains `is_administrator` (`EXTID`).
 
 ### 4.4 Flow
 
@@ -344,7 +341,8 @@ An administrator who is no member passes `workspace.Middleware` only on a route 
 admits one: the routes of the members, of the enablements, and `GET` on the workspace.
 The middleware then acts with the role `manager`. A route of a plugin and a route of
 its settings admit no administrator, so they answer `not-found`, which realizes
-`PLUGACC-INV-002`.
+`PLUGACC-INV-002`. The MCP settings tools check the enablement of the plugin that the
+call names, and `list_plugins` reads the allowlist as `GET /plugins` does.
 
 ### 4.5 Errors
 
@@ -352,6 +350,7 @@ its settings admit no administrator, so they answer `not-found`, which realizes
 | ------------------------------------------------------------ | ------ | --------------------------------------- |
 | A user who is no administrator calls a route of `/users`, or `scope=all` | 403 | `/problems/http/permission-denied`, `permission` set to `administration` |
 | The change leaves the instance with no active administrator  | 409    | `/problems/hub/administrator-last`      |
+| A change to the allowlist of an administrator, or `allowed_plugins` for a new administrator | 409 | `/problems/hub/administrator-allowlist` |
 | A plugin that the hub did not load                           | 422    | `/problems/http/validation-failed`, pointer `/plugin_id`, or `/allowed_plugins/{index}` at the creation of a user |
 | A manager enables a plugin that their allowlist does not hold | 403   | `/problems/http/permission-denied`, `permission` set to `plugin-allowlist` |
 | The plugin is already on the allowlist                       | 200    | The row that holds it                   |
@@ -466,7 +465,7 @@ plugin after the creation. A failure in the middle leaves a partial allowlist.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `PLUGACC-SC-001` through `PLUGACC-SC-025`, less the retired `PLUGACC-SC-015`.
+`spec-scenarios.md` holds `PLUGACC-SC-001` through `PLUGACC-SC-029`, less the retired `PLUGACC-SC-015`.
 
 ## 7. Build plan
 
@@ -480,9 +479,12 @@ plugin after the creation. A failure in the middle leaves a partial allowlist.
 | 6   | Write `PLUGACC-SC-008` to `PLUGACC-SC-013` and `PLUGACC-SC-020`, then the enablement service, its routes, `RequireEnabled`, and the admission of an administrator. | `PLUGACC-FR-010` to `PLUGACC-FR-018`, `PLUGACC-FR-027`, `PLUGACC-NFR-001` | [x] |
 | 7   | Write `PLUGACC-SC-017`, then the filter of `GET /plugins`.                               | `PLUGACC-FR-021`, `PLUGACC-FR-028`             | [x]  |
 | 8   | Carry out `spec-clients.md`: the command line, the bot, the scheduler, and the deck.    | `PLUGACC-FR-001`, `PLUGACC-FR-019`, `PLUGACC-FR-020`, `PLUGACC-FR-023` to `PLUGACC-FR-025` | [x] |
-| 9   | Write `PLUGACC-SC-024`, then `plugin` in the answer of an enablement.                   | `PLUGACC-FR-017`                               | [ ]  |
-| 10  | Write `PLUGACC-SC-023`, then `allowed_plugins` at the creation of a user.               | `PLUGACC-FR-032`                               | [ ]  |
-| 11  | Carry out section 4 of `spec-clients.md` again: the navigation from the enablements, the allowlist in the form of a new user, and no page of a plugin for an administrator who is no member. | `PLUGACC-FR-017`, `PLUGACC-FR-025`, `PLUGACC-FR-032`, `PLUGACC-FR-033` | [ ] |
+| 9   | Write `PLUGACC-SC-024`, then `plugin` in the answer of an enablement.                   | `PLUGACC-FR-017`                               | [x]  |
+| 10  | Write `PLUGACC-SC-023`, then `allowed_plugins` at the creation of a user.               | `PLUGACC-FR-032`                               | [x]  |
+| 11  | Carry out section 4 of `spec-clients.md` again: the navigation from the enablements, the allowlist in the form of a new user, and no page of a plugin for an administrator who is no member. | `PLUGACC-FR-017`, `PLUGACC-FR-025`, `PLUGACC-FR-032`, `PLUGACC-FR-033` | [x] |
+| 12  | Write `PLUGACC-SC-026`, then the names in `PATCH /users/{userId}` and on the page of one user. | `PLUGACC-FR-034`                               | [x]  |
+| 13  | Write `PLUGACC-SC-027`, then `administrator-allowlist` at the routes of an allowlist and at the creation, and the disabled allowlist in the deck. | `PLUGACC-FR-035`                               | [x]  |
+| 14  | Write `PLUGACC-SC-028` and `PLUGACC-SC-029`, then the enablement in the MCP settings tools, the allowlist in `list_plugins`, and the mark of an administrator over MCP. | `PLUGACC-FR-018`, `PLUGACC-FR-021`, `PLUGACC-FR-028` | [x]  |
 
 ## 8. Out of scope for this specification
 

@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { pluginState } from '$lib/state/plugins.svelte';
-	import { actingWorkspaceId, workspaceState } from '$lib/state/workspaces.svelte';
+	import { enabledState, loadEnabled } from '$lib/state/plugins.svelte';
+	import { userState } from '$lib/state/user.svelte';
+	import { actingWorkspaceId, isMember, workspaceState } from '$lib/state/workspaces.svelte';
 	import { uiOf } from '$lib/plugins/capabilities';
 
 	function isActive(href: string) {
@@ -23,11 +24,27 @@
 		});
 	}
 
+	$effect(() => {
+		if (workspaceId !== null) {
+			void loadEnabled(workspaceId);
+		}
+	});
+
+	// An administrator manages a workspace of another person and reads none of its
+	// records, so the navigation offers no page of a plugin there.
 	const uiPlugins = $derived(
-		pluginState.plugins
-			.map((plugin) => ({ id: plugin.id, manifest: uiOf(plugin) }))
-			.filter((entry) => entry.manifest !== undefined)
+		workspaceId === null || !isMember(workspaceId) || enabledState.workspaceId !== workspaceId
+			? []
+			: enabledState.plugins
+					.map((plugin) => ({ id: plugin.id, manifest: uiOf(plugin) }))
+					.filter((entry) => entry.manifest !== undefined)
 	);
+
+	const pluginsLoading = $derived(
+		enabledState.status === 'idle' || enabledState.status === 'loading'
+	);
+
+	const isAdministrator = $derived(userState.user?.is_administrator === true);
 
 	const hasNoWorkspace = $derived(
 		workspaceState.status === 'ready' && workspaceState.workspaces.length === 0
@@ -123,7 +140,7 @@
 								</a>
 							</li>
 
-							{#if pluginState.status === 'idle' || pluginState.status === 'loading'}
+							{#if pluginsLoading}
 								{#each [0, 1, 2] as i (i)}
 									<li>
 										<div class="flex items-center gap-2 px-3 py-1.5">
@@ -132,7 +149,7 @@
 										</div>
 									</li>
 								{/each}
-							{:else if pluginState.status === 'ready' && workspaceId !== null}
+							{:else if enabledState.status === 'ready' && workspaceId !== null}
 								{#each uiPlugins as plugin (plugin.id)}
 									<li>
 										<details
@@ -178,6 +195,45 @@
 									</li>
 								{/each}
 							{/if}
+						</ul>
+					</details>
+				</li>
+			{/if}
+			{#if isAdministrator}
+				<li>
+					<details open={page.route.id?.startsWith('/(dashboard)/admin') === true}>
+						<summary>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.75"
+								class="shrink-0"
+							>
+								<path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z" />
+							</svg>
+							<span class="is-drawer-close:hidden">Administration</span>
+						</summary>
+						<ul>
+							<li>
+								<a
+									href={resolve('/admin/users')}
+									class:menu-active={page.route.id?.startsWith('/(dashboard)/admin/users') === true}
+								>
+									Users
+								</a>
+							</li>
+							<li>
+								<a
+									href={resolve('/admin/workspaces')}
+									class:menu-active={isActive(resolve('/admin/workspaces'))}
+								>
+									Workspaces
+								</a>
+							</li>
 						</ul>
 					</details>
 				</li>

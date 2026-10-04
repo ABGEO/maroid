@@ -21,8 +21,8 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
+	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
-	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/cache"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
 	"github.com/abgeo/maroid/libs/rest/page"
@@ -46,16 +46,15 @@ type PluginHandler interface {
 
 // Plugin represents the plugin handler.
 type Plugin struct {
-	logger             *slog.Logger
-	verifier           auth.TokenVerifier
-	resolver           auth.IdentityResolver
-	pluginRegistry     *registry.PluginRegistry
-	uiRegistry         *registry.UIRegistry
-	capabilityRegistry *registry.CapabilityRegistry
-	settingsSvc        settings.Service
-	idempotency        idempotency.Store
-	access             WorkspaceAccess
-	allowed            repository.AllowedPluginRepository
+	logger      *slog.Logger
+	verifier    auth.TokenVerifier
+	resolver    auth.IdentityResolver
+	catalog     *registry.Catalog
+	uiRegistry  *registry.UIRegistry
+	settingsSvc settings.Service
+	idempotency idempotency.Store
+	access      WorkspaceAccess
+	allowed     repository.AllowedPluginRepository
 	// assetTags holds the entity tag of each plugin asset. An asset is embedded
 	// in the shared object, so its tag cannot change while the hub runs.
 	assetTags sync.Map
@@ -68,9 +67,8 @@ func NewPlugin(
 	logger *slog.Logger,
 	verifier auth.TokenVerifier,
 	resolver auth.IdentityResolver,
-	pluginRegistry *registry.PluginRegistry,
+	catalog *registry.Catalog,
 	uiRegistry *registry.UIRegistry,
-	capabilityRegistry *registry.CapabilityRegistry,
 	settingsSvc settings.Service,
 	idempotency idempotency.Store,
 	access WorkspaceAccess,
@@ -84,12 +82,11 @@ func NewPlugin(
 			slog.String("component", "handler"),
 			slog.String("handler", "plugin"),
 		),
-		verifier:           verifier,
-		resolver:           resolver,
-		pluginRegistry:     pluginRegistry,
-		uiRegistry:         uiRegistry,
-		capabilityRegistry: capabilityRegistry,
-		settingsSvc:        settingsSvc,
+		verifier:    verifier,
+		resolver:    resolver,
+		catalog:     catalog,
+		uiRegistry:  uiRegistry,
+		settingsSvc: settingsSvc,
 	}
 }
 
@@ -143,11 +140,11 @@ func (h *Plugin) List(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	entries, err := h.visibleEntries(r)
+	entries, err := user.VisiblePlugins(r.Context(), h.catalog, h.allowed)
 	if err != nil {
 		problem.Write(w, r, problem.NewInternal())
 
-		return err
+		return fmt.Errorf("listing the plugins: %w", err)
 	}
 
 	answered, err := page.New(r, entries, nil, nil)
@@ -245,36 +242,6 @@ func (h *Plugin) SaveSettings(w http.ResponseWriter, r *http.Request) error {
 	render.NoContent(w, r)
 
 	return nil
-}
-
-// visibleEntries answers every loaded plugin to an administrator, and the plugins of
-// the allowlist of the acting user to any other user.
-func (h *Plugin) visibleEntries(r *http.Request) ([]registry.PluginEntry, error) {
-	entries := registry.PluginEntries(h.pluginRegistry, h.capabilityRegistry)
-	if auth.IsAdministratorFromContext(r.Context()) {
-		return entries, nil
-	}
-
-	allowed, err := h.allowed.List(r.Context(), pluginapi.ActingUserFromContext(r.Context()))
-	if err != nil {
-		return nil, fmt.Errorf("reading the allowlist: %w", err)
-	}
-
-	held := make(map[string]bool, len(allowed))
-
-	for _, one := range allowed {
-		held[one.PluginID] = true
-	}
-
-	visible := make([]registry.PluginEntry, 0, len(allowed))
-
-	for _, entry := range entries {
-		if held[entry.ID] {
-			visible = append(visible, entry)
-		}
-	}
-
-	return visible, nil
 }
 
 // assetTag answers false for a path that names no file, and the file server then

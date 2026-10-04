@@ -29,6 +29,7 @@ type Service struct {
 	invitationRepo repository.InvitationRepository
 	workspaceRepo  repository.WorkspaceRepository
 	memberRepo     repository.WorkspaceMemberRepository
+	allowedRepo    repository.AllowedPluginRepository
 }
 
 // NewService creates a new Service instance.
@@ -39,6 +40,7 @@ func NewService(
 	invitationRepo repository.InvitationRepository,
 	workspaceRepo repository.WorkspaceRepository,
 	memberRepo repository.WorkspaceMemberRepository,
+	allowedRepo repository.AllowedPluginRepository,
 ) *Service {
 	return &Service{
 		db:             db,
@@ -47,6 +49,7 @@ func NewService(
 		invitationRepo: invitationRepo,
 		workspaceRepo:  workspaceRepo,
 		memberRepo:     memberRepo,
+		allowedRepo:    allowedRepo,
 	}
 }
 
@@ -85,10 +88,11 @@ func (s *Service) Detach(ctx context.Context, userID string, provider string) er
 // InviteRequest names what the owner wants an invitation for. An empty UserID
 // asks for a new user record, and the two names then apply to it.
 type InviteRequest struct {
-	UserID        string
-	FirstName     string
-	LastName      string
-	Administrator bool
+	UserID         string
+	FirstName      string
+	LastName       string
+	Administrator  bool
+	AllowedPlugins []string
 }
 
 // InviteResult holds the record that the invitation names and the token that
@@ -137,6 +141,10 @@ func (s *Service) Invite(
 			if markErr != nil {
 				return fmt.Errorf("marking the administrator: %w", markErr)
 			}
+		}
+
+		if err := s.allowedRepo.AddAll(ctx, tx, result.UserID, request.AllowedPlugins); err != nil {
+			return fmt.Errorf("writing the allowlist: %w", err)
 		}
 
 		_, createErr := s.invitationRepo.Create(

@@ -4,7 +4,7 @@ title: The hub as a Model Context Protocol server
 type: requirements
 status: approved
 created: 2026-09-17
-updated: 2026-10-01
+updated: 2026-10-04
 approved_by: Temuri
 approved_on: 2026-09-18
 constrained_by: [SEC, OWN, API, ARC, PLG, LOG, DAT]
@@ -125,8 +125,10 @@ for.
 
 ### `MCPHUB-FR-005`
 
-The hub must report the identifier, the version, and the capabilities of every
-loaded plugin, when an MCP client calls the plugin list tool.
+The hub must report the identifier, the version, and the capabilities of the plugins
+that `GET /plugins` answers the acting user, when an MCP client calls the plugin list
+tool: every loaded plugin to an administrator, and the plugins of their allowlist to any
+other user, as `PLUGACC-FR-021` and `PLUGACC-FR-028` give.
 
 **Why:** An agent that configures or diagnoses Maroid needs to know which plugin
 runs. `PCAP-FR-001` and `PCAP-FR-002` give the shape of the capabilities, so the

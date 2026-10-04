@@ -78,6 +78,36 @@ person can turn on before the person signs in for the first time.
 - Unwanted case: the allowlist names a plugin that the hub did not load. Maroid refuses
   it, names the plugin, and creates no record.
 
+### `PLUGACC-FR-034`
+
+An administrator must change the first name and the last name of a user record.
+
+**Why:** A person who received an invitation with a misspelled name, or no name, keeps
+the record. A new record for them would lose their workspaces.
+
+**Examples:**
+
+- Normal case: an administrator corrects "Nnia" to "Nina". The record keeps its
+  identities, its workspaces, and its allowlist.
+- Limit case: an administrator clears the last name. The record holds no last name.
+
+### `PLUGACC-FR-035`
+
+Maroid must refuse a change to the plugin allowlist of an administrator, at the creation
+of the record and after it.
+
+**Why:** An administrator turns on any loaded plugin, as `PLUGACC-FR-013` gives. An
+allowlist on their record would suggest a limit that does not hold.
+
+**Examples:**
+
+- Unwanted case: an administrator creates a record that is an administrator, with the
+  garden plugin on its allowlist. Maroid refuses it and creates no record.
+- Unwanted case: an administrator adds the garden plugin to the allowlist of another
+  administrator. Maroid refuses it.
+- Limit case: a person with an allowlist becomes an administrator. The allowlist stays,
+  has no effect while the mark holds, and returns to effect when the mark goes.
+
 ### `PLUGACC-FR-004`
 
 An administrator must obtain a new invitation for a user record that already exists.
@@ -246,14 +276,14 @@ An administrator must read every loaded plugin.
 ### `PLUGACC-FR-022`
 
 Maroid must refuse every action of `PLUGACC-FR-002` to `PLUGACC-FR-010`,
-`PLUGACC-FR-013`, `PLUGACC-FR-027`, `PLUGACC-FR-029`, `PLUGACC-FR-030`, and
-`PLUGACC-FR-032` from a user who is no administrator.
+`PLUGACC-FR-013`, `PLUGACC-FR-027`, `PLUGACC-FR-029`, `PLUGACC-FR-030`,
+`PLUGACC-FR-032`, and `PLUGACC-FR-034` from a user who is no administrator.
 
 ### `PLUGACC-FR-023`
 
 An administrator must reach every action of `PLUGACC-FR-002` to `PLUGACC-FR-010`,
-`PLUGACC-FR-013`, `PLUGACC-FR-027`, `PLUGACC-FR-029`, `PLUGACC-FR-030`, and
-`PLUGACC-FR-032` from the web shell.
+`PLUGACC-FR-013`, `PLUGACC-FR-027`, `PLUGACC-FR-029`, `PLUGACC-FR-030`,
+`PLUGACC-FR-032`, and `PLUGACC-FR-034` from the web shell.
 
 ### `PLUGACC-FR-024`
 

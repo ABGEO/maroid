@@ -12,6 +12,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 )
 
 const savePluginSettingsName = "save_plugin_settings"
@@ -38,8 +39,14 @@ type savePluginSettings struct {
 }
 
 // NewSavePluginSettings builds the tool that stores the settings of a plugin.
-func NewSavePluginSettings(logger *slog.Logger, settingsSvc settings.Service) registry.MCPTool {
-	tool := &savePluginSettings{settingsAccess{logger: logger, settingsSvc: settingsSvc}}
+func NewSavePluginSettings(
+	logger *slog.Logger,
+	settingsSvc settings.Service,
+	enablements workspace.EnablementChecker,
+) registry.MCPTool {
+	tool := &savePluginSettings{settingsAccess{
+		logger: logger, settingsSvc: settingsSvc, enablements: enablements,
+	}}
 
 	return registry.MCPTool{
 		Name:            savePluginSettingsName,
@@ -64,6 +71,10 @@ func (t *savePluginSettings) handle(
 	_ *mcp.CallToolRequest,
 	input SavePluginSettingsInput,
 ) (*mcp.CallToolResult, SavePluginSettingsOutput, error) {
+	if err := t.enabled(ctx, input.Plugin); err != nil {
+		return nil, SavePluginSettingsOutput{}, err
+	}
+
 	if err := t.refuseSecrets(ctx, input); err != nil {
 		return nil, SavePluginSettingsOutput{}, err
 	}

@@ -1,13 +1,13 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
 	import SettingsForm from '$lib/components/settings/SettingsForm.svelte';
-	import { pluginState } from '$lib/state/plugins.svelte';
+	import { knownPlugin } from '$lib/state/plugins.svelte';
 	import { PERMISSION, holds } from '$lib/permissions';
 	import { displayNameOf } from '$lib/plugins/capabilities';
 
 	let { data }: PageProps = $props();
 
-	const plugin = $derived(pluginState.plugins.find((p) => p.id === data.pluginId));
+	const plugin = $derived(knownPlugin(data.pluginId));
 	const name = $derived(displayNameOf(plugin, data.pluginId));
 </script>
 

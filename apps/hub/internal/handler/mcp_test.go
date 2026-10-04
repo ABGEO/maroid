@@ -201,7 +201,7 @@ func hubAt(
 
 	require.NoError(t, toolRegistry.Register(
 		tools.NewWhoAmI(),
-		tools.NewListPlugins(pluginRegistry, capabilities),
+		tools.NewListPlugins(registry.NewCatalog(pluginRegistry, capabilities), probeAllowlist{}),
 		tools.NewPing(),
 	))
 
@@ -320,6 +320,24 @@ func problemOf(t *testing.T, recorder *httptest.ResponseRecorder) problem.Proble
 
 // memberWorkspace is the one workspace that the acting user of the fixture belongs to.
 const memberWorkspace = "01998aa0-1111-7000-8000-0000000000aa"
+
+// probeAllowlist holds the probe plugin on the allowlist of every user.
+type probeAllowlist struct {
+	repository.AllowedPluginRepository
+}
+
+func (probeAllowlist) List(_ context.Context, userID string) ([]model.AllowedPlugin, error) {
+	return []model.AllowedPlugin{{UserID: userID, PluginID: probeID}}, nil
+}
+
+// administratorRecord is the active record of the acting user, marked as an
+// administrator.
+func administratorRecord() *model.User {
+	record := activeRecord()
+	record.IsAdministrator = true
+
+	return record
+}
 
 // everyPluginEnabled answers that every workspace enables every plugin.
 type everyPluginEnabled struct{}
@@ -556,7 +574,7 @@ func TestThePluginListToolReportsTheSameShapeAsTheRoute(t *testing.T) {
 	t.Parallel()
 
 	dex := authtest.StartProvider(t)
-	router := hubUnderTest(t, &stubResolver{user: activeRecord()}, dex)
+	router := hubUnderTest(t, &stubResolver{user: administratorRecord()}, dex)
 
 	content := callTool(t, router, dex.SignClaims(t, mcpClaims(dex)), "list_plugins")
 
@@ -591,6 +609,25 @@ func TestThePluginListToolReportsTheSameShapeAsTheRoute(t *testing.T) {
 	beaconCapabilities, ok := reported[beaconID]["capabilities"].(map[string]any)
 	require.True(t, ok, reported[beaconID])
 	require.Empty(t, beaconCapabilities, "the plugin declares none")
+}
+
+// PLUGACC-SC-029: A user who is no administrator reads the plugins of their allowlist
+// from list_plugins, as GET /plugins answers them.
+func TestThePluginListToolFollowsTheAllowlist(t *testing.T) {
+	t.Parallel()
+
+	dex := authtest.StartProvider(t)
+	router := hubUnderTest(t, &stubResolver{user: activeRecord()}, dex)
+
+	content := callTool(t, router, dex.SignClaims(t, mcpClaims(dex)), "list_plugins")
+
+	plugins, ok := content["plugins"].([]any)
+	require.True(t, ok, content)
+	require.Len(t, plugins, 1)
+
+	entry, ok := plugins[0].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, probeID, entry["id"])
 }
 
 // MCPHUB-SC-006: An authenticated MCP client calls the connectivity tool, and the

@@ -19,14 +19,15 @@ func TestEveryHubTypeIsARelativeReference(t *testing.T) {
 	t.Parallel()
 
 	for name, build := range map[string]func() *problem.Problem{
-		"network-not-allowed": problems.NewNetworkNotAllowed,
-		"settings-absent":     problems.NewSettingsAbsent,
-		"identity-last":       problems.NewIdentityLast,
-		"settings-invalid":    func() *problem.Problem { return problems.NewSettingsInvalid().Base() },
-		"not-ready":           func() *problem.Problem { return problems.NewNotReady().Base() },
-		"member-exists":       problems.NewMemberExists,
-		"manager-last":        problems.NewManagerLast,
-		"administrator-last":  problems.NewAdministratorLast,
+		"network-not-allowed":     problems.NewNetworkNotAllowed,
+		"settings-absent":         problems.NewSettingsAbsent,
+		"identity-last":           problems.NewIdentityLast,
+		"settings-invalid":        func() *problem.Problem { return problems.NewSettingsInvalid().Base() },
+		"not-ready":               func() *problem.Problem { return problems.NewNotReady().Base() },
+		"member-exists":           problems.NewMemberExists,
+		"manager-last":            problems.NewManagerLast,
+		"administrator-last":      problems.NewAdministratorLast,
+		"administrator-allowlist": problems.NewAdministratorAllowlist,
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()

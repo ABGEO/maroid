@@ -87,6 +87,8 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
           $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/AdministratorAllowlist"
         "422":
           $ref: "../../api/components.yaml#/components/responses/Invalid"
 
@@ -119,10 +121,10 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/NotFound"
     patch:
       operationId: changeUser
-      summary: Block or unblock a user record, or change its mark of an administrator.
+      summary: Change the names, the block, or the mark of an administrator of a user record.
       description: >
         Realizes `PLUGACC-FR-005`, `PLUGACC-FR-006`, `PLUGACC-FR-007`,
-        `PLUGACC-FR-029`, and `PLUGACC-FR-030`. An administrator alone. A change that
+        `PLUGACC-FR-029`, `PLUGACC-FR-030`, and `PLUGACC-FR-034`. An administrator alone. A change that
         leaves no active administrator answers `/problems/hub/administrator-last`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
@@ -257,6 +259,8 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
           $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/AdministratorAllowlist"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
         "422":
@@ -284,6 +288,8 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
           $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/AdministratorAllowlist"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
 
@@ -486,6 +492,12 @@ components:
       type: object
       description: A merge patch. A member that the body leaves out changes nothing.
       properties:
+        first_name:
+          type: string
+          description: A string sets the name, and an empty string clears it.
+        last_name:
+          type: string
+          description: A string sets the name, and an empty string clears it.
         status:
           type: string
           enum: [active, blocked]
@@ -543,6 +555,18 @@ components:
           readOnly: true
 
   responses:
+    AdministratorAllowlist:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      description: >
+        The record is an administrator, who turns on every plugin and holds no
+        allowlist. The type is `/problems/hub/administrator-allowlist`, and the hub
+        changed nothing. `PLUGACC-FR-035`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
     AdministratorLast:
       headers:
         X-Flow-ID:

@@ -55,7 +55,7 @@ func TestPluginEntriesReportEveryLoadedPlugin(t *testing.T) {
 	capabilities.Record(pluginapi.ParsePluginID(probeID), registry.CapSettings, registry.Present)
 	capabilities.Record(pluginapi.ParsePluginID(probeID), registry.CapUI, manifest)
 
-	entries := registry.PluginEntries(pluginRegistry, capabilities)
+	entries := registry.NewCatalog(pluginRegistry, capabilities).Entries()
 
 	slices.SortFunc(entries, func(a registry.PluginEntry, b registry.PluginEntry) int {
 		return cmpString(a.ID, b.ID)
@@ -82,13 +82,33 @@ func TestPluginEntriesReportEveryLoadedPlugin(t *testing.T) {
 func TestPluginEntriesReportAnEmptyListWhenNoPluginIsLoaded(t *testing.T) {
 	t.Parallel()
 
-	entries := registry.PluginEntries(
+	entries := registry.NewCatalog(
 		registry.NewPluginRegistry(),
 		registry.NewCapabilityRegistry(),
-	)
+	).Entries()
 
 	require.Empty(t, entries)
 	require.NotNil(t, entries)
+}
+
+// PLUGACC-SC-024: The catalog answers the entry of one loaded plugin, and no entry for
+// a plugin that the hub did not load.
+func TestTheCatalogAnswersTheEntryOfOnePlugin(t *testing.T) {
+	t.Parallel()
+
+	pluginRegistry := registry.NewPluginRegistry()
+	require.NoError(t, pluginRegistry.Register(newStubPlugin(probeID, "1.0.0")))
+
+	catalog := registry.NewCatalog(pluginRegistry, registry.NewCapabilityRegistry())
+
+	entry, loaded := catalog.Entry(probeID)
+	require.True(t, loaded)
+	require.Equal(t, registry.PluginEntry{
+		ID: probeID, Version: "1.0.0", Capabilities: map[registry.Capability]any{},
+	}, entry)
+
+	_, loaded = catalog.Entry(beaconID)
+	require.False(t, loaded)
 }
 
 func cmpString(a string, b string) int {

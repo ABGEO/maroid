@@ -20,6 +20,7 @@ type AllowedPluginRepository interface {
 	List(ctx context.Context, userID string) ([]model.AllowedPlugin, error)
 	Add(ctx context.Context, userID string, pluginID string) (*model.AllowedPlugin, bool, error)
 	Remove(ctx context.Context, userID string, pluginID string) error
+	AddAll(ctx context.Context, tx *sqlx.Tx, userID string, pluginIDs []string) error
 }
 
 // AllowedPlugin is a SQL based implementation of AllowedPluginRepository.
@@ -95,6 +96,26 @@ func (r *AllowedPlugin) Remove(ctx context.Context, userID string, pluginID stri
 
 	if affected == 0 {
 		return fmt.Errorf("removing an AllowedPlugin: %w", errs.ErrAllowedPluginNotFound)
+	}
+
+	return nil
+}
+
+// AddAll puts every plugin on the allowlist of the user, inside the transaction of the
+// caller. A plugin that the list already holds stays as it is.
+func (r *AllowedPlugin) AddAll(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	userID string,
+	pluginIDs []string,
+) error {
+	for _, pluginID := range pluginIDs {
+		_, err := tx.ExecContext(ctx, `
+			INSERT INTO public.allowed_plugins (user_id, plugin_id) VALUES ($1, $2)
+			ON CONFLICT (user_id, plugin_id) DO NOTHING;`, userID, pluginID)
+		if err != nil {
+			return fmt.Errorf("adding the AllowedPlugins of a User: %w", err)
+		}
 	}
 
 	return nil

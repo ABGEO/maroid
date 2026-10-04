@@ -266,9 +266,8 @@ func (c *Container) buildPluginHandler(
 		logger,
 		verifier,
 		identityResolver,
-		c.PluginRegistry(),
+		c.PluginCatalog(),
 		c.UIRegistry(),
-		c.CapabilityRegistry(),
 		settingsSvc,
 		idempotencyStore,
 		access,
@@ -327,7 +326,7 @@ func (c *Container) buildWorkspaceHandler() (*handler.Workspace, error) {
 		service,
 		authorizer,
 		service,
-		enablements,
+		handler.WorkspacePlugins{Enablements: enablements, Catalog: c.PluginCatalog()},
 		repository.NewWorkspace(dbInstance),
 	), nil
 }

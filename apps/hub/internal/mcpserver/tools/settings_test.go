@@ -355,7 +355,7 @@ func TestGetReportsTheSchemaTheSecretKeysAndTheValues(t *testing.T) {
 
 	result := content(t, call(
 		t,
-		tools.NewGetPluginSettings(logger(), service),
+		tools.NewGetPluginSettings(logger(), service, everyPluginEnabled{}),
 		"user",
 		`{"plugin":"`+probePluginID+`"}`,
 	))
@@ -382,7 +382,7 @@ func TestGetNamesThePluginThatDeclaresNoSettings(t *testing.T) {
 
 	result := call(
 		t,
-		tools.NewGetPluginSettings(logger(), service),
+		tools.NewGetPluginSettings(logger(), service, everyPluginEnabled{}),
 		"user",
 		`{"plugin":"`+unknownPluginID+`"}`,
 	)
@@ -406,7 +406,7 @@ func TestSaveNamesEachFieldThatCausedTheRejection(t *testing.T) {
 
 	result := call(
 		t,
-		tools.NewSavePluginSettings(logger(), service),
+		tools.NewSavePluginSettings(logger(), service, everyPluginEnabled{}),
 		"user",
 		`{"plugin":"`+probePluginID+`","values":{"colour":"red"}}`,
 	)
@@ -425,6 +425,7 @@ func TestACredentialReachesNoLogLineAndNoResult(t *testing.T) {
 	entry := tools.NewSavePluginSettings(
 		slog.New(recorder),
 		probeManager(t, nil),
+		everyPluginEnabled{},
 	)
 
 	result := call(
@@ -457,7 +458,7 @@ func TestSaveKeepsEveryFieldThatTheCallDoesNotName(t *testing.T) {
 
 	result := content(t, call(
 		t,
-		tools.NewSavePluginSettings(logger(), instance.manager),
+		tools.NewSavePluginSettings(logger(), instance.manager, everyPluginEnabled{}),
 		instance.userA,
 		`{"plugin":"`+probePluginID+`","values":{"email":"`+otherEmail+`"}}`,
 	))
@@ -482,7 +483,7 @@ func TestSaveStoresNothingWhenTheCallReplacesASecret(t *testing.T) {
 
 	result := call(
 		t,
-		tools.NewSavePluginSettings(logger(), instance.manager),
+		tools.NewSavePluginSettings(logger(), instance.manager, everyPluginEnabled{}),
 		instance.userA,
 		`{"plugin":"`+probePluginID+`","values":{"email":"`+otherEmail+`","password":"`+
 			newCredential+`"}}`,
@@ -493,7 +494,7 @@ func TestSaveStoresNothingWhenTheCallReplacesASecret(t *testing.T) {
 
 	stored := content(t, call(
 		t,
-		tools.NewGetPluginSettings(logger(), instance.manager),
+		tools.NewGetPluginSettings(logger(), instance.manager, everyPluginEnabled{}),
 		instance.userA,
 		`{"plugin":"`+probePluginID+`"}`,
 	))
@@ -516,7 +517,7 @@ func TestSaveStoresTheOtherFieldsWhenTheCallMasksTheSecret(t *testing.T) {
 
 	result := content(t, call(
 		t,
-		tools.NewSavePluginSettings(logger(), instance.manager),
+		tools.NewSavePluginSettings(logger(), instance.manager, everyPluginEnabled{}),
 		instance.userA,
 		`{"plugin":"`+probePluginID+`","values":{"email":"`+otherEmail+`","password":"`+
 			settings.SecretMask+`"}}`,
@@ -543,7 +544,7 @@ func TestEachUserReadsOnlyTheirOwnSettings(t *testing.T) {
 		keyPassword: valuePassword,
 	})
 
-	entry := tools.NewGetPluginSettings(logger(), instance.manager)
+	entry := tools.NewGetPluginSettings(logger(), instance.manager, everyPluginEnabled{})
 
 	for user, want := range map[string]string{
 		instance.userA: valueEmail,
@@ -561,4 +562,52 @@ func TestEachUserReadsOnlyTheirOwnSettings(t *testing.T) {
 // whether the write landed.
 func errorOf(_ time.Time, err error) error {
 	return err
+}
+
+// everyPluginEnabled answers that the acting workspace enables every plugin.
+type everyPluginEnabled struct{}
+
+func (everyPluginEnabled) IsEnabled(context.Context, string, string) (bool, error) {
+	return true, nil
+}
+
+// noPluginEnabled answers that the acting workspace enables no plugin.
+type noPluginEnabled struct{}
+
+func (noPluginEnabled) IsEnabled(context.Context, string, string) (bool, error) {
+	return false, nil
+}
+
+// PLUGACC-SC-028: A plugin that the acting workspace does not enable answers both
+// settings tools as a plugin that declares no settings, and the service reads and
+// writes nothing.
+func TestTheSettingsToolsOfADisabledPluginAnswerAsAbsent(t *testing.T) {
+	t.Parallel()
+
+	service := &stubSettings{
+		document: json.RawMessage(`{"type":"object"}`),
+		values:   map[string]any{"colour": "blue"},
+	}
+
+	read := failureText(t, call(t,
+		tools.NewGetPluginSettings(logger(), service, noPluginEnabled{}),
+		"user", `{"plugin":"`+probePluginID+`"}`))
+	write := failureText(t, call(t,
+		tools.NewSavePluginSettings(logger(), service, noPluginEnabled{}),
+		"user", `{"plugin":"`+probePluginID+`","values":{"colour":"red"}}`))
+
+	absent := failureText(t, call(
+		t,
+		tools.NewGetPluginSettings(
+			logger(),
+			&stubSettings{failure: errs.ErrSettingsSchemaNotFound},
+			everyPluginEnabled{},
+		),
+		"user",
+		`{"plugin":"`+probePluginID+`"}`,
+	))
+
+	require.Equal(t, absent, read)
+	require.Equal(t, absent, write)
+	require.Nil(t, service.saved)
 }

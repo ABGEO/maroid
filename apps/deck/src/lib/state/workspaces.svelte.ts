@@ -67,3 +67,11 @@ export function workspaceById(workspaceId: string | undefined): Workspace | unde
 export function actingWorkspaceId(addressed: string | undefined): string | null {
 	return addressed ?? landingWorkspace(workspaceState.workspaces)?.id ?? null;
 }
+
+/**
+ * Whether the person is a member of the workspace. An administrator opens a workspace
+ * of another person, and the list of the person does not hold it.
+ */
+export function isMember(workspaceId: string): boolean {
+	return workspaceById(workspaceId) !== undefined;
+}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -110,12 +111,15 @@ type pluginRefBody struct {
 }
 
 type userInput struct {
-	FirstName       *string `json:"first_name"`
-	LastName        *string `json:"last_name"`
-	IsAdministrator *bool   `json:"is_administrator"`
+	FirstName       *string  `json:"first_name"`
+	LastName        *string  `json:"last_name"`
+	IsAdministrator *bool    `json:"is_administrator"`
+	AllowedPlugins  []string `json:"allowed_plugins"`
 }
 
 type userChangeInput struct {
+	FirstName       *string `json:"first_name"`
+	LastName        *string `json:"last_name"`
 	Status          *string `json:"status"`
 	IsAdministrator *bool   `json:"is_administrator"`
 }
@@ -170,9 +174,10 @@ func (h *User) Create(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	record, invitation, err := h.service.Create(r.Context(), auth.InviteRequest{
-		FirstName:     valueOf(input.FirstName),
-		LastName:      valueOf(input.LastName),
-		Administrator: input.IsAdministrator != nil && *input.IsAdministrator,
+		FirstName:      valueOf(input.FirstName),
+		LastName:       valueOf(input.LastName),
+		Administrator:  input.IsAdministrator != nil && *input.IsAdministrator,
+		AllowedPlugins: input.AllowedPlugins,
 	})
 	if err != nil {
 		return h.fail(w, r, err, "creating the user record")
@@ -216,7 +221,11 @@ func (h *User) Change(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	change := user.Change{Administrator: input.IsAdministrator}
+	change := user.Change{
+		FirstName:     trimmed(input.FirstName),
+		LastName:      trimmed(input.LastName),
+		Administrator: input.IsAdministrator,
+	}
 
 	if input.Status != nil {
 		status, err := model.ParseStatus(*input.Status)
@@ -357,11 +366,20 @@ func (h *User) fail(
 	err error,
 	doing string,
 ) error {
+	var notLoaded *user.NotLoadedError
+
 	switch {
 	case errors.Is(err, errs.ErrUserNotFound), errors.Is(err, errs.ErrAllowedPluginNotFound):
 		problem.Write(w, r, problem.NewNotFound())
 	case errors.Is(err, errs.ErrAdministratorLast):
 		problem.Write(w, r, problems.NewAdministratorLast())
+	case errors.Is(err, errs.ErrAdministratorAllowlist):
+		problem.Write(w, r, problems.NewAdministratorAllowlist())
+	case errors.As(err, &notLoaded):
+		problem.Write(w, r, problem.NewValidationFailed(problem.FieldFailure{
+			Detail:  "the hub loaded no plugin with this identifier",
+			Pointer: fmt.Sprintf("/allowed_plugins/%d", notLoaded.Index),
+		}))
 	case errors.Is(err, errs.ErrPluginNotLoaded):
 		problem.Write(w, r, pluginFailure("the hub loaded no plugin with this identifier"))
 	case errors.Is(err, precondition.ErrModified):
@@ -377,6 +395,18 @@ func (h *User) fail(
 
 func pluginFailure(detail string) *problem.ValidationProblem {
 	return problem.NewValidationFailed(problem.FieldFailure{Detail: detail, Pointer: "/plugin_id"})
+}
+
+// trimmed answers the name without the spaces around it, so a name of spaces alone
+// clears it as an empty string does.
+func trimmed(field *string) *string {
+	if field == nil {
+		return nil
+	}
+
+	value := strings.TrimSpace(*field)
+
+	return &value
 }
 
 func valueOf(field *string) string {

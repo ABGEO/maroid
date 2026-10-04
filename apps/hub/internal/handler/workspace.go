@@ -42,7 +42,7 @@ type Workspace struct {
 	service     workspace.Service
 	authorizer  authz.Authorizer
 	catalog     workspace.Catalog
-	enablements workspace.EnablementService
+	plugins     WorkspacePlugins
 	workspaces  repository.WorkspaceRepository
 }
 
@@ -70,7 +70,7 @@ func NewWorkspace(
 	service workspace.Service,
 	authorizer authz.Authorizer,
 	catalog workspace.Catalog,
-	enablements workspace.EnablementService,
+	plugins WorkspacePlugins,
 	workspaces repository.WorkspaceRepository,
 ) *Workspace {
 	return &Workspace{
@@ -85,7 +85,7 @@ func NewWorkspace(
 		service:     service,
 		authorizer:  authorizer,
 		catalog:     catalog,
-		enablements: enablements,
+		plugins:     plugins,
 		workspaces:  workspaces,
 	}
 }

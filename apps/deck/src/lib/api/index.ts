@@ -1,7 +1,9 @@
 import { auth } from './auth';
+import { enablements } from './enablements';
 import { identities } from './identities';
 import { plugins } from './plugins';
 import { settings } from './settings';
+import { users } from './users';
 import { workspaces } from './workspaces';
 
 export {
@@ -30,13 +32,23 @@ export type {
 	Workspace,
 	Member,
 	Role,
-	Candidate
+	Candidate,
+	UserRecord,
+	UserStatus,
+	Invitation,
+	InvitedUser,
+	PluginRef,
+	EnabledPlugin,
+	InstanceWorkspace
 } from './types';
+export type { NewUser, UserChange } from './users';
 
 export const api = {
 	auth,
+	enablements,
 	identities,
 	plugins,
 	settings,
+	users,
 	workspaces
 };

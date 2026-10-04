@@ -190,6 +190,7 @@ func authServiceOf(
 		repository.NewInvitation(database),
 		repository.NewWorkspace(database),
 		repository.NewWorkspaceMember(database),
+		repository.NewAllowedPlugin(database),
 	)
 }
 
@@ -227,7 +228,7 @@ func workspaceRouter(
 
 	handler.NewPlugin(
 		logger, verifier, resolver,
-		loadedPlugins(t), registry.NewUIRegistry(), registry.NewCapabilityRegistry(),
+		loadedCatalog(t), registry.NewUIRegistry(),
 		&stubSettings{}, noIdempotency{}, access, repository.NewAllowedPlugin(instance.DB),
 	).Register(router)
 
@@ -247,7 +248,7 @@ func workspaceRouter(
 		manager,
 		access.Authorizer,
 		manager,
-		enablements,
+		handler.WorkspacePlugins{Enablements: enablements, Catalog: loadedCatalog(t)},
 		repository.NewWorkspace(instance.DB),
 	).Register(router)
 
@@ -308,6 +309,13 @@ func probeAccessOf(
 		Enablements: enablements,
 		Authorizer:  probeAuthorizer(t),
 	}, enablements
+}
+
+// loadedCatalog answers the entries of the plugins that loadedPlugins loads.
+func loadedCatalog(t *testing.T) *registry.Catalog {
+	t.Helper()
+
+	return registry.NewCatalog(loadedPlugins(t), registry.NewCapabilityRegistry())
 }
 
 // loadedPlugins answers the plugins P, Q, and the probe, as the hub loaded them.

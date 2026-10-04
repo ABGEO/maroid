@@ -113,6 +113,7 @@ func TestAFailedInviteLeavesNothing(t *testing.T) {
 		refusingInvitations{},
 		repository.NewWorkspace(instance.DB),
 		repository.NewWorkspaceMember(instance.DB),
+		repository.NewAllowedPlugin(instance.DB),
 	)
 
 	_, err = service.Invite(

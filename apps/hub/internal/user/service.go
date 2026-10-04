@@ -18,6 +18,8 @@ import (
 // Change holds the members of a merge patch of a user record. A nil member changes
 // nothing.
 type Change struct {
+	FirstName     *string
+	LastName      *string
 	Status        *model.Status
 	Administrator *bool
 }
@@ -131,6 +133,16 @@ func (m *Manager) Create(
 ) (*model.User, *Invitation, error) {
 	request.UserID = ""
 
+	if request.Administrator && len(request.AllowedPlugins) > 0 {
+		return nil, nil, errs.ErrAdministratorAllowlist
+	}
+
+	for index, pluginID := range request.AllowedPlugins {
+		if !m.loaded(pluginID) {
+			return nil, nil, &NotLoadedError{Index: index, PluginID: pluginID}
+		}
+	}
+
 	invitation, err := m.issue(ctx, request)
 	if err != nil {
 		return nil, nil, err
@@ -178,7 +190,7 @@ func (m *Manager) AllowPlugin(
 	userID string,
 	pluginID string,
 ) (*model.AllowedPlugin, bool, error) {
-	if _, err := m.Get(ctx, userID); err != nil {
+	if err := m.holdsAllowlist(ctx, userID); err != nil {
 		return nil, false, err
 	}
 
@@ -197,7 +209,7 @@ func (m *Manager) AllowPlugin(
 // DisallowPlugin takes a plugin off the allowlist of a user record. No enablement
 // changes, because no table holds which manager enabled a plugin.
 func (m *Manager) DisallowPlugin(ctx context.Context, userID string, pluginID string) error {
-	if _, err := m.Get(ctx, userID); err != nil {
+	if err := m.holdsAllowlist(ctx, userID); err != nil {
 		return err
 	}
 
@@ -230,6 +242,8 @@ func (m *Manager) Change(
 		var err error
 
 		changed, err = m.users.Change(ctx, tx, userID, repository.UserChange{
+			FirstName:     change.FirstName,
+			LastName:      change.LastName,
 			Status:        change.Status,
 			Administrator: change.Administrator,
 			IfMatch:       version,
@@ -269,6 +283,21 @@ func (m *Manager) issue(ctx context.Context, request auth.InviteRequest) (*Invit
 	}, nil
 }
 
+// holdsAllowlist answers ErrUserNotFound for a record that does not exist, and
+// ErrAdministratorAllowlist for an administrator, who turns on every plugin.
+func (m *Manager) holdsAllowlist(ctx context.Context, userID string) error {
+	record, err := m.Get(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if record.IsAdministrator {
+		return errs.ErrAdministratorAllowlist
+	}
+
+	return nil
+}
+
 func (m *Manager) loaded(pluginID string) bool {
 	for _, plugin := range m.plugins.All() {
 		if plugin.Meta().ID.String() == pluginID {
@@ -277,4 +306,20 @@ func (m *Manager) loaded(pluginID string) bool {
 	}
 
 	return false
+}
+
+// NotLoadedError reports a plugin of the allowlist of a new record that the hub did not
+// load, with its place in the list.
+type NotLoadedError struct {
+	Index    int
+	PluginID string
+}
+
+func (e *NotLoadedError) Error() string {
+	return fmt.Sprintf("%s: %s at %d", errs.ErrPluginNotLoaded, e.PluginID, e.Index)
+}
+
+// Unwrap answers ErrPluginNotLoaded, so a caller that checks the sentinel finds it.
+func (e *NotLoadedError) Unwrap() error {
+	return errs.ErrPluginNotLoaded
 }

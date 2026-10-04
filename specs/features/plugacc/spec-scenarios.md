@@ -272,6 +272,49 @@ member of H.
 page of a plugin, the header and the breadcrumbs name H, and the page says that Zura
 manages H as an administrator.
 
+## `PLUGACC-SC-026`
+
+**Verifies:** `PLUGACC-FR-034`
+**Layer:** integration
+
+**Given** Zura is an administrator, and Beka holds the first name "Bkea" and the last
+name "Kapanadze".
+**When** Zura sends `PATCH /users/{Beka}` with `first_name` "Beka", then with
+`last_name` "".
+**Then** the first answer carries "Beka" and the last name stays. The second answer
+carries no last name. The identities and the workspaces of Beka stay. Ana, who is no
+administrator, receives permission-denied for the same change.
+
+## `PLUGACC-SC-027`
+
+**Verifies:** `PLUGACC-FR-035`
+**Layer:** integration
+
+**Given** Zura and Levan are administrators, and Ana is not.
+**When** Zura adds P to the allowlist of Levan, removes P from it, and creates Nina as
+an administrator with `allowed_plugins` [P].
+**Then** each answers 409 with `/problems/hub/administrator-allowlist`, and no record of
+Nina exists. Zura adds P to the allowlist of Ana, and it answers 201.
+
+## `PLUGACC-SC-028`
+
+**Verifies:** `PLUGACC-FR-018`, `PLUGACC-INV-001`
+**Layer:** unit
+
+**Given** the acting workspace does not enable P, and P declares settings.
+**When** an agent calls `get_plugin_settings` and `save_plugin_settings` for P.
+**Then** each answers the failure of a plugin that declares no settings, as for a plugin
+that the hub did not load, and the settings service reads and writes nothing.
+
+## `PLUGACC-SC-029`
+
+**Verifies:** `PLUGACC-FR-021`, `PLUGACC-FR-028`
+**Layer:** integration
+
+**Given** the hub loaded P and Q, and the allowlist of Ana holds P.
+**When** Ana calls `list_plugins` over MCP, then Zura, an administrator, calls it.
+**Then** Ana reads P alone, as `GET /plugins` answers her. Zura reads P and Q.
+
 ## Retired identifiers
 
 | ID               | Retired    | Reason |

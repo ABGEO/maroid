@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 
 	import { api, type Plugin } from '$lib/api';
-	import { pluginState } from '$lib/state/plugins.svelte';
+	import { isEnabled, loadEnabled, pluginState } from '$lib/state/plugins.svelte';
 	import { actingWorkspaceId } from '$lib/state/workspaces.svelte';
 	import { fieldsOf, missingFields } from '$lib/settings/schema';
 	import {
@@ -37,12 +37,24 @@
 		}
 	}
 
+	function configurable(plugin: Plugin): boolean {
+		return (
+			workspaceId !== null && hasCapability(plugin, 'settings') && isEnabled(workspaceId, plugin.id)
+		);
+	}
+
+	$effect(() => {
+		if (workspaceId !== null) {
+			void loadEnabled(workspaceId);
+		}
+	});
+
 	$effect(() => {
 		if (workspaceId === null) {
 			return;
 		}
 
-		for (const plugin of pluginState.plugins.filter((p) => hasCapability(p, 'settings'))) {
+		for (const plugin of pluginState.plugins.filter(configurable)) {
 			void check(workspaceId, plugin);
 		}
 	});
@@ -51,7 +63,8 @@
 <div class="max-w-4xl">
 	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Plugins</h1>
 	<p class="text-base-content/60 mt-1 text-sm">
-		Every plugin that the hub loaded. A plugin that declares settings carries a configure action.
+		Every plugin that you can switch on. A plugin that declares settings carries a configure action
+		in a workspace that uses it.
 	</p>
 
 	{#if pluginState.status === 'idle' || pluginState.status === 'loading'}
@@ -92,7 +105,7 @@
 						{/if}
 					</div>
 
-					{#if hasCapability(plugin, 'settings') && workspaceId !== null}
+					{#if configurable(plugin) && workspaceId !== null}
 						<a
 							class="btn btn-ghost btn-sm"
 							href={resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/settings', {
@@ -116,6 +129,8 @@
 							</svg>
 							Configure
 						</a>
+					{:else if hasCapability(plugin, 'settings')}
+						<span class="text-base-content/35 font-mono text-[11px]">Off in this workspace</span>
 					{:else}
 						<span class="text-base-content/35 font-mono text-[11px]">No settings</span>
 					{/if}

@@ -282,3 +282,47 @@ func TestADisableTakesEffectAtTheNextRequest(t *testing.T) {
 
 	assert.Zero(t, fixture.probeRuns.Load())
 }
+
+// PLUGACC-SC-024: A member reads the entry of every plugin that the workspace enables,
+// whatever their allowlist holds. GET /plugins still answers the allowlist alone, and a
+// route of an enabled plugin answers the member.
+func TestAMemberReadsEveryEnabledPlugin(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+	zura := fixture.administrator(t)
+
+	enabled := fixture.call(t, zura, http.MethodPut, fixture.pluginsOfH("/"+pluginQ), nil, "")
+	require.Equal(t, http.StatusCreated, enabled.Code, enabled.Body.String())
+
+	entry, ok := decode(t, enabled)["plugin"].(map[string]any)
+	require.True(t, ok, "the answer of PUT carries the entry")
+	assert.Equal(t, pluginQ, entry[memberID])
+
+	response := fixture.call(t, fixture.gio, http.MethodGet, fixture.pluginsOfH(""), nil, "")
+	require.Equal(t, http.StatusOK, response.Code, response.Body.String())
+
+	entries := map[string]map[string]any{}
+
+	for _, item := range items(t, response) {
+		plugin, held := item["plugin"].(map[string]any)
+		require.True(t, held, "every loaded plugin carries its entry")
+		entries[stringOf(t, item[allowedID])] = plugin
+	}
+
+	require.Contains(t, entries, pluginQ)
+	assert.Equal(t, pluginQ, entries[pluginQ][memberID])
+	assert.Equal(t, "1.0.0", entries[pluginQ]["version"])
+	assert.Contains(t, entries[pluginQ], "capabilities")
+
+	one := fixture.call(t, fixture.gio, http.MethodGet, fixture.pluginsOfH("/"+pluginQ), nil, "")
+	require.Equal(t, http.StatusOK, one.Code, one.Body.String())
+	assert.Contains(t, decode(t, one), "plugin")
+
+	assert.Empty(t, items(t, fixture.call(t, fixture.gio, http.MethodGet, "/plugins", nil, "")),
+		"an empty allowlist answers no plugin to turn on")
+
+	assert.Equal(t, http.StatusOK,
+		fixture.call(t, fixture.gio, http.MethodGet, fixture.notesOfProbe(), nil, "").Code,
+		"the probe plugin is enabled in H and off the allowlist of Gio")
+}
