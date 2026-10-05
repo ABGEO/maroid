@@ -15,8 +15,8 @@
 	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">{name}</h1>
 	<p class="text-base-content/50 mt-1 font-mono text-[11px]">{data.pluginId}</p>
 	<p class="text-base-content/60 mt-3 text-sm">
-		These values belong to this workspace, and a field that names you belongs to you alone. A secret
-		never leaves the hub once you store it.
+		These values belong to this workspace. A field marked personal belongs to you alone, and its
+		value serves every workspace of yours. A secret never leaves the hub once you store it.
 	</p>
 
 	<div class="mt-8">

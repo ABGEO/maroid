@@ -170,6 +170,7 @@ export interface SchemaProperty {
 	enum?: string[];
 	default?: unknown;
 	maxLength?: number;
+	'x-maroid-scope'?: 'workspace' | 'user';
 }
 
 /** A JSON Schema document, draft 2020-12. */

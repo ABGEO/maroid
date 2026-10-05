@@ -23,8 +23,6 @@ export interface CrumbParams {
 
 const HUB: Crumb = { label: 'hub', href: resolve('/') };
 
-const PLUGINS: Crumb = { label: 'Plugins', href: resolve('/plugins') };
-
 const ADMINISTRATION: Crumb = { label: 'Administration' };
 
 const USERS: Crumb = { label: 'Users', href: resolve('/admin/users') };
@@ -100,6 +98,9 @@ export function crumbsFor(
 		case '/(dashboard)/admin/workspaces':
 			return [HUB, ADMINISTRATION, { label: 'Workspaces', href: resolve('/admin/workspaces') }];
 
+		case '/(dashboard)/admin/plugins':
+			return [HUB, ADMINISTRATION, { label: 'Plugins', href: resolve('/admin/plugins') }];
+
 		case '/(dashboard)/w/[workspace]/settings': {
 			const workspaceId = params.workspace ?? '';
 
@@ -115,9 +116,6 @@ export function crumbsFor(
 
 		case '/(dashboard)/profile':
 			return [HUB, { label: 'Profile', href: resolve('/profile') }];
-
-		case '/(dashboard)/plugins':
-			return [HUB, PLUGINS];
 
 		case '/(dashboard)/w/[workspace]/plugins/[plugin]/settings': {
 			const workspaceId = params.workspace ?? '';

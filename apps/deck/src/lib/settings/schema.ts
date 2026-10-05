@@ -2,6 +2,9 @@ import type { SchemaProperty, SettingsSchema, SettingsValue } from '$lib/api';
 
 export type FieldKind = 'text' | 'secret' | 'switch' | 'choice';
 
+/** Who holds the value of a field: every member of the workspace, or the person alone. */
+export type FieldScope = 'workspace' | 'user';
+
 export interface SettingsField {
 	key: string;
 	kind: FieldKind;
@@ -10,6 +13,7 @@ export interface SettingsField {
 	choices: string[];
 	maxLength?: number;
 	required: boolean;
+	scope: FieldScope;
 }
 
 // The hub reads the kind of a field from these keywords, in this order.
@@ -40,7 +44,8 @@ export function fieldsOf(schema: SettingsSchema): SettingsField[] {
 		description: property.description,
 		choices: property.enum ?? [],
 		maxLength: property.maxLength,
-		required: required.has(key)
+		required: required.has(key),
+		scope: property['x-maroid-scope'] === 'user' ? 'user' : 'workspace'
 	}));
 }
 

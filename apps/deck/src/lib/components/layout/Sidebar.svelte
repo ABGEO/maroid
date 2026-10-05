@@ -51,7 +51,7 @@
 	);
 
 	const pluginsGroupIsOpen = $derived(
-		page.url.pathname === resolve('/plugins') || page.route.id?.includes('/plugins/') === true
+		page.route.id?.startsWith('/(dashboard)/w/[workspace]/plugins') === true
 	);
 
 	function letterFromName(name: string) {
@@ -134,11 +134,16 @@
 							<span class="is-drawer-close:hidden">Plugins</span>
 						</summary>
 						<ul>
-							<li>
-								<a href={resolve('/plugins')} class:menu-active={isActive(resolve('/plugins'))}>
-									All plugins
-								</a>
-							</li>
+							{#if workspaceId !== null}
+								<li>
+									<a
+										href={resolve('/(dashboard)/w/[workspace]/plugins', { workspace: workspaceId })}
+										class:menu-active={page.route.id === '/(dashboard)/w/[workspace]/plugins'}
+									>
+										All plugins
+									</a>
+								</li>
+							{/if}
 
 							{#if pluginsLoading}
 								{#each [0, 1, 2] as i (i)}
@@ -232,6 +237,14 @@
 									class:menu-active={isActive(resolve('/admin/workspaces'))}
 								>
 									Workspaces
+								</a>
+							</li>
+							<li>
+								<a
+									href={resolve('/admin/plugins')}
+									class:menu-active={isActive(resolve('/admin/plugins'))}
+								>
+									Plugins
 								</a>
 							</li>
 						</ul>
