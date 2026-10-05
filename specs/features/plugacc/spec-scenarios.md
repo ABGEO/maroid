@@ -4,9 +4,9 @@ title: The scenarios of the administrator, the allowlist, and the enablement
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-04
+updated: 2026-10-05
 approved_by: Temuri
-approved_on: 2026-10-04
+approved_on: 2026-10-05
 constrained_by: [TST, OWN, TRC]
 requirements: features/plugacc/requirements.md
 ---
@@ -314,6 +314,28 @@ that the hub did not load, and the settings service reads and writes nothing.
 **Given** the hub loaded P and Q, and the allowlist of Ana holds P.
 **When** Ana calls `list_plugins` over MCP, then Zura, an administrator, calls it.
 **Then** Ana reads P alone, as `GET /plugins` answers her. Zura reads P and Q.
+
+## `PLUGACC-SC-030`
+
+**Verifies:** `PLUGACC-FR-036`
+**Layer:** manual
+
+**Given** H enables Q, Q declares a required setting that holds no value in H, and Gio
+holds an empty allowlist.
+**When** Gio, Ana, and Zura each open the plugins of H in the deck.
+**Then** Gio and Ana each read Q in use, marked as missing a value, with the link to its
+settings. Ana also reads P to turn on, and Gio reads no list to turn on. Zura reads Q in
+use and P to turn on, with no mark and no link to the settings. The sidebar of Gio links no list of plugins outside
+H.
+
+## `PLUGACC-SC-031`
+
+**Verifies:** `PLUGACC-FR-037`
+**Layer:** manual
+
+**Given** H enables Q.
+**When** Zura opens `/admin/plugins`, then Ana opens the same address.
+**Then** Zura reads P with no workspace, and Q with H. Ana sees no page under `/admin`.
 
 ## Retired identifiers
 

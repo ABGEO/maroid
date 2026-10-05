@@ -4,9 +4,9 @@ title: The settings of a plugin
 type: spec
 status: approved
 created: 2026-09-14
-updated: 2026-10-03
+updated: 2026-10-05
 approved_by: Temuri
-approved_on: 2026-09-14
+approved_on: 2026-10-05
 constrained_by: [CFG, PLG, OWN, SEC, ARC, API, ERR, EXT, PRC, DAT, REP, PKG, LIF, DEP, LOG, JOB, TST, SPC]
 requirements: features/pset/requirements.md
 ---
@@ -34,7 +34,7 @@ carry that change into the code.
 | --------------- | ----------------------------------------------- |
 | `PSET-FR-001`   | `PSET-DD-001`, Section 4.1, `PSET-SC-001`       |
 | `PSET-FR-002`   | `PSET-DD-001`, `PSET-SC-002`                    |
-| `PSET-FR-021`   | `PSET-DD-012`, Section 4.2, `PSET-SC-023`       |
+| `PSET-FR-021`   | `PSET-DD-012`, Section 4.2, `PSET-SC-023`, `PSET-SC-024` |
 | `PSET-FR-003`   | `PSET-DD-010`, `PSET-DD-013`, Section 4.3, `PSET-SC-003` |
 | `PSET-FR-004`   | `PSET-DD-010`, `PSET-SC-004`                    |
 | `PSET-FR-005`   | `PSET-DD-010`, `PSET-SC-004`                    |
@@ -629,6 +629,9 @@ one run, and not between two runs.
 the tag `jsonschema_extras:"x-maroid-scope=user"` writes. A field with no extension
 belongs to the workspace. `settings.Infer` reads the extension into `Schema.Scopes`,
 and the document that the route serves keeps it, so the deck labels each field. The
+form of the deck marks a field of the user as personal, and says that its value serves
+every workspace of the user, because `plugin_user_settings` holds one row for each pair
+of a user and a plugin. The
 hub holds one table for each scope, because `OWN-004` lets one table carry one scope.
 **Rationale:** `OWN-004` makes a new table of a plugin a table of the workspace, so the
 default of a field follows the default of a table. The extension travels in the
@@ -675,6 +678,7 @@ field of their own, and the route would split one save into two checks.
 | 13  | Write the migration that splits the table, then the scope of the repository and `database.WithScopeTx`. It needs the table of `OWN-010`. | `PSET-FR-003`, `PSET-INV-001` | [x]  |
 | 14  | Add `secret.WorkspaceKey`, then choose the key by the scope of the field in `settings.Manager`. | `PSET-FR-016`, `PSET-FR-017` | [x]  |
 | 15  | Move the three routes under `/workspaces/{workspaceId}`, with the permissions of `PSET-DD-013`, in `api.yaml` and in `handler.Plugin`. It needs the membership check of `OWN-003`. | `PSET-FR-003` to `PSET-FR-009` | [x]  |
+| 16  | Mark each field of the user as personal in the form of the deck, with the note that its value serves every workspace of the user. | `PSET-FR-021` | [x]  |
 
 Write the test of each step before the code of that step. See `TST-002`.
 

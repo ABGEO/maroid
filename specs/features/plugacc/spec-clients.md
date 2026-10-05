@@ -4,9 +4,9 @@ title: The administrator and the enablement in the command line, the bot, the sc
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-04
+updated: 2026-10-05
 approved_by: Temuri
-approved_on: 2026-10-04
+approved_on: 2026-10-05
 constrained_by: [SEC, OWN, TG, JOB, CLI, UI, TS, SPC, LNG]
 requirements: features/plugacc/requirements.md
 ---
@@ -66,23 +66,45 @@ declares `CronScopePerWorkspace` fails the preparation of the worker with
 | `apps/deck/src/routes/(dashboard)/admin/users/+page.svelte`            | create | The users: create, invite, block, unblock, mark, and the link to an allowlist |
 | `apps/deck/src/routes/(dashboard)/admin/users/[user]/+page.svelte`     | create | One user and their allowlist                                 |
 | `apps/deck/src/routes/(dashboard)/admin/workspaces/+page.svelte`       | create | Every workspace, with links to its members and its plugins   |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/+page.svelte`  | create | The plugins of the workspace, and the switch of each         |
+| `apps/deck/src/routes/(dashboard)/admin/plugins/+page.svelte`          | create | Every loaded plugin, and the workspaces that enable each one |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/+page.svelte`  | create | The plugins in use and the plugins to turn on, the switch of each, and the state of the settings of each plugin in use |
 | `apps/deck/src/lib/api/{users,enablements}.ts`                         | create | The routes of `spec.md` section 4.3                          |
 | `apps/deck/src/lib/state/plugins.svelte.ts`                            | change | The entries of the plugins of the acting workspace, from `/workspaces/{id}/plugins` |
-| `apps/deck/src/lib/navigation/breadcrumbs.ts`                          | change | Names a plugin and a workspace from the page that loaded them |
-| `apps/deck/src/routes/(dashboard)/plugins/+page.svelte`                | change | Offers the settings of a plugin that the acting workspace enables alone |
+| `apps/deck/src/lib/navigation/breadcrumbs.ts`                          | change | Names a plugin and a workspace from the page that loaded them, and names `/admin/plugins` |
+| `apps/deck/src/routes/(dashboard)/plugins/+page.svelte`                | delete | `PLUGACC-FR-036` keeps every list of plugins inside a workspace |
 | `libs/api-client/src/problem.ts`                                       | change | `PROBLEM_TYPE.administratorLast`                             |
-| `apps/deck/src/lib/components/layout/Sidebar.svelte`                   | change | Names the plugins of the acting workspace alone, and links an administrator to the pages of `/admin` |
+| `apps/deck/src/lib/components/layout/Sidebar.svelte`                   | change | Names the plugins of the acting workspace alone, links the page of its plugins, and links an administrator to the pages of `/admin` |
 
 The pages under `/admin` render for an administrator alone. `GET /auth/sessions/self`
 already answers the person of the session, and gains `is_administrator` for that test.
 The hub still guards each route, so a hidden link is a convenience.
 
-The page of the plugins of a workspace lists the catalog of `GET /plugins` and every
-plugin that the workspace enables, and marks each enabled one. A manager switches a
-plugin of their allowlist on or off, and an administrator switches any plugin, which
-realizes `PLUGACC-FR-024`. A manager switches off an enabled plugin that their
-allowlist does not hold, and cannot switch it on again.
+The page of the plugins of a workspace holds two lists, which realizes
+`PLUGACC-FR-036`.
+
+- **In use** names every plugin that the workspace enables, from the list of the
+  enablements, for every member. A row of a plugin that declares settings shows whether
+  a required field holds no value, and links the settings page of the plugin.
+- **To turn on** names each plugin of `GET /plugins` that the workspace does not enable.
+  It shows for a person who holds `plugins.write` alone.
+
+A manager switches a plugin of their allowlist on or off, and an administrator switches
+any plugin, which realizes `PLUGACC-FR-024`. A manager switches off an enabled plugin
+that their allowlist does not hold, and cannot switch it on again.
+
+An administrator who is no member of the workspace reads both lists with no state of
+the settings and no link to them. `PLUGACC-INV-002` closes the settings of the
+workspace to them.
+
+The deck holds no list of plugins outside a workspace for a person who is no
+administrator. The sidebar links the page of the plugins of the acting workspace in
+place of the page `/plugins`, which goes.
+
+The page `/admin/plugins` names every plugin of `GET /plugins`, with its version and its
+capabilities, and the workspaces that enable it, which realizes `PLUGACC-FR-037`. The
+deck reads the workspaces from `plugin_ids` in the answer of `GET /workspaces?scope=all`,
+so the page needs no new route. It renders for an administrator alone, as every page
+under `/admin` does.
 
 The sidebar, the breadcrumbs, and the pages of a plugin read the entry of each plugin
 from the list of the enablements of the acting workspace, as `PLUGACC-DD-009` gives,

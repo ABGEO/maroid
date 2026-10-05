@@ -4,9 +4,9 @@ title: The administrator, the plugin allowlist, and the enablement of a plugin
 type: requirements
 status: approved
 created: 2026-10-02
-updated: 2026-10-04
+updated: 2026-10-05
 approved_by: Temuri
-approved_on: 2026-10-04
+approved_on: 2026-10-05
 constrained_by: [SEC, OWN, ERR, EXT, TG, JOB, ARC, CLI]
 ---
 
@@ -293,6 +293,40 @@ A manager must enable and disable a plugin of their workspace from the web shell
 
 The navigation of the web shell must name only the plugins that the acting workspace
 enables.
+
+### `PLUGACC-FR-036`
+
+The web shell must show the plugins of a workspace on one page of that workspace. Every
+member must read there the plugins that the workspace enables. A person who can turn a
+plugin on in the workspace must also read there the plugins of their allowlist that the
+workspace does not enable.
+
+**Why:** A person uses a plugin inside a workspace and turns it on inside a workspace. A
+list outside a workspace shows a member nothing that they use.
+
+**Examples:**
+
+- Normal case: H enables Q. Gio, a viewer of H with an empty allowlist, opens the plugins
+  of H. He reads Q, and no plugin to turn on.
+- Normal case: H enables Q, and the allowlist of Ana, a manager of H, holds P. Ana reads Q
+  as in use, and P as a plugin to turn on.
+- Limit case: H enables no plugin. Gio reads that H uses no plugin.
+- Unwanted case: Gio opens a list of plugins that names no workspace, and reads no plugin
+  while H enables Q.
+
+### `PLUGACC-FR-037`
+
+The web shell must show an administrator every loaded plugin on one page that names no
+workspace, with the workspaces that enable each plugin.
+
+**Why:** An administrator sets the allowlists and enables a plugin in any workspace. They
+need the whole catalog in one place.
+
+**Examples:**
+
+- Normal case: the hub loaded P and Q, and H enables Q. Zura reads P with no workspace,
+  and Q with H.
+- Unwanted case: Ana, who is no administrator, reaches the page.
 
 ### `PLUGACC-FR-033`
 

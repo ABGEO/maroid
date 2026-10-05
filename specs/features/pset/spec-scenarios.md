@@ -4,9 +4,9 @@ title: The scenarios of the settings of a plugin
 type: spec
 status: approved
 created: 2026-09-14
-updated: 2026-10-01
+updated: 2026-10-05
 approved_by: Temuri
-approved_on: 2026-09-14
+approved_on: 2026-10-05
 constrained_by: [TST, OWN, TRC]
 requirements: features/pset/requirements.md
 ---
@@ -274,6 +274,19 @@ run in workspace A reads them.
 the identifier of user A, and `public.plugin_workspace_settings` holds no entry for
 `pin`. User A reads `******` for the PIN, user C reads the empty string for it, and
 the run reads no value for it.
+
+## `PSET-SC-024`
+
+**Verifies:** `PSET-FR-021`
+**Layer:** manual
+
+**Given** user A is a member of workspace A and workspace B, and both enable a plugin
+with the workspace field `accountNumber` and the user field `pin`.
+**When** user A opens the settings of the plugin in workspace A, saves the PIN `1234`,
+then opens the settings of the plugin in workspace B.
+**Then** the form marks `pin` as personal, with the note that it serves every workspace
+of user A, and marks `accountNumber` as a field of the workspace. Workspace B shows
+`pin` as stored.
 
 ## Retired identifiers
 

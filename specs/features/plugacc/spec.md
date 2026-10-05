@@ -4,9 +4,9 @@ title: The administrator, the plugin allowlist, and the enablement of a plugin
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-04
+updated: 2026-10-05
 approved_by: Temuri
-approved_on: 2026-10-04
+approved_on: 2026-10-05
 constrained_by: [SEC, OWN, ERR, API, RES, DAT, REP, JOB, TG, CLI, UI, ARC, TST, SPC, LNG]
 requirements: features/plugacc/requirements.md
 ---
@@ -66,6 +66,8 @@ answers a disabled plugin as absent.
 | `PLUGACC-FR-033`  | `spec-clients.md` section 4, `PLUGACC-SC-025`                    |
 | `PLUGACC-FR-034`  | Section 4.3, `PLUGACC-SC-026`                                    |
 | `PLUGACC-FR-035`  | Section 4.5, `PLUGACC-SC-027`                                    |
+| `PLUGACC-FR-036`  | `spec-clients.md` section 4, `PLUGACC-SC-030`                    |
+| `PLUGACC-FR-037`  | `spec-clients.md` section 4, `PLUGACC-SC-031`                    |
 | `PLUGACC-NFR-001` | `PLUGACC-DD-001`, `PLUGACC-SC-020`                               |
 | `PLUGACC-NFR-002` | Postponed. Section 8                                             |
 | `PLUGACC-INV-001` | Section 4.4, `PLUGACC-DD-001`, `PLUGACC-SC-013`                  |
@@ -485,6 +487,7 @@ plugin after the creation. A failure in the middle leaves a partial allowlist.
 | 12  | Write `PLUGACC-SC-026`, then the names in `PATCH /users/{userId}` and on the page of one user. | `PLUGACC-FR-034`                               | [x]  |
 | 13  | Write `PLUGACC-SC-027`, then `administrator-allowlist` at the routes of an allowlist and at the creation, and the disabled allowlist in the deck. | `PLUGACC-FR-035`                               | [x]  |
 | 14  | Write `PLUGACC-SC-028` and `PLUGACC-SC-029`, then the enablement in the MCP settings tools, the allowlist in `list_plugins`, and the mark of an administrator over MCP. | `PLUGACC-FR-018`, `PLUGACC-FR-021`, `PLUGACC-FR-028` | [x]  |
+| 15  | Carry out section 4 of `spec-clients.md` again: the two lists of the plugins of a workspace, the page `/admin/plugins`, the removal of `/plugins`, and the links of the sidebar. | `PLUGACC-FR-036`, `PLUGACC-FR-037` | [x]  |
 
 ## 8. Out of scope for this specification
 
