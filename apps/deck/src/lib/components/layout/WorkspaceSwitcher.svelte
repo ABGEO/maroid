@@ -11,11 +11,11 @@
 </script>
 
 {#if workspaceState.status === 'ready' && workspaceState.workspaces.length > 0}
-	<div class="dropdown">
+	<div class="dropdown min-w-0">
 		<div
 			tabindex="0"
 			role="button"
-			class="btn btn-ghost btn-sm max-w-56 font-normal"
+			class="btn btn-ghost btn-sm max-w-40 font-normal sm:max-w-56"
 			aria-label="Switch workspace"
 		>
 			<span class="truncate">{label}</span>

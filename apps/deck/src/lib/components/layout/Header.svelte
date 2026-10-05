@@ -24,11 +24,11 @@
 			</svg>
 		</label>
 
-		<a href={resolve('/')} class="flex items-center gap-2 pr-3 pl-1">
+		<a href={resolve('/')} class="flex shrink-0 items-center gap-2 pr-1 pl-1 sm:pr-3">
 			<div class="bg-base-300 relative h-9 w-9 overflow-hidden rounded-full">
 				<img src="/maroid.png" alt="Maroid" class="h-full w-full object-cover" />
 			</div>
-			<div class="leading-tight">
+			<div class="hidden leading-tight sm:block">
 				<div class="text-[15px] font-semibold tracking-tight">Maroid</div>
 				<div class="text-base-content/50 -mt-0.5 font-mono text-[10px]">deck · v0.1.0</div>
 			</div>
