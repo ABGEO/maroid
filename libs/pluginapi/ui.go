@@ -10,7 +10,6 @@ type UIPlugin interface {
 
 // UIManifest describes a plugin's UI capabilities.
 type UIManifest struct {
-	Name   string    `json:"name"`
 	Routes []UIRoute `json:"routes"`
 	Assets fs.FS     `json:"-"`
 }

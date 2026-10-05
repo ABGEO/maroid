@@ -36,7 +36,7 @@
 		workspaceId === null || !isMember(workspaceId) || enabledState.workspaceId !== workspaceId
 			? []
 			: enabledState.plugins
-					.map((plugin) => ({ id: plugin.id, manifest: uiOf(plugin) }))
+					.map((plugin) => ({ id: plugin.id, name: plugin.name, manifest: uiOf(plugin) }))
 					.filter((entry) => entry.manifest !== undefined)
 	);
 
@@ -168,12 +168,12 @@
 												<span
 													class="grid h-4 w-4 shrink-0 place-items-center rounded font-mono text-[10px] font-semibold"
 													style="background:oklch(92% 0.04 {nameToHue(
-														plugin.manifest!.name
-													)});color:oklch(40% 0.1 {nameToHue(plugin.manifest!.name)})"
+														plugin.name
+													)});color:oklch(40% 0.1 {nameToHue(plugin.name)})"
 												>
-													{letterFromName(plugin.manifest!.name)}
+													{letterFromName(plugin.name)}
 												</span>
-												<span class="is-drawer-close:hidden">{plugin.manifest!.name}</span>
+												<span class="is-drawer-close:hidden">{plugin.name}</span>
 											</summary>
 											<ul>
 												{#each plugin.manifest!.routes as route (route.path)}

@@ -40,9 +40,6 @@ func TestEveryCapabilityIsSnakeCase(t *testing.T) {
 	}
 }
 
-// probeName is the display name of the plugin that these tests register.
-const probeName = "Probe"
-
 // APIFMT-SC-010: A collection answers an empty array and never a null. A plugin
 // that registers a manifest with no route still answers one.
 func TestAManifestWithNoRouteAnswersAnEmptyArray(t *testing.T) {
@@ -51,7 +48,7 @@ func TestAManifestWithNoRouteAnswersAnEmptyArray(t *testing.T) {
 	uiRegistry := registry.NewUIRegistry()
 	pluginID := pluginapi.ParsePluginID("dev.maroid.probe")
 
-	uiRegistry.Register(pluginID, &pluginapi.UIManifest{Name: probeName})
+	uiRegistry.Register(pluginID, &pluginapi.UIManifest{})
 
 	entry, ok := uiRegistry.Get(pluginID.String())
 	require.True(t, ok)

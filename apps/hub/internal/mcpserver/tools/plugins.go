@@ -44,8 +44,9 @@ func NewListPlugins(
 				Name:  listPluginsName,
 				Title: "List the loaded plugins",
 				Description: "Report the plugins that the acting user can turn on, with " +
-					"the version and the capabilities of each: every loaded plugin to an " +
-					"administrator, and the plugins of their allowlist to anyone else.",
+					"the name, the description, the version, and the capabilities of each: " +
+					"every loaded plugin to an administrator, and the plugins of their " +
+					"allowlist to anyone else.",
 				Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true},
 			}, tool.handle)
 		},

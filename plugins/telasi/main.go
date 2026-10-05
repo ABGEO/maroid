@@ -69,9 +69,11 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *TelasiPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:         pluginapi.ParsePluginID("dev.maroid.telasi"),
-		Version:    "0.1.0",
-		APIVersion: pluginapi.APIVersion,
+		ID:          pluginapi.ParsePluginID("dev.maroid.telasi"),
+		Name:        "Telasi",
+		Description: "Electricity bills and usage from Telasi.",
+		Version:     "0.1.0",
+		APIVersion:  pluginapi.APIVersion,
 	}
 }
 

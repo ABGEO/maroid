@@ -1,8 +1,16 @@
 package registry
 
+import (
+	"strings"
+
+	"github.com/abgeo/maroid/libs/pluginapi"
+)
+
 // PluginEntry is the report of one loaded plugin.
 type PluginEntry struct {
 	ID           string             `json:"id"`
+	Name         string             `json:"name"`
+	Description  string             `json:"description,omitempty"`
 	Version      string             `json:"version"`
 	Capabilities map[Capability]any `json:"capabilities"`
 }
@@ -25,7 +33,7 @@ func (c *Catalog) Entries() []PluginEntry {
 	entries := make([]PluginEntry, 0, len(plugins))
 
 	for _, plg := range plugins {
-		entries = append(entries, c.entryOf(plg.Meta().ID.String(), plg.Meta().Version))
+		entries = append(entries, c.entryOf(plg.Meta()))
 	}
 
 	return entries
@@ -36,13 +44,21 @@ func (c *Catalog) Entries() []PluginEntry {
 func (c *Catalog) Entry(pluginID string) (PluginEntry, bool) {
 	for _, plg := range c.plugins.All() {
 		if plg.Meta().ID.String() == pluginID {
-			return c.entryOf(pluginID, plg.Meta().Version), true
+			return c.entryOf(plg.Meta()), true
 		}
 	}
 
 	return PluginEntry{}, false
 }
 
-func (c *Catalog) entryOf(pluginID string, version string) PluginEntry {
-	return PluginEntry{ID: pluginID, Version: version, Capabilities: c.capabilities.Of(pluginID)}
+func (c *Catalog) entryOf(meta pluginapi.Metadata) PluginEntry {
+	pluginID := meta.ID.String()
+
+	return PluginEntry{
+		ID:           pluginID,
+		Name:         strings.TrimSpace(meta.Name),
+		Description:  strings.TrimSpace(meta.Description),
+		Version:      meta.Version,
+		Capabilities: c.capabilities.Of(pluginID),
+	}
 }

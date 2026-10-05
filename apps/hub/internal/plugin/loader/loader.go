@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"plugin"
+	"strings"
+	"unicode/utf8"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
@@ -145,6 +147,28 @@ func (r *Loader) registerCapabilities(plg pluginapi.Plugin) error {
 	return nil
 }
 
+func validateMetadata(meta pluginapi.Metadata) error {
+	name := utf8.RuneCountInString(strings.TrimSpace(meta.Name))
+	description := utf8.RuneCountInString(strings.TrimSpace(meta.Description))
+
+	switch {
+	case name == 0:
+		return fmt.Errorf(
+			"%w: plugin %q: the name is empty",
+			errs.ErrInvalidPluginMetadata,
+			meta.ID,
+		)
+	case name > pluginapi.MaxNameLength:
+		return fmt.Errorf("%w: plugin %q: the name holds %d characters, at most %d",
+			errs.ErrInvalidPluginMetadata, meta.ID, name, pluginapi.MaxNameLength)
+	case description > pluginapi.MaxDescriptionLength:
+		return fmt.Errorf("%w: plugin %q: the description holds %d characters, at most %d",
+			errs.ErrInvalidPluginMetadata, meta.ID, description, pluginapi.MaxDescriptionLength)
+	default:
+		return nil
+	}
+}
+
 func openConstructor(path string) (pluginapi.Constructor, error) {
 	p, err := plugin.Open(path)
 	if err != nil {
@@ -178,6 +202,10 @@ func validatePlugin(plg pluginapi.Plugin) error {
 
 	if meta.ID == nil {
 		return errs.ErrInvalidPluginID
+	}
+
+	if err := validateMetadata(meta); err != nil {
+		return err
 	}
 
 	if meta.APIVersion != pluginapi.APIVersion {

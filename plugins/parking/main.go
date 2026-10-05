@@ -76,9 +76,11 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *ParkingPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:         pluginID,
-		Version:    "0.1.0",
-		APIVersion: pluginapi.APIVersion,
+		ID:          pluginID,
+		Name:        "Tbilisi Parking",
+		Description: "Start and stop parking sessions, and check the balance.",
+		Version:     "0.1.0",
+		APIVersion:  pluginapi.APIVersion,
 	}
 }
 

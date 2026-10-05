@@ -69,9 +69,11 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *TbilisiEnergyPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:         pluginapi.ParsePluginID("dev.maroid.tbilisi-energy"),
-		Version:    "0.1.0",
-		APIVersion: pluginapi.APIVersion,
+		ID:          pluginapi.ParsePluginID("dev.maroid.tbilisi-energy"),
+		Name:        "Tbilisi Energy",
+		Description: "Gas bills and usage from Tbilisi Energy.",
+		Version:     "0.1.0",
+		APIVersion:  pluginapi.APIVersion,
 	}
 }
 

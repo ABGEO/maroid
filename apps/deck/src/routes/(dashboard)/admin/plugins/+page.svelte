@@ -64,6 +64,9 @@
 						<span class="badge badge-ghost badge-xs font-mono">v{plugin.version}</span>
 					</div>
 					<div class="text-base-content/50 truncate font-mono text-[11px]">{plugin.id}</div>
+					{#if plugin.description}
+						<p class="text-base-content/70 mt-1 text-sm">{plugin.description}</p>
+					{/if}
 					{#if capabilitiesOf(plugin).length > 0}
 						<div class="mt-1.5 flex flex-wrap gap-1">
 							{#each capabilitiesOf(plugin) as name (name)}

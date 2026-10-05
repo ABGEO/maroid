@@ -303,7 +303,6 @@ func sessionOfAPerson(
 func probeUI() *registry.UIRegistry {
 	uis := registry.NewUIRegistry()
 	uis.Register(pluginapi.ParsePluginID(probePlugin), &pluginapi.UIManifest{
-		Name: "Probe",
 		Assets: fstest.MapFS{
 			"remoteEntry.js":           {Data: []byte("export const probe = 1;")},
 			"assets/entry-Bx9s2kQa.js": {Data: []byte("export const chunk = 1;")},

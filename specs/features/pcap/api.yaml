@@ -65,11 +65,24 @@ components:
   schemas:
     PluginEntry:
       type: object
-      required: [id, version, capabilities]
+      required: [id, name, version, capabilities]
       properties:
         id:
           type: string
           description: The permanent name of the plugin. `GLO-plugin-id`.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: >
+            The name that a person reads for the plugin. `GLO-plugin-name`.
+            `PCAP-DD-008`. The limit counts characters, as `PLG-012` gives.
+        description:
+          type: string
+          maxLength: 280
+          description: >
+            What the plugin does. `GLO-plugin-description`. Absent when the plugin
+            declares none.
         version:
           type: string
         capabilities:
@@ -127,10 +140,8 @@ components:
 
     UIManifest:
       type: object
-      required: [name, routes]
+      required: [routes]
       properties:
-        name:
-          type: string
         routes:
           type: array
           items:

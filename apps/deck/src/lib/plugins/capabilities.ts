@@ -32,11 +32,11 @@ export function uiOf(plugin: Plugin | undefined): UIManifest | undefined {
 }
 
 /**
- * The name that the deck shows for a plugin. The manifest name wins, and the
- * last part of the identifier answers when the plugin declares no user interface.
+ * The name that the deck shows for a plugin. With no entry, the hub did not load the
+ * plugin, and the whole identifier tells the person which one is missing.
  */
 export function displayNameOf(plugin: Plugin | undefined, pluginId: string): string {
-	return uiOf(plugin)?.name ?? pluginId.split('.').pop() ?? pluginId;
+	return plugin?.name ?? pluginId;
 }
 
 /** The label of one capability. */

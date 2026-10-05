@@ -114,6 +114,13 @@ func newStubPlugin(id string, version string) *stubPlugin {
 	}
 }
 
+func (p *stubPlugin) named(name string, description string) *stubPlugin {
+	p.meta.Name = name
+	p.meta.Description = description
+
+	return p
+}
+
 func activeRecord() *model.User {
 	first, last := "Temuri", "Takalandze"
 
@@ -185,8 +192,8 @@ func hubAt(
 
 	pluginRegistry := registry.NewPluginRegistry()
 	require.NoError(t, pluginRegistry.Register(
-		newStubPlugin(probeID, "1.0.0"),
-		newStubPlugin(beaconID, "2.3.4"),
+		newStubPlugin(probeID, "1.0.0").named("Probe", "Watches the probe."),
+		newStubPlugin(beaconID, "2.3.4").named("Beacon", ""),
 	))
 
 	// PCAP-SC-001: A registrar records what the hub loaded, so the report names
@@ -194,7 +201,6 @@ func hubAt(
 	capabilities := registry.NewCapabilityRegistry()
 	capabilities.Record(pluginapi.ParsePluginID(probeID), registry.CapSettings, registry.Present)
 	capabilities.Record(pluginapi.ParsePluginID(probeID), registry.CapUI, &pluginapi.UIManifest{
-		Name:   "Probe",
 		Routes: []pluginapi.UIRoute{{Path: "/", Label: "Probe"}},
 		Assets: fstest.MapFS{},
 	})
@@ -570,6 +576,8 @@ func TestTheIdentityToolNamesTheActingUser(t *testing.T) {
 // PCAP-SC-002: The agent reads the entry that GET /plugins gives, and neither
 // carries a settings flag or a user interface member beside the capabilities.
 // PCAP-SC-007: The settings capability is true to a client that tests it.
+// PCAP-SC-009: The agent reads the name and the description that each plugin
+// declares, and no description for a plugin that declares none.
 func TestThePluginListToolReportsTheSameShapeAsTheRoute(t *testing.T) {
 	t.Parallel()
 
@@ -596,6 +604,10 @@ func TestThePluginListToolReportsTheSameShapeAsTheRoute(t *testing.T) {
 	require.Len(t, reported, 2)
 	require.Equal(t, "1.0.0", reported[probeID]["version"])
 	require.Equal(t, "2.3.4", reported[beaconID]["version"])
+	require.Equal(t, "Probe", reported[probeID]["name"])
+	require.Equal(t, "Watches the probe.", reported[probeID]["description"])
+	require.Equal(t, "Beacon", reported[beaconID]["name"])
+	require.NotContains(t, reported[beaconID], "description")
 
 	require.NotContains(t, reported[probeID], "settings", "the flag moved into the capabilities")
 	require.NotContains(t, reported[probeID], "ui", "the manifest moved into the capabilities")

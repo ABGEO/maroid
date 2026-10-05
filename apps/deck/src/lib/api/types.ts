@@ -80,7 +80,6 @@ export interface UIRoute {
 }
 
 export interface UIManifest {
-	name: string;
 	routes: UIRoute[];
 }
 
@@ -145,6 +144,8 @@ export interface Capabilities {
 
 export interface Plugin {
 	id: string;
+	name: string;
+	description?: string;
 	version: string;
 	capabilities: Capabilities;
 }

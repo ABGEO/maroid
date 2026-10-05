@@ -69,9 +69,11 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *PensionsPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:         pluginapi.ParsePluginID("dev.maroid.pensions"),
-		Version:    "0.1.0",
-		APIVersion: pluginapi.APIVersion,
+		ID:          pluginapi.ParsePluginID("dev.maroid.pensions"),
+		Name:        "Pensions",
+		Description: "Contributions and balance from the pension agency.",
+		Version:     "0.1.0",
+		APIVersion:  pluginapi.APIVersion,
 	}
 }
 

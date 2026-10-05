@@ -13,6 +13,9 @@ var (
 	ErrPluginCapabilityNotSupported = errors.New("plugin: capability not supported")
 	// ErrInvalidPluginID indicates that a plugin configuration is missing its required ID, or it is not valid.
 	ErrInvalidPluginID = errors.New("plugin: ID is missing or invalid")
+	// ErrInvalidPluginMetadata indicates that the name or the description of a plugin
+	// breaks a limit.
+	ErrInvalidPluginMetadata = errors.New("plugin: invalid metadata")
 	// ErrUnexpectedPluginSymbolType indicates that a plugin symbol has an unexpected type
 	// (e.g., constructor symbol does not match the expected type).
 	ErrUnexpectedPluginSymbolType = errors.New("plugin: symbol has unexpected type")

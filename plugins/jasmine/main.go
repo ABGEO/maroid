@@ -51,9 +51,11 @@ var New pluginapi.Constructor = func(host pluginapi.Host, _ map[string]any) (plu
 
 func (p *JasminePlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:         pluginapi.ParsePluginID("dev.maroid.jasmine"),
-		Version:    "0.1.0",
-		APIVersion: pluginapi.APIVersion,
+		ID:          pluginapi.ParsePluginID("dev.maroid.jasmine"),
+		Name:        "Jasmine",
+		Description: "Plants, their environments, and their care.",
+		Version:     "0.1.0",
+		APIVersion:  pluginapi.APIVersion,
 	}
 }
 
@@ -79,7 +81,6 @@ func (p *JasminePlugin) UIManifest() (*pluginapi.UIManifest, error) {
 	}
 
 	return &pluginapi.UIManifest{
-		Name: "Jasmine",
 		Routes: []pluginapi.UIRoute{
 			{Path: "/plants", Label: "Plants"},
 			{Path: "/environments", Label: "Environments"},

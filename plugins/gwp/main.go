@@ -50,9 +50,11 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *GWPPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:         pluginapi.ParsePluginID("dev.maroid.gwp"),
-		Version:    "0.1.0",
-		APIVersion: pluginapi.APIVersion,
+		ID:          pluginapi.ParsePluginID("dev.maroid.gwp"),
+		Name:        "GWP",
+		Description: "Water bills and usage from Georgian Water and Power.",
+		Version:     "0.1.0",
+		APIVersion:  pluginapi.APIVersion,
 	}
 }
 

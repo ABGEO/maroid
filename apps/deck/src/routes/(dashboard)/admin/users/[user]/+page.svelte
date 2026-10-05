@@ -309,6 +309,9 @@
 								<span class="text-base-content/50 block truncate font-mono text-[11px]">
 									{plugin.id}
 								</span>
+								{#if plugin.description}
+									<span class="text-base-content/70 mt-1 block text-sm">{plugin.description}</span>
+								{/if}
 							</span>
 							<input
 								type="checkbox"

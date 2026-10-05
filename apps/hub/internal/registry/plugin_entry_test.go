@@ -1,6 +1,7 @@
 package registry_test
 
 import (
+	"encoding/json"
 	"slices"
 	"testing"
 	"testing/fstest"
@@ -33,6 +34,13 @@ func newStubPlugin(id string, version string) *stubPlugin {
 	}
 }
 
+func (p *stubPlugin) named(name string, description string) *stubPlugin {
+	p.meta.Name = name
+	p.meta.Description = description
+
+	return p
+}
+
 // MCPHUB-SC-005: Two plugins are loaded, and the report names both with what
 // each declares. MCPHUB-DD-007 gives both callers this one function.
 // PCAP-SC-001: The capabilities of a plugin are the ones a registrar recorded.
@@ -46,8 +54,7 @@ func TestPluginEntriesReportEveryLoadedPlugin(t *testing.T) {
 	))
 
 	manifest := &pluginapi.UIManifest{
-		Name:   probeName,
-		Routes: []pluginapi.UIRoute{{Path: "/", Label: probeName}},
+		Routes: []pluginapi.UIRoute{{Path: "/", Label: "Overview"}},
 		Assets: fstest.MapFS{},
 	}
 
@@ -109,6 +116,44 @@ func TestTheCatalogAnswersTheEntryOfOnePlugin(t *testing.T) {
 
 	_, loaded = catalog.Entry(beaconID)
 	require.False(t, loaded)
+}
+
+// PCAP-SC-009: The entry carries the trimmed name and the description that the
+// plugin declares. A plugin with no description carries no member for it, and the
+// manifest of a user interface carries no name.
+func TestTheEntryCarriesTheNameAndTheDescription(t *testing.T) {
+	t.Parallel()
+
+	pluginRegistry := registry.NewPluginRegistry()
+	require.NoError(t, pluginRegistry.Register(
+		newStubPlugin(probeID, "1.0.0").named("  Probe ", "Watches the probe."),
+		newStubPlugin(beaconID, "2.3.4").named("Beacon", ""),
+	))
+
+	capabilities := registry.NewCapabilityRegistry()
+	capabilities.Record(pluginapi.ParsePluginID(probeID), registry.CapUI, &pluginapi.UIManifest{
+		Routes: []pluginapi.UIRoute{{Path: "/", Label: "Overview"}},
+		Assets: fstest.MapFS{},
+	})
+
+	catalog := registry.NewCatalog(pluginRegistry, capabilities)
+
+	probe, loaded := catalog.Entry(probeID)
+	require.True(t, loaded)
+	require.Equal(t, "Probe", probe.Name)
+	require.Equal(t, "Watches the probe.", probe.Description)
+
+	beacon, loaded := catalog.Entry(beaconID)
+	require.True(t, loaded)
+
+	encoded, err := json.Marshal(beacon)
+	require.NoError(t, err)
+	require.JSONEq(t, `{"id":"`+beaconID+`","name":"Beacon","version":"2.3.4","capabilities":{}}`,
+		string(encoded))
+
+	encoded, err = json.Marshal(probe.Capabilities[registry.CapUI])
+	require.NoError(t, err)
+	require.JSONEq(t, `{"routes":[{"path":"/","label":"Overview"}]}`, string(encoded))
 }
 
 func cmpString(a string, b string) int {

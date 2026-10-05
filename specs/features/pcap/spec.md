@@ -561,10 +561,10 @@ each list shows the description of Jasmine under its name. The plugins of H show
 | 10  | Render one chip for each capability on the page that lists the plugins.                 | `PCAP-FR-006`                   | [x]  |
 | 11  | Add the capabilities to the coverage of `MCPHUB-FR-005` in `mcphub/spec.md`.             | `TRC-007`                       | [x]  |
 | 12  | Write the `{workspaceId}` prefix into the path of each `api` item, and the `permission` of each item. Record the `permissions` capability. It needs the permission capability of `SEC-013`. | `PCAP-FR-004`, `SEC-013` | [x]  |
-| 13  | Write `PCAP-SC-010`, then `Metadata.Name`, `Metadata.Description`, the limits, `ErrInvalidPluginMetadata`, and the check in `validatePlugin`. | `PCAP-FR-008`, `PLG-012` | [ ]  |
-| 14  | Write `PCAP-SC-009`, then the two members of `PluginEntry`, `UIManifest` without `Name`, and `api.yaml`. | `PCAP-FR-008`, `PCAP-DD-008` | [ ]  |
-| 15  | Declare the name of every plugin of the repository, and move the name of Jasmine out of its `UIManifest`. Build every plugin. | `PLG-012`, `BLD-004` | [ ]  |
-| 16  | Change the types of the deck, `displayNameOf`, the sidebar, and the two lists of plugins. | `PCAP-FR-009`, `PCAP-DD-009` | [ ]  |
+| 13  | Write `PCAP-SC-010`, then `Metadata.Name`, `Metadata.Description`, the limits, `ErrInvalidPluginMetadata`, and the check in `validatePlugin`. | `PCAP-FR-008`, `PLG-012` | [x]  |
+| 14  | Write `PCAP-SC-009`, then the two members of `PluginEntry`, `UIManifest` without `Name`, and `api.yaml`. | `PCAP-FR-008`, `PCAP-DD-008` | [x]  |
+| 15  | Declare the name of every plugin of the repository, and move the name of Jasmine out of its `UIManifest`. Build every plugin. | `PLG-012`, `BLD-004` | [x]  |
+| 16  | Change the types of the deck, `displayNameOf`, the sidebar, and the two lists of plugins. | `PCAP-FR-009`, `PCAP-DD-009` | [x]  |
 
 ## 8. Out of scope for this specification
 

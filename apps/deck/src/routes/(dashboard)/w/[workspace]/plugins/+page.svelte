@@ -183,6 +183,9 @@
 								{/if}
 							</div>
 							<div class="text-base-content/50 truncate font-mono text-[11px]">{row.id}</div>
+							{#if row.plugin?.description}
+								<p class="text-base-content/70 mt-1 text-sm">{row.plugin.description}</p>
+							{/if}
 							{#if row.plugin && capabilitiesOf(row.plugin).length > 0}
 								<div class="mt-1.5 flex flex-wrap gap-1">
 									{#each capabilitiesOf(row.plugin) as name (name)}
@@ -248,6 +251,9 @@
 								<span class="text-base-content/50 block truncate font-mono text-[11px]">
 									{plugin.id}
 								</span>
+								{#if plugin.description}
+									<span class="text-base-content/70 mt-1 block text-sm">{plugin.description}</span>
+								{/if}
 							</span>
 							<input
 								type="checkbox"
