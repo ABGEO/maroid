@@ -3,7 +3,7 @@ title: Architecture decision records
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-10-01
+updated: 2026-10-05
 ---
 
 # Architecture decision records
@@ -51,3 +51,4 @@ The frontmatter holds the identifier.
 | `ADR-0006` | The Zalando guidelines as the standard of the HTTP API | `zalando-guidelines-as-the-api-standard.md` | accepted | 2026-09-24 | `RES-001` to `RES-011`, `API-001` to `API-003`, `API-006`, `API-007`, `ERR-001` to `ERR-004`, `ERR-006`, `SPC-001`, `SPC-002`, `DAT-010`, `DAT-011`, `LOG-009`, `LOG-010`, `SEC-008`, `SEC-010`, `TG-001`, `TRC-001`, `LNG-013`, `BLD-001`, `CLI-001`, `GLO-page`, `GLO-cursor`, `GLO-flow-id`, `GLO-binding`, `GLO-handoff`, `GLO-transport-route`, `GLO-api-document`, `GLO-api-fragment`, `GLO-shipped-client` |
 | `ADR-0007` | The wire library is libs/rest | `the-wire-library-is-libs-rest.md` | accepted | 2026-09-24 | `ERR-003`, `ERR-007`, `BLD-004` |
 | `ADR-0008` | The workspace as the tenant | `the-workspace-as-the-tenant.md` | accepted | 2026-10-01 | `OWN-001` to `OWN-011`, `CFG-007`, `ERR-003`, `RES-002`, `RES-005`, `RES-009`, `SPC-003`, `UI-008`, `PLG-010`, `GLO-invitation`, `SEC-001`, `SEC-011` to `SEC-013`, `API-003`, `API-004`, `GLO-acting-user`, `GLO-scoped-table`, `GLO-shared-table`, `GLO-scoped-record`, `GLO-shared-record`, `GLO-setting`, `GLO-workspace`, `GLO-member`, `GLO-workspace-role`, `GLO-acting-workspace`, `GLO-administrator`, `GLO-plugin-allowlist`, `GLO-enablement`, `GLO-permission` |
+| `ADR-0009` | The name of a plugin lives in its metadata | `the-plugin-name-in-the-metadata.md` | accepted | 2026-10-05 | `PLG-012`, `GLO-plugin-name`, `GLO-plugin-description` |

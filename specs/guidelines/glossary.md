@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-10-01
+updated: 2026-10-05
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -22,6 +22,8 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-deck`          | deck              | The web shell in `apps/deck`. It renders the user interface of the hub and of the plugins.                        |
 | `GLO-plugin`        | plugin            | A Go shared object in `build/plugins/`. The hub loads it at runtime. It adds a capability.                        |
 | `GLO-plugin-id`     | plugin identifier | The permanent name of a plugin, with the form `dev.maroid.<name>`.                                                |
+| `GLO-plugin-name`   | plugin name       | The name that a person reads for a plugin. The plugin declares it in its metadata. See `PLG-012`.                 |
+| `GLO-plugin-description` | plugin description | One or two sentences that tell a person what a plugin does. It is optional. See `PLG-012`.               |
 | `GLO-capability`    | capability        | A function that a plugin adds to the hub. The plugin gets it when it implements an interface in `libs/pluginapi`. |
 | `GLO-host`          | host              | The `pluginapi.Host` interface. It is the only path from a plugin to an external resource.                        |
 | `GLO-registrar`     | registrar         | A component in the hub. It finds one capability in a plugin and puts it into a registry.                          |

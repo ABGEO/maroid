@@ -4,7 +4,7 @@ title: The plugin model
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-01
+updated: 2026-10-05
 scope: [plugins/, apps/hub/internal/plugin/, libs/pluginapi/]
 related: [ARC, DAT, UI, BLD]
 ---
@@ -97,6 +97,18 @@ A registry rejects a second registration under an identifier that it already hol
 and returns a sentinel error.
 
 **Why:** Two plugins with one identifier would replace each other in silence.
+
+## PLG-012
+
+A plugin declares a name in `pluginapi.Metadata.Name`. The name holds 1 to 64
+characters after the hub trims the white space at each end. A plugin may declare a
+description in `pluginapi.Metadata.Description`, of at most 280 characters.
+
+The hub refuses to load a plugin whose name or description breaks a limit, and the
+error names the plugin and the field.
+
+**Why:** Every client shows a plugin by its name. A name that only the user interface
+declares leaves the other plugins nameless.
 
 ## Retired identifiers
 

@@ -4,9 +4,9 @@ title: The capabilities that a plugin declares
 type: spec
 status: approved
 created: 2026-09-21
-updated: 2026-10-03
+updated: 2026-10-05
 approved_by: Temuri
-approved_on: 2026-09-21
+approved_on: 2026-10-05
 constrained_by: [PLG, ARC, API, ERR, UI, TS, PKG, GO, DEP]
 requirements: features/pcap/requirements.md
 ---
@@ -22,6 +22,10 @@ commands of a bot. A capability that holds nothing carries `true`. A registrar
 records the entry at the load, from the items it already read, so the report
 names what the hub loaded and never what a plugin merely implements.
 
+The report also carries the name of the plugin and its description, which the plugin
+declares in its metadata as `ADR-0009` gives. The manifest of the user interface no
+longer carries a name, and every page of the deck reads the name from the report.
+
 ## 2. Coverage
 
 | Requirement      | Where this specification realizes it                      |
@@ -33,6 +37,8 @@ names what the hub loaded and never what a plugin merely implements.
 | `PCAP-FR-005`    | `PCAP-DD-005`, `PCAP-SC-005`                               |
 | `PCAP-FR-006`    | `PCAP-DD-007`, `PCAP-SC-006`                               |
 | `PCAP-FR-007`    | `PCAP-DD-004`, `PCAP-SC-007`                               |
+| `PCAP-FR-008`    | `PCAP-DD-008`, section 4.6, `PCAP-SC-009`, `PCAP-SC-010`   |
+| `PCAP-FR-009`    | `PCAP-DD-009`, section 4.6, `PCAP-SC-011`                  |
 | `PCAP-NFR-001`   | `PCAP-DD-003`, `PCAP-SC-008`                               |
 | `PCAP-INV-001`   | `PCAP-DD-001`, `PCAP-DD-006`, `PCAP-SC-002`                |
 | `PCAP-INV-002`   | `PCAP-DD-003`, `PCAP-SC-001`                               |
@@ -43,6 +49,7 @@ names what the hub loaded and never what a plugin merely implements.
 | --------- | ------------------ | ---------------------------------------------------------------------------------------------------------- |
 | `PLG-006` | Plugin model       | Each capability keeps its interface, its registry, and its registrar. This feature adds no capability and changes no registrar contract. |
 | `ARC-008` | Architecture       | A registrar records for every plugin it supports. No rule names one plugin.                               |
+| `PLG-012` | Plugin model       | The loader checks the name and the description of every plugin before any registrar runs. Section 4.6.  |
 | `API-003` | HTTP API           | `/plugins` keeps its prefix and its access. Only the body of the answer changes.                          |
 | `API-006` | HTTP API           | The body stays JSON. `PCAP-DD-001` gives its shape.                                                       |
 | `UI-001`  | Web user interface | The deck renders the capabilities. It holds no list of its own.                                           |
@@ -120,6 +127,8 @@ func (r *CapabilityRegistry) Of(pluginID string) map[Capability]any
 // PluginEntry is the report of one loaded plugin.
 type PluginEntry struct {
     ID           string             `json:"id"`
+    Name         string             `json:"name"`
+    Description  string             `json:"description,omitempty"`
     Version      string             `json:"version"`
     Capabilities map[Capability]any `json:"capabilities"`
 }
@@ -159,7 +168,7 @@ of `/plugins` do not change.
 | ------------------------ | -------------------------------------------- | ---------------------------------- | ---------------------------- |
 | `settings`               | `true`                                       | `SettingsRegistrar`                | `PCAP-FR-007`                |
 | `migrations`             | `true`                                       | `MigrationRegistrar`               | `PCAP-FR-007`                |
-| `ui`                     | The `UIManifest`                             | `UIRegistrar`                      | `PCAP-FR-004`                |
+| `ui`                     | `{ routes }`, the `UIManifest` with no name  | `UIRegistrar`                      | `PCAP-FR-004`, `PCAP-DD-008` |
 | `api`                    | `[{ method, path, permission }]`             | `HandlerRegistrar`                 | `PCAP-FR-004`                |
 | `cli`                    | `[{ command }]`                              | `CommandRegistrar`                 | `PCAP-FR-004`                |
 | `cron`                   | `[{ id, schedule }]`                         | `CronRegistrar`                    | `PCAP-FR-004`                |
@@ -211,6 +220,55 @@ sequenceDiagram
 | A registrar fails for a plugin                           | The load of that plugin fails   | The failure that the registrar gives. The report then names no capability of that plugin, because the plugin is not loaded. |
 | A plugin declares a capability and holds no item for it   | The capability records `true`   | None. `PCAP-FR-007`.             |
 | A plugin is in the plugin registry and no registrar recorded a capability | The report holds an empty map | None. `PCAP-FR-001` limit case. |
+
+### 4.6 The name and the description
+
+| Path                                                                  | Change | Holds                                                                     |
+| --------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------- |
+| `libs/pluginapi/metadata.go`                                          | Change | `Metadata.Name`, `Metadata.Description`, `MaxNameLength`, `MaxDescriptionLength` |
+| `libs/pluginapi/ui.go`                                                | Change | `UIManifest` loses `Name`                                                 |
+| `apps/hub/internal/domain/errs/errs.go`                               | Change | `ErrInvalidPluginMetadata`                                                |
+| `apps/hub/internal/plugin/loader/loader.go`                           | Change | `validatePlugin` checks the name and the description. `PLG-012`           |
+| `apps/hub/internal/registry/plugin_entry.go`                          | Change | `PluginEntry.Name`, `PluginEntry.Description`                             |
+| `specs/features/pcap/api.yaml`                                        | Change | `name` required and `description` optional on `PluginEntry`. `UIManifest` loses `name` |
+| `apps/deck/src/lib/api/types.ts`                                      | Change | `Plugin.name`, `Plugin.description`. `UIManifest` loses `name`            |
+| `apps/deck/src/lib/plugins/capabilities.ts`                           | Change | `displayNameOf` reads `plugin.name`. `PCAP-DD-009`                         |
+| `apps/deck/src/lib/components/layout/Sidebar.svelte`                  | Change | The name, the letter, and the hue of a plugin come from the entry          |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/+page.svelte` | Change | The description under the name of each plugin                             |
+| `apps/deck/src/routes/(dashboard)/admin/plugins/+page.svelte`         | Change | The description under the name of each plugin                             |
+| `plugins/*/main.go`                                                   | Change | Each plugin declares its name. Jasmine moves its name out of `UIManifest`  |
+
+```go
+// libs/pluginapi/metadata.go
+
+// The limits of PLG-012, in characters after the hub trims the white space at
+// each end. A letter of Georgian counts as one character.
+const (
+    MaxNameLength        = 64
+    MaxDescriptionLength = 280
+)
+
+// Metadata contains basic information about a plugin.
+type Metadata struct {
+    ID          *PluginID
+    Name        string
+    Description string
+    Version     string
+    APIVersion  string
+}
+```
+
+`validatePlugin` trims both values, counts the runes of each, and returns
+`ErrInvalidPluginMetadata` with the identifier of the plugin and the name of the
+field. The check runs after the check of the identifier and before the check of the
+API version, so a plugin with no identifier still fails on its identifier.
+`PluginEntries` reports the trimmed values.
+
+| Condition                                                    | Behavior                      | Message                                                       |
+| ------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------- |
+| The name is empty after the trim                             | The load of the plugin fails  | `plugin: invalid metadata: plugin "<id>": the name is empty`  |
+| The name holds more than 64 characters                       | The load of the plugin fails  | `plugin: invalid metadata: plugin "<id>": the name holds <n> characters, at most 64` |
+| The description holds more than 280 characters               | The load of the plugin fails  | `plugin: invalid metadata: plugin "<id>": the description holds <n> characters, at most 280` |
 
 ## 5. Design decisions
 
@@ -345,6 +403,39 @@ label table and no component. `UI-001` keeps the rendering in the deck.
 the report across three files, and the chip of a capability would name itself in
 each of them.
 
+### `PCAP-DD-008`
+
+**Realizes:** `PCAP-FR-008`, `PCAP-INV-001`
+
+**Decision:** The name and the description are members of `PluginEntry`, beside the
+identifier and the version, and not a capability. The `ui` capability carries the
+routes alone. An empty description leaves the member out.
+
+**Rationale:** A name is a fact of the plugin, as the identifier is. A capability
+reports a function that the hub loaded, and a plugin with no capability still has a
+name. Keeping the name in the manifest beside the new member would state one fact
+twice, which `PCAP-INV-001` forbids. An absent description reads as "none" to a
+client, and an empty string reads as a description that says nothing.
+
+**Alternatives:** A `metadata` member that nests the name, the description, and the
+version. It moves `version`, which every client reads today, for no gain. An empty
+string for a missing description. A client then tests for two kinds of absence.
+
+### `PCAP-DD-009`
+
+**Realizes:** `PCAP-FR-009`
+
+**Decision:** `displayNameOf` answers `plugin.name`. With no entry, it answers the
+whole identifier. The fallback to the last segment of the identifier goes.
+
+**Rationale:** Every loaded plugin carries a name, so the last segment no longer
+stands in for a missing one. An entry is absent only for a plugin that a workspace
+enables and the hub did not load, and the whole identifier then tells the person
+exactly which plugin is missing.
+
+**Alternatives:** Keeping the last segment as the fallback. It reads as a name the
+plugin chose, and hides that the hub did not load the plugin.
+
 ## 6. Scenarios
 
 ### `PCAP-SC-001` (verifies `PCAP-FR-001`, `PCAP-INV-002`)
@@ -419,6 +510,41 @@ capability is absent from the map.
 **When** a client reads the plugin list.
 **Then** the hub runs zero database statements to answer it.
 
+### `PCAP-SC-009` (verifies `PCAP-FR-008`, `PCAP-INV-001`)
+
+**Layer:** integration
+
+**Given** a loaded plugin that declares the name "  Jasmine " and a description, a
+user interface, and a loaded plugin that declares the name "Telasi" and no description.
+**When** a browser reads `GET /plugins` and an agent calls `list_plugins`.
+**Then** the first entry carries the name "Jasmine" and the description, and its `ui`
+capability carries no name. The second entry carries the name "Telasi" and no
+`description` member. Both answers carry the same entries.
+
+### `PCAP-SC-010` (verifies `PCAP-FR-008`)
+
+**Layer:** unit
+
+**Given** six plugins: one with an empty name, one with the name "   ", one with a
+name of 65 letters, one with a name of 64 Georgian letters, one with a description of
+281 letters, and one with a name of 64 letters and a description of 280.
+**When** the loader validates each.
+**Then** the first, the second, the third, and the fifth fail with
+`ErrInvalidPluginMetadata`, and each error names the plugin and the field. The fourth
+and the sixth pass.
+
+### `PCAP-SC-011` (verifies `PCAP-FR-009`)
+
+**Layer:** manual
+
+**Given** H enables Jasmine, which declares a user interface, and Telasi, which declares
+none, and H enables `dev.maroid.gone`, which the hub did not load.
+**When** a member of H opens H, its plugins, and a page of Jasmine, and an
+administrator opens `/admin/plugins`.
+**Then** the sidebar, the breadcrumbs, and both lists show "Jasmine" and "Telasi", and
+each list shows the description of Jasmine under its name. The plugins of H show
+`dev.maroid.gone` by its whole identifier.
+
 ## 7. Build plan
 
 | #   | Step                                                                                    | Realizes                        | Done |
@@ -435,6 +561,10 @@ capability is absent from the map.
 | 10  | Render one chip for each capability on the page that lists the plugins.                 | `PCAP-FR-006`                   | [x]  |
 | 11  | Add the capabilities to the coverage of `MCPHUB-FR-005` in `mcphub/spec.md`.             | `TRC-007`                       | [x]  |
 | 12  | Write the `{workspaceId}` prefix into the path of each `api` item, and the `permission` of each item. Record the `permissions` capability. It needs the permission capability of `SEC-013`. | `PCAP-FR-004`, `SEC-013` | [x]  |
+| 13  | Write `PCAP-SC-010`, then `Metadata.Name`, `Metadata.Description`, the limits, `ErrInvalidPluginMetadata`, and the check in `validatePlugin`. | `PCAP-FR-008`, `PLG-012` | [ ]  |
+| 14  | Write `PCAP-SC-009`, then the two members of `PluginEntry`, `UIManifest` without `Name`, and `api.yaml`. | `PCAP-FR-008`, `PCAP-DD-008` | [ ]  |
+| 15  | Declare the name of every plugin of the repository, and move the name of Jasmine out of its `UIManifest`. Build every plugin. | `PLG-012`, `BLD-004` | [ ]  |
+| 16  | Change the types of the deck, `displayNameOf`, the sidebar, and the two lists of plugins. | `PCAP-FR-009`, `PCAP-DD-009` | [ ]  |
 
 ## 8. Out of scope for this specification
 

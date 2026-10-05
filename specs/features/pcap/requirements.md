@@ -4,9 +4,9 @@ title: The capabilities that a plugin declares
 type: requirements
 status: approved
 created: 2026-09-21
-updated: 2026-10-01
+updated: 2026-10-05
 approved_by: Temuri
-approved_on: 2026-09-21
+approved_on: 2026-10-05
 constrained_by: [PLG, ARC, API, UI]
 ---
 
@@ -29,6 +29,11 @@ loaded and cannot tell what the plugin is for.
 The report also states each of the two facts its own way, one as a flag and one
 as a nested manifest. A ninth capability would add a ninth member with a ninth
 shape, and every client would learn a ninth rule.
+
+The report names a plugin only through the manifest of its user interface, and one
+plugin declares one. A person reads "gwp" and "tbilisi-energy" for the others, and
+an agent reads no name at all. `ADR-0009` moves the name into the metadata of every
+plugin.
 
 ## 2. Users
 
@@ -162,6 +167,40 @@ configure action of every plugin that has one.
 - Unwanted case: a capability that holds no item reads as an empty answer, and a
   client that tests the capability for a value treats it as absent.
 
+### `PCAP-FR-008`
+
+The report of every loaded plugin must carry the name that the plugin declares, and
+its description when it declares one.
+
+**Why:** A person and an agent tell plugins apart by name. A name that only some
+plugins carry makes every client invent one for the rest.
+
+**Examples:**
+
+- Normal case: a plugin declares the name "Jasmine" and a description. The report
+  carries both.
+- Normal case: a plugin declares the name "Telasi" and no description. The report
+  carries the name and no description.
+- Limit case: a plugin declares a name in Georgian of 64 letters. The report carries
+  it whole.
+- Unwanted case: a plugin declares no name. The hub does not load it, and the error
+  names the plugin and the missing name.
+
+### `PCAP-FR-009`
+
+The deck must show a plugin by the name of its report, on every page that names the
+plugin, and must show the description on the pages that list the plugins.
+
+**Why:** A name that one page shows and another page replaces with the identifier
+reads as two plugins.
+
+**Examples:**
+
+- Normal case: the sidebar, the breadcrumbs, the page of the plugins of a workspace,
+  and `/admin/plugins` each show "Tbilisi Energy" for `dev.maroid.tbilisi-energy`.
+- Limit case: a workspace enables a plugin that the hub did not load. The page shows
+  the identifier, because no report exists.
+
 ## 5. Non-functional requirements
 
 ### `PCAP-NFR-001`
@@ -190,6 +229,7 @@ the hub loaded for that plugin, and no other.
 | Rule      | Guideline          | Effect on this feature                                                                                   |
 | --------- | ------------------ | ---------------------------------------------------------------------------------------------------------- |
 | `PLG-006` | Plugin model       | A capability is an interface in the plugin contract. The report names the capabilities that rule creates. |
+| `PLG-012` | Plugin model       | Every plugin declares a name, so the report of every plugin carries one.                                  |
 | `ARC-008` | Architecture       | The report holds no rule that names one plugin. Every plugin passes one detection.                        |
 | `API-004` | HTTP API           | The route of a plugin carries the prefix that the hub gives it. The report states the path a client calls. |
 | `API-006` | HTTP API           | The report travels as JSON.                                                                               |
@@ -207,6 +247,8 @@ agent beyond `PCAP-FR-002`.
 | 2   | Does a capability carry its items?                                                | Temuri | Yes. Every capability that holds items reports them. |
 | 4   | How does the report state the settings capability and the migrations capability, which hold no item? | Temuri | As present. `PCAP-FR-007` states the behavior, and a client must not read them as absent. |
 | 3   | Does the report hold a list of names beside the data, or one member for both?      | Temuri | One member. A capability names itself and carries its items in one place, so the two cannot disagree. |
+| 5   | Where does the name of a plugin live?                                              | Temuri | In the metadata of the plugin, beside an optional description. The manifest of the user interface loses it. `ADR-0009`. |
+| 6   | Which surfaces read the name, beside the deck and `GET /plugins`?                  | Temuri | `list_plugins`, through the same report. The bot, the problem details, and the logs keep the identifier. |
 
 Answer every question before the approval. An open question blocks stage 2.
 
