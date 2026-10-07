@@ -2,6 +2,7 @@ package secret_test
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"testing"
 	"time"
@@ -71,15 +72,15 @@ func startBao(t *testing.T) (*secret.Transit, *api.Client) {
 	root := rootClient(t, endpoint)
 	prepare(t, root)
 
-	client, err := openbao.New(t.Context(), &config.OpenBao{
+	session, err := openbao.New(t.Context(), &config.OpenBao{
 		Address:      endpoint,
 		RoleID:       readRoleID(t, root),
 		SecretID:     generateSecretID(t, root),
 		TransitMount: "transit",
-	})
+	}, slog.New(slog.DiscardHandler))
 	require.NoError(t, err)
 
-	cipher := secret.NewTransit(client, "transit")
+	cipher := secret.NewTransit(session.Client(), "transit")
 
 	return cipher, root
 }

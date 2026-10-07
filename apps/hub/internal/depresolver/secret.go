@@ -5,30 +5,32 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/openbao/openbao/api/v2"
-
 	"github.com/abgeo/maroid/apps/hub/internal/openbao"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
 )
 
-// OpenBaoClient initializes and returns the client that every use of OpenBao shares.
-func (c *Container) OpenBaoClient() (*api.Client, error) {
-	c.openBaoClient.mu.Lock()
-	defer c.openBaoClient.mu.Unlock()
+// OpenBaoSession initializes and returns the session that every use of OpenBao shares.
+func (c *Container) OpenBaoSession() (*openbao.Session, error) {
+	c.openBaoSession.mu.Lock()
+	defer c.openBaoSession.mu.Unlock()
 
 	var err error
 
-	c.openBaoClient.once.Do(func() {
-		c.openBaoClient.instance, err = openbao.New(context.Background(), &c.Config().OpenBao)
+	c.openBaoSession.once.Do(func() {
+		c.openBaoSession.instance, err = openbao.New(
+			context.Background(),
+			&c.Config().OpenBao,
+			c.Logger(),
+		)
 	})
 
 	if err != nil {
-		c.openBaoClient.once = sync.Once{}
+		c.openBaoSession.once = sync.Once{}
 
-		return nil, fmt.Errorf("initializing the OpenBao client: %w", err)
+		return nil, fmt.Errorf("initializing the OpenBao session: %w", err)
 	}
 
-	return c.openBaoClient.instance, nil
+	return c.openBaoSession.instance, nil
 }
 
 // SecretCipher initializes and returns the cipher that protects a secret.
@@ -39,14 +41,17 @@ func (c *Container) SecretCipher() (secret.Cipher, error) {
 	var err error
 
 	c.secretCipher.once.Do(func() {
-		var client *api.Client
+		var session *openbao.Session
 
-		client, err = c.OpenBaoClient()
+		session, err = c.OpenBaoSession()
 		if err != nil {
 			return
 		}
 
-		c.secretCipher.instance = secret.NewTransit(client, c.Config().OpenBao.TransitMount)
+		c.secretCipher.instance = secret.NewTransit(
+			session.Client(),
+			c.Config().OpenBao.TransitMount,
+		)
 	})
 
 	if err != nil {

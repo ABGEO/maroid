@@ -8,6 +8,7 @@
     "dex-ui:build": "pnpm --filter @maroid/dex-ui build",
     "hub:serve": "go run ./apps/hub/cmd serve http",
     "hub:migrate": "go run ./apps/hub/cmd migrate up",
+    "hub:worker": "go run ./apps/hub/cmd worker",
     "hub:plugin:build": "sh -c 'go build -buildmode=plugin -o build/plugins/$1.so ./plugins/$1' --"
   }
 }

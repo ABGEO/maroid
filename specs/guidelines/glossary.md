@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-10-05
+updated: 2026-10-07
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -89,6 +89,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-dependency`    | dependency        | A service outside the hub that every request path reads: the database, the IdP, and the secret store.            |
 | `GLO-secret-store`  | secret store      | The service that gives each secret its protection. OpenBao is the secret store today.                             |
 | `GLO-drain-period`  | drain period      | The time from the start of a shutdown to the close of the listener.                                               |
+| `GLO-store-access`  | store access      | The permission that the secret store grants to Maroid at a login. The store sets its end.                         |
 
 ## Retired identifiers
 

@@ -23,7 +23,7 @@ func (c *Container) HealthService() (*healthcheck.Service, error) {
 			return
 		}
 
-		openBaoClient, openBaoErr := c.OpenBaoClient()
+		openBaoSession, openBaoErr := c.OpenBaoSession()
 		if openBaoErr != nil {
 			err = openBaoErr
 
@@ -33,7 +33,7 @@ func (c *Container) HealthService() (*healthcheck.Service, error) {
 		c.healthService.instance, err = healthcheck.New(
 			c.Config(),
 			db,
-			openBaoClient,
+			openBaoSession.Client(),
 			http.DefaultClient,
 		)
 	})

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"slices"
 	"testing"
@@ -86,15 +87,15 @@ func newWorld(t *testing.T) *world {
 		require.NoError(t, err)
 	}
 
-	client, err := openbao.New(t.Context(), &config.OpenBao{
+	session, err := openbao.New(t.Context(), &config.OpenBao{
 		Address:      root.Address(),
 		RoleID:       readRoleID(t, root),
 		SecretID:     generateSecretID(t, root),
 		TransitMount: "transit",
-	})
+	}, slog.New(slog.DiscardHandler))
 	require.NoError(t, err)
 
-	cipher := secret.NewTransit(client, "transit")
+	cipher := secret.NewTransit(session.Client(), "transit")
 
 	schema, err := settings.Infer(&probeModel{})
 	require.NoError(t, err)

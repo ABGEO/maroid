@@ -1,2 +1,2 @@
-// Package openbao builds the client that every use of OpenBao shares.
+// Package openbao keeps the access of the hub to OpenBao.
 package openbao

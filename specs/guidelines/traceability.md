@@ -4,7 +4,7 @@ title: Traceability
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-02
+updated: 2026-10-07
 scope: [specs/, code comments]
 related: [LNG, PRC, GIT, RES]
 ---
@@ -283,6 +283,7 @@ Add a row before you create the file or the directory.
 | `WSPACE` | `features/wspace/` | The workspaces, their members, and the workspace that a unit of work acts in. | Approved |
 | `PLUGACC` | `features/plugacc/` | The administrator, the plugin allowlist, and the enablement of a plugin. | Approved |
 | `PERMS` | `features/perms/` | The workspace roles, and the permission that every action needs. | Approved |
+| `SSACCESS` | `features/ssaccess/` | The access of Maroid to the secret store while it runs. | Approved |
 
 ## Retired identifiers
 

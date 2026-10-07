@@ -12,7 +12,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/mymmrac/telego"
-	"github.com/openbao/openbao/api/v2"
 	"github.com/robfig/cron/v3"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
@@ -22,6 +21,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/healthcheck"
 	"github.com/abgeo/maroid/apps/hub/internal/logger"
 	"github.com/abgeo/maroid/apps/hub/internal/migrator"
+	"github.com/abgeo/maroid/apps/hub/internal/openbao"
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
@@ -59,7 +59,7 @@ type Resolver interface {
 	AuthFlowRepository() (repository.AuthFlowRepository, error)
 	IdentityResolver() (auth.IdentityResolver, error)
 	AuthService() (*auth.Service, error)
-	OpenBaoClient() (*api.Client, error)
+	OpenBaoSession() (*openbao.Session, error)
 	SecretCipher() (secret.Cipher, error)
 	HealthService() (*healthcheck.Service, error)
 	SettingsRegistry() *registry.SettingsRegistry
@@ -181,10 +181,10 @@ type Container struct {
 		instance *auth.Service
 	}
 
-	openBaoClient struct {
+	openBaoSession struct {
 		mu       sync.Mutex
 		once     sync.Once
-		instance *api.Client
+		instance *openbao.Session
 	}
 
 	healthService struct {
