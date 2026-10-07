@@ -14,6 +14,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/depresolver"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/openbao"
 	"github.com/abgeo/maroid/apps/hub/internal/worker"
 )
 
@@ -26,6 +27,7 @@ type WorkerCommand struct {
 
 	selectedWorkers []string
 	workers         []worker.Worker
+	openBaoSession  *openbao.Session
 }
 
 // NewWorkerCommand creates a new WorkerCommand.
@@ -65,6 +67,11 @@ func (c *WorkerCommand) Command() *cobra.Command {
 
 func (c *WorkerCommand) prepare() error {
 	var err error
+
+	c.openBaoSession, err = c.depResolver.OpenBaoSession()
+	if err != nil {
+		return fmt.Errorf("resolving the OpenBao session: %w", err)
+	}
 
 	c.workers, err = c.getWorkers()
 	if err != nil {
@@ -153,6 +160,10 @@ func (c *WorkerCommand) filterWorkers(names []string) ([]worker.Worker, error) {
 func (c *WorkerCommand) run(ctx context.Context) error {
 	errGroup, ctx := errgroup.WithContext(ctx)
 
+	errGroup.Go(func() error {
+		return c.openBaoSession.Run(ctx)
+	})
+
 	for _, wrk := range c.workers {
 		c.logger.InfoContext(ctx, "starting worker", slog.String("worker", wrk.Name()))
 
@@ -184,6 +195,14 @@ func (c *WorkerCommand) run(ctx context.Context) error {
 					slog.Any("error", err),
 				)
 			}
+		}
+
+		if err := c.openBaoSession.Stop(shutdownCtx); err != nil {
+			c.logger.ErrorContext(
+				shutdownCtx,
+				"openbao session stop failed",
+				slog.Any("error", err),
+			)
 		}
 	}()
 

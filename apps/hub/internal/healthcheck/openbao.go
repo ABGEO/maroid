@@ -16,7 +16,8 @@ var (
 	ErrOpenBaoUninitialized = errors.New("healthcheck: openbao is not initialized")
 )
 
-// secretStoreCheck checks that the secret store is initialized and unsealed.
+// secretStoreCheck checks that the secret store is initialized and unsealed, and
+// that it accepts the token of the hub.
 func secretStoreCheck(client *api.Client) health.Config {
 	return limited("secret-store", func(ctx context.Context) error {
 		status, err := client.Sys().HealthWithContext(ctx)
@@ -29,6 +30,12 @@ func secretStoreCheck(client *api.Client) health.Config {
 			return ErrOpenBaoUninitialized
 		case status.Sealed:
 			return ErrOpenBaoSealed
+		}
+
+		// The health of the store needs no token, so it stays up after the token of
+		// the hub ends.
+		if _, err = client.Auth().Token().LookupSelfWithContext(ctx); err != nil {
+			return fmt.Errorf("reading the openbao token: %w", err)
 		}
 
 		return nil

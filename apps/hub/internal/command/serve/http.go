@@ -66,6 +66,11 @@ func (c *HTTPCommand) Command() *cobra.Command {
 func (c *HTTPCommand) startServices(ctx context.Context) error {
 	errGroup, ctx := errgroup.WithContext(ctx)
 
+	openBaoSession, err := c.depResolver.OpenBaoSession()
+	if err != nil {
+		return fmt.Errorf("resolving the OpenBao session: %w", err)
+	}
+
 	server, err := c.depResolver.HTTPServer()
 	if err != nil {
 		return fmt.Errorf("resolving HTTP server: %w", err)
@@ -81,20 +86,12 @@ func (c *HTTPCommand) startServices(ctx context.Context) error {
 		return fmt.Errorf("resolving the health service: %w", err)
 	}
 
+	// The session starts before every other service, so the shutdown stops it last.
 	errGroup.Go(func() error {
-		c.logger.InfoContext(ctx, "starting HTTP server",
-			slog.String("address", c.cfg.Server.ListenAddr),
-			slog.String("port", c.cfg.Server.Port),
-		)
-
-		// @todo: listen TLS if configured.
-		err = server.ListenAndServe()
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			return fmt.Errorf("listening and serving: %w", err)
-		}
-
-		return nil
+		return openBaoSession.Run(ctx)
 	})
+
+	errGroup.Go(c.listen(ctx, server))
 
 	errGroup.Go(func() error {
 		c.logger.InfoContext(
@@ -115,6 +112,7 @@ func (c *HTTPCommand) startServices(ctx context.Context) error {
 		{"draining the HTTP server", c.drain(healthService)},
 		{"stopping telegram updates handler", telegramUpdatesHandler.Stop},
 		{"shutting down HTTP server", server.Shutdown},
+		{"stopping the OpenBao session", openBaoSession.Stop},
 	})
 
 	err = errGroup.Wait()
@@ -123,6 +121,23 @@ func (c *HTTPCommand) startServices(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (c *HTTPCommand) listen(ctx context.Context, server *http.Server) func() error {
+	return func() error {
+		c.logger.InfoContext(ctx, "starting HTTP server",
+			slog.String("address", c.cfg.Server.ListenAddr),
+			slog.String("port", c.cfg.Server.Port),
+		)
+
+		// @todo: listen TLS if configured.
+		err := server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			return fmt.Errorf("listening and serving: %w", err)
+		}
+
+		return nil
+	}
 }
 
 // drain fails the readiness, then keeps serving for the drain period, so that the

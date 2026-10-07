@@ -68,7 +68,6 @@ token of the hub still works.
 | `apps/hub/internal/command/worker.go`             | change | Runs the session in the errgroup. Stops it after every worker.          |
 | `apps/hub/internal/healthcheck/openbao.go`        | change | `secretStoreCheck` looks up the token after the health of the store.    |
 | `apps/hub/internal/healthcheck/service_test.go`   | change | The fake store answers `lookup-self`. `SSACCESS-SC-007`, `SSACCESS-SC-008`. |
-| `apps/hub/internal/handler/health_test.go`        | change | The fake store answers `lookup-self`.                                    |
 | `apps/hub/internal/secret/transit_test.go`        | change | Builds the cipher from `openbao.New(...).Client()`.                     |
 | `apps/hub/internal/settings/manager_test.go`      | change | Builds the cipher from `openbao.New(...).Client()`.                     |
 | `specs/features/pset/spec.md`                     | change | Section 4 names `openbao.New` with its new result.                      |
@@ -348,8 +347,8 @@ restore. The test runs about two minutes.
 | 1   | Write the test proxy and `SSACCESS-SC-001` to `SC-006`, `SC-010`, `SC-011`. Watch them fail. | `SSACCESS-FR-001` to `SSACCESS-FR-005`     | [x]  |
 | 2   | Write `openbao.Session` and delete `client.go`.                                       | `SSACCESS-FR-001` to `SSACCESS-FR-005`     | [x]  |
 | 3   | Replace `OpenBaoClient` with `OpenBaoSession` in the container.                       | `SSACCESS-FR-001`                          | [x]  |
-| 4   | Run and stop the session in `serve http` and in `worker`.                             | `SSACCESS-FR-001`                          | [ ]  |
-| 5   | Add `lookup-self` to the fake stores. Write `SC-007` and `SC-008`, then the check.    | `SSACCESS-FR-006`                          | [ ]  |
+| 4   | Run and stop the session in `serve http` and in `worker`.                             | `SSACCESS-FR-001`                          | [x]  |
+| 5   | Add `lookup-self` to the fake store. Write `SC-007` and `SC-008`, then the check.     | `SSACCESS-FR-006`                          | [x]  |
 | 6   | Write `SSACCESS-SC-009`.                                                              | `SSACCESS-NFR-001`                         | [ ]  |
 | 7   | Name the new result of `openbao.New` in section 4 of `specs/features/pset/spec.md`.   | `SSACCESS-FR-001`                          | [ ]  |
 

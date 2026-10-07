@@ -21,6 +21,7 @@ import (
 const (
 	discoveryPath = "/.well-known/openid-configuration"
 	healthPath    = "/v1/sys/health"
+	lookupPath    = "/v1/auth/token/lookup-self"
 	unsealed      = `{"initialized": true, "sealed": false}`
 	hangTime      = 10 * time.Second
 )
@@ -49,12 +50,13 @@ func newService(t *testing.T, idp, secretStore *httptest.Server) *healthcheck.Se
 	return service
 }
 
-// answer returns a test server that answers the path with the status and the body.
-func answer(t *testing.T, path string, status int, body string) *httptest.Server {
+// identityProvider returns a test server that answers the discovery document with
+// the status.
+func identityProvider(t *testing.T, status int) *httptest.Server {
 	t.Helper()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != path {
+		if r.URL.Path != discoveryPath {
 			http.NotFound(w, r)
 
 			return
@@ -62,7 +64,30 @@ func answer(t *testing.T, path string, status int, body string) *httptest.Server
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
-		_, _ = w.Write([]byte(body))
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	t.Cleanup(server.Close)
+
+	return server
+}
+
+// secretStore returns a test server that answers the health of the store with the
+// body, and the lookup of the token of the hub with the status.
+func secretStore(t *testing.T, healthBody string, lookupStatus int) *httptest.Server {
+	t.Helper()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		switch r.URL.Path {
+		case healthPath:
+			_, _ = w.Write([]byte(healthBody))
+		case lookupPath:
+			w.WriteHeader(lookupStatus)
+			_, _ = w.Write([]byte(`{"data": {}}`))
+		default:
+			http.NotFound(w, r)
+		}
 	}))
 	t.Cleanup(server.Close)
 
@@ -162,10 +187,10 @@ func TestTheIdentityProviderNeedsTheDiscoveryDocument(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			idp := answer(t, discoveryPath, testCase.status, `{}`)
-			secretStore := answer(t, healthPath, http.StatusOK, unsealed)
+			idp := identityProvider(t, testCase.status)
+			store := secretStore(t, unsealed, http.StatusOK)
 
-			failures := newService(t, idp, secretStore).Readiness(t.Context()).Failures
+			failures := newService(t, idp, store).Readiness(t.Context()).Failures
 
 			if testCase.failed {
 				assert.Contains(t, failures, "idp")
@@ -194,10 +219,10 @@ func TestTheSecretStoreMustBeInitializedAndUnsealed(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			idp := answer(t, discoveryPath, http.StatusOK, `{}`)
-			secretStore := answer(t, healthPath, http.StatusOK, testCase.body)
+			idp := identityProvider(t, http.StatusOK)
+			store := secretStore(t, testCase.body, http.StatusOK)
 
-			failures := newService(t, idp, secretStore).Readiness(t.Context()).Failures
+			failures := newService(t, idp, store).Readiness(t.Context()).Failures
 
 			if testCase.failed {
 				assert.Contains(t, failures, "secret-store")
@@ -206,4 +231,30 @@ func TestTheSecretStoreMustBeInitializedAndUnsealed(t *testing.T) {
 			}
 		})
 	}
+}
+
+// SSACCESS-SC-007: A store that refuses the token of the hub protects no secret for
+// the hub, so it counts as failed.
+func TestTheSecretStoreFailsWhenItRefusesTheToken(t *testing.T) {
+	t.Parallel()
+
+	idp := identityProvider(t, http.StatusOK)
+	store := secretStore(t, unsealed, http.StatusForbidden)
+
+	check := newService(t, idp, store).Readiness(t.Context())
+
+	assert.Equal(t, health.StatusUnavailable, check.Status)
+	assert.Contains(t, check.Failures, "secret-store")
+}
+
+// SSACCESS-SC-008: A store that accepts the token of the hub counts as up.
+func TestTheSecretStoreIsUpWhenItAcceptsTheToken(t *testing.T) {
+	t.Parallel()
+
+	idp := identityProvider(t, http.StatusOK)
+	store := secretStore(t, unsealed, http.StatusOK)
+
+	check := newService(t, idp, store).Readiness(t.Context())
+
+	assert.NotContains(t, check.Failures, "secret-store")
 }
