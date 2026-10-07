@@ -3,14 +3,15 @@ module github.com/abgeo/maroid/plugins/gwp
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261005165815-8d022217a917
-	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261005165815-8d022217a917
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261007201113-f0f51ecfa664
+	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261007201113-f0f51ecfa664
 	resty.dev/v3 v3.0.0-beta.3
 )
 
 require (
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261005165815-8d022217a917 // indirect
-	github.com/abgeo/maroid/libs/testdb v0.0.0-20261005165815-8d022217a917 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20261006220739-8c912ac31dd4 // indirect
+	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664 // indirect
+	github.com/abgeo/maroid/libs/testdb v0.0.0-20261007201113-f0f51ecfa664 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.4 // indirect
 	github.com/bytedance/sonic/loader v0.5.2 // indirect
@@ -29,19 +30,14 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/mcuadros/go-defaults v1.2.0 // indirect
-	github.com/moby/moby/api v1.56.1 // indirect
-	github.com/moby/moby/client v0.6.1 // indirect
 	github.com/molecule-man/go-brrr v1.2.0 // indirect
 	github.com/mymmrac/telego v1.12.1 // indirect
-	github.com/shirou/gopsutil/v4 v4.26.9 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.75.0 // indirect
 	github.com/valyala/fastjson v1.6.10 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.72.0 // indirect
-	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	golang.org/x/arch v0.31.0 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/net v0.59.0 // indirect

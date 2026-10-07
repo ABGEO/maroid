@@ -3,8 +3,8 @@ module github.com/abgeo/maroid/libs/pluginapi
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261005165815-8d022217a917
-	github.com/abgeo/maroid/libs/testdb v0.0.0-20261005165815-8d022217a917
+	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664
+	github.com/abgeo/maroid/libs/testdb v0.0.0-20261007201113-f0f51ecfa664
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/mymmrac/telego v1.12.1
 	github.com/spf13/cobra v1.10.2
@@ -13,7 +13,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
-	github.com/Azure/go-ansiterm v0.0.0-20260917205352-e937bb47801a // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20261006220739-8c912ac31dd4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.4 // indirect

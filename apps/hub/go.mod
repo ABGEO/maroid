@@ -3,12 +3,12 @@ module github.com/abgeo/maroid/apps/hub
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/notifier v0.0.0-20261005165815-8d022217a917
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261005165815-8d022217a917
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261005165815-8d022217a917
-	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261005165815-8d022217a917
-	github.com/abgeo/maroid/libs/rest v0.0.0-20261005165815-8d022217a917
-	github.com/abgeo/maroid/libs/testdb v0.0.0-20261005165815-8d022217a917
+	github.com/abgeo/maroid/libs/notifier v0.0.0-20261007201113-f0f51ecfa664
+	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261007201113-f0f51ecfa664
+	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261007201113-f0f51ecfa664
+	github.com/abgeo/maroid/libs/rest v0.0.0-20261007201113-f0f51ecfa664
+	github.com/abgeo/maroid/libs/testdb v0.0.0-20261007201113-f0f51ecfa664
 	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/go-chi/chi/v5 v5.3.0
@@ -40,7 +40,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.2 // indirect
-	github.com/Azure/go-ansiterm v0.0.0-20260917205352-e937bb47801a // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20261006220739-8c912ac31dd4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ajg/form v1.7.1 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect

@@ -1,5 +1,5 @@
-github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261005165815-8d022217a917 h1:CNPOFerbwLe+Op115ibaFc4FixwI1iK2zIIL4bZCWGU=
-github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261005165815-8d022217a917/go.mod h1:eAkT4x31SwNKNAQOvzqAjsBcqI13W9A1RRnT6w4/cQI=
+github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664 h1:n6NZ1muJxInbvUNL/8e8yn3p92hbYfEdY5YycO7kZzI=
+github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664/go.mod h1:eAkT4x31SwNKNAQOvzqAjsBcqI13W9A1RRnT6w4/cQI=
 github.com/bytedance/gopkg v0.1.4 h1:oZnQwnX82KAIWb7033bEwtxvTqXcYMxDBaQxo5JJHWM=
 github.com/bytedance/gopkg v0.1.4/go.mod h1:v1zWfPm21Fb+OsyXN2VAHdL6TBb2L88anLQgdyje6R4=
 github.com/bytedance/sonic v1.15.4 h1:FgtV/4aBHpla9AxuMpuuzVUpa/Cf3izufkxNmnEzdI8=
