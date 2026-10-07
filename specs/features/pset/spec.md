@@ -4,7 +4,7 @@ title: The settings of a plugin
 type: spec
 status: approved
 created: 2026-09-14
-updated: 2026-10-05
+updated: 2026-10-08
 approved_by: Temuri
 approved_on: 2026-10-05
 constrained_by: [CFG, PLG, OWN, SEC, ARC, API, ERR, EXT, PRC, DAT, REP, PKG, LIF, DEP, LOG, JOB, TST, SPC]
@@ -100,13 +100,13 @@ carry that change into the code.
 | `apps/hub/internal/model/plugin_settings.go`                        | create | `model.PluginSettings`, `model.Fields`, `model.SettingEntry`, `model.FieldKind`, `LogValue` |
 | `apps/hub/internal/repository/plugin_settings.go`                   | create | `repository.PluginSettingsRepository`, `repository.PluginSettings`       |
 | `apps/hub/internal/database/tx.go`                                  | create | `database.WithScopeTx`                                                   |
-| `apps/hub/internal/openbao/{doc,client}.go`                         | create | `openbao.New`, which builds the client and logs in                       |
+| `apps/hub/internal/openbao/{doc,session}.go`                        | create | `openbao.New`, which builds the client and logs in                       |
 | `apps/hub/internal/secret/{doc,cipher,transit}.go`                  | create | `secret.Cipher`, `secret.Transit`, `secret.Key`, `secret.UserKey`, `secret.UserKeyPrefix`, `secret.WorkspaceKey`, `secret.WorkspaceKeyPrefix` |
 | `apps/hub/internal/settings/{doc,service,schema,validate}.go`       | create | `settings.Service`, `settings.Manager`, `settings.SchemaSource`, `settings.Schema`, `settings.Infer`, `settings.Validate`, `settings.InvalidError`, `settings.MaxValueLength`, `settings.SecretMask` |
 | `apps/hub/internal/registry/settings.go`                            | create | `registry.SettingsRegistry`, `registry.SettingsEntry`                    |
 | `apps/hub/internal/plugin/registrar/settings.go`                    | create | `registrar.SettingsRegistrar`                                            |
 | `apps/hub/internal/handler/plugin.go`                               | change | `handler.Plugin` takes the settings service, and it owns every settings route of a plugin |
-| `apps/hub/internal/depresolver/{secret,settings}.go`                | create | `OpenBaoClient`, `SecretCipher`, `SettingsRegistry`, `SettingsService`   |
+| `apps/hub/internal/depresolver/{secret,settings}.go`                | create | `OpenBaoSession`, `SecretCipher`, `SettingsRegistry`, `SettingsService`  |
 | `apps/hub/internal/config/config.go`                                | change | `OpenBao`, and the `OpenBao` field of `Config`                           |
 | `apps/hub/internal/depresolver/resolver.go`                         | change | The four providers join `Resolver`, and four fields join `Container`     |
 | `apps/hub/internal/depresolver/plugin.go`                           | change | `PluginHost` takes the service. `buildPluginLoader` passes the registry. |
@@ -160,9 +160,10 @@ type SettingsEntry struct {
     Schema   *settings.Schema
 }
 
-// apps/hub/internal/openbao/client.go
+// apps/hub/internal/openbao/session.go
 // One client serves every engine, so a second use of OpenBao logs in no second time.
-func New(ctx context.Context, cfg *config.OpenBao) (*api.Client, error)
+// SSACCESS keeps the token of the session alive.
+func New(ctx context.Context, cfg *config.OpenBao, logger *slog.Logger) (*Session, error)
 
 // apps/hub/internal/secret/cipher.go
 
@@ -516,7 +517,7 @@ password is not large enough to pay for the extra step.
 
 **Realizes:** `PSET-FR-018`
 **Decision:** `openbao.New` builds the client and logs in with AppRole.
-`Container.OpenBaoClient` holds it, and `Container.SecretCipher` takes it to build
+`Container.OpenBaoSession` holds it, and `Container.SecretCipher` takes its client to build
 `secret.Transit`. The login is a request to the service, so a build that cannot reach
 it returns an error and the process stops. `Application.New` resolves the plugin
 loader, which builds the host, the settings service, and the cipher, so the login runs

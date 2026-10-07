@@ -500,3 +500,26 @@ func TestSessionIgnoresTheCancellationOfItsContext(t *testing.T) {
 	require.NoError(t, run.session.Stop(stopCtx))
 	require.NoError(t, <-run.done)
 }
+
+// SSACCESS-SC-009: The session regains its access no more than 60 seconds after the
+// store answers again, after an outage in which a wait with no limit passes 60 seconds.
+func TestSessionRegainsAccessWithinOneMinute(t *testing.T) {
+	t.Parallel()
+
+	st := startStore(t, "2s", "2s")
+	proxy := newFaultProxy(t, st.endpoint)
+	run := startSession(t.Context(), t, st, proxy.server.URL, &logBuffer{})
+
+	proxy.set(drop)
+	time.Sleep(200 * time.Second)
+	proxy.set(forward)
+
+	restored := time.Now()
+
+	assert.Eventually(t, func() bool {
+		_, err := run.session.Client().Auth().Token().LookupSelfWithContext(t.Context())
+
+		return err == nil
+	}, 60*time.Second, 500*time.Millisecond)
+	t.Logf("regained the access %s after the restore", time.Since(restored).Round(time.Second))
+}

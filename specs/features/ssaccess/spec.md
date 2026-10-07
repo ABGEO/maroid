@@ -4,7 +4,7 @@ title: The access of Maroid to the secret store
 type: spec
 status: approved
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-08
 approved_by: Temuri
 approved_on: 2026-10-07
 constrained_by: [LIF, LOG, DEP, JOB, TST, EXT]
@@ -318,9 +318,10 @@ request two times before it fails, so one renewal and one login take about 7 sec
 **Layer:** integration
 
 **Given** a role with `token_ttl` 2 seconds and `token_max_ttl` 2 seconds, and a running session.
-**When** the proxy answers nothing for 70 seconds, then forwards again.
+**When** the proxy answers nothing for 200 seconds, then forwards again.
 **Then** `lookup-self` through `Client()` succeeds no more than 60 seconds after the
-restore. The test runs about two minutes.
+restore. The waits double past 60 seconds inside the outage, so a wait with no
+`maxRetryDelay` fails the scenario. The test runs about four minutes.
 
 ### `SSACCESS-SC-010`
 
@@ -349,8 +350,8 @@ restore. The test runs about two minutes.
 | 3   | Replace `OpenBaoClient` with `OpenBaoSession` in the container.                       | `SSACCESS-FR-001`                          | [x]  |
 | 4   | Run and stop the session in `serve http` and in `worker`.                             | `SSACCESS-FR-001`                          | [x]  |
 | 5   | Add `lookup-self` to the fake store. Write `SC-007` and `SC-008`, then the check.     | `SSACCESS-FR-006`                          | [x]  |
-| 6   | Write `SSACCESS-SC-009`.                                                              | `SSACCESS-NFR-001`                         | [ ]  |
-| 7   | Name the new result of `openbao.New` in section 4 of `specs/features/pset/spec.md`.   | `SSACCESS-FR-001`                          | [ ]  |
+| 6   | Write `SSACCESS-SC-009`.                                                              | `SSACCESS-NFR-001`                         | [x]  |
+| 7   | Name the new result of `openbao.New` in section 4 of `specs/features/pset/spec.md`.   | `SSACCESS-FR-001`                          | [x]  |
 
 ## Retired identifiers
 
