@@ -188,7 +188,7 @@ func TestThePresetsOfOneKindExistOnce(t *testing.T) {
 
 	manager, _ := writable(t,
 		dextest.Connector("telegram", "oidc", "Telegram", `{"maroidPreset":"telegram"}`),
-		dextest.Connector("local", "local", "Maroid", `{"maroidPreset":"local"}`),
+		dextest.Connector("local", "local", "Email", `{"maroidPreset":"local"}`),
 	)
 
 	_, err := manager.Create(t.Context(), provider.Input{
@@ -200,7 +200,7 @@ func TestThePresetsOfOneKindExistOnce(t *testing.T) {
 	require.ErrorIs(t, err, errs.ErrProviderExists)
 }
 
-// IDPROV-SC-006: The local preset takes no input, and Dex holds it named Maroid.
+// IDPROV-SC-006: The local preset takes no input, and Dex holds it named Email.
 func TestTheLocalPresetTakesNoInput(t *testing.T) {
 	t.Parallel()
 
@@ -214,7 +214,7 @@ func TestTheLocalPresetTakesNoInput(t *testing.T) {
 	created, err := manager.Create(t.Context(), provider.Input{Preset: provider.PresetLocal})
 	require.NoError(t, err)
 	assert.Equal(t, "local", created.ID)
-	assert.Equal(t, "Maroid", created.Name)
+	assert.Equal(t, "Email", created.Name)
 
 	connectors, err := memory.ListConnectors(t.Context())
 	require.NoError(t, err)
@@ -268,7 +268,7 @@ func TestAChangeLandsOnTheFieldsThatChange(t *testing.T) {
 	manager, memory := writable(t,
 		dextest.Connector("telegram", "oidc", "Telegram",
 			`{"maroidPreset":"telegram","scopes":["openid","profile"]}`),
-		dextest.Connector("local", "local", "Maroid", `{"maroidPreset":"local"}`),
+		dextest.Connector("local", "local", "Email", `{"maroidPreset":"local"}`),
 	)
 	_, err := manager.Create(t.Context(), cloudInput())
 	require.NoError(t, err)

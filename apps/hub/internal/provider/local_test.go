@@ -48,7 +48,7 @@ func localUnderTest(t *testing.T, connectors ...dex.Connector) *localFixture {
 }
 
 func withLocal() dex.Connector {
-	return dextest.Connector("local", "local", "Maroid", localPreset)
+	return dextest.Connector("local", "local", "Email", localPreset)
 }
 
 func (f *localFixture) user(t *testing.T, name string) string {
@@ -278,7 +278,7 @@ func TestEnsureProviderAddsTheLocalProvider(t *testing.T) {
 	connectors, err := fixture.memory.ListConnectors(t.Context())
 	require.NoError(t, err)
 	require.Len(t, connectors, 1)
-	assert.Equal(t, "Maroid", connectors[0].Name)
+	assert.Equal(t, "Email", connectors[0].Name)
 }
 
 // IDPROV-SC-025: The command line asks whether a record holds a local account before it

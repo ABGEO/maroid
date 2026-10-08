@@ -371,7 +371,7 @@ components:
   schemas:
     Provider:
       type: object
-      required: [id, name, static, identity_count, administrators_without_sign_in]
+      required: [id, name, static, redirect_uri, identity_count, administrators_without_sign_in]
       properties:
         id:
           type: string
@@ -407,7 +407,9 @@ components:
         redirect_uri:
           type: string
           format: uri
-          description: The address to register at the upstream provider.
+          description: >
+            The address to register at the upstream provider. It is one for the
+            instance, so every provider carries it.
         identity_count:
           type: integer
           minimum: 0

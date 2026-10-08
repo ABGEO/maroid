@@ -4,7 +4,7 @@ title: The scenarios of the providers and the local account
 type: spec
 status: approved
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-09
 approved_by: Temuri
 approved_on: 2026-10-08
 constrained_by: [TST, TRC]
@@ -83,7 +83,7 @@ answer shows that client identifier.
 
 **Given** no local provider.
 **When** Zura adds the local preset with an empty body beyond the preset.
-**Then** Dex holds `local` of type `local`, named `Maroid`.
+**Then** Dex holds `local` of type `local`, named `Email`.
 
 ## `IDPROV-SC-007`
 
@@ -92,8 +92,8 @@ answer shows that client identifier.
 
 **Given** `oidc.issuer` is `https://auth.maroid.localhost`.
 **When** Zura reads `abgeo-cloud`, then `local`.
-**Then** `abgeo-cloud` carries `redirect_uri: https://auth.maroid.localhost/callback`.
-`local` carries none.
+**Then** both carry `redirect_uri: https://auth.maroid.localhost/callback`, so the form
+of a new provider reads the address from any provider of the list.
 
 ## `IDPROV-SC-008`
 
@@ -264,7 +264,7 @@ records every line.
 **When** the operator runs `maroid user invite --first-name Zura --admin`, then
 `maroid user password --user <the first line> --email zura@home.example`, and types
 the password twice.
-**Then** the sign in page of Dex shows "Log in with Maroid". Zura signs in and reaches
+**Then** the sign in page of Dex shows "Log in with Email". Zura signs in and reaches
 `/admin/providers`.
 
 ## `IDPROV-SC-025`

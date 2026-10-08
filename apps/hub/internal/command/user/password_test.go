@@ -110,7 +110,7 @@ func TestTheCommandGivesTheFirstLocalAccount(t *testing.T) {
 	connectors := world.connectors(t)
 	require.Len(t, connectors, 1)
 	assert.Equal(t, "local", connectors[0].ID)
-	assert.Equal(t, "Maroid", connectors[0].Name)
+	assert.Equal(t, "Email", connectors[0].Name)
 	require.NoError(
 		t,
 		bcrypt.CompareHashAndPassword(world.memory.Hash(zuraEmail), []byte(firstPassword)),

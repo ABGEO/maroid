@@ -64,15 +64,15 @@ func TestAConfigThatIsNoObjectIsStatic(t *testing.T) {
 	assert.True(t, providers[0].Static)
 }
 
-// IDPROV-SC-007: A provider of the OIDC kind carries the redirect address of Dex.
-// The local provider carries none.
-func TestTheRedirectAddressBelongsToAnOIDCProvider(t *testing.T) {
+// IDPROV-SC-007: Every provider carries the redirect address of Dex, so the form of a
+// new provider reads it from the list.
+func TestEveryProviderCarriesTheRedirectAddress(t *testing.T) {
 	t.Parallel()
 
 	manager := managerOf(t,
 		dextest.Connector("abgeo-cloud", "oidc", "ABGEO.cloud",
 			`{"issuer":"https://auth.abgeo.cloud","maroidPreset":"oidc"}`),
-		dextest.Connector("local", "local", "Maroid", `{"maroidPreset":"local"}`),
+		dextest.Connector("local", "local", "Email", `{"maroidPreset":"local"}`),
 	)
 
 	cloud, err := manager.Get(t.Context(), "abgeo-cloud")
@@ -82,7 +82,7 @@ func TestTheRedirectAddressBelongsToAnOIDCProvider(t *testing.T) {
 	local, err := manager.Get(t.Context(), "local")
 	require.NoError(t, err)
 	assert.Equal(t, provider.PresetLocal, local.Preset)
-	assert.Empty(t, local.RedirectURI)
+	assert.Equal(t, "https://auth.maroid.localhost/callback", local.RedirectURI)
 }
 
 // IDPROV-SC-010: The answer says that a secret exists and never carries it. The

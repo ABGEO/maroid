@@ -107,11 +107,14 @@ and routes under `/users/{userId}/identities` give, reset, and remove a local ac
 | `apps/hub/internal/depresolver/{dex,provider,server}.go`    | create, change | `DexClient`, `CloseDexClient`, `ProviderService`, `LocalAccounts`, the handler |
 | `apps/hub/internal/command/user/password.go`                | create | `PasswordCommand`                                                   |
 | `apps/hub/internal/command/user/{user,invite}.go`           | change | Registers `password`. `invite` prints the record identifier.        |
-| `apps/deck/src/lib/api/{providers,users,types}.ts`          | create, change | The client of section 4.3                                    |
+| `apps/deck/src/lib/api/{providers,users,types,index}.ts`    | create, change | The client of section 4.3                                    |
 | `apps/deck/src/routes/(dashboard)/admin/providers/+page.svelte` | create | The list, and the menu that adds a provider                     |
 | `apps/deck/src/routes/(dashboard)/admin/providers/[provider]/+page.svelte` | create | The form, the redirect address, the removal dialog   |
 | `apps/deck/src/routes/(dashboard)/admin/users/[user]/+page.svelte` | change | The local account section                                    |
 | `apps/deck/src/lib/components/layout/Sidebar.svelte`        | change | The entry `/admin/providers`                                        |
+| `apps/deck/src/routes/(dashboard)/profile/+page.svelte`    | change | The local provider offers no attach. `IDPROV-FR-022`              |
+| `apps/deck/package.json`                                    | change | The `yaml` package. `IDPROV-DD-004`                                 |
+| `libs/api-client/src/problem.ts`                            | change | The four problem types of section 4.6, and `not-ready`             |
 | `config.example.yaml`, `docker-compose.yaml`, `.docker/dex/config.yaml`, `chart/` | change | The `dex` block, the certificates, no published port |
 | `specs/features/idprov/api.yaml`                            | create | The routes of section 4.3                                           |
 | `specs/features/extid/api.yaml`                             | change | `startAttach` answers 400 for `local`                               |
@@ -219,11 +222,15 @@ The identity of a local account is `(local, <user record identifier>)`.
 The three routes under `/users/{userId}/identities` that write accept the provider
 `local` alone. `IDPROV-DD-011`.
 
-A provider in an answer carries `id`, `name`, `preset`, `static`, `identity_count`, and
-`administrators_without_sign_in`. A provider of a preset other than `local` also
-carries `issuer`, `client_id`, `user_id_key`, `options`, `client_secret_set`, and
-`redirect_uri`. A generic OIDC provider also carries `scopes`. No answer carries a
+A provider in an answer carries `id`, `name`, `preset`, `static`, `redirect_uri`,
+`identity_count`, and `administrators_without_sign_in`. A provider of a preset other
+than `local` also carries `issuer`, `client_id`, `user_id_key`, `options`, and
+`client_secret_set`. A generic OIDC provider also carries `scopes`. No answer carries a
 secret, a password, or a hash.
+
+Every provider carries `redirect_uri`, because the address is one for the instance and
+the form of a new provider needs it before the upstream provider issues a client. A
+person who reaches the deck signed in with a provider, so the list holds one.
 
 `redirect_uri` is `oidc.issuer` with `/callback` appended. The `ETag` of a provider is
 an integer from the SHA-256 of its name and its stored config, so a change in Dex
@@ -263,7 +270,7 @@ The hub writes the key `maroidPreset` into every connector config that it stores
 
 | Preset     | Identifier            | Type of Dex | Name at creation | Fixed config                                                         | Default config                                          |
 | ---------- | --------------------- | ----------- | ---------------- | -------------------------------------------------------------------- | ------------------------------------------------------- |
-| `local`    | `local`               | `local`     | `Maroid`         | `maroidPreset`                                                       | None                                                    |
+| `local`    | `local`               | `local`     | `Email`          | `maroidPreset`                                                       | None                                                    |
 | `telegram` | `telegram`            | `oidc`      | `Telegram`       | `issuer: https://oauth.telegram.org`, `userIDKey: id`, `scopes: [openid, profile]`, `redirectURI`, `maroidPreset` | `clientID`: the prefix of `telegram.token` before `:` |
 | `oidc`     | Chosen, then fixed    | `oidc`      | Chosen           | `redirectURI`, `maroidPreset`                                        | `userIDKey: sub`, `scopes: [openid, profile, email]`    |
 
@@ -500,7 +507,7 @@ administrators overwrite the first with no warning.
 | 6   | `GET /auth/identities` reads Dex. `auth.providers` goes. `Link` refuses `local`. | `IDPROV-FR-017`, `IDPROV-FR-022`    | [x]  |
 | 7   | `LocalAccounts`, the routes under `/users/{userId}/identities`, the detach    | `IDPROV-FR-018` to `IDPROV-FR-024`    | [x]  |
 | 8   | `maroid user password`, and the output of `maroid user invite`                | `IDPROV-FR-025` to `IDPROV-FR-028`    | [x]  |
-| 9   | The deck: the providers pages, the local account section, the sidebar entry   | `IDPROV-FR-001` to `IDPROV-FR-020`    | [ ]  |
+| 9   | The deck: the providers pages, the local account section, the sidebar entry   | `IDPROV-FR-001` to `IDPROV-FR-020`    | [x]  |
 | 10  | `config.example.yaml`, `docker-compose.yaml`, `chart/`, and the manual scenarios | `IDPROV-NFR-001`                   | [ ]  |
 
 ## 8. Out of scope for this specification

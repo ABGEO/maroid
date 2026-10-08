@@ -364,10 +364,11 @@ func (m *Manager) find(ctx context.Context, id string) (dex.Connector, error) {
 
 func (m *Manager) read(connector dex.Connector) Provider {
 	read := Provider{
-		ID:      connector.ID,
-		Name:    connector.Name,
-		Static:  true,
-		Version: version(connector),
+		ID:          connector.ID,
+		Name:        connector.Name,
+		Static:      true,
+		RedirectURI: m.redirectURI,
+		Version:     version(connector),
 	}
 
 	var config map[string]json.RawMessage
@@ -391,7 +392,6 @@ func (m *Manager) read(connector dex.Connector) Provider {
 	read.ClientID = text(config[keyClientID])
 	read.ClientSecretSet = text(config[keyClientSecret]) != ""
 	read.UserIDKey = text(config[keyUserIDKey])
-	read.RedirectURI = m.redirectURI
 
 	if preset == PresetOIDC {
 		_ = json.Unmarshal(config[keyScopes], &read.Scopes)

@@ -4,7 +4,7 @@ title: The providers of the instance and the local account
 type: requirements
 status: approved
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-09
 approved_by: Temuri
 approved_on: 2026-10-08
 constrained_by: [SEC, OWN, API, CLI, CFG, LOG]
@@ -97,10 +97,11 @@ identifier is the same at every bot.
 
 ### `IDPROV-FR-006`
 
-An administrator must add the local provider with no input. Maroid names it `Maroid`.
+An administrator must add the local provider with no input. Maroid names it `Email`.
 
-**Why:** The local provider holds no setting. The sign in page of the IdP reads
-"Log in with Maroid", which sets an account of the instance apart from an external one.
+**Why:** The local provider holds no setting. The IdP gives the name `Email` to the
+local connector of its own configuration, so a local provider reads the same
+whichever of the two holds it, and the sign in page reads "Log in with Email".
 
 **Examples:**
 

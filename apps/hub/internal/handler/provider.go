@@ -88,7 +88,7 @@ type providerBody struct {
 	UserIDKey       string                     `json:"user_id_key,omitempty"`
 	Scopes          []string                   `json:"scopes,omitempty"`
 	Options         map[string]json.RawMessage `json:"options,omitempty"`
-	RedirectURI     string                     `json:"redirect_uri,omitempty"`
+	RedirectURI     string                     `json:"redirect_uri"`
 	IdentityCount   int                        `json:"identity_count"`
 	Stranded        []userRefBody              `json:"administrators_without_sign_in"`
 }

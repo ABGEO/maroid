@@ -16,7 +16,7 @@ import (
 // The fixed values of the presets. `spec.md` section 4.4 gives them.
 const (
 	localID          = "local"
-	localName        = "Maroid"
+	localName        = "Email"
 	telegramID       = "telegram"
 	telegramName     = "Telegram"
 	telegramIssuer   = "https://oauth.telegram.org"

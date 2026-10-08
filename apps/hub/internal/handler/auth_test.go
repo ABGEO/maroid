@@ -776,7 +776,7 @@ func TestTheListReadsTheProvidersOfDex(t *testing.T) {
 	require.NoError(t, fixture.idp.CreateConnector(ctx,
 		dextest.Connector("mock", "mockCallback", "Mock", `{}`)))
 	require.NoError(t, fixture.idp.CreateConnector(ctx,
-		dextest.Connector(auth.ProviderLocal, "local", "Maroid", `{"maroidPreset":"local"}`)))
+		dextest.Connector(auth.ProviderLocal, "local", "Email", `{"maroidPreset":"local"}`)))
 	require.NoError(t, fixture.idp.DeleteConnector(ctx, providerCloud))
 
 	userID := addUserRecord(t, fixture.database, "Ana")
@@ -788,7 +788,7 @@ func TestTheListReadsTheProvidersOfDex(t *testing.T) {
 	require.Len(t, body, 3)
 
 	assert.Equal(t, "Mock", body["mock"]["name"])
-	assert.Equal(t, "Maroid", body[auth.ProviderLocal]["name"])
+	assert.Equal(t, "Email", body[auth.ProviderLocal]["name"])
 	assert.Equal(t, true, body[auth.ProviderTelegram]["attached"])
 	assert.Equal(t, false, body["mock"]["attached"])
 }
@@ -866,7 +866,7 @@ func TestADetachOfTheLocalAccountRemovesThePassword(t *testing.T) {
 	ctx := t.Context()
 
 	require.NoError(t, fixture.idp.CreateConnector(ctx,
-		dextest.Connector(auth.ProviderLocal, "local", "Maroid", `{"maroidPreset":"local"}`)))
+		dextest.Connector(auth.ProviderLocal, "local", "Email", `{"maroidPreset":"local"}`)))
 
 	nina := addUserRecord(t, fixture.database, "Nina")
 	require.NoError(
