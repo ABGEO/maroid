@@ -158,6 +158,8 @@ type LocalAccounts interface {
     Reset(ctx context.Context, userID string, password []byte) error
     Remove(ctx context.Context, userID string) error
     EnsureProvider(ctx context.Context) error
+    // HasAccount tells the command line whether to give an account or reset one.
+    HasAccount(ctx context.Context, userID string) (bool, error)
 }
 
 // apps/hub/internal/repository/identity.go
@@ -237,7 +239,8 @@ moves it too. `IDPROV-DD-013`.
 `--email` is required when the record holds no local account, and refused when it
 holds one. The command offers no flag for the password. On a terminal it prompts
 twice and refuses two different values. Otherwise it reads the first line of the
-standard input.
+standard input. Every check and the read of the password run before the first write,
+so a refused run changes nothing.
 
 **Configuration scheme.**
 
@@ -496,7 +499,7 @@ administrators overwrite the first with no warning.
 | 5   | `provider.Service` and the routes under `/providers`, the problem types       | `IDPROV-FR-001` to `IDPROV-FR-016`    | [x]  |
 | 6   | `GET /auth/identities` reads Dex. `auth.providers` goes. `Link` refuses `local`. | `IDPROV-FR-017`, `IDPROV-FR-022`    | [x]  |
 | 7   | `LocalAccounts`, the routes under `/users/{userId}/identities`, the detach    | `IDPROV-FR-018` to `IDPROV-FR-024`    | [x]  |
-| 8   | `maroid user password`, and the output of `maroid user invite`                | `IDPROV-FR-025` to `IDPROV-FR-028`    | [ ]  |
+| 8   | `maroid user password`, and the output of `maroid user invite`                | `IDPROV-FR-025` to `IDPROV-FR-028`    | [x]  |
 | 9   | The deck: the providers pages, the local account section, the sidebar entry   | `IDPROV-FR-001` to `IDPROV-FR-020`    | [ ]  |
 | 10  | `config.example.yaml`, `docker-compose.yaml`, `chart/`, and the manual scenarios | `IDPROV-NFR-001`                   | [ ]  |
 

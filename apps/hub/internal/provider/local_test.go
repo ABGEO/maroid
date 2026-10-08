@@ -280,3 +280,22 @@ func TestEnsureProviderAddsTheLocalProvider(t *testing.T) {
 	require.Len(t, connectors, 1)
 	assert.Equal(t, "Maroid", connectors[0].Name)
 }
+
+// IDPROV-SC-025: The command line asks whether a record holds a local account before it
+// gives one or resets one.
+func TestHasAccountReadsTheIdentity(t *testing.T) {
+	t.Parallel()
+
+	fixture := localUnderTest(t, withLocal())
+	nina, beka := fixture.user(t, "Nina"), fixture.user(t, "Beka")
+
+	require.NoError(t, fixture.accounts.Give(t.Context(), nina, ninaEmail, []byte(goodPassword)))
+
+	held, err := fixture.accounts.HasAccount(t.Context(), nina)
+	require.NoError(t, err)
+	assert.True(t, held)
+
+	held, err = fixture.accounts.HasAccount(t.Context(), beka)
+	require.NoError(t, err)
+	assert.False(t, held)
+}

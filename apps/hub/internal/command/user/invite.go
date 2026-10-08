@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -108,7 +110,15 @@ func (c *InviteCommand) run(ctx context.Context) error {
 		slog.Time("expires_at", time.Now().Add(ttl)),
 	)
 
-	fmt.Println(address) //nolint:forbidigo // the address is the result of the command.
+	return writeInvitation(os.Stdout, result.UserID, address)
+}
+
+// writeInvitation prints the identifier of the record on the first line and the address
+// of the invitation on the second. maroid user password reads the first.
+func writeInvitation(out io.Writer, userID string, address string) error {
+	if _, err := fmt.Fprintf(out, "%s\n%s\n", userID, address); err != nil {
+		return fmt.Errorf("writing the invitation: %w", err)
+	}
 
 	return nil
 }

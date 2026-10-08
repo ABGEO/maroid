@@ -24,7 +24,10 @@ func (c *Command) Command() *cobra.Command {
 		Short: "Act on a user record",
 	}
 
-	cmd.AddCommand(NewInviteCommand(c.depResolver).Command())
+	cmd.AddCommand(
+		NewInviteCommand(c.depResolver).Command(),
+		NewPasswordCommand(c.depResolver).Command(),
+	)
 
 	return cmd
 }

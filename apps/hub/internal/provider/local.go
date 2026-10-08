@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/mail"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -33,6 +34,7 @@ type LocalAccounts interface {
 	Reset(ctx context.Context, userID string, password []byte) error
 	Remove(ctx context.Context, userID string) error
 	EnsureProvider(ctx context.Context) error
+	HasAccount(ctx context.Context, userID string) (bool, error)
 }
 
 // Accounts is the LocalAccounts that Dex and the identities back. The user_id of a
@@ -144,6 +146,20 @@ func (a *Accounts) Remove(ctx context.Context, userID string) error {
 	}
 
 	return nil
+}
+
+// HasAccount reports whether the record holds a local account.
+func (a *Accounts) HasAccount(ctx context.Context, userID string) (bool, error) {
+	identities, err := database.FetchTx(ctx, a.db, func(tx *sqlx.Tx) ([]model.Identity, error) {
+		return repository.NewIdentity(tx).ListByUser(ctx, userID)
+	})
+	if err != nil {
+		return false, fmt.Errorf("reading the identities of the record: %w", err)
+	}
+
+	return slices.ContainsFunc(identities, func(identity model.Identity) bool {
+		return identity.Provider == localID
+	}), nil
 }
 
 // EnsureProvider adds the local provider when Dex holds none.

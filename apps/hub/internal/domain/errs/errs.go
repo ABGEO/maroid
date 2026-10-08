@@ -158,4 +158,15 @@ var (
 	// ErrLocalProviderAbsent indicates a local account while the identity provider
 	// holds no local provider.
 	ErrLocalProviderAbsent = errors.New("local account: no local provider")
+	// ErrLocalAccountEmail indicates an email address for a record that already holds a
+	// local account, whose address stays.
+	ErrLocalAccountEmail = errors.New("local account: the record holds one, so --email is refused")
+	// ErrLocalAccountEmailMissing indicates a new local account with no email address.
+	ErrLocalAccountEmailMissing = errors.New(
+		"local account: the record holds none, so --email is required",
+	)
+	// ErrPasswordMismatch indicates two entries of a password at a prompt that differ.
+	ErrPasswordMismatch = errors.New("password: the two entries differ")
+	// ErrPasswordMissing indicates a standard input that holds no password.
+	ErrPasswordMissing = errors.New("password: the standard input holds none")
 )
