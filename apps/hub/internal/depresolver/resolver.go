@@ -17,6 +17,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/dex"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/healthcheck"
 	"github.com/abgeo/maroid/apps/hub/internal/logger"
@@ -24,6 +25,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/openbao"
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
+	"github.com/abgeo/maroid/apps/hub/internal/provider"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
@@ -60,6 +62,9 @@ type Resolver interface {
 	IdentityResolver() (auth.IdentityResolver, error)
 	AuthService() (*auth.Service, error)
 	OpenBaoSession() (*openbao.Session, error)
+	DexClient() (*dex.GRPC, error)
+	CloseDexClient() error
+	ProviderService() (*provider.Manager, error)
 	SecretCipher() (secret.Cipher, error)
 	HealthService() (*healthcheck.Service, error)
 	SettingsRegistry() *registry.SettingsRegistry
@@ -185,6 +190,18 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *openbao.Session
+	}
+
+	dexClient struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *dex.GRPC
+	}
+
+	providerService struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *provider.Manager
 	}
 
 	healthService struct {
@@ -392,5 +409,6 @@ func (c *Container) Close(_ context.Context) error {
 	return errors.Join(
 		c.CloseHTTPServer(),
 		c.CloseDatabase(),
+		c.CloseDexClient(),
 	)
 }

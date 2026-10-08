@@ -21,9 +21,11 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/authtest"
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/dex/dextest"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/idempotency"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	providers "github.com/abgeo/maroid/apps/hub/internal/provider"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
@@ -104,7 +106,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		handler.NewAuth(
 			cfg, logger, verifier,
 			auth.NewOIDCFlow(oidcSvc, repository.NewAuthFlow(instance.DB), cfg.Auth.FlowTTL),
-			userRepo, identityRepo, resolver, invitationRepo, service,
+			userRepo, identityRepo, resolver, invitationRepo, service, hubProviders(provider.URL),
 		),
 		handler.NewPlugin(
 			logger, verifier, resolver, emptyCatalog(), probeUI(),
@@ -137,6 +139,13 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		workspace: enabledWorkspaceOf(t, instance.DB, workspaces, person),
 		gate:      held,
 	}
+}
+
+// hubProviders reads the one provider that the scenarios sign in with.
+func hubProviders(issuer string) *providers.Manager {
+	return providers.NewManager(dextest.New(dextest.Connector(
+		auth.ProviderTelegram, "oidc", "Telegram", `{"maroidPreset":"telegram"}`,
+	)), issuer)
 }
 
 // authService builds the auth service on the database.
@@ -318,7 +327,6 @@ func hubConfig(issuer string) *config.Config {
 	cfg.Auth.AllowedRedirects = []string{deckAddress}
 	cfg.Auth.DeckURL = deckAddress
 	cfg.Auth.FlowTTL = 10 * time.Minute
-	cfg.Auth.Providers = []config.Provider{{ID: auth.ProviderTelegram, Name: "Telegram"}}
 	cfg.OIDC.Issuer = issuer
 	cfg.OIDC.ClientID = authtest.ClientID
 	cfg.OIDC.ClientSecret = "secret"

@@ -170,11 +170,12 @@ Detach(ctx context.Context, userID string, provider string, beforeCommit func(co
 
 `dex.Client` wraps `api.DexClient` of `github.com/dexidp/dex/api/v2` v2.4.0, which
 holds every call above. Each call takes the deadline of `dex.timeout`, and maps
-`codes.DeadlineExceeded` and `codes.Unavailable` to `errs.ErrIdPUnavailable`.
+`codes.DeadlineExceeded` and `codes.Unavailable` to `errs.ErrIDPUnavailable`.
 
 Dex reports a conflict in a successful answer, not as an error. The client maps
-`already_exists` to `errs.ErrAlreadyExists` and `not_found` to `errs.ErrNotFound` of
-the package `dex`. Dex answers a refused value, such as a hash cost outside 10 to 16 or
+`already_exists` of a connector to `errs.ErrProviderExists` and of a password to
+`errs.ErrLocalAccountExists`, and `not_found` to `errs.ErrProviderNotFound` or
+`errs.ErrLocalAccountNotFound`. `GO-005` keeps every sentinel in `domain/errs`. Dex answers a refused value, such as a hash cost outside 10 to 16 or
 a write to a static connector, with `codes.Unknown`, and the client returns it wrapped.
 
 `UpdateConnector` keeps a field that the request leaves empty. The hub still sends the
@@ -320,7 +321,8 @@ identity. `Reset` finds the password whose `user_id` is the record, then calls
 
 `ERR-003` gains the four types of the hub in the first rows, each with the title
 of its condition. `errs` gains `ErrProviderExists`, `ErrProviderStatic`,
-`ErrLocalAccountExists`, `ErrLocalProviderAbsent`, and `ErrIdPUnavailable`.
+`ErrProviderNotFound`, `ErrLocalAccountExists`, `ErrLocalAccountNotFound`,
+`ErrLocalProviderAbsent`, and `ErrIDPUnavailable`.
 
 ## 5. Design decisions
 
@@ -471,11 +473,11 @@ value for each line.
 | #   | Step                                                                          | Realizes                              | Done |
 | --- | ----------------------------------------------------------------------------- | ------------------------------------- | ---- |
 | 1   | Development certificates, the TLS block of Dex, no published port. The owner edits `.docker/dex/config.yaml`. | `IDPROV-FR-001` | [ ] |
-| 2   | `config.Dex`, `dex.Client`, `DexClient` and `CloseDexClient`                  | `IDPROV-FR-001`, `IDPROV-NFR-002`     | [ ]  |
+| 2   | `config.Dex`, `dex.Client`, `DexClient` and `CloseDexClient`                  | `IDPROV-FR-001`, `IDPROV-NFR-002`     | [x]  |
 | 3   | `provider` presets, `oidcOptions`, and the validation                         | `IDPROV-FR-002` to `IDPROV-FR-011`, `IDPROV-INV-001` to `IDPROV-INV-003` | [ ] |
 | 4   | The identity repository: count, delete, report, the hook of `Detach`          | `IDPROV-FR-012`, `IDPROV-FR-014`      | [ ]  |
 | 5   | `provider.Service` and the routes under `/providers`, the problem types       | `IDPROV-FR-001` to `IDPROV-FR-016`    | [ ]  |
-| 6   | `GET /auth/identities` reads Dex. `auth.providers` goes. `Link` refuses `local`. | `IDPROV-FR-017`, `IDPROV-FR-022`    | [ ]  |
+| 6   | `GET /auth/identities` reads Dex. `auth.providers` goes. `Link` refuses `local`. | `IDPROV-FR-017`, `IDPROV-FR-022`    | [x]  |
 | 7   | `LocalAccounts`, the routes under `/users/{userId}/identities`, the detach    | `IDPROV-FR-018` to `IDPROV-FR-024`    | [ ]  |
 | 8   | `maroid user password`, and the output of `maroid user invite`                | `IDPROV-FR-025` to `IDPROV-FR-028`    | [ ]  |
 | 9   | The deck: the providers pages, the local account section, the sidebar entry   | `IDPROV-FR-001` to `IDPROV-FR-020`    | [ ]  |

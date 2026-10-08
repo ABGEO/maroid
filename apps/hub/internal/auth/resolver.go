@@ -8,8 +8,13 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
-// ProviderTelegram is the connector of Dex that federates Telegram.
-const ProviderTelegram = "telegram"
+// The connectors of Dex whose identifier the hub fixes.
+const (
+	// ProviderTelegram is the connector of Dex that federates Telegram.
+	ProviderTelegram = "telegram"
+	// ProviderLocal is the connector of Dex that holds the local accounts.
+	ProviderLocal = "local"
+)
 
 // IdentityResolver reads the user record that one external account names.
 type IdentityResolver interface {

@@ -20,8 +20,11 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/authtest"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/dex/dextest"
+	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	providers "github.com/abgeo/maroid/apps/hub/internal/provider"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/rest/address"
 	"github.com/abgeo/maroid/libs/rest/problem"
@@ -42,6 +45,7 @@ type authFixture struct {
 	provider     *authtest.Provider
 	identityRepo repository.IdentityRepository
 	service      *auth.Service
+	idp          *dextest.Memory
 }
 
 // authUnderTest builds the handler with every real dependency, so a test drives
@@ -62,10 +66,6 @@ func authUnderTest(t *testing.T) *authFixture {
 	cfg.Auth.AllowedRedirects = []string{shellTarget}
 	cfg.Auth.DeckURL = shellTarget
 	cfg.Auth.FlowTTL = flowLifetime
-	cfg.Auth.Providers = []config.Provider{
-		{ID: auth.ProviderTelegram, Name: "Telegram"},
-		{ID: providerCloud, Name: "ABGEO.cloud"},
-	}
 	cfg.OIDC.Issuer = provider.URL
 	cfg.OIDC.ClientID = authtest.ClientID
 	cfg.OIDC.ClientSecret = "secret"
@@ -83,6 +83,8 @@ func authUnderTest(t *testing.T) *authFixture {
 		repository.NewAllowedPlugin(instance.DB),
 	)
 
+	idp := authIDP()
+
 	authHandler := handler.NewAuth(
 		cfg,
 		slog.New(slog.DiscardHandler),
@@ -93,6 +95,7 @@ func authUnderTest(t *testing.T) *authFixture {
 		auth.NewResolver(identityRepo),
 		invitationRepo,
 		service,
+		providers.NewManager(idp, provider.URL),
 	)
 
 	router := chi.NewRouter()
@@ -105,7 +108,16 @@ func authUnderTest(t *testing.T) *authFixture {
 		provider:     provider,
 		identityRepo: identityRepo,
 		service:      service,
+		idp:          idp,
 	}
+}
+
+// authIDP holds the two providers that the scenarios of EXTID name.
+func authIDP() *dextest.Memory {
+	return dextest.New(
+		dextest.Connector(auth.ProviderTelegram, "oidc", "Telegram", `{"maroidPreset":"telegram"}`),
+		dextest.Connector(providerCloud, "oidc", "ABGEO.cloud", `{"maroidPreset":"oidc"}`),
+	)
 }
 
 // EXTID-SC-008: The attach lands on the record that the flow row names. The
@@ -232,7 +244,7 @@ func TestTheRedemptionBindsTheFirstIdentity(t *testing.T) {
 	require.Equal(t, problem.TypeNotFound, failure.Type, "the grant is spent")
 }
 
-// EXTID-SC-011: The list names every provider that the configuration holds. It
+// EXTID-SC-011: The list names every provider that Dex holds. It
 // marks the one that the record attached, with the handle that provider gave, and
 // marks the other as not attached.
 // EXTID-FR-009: A provider that nobody attached appears, because the person picks
@@ -252,27 +264,39 @@ func TestTheListNamesEveryProvider(t *testing.T) {
 		model.Profile{Username: "abgeo", DisplayName: "Temuri", PictureURL: "https://a/b.jpg"},
 	))
 
-	body := fixture.listIdentities(t, auth.ProviderTelegram, "111")
-	require.Len(t, body, 2, "the configuration holds two providers")
+	body := byProvider(fixture.listIdentities(t, auth.ProviderTelegram, "111"))
+	require.Len(t, body, 2, "Dex holds two providers")
 
-	require.Equal(t, auth.ProviderTelegram, body[0]["provider"])
-	require.Equal(t, "Telegram", body[0]["name"], "the deck shows this text")
-	require.Equal(t, true, body[0]["attached"])
-	require.Equal(t, "abgeo", body[0]["username"])
-	require.Equal(t, "Temuri", body[0]["display_name"])
-	require.Equal(t, "https://a/b.jpg", body[0]["picture_url"])
-	require.NotEmpty(t, body[0]["attached_at"])
+	telegram := body[auth.ProviderTelegram]
+	require.Equal(t, "Telegram", telegram["name"], "the deck shows this text")
+	require.Equal(t, true, telegram["attached"])
+	require.Equal(t, "abgeo", telegram["username"])
+	require.Equal(t, "Temuri", telegram["display_name"])
+	require.Equal(t, "https://a/b.jpg", telegram["picture_url"])
+	require.NotEmpty(t, telegram["attached_at"])
 
 	// APIFMT-SC-009: encoding/json writes a time.Time in the zone that it
 	// carries, and the database answers the zone of the session.
-	attachedAt, ok := body[0]["attached_at"].(string)
+	attachedAt, ok := telegram["attached_at"].(string)
 	require.True(t, ok)
 	require.True(t, strings.HasSuffix(attachedAt, "Z"), attachedAt)
 
-	require.Equal(t, providerCloud, body[1]["provider"])
-	require.Equal(t, false, body[1]["attached"], "a provider that nobody attached appears")
-	require.Nil(t, body[1]["username"])
-	require.Nil(t, body[1]["picture_url"])
+	cloud := body[providerCloud]
+	require.Equal(t, false, cloud["attached"], "a provider that nobody attached appears")
+	require.Nil(t, cloud["username"])
+	require.Nil(t, cloud["picture_url"])
+}
+
+// byProvider keys the list of identities by the provider of each item.
+func byProvider(listed []map[string]any) map[string]map[string]any {
+	keyed := make(map[string]map[string]any, len(listed))
+	for _, item := range listed {
+		if id, ok := item["provider"].(string); ok {
+			keyed[id] = item
+		}
+	}
+
+	return keyed
 }
 
 // EXTID-FR-009: The list belongs to the person that asks for it, and to no other.
@@ -292,11 +316,12 @@ func TestTheListHoldsNothingOfAnotherRecord(t *testing.T) {
 		ctx, theirs, providerCloud, "abc", model.Profile{Username: "not-mine"},
 	))
 
-	body := fixture.listIdentities(t, auth.ProviderTelegram, "111")
+	body := byProvider(fixture.listIdentities(t, auth.ProviderTelegram, "111"))
 
-	require.Equal(t, true, body[0]["attached"], "my own provider")
-	require.Equal(t, false, body[1]["attached"], "the account of another record is not mine")
-	require.Nil(t, body[1]["username"])
+	require.Equal(t, true, body[auth.ProviderTelegram]["attached"], "my own provider")
+	require.Equal(t, false, body[providerCloud]["attached"],
+		"the account of another record is not mine")
+	require.Nil(t, body[providerCloud]["username"])
 }
 
 // A request that carries no session reaches no list.
@@ -736,4 +761,96 @@ func TestTheCurrentUserCarriesTheMarkOfAnAdministrator(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, true, fixture.me(t, auth.ProviderTelegram, "404")["is_administrator"])
+}
+
+// IDPROV-SC-016: The list names every provider that Dex holds, the static one and
+// the local one included, by the names that Dex holds.
+func TestTheListReadsTheProvidersOfDex(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+	ctx := t.Context()
+
+	require.NoError(t, fixture.idp.CreateConnector(ctx,
+		dextest.Connector("mock", "mockCallback", "Mock", `{}`)))
+	require.NoError(t, fixture.idp.CreateConnector(ctx,
+		dextest.Connector(auth.ProviderLocal, "local", "Maroid", `{"maroidPreset":"local"}`)))
+	require.NoError(t, fixture.idp.DeleteConnector(ctx, providerCloud))
+
+	userID := addUserRecord(t, fixture.database, "Ana")
+	require.NoError(t, fixture.service.Attach(
+		ctx, userID, auth.ProviderTelegram, "111", model.Profile{},
+	))
+
+	body := byProvider(fixture.listIdentities(t, auth.ProviderTelegram, "111"))
+	require.Len(t, body, 3)
+
+	assert.Equal(t, "Mock", body["mock"]["name"])
+	assert.Equal(t, "Maroid", body[auth.ProviderLocal]["name"])
+	assert.Equal(t, true, body[auth.ProviderTelegram]["attached"])
+	assert.Equal(t, false, body["mock"]["attached"])
+}
+
+// IDPROV-SC-021: An attach through the local provider answers request-invalid,
+// names the parameter, and starts no flow.
+func TestAnAttachThroughTheLocalProviderIsRefused(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+	ctx := t.Context()
+
+	userID := addUserRecord(t, fixture.database, "Nina")
+	require.NoError(t, fixture.service.Attach(
+		ctx, userID, auth.ProviderTelegram, "111", model.Profile{},
+	))
+
+	request := httptest.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		"/auth/identities?provider="+auth.ProviderLocal+"&redirect="+url.QueryEscape(
+			shellTarget,
+		),
+		nil,
+	)
+	request.AddCookie(
+		requestCookie(sessionCookie, fixture.provider.Sign(t, auth.ProviderTelegram, "111")),
+	)
+
+	recorder := httptest.NewRecorder()
+	fixture.router.ServeHTTP(recorder, request)
+	require.Equal(t, http.StatusBadRequest, recorder.Code, recorder.Body.String())
+
+	var failure problem.Problem
+
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &failure))
+	assert.Equal(t, problem.TypeRequestInvalid, failure.Type)
+	assert.Contains(t, failure.Detail, "provider")
+
+	var flows int
+
+	require.NoError(t, fixture.database.Get(&flows, `SELECT count(*) FROM public.auth_flows;`))
+	assert.Zero(t, flows)
+}
+
+// IDPROV-SC-029: A Dex that does not answer makes the list answer not-ready.
+func TestTheListAnswersNotReadyWithoutDex(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+
+	userID := addUserRecord(t, fixture.database, "Ana")
+	require.NoError(t, fixture.service.Attach(
+		t.Context(), userID, auth.ProviderTelegram, "111", model.Profile{},
+	))
+
+	fixture.idp.Fail(errs.ErrIDPUnavailable)
+
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/auth/identities", nil)
+	request.AddCookie(
+		requestCookie(sessionCookie, fixture.provider.Sign(t, auth.ProviderTelegram, "111")),
+	)
+
+	recorder := httptest.NewRecorder()
+	fixture.router.ServeHTTP(recorder, request)
+	require.Equal(t, http.StatusServiceUnavailable, recorder.Code, recorder.Body.String())
 }

@@ -154,7 +154,36 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		return fmt.Errorf("register user handler: %w", err)
 	}
 
+	providerHandler, err := c.buildProviderHandler()
+	if err != nil {
+		return err
+	}
+
+	if err = reg.Register("provider", providerHandler); err != nil {
+		return fmt.Errorf("register provider handler: %w", err)
+	}
+
 	return nil
+}
+
+// buildProviderHandler resolves every dependency of the handler of /providers.
+func (c *Container) buildProviderHandler() (*handler.Provider, error) {
+	verifier, err := c.TokenVerifier()
+	if err != nil {
+		return nil, err
+	}
+
+	identityResolver, err := c.IdentityResolver()
+	if err != nil {
+		return nil, err
+	}
+
+	providers, err := c.ProviderService()
+	if err != nil {
+		return nil, err
+	}
+
+	return handler.NewProvider(c.Logger(), verifier, identityResolver, providers), nil
 }
 
 // buildUserHandler resolves every dependency of the handler of /users.
@@ -363,6 +392,11 @@ func (c *Container) buildAuthHandler(
 		return nil, err
 	}
 
+	providers, err := c.ProviderService()
+	if err != nil {
+		return nil, err
+	}
+
 	return handler.NewAuth(
 		cfg,
 		logger,
@@ -373,6 +407,7 @@ func (c *Container) buildAuthHandler(
 		identityResolver,
 		invitationRepo,
 		authSvc,
+		providers,
 	), nil
 }
 

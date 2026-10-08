@@ -18,6 +18,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/provider"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/libs/rest/problem"
@@ -62,6 +63,7 @@ type Auth struct {
 	identityResolver auth.IdentityResolver
 	invitationRepo   repository.InvitationRepository
 	authSvc          *auth.Service
+	providers        provider.Service
 }
 
 var _ AuthHandler = (*Auth)(nil)
@@ -77,6 +79,7 @@ func NewAuth(
 	identityResolver auth.IdentityResolver,
 	invitationRepo repository.InvitationRepository,
 	authSvc *auth.Service,
+	providers provider.Service,
 ) *Auth {
 	return &Auth{
 		cfg: cfg,
@@ -91,6 +94,7 @@ func NewAuth(
 		identityResolver: identityResolver,
 		invitationRepo:   invitationRepo,
 		authSvc:          authSvc,
+		providers:        providers,
 	}
 }
 
@@ -213,11 +217,23 @@ func (h *Auth) Link(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("%w: missing or invalid redirect parameter", errInvalidQueryParameter)
 	}
 
-	provider := r.URL.Query().Get("provider")
-	if provider == "" {
+	providerKey := r.URL.Query().Get("provider")
+	if providerKey == "" {
 		sendBadRequest(w, r, "missing provider parameter")
 
 		return fmt.Errorf("%w: missing provider parameter", errInvalidQueryParameter)
+	}
+
+	// Only an administrator gives a local account, so a person who signs in with
+	// one already holds its identity.
+	if providerKey == auth.ProviderLocal {
+		sendBadRequest(
+			w,
+			r,
+			"the provider parameter names the local provider, which takes no attach",
+		)
+
+		return fmt.Errorf("%w: an attach through the local provider", errInvalidQueryParameter)
 	}
 
 	userID := auth.UserIDFromContext(r.Context())
@@ -225,7 +241,7 @@ func (h *Auth) Link(w http.ResponseWriter, r *http.Request) error {
 	authURL, binding, err := h.oidcFlow.Initiate(r.Context(), model.AuthFlow{
 		Intent:   model.IntentAttach,
 		UserID:   &userID,
-		Provider: &provider,
+		Provider: &providerKey,
 		Redirect: redirect,
 	})
 	if err != nil {
@@ -276,11 +292,16 @@ func (h *Auth) Identities(w http.ResponseWriter, r *http.Request) error {
 		attached[identity.Provider] = identity
 	}
 
-	states := make([]providerState, 0, len(h.cfg.Auth.Providers))
-	for _, provider := range h.cfg.Auth.Providers {
-		state := providerState{Provider: provider.ID, Name: provider.Name}
+	offered, err := h.providers.List(r.Context())
+	if err != nil {
+		return failProvider(w, r, err, "listing the providers")
+	}
 
-		if identity, ok := attached[provider.ID]; ok {
+	states := make([]providerState, 0, len(offered))
+	for _, offer := range offered {
+		state := providerState{Provider: offer.ID, Name: offer.Name}
+
+		if identity, ok := attached[offer.ID]; ok {
 			state.Attached = true
 			state.Username = identity.Username
 			state.DisplayName = identity.DisplayName

@@ -10,6 +10,7 @@ require (
 	github.com/abgeo/maroid/libs/rest v0.0.0-20261007201113-f0f51ecfa664
 	github.com/abgeo/maroid/libs/testdb v0.0.0-20261007201113-f0f51ecfa664
 	github.com/coreos/go-oidc/v3 v3.20.0
+	github.com/dexidp/dex/api/v2 v2.4.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/go-chi/chi/v5 v5.3.0
 	github.com/go-chi/cors v1.2.2
@@ -36,6 +37,7 @@ require (
 	github.com/testcontainers/testcontainers-go v0.44.0
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.23.0
+	google.golang.org/grpc v1.82.0
 )
 
 require (
@@ -149,4 +151,6 @@ require (
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260630182238-925bb5da69e7 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 )

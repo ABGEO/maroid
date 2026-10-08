@@ -22,8 +22,10 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/authtest"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	hubdatabase "github.com/abgeo/maroid/apps/hub/internal/database"
+	"github.com/abgeo/maroid/apps/hub/internal/dex/dextest"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	providers "github.com/abgeo/maroid/apps/hub/internal/provider"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
@@ -82,6 +84,8 @@ type workspaceFixture struct {
 	nino     person
 	h        string
 	authSvc  *auth.Service
+	// idp is the Dex that the routes of the providers read.
+	idp *dextest.Memory
 	// probeRuns counts the requests that reached the read route of the probe plugin.
 	probeRuns *atomic.Int32
 	// probeWrites counts the requests that reached the write route of the probe plugin.
@@ -107,6 +111,7 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 	authSvc := authServiceOf(instance.DB, identityRepo, userRepo)
 
 	runs, writes := &atomic.Int32{}, &atomic.Int32{}
+	idp := dextest.New(dextest.Connector("mock", "mockCallback", "Mock", `{}`))
 	fixture := &workspaceFixture{
 		router: workspaceRouter(
 			t,
@@ -117,7 +122,9 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 			userRepo,
 			runs,
 			writes,
+			idp,
 		),
+		idp:         idp,
 		database:    instance.DB,
 		provider:    provider,
 		probeRuns:   runs,
@@ -206,6 +213,7 @@ func workspaceRouter(
 	userRepo repository.UserRepository,
 	probeRuns *atomic.Int32,
 	probeWrites *atomic.Int32,
+	idp *dextest.Memory,
 ) *chi.Mux {
 	t.Helper()
 
@@ -216,9 +224,7 @@ func workspaceRouter(
 	verifier := workspaceVerifier(t, provider)
 	resolver := auth.NewResolver(identityRepo)
 
-	router := chi.NewRouter()
-	router.Use(address.Middleware("https://hub.example.com"))
-	router.Use(precondition.IfMatch)
+	router := baseRouter()
 
 	handler.NewPluginWrapper(
 		logger, verifier, resolver, noIdempotency{}, access,
@@ -256,7 +262,30 @@ func workspaceRouter(
 		logger, verifier, resolver, noIdempotency{}, users, "http://maroid.localhost",
 	).Register(router)
 
+	registerProviders(router, logger, verifier, resolver, idp)
+
 	return router
+}
+
+// baseRouter answers a router with the middleware that every route of the hub runs.
+func baseRouter() *chi.Mux {
+	router := chi.NewRouter()
+	router.Use(address.Middleware("https://hub.example.com"))
+	router.Use(precondition.IfMatch)
+
+	return router
+}
+
+// registerProviders mounts the routes of the providers over the Dex in memory.
+func registerProviders(
+	router chi.Router,
+	logger *slog.Logger,
+	verifier auth.TokenVerifier,
+	resolver auth.IdentityResolver,
+	idp *dextest.Memory,
+) {
+	handler.NewProvider(logger, verifier, resolver, providers.NewManager(idp, dexIssuer)).
+		Register(router)
 }
 
 // usersOf builds the service of the user records over the database, with the plugins

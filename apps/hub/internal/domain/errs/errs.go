@@ -135,4 +135,21 @@ var (
 	// ErrInvalidMCPToolModel indicates that a plugin declared an input or an output
 	// model that the hub cannot reflect into a JSON schema.
 	ErrInvalidMCPToolModel = errors.New("mcp tool model: invalid")
+	// ErrIDPUnavailable indicates that the API of the identity provider refused the
+	// connection or did not answer before the deadline.
+	ErrIDPUnavailable = errors.New("idp: unavailable")
+	// ErrDexNoAuthority indicates that the authority file of the Dex API holds no
+	// PEM certificate.
+	ErrDexNoAuthority = errors.New("dex: the authority file holds no certificate")
+	// ErrProviderExists indicates that the identity provider holds a connector with
+	// the same identifier.
+	ErrProviderExists = errors.New("provider: already exists")
+	// ErrProviderNotFound indicates that the identity provider holds no connector
+	// with the identifier.
+	ErrProviderNotFound = errors.New("provider: not found")
+	// ErrLocalAccountExists indicates that another local account holds the email address.
+	ErrLocalAccountExists = errors.New("local account: already exists")
+	// ErrLocalAccountNotFound indicates that the identity provider holds no password
+	// for the email address.
+	ErrLocalAccountNotFound = errors.New("local account: not found")
 )

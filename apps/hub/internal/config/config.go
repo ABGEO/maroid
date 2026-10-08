@@ -84,19 +84,22 @@ func (c *Server) ExternalAddress(path string) string {
 	return strings.TrimSuffix(c.ExternalURL, "/") + path
 }
 
-// Provider is one account system that Dex federates and that Maroid offers.
-type Provider struct {
-	ID   string `validate:"required"`
-	Name string `validate:"required"`
-}
-
 // Auth defines general authentication configuration parameters.
 type Auth struct {
 	AllowedRedirects []string      `mapstructure:"allowed_redirects" validate:"required,min=1,dive,url"`
 	FlowTTL          time.Duration `default:"10m"                    mapstructure:"flow_ttl"`
 	InvitationTTL    time.Duration `default:"72h"                    mapstructure:"invitation_ttl"`
 	DeckURL          string        `mapstructure:"deck_url"          validate:"omitempty,url"`
-	Providers        []Provider    `validate:"dive"`
+}
+
+// Dex defines the connection of the hub to the gRPC API of Dex. The API writes a
+// password and a connector, so the hub presents a client certificate.
+type Dex struct {
+	Address  string        `validate:"required,hostname_port"`
+	CAFile   string        `mapstructure:"ca_file"            validate:"required,file"`
+	CertFile string        `mapstructure:"cert_file"          validate:"required,file"`
+	KeyFile  string        `mapstructure:"key_file"           validate:"required,file"`
+	Timeout  time.Duration `default:"5s"                      validate:"gt=0"`
 }
 
 // OIDC defines OpenID Connect configuration parameters for authentication.
@@ -153,6 +156,7 @@ type Config struct {
 	CORS     CORS
 	Auth     Auth
 	OIDC     OIDC
+	Dex      Dex
 	MCP      MCP
 	MQTT     MQTT
 	OpenBao  OpenBao
