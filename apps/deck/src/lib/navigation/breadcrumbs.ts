@@ -17,6 +17,7 @@ export interface Crumb {
 export interface CrumbParams {
 	plugin?: string;
 	path?: string;
+	provider?: string;
 	user?: string;
 	workspace?: string;
 }
@@ -26,6 +27,8 @@ const HUB: Crumb = { label: 'hub', href: resolve('/') };
 const ADMINISTRATION: Crumb = { label: 'Administration' };
 
 const USERS: Crumb = { label: 'Users', href: resolve('/admin/users') };
+
+const PROVIDERS: Crumb = { label: 'Sign-in providers', href: resolve('/admin/providers') };
 
 /**
  * Reports whether a trail needs the loaded plugins to read correctly. A caller
@@ -100,6 +103,22 @@ export function crumbsFor(
 
 		case '/(dashboard)/admin/plugins':
 			return [HUB, ADMINISTRATION, { label: 'Plugins', href: resolve('/admin/plugins') }];
+
+		case '/(dashboard)/admin/providers':
+			return [HUB, ADMINISTRATION, PROVIDERS];
+
+		case '/(dashboard)/admin/providers/[provider]':
+			return [
+				HUB,
+				ADMINISTRATION,
+				PROVIDERS,
+				{
+					label: 'Provider',
+					href: resolve('/(dashboard)/admin/providers/[provider]', {
+						provider: params.provider ?? ''
+					})
+				}
+			];
 
 		case '/(dashboard)/w/[workspace]/settings': {
 			const workspaceId = params.workspace ?? '';
