@@ -42,10 +42,7 @@ type Catalog interface {
 
 // Manager is the implementation of Service over the repositories of the hub.
 type Manager struct {
-	db         *sqlx.DB
-	workspaces repository.WorkspaceRepository
-	members    repository.WorkspaceMemberRepository
-	users      repository.UserRepository
+	db *sqlx.DB
 }
 
 var (
@@ -54,13 +51,8 @@ var (
 )
 
 // NewManager creates a new Manager.
-func NewManager(
-	db *sqlx.DB,
-	workspaces repository.WorkspaceRepository,
-	members repository.WorkspaceMemberRepository,
-	users repository.UserRepository,
-) *Manager {
-	return &Manager{db: db, workspaces: workspaces, members: members, users: users}
+func NewManager(db *sqlx.DB) *Manager {
+	return &Manager{db: db}
 }
 
 // Create writes the workspace and the membership of the acting user in one
@@ -69,14 +61,13 @@ func (m *Manager) Create(ctx context.Context, name string) (*model.Workspace, er
 	var created *model.Workspace
 
 	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
-		workspace, err := m.workspaces.Create(ctx, tx, name)
+		workspace, err := repository.NewWorkspace(tx).Create(ctx, name)
 		if err != nil {
 			return fmt.Errorf("creating the workspace: %w", err)
 		}
 
-		if _, err = m.members.Add(
+		if _, err = repository.NewWorkspaceMember(tx).Add(
 			ctx,
-			tx,
 			workspace.ID,
 			pluginapi.ActingUserFromContext(ctx),
 			pluginapi.RoleManager,
@@ -97,7 +88,9 @@ func (m *Manager) Create(ctx context.Context, name string) (*model.Workspace, er
 
 // ListOfUser lists the workspaces of the acting user.
 func (m *Manager) ListOfUser(ctx context.Context) ([]model.Workspace, error) {
-	workspaces, err := m.workspaces.ListOfUser(ctx, pluginapi.ActingUserFromContext(ctx))
+	workspaces, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) ([]model.Workspace, error) {
+		return repository.NewWorkspace(tx).ListOfUser(ctx, pluginapi.ActingUserFromContext(ctx))
+	})
 	if err != nil {
 		return nil, fmt.Errorf("listing the workspaces of the acting user: %w", err)
 	}
@@ -107,7 +100,9 @@ func (m *Manager) ListOfUser(ctx context.Context) ([]model.Workspace, error) {
 
 // Get reads the acting workspace.
 func (m *Manager) Get(ctx context.Context) (*model.Workspace, error) {
-	workspace, err := m.workspaces.GetByID(ctx, pluginapi.ActingWorkspaceFromContext(ctx))
+	workspace, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) (*model.Workspace, error) {
+		return repository.NewWorkspace(tx).GetByID(ctx, pluginapi.ActingWorkspaceFromContext(ctx))
+	})
 	if err != nil {
 		return nil, fmt.Errorf("reading the acting workspace: %w", err)
 	}
@@ -121,12 +116,14 @@ func (m *Manager) Rename(
 	name string,
 	version *time.Time,
 ) (*model.Workspace, error) {
-	workspace, err := m.workspaces.Rename(
-		ctx,
-		pluginapi.ActingWorkspaceFromContext(ctx),
-		name,
-		version,
-	)
+	workspace, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) (*model.Workspace, error) {
+		return repository.NewWorkspace(tx).Rename(
+			ctx,
+			pluginapi.ActingWorkspaceFromContext(ctx),
+			name,
+			version,
+		)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("renaming the acting workspace: %w", err)
 	}
@@ -138,7 +135,13 @@ func (m *Manager) Rename(
 // and the plugins that it enables. An administrator reads it, and the caller checks
 // the mark.
 func (m *Manager) ListAll(ctx context.Context) ([]model.InstanceWorkspace, error) {
-	workspaces, err := m.workspaces.ListAll(ctx)
+	workspaces, err := database.FetchTx(
+		ctx,
+		m.db,
+		func(tx *sqlx.Tx) ([]model.InstanceWorkspace, error) {
+			return repository.NewWorkspace(tx).ListAll(ctx)
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("listing the workspaces of the instance: %w", err)
 	}
@@ -148,7 +151,10 @@ func (m *Manager) ListAll(ctx context.Context) ([]model.InstanceWorkspace, error
 
 // Members lists the members of the acting workspace.
 func (m *Manager) Members(ctx context.Context) ([]model.Member, error) {
-	members, err := m.members.List(ctx, pluginapi.ActingWorkspaceFromContext(ctx))
+	members, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) ([]model.Member, error) {
+		return repository.NewWorkspaceMember(tx).
+			List(ctx, pluginapi.ActingWorkspaceFromContext(ctx))
+	})
 	if err != nil {
 		return nil, fmt.Errorf("listing the members of the acting workspace: %w", err)
 	}
@@ -158,7 +164,11 @@ func (m *Manager) Members(ctx context.Context) ([]model.Member, error) {
 
 // Member reads one membership of the acting workspace.
 func (m *Manager) Member(ctx context.Context, userID string) (*model.Member, error) {
-	member, err := m.members.Get(ctx, pluginapi.ActingWorkspaceFromContext(ctx), userID)
+	member, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) (*model.Member, error) {
+		return repository.NewWorkspaceMember(tx).Get(
+			ctx, pluginapi.ActingWorkspaceFromContext(ctx), userID,
+		)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("reading a member of the acting workspace: %w", err)
 	}
@@ -169,7 +179,11 @@ func (m *Manager) Member(ctx context.Context, userID string) (*model.Member, err
 // Candidates lists every active user record that is no member of the acting
 // workspace.
 func (m *Manager) Candidates(ctx context.Context) ([]model.User, error) {
-	candidates, err := m.members.Candidates(ctx, pluginapi.ActingWorkspaceFromContext(ctx))
+	candidates, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) ([]model.User, error) {
+		return repository.NewWorkspaceMember(tx).Candidates(
+			ctx, pluginapi.ActingWorkspaceFromContext(ctx),
+		)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("listing the candidates of the acting workspace: %w", err)
 	}
@@ -184,27 +198,22 @@ func (m *Manager) AddMember(
 	userID string,
 	role pluginapi.Role,
 ) (*model.Member, error) {
-	if _, err := m.users.GetActiveByID(ctx, userID); err != nil {
-		return nil, fmt.Errorf("reading the record to add: %w", err)
-	}
+	added, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) (*model.Member, error) {
+		if _, err := repository.NewUser(tx).GetActiveByID(ctx, userID); err != nil {
+			return nil, fmt.Errorf("reading the record to add: %w", err)
+		}
 
-	var added *model.Member
-
-	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
-		member, err := m.members.Add(
+		member, err := repository.NewWorkspaceMember(tx).Add(
 			ctx,
-			tx,
 			pluginapi.ActingWorkspaceFromContext(ctx),
 			userID,
 			role,
 		)
 		if err != nil {
-			return fmt.Errorf("adding the member: %w", err)
+			return nil, fmt.Errorf("adding the member: %w", err)
 		}
 
-		added = member
-
-		return nil
+		return member, nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("adding a member to the acting workspace: %w", err)
@@ -218,7 +227,7 @@ func (m *Manager) AddMember(
 // errs.ErrManagerLast and removes nothing.
 func (m *Manager) RemoveMember(ctx context.Context, userID string) error {
 	err := m.keepingAManager(ctx, func(tx *sqlx.Tx, workspaceID string) error {
-		return m.members.Remove(ctx, tx, workspaceID, userID)
+		return repository.NewWorkspaceMember(tx).Remove(ctx, workspaceID, userID)
 	})
 	if err != nil {
 		return fmt.Errorf("removing a member from the acting workspace: %w", err)
@@ -240,7 +249,8 @@ func (m *Manager) ChangeRole(
 	err := m.keepingAManager(ctx, func(tx *sqlx.Tx, workspaceID string) error {
 		var err error
 
-		changed, err = m.members.ChangeRole(ctx, tx, workspaceID, userID, role, version)
+		changed, err = repository.NewWorkspaceMember(tx).
+			ChangeRole(ctx, workspaceID, userID, role, version)
 
 		return err //nolint:wrapcheck // keepingAManager wraps it.
 	})
@@ -262,7 +272,7 @@ func (m *Manager) keepingAManager(
 	workspaceID := pluginapi.ActingWorkspaceFromContext(ctx)
 
 	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
-		if err := m.workspaces.Lock(ctx, tx, workspaceID); err != nil {
+		if err := repository.NewWorkspace(tx).Lock(ctx, workspaceID); err != nil {
 			return fmt.Errorf("locking the workspace: %w", err)
 		}
 
@@ -270,7 +280,7 @@ func (m *Manager) keepingAManager(
 			return err
 		}
 
-		managers, err := m.members.CountManagers(ctx, tx, workspaceID)
+		managers, err := repository.NewWorkspaceMember(tx).CountManagers(ctx, workspaceID)
 		if err != nil {
 			return fmt.Errorf("counting the managers: %w", err)
 		}

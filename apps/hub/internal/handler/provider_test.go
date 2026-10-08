@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/dex"
 	"github.com/abgeo/maroid/apps/hub/internal/dex/dextest"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
@@ -18,6 +19,9 @@ import (
 const (
 	dexIssuer         = "https://auth.maroid.localhost"
 	optionGetUserInfo = "getUserInfo"
+	memberPreset      = "preset"
+	memberPassword    = "password"
+	memberEmail       = "email"
 )
 
 // anyIssuer accepts every issuer, so a route test reaches no network.
@@ -40,7 +44,7 @@ func TestAnAdministratorListsTheProviders(t *testing.T) {
 
 	fixture := workspaceUnderTest(t)
 	zura := fixture.administrator(t)
-	fixture.storeConnector(t, "telegram", "oidc", `{"maroidPreset":"telegram"}`)
+	fixture.storeConnector(t, auth.ProviderTelegram, "oidc", `{"maroidPreset":"telegram"}`)
 
 	response := fixture.call(t, zura, http.MethodGet, "/providers", nil, "")
 	require.Equal(t, http.StatusOK, response.Code, response.Body.String())
@@ -52,9 +56,9 @@ func TestAnAdministratorListsTheProviders(t *testing.T) {
 	assert.Equal(t, true, listed[0]["static"])
 	assert.NotContains(t, listed[0], "preset")
 
-	assert.Equal(t, "telegram", listed[1]["id"])
+	assert.Equal(t, auth.ProviderTelegram, listed[1]["id"])
 	assert.Equal(t, false, listed[1]["static"])
-	assert.Equal(t, "telegram", listed[1]["preset"])
+	assert.Equal(t, auth.ProviderTelegram, listed[1]["preset"])
 }
 
 // IDPROV-SC-001: SEC-011 keeps the providers to an administrator.
@@ -129,7 +133,7 @@ func TestAnUnavailableDexAnswersNotReady(t *testing.T) {
 
 func cloudBody() map[string]any {
 	return map[string]any{
-		"preset":        "oidc",
+		memberPreset:    "oidc",
 		"id":            "abgeo-cloud",
 		memberName:      "ABGEO.cloud",
 		"issuer":        "https://auth.abgeo.cloud",
@@ -171,7 +175,7 @@ func TestAnAddRefusesAnIdentifier(t *testing.T) {
 	zura := fixture.administrator(t)
 
 	reserved := cloudBody()
-	reserved["id"] = "telegram"
+	reserved["id"] = auth.ProviderTelegram
 	requirePointer(t, fixture.call(t, zura, http.MethodPost, "/providers", reserved, ""), "/id")
 
 	taken := cloudBody()
@@ -193,7 +197,7 @@ func TestAChangeRefusesTheFieldsThatNeverChange(t *testing.T) {
 	require.Equal(t, http.StatusCreated, created.Code, created.Body.String())
 
 	for member, changed := range map[string]any{
-		"id": "cloud", "preset": "telegram", "issuer": "https://other.example", "user_id_key": "email",
+		"id": "cloud", memberPreset: auth.ProviderTelegram, "issuer": "https://other.example", "user_id_key": memberEmail,
 	} {
 		requirePointer(t, fixture.call(t, zura, http.MethodPatch, "/providers/abgeo-cloud",
 			map[string]any{member: changed}, ""), "/"+member)
@@ -269,9 +273,12 @@ func TestAProviderReportsItsRemoval(t *testing.T) {
 
 	fixture := workspaceUnderTest(t)
 	zura := fixture.administrator(t)
-	fixture.storeConnector(t, "telegram", "oidc", `{"maroidPreset":"telegram"}`)
+	fixture.storeConnector(t, auth.ProviderTelegram, "oidc", `{"maroidPreset":"telegram"}`)
 
-	body := decode(t, fixture.call(t, zura, http.MethodGet, "/providers/telegram", nil, ""))
+	body := decode(
+		t,
+		fixture.call(t, zura, http.MethodGet, "/providers/"+auth.ProviderTelegram, nil, ""),
+	)
 	assert.InDelta(t, 5, body["identity_count"], 0, "Ana, Beka, Gio, Nino, and Zura")
 
 	stranded, ok := body["administrators_without_sign_in"].([]any)

@@ -11,7 +11,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/db"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/libs/testdb"
 )
@@ -46,13 +45,9 @@ func newWorld(t *testing.T) *world {
 
 	return &world{
 		instance: instance,
-		service: user.NewManager(
-			instance.DB,
-			user.Repositories{Users: repository.NewUser(instance.DB)},
-			nil, nil, 0,
-		),
-		zura: insert("Zura", true),
-		ana:  insert("Ana", false),
+		service:  user.NewManager(instance.DB, nil, nil, 0),
+		zura:     insert("Zura", true),
+		ana:      insert("Ana", false),
 	}
 }
 

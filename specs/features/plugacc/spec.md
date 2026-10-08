@@ -4,7 +4,7 @@ title: The administrator, the plugin allowlist, and the enablement of a plugin
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-05
+updated: 2026-10-09
 approved_by: Temuri
 approved_on: 2026-10-05
 constrained_by: [SEC, OWN, ERR, API, RES, DAT, REP, JOB, TG, CLI, UI, ARC, TST, SPC, LNG]
@@ -182,7 +182,7 @@ func RequireEnabledOf(logger *slog.Logger, enablements EnablementChecker, pick f
 
 // apps/hub/internal/workspace/middleware.go
 // AdmitAdministrator lets an administrator who is no member pass as a manager.
-func AdmitAdministrator(workspaces repository.WorkspaceRepository) MiddlewareOption
+func AdmitAdministrator() MiddlewareOption
 
 // apps/hub/internal/registry/plugin_entry.go: GET /plugins, the enablements, and the
 // MCP tool list_plugins read one Catalog, so an entry has one shape.
@@ -194,7 +194,7 @@ func (c *Catalog) Entry(pluginID string) (PluginEntry, bool)
 // WorkspaceAccess holds the three checks of a route of a plugin: the membership, the
 // enablement, and the permission. The wrapper, the settings routes, and the loader take it.
 type WorkspaceAccess struct {
-    Members     repository.WorkspaceMemberRepository
+    DB          *sqlx.DB
     Enablements workspace.EnablementChecker
     Authorizer  authz.Authorizer
 }

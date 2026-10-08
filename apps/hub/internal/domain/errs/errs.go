@@ -155,4 +155,7 @@ var (
 	// ErrLocalAccountNotFound indicates that the identity provider holds no password
 	// for the email address.
 	ErrLocalAccountNotFound = errors.New("local account: not found")
+	// ErrLocalProviderAbsent indicates a local account while the identity provider
+	// holds no local provider.
+	ErrLocalProviderAbsent = errors.New("local account: no local provider")
 )

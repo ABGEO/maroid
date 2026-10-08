@@ -4,7 +4,7 @@ title: External identities and the delegated sign in
 type: spec
 status: approved
 created: 2026-09-15
-updated: 2026-10-08
+updated: 2026-10-09
 approved_by: Temuri
 approved_on: 2026-09-16
 constrained_by: [OWN, SEC, API, ERR, TG, CLI, DAT, REP, PKG, CFG, GO, TST, LOG]
@@ -143,10 +143,13 @@ type IdentityRepository interface {
     GetActiveUserByProvider(ctx context.Context, provider, providerUserID string) (*model.User, error)
     GetUserByProvider(ctx context.Context, provider, providerUserID string) (*model.User, error)
     ListByUser(ctx context.Context, userID string) ([]model.Identity, error)
-    Attach(ctx context.Context, tx *sqlx.Tx, userID, provider, providerUserID string, profile model.Profile) error
+    Attach(ctx context.Context, userID, provider, providerUserID string, profile model.Profile) error
     SyncProfile(ctx context.Context, provider, providerUserID string, profile model.Profile) error
     Detach(ctx context.Context, userID, provider string) error
 }
+
+// NewIdentity takes the transaction of its caller, as REP-003 gives since ADR-0011.
+func NewIdentity(tx *sqlx.Tx) *Identity
 ```
 
 `Attach` takes a transaction, because the redemption writes the identity and consumes

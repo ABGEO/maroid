@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
 )
 
@@ -34,11 +33,6 @@ func (c *Container) buildUserService() (*user.Manager, error) {
 		return nil, err
 	}
 
-	users, err := c.UserRepository()
-	if err != nil {
-		return nil, err
-	}
-
 	authService, err := c.AuthService()
 	if err != nil {
 		return nil, err
@@ -46,10 +40,6 @@ func (c *Container) buildUserService() (*user.Manager, error) {
 
 	return user.NewManager(
 		dbInstance,
-		user.Repositories{
-			Users:   users,
-			Allowed: repository.NewAllowedPlugin(dbInstance),
-		},
 		authService,
 		c.PluginRegistry(),
 		c.Config().Auth.InvitationTTL,

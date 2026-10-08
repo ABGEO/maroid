@@ -12,13 +12,12 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/authtest"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
 const providerCloud = "cloud"
 
-func serviceUnderTest(t *testing.T) (*auth.Service, repository.IdentityRepository, *sqlx.DB) {
+func serviceUnderTest(t *testing.T) (*auth.Service, identityStore, *sqlx.DB) {
 	t.Helper()
 
 	instance := testdb.Start(t)
@@ -28,19 +27,7 @@ func serviceUnderTest(t *testing.T) (*auth.Service, repository.IdentityRepositor
 
 	instance.Migrate(t, "public", migrations)
 
-	identityRepo := repository.NewIdentity(instance.DB)
-
-	service := auth.NewService(
-		instance.DB,
-		repository.NewUser(instance.DB),
-		identityRepo,
-		repository.NewInvitation(instance.DB),
-		repository.NewWorkspace(instance.DB),
-		repository.NewWorkspaceMember(instance.DB),
-		repository.NewAllowedPlugin(instance.DB),
-	)
-
-	return service, identityRepo, instance.DB
+	return auth.NewService(instance.DB), identityStore{db: instance.DB}, instance.DB
 }
 
 func addUser(t *testing.T, database *sqlx.DB, firstName string) string {

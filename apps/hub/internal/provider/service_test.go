@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -11,35 +10,17 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/dex"
 	"github.com/abgeo/maroid/apps/hub/internal/dex/dextest"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
-	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/provider"
 )
 
 const issuer = "https://auth.maroid.localhost"
 
-// noIdentities holds no identity, so every report is empty.
-type noIdentities struct{}
+func managerOf(t *testing.T, connectors ...dex.Connector) *provider.Manager {
+	t.Helper()
 
-func (noIdentities) CountByProvider(context.Context) (map[string]int, error) {
-	return map[string]int{}, nil
-}
-
-func (noIdentities) AdministratorsBySoleProvider(context.Context) (map[string][]model.User, error) {
-	return map[string][]model.User{}, nil
-}
-
-func (noIdentities) DeleteByProvider(
-	ctx context.Context,
-	_ string,
-	beforeCommit func(context.Context) error,
-) error {
-	return beforeCommit(ctx)
-}
-
-func managerOf(connectors ...dex.Connector) *provider.Manager {
 	return provider.NewManager(
 		dextest.New(connectors...),
-		noIdentities{},
+		migrated(t).DB,
 		provider.Settings{Issuer: issuer},
 	)
 }
@@ -49,7 +30,7 @@ func managerOf(connectors ...dex.Connector) *provider.Manager {
 func TestTheListMarksAStaticProvider(t *testing.T) {
 	t.Parallel()
 
-	manager := managerOf(
+	manager := managerOf(t,
 		dextest.Connector("telegram", "oidc", "Telegram",
 			`{"issuer":"https://oauth.telegram.org","clientID":"1","clientSecret":"s",`+
 				`"userIDKey":"id","maroidPreset":"telegram"}`),
@@ -74,7 +55,10 @@ func TestTheListMarksAStaticProvider(t *testing.T) {
 func TestAConfigThatIsNoObjectIsStatic(t *testing.T) {
 	t.Parallel()
 
-	providers, err := managerOf(dextest.Connector("odd", "github", "Odd", `[]`)).List(t.Context())
+	providers, err := managerOf(
+		t,
+		dextest.Connector("odd", "github", "Odd", `[]`),
+	).List(t.Context())
 	require.NoError(t, err)
 	require.Len(t, providers, 1)
 	assert.True(t, providers[0].Static)
@@ -85,7 +69,7 @@ func TestAConfigThatIsNoObjectIsStatic(t *testing.T) {
 func TestTheRedirectAddressBelongsToAnOIDCProvider(t *testing.T) {
 	t.Parallel()
 
-	manager := managerOf(
+	manager := managerOf(t,
 		dextest.Connector("abgeo-cloud", "oidc", "ABGEO.cloud",
 			`{"issuer":"https://auth.abgeo.cloud","maroidPreset":"oidc"}`),
 		dextest.Connector("local", "local", "Maroid", `{"maroidPreset":"local"}`),
@@ -106,7 +90,7 @@ func TestTheRedirectAddressBelongsToAnOIDCProvider(t *testing.T) {
 func TestTheProviderSplitsItsConfig(t *testing.T) {
 	t.Parallel()
 
-	manager := managerOf(dextest.Connector("abgeo-cloud", "oidc", "ABGEO.cloud", `{
+	manager := managerOf(t, dextest.Connector("abgeo-cloud", "oidc", "ABGEO.cloud", `{
 		"issuer": "https://auth.abgeo.cloud",
 		"clientID": "cid",
 		"clientSecret": "s1",
@@ -137,7 +121,7 @@ func TestTheProviderSplitsItsConfig(t *testing.T) {
 func TestTheTelegramProviderCarriesNoScopes(t *testing.T) {
 	t.Parallel()
 
-	telegram, err := managerOf(dextest.Connector("telegram", "oidc", "Telegram",
+	telegram, err := managerOf(t, dextest.Connector("telegram", "oidc", "Telegram",
 		`{"scopes":["openid","profile"],"userIDKey":"id","maroidPreset":"telegram"}`),
 	).Get(t.Context(), "telegram")
 	require.NoError(t, err)
@@ -151,7 +135,7 @@ func TestTheTelegramProviderCarriesNoScopes(t *testing.T) {
 func TestAProviderThatDexLacksIsNotFound(t *testing.T) {
 	t.Parallel()
 
-	_, err := managerOf().Get(t.Context(), "nope")
+	_, err := managerOf(t).Get(t.Context(), "nope")
 	require.ErrorIs(t, err, errs.ErrProviderNotFound)
 }
 
@@ -162,7 +146,7 @@ func TestAnUnavailableDexReachesTheCaller(t *testing.T) {
 	memory := dextest.New()
 	memory.Fail(errs.ErrIDPUnavailable)
 
-	manager := provider.NewManager(memory, noIdentities{}, provider.Settings{Issuer: issuer})
+	manager := provider.NewManager(memory, migrated(t).DB, provider.Settings{Issuer: issuer})
 
 	_, err := manager.List(t.Context())
 	require.ErrorIs(t, err, errs.ErrIDPUnavailable)

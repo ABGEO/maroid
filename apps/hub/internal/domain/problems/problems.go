@@ -22,6 +22,8 @@ const (
 	TypeAdministratorAllowlist = "/problems/hub/administrator-allowlist"
 	TypeProviderExists         = "/problems/hub/provider-exists"
 	TypeProviderStatic         = "/problems/hub/provider-static"
+	TypeLocalAccountExists     = "/problems/hub/local-account-exists"
+	TypeLocalProviderAbsent    = "/problems/hub/local-provider-absent"
 )
 
 // NotReadyProblem reports a hub that cannot serve a request, with the name of each
@@ -74,6 +76,25 @@ func NewProviderStatic() *problem.Problem {
 	return &problem.Problem{
 		Type:   TypeProviderStatic,
 		Title:  "The configuration of the identity provider holds the provider.",
+		Status: http.StatusConflict,
+	}
+}
+
+// NewLocalAccountExists reports a local account whose email address another local
+// account holds, or a record that already holds one.
+func NewLocalAccountExists() *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeLocalAccountExists,
+		Title:  "Another local account holds the email address.",
+		Status: http.StatusConflict,
+	}
+}
+
+// NewLocalProviderAbsent reports a local account while Dex holds no local provider.
+func NewLocalProviderAbsent() *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeLocalProviderAbsent,
+		Title:  "The instance holds no local provider.",
 		Status: http.StatusConflict,
 	}
 }

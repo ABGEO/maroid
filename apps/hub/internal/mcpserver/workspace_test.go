@@ -20,7 +20,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver"
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver/tools"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/testdb"
@@ -251,12 +250,8 @@ func (scene *workspaceWorld) sessionAs(
 	server := mcpserver.NewServer(
 		slog.New(slog.DiscardHandler),
 		toolRegistry,
-		repository.NewWorkspaceMember(scene.instance.DB),
-		workspace.NewEnablements(
-			repository.NewWorkspacePlugin(scene.instance.DB),
-			repository.NewAllowedPlugin(scene.instance.DB),
-			registry.NewPluginRegistry(),
-		),
+		scene.instance.DB,
+		workspace.NewEnablements(scene.instance.DB, registry.NewPluginRegistry()),
 		scene.authorizer(t),
 	)
 	server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
@@ -295,7 +290,7 @@ func TestListWorkspacesNamesTheMembershipsOfTheActingUser(t *testing.T) {
 	t.Parallel()
 
 	scene := newWorkspaceWorld(t)
-	entry := tools.NewListWorkspaces(repository.NewWorkspace(scene.instance.DB))
+	entry := tools.NewListWorkspaces(scene.instance.DB)
 
 	result, err := scene.sessionAs(t, scene.ana, entry).CallTool(t.Context(), &mcp.CallToolParams{
 		Name: entry.Name, Arguments: json.RawMessage(`{}`),

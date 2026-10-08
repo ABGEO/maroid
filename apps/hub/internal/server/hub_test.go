@@ -27,7 +27,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	providers "github.com/abgeo/maroid/apps/hub/internal/provider"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
@@ -87,16 +86,12 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	logger := slog.New(slog.DiscardHandler)
 
 	oidcSvc := oidcOf(t, cfg)
-	identityRepo := repository.NewIdentity(instance.DB)
-	invitationRepo := repository.NewInvitation(instance.DB)
-	userRepo := repository.NewUser(instance.DB)
-	members := repository.NewWorkspaceMember(instance.DB)
-	service := authService(instance.DB, userRepo, identityRepo, invitationRepo, members)
+	service := auth.NewService(instance.DB)
 	verifier := auth.NewTokenVerifier(oidcSvc)
-	resolver := auth.NewResolver(identityRepo)
+	resolver := auth.NewResolver(instance.DB)
 	store := idempotency.NewStore(instance.DB)
-	workspaces := workspaceManager(instance.DB, members, userRepo)
-	access, enablements := probeAccess(t, instance.DB, members)
+	workspaces := workspace.NewManager(instance.DB)
+	access, enablements := probeAccess(t, instance.DB)
 
 	router := routerOf(t, cfg, logger)
 	held := newGate()
@@ -105,22 +100,26 @@ func hubUnderTest(t *testing.T) *hubFixture {
 		router,
 		handler.NewAuth(
 			cfg, logger, verifier, flowOf(oidcSvc, instance.DB, cfg.Auth.FlowTTL),
-			userRepo, identityRepo, resolver, invitationRepo, service,
-			hubProviders(identityRepo, provider.URL),
+			instance.DB, resolver, service, hubProviders(instance.DB, provider.URL), nil,
 		),
 		handler.NewPlugin(
 			logger, verifier, resolver, emptyCatalog(), probeUI(),
-			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store, access,
-			repository.NewAllowedPlugin(instance.DB),
+			&settingsStub{moment: time.Unix(1790332200, 0).UTC()}, store, access, instance.DB,
 		),
 		handler.NewWorkspace(
-			logger, verifier, resolver, store, members, workspaces, access.Authorizer, workspaces,
+			logger,
+			verifier,
+			resolver,
+			store,
+			instance.DB,
+			workspaces,
+			access.Authorizer,
+			workspaces,
 			handler.WorkspacePlugins{Enablements: enablements, Catalog: emptyCatalog()},
-			repository.NewWorkspace(instance.DB),
 		),
 		handler.NewMCP(
 			cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry(),
-			members, access.Enablements, access.Authorizer,
+			instance.DB, access.Enablements, access.Authorizer,
 		),
 		handler.NewPluginWrapper(
 			logger, verifier, resolver, store, access,
@@ -143,37 +142,14 @@ func hubUnderTest(t *testing.T) *hubFixture {
 
 // flowOf builds the flow of a sign in over the database.
 func flowOf(oidcSvc *auth.OIDCService, database *sqlx.DB, ttl time.Duration) *auth.OIDCFlow {
-	return auth.NewOIDCFlow(oidcSvc, repository.NewAuthFlow(database), ttl)
+	return auth.NewOIDCFlow(oidcSvc, database, ttl)
 }
 
 // hubProviders reads the one provider that the scenarios sign in with.
-func hubProviders(identities repository.IdentityRepository, issuer string) *providers.Manager {
+func hubProviders(database *sqlx.DB, issuer string) *providers.Manager {
 	return providers.NewManager(dextest.New(dextest.Connector(
 		auth.ProviderTelegram, "oidc", "Telegram", `{"maroidPreset":"telegram"}`,
-	)), identities, providers.Settings{Issuer: issuer})
-}
-
-// authService builds the auth service on the database.
-func authService(
-	database *sqlx.DB,
-	users repository.UserRepository,
-	identities repository.IdentityRepository,
-	invitations repository.InvitationRepository,
-	members repository.WorkspaceMemberRepository,
-) *auth.Service {
-	return auth.NewService(
-		database, users, identities, invitations, repository.NewWorkspace(database), members,
-		repository.NewAllowedPlugin(database),
-	)
-}
-
-// workspaceManager builds the service of the workspaces on the database.
-func workspaceManager(
-	database *sqlx.DB,
-	members repository.WorkspaceMemberRepository,
-	users repository.UserRepository,
-) *workspace.Manager {
-	return workspace.NewManager(database, repository.NewWorkspace(database), members, users)
+	)), database, providers.Settings{Issuer: issuer})
 }
 
 // oidcOf builds the OIDC service of the configuration.
@@ -207,18 +183,13 @@ func emptyCatalog() *registry.Catalog {
 func probeAccess(
 	t *testing.T,
 	database *sqlx.DB,
-	members repository.WorkspaceMemberRepository,
 ) (handler.WorkspaceAccess, *workspace.Enablements) {
 	t.Helper()
 
-	enablements := workspace.NewEnablements(
-		repository.NewWorkspacePlugin(database),
-		repository.NewAllowedPlugin(database),
-		registry.NewPluginRegistry(),
-	)
+	enablements := workspace.NewEnablements(database, registry.NewPluginRegistry())
 
 	return handler.WorkspaceAccess{
-		Members:     members,
+		DB:          database,
 		Enablements: enablements,
 		Authorizer:  probeAuthorizer(t),
 	}, enablements

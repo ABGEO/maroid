@@ -20,19 +20,19 @@ type AllowedPluginRepository interface {
 	List(ctx context.Context, userID string) ([]model.AllowedPlugin, error)
 	Add(ctx context.Context, userID string, pluginID string) (*model.AllowedPlugin, bool, error)
 	Remove(ctx context.Context, userID string, pluginID string) error
-	AddAll(ctx context.Context, tx *sqlx.Tx, userID string, pluginIDs []string) error
+	AddAll(ctx context.Context, userID string, pluginIDs []string) error
 }
 
 // AllowedPlugin is a SQL based implementation of AllowedPluginRepository.
 type AllowedPlugin struct {
-	db *sqlx.DB
+	tx *sqlx.Tx
 }
 
 var _ AllowedPluginRepository = (*AllowedPlugin)(nil)
 
 // NewAllowedPlugin creates a new AllowedPlugin repository instance.
-func NewAllowedPlugin(db *sqlx.DB) *AllowedPlugin {
-	return &AllowedPlugin{db: db}
+func NewAllowedPlugin(tx *sqlx.Tx) *AllowedPlugin {
+	return &AllowedPlugin{tx: tx}
 }
 
 // List retrieves the allowlist of the user, ordered by the plugin identifier, because
@@ -43,7 +43,7 @@ func (r *AllowedPlugin) List(ctx context.Context, userID string) ([]model.Allowe
 	query := `SELECT ` + allowedPluginColumns + ` FROM public.allowed_plugins
 		WHERE user_id = $1 ORDER BY plugin_id;`
 
-	if err := r.db.SelectContext(ctx, &entities, query, userID); err != nil {
+	if err := r.tx.SelectContext(ctx, &entities, query, userID); err != nil {
 		return nil, fmt.Errorf("listing the AllowedPlugins of a User: %w", err)
 	}
 
@@ -59,7 +59,7 @@ func (r *AllowedPlugin) Add(
 ) (*model.AllowedPlugin, bool, error) {
 	var entity model.AllowedPlugin
 
-	err := r.db.GetContext(ctx, &entity, `
+	err := r.tx.GetContext(ctx, &entity, `
 		INSERT INTO public.allowed_plugins (user_id, plugin_id) VALUES ($1, $2)
 		ON CONFLICT (user_id, plugin_id) DO NOTHING
 		RETURNING `+allowedPluginColumns+`;`, userID, pluginID)
@@ -71,7 +71,7 @@ func (r *AllowedPlugin) Add(
 		return nil, false, fmt.Errorf("adding an AllowedPlugin: %w", err)
 	}
 
-	err = r.db.GetContext(ctx, &entity, `SELECT `+allowedPluginColumns+` FROM public.allowed_plugins
+	err = r.tx.GetContext(ctx, &entity, `SELECT `+allowedPluginColumns+` FROM public.allowed_plugins
 		WHERE user_id = $1 AND plugin_id = $2;`, userID, pluginID)
 	if err != nil {
 		return nil, false, fmt.Errorf("reading the AllowedPlugin that the list holds: %w", err)
@@ -82,7 +82,7 @@ func (r *AllowedPlugin) Add(
 
 // Remove takes the plugin off the allowlist.
 func (r *AllowedPlugin) Remove(ctx context.Context, userID string, pluginID string) error {
-	result, err := r.db.ExecContext(ctx,
+	result, err := r.tx.ExecContext(ctx,
 		`DELETE FROM public.allowed_plugins WHERE user_id = $1 AND plugin_id = $2;`,
 		userID, pluginID)
 	if err != nil {
@@ -101,16 +101,15 @@ func (r *AllowedPlugin) Remove(ctx context.Context, userID string, pluginID stri
 	return nil
 }
 
-// AddAll puts every plugin on the allowlist of the user, inside the transaction of the
-// caller. A plugin that the list already holds stays as it is.
+// AddAll puts every plugin on the allowlist of the user. A plugin that the list
+// already holds stays as it is.
 func (r *AllowedPlugin) AddAll(
 	ctx context.Context,
-	tx *sqlx.Tx,
 	userID string,
 	pluginIDs []string,
 ) error {
 	for _, pluginID := range pluginIDs {
-		_, err := tx.ExecContext(ctx, `
+		_, err := r.tx.ExecContext(ctx, `
 			INSERT INTO public.allowed_plugins (user_id, plugin_id) VALUES ($1, $2)
 			ON CONFLICT (user_id, plugin_id) DO NOTHING;`, userID, pluginID)
 		if err != nil {

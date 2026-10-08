@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/abgeo/maroid/apps/hub/internal/database"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -30,12 +33,12 @@ type ListWorkspacesOutput struct {
 
 // listWorkspaces holds the repository that the report reads.
 type listWorkspaces struct {
-	workspaces repository.WorkspaceRepository
+	db *sqlx.DB
 }
 
 // NewListWorkspaces builds the tool that names the workspaces of the acting user.
-func NewListWorkspaces(workspaces repository.WorkspaceRepository) registry.MCPTool {
-	tool := &listWorkspaces{workspaces: workspaces}
+func NewListWorkspaces(db *sqlx.DB) registry.MCPTool {
+	tool := &listWorkspaces{db: db}
 
 	return registry.MCPTool{
 		Name: listWorkspacesName,
@@ -56,7 +59,9 @@ func (t *listWorkspaces) handle(
 	_ *mcp.CallToolRequest,
 	_ ListWorkspacesInput,
 ) (*mcp.CallToolResult, ListWorkspacesOutput, error) {
-	memberships, err := t.workspaces.ListOfUser(ctx, pluginapi.ActingUserFromContext(ctx))
+	memberships, err := database.FetchTx(ctx, t.db, func(tx *sqlx.Tx) ([]model.Workspace, error) {
+		return repository.NewWorkspace(tx).ListOfUser(ctx, pluginapi.ActingUserFromContext(ctx))
+	})
 	if err != nil {
 		return nil, ListWorkspacesOutput{}, fmt.Errorf("listing the workspaces: %w", err)
 	}

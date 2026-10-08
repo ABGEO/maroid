@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
@@ -33,12 +32,7 @@ func (f *workspaceFixture) changeRole(
 
 // service builds the service of the workspaces over the database of the fixture.
 func (f *workspaceFixture) service() *workspace.Manager {
-	return workspace.NewManager(
-		f.database,
-		repository.NewWorkspace(f.database),
-		repository.NewWorkspaceMember(f.database),
-		repository.NewUser(f.database),
-	)
+	return workspace.NewManager(f.database)
 }
 
 // roleIn reads the role of the member in the workspace, as the owner of the tables.

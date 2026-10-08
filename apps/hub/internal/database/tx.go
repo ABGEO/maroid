@@ -60,3 +60,19 @@ func WithTx(ctx context.Context, db *sqlx.DB, fn func(*sqlx.Tx) error) error {
 
 	return nil
 }
+
+// FetchTx runs load inside a transaction that carries no acting user, and answers the
+// value that load produced.
+func FetchTx[T any](ctx context.Context, db *sqlx.DB, load func(*sqlx.Tx) (T, error)) (T, error) {
+	var result T
+
+	err := WithTx(ctx, db, func(tx *sqlx.Tx) error {
+		var loadErr error
+
+		result, loadErr = load(tx)
+
+		return loadErr
+	})
+
+	return result, err
+}

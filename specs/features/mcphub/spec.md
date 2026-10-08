@@ -4,7 +4,7 @@ title: The hub as a Model Context Protocol server
 type: spec
 status: approved
 created: 2026-09-17
-updated: 2026-10-04
+updated: 2026-10-09
 approved_by: Temuri
 approved_on: 2026-09-18
 constrained_by: [SEC, OWN, API, ERR, ARC, PLG, LOG, GO, PKG, CFG]
@@ -200,7 +200,7 @@ func NewPing() registry.MCPTool
 
 // NewListWorkspaces builds the workspace list tool: each workspace of the acting
 // user, with the workspace role in it.
-func NewListWorkspaces(members repository.WorkspaceMemberRepository) registry.MCPTool
+func NewListWorkspaces(db *sqlx.DB) registry.MCPTool
 ```
 
 ### 4.2 Data model

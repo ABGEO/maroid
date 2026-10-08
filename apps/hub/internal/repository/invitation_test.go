@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
@@ -19,7 +20,6 @@ const invitationTTL = 72 * time.Hour
 func issue(
 	t *testing.T,
 	instance *testdb.Instance,
-	repo repository.InvitationRepository,
 	userID string,
 	token string,
 	expiresAt time.Time,
@@ -28,14 +28,36 @@ func issue(
 
 	digest := sha256.Sum256([]byte(token))
 
-	tx, err := instance.DB.BeginTxx(t.Context(), nil)
+	invitation, err := fetch(t, instance, func(tx *sqlx.Tx) (*model.Invitation, error) {
+		return repository.NewInvitation(tx).Create(t.Context(), userID, digest[:], expiresAt)
+	})
 	require.NoError(t, err)
-
-	invitation, err := repo.Create(t.Context(), tx, userID, digest[:], expiresAt)
-	require.NoError(t, err)
-	require.NoError(t, tx.Commit())
 
 	return invitation, digest[:]
+}
+
+func validInvitation(
+	t *testing.T,
+	instance *testdb.Instance,
+	digest []byte,
+) (*model.Invitation, error) {
+	t.Helper()
+
+	return fetch(t, instance, func(tx *sqlx.Tx) (*model.Invitation, error) {
+		return repository.NewInvitation(tx).GetValidByTokenHash(t.Context(), digest)
+	})
+}
+
+func consumeInvitation(
+	t *testing.T,
+	instance *testdb.Instance,
+	id string,
+) (*model.Invitation, error) {
+	t.Helper()
+
+	return fetch(t, instance, func(tx *sqlx.Tx) (*model.Invitation, error) {
+		return repository.NewInvitation(tx).Consume(t.Context(), id)
+	})
 }
 
 // EXTID-FR-013: One invitation serves one time.
@@ -45,35 +67,25 @@ func TestInvitationConsumesOneTime(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	invitationRepo := repository.NewInvitation(instance.DB)
-	ctx := t.Context()
 
 	userID := insertUser(t, instance, nameOfA)
-	created, digest := issue(
-		t, instance, invitationRepo, userID, "the-token", time.Now().Add(invitationTTL),
-	)
+	created, digest := issue(t, instance, userID, "the-token", time.Now().Add(invitationTTL))
 
 	require.Nil(t, created.ConsumedAt)
 	require.Equal(t, userID, created.UserID)
 
-	found, err := invitationRepo.GetValidByTokenHash(ctx, digest)
+	found, err := validInvitation(t, instance, digest)
 	require.NoError(t, err)
 	require.Equal(t, created.ID, found.ID)
 
-	tx, err := instance.DB.BeginTxx(ctx, nil)
-	require.NoError(t, err)
-	spent, err := invitationRepo.Consume(ctx, tx, created.ID)
+	spent, err := consumeInvitation(t, instance, created.ID)
 	require.NoError(t, err)
 	require.Equal(t, userID, spent.UserID, "the row names the record it grants")
-	require.NoError(t, tx.Commit())
 
-	tx, err = instance.DB.BeginTxx(ctx, nil)
-	require.NoError(t, err)
-	_, err = invitationRepo.Consume(ctx, tx, created.ID)
+	_, err = consumeInvitation(t, instance, created.ID)
 	require.ErrorIs(t, err, errs.ErrInvitationNotValid)
-	require.NoError(t, tx.Rollback())
 
-	_, err = invitationRepo.GetValidByTokenHash(ctx, digest)
+	_, err = validInvitation(t, instance, digest)
 	require.ErrorIs(t, err, errs.ErrInvitationNotValid, "a consumed invitation grants nothing")
 }
 
@@ -82,22 +94,15 @@ func TestExpiredInvitationGrantsNothing(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	invitationRepo := repository.NewInvitation(instance.DB)
-	ctx := t.Context()
 
 	userID := insertUser(t, instance, nameOfA)
-	created, digest := issue(
-		t, instance, invitationRepo, userID, "stale", time.Now().Add(-time.Minute),
-	)
+	created, digest := issue(t, instance, userID, "stale", time.Now().Add(-time.Minute))
 
-	_, err := invitationRepo.GetValidByTokenHash(ctx, digest)
+	_, err := validInvitation(t, instance, digest)
 	require.ErrorIs(t, err, errs.ErrInvitationNotValid)
 
-	tx, err := instance.DB.BeginTxx(ctx, nil)
-	require.NoError(t, err)
-	_, err = invitationRepo.Consume(ctx, tx, created.ID)
+	_, err = consumeInvitation(t, instance, created.ID)
 	require.ErrorIs(t, err, errs.ErrInvitationNotValid)
-	require.NoError(t, tx.Rollback())
 }
 
 // EXTID-DD-007: The column holds the digest, so a reader of the database gains no
@@ -106,12 +111,9 @@ func TestInvitationLookupNeedsTheDigest(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	invitationRepo := repository.NewInvitation(instance.DB)
 
 	userID := insertUser(t, instance, nameOfA)
-	_, digest := issue(
-		t, instance, invitationRepo, userID, "the-token", time.Now().Add(invitationTTL),
-	)
+	_, digest := issue(t, instance, userID, "the-token", time.Now().Add(invitationTTL))
 
 	var stored []byte
 
@@ -121,6 +123,6 @@ func TestInvitationLookupNeedsTheDigest(t *testing.T) {
 
 	other := sha256.Sum256([]byte("another-token"))
 
-	_, err := invitationRepo.GetValidByTokenHash(t.Context(), other[:])
+	_, err := validInvitation(t, instance, other[:])
 	require.ErrorIs(t, err, errs.ErrInvitationNotValid)
 }

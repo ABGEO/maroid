@@ -7,36 +7,8 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 )
-
-// WorkspaceMemberRepository initializes and returns the membership repository.
-func (c *Container) WorkspaceMemberRepository() (repository.WorkspaceMemberRepository, error) {
-	c.workspaceMemberRepository.mu.Lock()
-	defer c.workspaceMemberRepository.mu.Unlock()
-
-	var err error
-
-	c.workspaceMemberRepository.once.Do(func() {
-		var dbInstance *sqlx.DB
-
-		dbInstance, err = c.Database()
-		if err != nil {
-			return
-		}
-
-		c.workspaceMemberRepository.instance = repository.NewWorkspaceMember(dbInstance)
-	})
-
-	if err != nil {
-		c.workspaceMemberRepository.once = sync.Once{}
-
-		return nil, fmt.Errorf("initializing workspace member repository: %w", err)
-	}
-
-	return c.workspaceMemberRepository.instance, nil
-}
 
 // WorkspaceService initializes and returns the service of the workspaces. It answers
 // the manager, which a caller takes as workspace.Service or as workspace.Catalog.
@@ -47,30 +19,13 @@ func (c *Container) WorkspaceService() (*workspace.Manager, error) {
 	var err error
 
 	c.workspaceService.once.Do(func() {
-		var (
-			dbInstance *sqlx.DB
-			members    repository.WorkspaceMemberRepository
-			users      repository.UserRepository
-		)
+		var dbInstance *sqlx.DB
 
 		if dbInstance, err = c.Database(); err != nil {
 			return
 		}
 
-		if members, err = c.WorkspaceMemberRepository(); err != nil {
-			return
-		}
-
-		if users, err = c.UserRepository(); err != nil {
-			return
-		}
-
-		c.workspaceService.instance = workspace.NewManager(
-			dbInstance,
-			repository.NewWorkspace(dbInstance),
-			members,
-			users,
-		)
+		c.workspaceService.instance = workspace.NewManager(dbInstance)
 	})
 
 	if err != nil {
@@ -90,24 +45,13 @@ func (c *Container) ChatSelection() (*workspace.ChatSelection, error) {
 	var err error
 
 	c.chatSelection.once.Do(func() {
-		var (
-			dbInstance *sqlx.DB
-			members    repository.WorkspaceMemberRepository
-		)
+		var dbInstance *sqlx.DB
 
 		if dbInstance, err = c.Database(); err != nil {
 			return
 		}
 
-		if members, err = c.WorkspaceMemberRepository(); err != nil {
-			return
-		}
-
-		c.chatSelection.instance = workspace.NewChatSelection(
-			dbInstance,
-			repository.NewWorkspace(dbInstance),
-			members,
-		)
+		c.chatSelection.instance = workspace.NewChatSelection(dbInstance)
 	})
 
 	if err != nil {
@@ -133,11 +77,7 @@ func (c *Container) EnablementService() (*workspace.Enablements, error) {
 			return
 		}
 
-		c.enablementService.instance = workspace.NewEnablements(
-			repository.NewWorkspacePlugin(dbInstance),
-			repository.NewAllowedPlugin(dbInstance),
-			c.PluginRegistry(),
-		)
+		c.enablementService.instance = workspace.NewEnablements(dbInstance, c.PluginRegistry())
 	})
 
 	if err != nil {
@@ -151,7 +91,7 @@ func (c *Container) EnablementService() (*workspace.Enablements, error) {
 
 // workspaceAccess resolves the three checks that a route of a plugin passes.
 func (c *Container) workspaceAccess() (handler.WorkspaceAccess, error) {
-	members, err := c.WorkspaceMemberRepository()
+	dbInstance, err := c.Database()
 	if err != nil {
 		return handler.WorkspaceAccess{}, err
 	}
@@ -167,7 +107,7 @@ func (c *Container) workspaceAccess() (handler.WorkspaceAccess, error) {
 	}
 
 	return handler.WorkspaceAccess{
-		Members:     members,
+		DB:          dbInstance,
 		Enablements: enablements,
 		Authorizer:  authorizer,
 	}, nil

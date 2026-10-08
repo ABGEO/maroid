@@ -5,9 +5,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/abgeo/maroid/apps/hub/internal/dex"
 	"github.com/abgeo/maroid/apps/hub/internal/provider"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
 // DexClient initializes and returns the client of the gRPC API of Dex.
@@ -58,19 +59,23 @@ func (c *Container) ProviderService() (*provider.Manager, error) {
 			return
 		}
 
-		var identities repository.IdentityRepository
+		var database *sqlx.DB
 
-		identities, err = c.IdentityRepository()
+		database, err = c.Database()
 		if err != nil {
 			return
 		}
 
 		cfg := c.Config()
-		c.providerService.instance = provider.NewManager(client, identities, provider.Settings{
-			Issuer:        cfg.OIDC.Issuer,
-			TelegramBotID: telegramBotID(cfg.Telegram.Token),
-			Discoverer:    provider.OIDCDiscovery{Timeout: cfg.Dex.Timeout},
-		})
+		c.providerService.instance = provider.NewManager(
+			client,
+			database,
+			provider.Settings{
+				Issuer:        cfg.OIDC.Issuer,
+				TelegramBotID: telegramBotID(cfg.Telegram.Token),
+				Discoverer:    provider.OIDCDiscovery{Timeout: cfg.Dex.Timeout},
+			},
+		)
 	})
 
 	if err != nil {
@@ -80,6 +85,45 @@ func (c *Container) ProviderService() (*provider.Manager, error) {
 	}
 
 	return c.providerService.instance, nil
+}
+
+// LocalAccounts initializes and returns the service of the local accounts.
+func (c *Container) LocalAccounts() (*provider.Accounts, error) {
+	c.localAccounts.mu.Lock()
+	defer c.localAccounts.mu.Unlock()
+
+	var err error
+
+	c.localAccounts.once.Do(func() {
+		c.localAccounts.instance, err = c.buildLocalAccounts()
+	})
+
+	if err != nil {
+		c.localAccounts.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing the local accounts: %w", err)
+	}
+
+	return c.localAccounts.instance, nil
+}
+
+func (c *Container) buildLocalAccounts() (*provider.Accounts, error) {
+	client, err := c.DexClient()
+	if err != nil {
+		return nil, err
+	}
+
+	database, err := c.Database()
+	if err != nil {
+		return nil, err
+	}
+
+	providers, err := c.ProviderService()
+	if err != nil {
+		return nil, err
+	}
+
+	return provider.NewAccounts(client, database, providers), nil
 }
 
 // telegramBotID answers the numeric prefix of a bot token, which is the identifier of

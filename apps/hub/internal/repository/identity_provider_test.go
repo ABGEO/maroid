@@ -1,13 +1,15 @@
 package repository_test
 
 import (
-	"context"
 	"errors"
+	"fmt"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/testdb"
 )
@@ -25,15 +27,23 @@ func markAdministrator(t *testing.T, instance *testdb.Instance, userID string, s
 	require.NoError(t, err)
 }
 
+func countsOf(t *testing.T, instance *testdb.Instance) map[string]int {
+	t.Helper()
+
+	counts, err := fetch(t, instance, func(tx *sqlx.Tx) (map[string]int, error) {
+		return repository.NewIdentity(tx).CountByProvider(t.Context())
+	})
+	require.NoError(t, err)
+
+	return counts
+}
+
 // IDPROV-SC-012: The count names every identity of each provider. The report names
 // each active administrator who holds identities at one provider alone.
 func TestTheReportOfARemoval(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	repo := repository.NewIdentity(instance.DB)
-	ctx := t.Context()
-
 	zura := insertUser(t, instance, "Zura")
 	nino := insertUser(t, instance, "Nino")
 	ana := insertUser(t, instance, "Ana")
@@ -43,53 +53,50 @@ func TestTheReportOfARemoval(t *testing.T) {
 	markAdministrator(t, instance, nino, "active")
 	markAdministrator(t, instance, gio, "blocked")
 
-	attach(t, instance, repo, zura, providerLocal, "zura")
-	attach(t, instance, repo, zura, providerTelegram, accountOfA)
-	attach(t, instance, repo, nino, providerLocal, "nino")
-	attach(t, instance, repo, ana, providerLocal, "ana")
-	attach(t, instance, repo, gio, providerLocal, "gio")
+	attach(t, instance, zura, providerLocal, "zura")
+	attach(t, instance, zura, providerTelegram, accountOfA)
+	attach(t, instance, nino, providerLocal, "nino")
+	attach(t, instance, ana, providerLocal, "ana")
+	attach(t, instance, gio, providerLocal, "gio")
 
-	counts, err := repo.CountByProvider(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, map[string]int{providerLocal: 4, providerTelegram: 1}, counts)
+	assert.Equal(t, map[string]int{providerLocal: 4, providerTelegram: 1}, countsOf(t, instance))
 
-	sole, err := repo.AdministratorsBySoleProvider(ctx)
+	sole, err := fetch(t, instance, func(tx *sqlx.Tx) (map[string][]model.User, error) {
+		return repository.NewIdentity(tx).AdministratorsBySoleProvider(t.Context())
+	})
 	require.NoError(t, err)
 	require.Len(t, sole, 1)
 	require.Len(t, sole[providerLocal], 1)
 	assert.Equal(t, nino, sole[providerLocal][0].ID)
 }
 
-// IDPROV-SC-013: A hook that fails keeps every identity of the provider. A hook that
-// passes deletes them, and leaves the identities of other providers.
-func TestADeleteOfAProviderWaitsForItsHook(t *testing.T) {
+// IDPROV-SC-013: The delete belongs to the transaction of the caller. A rollback keeps
+// every identity of the provider. A commit deletes them, and leaves the identities of
+// other providers.
+func TestADeleteOfAProviderBelongsToItsTransaction(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	repo := repository.NewIdentity(instance.DB)
-	ctx := t.Context()
-
 	ana := insertUser(t, instance, "Ana")
 	beka := insertUser(t, instance, "Beka")
 
-	attach(t, instance, repo, ana, providerCloud, accountOfA)
-	attach(t, instance, repo, beka, providerCloud, accountOfB)
-	attach(t, instance, repo, beka, providerTelegram, accountOfB)
+	attach(t, instance, ana, providerCloud, accountOfA)
+	attach(t, instance, beka, providerCloud, accountOfB)
+	attach(t, instance, beka, providerTelegram, accountOfB)
 
-	err := repo.DeleteByProvider(ctx, providerCloud, func(context.Context) error {
+	err := exec(t, instance, func(tx *sqlx.Tx) error {
+		if err := repository.NewIdentity(tx).
+			DeleteByProvider(t.Context(), providerCloud); err != nil {
+			return fmt.Errorf("deleting in the test: %w", err)
+		}
+
 		return errDexFailed
 	})
 	require.ErrorIs(t, err, errDexFailed)
+	assert.Equal(t, 2, countsOf(t, instance)[providerCloud], "the rollback keeps every identity")
 
-	counts, err := repo.CountByProvider(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, 2, counts[providerCloud], "the failed hook rolls the delete back")
-
-	require.NoError(t, repo.DeleteByProvider(ctx, providerCloud, func(context.Context) error {
-		return nil
+	require.NoError(t, exec(t, instance, func(tx *sqlx.Tx) error {
+		return repository.NewIdentity(tx).DeleteByProvider(t.Context(), providerCloud)
 	}))
-
-	counts, err = repo.CountByProvider(ctx)
-	require.NoError(t, err)
-	assert.Equal(t, map[string]int{providerTelegram: 1}, counts)
+	assert.Equal(t, map[string]int{providerTelegram: 1}, countsOf(t, instance))
 }

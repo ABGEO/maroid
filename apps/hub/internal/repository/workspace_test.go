@@ -1,8 +1,10 @@
 package repository_test
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,18 +24,22 @@ func createWorkspace(
 ) *model.Workspace {
 	t.Helper()
 
-	workspaceRepo := repository.NewWorkspace(instance.DB)
-	memberRepo := repository.NewWorkspaceMember(instance.DB)
+	workspace, err := fetch(t, instance, func(tx *sqlx.Tx) (*model.Workspace, error) {
+		workspace, err := repository.NewWorkspace(tx).Create(t.Context(), name)
+		if err != nil {
+			return nil, fmt.Errorf("creating in the test: %w", err)
+		}
 
-	tx, err := instance.DB.BeginTxx(t.Context(), nil)
-	require.NoError(t, err)
+		_, err = repository.NewWorkspaceMember(tx).Add(
+			t.Context(), workspace.ID, firstMember, pluginapi.RoleManager,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("adding in the test: %w", err)
+		}
 
-	workspace, err := workspaceRepo.Create(t.Context(), tx, name)
+		return workspace, nil
+	})
 	require.NoError(t, err)
-
-	_, err = memberRepo.Add(t.Context(), tx, workspace.ID, firstMember, pluginapi.RoleManager)
-	require.NoError(t, err)
-	require.NoError(t, tx.Commit())
 
 	return workspace
 }
@@ -42,14 +48,46 @@ func createWorkspace(
 func addMember(t *testing.T, instance *testdb.Instance, workspaceID string, userID string) {
 	t.Helper()
 
-	tx, err := instance.DB.BeginTxx(t.Context(), nil)
+	require.NoError(t, addMembership(t, instance, workspaceID, userID))
+}
+
+func addMembership(
+	t *testing.T,
+	instance *testdb.Instance,
+	workspaceID string,
+	userID string,
+) error {
+	t.Helper()
+
+	return exec(t, instance, func(tx *sqlx.Tx) error {
+		_, err := repository.NewWorkspaceMember(tx).Add(
+			t.Context(), workspaceID, userID, pluginapi.RoleManager,
+		)
+		if err != nil {
+			return fmt.Errorf("adding in the test: %w", err)
+		}
+
+		return nil
+	})
+}
+
+func membersOf(t *testing.T, instance *testdb.Instance, workspaceID string) []model.Member {
+	t.Helper()
+
+	members, err := fetch(t, instance, func(tx *sqlx.Tx) ([]model.Member, error) {
+		return repository.NewWorkspaceMember(tx).List(t.Context(), workspaceID)
+	})
 	require.NoError(t, err)
 
-	_, err = repository.NewWorkspaceMember(instance.DB).Add(
-		t.Context(), tx, workspaceID, userID, pluginapi.RoleManager,
-	)
-	require.NoError(t, err)
-	require.NoError(t, tx.Commit())
+	return members
+}
+
+func workspaceByID(t *testing.T, instance *testdb.Instance, id string) (*model.Workspace, error) {
+	t.Helper()
+
+	return fetch(t, instance, func(tx *sqlx.Tx) (*model.Workspace, error) {
+		return repository.NewWorkspace(tx).GetByID(t.Context(), id)
+	})
 }
 
 // WSPACE-SC-001: A new workspace carries an identifier that the database generates,
@@ -66,12 +104,11 @@ func TestWorkspaceCreatesWithItsFirstMember(t *testing.T) {
 	assert.Equal(t, "Home", workspace.Name)
 	assert.False(t, workspace.CreatedAt.IsZero())
 
-	found, err := repository.NewWorkspace(instance.DB).GetByID(t.Context(), workspace.ID)
+	found, err := workspaceByID(t, instance, workspace.ID)
 	require.NoError(t, err)
 	assert.Equal(t, workspace.ID, found.ID)
 
-	members, err := repository.NewWorkspaceMember(instance.DB).List(t.Context(), workspace.ID)
-	require.NoError(t, err)
+	members := membersOf(t, instance, workspace.ID)
 	require.Len(t, members, 1)
 	assert.Equal(t, nino, members[0].UserID)
 }
@@ -83,16 +120,12 @@ func TestWorkspaceRefusesALongName(t *testing.T) {
 
 	instance := startWithCoreMigrations(t)
 
-	tx, err := instance.DB.BeginTxx(t.Context(), nil)
-	require.NoError(t, err)
-
-	t.Cleanup(func() { _ = tx.Rollback() })
-
-	_, err = repository.NewWorkspace(instance.DB).Create(
-		t.Context(),
-		tx,
-		"0123456789012345678901234567890123456789012345678901234567890123x",
-	)
+	_, err := fetch(t, instance, func(tx *sqlx.Tx) (*model.Workspace, error) {
+		return repository.NewWorkspace(tx).Create(
+			t.Context(),
+			"0123456789012345678901234567890123456789012345678901234567890123x",
+		)
+	})
 	require.Error(t, err)
 }
 
@@ -110,7 +143,9 @@ func TestWorkspaceListsTheWorkspacesOfAUser(t *testing.T) {
 	garden := createWorkspace(t, instance, "Garden", gio)
 	createWorkspace(t, instance, "Office", nino)
 
-	workspaces, err := repository.NewWorkspace(instance.DB).ListOfUser(t.Context(), gio)
+	workspaces, err := fetch(t, instance, func(tx *sqlx.Tx) ([]model.Workspace, error) {
+		return repository.NewWorkspace(tx).ListOfUser(t.Context(), gio)
+	})
 	require.NoError(t, err)
 
 	require.Len(t, workspaces, 2)
@@ -124,10 +159,7 @@ func TestWorkspaceAbsentAnswersNotFound(t *testing.T) {
 
 	instance := startWithCoreMigrations(t)
 
-	_, err := repository.NewWorkspace(instance.DB).GetByID(
-		t.Context(),
-		"01927f4e-3c2a-7b1d-9e8f-0a1b2c3d4e5f",
-	)
+	_, err := workspaceByID(t, instance, "01927f4e-3c2a-7b1d-9e8f-0a1b2c3d4e5f")
 	require.ErrorIs(t, err, errs.ErrWorkspaceNotFound)
 }
 
@@ -143,15 +175,7 @@ func TestWorkspaceMemberRefusesASecondMembership(t *testing.T) {
 
 	addMember(t, instance, home.ID, nino)
 
-	tx, err := instance.DB.BeginTxx(t.Context(), nil)
-	require.NoError(t, err)
-
-	t.Cleanup(func() { _ = tx.Rollback() })
-
-	_, err = repository.NewWorkspaceMember(instance.DB).Add(
-		t.Context(), tx, home.ID, nino, pluginapi.RoleManager,
-	)
-	require.ErrorIs(t, err, errs.ErrMemberExists)
+	require.ErrorIs(t, addMembership(t, instance, home.ID, nino), errs.ErrMemberExists)
 }
 
 // WSPACE-SC-007: A member reads every member of the workspace with their names, in
@@ -165,21 +189,24 @@ func TestWorkspaceMemberListsAndReadsTheMembers(t *testing.T) {
 	home := createWorkspace(t, instance, "Home", ana)
 	addMember(t, instance, home.ID, nino)
 
-	memberRepo := repository.NewWorkspaceMember(instance.DB)
-
-	members, err := memberRepo.List(t.Context(), home.ID)
-	require.NoError(t, err)
+	members := membersOf(t, instance, home.ID)
 	require.Len(t, members, 2)
 	assert.Equal(t, ana, members[0].UserID)
 	assert.Equal(t, nino, members[1].UserID)
 	require.NotNil(t, members[1].FirstName)
 	assert.Equal(t, nameOfB, *members[1].FirstName)
 
-	member, err := memberRepo.Get(t.Context(), home.ID, ana)
+	memberOf := func(userID string) (*model.Member, error) {
+		return fetch(t, instance, func(tx *sqlx.Tx) (*model.Member, error) {
+			return repository.NewWorkspaceMember(tx).Get(t.Context(), home.ID, userID)
+		})
+	}
+
+	member, err := memberOf(ana)
 	require.NoError(t, err)
 	assert.Equal(t, ana, member.UserID)
 
-	_, err = memberRepo.Get(t.Context(), home.ID, insertUser(t, instance, "Gio"))
+	_, err = memberOf(insertUser(t, instance, "Gio"))
 	require.ErrorIs(t, err, errs.ErrMemberNotFound)
 }
 
@@ -193,22 +220,17 @@ func TestWorkspaceMemberRemovesOneMembership(t *testing.T) {
 	home := createWorkspace(t, instance, "Home", ana)
 	addMember(t, instance, home.ID, nino)
 
-	memberRepo := repository.NewWorkspaceMember(instance.DB)
+	remove := func() error {
+		return exec(t, instance, func(tx *sqlx.Tx) error {
+			return repository.NewWorkspaceMember(tx).Remove(t.Context(), home.ID, nino)
+		})
+	}
 
-	tx, err := instance.DB.BeginTxx(t.Context(), nil)
-	require.NoError(t, err)
-	require.NoError(t, memberRepo.Remove(t.Context(), tx, home.ID, nino))
-	require.NoError(t, tx.Commit())
+	require.NoError(t, remove())
 
-	members, err := memberRepo.List(t.Context(), home.ID)
-	require.NoError(t, err)
+	members := membersOf(t, instance, home.ID)
 	require.Len(t, members, 1)
 	assert.Equal(t, ana, members[0].UserID)
 
-	tx, err = instance.DB.BeginTxx(t.Context(), nil)
-	require.NoError(t, err)
-
-	t.Cleanup(func() { _ = tx.Rollback() })
-
-	require.ErrorIs(t, memberRepo.Remove(t.Context(), tx, home.ID, nino), errs.ErrMemberNotFound)
+	require.ErrorIs(t, remove(), errs.ErrMemberNotFound)
 }

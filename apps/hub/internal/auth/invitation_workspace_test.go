@@ -1,11 +1,8 @@
 package auth_test
 
 import (
-	"context"
-	"errors"
 	"io/fs"
 	"testing"
-	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -13,24 +10,12 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/db"
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
-	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
-var errRefusedWrite = errors.New("the invitation write is refused")
-
-// refusingInvitations fails every write of an invitation, so the test sees what the
-// writes before it leave behind.
-type refusingInvitations struct {
-	repository.InvitationRepository
-}
-
-func (refusingInvitations) Create(
-	context.Context, *sqlx.Tx, string, []byte, time.Time,
-) (*model.Invitation, error) {
-	return nil, errRefusedWrite
-}
+// refusedInvitation is the message of the trigger that refuses every write of an
+// invitation, so the test sees what the writes before it leave behind.
+const refusedInvitation = "the invitation write is refused"
 
 // countRows counts the rows of each table, as the owner of the tables.
 func countRows(t *testing.T, database *sqlx.DB, tables ...string) map[string]int {
@@ -106,22 +91,21 @@ func TestAFailedInviteLeavesNothing(t *testing.T) {
 
 	instance.Migrate(t, "public", migrations)
 
-	service := auth.NewService(
-		instance.DB,
-		repository.NewUser(instance.DB),
-		repository.NewIdentity(instance.DB),
-		refusingInvitations{},
-		repository.NewWorkspace(instance.DB),
-		repository.NewWorkspaceMember(instance.DB),
-		repository.NewAllowedPlugin(instance.DB),
-	)
+	_, err = instance.DB.ExecContext(t.Context(), `
+		CREATE FUNCTION public.refuse_invitation() RETURNS trigger LANGUAGE plpgsql AS $$
+		BEGIN
+			RAISE EXCEPTION '`+refusedInvitation+`';
+		END $$;
+		CREATE TRIGGER refuse_invitation BEFORE INSERT ON public.invitations
+			FOR EACH ROW EXECUTE FUNCTION public.refuse_invitation();`)
+	require.NoError(t, err)
 
-	_, err = service.Invite(
+	_, err = auth.NewService(instance.DB).Invite(
 		t.Context(),
 		auth.InviteRequest{FirstName: nameOfInvitee},
 		invitationTTL,
 	)
-	require.ErrorIs(t, err, errRefusedWrite)
+	require.ErrorContains(t, err, refusedInvitation)
 
 	assert.Equal(t, map[string]int{
 		"public.users":             0,

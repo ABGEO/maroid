@@ -4,6 +4,7 @@ import (
 	"io/fs"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/db"
@@ -33,17 +34,23 @@ func startWithCoreMigrations(t *testing.T) *testdb.Instance {
 	return instance
 }
 
+func activeUser(t *testing.T, instance *testdb.Instance, id string) (*model.User, error) {
+	t.Helper()
+
+	return fetch(t, instance, func(tx *sqlx.Tx) (*model.User, error) {
+		return repository.NewUser(tx).GetActiveByID(t.Context(), id)
+	})
+}
+
 // IDENT-FR-001: The record carries an identifier that the database generates.
 // See DAT-009 and ADR-0001. EXTID-FR-015 leaves both names to the owner.
 func TestUserRecordDefaults(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	userRepo := repository.NewUser(instance.DB)
-
 	id := insertUser(t, instance, nameOfA)
 
-	user, err := userRepo.GetActiveByID(t.Context(), id)
+	user, err := activeUser(t, instance, id)
 	require.NoError(t, err)
 
 	require.NotEmpty(t, user.ID)
@@ -60,8 +67,6 @@ func TestBlockedUserIsNotActive(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	userRepo := repository.NewUser(instance.DB)
-	ctx := t.Context()
 
 	var id string
 
@@ -72,10 +77,12 @@ func TestBlockedUserIsNotActive(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	_, err = userRepo.GetActiveByID(ctx, id)
+	_, err = activeUser(t, instance, id)
 	require.ErrorIs(t, err, errs.ErrUserNotFound)
 
-	active, err := userRepo.ListActive(ctx)
+	active, err := fetch(t, instance, func(tx *sqlx.Tx) ([]model.User, error) {
+		return repository.NewUser(tx).ListActive(t.Context())
+	})
 	require.NoError(t, err)
 	require.Empty(t, active)
 
@@ -89,8 +96,6 @@ func TestGetActiveByIDOfUnknownRecord(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	userRepo := repository.NewUser(instance.DB)
-
-	_, err := userRepo.GetActiveByID(t.Context(), "01998aa0-0000-7000-8000-000000000000")
+	_, err := activeUser(t, instance, "01998aa0-0000-7000-8000-000000000000")
 	require.ErrorIs(t, err, errs.ErrUserNotFound)
 }

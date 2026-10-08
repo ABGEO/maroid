@@ -12,9 +12,13 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/jmoiron/sqlx"
+
+	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/dex"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/rest/precondition"
 )
 
@@ -75,17 +79,6 @@ type Service interface {
 	Remove(ctx context.Context, id string) error
 }
 
-// Identities reads and deletes the identities that belong to a provider.
-type Identities interface {
-	CountByProvider(ctx context.Context) (map[string]int, error)
-	AdministratorsBySoleProvider(ctx context.Context) (map[string][]model.User, error)
-	DeleteByProvider(
-		ctx context.Context,
-		provider string,
-		beforeCommit func(context.Context) error,
-	) error
-}
-
 // Settings holds what the presets read from the configuration of the hub.
 type Settings struct {
 	// Issuer is the address of Dex. The redirect address of every OIDC provider
@@ -101,7 +94,7 @@ type Settings struct {
 // shows at the next read.
 type Manager struct {
 	client        dex.Client
-	identities    Identities
+	db            *sqlx.DB
 	redirectURI   string
 	telegramBotID string
 	discoverer    Discoverer
@@ -109,11 +102,11 @@ type Manager struct {
 
 var _ Service = (*Manager)(nil)
 
-// NewManager creates a Manager.
-func NewManager(client dex.Client, identities Identities, settings Settings) *Manager {
+// NewManager creates a Manager. A removal runs in a transaction of the database.
+func NewManager(client dex.Client, db *sqlx.DB, settings Settings) *Manager {
 	return &Manager{
 		client:        client,
-		identities:    identities,
+		db:            db,
 		redirectURI:   strings.TrimSuffix(settings.Issuer, "/") + "/callback",
 		telegramBotID: settings.TelegramBotID,
 		discoverer:    settings.Discoverer,
@@ -239,8 +232,10 @@ func (m *Manager) Change(
 	return &providers[0], nil
 }
 
-// Remove deletes a stored provider and every identity of it. A local provider takes
-// every local account with it, because each local connector reads one password store.
+// Remove deletes a stored provider and every identity of it. The identities go inside a
+// transaction that commits only after Dex removed the connector, so a failure of Dex
+// keeps them. A local provider takes every local account with it, because each local
+// connector reads one password store.
 func (m *Manager) Remove(ctx context.Context, id string) error {
 	connector, err := m.find(ctx, id)
 	if errors.Is(err, errs.ErrProviderNotFound) {
@@ -256,7 +251,11 @@ func (m *Manager) Remove(ctx context.Context, id string) error {
 		return fmt.Errorf("removing the provider %s: %w", id, errs.ErrProviderStatic)
 	}
 
-	err = m.identities.DeleteByProvider(ctx, id, func(ctx context.Context) error {
+	err = database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
+		if err := repository.NewIdentity(tx).DeleteByProvider(ctx, id); err != nil {
+			return fmt.Errorf("deleting the identities of %s: %w", id, err)
+		}
+
 		if removed.Preset == PresetLocal {
 			if err := m.deletePasswords(ctx); err != nil {
 				return err
@@ -276,18 +275,26 @@ func (m *Manager) Remove(ctx context.Context, id string) error {
 // commit that failed after Dex removed the connector leaves them, and a retry ends
 // here.
 func (m *Manager) removeLeftovers(ctx context.Context, id string, absent error) error {
-	counts, err := m.identities.CountByProvider(ctx)
-	if err != nil {
-		return fmt.Errorf("counting the identities of %s: %w", id, err)
-	}
+	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
+		identities := repository.NewIdentity(tx)
 
-	if counts[id] == 0 {
-		return absent
-	}
+		counts, err := identities.CountByProvider(ctx)
+		if err != nil {
+			return fmt.Errorf("counting the identities of %s: %w", id, err)
+		}
 
-	err = m.identities.DeleteByProvider(ctx, id, func(context.Context) error { return nil })
+		if counts[id] == 0 {
+			return absent
+		}
+
+		if err = identities.DeleteByProvider(ctx, id); err != nil {
+			return fmt.Errorf("removing the identities of %s: %w", id, err)
+		}
+
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("removing the identities of %s: %w", id, err)
+		return fmt.Errorf("removing the provider %s: %w", id, err)
 	}
 
 	return nil
@@ -313,19 +320,28 @@ func (m *Manager) deletePasswords(ctx context.Context) error {
 // report writes the count of identities and the administrators who would hold no sign
 // in into each provider.
 func (m *Manager) report(ctx context.Context, providers []Provider) error {
-	counts, err := m.identities.CountByProvider(ctx)
-	if err != nil {
-		return fmt.Errorf("counting the identities of each provider: %w", err)
-	}
+	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
+		identities := repository.NewIdentity(tx)
 
-	sole, err := m.identities.AdministratorsBySoleProvider(ctx)
-	if err != nil {
-		return fmt.Errorf("reading the administrators of each provider: %w", err)
-	}
+		counts, err := identities.CountByProvider(ctx)
+		if err != nil {
+			return fmt.Errorf("counting the identities of each provider: %w", err)
+		}
 
-	for i := range providers {
-		providers[i].IdentityCount = counts[providers[i].ID]
-		providers[i].AdministratorsWithoutSignIn = sole[providers[i].ID]
+		sole, err := identities.AdministratorsBySoleProvider(ctx)
+		if err != nil {
+			return fmt.Errorf("reading the administrators of each provider: %w", err)
+		}
+
+		for i := range providers {
+			providers[i].IdentityCount = counts[providers[i].ID]
+			providers[i].AdministratorsWithoutSignIn = sole[providers[i].ID]
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("reporting the removal of each provider: %w", err)
 	}
 
 	return nil

@@ -4,11 +4,11 @@ import (
 	"log/slog"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
@@ -52,7 +52,7 @@ func NewPluginWrapper(
 // runs, in this order: the membership, the enablement of the plugin, and the
 // permission of the route.
 type WorkspaceAccess struct {
-	Members     repository.WorkspaceMemberRepository
+	DB          *sqlx.DB
 	Enablements workspace.EnablementChecker
 	Authorizer  authz.Authorizer
 }
@@ -71,7 +71,7 @@ func (h *PluginWrapper) Register(router chi.Router) {
 	router.Route(h.pathPrefix(), func(r chi.Router) {
 		r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
 		r.Use(idempotency.Middleware(h.logger, h.idempotency))
-		r.Use(workspace.Middleware(h.logger, h.access.Members))
+		r.Use(workspace.Middleware(h.logger, h.access.DB))
 		r.Use(workspace.RequireEnabled(h.logger, h.access.Enablements, h.pluginID.String()))
 
 		for _, route := range h.routes {

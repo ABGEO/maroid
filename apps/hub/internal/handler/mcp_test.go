@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io/fs"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -13,8 +14,10 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/apps/hub/db"
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/authtest"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
@@ -24,10 +27,10 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver/tools"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/problem"
+	"github.com/abgeo/maroid/libs/testdb"
 )
 
 const (
@@ -205,14 +208,16 @@ func hubAt(
 		Assets: fstest.MapFS{},
 	})
 
+	database := mcpDatabase(t)
+
 	require.NoError(t, toolRegistry.Register(
 		tools.NewWhoAmI(),
-		tools.NewListPlugins(registry.NewCatalog(pluginRegistry, capabilities), probeAllowlist{}),
+		tools.NewListPlugins(registry.NewCatalog(pluginRegistry, capabilities), database),
 		tools.NewPing(),
 	))
 
 	mcpHandler := handler.NewMCP(
-		cfg, slog.New(slog.DiscardHandler), oidcSvc, resolver, toolRegistry, stubMembers{},
+		cfg, slog.New(slog.DiscardHandler), oidcSvc, resolver, toolRegistry, database,
 		everyPluginEnabled{}, probeAuthorizer(t),
 	)
 
@@ -327,13 +332,41 @@ func problemOf(t *testing.T, recorder *httptest.ResponseRecorder) problem.Proble
 // memberWorkspace is the one workspace that the acting user of the fixture belongs to.
 const memberWorkspace = "01998aa0-1111-7000-8000-0000000000aa"
 
-// probeAllowlist holds the probe plugin on the allowlist of every user.
-type probeAllowlist struct {
-	repository.AllowedPluginRepository
-}
+// mcpDatabase holds the record of the acting user as a viewer of memberWorkspace, with
+// the probe plugin on its allowlist.
+func mcpDatabase(t *testing.T) *sqlx.DB {
+	t.Helper()
 
-func (probeAllowlist) List(_ context.Context, userID string) ([]model.AllowedPlugin, error) {
-	return []model.AllowedPlugin{{UserID: userID, PluginID: probeID}}, nil
+	instance := testdb.Start(t)
+
+	migrations, err := fs.Sub(db.GetMigrationsFS(), "migrations")
+	require.NoError(t, err)
+
+	instance.Migrate(t, "public", migrations)
+
+	for _, statement := range []struct {
+		query string
+		args  []any
+	}{
+		{
+			`INSERT INTO public.users (id, first_name, last_name) VALUES ($1, 'Temuri', 'Takalandze');`,
+			[]any{recordID},
+		},
+		{`INSERT INTO public.workspaces (id, name) VALUES ($1, 'Home');`, []any{memberWorkspace}},
+		{
+			`INSERT INTO public.workspace_members (workspace_id, user_id, role) VALUES ($1, $2, 'viewer');`,
+			[]any{memberWorkspace, recordID},
+		},
+		{
+			`INSERT INTO public.allowed_plugins (user_id, plugin_id) VALUES ($1, $2);`,
+			[]any{recordID, probeID},
+		},
+	} {
+		_, err = instance.DB.ExecContext(t.Context(), statement.query, statement.args...)
+		require.NoError(t, err)
+	}
+
+	return instance.DB
 }
 
 // administratorRecord is the active record of the acting user, marked as an
@@ -350,23 +383,6 @@ type everyPluginEnabled struct{}
 
 func (everyPluginEnabled) IsEnabled(context.Context, string, string) (bool, error) {
 	return true, nil
-}
-
-// stubMembers holds the acting user of the fixture as a member of memberWorkspace.
-type stubMembers struct {
-	repository.WorkspaceMemberRepository
-}
-
-func (stubMembers) Get(
-	_ context.Context,
-	workspaceID string,
-	userID string,
-) (*model.Member, error) {
-	if workspaceID != memberWorkspace {
-		return nil, errs.ErrMemberNotFound
-	}
-
-	return &model.Member{WorkspaceID: workspaceID, UserID: userID, Role: pluginapi.RoleViewer}, nil
 }
 
 // MCPHUB-SC-008: A tool that a plugin registers reaches an MCP client.

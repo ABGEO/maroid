@@ -27,7 +27,6 @@ import (
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
 	"github.com/abgeo/maroid/apps/hub/internal/provider"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
@@ -50,21 +49,17 @@ type Resolver interface {
 	CloseHTTPServer() error
 	Database() (*sqlx.DB, error)
 	CloseDatabase() error
-	UserRepository() (repository.UserRepository, error)
-	IdentityRepository() (repository.IdentityRepository, error)
-	InvitationRepository() (repository.InvitationRepository, error)
-	WorkspaceMemberRepository() (repository.WorkspaceMemberRepository, error)
 	WorkspaceService() (*workspace.Manager, error)
 	ChatSelection() (*workspace.ChatSelection, error)
 	EnablementService() (*workspace.Enablements, error)
 	UserService() (user.Service, error)
-	AuthFlowRepository() (repository.AuthFlowRepository, error)
 	IdentityResolver() (auth.IdentityResolver, error)
 	AuthService() (*auth.Service, error)
 	OpenBaoSession() (*openbao.Session, error)
 	DexClient() (*dex.GRPC, error)
 	CloseDexClient() error
 	ProviderService() (*provider.Manager, error)
+	LocalAccounts() (*provider.Accounts, error)
 	SecretCipher() (secret.Cipher, error)
 	HealthService() (*healthcheck.Service, error)
 	SettingsRegistry() *registry.SettingsRegistry
@@ -120,30 +115,6 @@ type Container struct {
 		instance *migrator.Migrator
 	}
 
-	userRepository struct {
-		mu       sync.Mutex
-		once     sync.Once
-		instance repository.UserRepository
-	}
-
-	identityRepository struct {
-		mu       sync.Mutex
-		once     sync.Once
-		instance repository.IdentityRepository
-	}
-
-	invitationRepository struct {
-		mu       sync.Mutex
-		once     sync.Once
-		instance repository.InvitationRepository
-	}
-
-	workspaceMemberRepository struct {
-		mu       sync.Mutex
-		once     sync.Once
-		instance repository.WorkspaceMemberRepository
-	}
-
 	workspaceService struct {
 		mu       sync.Mutex
 		once     sync.Once
@@ -166,12 +137,6 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *workspace.ChatSelection
-	}
-
-	authFlowRepository struct {
-		mu       sync.Mutex
-		once     sync.Once
-		instance repository.AuthFlowRepository
 	}
 
 	identityResolver struct {
@@ -202,6 +167,12 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *provider.Manager
+	}
+
+	localAccounts struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *provider.Accounts
 	}
 
 	healthService struct {

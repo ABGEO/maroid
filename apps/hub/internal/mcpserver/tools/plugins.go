@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
 )
 
@@ -24,18 +24,12 @@ type ListPluginsOutput struct {
 // listPlugins holds the registries that the report reads.
 type listPlugins struct {
 	catalog *registry.Catalog
-	allowed repository.AllowedPluginRepository
+	db      *sqlx.DB
 }
 
 // NewListPlugins builds the plugin list tool.
-func NewListPlugins(
-	catalog *registry.Catalog,
-	allowed repository.AllowedPluginRepository,
-) registry.MCPTool {
-	tool := &listPlugins{
-		catalog: catalog,
-		allowed: allowed,
-	}
+func NewListPlugins(catalog *registry.Catalog, db *sqlx.DB) registry.MCPTool {
+	tool := &listPlugins{catalog: catalog, db: db}
 
 	return registry.MCPTool{
 		Name: listPluginsName,
@@ -58,7 +52,7 @@ func (t *listPlugins) handle(
 	_ *mcp.CallToolRequest,
 	_ ListPluginsInput,
 ) (*mcp.CallToolResult, ListPluginsOutput, error) {
-	visible, err := user.VisiblePlugins(ctx, t.catalog, t.allowed)
+	visible, err := user.VisiblePlugins(ctx, t.catalog, t.db)
 	if err != nil {
 		return nil, ListPluginsOutput{}, fmt.Errorf("listing the plugins: %w", err)
 	}

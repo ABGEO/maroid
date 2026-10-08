@@ -1,110 +1,37 @@
 package auth_test
 
 import (
-	"context"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
-
-// fakeIdentityRepository answers the resolution and reports what it was asked.
-type fakeIdentityRepository struct {
-	user           *model.User
-	err            error
-	gotProvider    string
-	gotProviderUID string
-}
-
-var _ repository.IdentityRepository = (*fakeIdentityRepository)(nil)
-
-func (f *fakeIdentityRepository) GetActiveUserByProvider(
-	_ context.Context,
-	provider string,
-	providerUserID string,
-) (*model.User, error) {
-	f.gotProvider = provider
-	f.gotProviderUID = providerUserID
-
-	return f.user, f.err
-}
-
-func (f *fakeIdentityRepository) GetUserByProvider(
-	_ context.Context,
-	_ string,
-	_ string,
-) (*model.User, error) {
-	return f.user, f.err
-}
-
-func (f *fakeIdentityRepository) ListByUser(
-	_ context.Context,
-	_ string,
-) ([]model.Identity, error) {
-	return nil, errs.ErrIdentityNotFound
-}
-
-func (f *fakeIdentityRepository) Attach(
-	_ context.Context,
-	_ *sqlx.Tx,
-	_ string,
-	_ string,
-	_ string,
-	_ model.Profile,
-) error {
-	return errs.ErrIdentityNotFound
-}
-
-func (f *fakeIdentityRepository) SyncProfile(
-	_ context.Context,
-	_ string,
-	_ string,
-	_ model.Profile,
-) error {
-	return errs.ErrIdentityNotFound
-}
-
-func (f *fakeIdentityRepository) Detach(_ context.Context, _ string, _ string) error {
-	return errs.ErrIdentityNotFound
-}
-
-func (f *fakeIdentityRepository) CountByProvider(_ context.Context) (map[string]int, error) {
-	return map[string]int{}, nil
-}
-
-func (f *fakeIdentityRepository) AdministratorsBySoleProvider(
-	_ context.Context,
-) (map[string][]model.User, error) {
-	return map[string][]model.User{}, nil
-}
-
-func (f *fakeIdentityRepository) DeleteByProvider(
-	_ context.Context,
-	_ string,
-	_ func(context.Context) error,
-) error {
-	return nil
-}
 
 // EXTID-DD-012: One resolver serves both entry points, and it passes the provider
 // and the external account through without a change.
 func TestResolverReadsTheIdentity(t *testing.T) {
 	t.Parallel()
 
-	expected := &model.User{ID: "01998aa0-1111-7000-8000-00000000000a"}
-	identityRepo := &fakeIdentityRepository{user: expected}
-	resolver := auth.NewResolver(identityRepo)
+	service, _, database := serviceUnderTest(t)
+	userID := addUser(t, database, "Temuri")
+	require.NoError(t, service.Attach(
+		t.Context(), userID, auth.ProviderTelegram, "722183546", model.Profile{},
+	))
 
-	user, err := resolver.ResolveByProvider(t.Context(), "telegram", "722183546")
+	resolver := auth.NewResolver(database)
+
+	user, err := resolver.ResolveByProvider(t.Context(), auth.ProviderTelegram, "722183546")
 	require.NoError(t, err)
-	require.Equal(t, expected.ID, user.ID)
-	require.Equal(t, "telegram", identityRepo.gotProvider)
-	require.Equal(t, "722183546", identityRepo.gotProviderUID)
+	require.Equal(t, userID, user.ID)
+
+	_, err = resolver.ResolveByProvider(t.Context(), providerCloud, "722183546")
+	require.ErrorIs(t, err, errs.ErrUserNotFound, "the provider takes part in the lookup")
+
+	_, err = resolver.ResolveByProvider(t.Context(), auth.ProviderTelegram, "722183547")
+	require.ErrorIs(t, err, errs.ErrUserNotFound, "the account takes part in the lookup")
 }
 
 // EXTID-FR-001: An external account that names no active record resolves to
@@ -112,9 +39,10 @@ func TestResolverReadsTheIdentity(t *testing.T) {
 func TestResolverReportsAnUnknownAccount(t *testing.T) {
 	t.Parallel()
 
-	resolver := auth.NewResolver(&fakeIdentityRepository{err: errs.ErrUserNotFound})
+	_, _, database := serviceUnderTest(t)
+	resolver := auth.NewResolver(database)
 
-	user, err := resolver.ResolveByProvider(t.Context(), "cloud", "nobody")
+	user, err := resolver.ResolveByProvider(t.Context(), providerCloud, "nobody")
 	require.ErrorIs(t, err, errs.ErrUserNotFound)
 	require.Nil(t, user)
 }

@@ -48,7 +48,7 @@ func TestTheCheckOfARouteTakesTwoMillisecondsAtMost(t *testing.T) {
 		})
 	})
 	router.Route("/workspaces/{"+workspace.PathParam+"}", func(r chi.Router) {
-		r.Use(workspace.Middleware(logger, scene.members))
+		r.Use(workspace.Middleware(logger, scene.instance.DB))
 
 		r.With(workspace.Require(logger, authz.NewRoleAuthorizer(permissions), authz.PermissionWorkspaceRead)).
 			Get("/", func(w http.ResponseWriter, r *http.Request) {

@@ -4,7 +4,7 @@ title: The providers of the instance and the local account
 type: spec
 status: approved
 created: 2026-10-08
-updated: 2026-10-08
+updated: 2026-10-09
 approved_by: Temuri
 approved_on: 2026-10-08
 constrained_by: [SEC, OWN, ERR, API, RES, CLI, CFG, DEP, LOG, UI, TST, SPC, LNG]
@@ -97,12 +97,11 @@ and routes under `/users/{userId}/identities` give, reset, and remove a local ac
 | `apps/hub/internal/provider/{doc,preset,options,build,discovery}.go` | create | `provider.Preset`, the fixed fields, `oidcOptions`, the checks of a preset, `provider.OIDCDiscovery` |
 | `apps/hub/internal/provider/service.go`                     | create | `provider.Service`: list, read, add, change, remove                 |
 | `apps/hub/internal/provider/local.go`                       | create | `provider.LocalAccounts`: give, reset, remove                       |
-| `apps/hub/internal/repository/identity.go`                  | change | `CountByProvider`, `AdministratorsBySoleProvider`, `DeleteByProvider` and `Detach` take a hook |
+| `apps/hub/internal/repository/identity.go`                  | change | `CountByProvider`, `AdministratorsBySoleProvider`, `DeleteByProvider`. The repository comes from the transaction (`ADR-0011`) |
 | `apps/hub/internal/auth/resolver.go`                        | change | `ProviderLocal`                                                     |
-| `apps/hub/internal/auth/service.go`                         | change | `Detach` of `local` runs `LocalAccounts.Remove`                     |
 | `apps/hub/internal/handler/provider.go`                     | create | `handler.Provider`, the routes under `/providers`                   |
-| `apps/hub/internal/handler/user.go`                         | change | The routes under `/users/{userId}/identities`                       |
-| `apps/hub/internal/handler/auth.go`                         | change | `Identities` reads `provider.Service.List`. `Link` refuses `local`. |
+| `apps/hub/internal/handler/{user,user_identity}.go`         | change, create | The routes under `/users/{userId}/identities`                |
+| `apps/hub/internal/handler/auth.go`                         | change | `Identities` reads `provider.Service.List`. `Link` refuses `local`. `Detach` of `local` runs `LocalAccounts.Remove`. |
 | `apps/hub/internal/domain/problems/problems.go`             | change | The four types of section 4.6                                       |
 | `apps/hub/internal/domain/errs/errs.go`                     | change | The sentinels of section 4.6                                        |
 | `apps/hub/internal/depresolver/{dex,provider,server}.go`    | create, change | `DexClient`, `CloseDexClient`, `ProviderService`, `LocalAccounts`, the handler |
@@ -165,8 +164,8 @@ type LocalAccounts interface {
 CountByProvider(ctx context.Context) (map[string]int, error)
 // The key is the one provider at which each active administrator holds identities.
 AdministratorsBySoleProvider(ctx context.Context) (map[string][]model.User, error)
-DeleteByProvider(ctx context.Context, provider string, beforeCommit func(context.Context) error) error
-Detach(ctx context.Context, userID string, provider string, beforeCommit func(context.Context) error) error
+DeleteByProvider(ctx context.Context, provider string) error
+Detach(ctx context.Context, userID string, provider string) error
 ```
 
 `dex.Client` wraps `api.DexClient` of `github.com/dexidp/dex/api/v2` v2.4.0, which
@@ -270,7 +269,8 @@ neither `local` nor `telegram`. The issuer is an `https` address.
 
 ### 4.5 Flow
 
-Every write reaches Dex inside the database transaction, before the commit.
+Every write reaches Dex inside the database transaction, before the commit. The
+service owns the transaction and creates each repository inside it, as `ADR-0011` gives.
 `IDPROV-DD-003`.
 
 ```mermaid
@@ -297,10 +297,11 @@ A removal of `local` also lists the passwords and deletes each one before the co
 
 `LocalAccounts.Give` hashes the password, calls `CreatePassword`, then inserts the
 identity. `Reset` finds the password whose `user_id` is the record, then calls
-`UpdatePassword`. `Remove` runs `IdentityRepository.Detach` with a hook that calls
-`DeletePassword`, so the last identity check of `EXTID-FR-008` runs first.
+`UpdatePassword`. `Remove` runs `IdentityRepository.Detach` in its transaction, then
+calls `DeletePassword`, so the last identity check of `EXTID-FR-008` runs first.
 
-`auth.Service.Detach` sends a detach of `local` to `LocalAccounts.Remove`.
+The handler of `DELETE /auth/identities/{provider}` sends a detach of `local` to
+`LocalAccounts.Remove`, so the package `auth` needs no import of `provider`.
 
 ### 4.6 Errors
 
@@ -494,7 +495,7 @@ administrators overwrite the first with no warning.
 | 4   | The identity repository: count, delete, report, the hook of `Detach`          | `IDPROV-FR-012`, `IDPROV-FR-014`      | [x]  |
 | 5   | `provider.Service` and the routes under `/providers`, the problem types       | `IDPROV-FR-001` to `IDPROV-FR-016`    | [x]  |
 | 6   | `GET /auth/identities` reads Dex. `auth.providers` goes. `Link` refuses `local`. | `IDPROV-FR-017`, `IDPROV-FR-022`    | [x]  |
-| 7   | `LocalAccounts`, the routes under `/users/{userId}/identities`, the detach    | `IDPROV-FR-018` to `IDPROV-FR-024`    | [ ]  |
+| 7   | `LocalAccounts`, the routes under `/users/{userId}/identities`, the detach    | `IDPROV-FR-018` to `IDPROV-FR-024`    | [x]  |
 | 8   | `maroid user password`, and the output of `maroid user invite`                | `IDPROV-FR-025` to `IDPROV-FR-028`    | [ ]  |
 | 9   | The deck: the providers pages, the local account section, the sidebar entry   | `IDPROV-FR-001` to `IDPROV-FR-020`    | [ ]  |
 | 10  | `config.example.yaml`, `docker-compose.yaml`, `chart/`, and the manual scenarios | `IDPROV-NFR-001`                   | [ ]  |

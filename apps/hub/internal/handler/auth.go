@@ -12,9 +12,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
@@ -58,12 +60,11 @@ type Auth struct {
 	logger           *slog.Logger
 	verifier         auth.TokenVerifier
 	oidcFlow         *auth.OIDCFlow
-	userRepo         repository.UserRepository
-	identityRepo     repository.IdentityRepository
+	db               *sqlx.DB
 	identityResolver auth.IdentityResolver
-	invitationRepo   repository.InvitationRepository
 	authSvc          *auth.Service
 	providers        provider.Service
+	accounts         provider.LocalAccounts
 }
 
 var _ AuthHandler = (*Auth)(nil)
@@ -74,12 +75,11 @@ func NewAuth(
 	logger *slog.Logger,
 	verifier auth.TokenVerifier,
 	oidcFlow *auth.OIDCFlow,
-	userRepo repository.UserRepository,
-	identityRepo repository.IdentityRepository,
+	db *sqlx.DB,
 	identityResolver auth.IdentityResolver,
-	invitationRepo repository.InvitationRepository,
 	authSvc *auth.Service,
 	providers provider.Service,
+	accounts provider.LocalAccounts,
 ) *Auth {
 	return &Auth{
 		cfg: cfg,
@@ -89,12 +89,11 @@ func NewAuth(
 		),
 		verifier:         verifier,
 		oidcFlow:         oidcFlow,
-		userRepo:         userRepo,
-		identityRepo:     identityRepo,
+		db:               db,
 		identityResolver: identityResolver,
-		invitationRepo:   invitationRepo,
 		authSvc:          authSvc,
 		providers:        providers,
+		accounts:         accounts,
 	}
 }
 
@@ -279,10 +278,11 @@ func (h *Auth) Identities(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	identities, err := h.identityRepo.ListByUser(
-		r.Context(),
-		auth.UserIDFromContext(r.Context()),
-	)
+	ctx := r.Context()
+
+	identities, err := database.FetchTx(ctx, h.db, func(tx *sqlx.Tx) ([]model.Identity, error) {
+		return repository.NewIdentity(tx).ListByUser(ctx, auth.UserIDFromContext(ctx))
+	})
 	if err != nil {
 		return fmt.Errorf("listing the identities of the acting user: %w", err)
 	}
@@ -330,8 +330,14 @@ func (h *Auth) Identities(w http.ResponseWriter, r *http.Request) error {
 // Detach removes an external account from the acting user.
 func (h *Auth) Detach(w http.ResponseWriter, r *http.Request) error {
 	provider := chi.URLParam(r, "provider")
+	userID := auth.UserIDFromContext(r.Context())
 
-	err := h.authSvc.Detach(r.Context(), auth.UserIDFromContext(r.Context()), provider)
+	var err error
+	if provider == auth.ProviderLocal {
+		err = h.accounts.Remove(r.Context(), userID)
+	} else {
+		err = h.authSvc.Detach(r.Context(), userID, provider)
+	}
 
 	switch {
 	case err == nil:
@@ -340,6 +346,10 @@ func (h *Auth) Detach(w http.ResponseWriter, r *http.Request) error {
 		problem.Write(w, r, problems.NewIdentityLast())
 	case errors.Is(err, errs.ErrIdentityNotFound):
 		problem.Write(w, r, problem.NewNotFound())
+	case errors.Is(err, errs.ErrIDPUnavailable):
+		problem.Write(w, r, problems.NewNotReady(dependencyDex))
+
+		return fmt.Errorf("detaching the local account: %w", err)
 	default:
 		return fmt.Errorf("detaching the external account: %w", err)
 	}
@@ -358,7 +368,11 @@ func (h *Auth) Invite(w http.ResponseWriter, r *http.Request) error {
 
 	digest := sha256.Sum256([]byte(r.URL.Query().Get("token")))
 
-	invitation, err := h.invitationRepo.GetValidByTokenHash(r.Context(), digest[:])
+	ctx := r.Context()
+
+	invitation, err := database.FetchTx(ctx, h.db, func(tx *sqlx.Tx) (*model.Invitation, error) {
+		return repository.NewInvitation(tx).GetValidByTokenHash(ctx, digest[:])
+	})
 	if err != nil {
 		problem.Write(w, r, problem.NewNotFound().
 			WithDetail("The invitation is spent, expired, or unknown."))
@@ -435,9 +449,12 @@ type meResponse struct {
 // Me returns the identifier and the name of the acting user, the picture of the
 // session, and the provider that authenticated it.
 func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
-	claims := auth.ClaimsFromContext(r.Context())
+	ctx := r.Context()
+	claims := auth.ClaimsFromContext(ctx)
 
-	user, err := h.userRepo.GetActiveByID(r.Context(), auth.UserIDFromContext(r.Context()))
+	user, err := database.FetchTx(ctx, h.db, func(tx *sqlx.Tx) (*model.User, error) {
+		return repository.NewUser(tx).GetActiveByID(ctx, auth.UserIDFromContext(ctx))
+	})
 	if err != nil {
 		return fmt.Errorf("reading the acting user: %w", err)
 	}
@@ -538,22 +555,31 @@ func (h *Auth) finishRedeem(
 func (h *Auth) resolveAndSync(ctx context.Context, claims *auth.Claims) (*model.User, error) {
 	federated := claims.Federated
 
-	user, err := h.identityRepo.GetUserByProvider(ctx, federated.ConnectorID, federated.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("resolving the user record of the external account: %w", err)
-	}
+	user, err := database.FetchTx(ctx, h.db, func(tx *sqlx.Tx) (*model.User, error) {
+		identities := repository.NewIdentity(tx)
 
-	if user.Status != model.StatusActive {
-		return nil, fmt.Errorf("%w: %s", errRecordNotActive, user.ID)
-	}
+		user, err := identities.GetUserByProvider(ctx, federated.ConnectorID, federated.UserID)
+		if err != nil {
+			return nil, fmt.Errorf("resolving the user record of the external account: %w", err)
+		}
 
-	err = h.identityRepo.SyncProfile(ctx, federated.ConnectorID, federated.UserID, model.Profile{
-		Username:    claims.Username,
-		DisplayName: claims.Name,
-		PictureURL:  claims.Picture,
+		if user.Status != model.StatusActive {
+			return nil, fmt.Errorf("%w: %s", errRecordNotActive, user.ID)
+		}
+
+		err = identities.SyncProfile(ctx, federated.ConnectorID, federated.UserID, model.Profile{
+			Username:    claims.Username,
+			DisplayName: claims.Name,
+			PictureURL:  claims.Picture,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("syncing the profile of the identity: %w", err)
+		}
+
+		return user, nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("syncing the profile of the identity: %w", err)
+		return nil, fmt.Errorf("signing in the external account: %w", err)
 	}
 
 	return user, nil

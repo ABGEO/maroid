@@ -24,42 +24,39 @@ const (
 type WorkspaceMemberRepository interface {
 	Add(
 		ctx context.Context,
-		tx *sqlx.Tx,
 		workspaceID string,
 		userID string,
 		role pluginapi.Role,
 	) (*model.Member, error)
 	Get(ctx context.Context, workspaceID string, userID string) (*model.Member, error)
 	List(ctx context.Context, workspaceID string) ([]model.Member, error)
-	Remove(ctx context.Context, tx *sqlx.Tx, workspaceID string, userID string) error
+	Remove(ctx context.Context, workspaceID string, userID string) error
 	ChangeRole(
 		ctx context.Context,
-		tx *sqlx.Tx,
 		workspaceID string,
 		userID string,
 		role pluginapi.Role,
 		ifMatch *time.Time,
 	) (*model.Member, error)
-	CountManagers(ctx context.Context, tx *sqlx.Tx, workspaceID string) (int, error)
+	CountManagers(ctx context.Context, workspaceID string) (int, error)
 	Candidates(ctx context.Context, workspaceID string) ([]model.User, error)
 }
 
 // WorkspaceMember is a SQL based implementation of WorkspaceMemberRepository.
 type WorkspaceMember struct {
-	db *sqlx.DB
+	tx *sqlx.Tx
 }
 
 var _ WorkspaceMemberRepository = (*WorkspaceMember)(nil)
 
 // NewWorkspaceMember creates a new WorkspaceMember repository instance.
-func NewWorkspaceMember(db *sqlx.DB) *WorkspaceMember {
-	return &WorkspaceMember{db: db}
+func NewWorkspaceMember(tx *sqlx.Tx) *WorkspaceMember {
+	return &WorkspaceMember{tx: tx}
 }
 
 // Add writes one membership with its role, and answers it with the names of the record.
 func (r *WorkspaceMember) Add(
 	ctx context.Context,
-	tx *sqlx.Tx,
 	workspaceID string,
 	userID string,
 	role pluginapi.Role,
@@ -76,7 +73,7 @@ func (r *WorkspaceMember) Add(
 		FROM m
 		JOIN public.users u ON u.id = m.user_id;`
 
-	if err := tx.GetContext(ctx, &entity, query, workspaceID, userID, role); err != nil {
+	if err := r.tx.GetContext(ctx, &entity, query, workspaceID, userID, role); err != nil {
 		if isUniqueViolation(err, workspaceMemberKey) {
 			return nil, fmt.Errorf("adding a Member: %w", errs.ErrMemberExists)
 		}
@@ -101,7 +98,7 @@ func (r *WorkspaceMember) Get(
 		JOIN public.users u ON u.id = m.user_id
 		WHERE m.workspace_id = $1 AND m.user_id = $2;`
 
-	if err := r.db.GetContext(ctx, &entity, query, workspaceID, userID); err != nil {
+	if err := r.tx.GetContext(ctx, &entity, query, workspaceID, userID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("getting a Member: %w", errs.ErrMemberNotFound)
 		}
@@ -124,7 +121,7 @@ func (r *WorkspaceMember) List(ctx context.Context, workspaceID string) ([]model
 		WHERE m.workspace_id = $1
 		ORDER BY m.created_at, m.user_id;`
 
-	if err := r.db.SelectContext(ctx, &entities, query, workspaceID); err != nil {
+	if err := r.tx.SelectContext(ctx, &entities, query, workspaceID); err != nil {
 		return nil, fmt.Errorf("listing the Members of a Workspace: %w", err)
 	}
 
@@ -135,11 +132,10 @@ func (r *WorkspaceMember) List(ctx context.Context, workspaceID string) ([]model
 // of the workspace stays, because no row names a membership.
 func (r *WorkspaceMember) Remove(
 	ctx context.Context,
-	tx *sqlx.Tx,
 	workspaceID string,
 	userID string,
 ) error {
-	result, err := tx.ExecContext(
+	result, err := r.tx.ExecContext(
 		ctx,
 		`DELETE FROM public.workspace_members WHERE workspace_id = $1 AND user_id = $2;`,
 		workspaceID,
@@ -179,7 +175,7 @@ func (r *WorkspaceMember) Candidates(
 		  )
 		ORDER BY u.last_name NULLS LAST, u.first_name NULLS LAST, u.id;`
 
-	if err := r.db.SelectContext(
+	if err := r.tx.SelectContext(
 		ctx,
 		&entities,
 		query,
@@ -196,7 +192,6 @@ func (r *WorkspaceMember) Candidates(
 // record. With a validator it changes the row only while the row still carries it.
 func (r *WorkspaceMember) ChangeRole(
 	ctx context.Context,
-	tx *sqlx.Tx,
 	workspaceID string,
 	userID string,
 	role pluginapi.Role,
@@ -215,7 +210,7 @@ func (r *WorkspaceMember) ChangeRole(
 		FROM m
 		JOIN public.users u ON u.id = m.user_id;`
 
-	err := tx.GetContext(ctx, &entity, query, workspaceID, userID, role, ifMatch)
+	err := r.tx.GetContext(ctx, &entity, query, workspaceID, userID, role, ifMatch)
 	if errors.Is(err, sql.ErrNoRows) {
 		if ifMatch != nil {
 			return nil, fmt.Errorf("changing the role of a Member: %w", precondition.ErrModified)
@@ -234,12 +229,11 @@ func (r *WorkspaceMember) ChangeRole(
 // CountManagers counts the managers of the workspace, as the transaction sees them.
 func (r *WorkspaceMember) CountManagers(
 	ctx context.Context,
-	tx *sqlx.Tx,
 	workspaceID string,
 ) (int, error) {
 	var count int
 
-	err := tx.GetContext(ctx, &count,
+	err := r.tx.GetContext(ctx, &count,
 		`SELECT count(*) FROM public.workspace_members WHERE workspace_id = $1 AND role = $2;`,
 		workspaceID, pluginapi.RoleManager)
 	if err != nil {

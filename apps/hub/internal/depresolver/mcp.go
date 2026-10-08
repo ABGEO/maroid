@@ -8,7 +8,6 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/mcpserver/tools"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 )
@@ -47,11 +46,11 @@ func (c *Container) MCPToolRegistry() (*registry.MCPToolRegistry, error) {
 
 		err = c.mcpToolRegistry.instance.Register(
 			tools.NewWhoAmI(),
-			tools.NewListPlugins(c.PluginCatalog(), repository.NewAllowedPlugin(dbInstance)),
+			tools.NewListPlugins(c.PluginCatalog(), dbInstance),
 			tools.NewPing(),
 			tools.NewGetPluginSettings(c.Logger(), settingsSvc, enablements),
 			tools.NewSavePluginSettings(c.Logger(), settingsSvc, enablements),
-			tools.NewListWorkspaces(repository.NewWorkspace(dbInstance)),
+			tools.NewListWorkspaces(dbInstance),
 		)
 	})
 

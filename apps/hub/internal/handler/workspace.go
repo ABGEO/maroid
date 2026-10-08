@@ -12,13 +12,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/address"
@@ -38,12 +38,11 @@ type Workspace struct {
 	verifier    auth.TokenVerifier
 	resolver    auth.IdentityResolver
 	idempotency idempotency.Store
-	members     repository.WorkspaceMemberRepository
+	db          *sqlx.DB
 	service     workspace.Service
 	authorizer  authz.Authorizer
 	catalog     workspace.Catalog
 	plugins     WorkspacePlugins
-	workspaces  repository.WorkspaceRepository
 }
 
 // scopeAll names every workspace of the instance in the scope of the list.
@@ -66,12 +65,11 @@ func NewWorkspace(
 	verifier auth.TokenVerifier,
 	resolver auth.IdentityResolver,
 	idempotency idempotency.Store,
-	members repository.WorkspaceMemberRepository,
+	db *sqlx.DB,
 	service workspace.Service,
 	authorizer authz.Authorizer,
 	catalog workspace.Catalog,
 	plugins WorkspacePlugins,
-	workspaces repository.WorkspaceRepository,
 ) *Workspace {
 	return &Workspace{
 		logger: logger.With(
@@ -81,12 +79,11 @@ func NewWorkspace(
 		verifier:    verifier,
 		resolver:    resolver,
 		idempotency: idempotency,
-		members:     members,
+		db:          db,
 		service:     service,
 		authorizer:  authorizer,
 		catalog:     catalog,
 		plugins:     plugins,
-		workspaces:  workspaces,
 	}
 }
 
@@ -104,7 +101,7 @@ func (h *Workspace) Register(router chi.Router) {
 		r.Post("/", Wrap(h.logger, h.Create))
 
 		r.Route("/{"+workspace.PathParam+"}", func(r chi.Router) {
-			r.With(workspace.Middleware(h.logger, h.members), workspaceWrite).
+			r.With(workspace.Middleware(h.logger, h.db), workspaceWrite).
 				Patch("/", Wrap(h.logger, h.Rename))
 
 			h.registerAdmitting(r)
@@ -450,7 +447,7 @@ func (h *Workspace) registerAdmitting(router chi.Router) {
 	pluginsWrite := h.require(authz.PermissionPluginsWrite)
 
 	router.Group(func(r chi.Router) {
-		r.Use(workspace.Middleware(h.logger, h.members, workspace.AdmitAdministrator(h.workspaces)))
+		r.Use(workspace.Middleware(h.logger, h.db, workspace.AdmitAdministrator()))
 
 		r.With(workspaceRead).Get("/", Wrap(h.logger, h.Get))
 		r.With(workspaceRead).Get("/plugins", Wrap(h.logger, h.EnabledPlugins))

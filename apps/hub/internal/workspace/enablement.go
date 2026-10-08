@@ -8,7 +8,10 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
@@ -41,20 +44,15 @@ type PluginCatalog interface {
 
 // Enablements is the implementation of EnablementService over the repositories of the hub.
 type Enablements struct {
-	enablements repository.WorkspacePluginRepository
-	allowed     repository.AllowedPluginRepository
-	plugins     PluginCatalog
+	db      *sqlx.DB
+	plugins PluginCatalog
 }
 
 var _ EnablementService = (*Enablements)(nil)
 
 // NewEnablements creates a new Enablements.
-func NewEnablements(
-	enablements repository.WorkspacePluginRepository,
-	allowed repository.AllowedPluginRepository,
-	plugins PluginCatalog,
-) *Enablements {
-	return &Enablements{enablements: enablements, allowed: allowed, plugins: plugins}
+func NewEnablements(db *sqlx.DB, plugins PluginCatalog) *Enablements {
+	return &Enablements{db: db, plugins: plugins}
 }
 
 // IsEnabled reports whether the workspace enables the plugin.
@@ -63,7 +61,9 @@ func (e *Enablements) IsEnabled(
 	workspaceID string,
 	pluginID string,
 ) (bool, error) {
-	_, err := e.enablements.Get(ctx, workspaceID, pluginID)
+	_, err := database.FetchTx(ctx, e.db, func(tx *sqlx.Tx) (*model.Enablement, error) {
+		return repository.NewWorkspacePlugin(tx).Get(ctx, workspaceID, pluginID)
+	})
 	if errors.Is(err, errs.ErrEnablementNotFound) {
 		return false, nil
 	}
@@ -77,7 +77,10 @@ func (e *Enablements) IsEnabled(
 
 // Enabled lists the plugins that the acting workspace enables.
 func (e *Enablements) Enabled(ctx context.Context) ([]model.Enablement, error) {
-	enabled, err := e.enablements.List(ctx, pluginapi.ActingWorkspaceFromContext(ctx))
+	enabled, err := database.FetchTx(ctx, e.db, func(tx *sqlx.Tx) ([]model.Enablement, error) {
+		return repository.NewWorkspacePlugin(tx).
+			List(ctx, pluginapi.ActingWorkspaceFromContext(ctx))
+	})
 	if err != nil {
 		return nil, fmt.Errorf("listing the plugins of the acting workspace: %w", err)
 	}
@@ -87,7 +90,11 @@ func (e *Enablements) Enabled(ctx context.Context) ([]model.Enablement, error) {
 
 // Enablement reads one plugin that the acting workspace enables.
 func (e *Enablements) Enablement(ctx context.Context, pluginID string) (*model.Enablement, error) {
-	enabled, err := e.enablements.Get(ctx, pluginapi.ActingWorkspaceFromContext(ctx), pluginID)
+	enabled, err := database.FetchTx(ctx, e.db, func(tx *sqlx.Tx) (*model.Enablement, error) {
+		return repository.NewWorkspacePlugin(tx).Get(
+			ctx, pluginapi.ActingWorkspaceFromContext(ctx), pluginID,
+		)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("reading a plugin of the acting workspace: %w", err)
 	}
@@ -106,26 +113,28 @@ func (e *Enablements) Enable(
 		return nil, false, fmt.Errorf("%w: %s", errs.ErrPluginNotLoaded, pluginID)
 	}
 
-	if !auth.IsAdministratorFromContext(ctx) {
-		allowed, err := e.allowed.List(ctx, pluginapi.ActingUserFromContext(ctx))
+	var created bool
+
+	enabled, err := database.FetchTx(ctx, e.db, func(tx *sqlx.Tx) (*model.Enablement, error) {
+		if err := e.requireAllowed(ctx, tx, pluginID); err != nil {
+			return nil, err
+		}
+
+		row, wrote, err := repository.NewWorkspacePlugin(tx).Add(
+			ctx,
+			pluginapi.ActingWorkspaceFromContext(ctx),
+			pluginID,
+		)
 		if err != nil {
-			return nil, false, fmt.Errorf("reading the allowlist: %w", err)
+			return nil, fmt.Errorf("enabling the plugin: %w", err)
 		}
 
-		if !slices.ContainsFunc(allowed, func(one model.AllowedPlugin) bool {
-			return one.PluginID == pluginID
-		}) {
-			return nil, false, fmt.Errorf("%w: %s", errs.ErrPluginNotAllowed, pluginID)
-		}
-	}
+		created = wrote
 
-	enabled, created, err := e.enablements.Add(
-		ctx,
-		pluginapi.ActingWorkspaceFromContext(ctx),
-		pluginID,
-	)
+		return row, nil
+	})
 	if err != nil {
-		return nil, false, fmt.Errorf("enabling the plugin: %w", err)
+		return nil, false, fmt.Errorf("enabling a plugin of the acting workspace: %w", err)
 	}
 
 	return enabled, created, nil
@@ -133,11 +142,14 @@ func (e *Enablements) Enable(
 
 // Disable disables a plugin in the acting workspace. Its records and its settings stay.
 func (e *Enablements) Disable(ctx context.Context, pluginID string) error {
-	if err := e.enablements.Remove(
-		ctx,
-		pluginapi.ActingWorkspaceFromContext(ctx),
-		pluginID,
-	); err != nil {
+	err := database.WithTx(ctx, e.db, func(tx *sqlx.Tx) error {
+		return repository.NewWorkspacePlugin(tx).Remove(
+			ctx,
+			pluginapi.ActingWorkspaceFromContext(ctx),
+			pluginID,
+		)
+	})
+	if err != nil {
 		return fmt.Errorf("disabling the plugin: %w", err)
 	}
 
@@ -146,12 +158,35 @@ func (e *Enablements) Disable(ctx context.Context, pluginID string) error {
 
 // WorkspacesEnabling lists every workspace that enables the plugin.
 func (e *Enablements) WorkspacesEnabling(ctx context.Context, pluginID string) ([]string, error) {
-	workspaces, err := e.enablements.WorkspacesEnabling(ctx, pluginID)
+	workspaces, err := database.FetchTx(ctx, e.db, func(tx *sqlx.Tx) ([]string, error) {
+		return repository.NewWorkspacePlugin(tx).WorkspacesEnabling(ctx, pluginID)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("listing the workspaces that enable the plugin: %w", err)
 	}
 
 	return workspaces, nil
+}
+
+// requireAllowed refuses a plugin that the allowlist of the acting user does not hold.
+// An administrator turns on any loaded plugin.
+func (e *Enablements) requireAllowed(ctx context.Context, tx *sqlx.Tx, pluginID string) error {
+	if auth.IsAdministratorFromContext(ctx) {
+		return nil
+	}
+
+	allowed, err := repository.NewAllowedPlugin(tx).List(ctx, pluginapi.ActingUserFromContext(ctx))
+	if err != nil {
+		return fmt.Errorf("reading the allowlist: %w", err)
+	}
+
+	if !slices.ContainsFunc(allowed, func(one model.AllowedPlugin) bool {
+		return one.PluginID == pluginID
+	}) {
+		return fmt.Errorf("%w: %s", errs.ErrPluginNotAllowed, pluginID)
+	}
+
+	return nil
 }
 
 func (e *Enablements) loaded(pluginID string) bool {

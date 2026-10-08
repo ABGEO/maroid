@@ -10,11 +10,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/provider"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/libs/rest/address"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
@@ -34,6 +36,8 @@ type User struct {
 	idempotency idempotency.Store
 	service     user.Service
 	deckURL     string
+	db          *sqlx.DB
+	accounts    provider.LocalAccounts
 }
 
 var _ Handler = (*User)(nil)
@@ -46,6 +50,8 @@ func NewUser(
 	idempotency idempotency.Store,
 	service user.Service,
 	deckURL string,
+	db *sqlx.DB,
+	accounts provider.LocalAccounts,
 ) *User {
 	return &User{
 		logger: logger.With(
@@ -57,6 +63,8 @@ func NewUser(
 		idempotency: idempotency,
 		service:     service,
 		deckURL:     deckURL,
+		db:          db,
+		accounts:    accounts,
 	}
 }
 
@@ -81,6 +89,13 @@ func (h *User) Register(router chi.Router) {
 			r.Get("/allowed-plugins", Wrap(h.logger, h.AllowedPlugins))
 			r.Post("/allowed-plugins", Wrap(h.logger, h.AllowPlugin))
 			r.Delete("/allowed-plugins/{"+pluginIDParam+"}", Wrap(h.logger, h.DisallowPlugin))
+			r.Get("/identities", Wrap(h.logger, h.Identities))
+			r.Post("/identities", Wrap(h.logger, h.GiveLocalAccount))
+			r.Patch("/identities/{"+identityProviderParam+"}", Wrap(h.logger, h.ResetLocalAccount))
+			r.Delete(
+				"/identities/{"+identityProviderParam+"}",
+				Wrap(h.logger, h.RemoveLocalAccount),
+			)
 		})
 	})
 }

@@ -112,9 +112,9 @@ func (c *WorkerCommand) getWorkers() ([]worker.Worker, error) {
 		return nil, fmt.Errorf("resolving MQTT subscriber registry: %w", err)
 	}
 
-	userRepo, err := c.depResolver.UserRepository()
+	users, err := c.depResolver.UserService()
 	if err != nil {
-		return nil, fmt.Errorf("resolving user repository: %w", err)
+		return nil, fmt.Errorf("resolving user service: %w", err)
 	}
 
 	enablements, err := c.depResolver.EnablementService()
@@ -123,7 +123,7 @@ func (c *WorkerCommand) getWorkers() ([]worker.Worker, error) {
 	}
 
 	return []worker.Worker{
-		worker.NewCronWorker(c.logger, cronScheduler, cronRegistry, userRepo, enablements),
+		worker.NewCronWorker(c.logger, cronScheduler, cronRegistry, users, enablements),
 		worker.NewMQTTWorker(c.logger, cfg, mqttSubscriberRegistry),
 	}, nil
 }

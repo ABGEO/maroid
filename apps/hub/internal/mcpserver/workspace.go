@@ -6,11 +6,14 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/modelcontextprotocol/go-sdk/jsonrpc"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
+	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
@@ -32,11 +35,11 @@ const (
 // the tool, whose schema then refuses it.
 func workspaceMiddleware(
 	tools []registry.MCPTool,
-	members repository.WorkspaceMemberRepository,
+	db *sqlx.DB,
 	enablements workspace.EnablementChecker,
 	authorizer authz.Authorizer,
 ) mcp.Middleware {
-	gate := toolGate{members: members, enablements: enablements, authorizer: authorizer}
+	gate := toolGate{db: db, enablements: enablements, authorizer: authorizer}
 	inWorkspace := make(map[string]registry.MCPTool, len(tools))
 
 	for _, tool := range tools {
@@ -79,7 +82,7 @@ func workspaceMiddleware(
 // toolGate holds the three checks of a call of a tool in a workspace: the membership,
 // the enablement of the plugin of the tool, and the permission of the tool.
 type toolGate struct {
-	members     repository.WorkspaceMemberRepository
+	db          *sqlx.DB
 	enablements workspace.EnablementChecker
 	authorizer  authz.Authorizer
 }
@@ -93,7 +96,7 @@ func (gate toolGate) pass(
 	tool registry.MCPTool,
 	workspaceID string,
 ) (context.Context, *mcp.CallToolResult, error) {
-	role, member := roleIn(ctx, gate.members, workspaceID)
+	role, member := roleIn(ctx, gate.db, workspaceID)
 	if !member || !enabledIn(ctx, gate.enablements, workspaceID, tool.PluginID) {
 		return nil, nil, unknownTool(tool.Name)
 	}
@@ -137,14 +140,18 @@ func workspaceOf(arguments json.RawMessage) (string, bool) {
 
 func roleIn(
 	ctx context.Context,
-	members repository.WorkspaceMemberRepository,
+	db *sqlx.DB,
 	workspaceID string,
 ) (pluginapi.Role, bool) {
 	if uuid.Validate(workspaceID) != nil {
 		return "", false
 	}
 
-	member, err := members.Get(ctx, workspaceID, pluginapi.ActingUserFromContext(ctx))
+	member, err := database.FetchTx(ctx, db, func(tx *sqlx.Tx) (*model.Member, error) {
+		return repository.NewWorkspaceMember(tx).Get(
+			ctx, workspaceID, pluginapi.ActingUserFromContext(ctx),
+		)
+	})
 	if err != nil {
 		return "", false
 	}

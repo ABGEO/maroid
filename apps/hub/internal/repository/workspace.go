@@ -21,7 +21,7 @@ const (
 
 // WorkspaceRepository defines the data access contract for a workspace.
 type WorkspaceRepository interface {
-	Create(ctx context.Context, tx *sqlx.Tx, name string) (*model.Workspace, error)
+	Create(ctx context.Context, name string) (*model.Workspace, error)
 	GetByID(ctx context.Context, id string) (*model.Workspace, error)
 	ListOfUser(ctx context.Context, userID string) ([]model.Workspace, error)
 	Rename(
@@ -30,33 +30,32 @@ type WorkspaceRepository interface {
 		name string,
 		ifMatch *time.Time,
 	) (*model.Workspace, error)
-	Lock(ctx context.Context, tx *sqlx.Tx, id string) error
+	Lock(ctx context.Context, id string) error
 	ListAll(ctx context.Context) ([]model.InstanceWorkspace, error)
 }
 
 // Workspace is a SQL based implementation of WorkspaceRepository.
 type Workspace struct {
-	db *sqlx.DB
+	tx *sqlx.Tx
 }
 
 var _ WorkspaceRepository = (*Workspace)(nil)
 
 // NewWorkspace creates a new Workspace repository instance.
-func NewWorkspace(db *sqlx.DB) *Workspace {
-	return &Workspace{db: db}
+func NewWorkspace(tx *sqlx.Tx) *Workspace {
+	return &Workspace{tx: tx}
 }
 
 // Create writes one workspace.
 func (r *Workspace) Create(
 	ctx context.Context,
-	tx *sqlx.Tx,
 	name string,
 ) (*model.Workspace, error) {
 	var entity model.Workspace
 
 	query := `INSERT INTO public.workspaces (name) VALUES ($1) RETURNING ` + workspaceColumns + `;`
 
-	if err := tx.GetContext(ctx, &entity, query, name); err != nil {
+	if err := r.tx.GetContext(ctx, &entity, query, name); err != nil {
 		return nil, fmt.Errorf("creating a Workspace: %w", err)
 	}
 
@@ -69,7 +68,7 @@ func (r *Workspace) GetByID(ctx context.Context, id string) (*model.Workspace, e
 
 	query := `SELECT ` + workspaceColumns + ` FROM public.workspaces WHERE id = $1;`
 
-	if err := r.db.GetContext(ctx, &entity, query, id); err != nil {
+	if err := r.tx.GetContext(ctx, &entity, query, id); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("getting a Workspace by ID: %w", errs.ErrWorkspaceNotFound)
 		}
@@ -92,7 +91,7 @@ func (r *Workspace) ListOfUser(ctx context.Context, userID string) ([]model.Work
 		WHERE m.user_id = $1
 		ORDER BY w.name, w.id;`
 
-	if err := r.db.SelectContext(ctx, &entities, query, userID); err != nil {
+	if err := r.tx.SelectContext(ctx, &entities, query, userID); err != nil {
 		return nil, fmt.Errorf("listing the Workspaces of a User: %w", err)
 	}
 
@@ -115,7 +114,7 @@ func (r *Workspace) Rename(
 		WHERE id = $1 AND ($3::timestamptz IS NULL OR updated_at = $3)
 		RETURNING ` + workspaceColumns + `;`
 
-	err := r.db.GetContext(ctx, &entity, query, id, name, ifMatch)
+	err := r.tx.GetContext(ctx, &entity, query, id, name, ifMatch)
 	if errors.Is(err, sql.ErrNoRows) {
 		if ifMatch != nil {
 			return nil, fmt.Errorf("renaming a Workspace: %w", precondition.ErrModified)
@@ -133,10 +132,10 @@ func (r *Workspace) Rename(
 
 // Lock holds the row of the workspace until the transaction ends, so two changes of
 // its memberships run one after the other.
-func (r *Workspace) Lock(ctx context.Context, tx *sqlx.Tx, id string) error {
+func (r *Workspace) Lock(ctx context.Context, id string) error {
 	var held string
 
-	err := tx.GetContext(
+	err := r.tx.GetContext(
 		ctx,
 		&held,
 		`SELECT id FROM public.workspaces WHERE id = $1 FOR UPDATE;`,
@@ -164,13 +163,13 @@ func (r *Workspace) ListAll(ctx context.Context) ([]model.InstanceWorkspace, err
 		FROM public.workspaces w
 		ORDER BY w.name, w.id;`
 
-	if err := r.db.SelectContext(ctx, &entities, query); err != nil {
+	if err := r.tx.SelectContext(ctx, &entities, query); err != nil {
 		return nil, fmt.Errorf("listing every Workspace: %w", err)
 	}
 
 	enablements := []model.Enablement{}
 
-	err := r.db.SelectContext(ctx, &enablements, `
+	err := r.tx.SelectContext(ctx, &enablements, `
 		SELECT workspace_id, plugin_id, created_at, updated_at FROM public.workspace_plugins
 		ORDER BY workspace_id, plugin_id;`)
 	if err != nil {

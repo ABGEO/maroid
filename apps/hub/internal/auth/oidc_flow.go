@@ -11,8 +11,10 @@ import (
 	"io"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"golang.org/x/oauth2"
 
+	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
@@ -28,9 +30,9 @@ var ErrRandomGeneration = errors.New("auth: random generation failed")
 // of the browser rewrites, and a rewritten value moves an attach to another
 // record. The caller of Initiate therefore never sees a secret.
 type OIDCFlow struct {
-	oidcSvc  *OIDCService
-	flowRepo repository.AuthFlowRepository
-	flowTTL  time.Duration
+	oidcSvc *OIDCService
+	db      *sqlx.DB
+	flowTTL time.Duration
 }
 
 // Session is the credential that a finished flow produces, and the claims that
@@ -42,15 +44,11 @@ type Session struct {
 }
 
 // NewOIDCFlow creates a new OIDCFlow service.
-func NewOIDCFlow(
-	oidcSvc *OIDCService,
-	flowRepo repository.AuthFlowRepository,
-	flowTTL time.Duration,
-) *OIDCFlow {
+func NewOIDCFlow(oidcSvc *OIDCService, db *sqlx.DB, flowTTL time.Duration) *OIDCFlow {
 	return &OIDCFlow{
-		oidcSvc:  oidcSvc,
-		flowRepo: flowRepo,
-		flowTTL:  flowTTL,
+		oidcSvc: oidcSvc,
+		db:      db,
+		flowTTL: flowTTL,
 	}
 }
 
@@ -87,7 +85,10 @@ func (f *OIDCFlow) Initiate(ctx context.Context, flow model.AuthFlow) (string, s
 	flow.Verifier = oauth2.GenerateVerifier()
 	flow.ExpiresAt = time.Now().Add(f.flowTTL)
 
-	if _, err = f.flowRepo.Create(ctx, flow); err != nil {
+	_, err = database.FetchTx(ctx, f.db, func(tx *sqlx.Tx) (*model.AuthFlow, error) {
+		return repository.NewAuthFlow(tx).Create(ctx, flow)
+	})
+	if err != nil {
 		return "", "", fmt.Errorf("writing the authorization flow: %w", err)
 	}
 
@@ -113,7 +114,9 @@ func (f *OIDCFlow) Consume(
 	state string,
 	binding string,
 ) (*model.AuthFlow, error) {
-	flow, err := f.flowRepo.ConsumeByState(ctx, state)
+	flow, err := database.FetchTx(ctx, f.db, func(tx *sqlx.Tx) (*model.AuthFlow, error) {
+		return repository.NewAuthFlow(tx).ConsumeByState(ctx, state)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("consuming the authorization flow: %w", err)
 	}

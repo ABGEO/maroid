@@ -23,34 +23,12 @@ var ErrNoDeckURL = errors.New("auth: auth.deck_url is empty")
 
 // Service holds the operations that change the identities of a user record.
 type Service struct {
-	db             *sqlx.DB
-	userRepo       repository.UserRepository
-	identityRepo   repository.IdentityRepository
-	invitationRepo repository.InvitationRepository
-	workspaceRepo  repository.WorkspaceRepository
-	memberRepo     repository.WorkspaceMemberRepository
-	allowedRepo    repository.AllowedPluginRepository
+	db *sqlx.DB
 }
 
 // NewService creates a new Service instance.
-func NewService(
-	db *sqlx.DB,
-	userRepo repository.UserRepository,
-	identityRepo repository.IdentityRepository,
-	invitationRepo repository.InvitationRepository,
-	workspaceRepo repository.WorkspaceRepository,
-	memberRepo repository.WorkspaceMemberRepository,
-	allowedRepo repository.AllowedPluginRepository,
-) *Service {
-	return &Service{
-		db:             db,
-		userRepo:       userRepo,
-		identityRepo:   identityRepo,
-		invitationRepo: invitationRepo,
-		workspaceRepo:  workspaceRepo,
-		memberRepo:     memberRepo,
-		allowedRepo:    allowedRepo,
-	}
+func NewService(db *sqlx.DB) *Service {
+	return &Service{db: db}
 }
 
 // Attach binds the external account to the user record.
@@ -62,7 +40,7 @@ func (s *Service) Attach(
 	profile model.Profile,
 ) error {
 	err := database.WithTx(ctx, s.db, func(tx *sqlx.Tx) error {
-		return s.identityRepo.Attach(ctx, tx, userID, provider, providerUserID, profile)
+		return repository.NewIdentity(tx).Attach(ctx, userID, provider, providerUserID, profile)
 	})
 
 	if errors.Is(err, errs.ErrIdentityTaken) {
@@ -78,7 +56,10 @@ func (s *Service) Attach(
 
 // Detach removes the identity of the provider from the user record.
 func (s *Service) Detach(ctx context.Context, userID string, provider string) error {
-	if err := s.identityRepo.Detach(ctx, userID, provider); err != nil {
+	err := database.WithTx(ctx, s.db, func(tx *sqlx.Tx) error {
+		return repository.NewIdentity(tx).Detach(ctx, userID, provider)
+	})
+	if err != nil {
 		return fmt.Errorf("detaching the external account: %w", err)
 	}
 
@@ -132,9 +113,8 @@ func (s *Service) Invite(
 		if request.Administrator {
 			marked := true
 
-			_, markErr := s.userRepo.Change(
+			_, markErr := repository.NewUser(tx).Change(
 				ctx,
-				tx,
 				result.UserID,
 				repository.UserChange{Administrator: &marked},
 			)
@@ -143,12 +123,13 @@ func (s *Service) Invite(
 			}
 		}
 
-		if err := s.allowedRepo.AddAll(ctx, tx, result.UserID, request.AllowedPlugins); err != nil {
+		err := repository.NewAllowedPlugin(tx).AddAll(ctx, result.UserID, request.AllowedPlugins)
+		if err != nil {
 			return fmt.Errorf("writing the allowlist: %w", err)
 		}
 
-		_, createErr := s.invitationRepo.Create(
-			ctx, tx, result.UserID, digest[:], time.Now().Add(ttl),
+		_, createErr := repository.NewInvitation(tx).Create(
+			ctx, result.UserID, digest[:], time.Now().Add(ttl),
 		)
 		if createErr != nil {
 			return fmt.Errorf("writing the invitation: %w", createErr)
@@ -174,13 +155,13 @@ func (s *Service) Redeem(
 	var user *model.User
 
 	err := database.WithTx(ctx, s.db, func(tx *sqlx.Tx) error {
-		invitation, consumeErr := s.invitationRepo.Consume(ctx, tx, invitationID)
+		invitation, consumeErr := repository.NewInvitation(tx).Consume(ctx, invitationID)
 		if consumeErr != nil {
 			return fmt.Errorf("spending the invitation: %w", consumeErr)
 		}
 
-		attachErr := s.identityRepo.Attach(
-			ctx, tx, invitation.UserID, provider, providerUserID, profile,
+		attachErr := repository.NewIdentity(tx).Attach(
+			ctx, invitation.UserID, provider, providerUserID, profile,
 		)
 		if attachErr != nil {
 			return fmt.Errorf("binding the first identity: %w", attachErr)
@@ -206,7 +187,9 @@ func (s *Service) reportConflict(
 	providerUserID string,
 	conflict error,
 ) error {
-	owner, err := s.identityRepo.GetActiveUserByProvider(ctx, provider, providerUserID)
+	owner, err := database.FetchTx(ctx, s.db, func(tx *sqlx.Tx) (*model.User, error) {
+		return repository.NewIdentity(tx).GetActiveUserByProvider(ctx, provider, providerUserID)
+	})
 	if err == nil && owner.ID == userID {
 		return nil
 	}
@@ -238,19 +221,19 @@ func (s *Service) createWithWorkspace(
 	tx *sqlx.Tx,
 	request InviteRequest,
 ) (string, error) {
-	user, err := s.userRepo.Create(ctx, tx, request.FirstName, request.LastName)
+	user, err := repository.NewUser(tx).Create(ctx, request.FirstName, request.LastName)
 	if err != nil {
 		return "", fmt.Errorf("creating the user record: %w", err)
 	}
 
-	workspace, err := s.workspaceRepo.Create(ctx, tx, model.FirstWorkspaceName(request.FirstName))
+	workspace, err := repository.NewWorkspace(tx).
+		Create(ctx, model.FirstWorkspaceName(request.FirstName))
 	if err != nil {
 		return "", fmt.Errorf("creating the first workspace: %w", err)
 	}
 
-	if _, err = s.memberRepo.Add(
+	if _, err = repository.NewWorkspaceMember(tx).Add(
 		ctx,
-		tx,
 		workspace.ID,
 		user.ID,
 		pluginapi.RoleManager,

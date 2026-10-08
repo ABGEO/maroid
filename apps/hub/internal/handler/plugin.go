@@ -13,13 +13,13 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
@@ -54,7 +54,7 @@ type Plugin struct {
 	settingsSvc settings.Service
 	idempotency idempotency.Store
 	access      WorkspaceAccess
-	allowed     repository.AllowedPluginRepository
+	db          *sqlx.DB
 	// assetTags holds the entity tag of each plugin asset. An asset is embedded
 	// in the shared object, so its tag cannot change while the hub runs.
 	assetTags sync.Map
@@ -72,12 +72,12 @@ func NewPlugin(
 	settingsSvc settings.Service,
 	idempotency idempotency.Store,
 	access WorkspaceAccess,
-	allowed repository.AllowedPluginRepository,
+	db *sqlx.DB,
 ) *Plugin {
 	return &Plugin{
 		idempotency: idempotency,
 		access:      access,
-		allowed:     allowed,
+		db:          db,
 		logger: logger.With(
 			slog.String("component", "handler"),
 			slog.String("handler", "plugin"),
@@ -100,7 +100,7 @@ func (h *Plugin) Register(router chi.Router) {
 	router.Route("/workspaces/{"+workspace.PathParam+"}/plugins/{id}/settings", func(r chi.Router) {
 		r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
 		r.Use(idempotency.Middleware(h.logger, h.idempotency))
-		r.Use(workspace.Middleware(h.logger, h.access.Members))
+		r.Use(workspace.Middleware(h.logger, h.access.DB))
 		r.Use(
 			workspace.RequireEnabledOf(
 				h.logger,
@@ -140,7 +140,7 @@ func (h *Plugin) List(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
-	entries, err := user.VisiblePlugins(r.Context(), h.catalog, h.allowed)
+	entries, err := user.VisiblePlugins(r.Context(), h.catalog, h.db)
 	if err != nil {
 		problem.Write(w, r, problem.NewInternal())
 

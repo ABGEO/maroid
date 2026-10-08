@@ -11,7 +11,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/migrator"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
 // Database initializes and returns the database instance.
@@ -46,33 +45,6 @@ func (c *Container) CloseDatabase() error {
 	}
 
 	return nil
-}
-
-// UserRepository initializes and returns the user repository instance.
-func (c *Container) UserRepository() (repository.UserRepository, error) {
-	c.userRepository.mu.Lock()
-	defer c.userRepository.mu.Unlock()
-
-	var err error
-
-	c.userRepository.once.Do(func() {
-		var dbInstance *sqlx.DB
-
-		dbInstance, err = c.Database()
-		if err != nil {
-			return
-		}
-
-		c.userRepository.instance = repository.NewUser(dbInstance)
-	})
-
-	if err != nil {
-		c.userRepository.once = sync.Once{}
-
-		return nil, fmt.Errorf("initializing user repository: %w", err)
-	}
-
-	return c.userRepository.instance, nil
 }
 
 // MigrationRegistry initializes and returns the migration registry instance.
@@ -150,85 +122,4 @@ func getCoreMigrationFS() (fs.FS, error) {
 	}
 
 	return coreFS, nil
-}
-
-// IdentityRepository initializes and returns the identity repository instance.
-func (c *Container) IdentityRepository() (repository.IdentityRepository, error) {
-	c.identityRepository.mu.Lock()
-	defer c.identityRepository.mu.Unlock()
-
-	var err error
-
-	c.identityRepository.once.Do(func() {
-		var dbInstance *sqlx.DB
-
-		dbInstance, err = c.Database()
-		if err != nil {
-			return
-		}
-
-		c.identityRepository.instance = repository.NewIdentity(dbInstance)
-	})
-
-	if err != nil {
-		c.identityRepository.once = sync.Once{}
-
-		return nil, fmt.Errorf("initializing identity repository: %w", err)
-	}
-
-	return c.identityRepository.instance, nil
-}
-
-// InvitationRepository initializes and returns the invitation repository instance.
-func (c *Container) InvitationRepository() (repository.InvitationRepository, error) {
-	c.invitationRepository.mu.Lock()
-	defer c.invitationRepository.mu.Unlock()
-
-	var err error
-
-	c.invitationRepository.once.Do(func() {
-		var dbInstance *sqlx.DB
-
-		dbInstance, err = c.Database()
-		if err != nil {
-			return
-		}
-
-		c.invitationRepository.instance = repository.NewInvitation(dbInstance)
-	})
-
-	if err != nil {
-		c.invitationRepository.once = sync.Once{}
-
-		return nil, fmt.Errorf("initializing invitation repository: %w", err)
-	}
-
-	return c.invitationRepository.instance, nil
-}
-
-// AuthFlowRepository initializes and returns the authorization flow repository instance.
-func (c *Container) AuthFlowRepository() (repository.AuthFlowRepository, error) {
-	c.authFlowRepository.mu.Lock()
-	defer c.authFlowRepository.mu.Unlock()
-
-	var err error
-
-	c.authFlowRepository.once.Do(func() {
-		var dbInstance *sqlx.DB
-
-		dbInstance, err = c.Database()
-		if err != nil {
-			return
-		}
-
-		c.authFlowRepository.instance = repository.NewAuthFlow(dbInstance)
-	})
-
-	if err != nil {
-		c.authFlowRepository.once = sync.Once{}
-
-		return nil, fmt.Errorf("initializing auth flow repository: %w", err)
-	}
-
-	return c.authFlowRepository.instance, nil
 }

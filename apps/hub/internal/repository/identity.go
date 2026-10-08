@@ -35,7 +35,6 @@ type IdentityRepository interface {
 	ListByUser(ctx context.Context, userID string) ([]model.Identity, error)
 	Attach(
 		ctx context.Context,
-		tx *sqlx.Tx,
 		userID string,
 		provider string,
 		providerUserID string,
@@ -50,11 +49,7 @@ type IdentityRepository interface {
 	Detach(ctx context.Context, userID string, provider string) error
 	CountByProvider(ctx context.Context) (map[string]int, error)
 	AdministratorsBySoleProvider(ctx context.Context) (map[string][]model.User, error)
-	DeleteByProvider(
-		ctx context.Context,
-		provider string,
-		beforeCommit func(context.Context) error,
-	) error
+	DeleteByProvider(ctx context.Context, provider string) error
 }
 
 // identityBinding names the parameters of a write. The embedded profile carries
@@ -69,14 +64,14 @@ type identityBinding struct {
 
 // Identity is a SQL based implementation of IdentityRepository.
 type Identity struct {
-	db *sqlx.DB
+	tx *sqlx.Tx
 }
 
 var _ IdentityRepository = (*Identity)(nil)
 
 // NewIdentity creates a new Identity repository instance.
-func NewIdentity(db *sqlx.DB) *Identity {
-	return &Identity{db: db}
+func NewIdentity(tx *sqlx.Tx) *Identity {
+	return &Identity{tx: tx}
 }
 
 // GetActiveUserByProvider retrieves the active user record that the external
@@ -94,7 +89,7 @@ func (r *Identity) GetActiveUserByProvider(
 		JOIN public.identities i ON i.user_id = u.id
 		WHERE i.provider = $1 AND i.provider_user_id = $2 AND u.status = $3;`
 
-	err := r.db.GetContext(ctx, &entity, query, provider, providerUserID, model.StatusActive)
+	err := r.tx.GetContext(ctx, &entity, query, provider, providerUserID, model.StatusActive)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf(
@@ -125,7 +120,7 @@ func (r *Identity) GetUserByProvider(
 		JOIN public.identities i ON i.user_id = u.id
 		WHERE i.provider = $1 AND i.provider_user_id = $2;`
 
-	if err := r.db.GetContext(ctx, &entity, query, provider, providerUserID); err != nil {
+	if err := r.tx.GetContext(ctx, &entity, query, provider, providerUserID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf(
 				"getting the User of the identity of %s: %w",
@@ -147,7 +142,7 @@ func (r *Identity) ListByUser(ctx context.Context, userID string) ([]model.Ident
 	query := `SELECT ` + identityColumns +
 		` FROM public.identities WHERE user_id = $1 ORDER BY id;`
 
-	if err := r.db.SelectContext(ctx, &entities, query, userID); err != nil {
+	if err := r.tx.SelectContext(ctx, &entities, query, userID); err != nil {
 		return nil, fmt.Errorf("listing the Identities of a User: %w", err)
 	}
 
@@ -157,7 +152,6 @@ func (r *Identity) ListByUser(ctx context.Context, userID string) ([]model.Ident
 // Attach binds the external account to the user record.
 func (r *Identity) Attach(
 	ctx context.Context,
-	tx *sqlx.Tx,
 	userID string,
 	provider string,
 	providerUserID string,
@@ -169,7 +163,7 @@ func (r *Identity) Attach(
 		VALUES (:user_id, :provider, :provider_user_id,
 		        NULLIF(:username, ''), NULLIF(:display_name, ''), NULLIF(:picture_url, ''));`
 
-	_, err := tx.NamedExecContext(ctx, query, identityBinding{
+	_, err := r.tx.NamedExecContext(ctx, query, identityBinding{
 		UserID:         userID,
 		Provider:       provider,
 		ProviderUserID: providerUserID,
@@ -200,7 +194,7 @@ func (r *Identity) SyncProfile(
 		    picture_url  = NULLIF(:picture_url, '')
 		WHERE provider = :provider AND provider_user_id = :provider_user_id;`
 
-	result, err := r.db.NamedExecContext(ctx, query, identityBinding{
+	result, err := r.tx.NamedExecContext(ctx, query, identityBinding{
 		Provider:       provider,
 		ProviderUserID: providerUserID,
 		Profile:        profile,
@@ -221,18 +215,13 @@ func (r *Identity) SyncProfile(
 	return nil
 }
 
-// Detach removes the identity of the provider from the user record.
+// Detach removes the identity of the provider from the user record. It locks the
+// record, so two detaches of one record run one after the other and never remove its
+// last identity together.
 func (r *Identity) Detach(ctx context.Context, userID string, provider string) error {
-	tx, err := r.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("detaching an Identity: %w", err)
-	}
-
-	defer func() { _ = tx.Rollback() }()
-
 	var locked string
 
-	err = tx.GetContext(
+	err := r.tx.GetContext(
 		ctx,
 		&locked,
 		`SELECT id FROM public.users WHERE id = $1 FOR UPDATE;`,
@@ -246,7 +235,7 @@ func (r *Identity) Detach(ctx context.Context, userID string, provider string) e
 		return fmt.Errorf("detaching an Identity: %w", err)
 	}
 
-	result, err := tx.ExecContext(ctx, `
+	result, err := r.tx.ExecContext(ctx, `
 		DELETE FROM public.identities
 		WHERE user_id = $1
 		  AND provider = $2
@@ -263,11 +252,7 @@ func (r *Identity) Detach(ctx context.Context, userID string, provider string) e
 	}
 
 	if affected == 0 {
-		return r.refuseDetach(ctx, tx, userID, provider)
-	}
-
-	if err = tx.Commit(); err != nil {
-		return fmt.Errorf("detaching an Identity: %w", err)
+		return r.refuseDetach(ctx, userID, provider)
 	}
 
 	return nil
@@ -282,7 +267,7 @@ func (r *Identity) CountByProvider(ctx context.Context) (map[string]int, error) 
 
 	query := `SELECT provider, count(*) AS count FROM public.identities GROUP BY provider;`
 
-	if err := r.db.SelectContext(ctx, &rows, query); err != nil {
+	if err := r.tx.SelectContext(ctx, &rows, query); err != nil {
 		return nil, fmt.Errorf("counting the Identities of each provider: %w", err)
 	}
 
@@ -314,7 +299,7 @@ func (r *Identity) AdministratorsBySoleProvider(
 		HAVING count(DISTINCT i.provider) = 1
 		ORDER BY u.id;`
 
-	if err := r.db.SelectContext(ctx, &rows, query, model.StatusActive); err != nil {
+	if err := r.tx.SelectContext(ctx, &rows, query, model.StatusActive); err != nil {
 		return nil, fmt.Errorf("listing the administrators of one provider: %w", err)
 	}
 
@@ -326,30 +311,10 @@ func (r *Identity) AdministratorsBySoleProvider(
 	return sole, nil
 }
 
-// DeleteByProvider removes every identity of the provider. The hook runs inside the
-// transaction, before the commit, so a hook that fails keeps every identity.
-func (r *Identity) DeleteByProvider(
-	ctx context.Context,
-	provider string,
-	beforeCommit func(context.Context) error,
-) error {
-	tx, err := r.db.BeginTxx(ctx, nil)
+// DeleteByProvider removes every identity of the provider.
+func (r *Identity) DeleteByProvider(ctx context.Context, provider string) error {
+	_, err := r.tx.ExecContext(ctx, `DELETE FROM public.identities WHERE provider = $1;`, provider)
 	if err != nil {
-		return fmt.Errorf("deleting the Identities of %s: %w", provider, err)
-	}
-
-	defer func() { _ = tx.Rollback() }()
-
-	_, err = tx.ExecContext(ctx, `DELETE FROM public.identities WHERE provider = $1;`, provider)
-	if err != nil {
-		return fmt.Errorf("deleting the Identities of %s: %w", provider, err)
-	}
-
-	if err = beforeCommit(ctx); err != nil {
-		return err
-	}
-
-	if err = tx.Commit(); err != nil {
 		return fmt.Errorf("deleting the Identities of %s: %w", provider, err)
 	}
 
@@ -359,13 +324,12 @@ func (r *Identity) DeleteByProvider(
 // refuseDetach names the reason that the delete removed no row.
 func (r *Identity) refuseDetach(
 	ctx context.Context,
-	tx *sqlx.Tx,
 	userID string,
 	provider string,
 ) error {
 	var exists bool
 
-	err := tx.GetContext(ctx, &exists, `
+	err := r.tx.GetContext(ctx, &exists, `
 		SELECT EXISTS(
 			SELECT 1 FROM public.identities WHERE user_id = $1 AND provider = $2
 		);`,

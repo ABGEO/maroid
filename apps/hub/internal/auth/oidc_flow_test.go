@@ -18,7 +18,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
@@ -55,7 +54,7 @@ func fakeIssuer(t *testing.T) string {
 	return server.URL
 }
 
-func flowUnderTest(t *testing.T) (*auth.OIDCFlow, repository.AuthFlowRepository) {
+func flowUnderTest(t *testing.T) (*auth.OIDCFlow, flowStore) {
 	t.Helper()
 
 	instance := testdb.Start(t)
@@ -76,9 +75,7 @@ func flowUnderTest(t *testing.T) (*auth.OIDCFlow, repository.AuthFlowRepository)
 	service, err := auth.NewOIDCService(cfg)
 	require.NoError(t, err)
 
-	flowRepo := repository.NewAuthFlow(instance.DB)
-
-	return auth.NewOIDCFlow(service, flowRepo, cfg.Auth.FlowTTL), flowRepo
+	return auth.NewOIDCFlow(service, instance.DB, cfg.Auth.FlowTTL), flowStore{db: instance.DB}
 }
 
 // EXTID-FR-006: The row carries the state, the nonce, and the verifier. Nothing

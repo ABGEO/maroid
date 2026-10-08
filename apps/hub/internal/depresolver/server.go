@@ -11,7 +11,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/server"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
@@ -215,8 +214,19 @@ func (c *Container) buildUserHandler() (*handler.User, error) {
 		return nil, err
 	}
 
+	dbInstance, err := c.Database()
+	if err != nil {
+		return nil, err
+	}
+
+	accounts, err := c.LocalAccounts()
+	if err != nil {
+		return nil, err
+	}
+
 	return handler.NewUser(
 		c.Logger(), verifier, identityResolver, idempotencyStore, service, c.Config().Auth.DeckURL,
+		dbInstance, accounts,
 	), nil
 }
 
@@ -240,12 +250,7 @@ func (c *Container) buildHandlers() (map[string]handler.Handler, error) {
 		return nil, err
 	}
 
-	userRepo, err := c.UserRepository()
-	if err != nil {
-		return nil, err
-	}
-
-	authHandler, err := c.buildAuthHandler(cfg, logger, verifier, userRepo)
+	authHandler, err := c.buildAuthHandler(cfg, logger, verifier)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +312,7 @@ func (c *Container) buildPluginHandler(
 		settingsSvc,
 		idempotencyStore,
 		access,
-		repository.NewAllowedPlugin(dbInstance),
+		dbInstance,
 	), nil
 }
 
@@ -324,11 +329,6 @@ func (c *Container) buildWorkspaceHandler() (*handler.Workspace, error) {
 	}
 
 	idempotencyStore, err := c.IdempotencyStore()
-	if err != nil {
-		return nil, err
-	}
-
-	members, err := c.WorkspaceMemberRepository()
 	if err != nil {
 		return nil, err
 	}
@@ -358,12 +358,11 @@ func (c *Container) buildWorkspaceHandler() (*handler.Workspace, error) {
 		verifier,
 		identityResolver,
 		idempotencyStore,
-		members,
+		dbInstance,
 		service,
 		authorizer,
 		service,
 		handler.WorkspacePlugins{Enablements: enablements, Catalog: c.PluginCatalog()},
-		repository.NewWorkspace(dbInstance),
 	), nil
 }
 
@@ -372,19 +371,13 @@ func (c *Container) buildAuthHandler(
 	cfg *config.Config,
 	logger *slog.Logger,
 	verifier auth.TokenVerifier,
-	userRepo repository.UserRepository,
 ) (*handler.Auth, error) {
 	oidcFlow, err := c.OIDCFlow()
 	if err != nil {
 		return nil, err
 	}
 
-	identityRepo, err := c.IdentityRepository()
-	if err != nil {
-		return nil, err
-	}
-
-	invitationRepo, err := c.InvitationRepository()
+	dbInstance, err := c.Database()
 	if err != nil {
 		return nil, err
 	}
@@ -404,17 +397,21 @@ func (c *Container) buildAuthHandler(
 		return nil, err
 	}
 
+	accounts, err := c.LocalAccounts()
+	if err != nil {
+		return nil, err
+	}
+
 	return handler.NewAuth(
 		cfg,
 		logger,
 		verifier,
 		oidcFlow,
-		userRepo,
-		identityRepo,
+		dbInstance,
 		identityResolver,
-		invitationRepo,
 		authSvc,
 		providers,
+		accounts,
 	), nil
 }
 
@@ -441,6 +438,6 @@ func (c *Container) buildMCPHandler(
 
 	return handler.NewMCP(
 		cfg, logger, oidcSvc, identityResolver, toolRegistry,
-		access.Members, access.Enablements, access.Authorizer,
+		access.DB, access.Enablements, access.Authorizer,
 	), nil
 }

@@ -8,14 +8,12 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/robfig/cron/v3"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/worker"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
@@ -69,29 +67,16 @@ func (j *recordingJob) actingUsers() []string {
 	return append([]string(nil), j.seen...)
 }
 
-// fakeUserRepo lists the records that the test gives. The methods that a cron
-// run does not reach report a missing record, or reach the nil interface.
-type fakeUserRepo struct {
-	repository.UserRepository
-
+// fakeUsers lists the records that the test gives.
+type fakeUsers struct {
 	users []model.User
 	err   error
 }
 
-var _ repository.UserRepository = (*fakeUserRepo)(nil)
+var _ worker.ActiveUsers = fakeUsers{}
 
-func (f fakeUserRepo) Create(
-	context.Context, *sqlx.Tx, string, string,
-) (*model.User, error) {
-	return nil, errs.ErrUserNotFound
-}
-
-func (f fakeUserRepo) ListActive(context.Context) ([]model.User, error) {
+func (f fakeUsers) ListActive(context.Context) ([]model.User, error) {
 	return f.users, f.err
-}
-
-func (f fakeUserRepo) GetActiveByID(context.Context, string) (*model.User, error) {
-	return nil, errs.ErrUserNotFound
 }
 
 // fakeEnablements answers the workspaces that enable each plugin.
@@ -106,18 +91,18 @@ func pAndBothWorkspaces() fakeEnablements {
 	return fakeEnablements{pluginP: {workspaceH, workspaceG}}
 }
 
-func twoActiveUsers() fakeUserRepo {
-	return fakeUserRepo{
+func twoActiveUsers() fakeUsers {
+	return fakeUsers{
 		users: []model.User{{ID: idOfA}, {ID: idOfB}},
 		err:   nil,
 	}
 }
 
 // fire prepares the worker and runs the one entry that the scheduler holds.
-func fire(t *testing.T, job pluginapi.CronJob, userRepo repository.UserRepository) {
+func fire(t *testing.T, job pluginapi.CronJob, users worker.ActiveUsers) {
 	t.Helper()
 
-	fireOf(t, slog.New(slog.DiscardHandler), job, userRepo, fakeEnablements{})
+	fireOf(t, slog.New(slog.DiscardHandler), job, users, fakeEnablements{})
 }
 
 // fireOf registers the job as a job of P, prepares the worker, and runs the one
@@ -126,7 +111,7 @@ func fireOf(
 	t *testing.T,
 	logger *slog.Logger,
 	job pluginapi.CronJob,
-	userRepo repository.UserRepository,
+	users worker.ActiveUsers,
 	enablements worker.WorkspaceLister,
 ) {
 	t.Helper()
@@ -136,7 +121,7 @@ func fireOf(
 
 	scheduler := cron.New()
 
-	instance := worker.NewCronWorker(logger, scheduler, registryInstance, userRepo, enablements)
+	instance := worker.NewCronWorker(logger, scheduler, registryInstance, users, enablements)
 	require.NoError(t, instance.Prepare())
 
 	entries := scheduler.Entries()
@@ -228,7 +213,7 @@ func TestPerUserJobRunsForNobodyWhenTheListFails(t *testing.T) {
 		err: nil,
 	}
 
-	fire(t, job, fakeUserRepo{users: nil, err: errJobFailed})
+	fire(t, job, fakeUsers{users: nil, err: errJobFailed})
 
 	require.Empty(t, job.actingUsers())
 }

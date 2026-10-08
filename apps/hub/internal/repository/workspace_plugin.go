@@ -26,14 +26,14 @@ type WorkspacePluginRepository interface {
 
 // WorkspacePlugin is a SQL based implementation of WorkspacePluginRepository.
 type WorkspacePlugin struct {
-	db *sqlx.DB
+	tx *sqlx.Tx
 }
 
 var _ WorkspacePluginRepository = (*WorkspacePlugin)(nil)
 
 // NewWorkspacePlugin creates a new WorkspacePlugin repository instance.
-func NewWorkspacePlugin(db *sqlx.DB) *WorkspacePlugin {
-	return &WorkspacePlugin{db: db}
+func NewWorkspacePlugin(tx *sqlx.Tx) *WorkspacePlugin {
+	return &WorkspacePlugin{tx: tx}
 }
 
 // List retrieves the enablements of the workspace, ordered by the plugin identifier,
@@ -47,7 +47,7 @@ func (r *WorkspacePlugin) List(
 	query := `SELECT ` + enablementColumns + ` FROM public.workspace_plugins
 		WHERE workspace_id = $1 ORDER BY plugin_id;`
 
-	if err := r.db.SelectContext(ctx, &entities, query, workspaceID); err != nil {
+	if err := r.tx.SelectContext(ctx, &entities, query, workspaceID); err != nil {
 		return nil, fmt.Errorf("listing the Enablements of a Workspace: %w", err)
 	}
 
@@ -63,7 +63,7 @@ func (r *WorkspacePlugin) Get(
 ) (*model.Enablement, error) {
 	var entity model.Enablement
 
-	err := r.db.GetContext(ctx, &entity, `SELECT `+enablementColumns+` FROM public.workspace_plugins
+	err := r.tx.GetContext(ctx, &entity, `SELECT `+enablementColumns+` FROM public.workspace_plugins
 		WHERE workspace_id = $1 AND plugin_id = $2;`, workspaceID, pluginID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("getting an Enablement: %w", errs.ErrEnablementNotFound)
@@ -85,7 +85,7 @@ func (r *WorkspacePlugin) Add(
 ) (*model.Enablement, bool, error) {
 	var entity model.Enablement
 
-	err := r.db.GetContext(ctx, &entity, `
+	err := r.tx.GetContext(ctx, &entity, `
 		INSERT INTO public.workspace_plugins (workspace_id, plugin_id) VALUES ($1, $2)
 		ON CONFLICT (workspace_id, plugin_id) DO NOTHING
 		RETURNING `+enablementColumns+`;`, workspaceID, pluginID)
@@ -108,7 +108,7 @@ func (r *WorkspacePlugin) Add(
 // Remove disables the plugin in the workspace. Its records and its settings stay,
 // because they carry the workspace and not the enablement.
 func (r *WorkspacePlugin) Remove(ctx context.Context, workspaceID string, pluginID string) error {
-	result, err := r.db.ExecContext(ctx,
+	result, err := r.tx.ExecContext(ctx,
 		`DELETE FROM public.workspace_plugins WHERE workspace_id = $1 AND plugin_id = $2;`,
 		workspaceID, pluginID)
 	if err != nil {
@@ -134,7 +134,7 @@ func (r *WorkspacePlugin) WorkspacesEnabling(
 ) ([]string, error) {
 	workspaces := []string{}
 
-	err := r.db.SelectContext(
+	err := r.tx.SelectContext(
 		ctx,
 		&workspaces,
 		`SELECT workspace_id FROM public.workspace_plugins WHERE plugin_id = $1 ORDER BY workspace_id;`,

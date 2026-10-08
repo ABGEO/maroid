@@ -3,11 +3,11 @@ package mcpserver
 import (
 	"log/slog"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 )
 
@@ -23,7 +23,7 @@ const (
 func NewServer(
 	logger *slog.Logger,
 	toolRegistry *registry.MCPToolRegistry,
-	members repository.WorkspaceMemberRepository,
+	db *sqlx.DB,
 	enablements workspace.EnablementChecker,
 	authorizer authz.Authorizer,
 ) *mcp.Server {
@@ -38,7 +38,7 @@ func NewServer(
 	server.AddReceivingMiddleware(
 		loggingMiddleware(logger),
 		actingUserMiddleware(),
-		workspaceMiddleware(tools, members, enablements, authorizer),
+		workspaceMiddleware(tools, db, enablements, authorizer),
 	)
 
 	for _, tool := range tools {

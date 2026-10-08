@@ -5,11 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/libs/testdb"
 )
 
 const flowTTL = 10 * time.Minute
@@ -30,31 +32,49 @@ func signInFlow(state string) model.AuthFlow {
 	}
 }
 
+func createFlow(
+	t *testing.T,
+	instance *testdb.Instance,
+	flow model.AuthFlow,
+) (*model.AuthFlow, error) {
+	t.Helper()
+
+	return fetch(t, instance, func(tx *sqlx.Tx) (*model.AuthFlow, error) {
+		return repository.NewAuthFlow(tx).Create(t.Context(), flow)
+	})
+}
+
+func consumeFlow(t *testing.T, instance *testdb.Instance, state string) (*model.AuthFlow, error) {
+	t.Helper()
+
+	return fetch(t, instance, func(tx *sqlx.Tx) (*model.AuthFlow, error) {
+		return repository.NewAuthFlow(tx).ConsumeByState(t.Context(), state)
+	})
+}
+
 // EXTID-FR-006: The state spends one time, so a replay of the callback finds
 // nothing and cannot attach a second account.
 func TestAuthFlowConsumesOneTime(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	flowRepo := repository.NewAuthFlow(instance.DB)
-	ctx := t.Context()
 
-	created, err := flowRepo.Create(ctx, signInFlow("state-one"))
+	created, err := createFlow(t, instance, signInFlow("state-one"))
 	require.NoError(t, err)
 	require.NotEmpty(t, created.ID)
 	require.Nil(t, created.ConsumedAt)
 
-	consumed, err := flowRepo.ConsumeByState(ctx, "state-one")
+	consumed, err := consumeFlow(t, instance, "state-one")
 	require.NoError(t, err)
 	require.Equal(t, created.ID, consumed.ID)
 	require.NotEmpty(t, consumed.BindingHash, "the row returns the binding digest")
 	require.Equal(t, model.IntentSignIn, consumed.Intent)
 	require.NotNil(t, consumed.ConsumedAt)
 
-	_, err = flowRepo.ConsumeByState(ctx, "state-one")
+	_, err = consumeFlow(t, instance, "state-one")
 	require.ErrorIs(t, err, errs.ErrAuthFlowNotFound, "the second callback finds nothing")
 
-	_, err = flowRepo.ConsumeByState(ctx, "state-that-nobody-wrote")
+	_, err = consumeFlow(t, instance, "state-that-nobody-wrote")
 	require.ErrorIs(t, err, errs.ErrAuthFlowNotFound)
 }
 
@@ -64,16 +84,13 @@ func TestAuthFlowIntentNamesItsTarget(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	flowRepo := repository.NewAuthFlow(instance.DB)
-	ctx := t.Context()
-
 	userID := insertUser(t, instance, nameOfA)
 
 	attachFlow := signInFlow("state-attach")
 	attachFlow.Intent = model.IntentAttach
 	attachFlow.UserID = &userID
 
-	stored, err := flowRepo.Create(ctx, attachFlow)
+	stored, err := createFlow(t, instance, attachFlow)
 	require.NoError(t, err)
 	require.Equal(t, userID, *stored.UserID)
 
@@ -83,7 +100,7 @@ func TestAuthFlowIntentNamesItsTarget(t *testing.T) {
 		flow := signInFlow("state-attach-orphan")
 		flow.Intent = model.IntentAttach
 
-		_, err := flowRepo.Create(t.Context(), flow)
+		_, err := createFlow(t, instance, flow)
 		require.ErrorContains(t, err, "auth_flows_intent_target_check")
 	})
 
@@ -93,7 +110,7 @@ func TestAuthFlowIntentNamesItsTarget(t *testing.T) {
 		flow := signInFlow("state-signin-with-user")
 		flow.UserID = &userID
 
-		_, err := flowRepo.Create(t.Context(), flow)
+		_, err := createFlow(t, instance, flow)
 		require.ErrorContains(t, err, "auth_flows_intent_target_check")
 	})
 
@@ -103,7 +120,7 @@ func TestAuthFlowIntentNamesItsTarget(t *testing.T) {
 		flow := signInFlow("state-redeem-orphan")
 		flow.Intent = model.IntentRedeem
 
-		_, err := flowRepo.Create(t.Context(), flow)
+		_, err := createFlow(t, instance, flow)
 		require.ErrorContains(t, err, "auth_flows_intent_target_check")
 	})
 
@@ -113,7 +130,7 @@ func TestAuthFlowIntentNamesItsTarget(t *testing.T) {
 		flow := signInFlow("state-unknown-intent")
 		flow.Intent = "elevate"
 
-		_, err := flowRepo.Create(t.Context(), flow)
+		_, err := createFlow(t, instance, flow)
 		require.ErrorContains(t, err, "auth_flows_intent_check")
 	})
 }
@@ -124,12 +141,9 @@ func TestAuthFlowStateIsUnique(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	flowRepo := repository.NewAuthFlow(instance.DB)
-	ctx := t.Context()
-
-	_, err := flowRepo.Create(ctx, signInFlow("state-twice"))
+	_, err := createFlow(t, instance, signInFlow("state-twice"))
 	require.NoError(t, err)
 
-	_, err = flowRepo.Create(ctx, signInFlow("state-twice"))
+	_, err = createFlow(t, instance, signInFlow("state-twice"))
 	require.ErrorContains(t, err, "auth_flows_state_key")
 }

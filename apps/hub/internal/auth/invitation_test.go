@@ -11,7 +11,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/authtest"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
 const (
@@ -27,7 +26,7 @@ func TestInviteCreatesTheRecordAndTheGrant(t *testing.T) {
 
 	service, _, database := serviceUnderTest(t)
 	ctx := t.Context()
-	invitationRepo := repository.NewInvitation(database)
+	invitationRepo := invitationStore{db: database}
 
 	result, err := service.Invite(ctx, auth.InviteRequest{
 		FirstName: nameOfInvitee,
@@ -93,7 +92,7 @@ func TestRedeemBindsTheFirstIdentity(t *testing.T) {
 
 	service, identityRepo, database := serviceUnderTest(t)
 	ctx := t.Context()
-	invitationRepo := repository.NewInvitation(database)
+	invitationRepo := invitationStore{db: database}
 
 	result, err := service.Invite(ctx, auth.InviteRequest{FirstName: nameOfInvitee}, invitationTTL)
 	require.NoError(t, err)
@@ -125,7 +124,7 @@ func TestRedeemSpendsTheInvitationOneTime(t *testing.T) {
 
 	service, identityRepo, database := serviceUnderTest(t)
 	ctx := t.Context()
-	invitationRepo := repository.NewInvitation(database)
+	invitationRepo := invitationStore{db: database}
 
 	result, err := service.Invite(ctx, auth.InviteRequest{FirstName: nameOfInvitee}, invitationTTL)
 	require.NoError(t, err)
@@ -175,7 +174,7 @@ func TestRedeemKeepsTheGrantWhenTheAccountIsTaken(t *testing.T) {
 
 	service, _, database := serviceUnderTest(t)
 	ctx := t.Context()
-	invitationRepo := repository.NewInvitation(database)
+	invitationRepo := invitationStore{db: database}
 
 	holder := addUser(t, database, "Temuri")
 	require.NoError(t, service.Attach(ctx, holder, providerCloud, "abc", model.Profile{}))

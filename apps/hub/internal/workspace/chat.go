@@ -16,18 +16,12 @@ import (
 
 // ChatSelection keeps the workspace that each chat of the acting user acts in.
 type ChatSelection struct {
-	db         *sqlx.DB
-	workspaces repository.WorkspaceRepository
-	members    repository.WorkspaceMemberRepository
+	db *sqlx.DB
 }
 
 // NewChatSelection creates a new ChatSelection.
-func NewChatSelection(
-	db *sqlx.DB,
-	workspaces repository.WorkspaceRepository,
-	members repository.WorkspaceMemberRepository,
-) *ChatSelection {
-	return &ChatSelection{db: db, workspaces: workspaces, members: members}
+func NewChatSelection(db *sqlx.DB) *ChatSelection {
+	return &ChatSelection{db: db}
 }
 
 // Acting returns the workspace that the chat acts in for the acting user and the role
@@ -53,7 +47,7 @@ func (c *ChatSelection) Acting(ctx context.Context, chatID int64) (string, plugi
 		if chat != nil && chat.SelectedWorkspaceID != nil {
 			selected := *chat.SelectedWorkspaceID
 
-			member, memberErr := c.members.Get(ctx, selected, userID)
+			member, memberErr := repository.NewWorkspaceMember(tx).Get(ctx, selected, userID)
 			if memberErr == nil {
 				acting, role = selected, member.Role
 
@@ -69,7 +63,7 @@ func (c *ChatSelection) Acting(ctx context.Context, chatID int64) (string, plugi
 			}
 		}
 
-		acting, role, err = c.selectTheOnly(ctx, chats, chatID, userID)
+		acting, role, err = selectTheOnly(ctx, tx, chatID, userID)
 
 		return err
 	})
@@ -87,20 +81,28 @@ func (c *ChatSelection) Select(
 	chatID int64,
 	workspaceID string,
 ) (*model.Workspace, error) {
-	if _, err := c.members.Get(ctx, workspaceID, pluginapi.ActingUserFromContext(ctx)); err != nil {
-		return nil, fmt.Errorf("checking the membership of the pick: %w", err)
-	}
+	var selected *model.Workspace
 
-	selected, err := c.workspaces.GetByID(ctx, workspaceID)
-	if err != nil {
-		return nil, fmt.Errorf("reading the picked workspace: %w", err)
-	}
+	err := database.WithScopeTx(ctx, c.db, func(tx *sqlx.Tx) error {
+		_, err := repository.NewWorkspaceMember(tx).Get(
+			ctx, workspaceID, pluginapi.ActingUserFromContext(ctx),
+		)
+		if err != nil {
+			return fmt.Errorf("checking the membership of the pick: %w", err)
+		}
 
-	err = database.WithScopeTx(ctx, c.db, func(tx *sqlx.Tx) error {
-		return repository.NewTelegramChat(tx).Select(ctx, chatID, &workspaceID)
+		if selected, err = repository.NewWorkspace(tx).GetByID(ctx, workspaceID); err != nil {
+			return fmt.Errorf("reading the picked workspace: %w", err)
+		}
+
+		if err = repository.NewTelegramChat(tx).Select(ctx, chatID, &workspaceID); err != nil {
+			return fmt.Errorf("storing the pick: %w", err)
+		}
+
+		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("storing the pick: %w", err)
+		return nil, fmt.Errorf("selecting the workspace of the chat: %w", err)
 	}
 
 	return selected, nil
@@ -108,7 +110,9 @@ func (c *ChatSelection) Select(
 
 // Choices lists the workspaces that the acting user can pick.
 func (c *ChatSelection) Choices(ctx context.Context) ([]model.Workspace, error) {
-	choices, err := c.workspaces.ListOfUser(ctx, pluginapi.ActingUserFromContext(ctx))
+	choices, err := database.FetchTx(ctx, c.db, func(tx *sqlx.Tx) ([]model.Workspace, error) {
+		return repository.NewWorkspace(tx).ListOfUser(ctx, pluginapi.ActingUserFromContext(ctx))
+	})
 	if err != nil {
 		return nil, fmt.Errorf("listing the workspaces of the person: %w", err)
 	}
@@ -118,13 +122,13 @@ func (c *ChatSelection) Choices(ctx context.Context) ([]model.Workspace, error) 
 
 // selectTheOnly stores the only membership of the person as the selection of the
 // chat, and returns it. A person of two or more workspaces picks one.
-func (c *ChatSelection) selectTheOnly(
+func selectTheOnly(
 	ctx context.Context,
-	chats repository.TelegramChatRepository,
+	tx *sqlx.Tx,
 	chatID int64,
 	userID string,
 ) (string, pluginapi.Role, error) {
-	memberships, err := c.workspaces.ListOfUser(ctx, userID)
+	memberships, err := repository.NewWorkspace(tx).ListOfUser(ctx, userID)
 	if err != nil {
 		return "", "", fmt.Errorf("listing the workspaces of the person: %w", err)
 	}
@@ -135,7 +139,7 @@ func (c *ChatSelection) selectTheOnly(
 
 	only := memberships[0].ID
 
-	if err = chats.Select(ctx, chatID, &only); err != nil {
+	if err = repository.NewTelegramChat(tx).Select(ctx, chatID, &only); err != nil {
 		return "", "", fmt.Errorf("selecting the only workspace: %w", err)
 	}
 

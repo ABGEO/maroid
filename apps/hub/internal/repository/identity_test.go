@@ -5,6 +5,7 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
@@ -40,18 +41,49 @@ func insertUser(t *testing.T, instance *testdb.Instance, firstName string) strin
 func attach(
 	t *testing.T,
 	instance *testdb.Instance,
-	repo repository.IdentityRepository,
 	userID string,
 	provider string,
 	account string,
 ) {
 	t.Helper()
 
-	tx, err := instance.DB.BeginTxx(t.Context(), nil)
+	require.NoError(t, exec(t, instance, func(tx *sqlx.Tx) error {
+		return repository.NewIdentity(tx).
+			Attach(t.Context(), userID, provider, account, model.Profile{})
+	}))
+}
+
+// detach runs one detach in a transaction of its own, as a service does.
+func detach(t *testing.T, instance *testdb.Instance, userID string, provider string) error {
+	t.Helper()
+
+	return exec(t, instance, func(tx *sqlx.Tx) error {
+		return repository.NewIdentity(tx).Detach(t.Context(), userID, provider)
+	})
+}
+
+func identitiesOf(t *testing.T, instance *testdb.Instance, userID string) []model.Identity {
+	t.Helper()
+
+	identities, err := fetch(t, instance, func(tx *sqlx.Tx) ([]model.Identity, error) {
+		return repository.NewIdentity(tx).ListByUser(t.Context(), userID)
+	})
 	require.NoError(t, err)
 
-	require.NoError(t, repo.Attach(t.Context(), tx, userID, provider, account, model.Profile{}))
-	require.NoError(t, tx.Commit())
+	return identities
+}
+
+func activeUserOf(
+	t *testing.T,
+	instance *testdb.Instance,
+	provider string,
+	account string,
+) (*model.User, error) {
+	t.Helper()
+
+	return fetch(t, instance, func(tx *sqlx.Tx) (*model.User, error) {
+		return repository.NewIdentity(tx).GetActiveUserByProvider(t.Context(), provider, account)
+	})
 }
 
 // EXTID-SC-007: An external account that names another record refuses the attach.
@@ -60,28 +92,21 @@ func TestAttachRefusesAnAccountOfAnotherUser(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	identityRepo := repository.NewIdentity(instance.DB)
-	ctx := t.Context()
-
 	userA := insertUser(t, instance, nameOfA)
 	userB := insertUser(t, instance, nameOfB)
 
-	attach(t, instance, identityRepo, userB, providerCloud, accountOfB)
+	attach(t, instance, userB, providerCloud, accountOfB)
 
-	tx, err := instance.DB.BeginTxx(ctx, nil)
-	require.NoError(t, err)
-
-	err = identityRepo.Attach(ctx, tx, userA, providerCloud, accountOfB, model.Profile{})
+	err := exec(t, instance, func(tx *sqlx.Tx) error {
+		return repository.NewIdentity(tx).Attach(
+			t.Context(), userA, providerCloud, accountOfB, model.Profile{},
+		)
+	})
 	require.ErrorIs(t, err, errs.ErrIdentityTaken)
-	require.NoError(t, tx.Rollback())
 
-	ofA, err := identityRepo.ListByUser(ctx, userA)
-	require.NoError(t, err)
-	require.Empty(t, ofA, "the record of the caller gains nothing")
-
-	ofB, err := identityRepo.ListByUser(ctx, userB)
-	require.NoError(t, err)
-	require.Len(t, ofB, 1, "the record that holds the account keeps it")
+	require.Empty(t, identitiesOf(t, instance, userA), "the record of the caller gains nothing")
+	require.Len(t, identitiesOf(t, instance, userB), 1,
+		"the record that holds the account keeps it")
 }
 
 // EXTID-SC-022: Two detaches of one record at the same time leave one identity.
@@ -95,13 +120,10 @@ func TestConcurrentDetachKeepsOneIdentity(t *testing.T) {
 	const rounds = 25
 
 	instance := startWithCoreMigrations(t)
-	identityRepo := repository.NewIdentity(instance.DB)
-	ctx := t.Context()
-
 	for round := range rounds {
 		userID := insertUser(t, instance, nameOfA)
-		attach(t, instance, identityRepo, userID, providerTelegram, strconv.Itoa(round)+"-a")
-		attach(t, instance, identityRepo, userID, providerCloud, strconv.Itoa(round)+"-b")
+		attach(t, instance, userID, providerTelegram, strconv.Itoa(round)+"-a")
+		attach(t, instance, userID, providerCloud, strconv.Itoa(round)+"-b")
 
 		var (
 			waitGroup sync.WaitGroup
@@ -118,7 +140,7 @@ func TestConcurrentDetachKeepsOneIdentity(t *testing.T) {
 
 				<-release
 
-				results[index] = identityRepo.Detach(ctx, userID, provider)
+				results[index] = detach(t, instance, userID, provider)
 			}()
 		}
 
@@ -142,9 +164,7 @@ func TestConcurrentDetachKeepsOneIdentity(t *testing.T) {
 		require.Equal(t, 1, removed, "round %d: exactly one detach removes an identity", round)
 		require.Equal(t, 1, refused, "round %d: the other reports the last identity", round)
 
-		remaining, err := identityRepo.ListByUser(ctx, userID)
-		require.NoError(t, err)
-		require.Len(t, remaining, 1, "round %d", round)
+		require.Len(t, identitiesOf(t, instance, userID), 1, "round %d", round)
 	}
 }
 
@@ -153,18 +173,12 @@ func TestDetachRefusesTheLastIdentity(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	identityRepo := repository.NewIdentity(instance.DB)
-	ctx := t.Context()
-
 	userA := insertUser(t, instance, nameOfA)
-	attach(t, instance, identityRepo, userA, providerTelegram, accountOfA)
+	attach(t, instance, userA, providerTelegram, accountOfA)
 
-	require.ErrorIs(t, identityRepo.Detach(ctx, userA, providerTelegram), errs.ErrLastIdentity)
-	require.ErrorIs(t, identityRepo.Detach(ctx, userA, providerCloud), errs.ErrIdentityNotFound)
-
-	remaining, err := identityRepo.ListByUser(ctx, userA)
-	require.NoError(t, err)
-	require.Len(t, remaining, 1)
+	require.ErrorIs(t, detach(t, instance, userA, providerTelegram), errs.ErrLastIdentity)
+	require.ErrorIs(t, detach(t, instance, userA, providerCloud), errs.ErrIdentityNotFound)
+	require.Len(t, identitiesOf(t, instance, userA), 1)
 }
 
 // EXTID-FR-001: The resolution reaches the record that the identity names, and a
@@ -173,17 +187,14 @@ func TestGetActiveUserByProvider(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	identityRepo := repository.NewIdentity(instance.DB)
-	ctx := t.Context()
-
 	userA := insertUser(t, instance, nameOfA)
-	attach(t, instance, identityRepo, userA, providerTelegram, accountOfA)
+	attach(t, instance, userA, providerTelegram, accountOfA)
 
-	user, err := identityRepo.GetActiveUserByProvider(ctx, providerTelegram, accountOfA)
+	user, err := activeUserOf(t, instance, providerTelegram, accountOfA)
 	require.NoError(t, err)
 	require.Equal(t, userA, user.ID)
 
-	_, err = identityRepo.GetActiveUserByProvider(ctx, providerCloud, accountOfA)
+	_, err = activeUserOf(t, instance, providerCloud, accountOfA)
 	require.ErrorIs(t, err, errs.ErrUserNotFound)
 
 	_, err = instance.DB.Exec(
@@ -192,7 +203,7 @@ func TestGetActiveUserByProvider(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	_, err = identityRepo.GetActiveUserByProvider(ctx, providerTelegram, accountOfA)
+	_, err = activeUserOf(t, instance, providerTelegram, accountOfA)
 	require.ErrorIs(t, err, errs.ErrUserNotFound)
 }
 
@@ -201,21 +212,21 @@ func TestSyncProfileWritesTheIdentity(t *testing.T) {
 	t.Parallel()
 
 	instance := startWithCoreMigrations(t)
-	identityRepo := repository.NewIdentity(instance.DB)
-	ctx := t.Context()
-
 	userA := insertUser(t, instance, nameOfA)
-	attach(t, instance, identityRepo, userA, providerTelegram, accountOfA)
+	attach(t, instance, userA, providerTelegram, accountOfA)
 
-	err := identityRepo.SyncProfile(ctx, providerTelegram, accountOfA, model.Profile{
-		Username:    "new_handle",
-		DisplayName: "Temuri",
-		PictureURL:  "https://example.com/a.jpg",
+	err := exec(t, instance, func(tx *sqlx.Tx) error {
+		return repository.NewIdentity(tx).SyncProfile(
+			t.Context(), providerTelegram, accountOfA, model.Profile{
+				Username:    "new_handle",
+				DisplayName: "Temuri",
+				PictureURL:  "https://example.com/a.jpg",
+			},
+		)
 	})
 	require.NoError(t, err)
 
-	identities, err := identityRepo.ListByUser(ctx, userA)
-	require.NoError(t, err)
+	identities := identitiesOf(t, instance, userA)
 	require.Len(t, identities, 1)
 	require.Equal(t, "new_handle", *identities[0].Username)
 	require.Equal(t, "Temuri", *identities[0].DisplayName)

@@ -9,8 +9,8 @@ import (
 	"github.com/robfig/cron/v3"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -20,12 +20,17 @@ type WorkspaceLister interface {
 	WorkspacesEnabling(ctx context.Context, pluginID string) ([]string, error)
 }
 
+// ActiveUsers lists the user records that a job of each user runs for.
+type ActiveUsers interface {
+	ListActive(ctx context.Context) ([]model.User, error)
+}
+
 // CronWorker runs registered cron jobs using the cron scheduler.
 type CronWorker struct {
 	logger       *slog.Logger
 	scheduler    *cron.Cron
 	cronRegistry *registry.CronRegistry
-	userRepo     repository.UserRepository
+	users        ActiveUsers
 	workspaces   WorkspaceLister
 }
 
@@ -36,7 +41,7 @@ func NewCronWorker(
 	logger *slog.Logger,
 	scheduler *cron.Cron,
 	cronRegistry *registry.CronRegistry,
-	userRepo repository.UserRepository,
+	users ActiveUsers,
 	workspaces WorkspaceLister,
 ) *CronWorker {
 	return &CronWorker{
@@ -46,7 +51,7 @@ func NewCronWorker(
 		),
 		scheduler:    scheduler,
 		cronRegistry: cronRegistry,
-		userRepo:     userRepo,
+		users:        users,
 		workspaces:   workspaces,
 	}
 }
@@ -155,7 +160,7 @@ func (w *CronWorker) runForEachUser(
 	logger *slog.Logger,
 	job pluginapi.CronJob,
 ) {
-	users, err := w.userRepo.ListActive(ctx)
+	users, err := w.users.ListActive(ctx)
 	if err != nil {
 		logger.ErrorContext(ctx, "listing the active users failed", slog.Any("error", err))
 

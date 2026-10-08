@@ -27,7 +27,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	providers "github.com/abgeo/maroid/apps/hub/internal/provider"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -106,9 +105,7 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 	require.NoError(t, err)
 
 	provider := authtest.StartProvider(t)
-	identityRepo := repository.NewIdentity(instance.DB)
-	userRepo := repository.NewUser(instance.DB)
-	authSvc := authServiceOf(instance.DB, identityRepo, userRepo)
+	authSvc := auth.NewService(instance.DB)
 
 	runs, writes := &atomic.Int32{}, &atomic.Int32{}
 	idp := dextest.New(dextest.Connector("mock", "mockCallback", "Mock", `{}`))
@@ -117,9 +114,7 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 			t,
 			instance,
 			provider,
-			identityRepo,
-			usersOf(t, instance.DB, userRepo, authSvc),
-			userRepo,
+			usersOf(t, instance.DB, authSvc),
 			runs,
 			writes,
 			idp,
@@ -184,23 +179,6 @@ func (f *workspaceFixture) administrator(t *testing.T) person {
 	return person{id: id, account: "105"}
 }
 
-// authServiceOf builds the auth service over the database.
-func authServiceOf(
-	database *sqlx.DB,
-	identityRepo repository.IdentityRepository,
-	userRepo repository.UserRepository,
-) *auth.Service {
-	return auth.NewService(
-		database,
-		userRepo,
-		identityRepo,
-		repository.NewInvitation(database),
-		repository.NewWorkspace(database),
-		repository.NewWorkspaceMember(database),
-		repository.NewAllowedPlugin(database),
-	)
-}
-
 // workspaceRouter mounts the handler of the workspaces, the settings routes, and the
 // routes of the probe plugin with every real dependency, the way the hub mounts them
 // on one router.
@@ -208,21 +186,18 @@ func workspaceRouter(
 	t *testing.T,
 	instance *testdb.Instance,
 	provider *authtest.Provider,
-	identityRepo repository.IdentityRepository,
 	users *user.Manager,
-	userRepo repository.UserRepository,
 	probeRuns *atomic.Int32,
 	probeWrites *atomic.Int32,
 	idp *dextest.Memory,
 ) *chi.Mux {
 	t.Helper()
 
-	memberRepo := repository.NewWorkspaceMember(instance.DB)
-	access, enablements := probeAccessOf(t, instance.DB, memberRepo)
+	access, enablements := probeAccessOf(t, instance.DB)
 
 	logger := slog.New(slog.DiscardHandler)
 	verifier := workspaceVerifier(t, provider)
-	resolver := auth.NewResolver(identityRepo)
+	resolver := auth.NewResolver(instance.DB)
 
 	router := baseRouter()
 
@@ -235,34 +210,27 @@ func workspaceRouter(
 	handler.NewPlugin(
 		logger, verifier, resolver,
 		loadedCatalog(t), registry.NewUIRegistry(),
-		&stubSettings{}, noIdempotency{}, access, repository.NewAllowedPlugin(instance.DB),
+		&stubSettings{}, noIdempotency{}, access, instance.DB,
 	).Register(router)
 
-	manager := workspace.NewManager(
-		instance.DB,
-		repository.NewWorkspace(instance.DB),
-		memberRepo,
-		userRepo,
-	)
+	manager := workspace.NewManager(instance.DB)
 
 	handler.NewWorkspace(
 		logger,
 		verifier,
 		resolver,
 		noIdempotency{},
-		memberRepo,
+		instance.DB,
 		manager,
 		access.Authorizer,
 		manager,
 		handler.WorkspacePlugins{Enablements: enablements, Catalog: loadedCatalog(t)},
-		repository.NewWorkspace(instance.DB),
 	).Register(router)
 
-	handler.NewUser(
-		logger, verifier, resolver, noIdempotency{}, users, "http://maroid.localhost",
-	).Register(router)
-
-	registerProviders(router, logger, verifier, resolver, idp, identityRepo)
+	registerAdministration(router, administration{
+		logger: logger, verifier: verifier, resolver: resolver,
+		users: users, idp: idp, database: instance.DB,
+	})
 
 	return router
 }
@@ -276,19 +244,31 @@ func baseRouter() *chi.Mux {
 	return router
 }
 
-// registerProviders mounts the routes of the providers over the Dex in memory.
-func registerProviders(
-	router chi.Router,
-	logger *slog.Logger,
-	verifier auth.TokenVerifier,
-	resolver auth.IdentityResolver,
-	idp *dextest.Memory,
-	identities repository.IdentityRepository,
-) {
-	handler.NewProvider(logger, verifier, resolver, noIdempotency{}, providers.NewManager(
-		idp, identities,
-		providers.Settings{Issuer: dexIssuer, TelegramBotID: "1", Discoverer: anyIssuer{}},
-	)).Register(router)
+// administration holds what the routes of an administrator need.
+type administration struct {
+	logger   *slog.Logger
+	verifier auth.TokenVerifier
+	resolver auth.IdentityResolver
+	users    *user.Manager
+	idp      *dextest.Memory
+	database *sqlx.DB
+}
+
+// registerAdministration mounts the routes of the users and of the providers over the
+// Dex in memory.
+func registerAdministration(router chi.Router, deps administration) {
+	manager := providers.NewManager(deps.idp, deps.database, providers.Settings{
+		Issuer: dexIssuer, TelegramBotID: "1", Discoverer: anyIssuer{},
+	})
+	accounts := providers.NewAccounts(deps.idp, deps.database, manager)
+
+	handler.NewUser(
+		deps.logger, deps.verifier, deps.resolver, noIdempotency{}, deps.users,
+		"http://maroid.localhost", deps.database, accounts,
+	).Register(router)
+
+	handler.NewProvider(deps.logger, deps.verifier, deps.resolver, noIdempotency{}, manager).
+		Register(router)
 }
 
 // usersOf builds the service of the user records over the database, with the plugins
@@ -296,7 +276,6 @@ func registerProviders(
 func usersOf(
 	t *testing.T,
 	database *sqlx.DB,
-	users repository.UserRepository,
 	inviter user.Inviter,
 ) *user.Manager {
 	t.Helper()
@@ -309,10 +288,6 @@ func usersOf(
 
 	return user.NewManager(
 		database,
-		user.Repositories{
-			Users:   users,
-			Allowed: repository.NewAllowedPlugin(database),
-		},
 		inviter,
 		loadedPlugins(t),
 		time.Hour,
@@ -324,20 +299,13 @@ func usersOf(
 func probeAccessOf(
 	t *testing.T,
 	database *sqlx.DB,
-	members repository.WorkspaceMemberRepository,
 ) (handler.WorkspaceAccess, *workspace.Enablements) {
 	t.Helper()
 
-	enablements := workspace.NewEnablements(
-		repository.NewWorkspacePlugin(
-			database,
-		),
-		repository.NewAllowedPlugin(database),
-		loadedPlugins(t),
-	)
+	enablements := workspace.NewEnablements(database, loadedPlugins(t))
 
 	return handler.WorkspaceAccess{
-		Members:     members,
+		DB:          database,
 		Enablements: enablements,
 		Authorizer:  probeAuthorizer(t),
 	}, enablements

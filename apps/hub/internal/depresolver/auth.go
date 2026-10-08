@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
 // OIDCService initializes and returns the OIDC service instance.
@@ -43,14 +44,14 @@ func (c *Container) OIDCFlow() (*auth.OIDCFlow, error) {
 			return
 		}
 
-		var flowRepo repository.AuthFlowRepository
+		var dbInstance *sqlx.DB
 
-		flowRepo, err = c.AuthFlowRepository()
+		dbInstance, err = c.Database()
 		if err != nil {
 			return
 		}
 
-		c.oidcFlow.instance = auth.NewOIDCFlow(oidcSvc, flowRepo, c.Config().Auth.FlowTTL)
+		c.oidcFlow.instance = auth.NewOIDCFlow(oidcSvc, dbInstance, c.Config().Auth.FlowTTL)
 	})
 
 	if err != nil {
@@ -97,14 +98,14 @@ func (c *Container) IdentityResolver() (auth.IdentityResolver, error) {
 	var err error
 
 	c.identityResolver.once.Do(func() {
-		var identityRepo repository.IdentityRepository
+		var dbInstance *sqlx.DB
 
-		identityRepo, err = c.IdentityRepository()
+		dbInstance, err = c.Database()
 		if err != nil {
 			return
 		}
 
-		c.identityResolver.instance = auth.NewResolver(identityRepo)
+		c.identityResolver.instance = auth.NewResolver(dbInstance)
 	})
 
 	if err != nil {
@@ -125,7 +126,14 @@ func (c *Container) AuthService() (*auth.Service, error) {
 	var err error
 
 	c.authService.once.Do(func() {
-		c.authService.instance, err = c.buildAuthService()
+		var dbInstance *sqlx.DB
+
+		dbInstance, err = c.Database()
+		if err != nil {
+			return
+		}
+
+		c.authService.instance = auth.NewService(dbInstance)
 	})
 
 	if err != nil {
@@ -135,42 +143,4 @@ func (c *Container) AuthService() (*auth.Service, error) {
 	}
 
 	return c.authService.instance, nil
-}
-
-// buildAuthService resolves every dependency of the auth service.
-func (c *Container) buildAuthService() (*auth.Service, error) {
-	dbInstance, err := c.Database()
-	if err != nil {
-		return nil, err
-	}
-
-	userRepo, err := c.UserRepository()
-	if err != nil {
-		return nil, err
-	}
-
-	identityRepo, err := c.IdentityRepository()
-	if err != nil {
-		return nil, err
-	}
-
-	invitationRepo, err := c.InvitationRepository()
-	if err != nil {
-		return nil, err
-	}
-
-	members, err := c.WorkspaceMemberRepository()
-	if err != nil {
-		return nil, err
-	}
-
-	return auth.NewService(
-		dbInstance,
-		userRepo,
-		identityRepo,
-		invitationRepo,
-		repository.NewWorkspace(dbInstance),
-		members,
-		repository.NewAllowedPlugin(dbInstance),
-	), nil
 }

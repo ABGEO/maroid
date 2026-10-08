@@ -23,14 +23,14 @@ type AuthFlowRepository interface {
 
 // AuthFlow is a SQL based implementation of AuthFlowRepository.
 type AuthFlow struct {
-	db *sqlx.DB
+	tx *sqlx.Tx
 }
 
 var _ AuthFlowRepository = (*AuthFlow)(nil)
 
 // NewAuthFlow creates a new AuthFlow repository instance.
-func NewAuthFlow(db *sqlx.DB) *AuthFlow {
-	return &AuthFlow{db: db}
+func NewAuthFlow(tx *sqlx.Tx) *AuthFlow {
+	return &AuthFlow{tx: tx}
 }
 
 // Create writes one authorization flow.
@@ -50,7 +50,7 @@ func (r *AuthFlow) Create(ctx context.Context, flow model.AuthFlow) (*model.Auth
 		return nil, fmt.Errorf("binding AuthFlow arguments: %w", err)
 	}
 
-	if err = r.db.GetContext(ctx, &entity, r.db.Rebind(statement), args...); err != nil {
+	if err = r.tx.GetContext(ctx, &entity, r.tx.Rebind(statement), args...); err != nil {
 		return nil, fmt.Errorf("creating an AuthFlow: %w", err)
 	}
 
@@ -67,7 +67,7 @@ func (r *AuthFlow) ConsumeByState(ctx context.Context, state string) (*model.Aut
 		WHERE state = $1 AND consumed_at IS NULL
 		RETURNING ` + authFlowColumns + `;`
 
-	if err := r.db.GetContext(ctx, &entity, query, state); err != nil {
+	if err := r.tx.GetContext(ctx, &entity, query, state); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("consuming an AuthFlow: %w", errs.ErrAuthFlowNotFound)
 		}

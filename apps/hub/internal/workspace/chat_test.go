@@ -26,7 +26,6 @@ const chatID = int64(-1001234567890)
 // and Beka of H, G, and K.
 type chatWorld struct {
 	instance  *testdb.Instance
-	members   *repository.WorkspaceMember
 	selection *workspace.ChatSelection
 	h, g, k   string
 	ana, gio  string
@@ -43,13 +42,9 @@ func newChatWorld(t *testing.T) *chatWorld {
 
 	instance.Migrate(t, "public", migrations)
 
-	members := repository.NewWorkspaceMember(instance.DB)
 	scene := &chatWorld{
-		instance: instance,
-		members:  members,
-		selection: workspace.NewChatSelection(
-			instance.DB, repository.NewWorkspace(instance.DB), members,
-		),
+		instance:  instance,
+		selection: workspace.NewChatSelection(instance.DB),
 	}
 
 	person := func(name string) string {
@@ -176,10 +171,9 @@ func TestARemovedMemberLosesTheSelection(t *testing.T) {
 	_, err := scene.selection.Select(as(scene.beka), chatID, scene.h)
 	require.NoError(t, err)
 
-	tx, err := scene.instance.DB.BeginTxx(t.Context(), nil)
-	require.NoError(t, err)
-	require.NoError(t, scene.members.Remove(t.Context(), tx, scene.h, scene.beka))
-	require.NoError(t, tx.Commit())
+	require.NoError(t, database.WithTx(t.Context(), scene.instance.DB, func(tx *sqlx.Tx) error {
+		return repository.NewWorkspaceMember(tx).Remove(t.Context(), scene.h, scene.beka)
+	}))
 
 	acting, _, err := scene.selection.Acting(as(scene.beka), chatID)
 	require.NoError(t, err)

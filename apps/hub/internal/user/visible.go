@@ -4,7 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/database"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -16,14 +20,16 @@ import (
 func VisiblePlugins(
 	ctx context.Context,
 	catalog *registry.Catalog,
-	allowed repository.AllowedPluginRepository,
+	db *sqlx.DB,
 ) ([]registry.PluginEntry, error) {
 	entries := catalog.Entries()
 	if auth.IsAdministratorFromContext(ctx) {
 		return entries, nil
 	}
 
-	held, err := allowed.List(ctx, pluginapi.ActingUserFromContext(ctx))
+	held, err := database.FetchTx(ctx, db, func(tx *sqlx.Tx) ([]model.AllowedPlugin, error) {
+		return repository.NewAllowedPlugin(tx).List(ctx, pluginapi.ActingUserFromContext(ctx))
+	})
 	if err != nil {
 		return nil, fmt.Errorf("reading the allowlist: %w", err)
 	}

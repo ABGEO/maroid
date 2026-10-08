@@ -4,7 +4,7 @@ title: The user record and the ownership of a row
 type: spec
 status: approved
 created: 2026-09-12
-updated: 2026-10-04
+updated: 2026-10-09
 approved_by: Temuri
 approved_on: 2026-09-12
 constrained_by: [OWN, DAT, SEC, TG, JOB, REP, PLG, API, ERR, CFG, PKG, TST]
@@ -65,7 +65,7 @@ to 15 of the build plan carry that change into the code.
 | `JOB-007`  | Jobs             | Section 4.5. One workspace or one user that fails does not stop the run for the next. |
 | `PLG-007`  | Plugin model     | `IDENT-DD-001` puts the context helpers in `libs/pluginapi`, not in the hub.     |
 | `ARC-008`  | Architecture     | No rule in this design names a plugin.                                            |
-| `REP-003`  | Repository       | The rule binds `plugins/*/repository/`. The hub repository holds the pool, because each operation is one statement on the request path. `IDENT-DD-003` gives the reason. |
+| `REP-003`  | Repository       | The repository comes from the transaction of its caller. `ADR-0011` brought the hub under the rule, and replaced the pool that this design first gave the hub. |
 
 `ADR-0001` amended `DAT-008` and `DAT-009` for this specification.
 
@@ -79,7 +79,7 @@ to 15 of the build plan carry that change into the code.
 | `apps/hub/db/migrations/20251107142304_extension_uuid_ossp_create.*` | delete | `ADR-0001` drops the extension                             |
 | `apps/hub/internal/model/user.go`                           | create | `model.User`, `model.Status`, `model.Profile`, `model.ParseStatus` |
 | `apps/hub/internal/repository/user.go`                      | create | `repository.UserRepository`, `repository.User`                     |
-| `apps/hub/internal/auth/middleware.go`                      | change | `Middleware(logger, jwtService, userRepo repository.UserRepository)` |
+| `apps/hub/internal/auth/middleware.go`                      | change | `Middleware(logger, verifier, resolver)`. `ADR-0002` and `ADR-0011` changed the arguments |
 | `apps/hub/internal/handler/auth.go`                         | change | The callback resolves the record. `ADR-0002` took the signature away |
 | `apps/hub/internal/handler/{plugin,plugin_wrapper}.go`      | change | The new middleware argument                                        |
 | `apps/hub/internal/config/config.go`                        | change | `Telegram.AllowedUsers` goes                                       |
@@ -88,8 +88,8 @@ to 15 of the build plan carry that change into the code.
 | `apps/hub/internal/telegram/handler.go`                     | change | The new middleware, and the context reaches the engine             |
 | `apps/hub/internal/telegram/conversation/engine.go`         | change | `HandleMessage(ctx, update)`, `Start(ctx, update, id)`             |
 | `apps/hub/internal/worker/cron.go`                          | change | The run for each active user, and for each workspace that enables the plugin |
-| `apps/hub/internal/command/worker.go`                       | change | Resolves the repository for the cron worker                        |
-| `apps/hub/internal/depresolver/{resolver,database,server,telegram,plugin}.go` | change | `UserRepository()` joins the `Resolver` interface, and each consumer receives it |
+| `apps/hub/internal/command/worker.go`                       | change | Resolves the user service for the cron worker. `ADR-0011`          |
+| `apps/hub/internal/depresolver/{resolver,database,server,telegram,plugin}.go` | change | Each consumer receives the database. `ADR-0011` removed `UserRepository()` |
 | `libs/pluginapi/actinguser.go`                              | create | `ContextWithActingUser`, `ActingUserFromContext`, `ContextWithActingWorkspace`, `ActingWorkspaceFromContext` |
 | `libs/pluginapi/database.go`                                | change | `WithTx` sets `app.user_id` and `app.workspace_id`                 |
 | `apps/hub/internal/database/`                               | change | `WithScopeTx` replaces `WithUserTx`                                |
@@ -121,10 +121,9 @@ type UserRepository interface {
 `GetActiveByTelegramID` and `SyncProfileByTelegramID` go. `EXTID` gives the
 resolver that reads `public.identities` in their place.
 
-Every consumer takes `repository.UserRepository`, the one interface that
-`REP-002` puts beside the implementation. A unit test passes a fake that
-satisfies it, and the methods that the test does not reach report a missing
-record.
+A consumer holds the database and creates `repository.User` inside its
+transaction, as `REP-003` gives since `ADR-0011`. A test of a consumer runs against
+the database.
 
 ### 4.2 Data model
 

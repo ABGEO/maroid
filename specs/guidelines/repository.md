@@ -4,8 +4,8 @@ title: The repository layer
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-01
-scope: [plugins/*/repository/, plugins/*/model/]
+updated: 2026-10-09
+scope: [plugins/*/repository/, plugins/*/model/, apps/hub/internal/repository/]
 related: [DAT, PKG, GO, OWN]
 ---
 
@@ -25,13 +25,17 @@ Assert the implementation at compile time. See `GO-007`.
 
 ## REP-003
 
-A repository takes `*sqlx.Tx`. It does not take `*sqlx.DB` and it does not take
-`pluginapi.PluginDB`.
+A repository takes `*sqlx.Tx` from its constructor. It does not take `*sqlx.DB`
+and it does not take `pluginapi.PluginDB`. No method of it takes a transaction.
 
-The caller creates the repository inside `PluginDB.WithTx`.
+A plugin creates the repository inside `PluginDB.WithTx`. The hub creates it inside
+`database.WithTx`, `database.WithScopeTx`, or `database.FetchTx`. A repository is
+never a dependency that a constructor takes.
 
-**Why:** `DAT-004` sets the search path on the transaction. A repository that holds
-the pool would read the wrong schema.
+**Why:** `DAT-004` sets the search path on the transaction of a plugin, and `OWN-007`
+sets the scope on the transaction of the hub. A repository that holds the pool would
+read outside both, and a write that spans two repositories would span two
+transactions.
 
 ## REP-004
 

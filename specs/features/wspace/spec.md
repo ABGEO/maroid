@@ -4,7 +4,7 @@ title: The workspaces, their members, and the workspace that a unit of work acts
 type: spec
 status: approved
 created: 2026-10-01
-updated: 2026-10-03
+updated: 2026-10-09
 approved_by: Temuri
 approved_on: 2026-10-02
 constrained_by: [OWN, SEC, ERR, API, RES, DAT, REP, PKG, TG, UI, TST, SPC, LNG]
@@ -97,7 +97,7 @@ specification, and `ADR-0008` records the change.
 
 // Middleware resolves {workspaceId}, checks the membership of the acting user,
 // and puts the acting workspace into the context.
-func Middleware(logger *slog.Logger, members repository.WorkspaceMemberRepository) func(http.Handler) http.Handler
+func Middleware(logger *slog.Logger, db *sqlx.DB, options ...MiddlewareOption) func(http.Handler) http.Handler
 
 // apps/hub/internal/workspace/service.go
 type Service interface {

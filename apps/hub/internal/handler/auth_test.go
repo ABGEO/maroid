@@ -25,7 +25,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	providers "github.com/abgeo/maroid/apps/hub/internal/provider"
-	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/rest/address"
 	"github.com/abgeo/maroid/libs/rest/problem"
 	"github.com/abgeo/maroid/libs/testdb"
@@ -43,9 +42,10 @@ type authFixture struct {
 	router       chi.Router
 	database     *sqlx.DB
 	provider     *authtest.Provider
-	identityRepo repository.IdentityRepository
+	identityRepo identityStore
 	service      *auth.Service
 	idp          *dextest.Memory
+	accounts     *providers.Accounts
 }
 
 // authUnderTest builds the handler with every real dependency, so a test drives
@@ -74,28 +74,18 @@ func authUnderTest(t *testing.T) *authFixture {
 	oidcSvc, err := auth.NewOIDCService(cfg)
 	require.NoError(t, err)
 
-	identityRepo := repository.NewIdentity(instance.DB)
-	invitationRepo := repository.NewInvitation(instance.DB)
-	userRepo := repository.NewUser(instance.DB)
-	service := auth.NewService(
-		instance.DB, userRepo, identityRepo, invitationRepo,
-		repository.NewWorkspace(instance.DB), repository.NewWorkspaceMember(instance.DB),
-		repository.NewAllowedPlugin(instance.DB),
-	)
-
-	idp := authIDP()
+	service := auth.NewService(instance.DB)
+	idp, manager, accounts := authProviders(instance.DB, provider.URL)
 
 	authHandler := handler.NewAuth(
 		cfg,
 		slog.New(slog.DiscardHandler),
 		auth.NewTokenVerifier(oidcSvc),
-		auth.NewOIDCFlow(oidcSvc, repository.NewAuthFlow(instance.DB), cfg.Auth.FlowTTL),
-		userRepo,
-		identityRepo,
-		auth.NewResolver(identityRepo),
-		invitationRepo,
+		auth.NewOIDCFlow(oidcSvc, instance.DB, cfg.Auth.FlowTTL),
+		instance.DB,
+		auth.NewResolver(instance.DB),
 		service,
-		providers.NewManager(idp, identityRepo, providers.Settings{Issuer: provider.URL}),
+		manager, accounts,
 	)
 
 	router := chi.NewRouter()
@@ -106,10 +96,22 @@ func authUnderTest(t *testing.T) *authFixture {
 		router:       router,
 		database:     instance.DB,
 		provider:     provider,
-		identityRepo: identityRepo,
+		identityRepo: identityStore{db: instance.DB},
 		service:      service,
 		idp:          idp,
+		accounts:     accounts,
 	}
+}
+
+// authProviders builds the providers and the local accounts over the Dex in memory.
+func authProviders(
+	database *sqlx.DB,
+	issuer string,
+) (*dextest.Memory, *providers.Manager, *providers.Accounts) {
+	idp := authIDP()
+	manager := providers.NewManager(idp, database, providers.Settings{Issuer: issuer})
+
+	return idp, manager, providers.NewAccounts(idp, database, manager)
 }
 
 // authIDP holds the two providers that the scenarios of EXTID name.
@@ -853,4 +855,43 @@ func TestTheListAnswersNotReadyWithoutDex(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	fixture.router.ServeHTTP(recorder, request)
 	require.Equal(t, http.StatusServiceUnavailable, recorder.Code, recorder.Body.String())
+}
+
+// IDPROV-SC-020: A person who detaches their local account removes its password in
+// Dex too.
+func TestADetachOfTheLocalAccountRemovesThePassword(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+	ctx := t.Context()
+
+	require.NoError(t, fixture.idp.CreateConnector(ctx,
+		dextest.Connector(auth.ProviderLocal, "local", "Maroid", `{"maroidPreset":"local"}`)))
+
+	nina := addUserRecord(t, fixture.database, "Nina")
+	require.NoError(
+		t,
+		fixture.service.Attach(ctx, nina, auth.ProviderTelegram, "111", model.Profile{}),
+	)
+	require.NoError(t, fixture.accounts.Give(ctx, nina, "nina@home.example",
+		[]byte("correct horse battery")))
+
+	request := httptest.NewRequestWithContext(ctx, http.MethodDelete,
+		"/auth/identities/"+auth.ProviderLocal, nil)
+	request.AddCookie(
+		requestCookie(sessionCookie, fixture.provider.Sign(t, auth.ProviderTelegram, "111")),
+	)
+
+	recorder := httptest.NewRecorder()
+	fixture.router.ServeHTTP(recorder, request)
+	require.Equal(t, http.StatusNoContent, recorder.Code, recorder.Body.String())
+
+	identities, err := fixture.identityRepo.ListByUser(ctx, nina)
+	require.NoError(t, err)
+	require.Len(t, identities, 1)
+	assert.Equal(t, auth.ProviderTelegram, identities[0].Provider)
+
+	passwords, err := fixture.idp.ListPasswords(ctx)
+	require.NoError(t, err)
+	assert.Empty(t, passwords)
 }

@@ -35,6 +35,7 @@ type Invitation struct {
 // Service manages the user records of the instance and the allowlist of each.
 type Service interface {
 	List(ctx context.Context) ([]model.User, error)
+	ListActive(ctx context.Context) ([]model.User, error)
 	Get(ctx context.Context, userID string) (*model.User, error)
 	Create(ctx context.Context, request auth.InviteRequest) (*model.User, *Invitation, error)
 	Invite(ctx context.Context, userID string) (*Invitation, error)
@@ -69,17 +70,9 @@ type PluginCatalog interface {
 	All() []pluginapi.Plugin
 }
 
-// Repositories holds the data access that the service reads and writes.
-type Repositories struct {
-	Users   repository.UserRepository
-	Allowed repository.AllowedPluginRepository
-}
-
 // Manager is the implementation of Service over the repositories of the hub.
 type Manager struct {
 	db            *sqlx.DB
-	users         repository.UserRepository
-	allowed       repository.AllowedPluginRepository
 	inviter       Inviter
 	plugins       PluginCatalog
 	invitationTTL time.Duration
@@ -90,15 +83,12 @@ var _ Service = (*Manager)(nil)
 // NewManager creates a new Manager.
 func NewManager(
 	db *sqlx.DB,
-	repositories Repositories,
 	inviter Inviter,
 	plugins PluginCatalog,
 	invitationTTL time.Duration,
 ) *Manager {
 	return &Manager{
 		db:            db,
-		users:         repositories.Users,
-		allowed:       repositories.Allowed,
 		inviter:       inviter,
 		plugins:       plugins,
 		invitationTTL: invitationTTL,
@@ -107,7 +97,9 @@ func NewManager(
 
 // List lists every user record of the instance.
 func (m *Manager) List(ctx context.Context) ([]model.User, error) {
-	users, err := m.users.List(ctx)
+	users, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) ([]model.User, error) {
+		return repository.NewUser(tx).List(ctx)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("listing the user records: %w", err)
 	}
@@ -115,9 +107,23 @@ func (m *Manager) List(ctx context.Context) ([]model.User, error) {
 	return users, nil
 }
 
+// ListActive lists every active user record. A job of each user runs for each one.
+func (m *Manager) ListActive(ctx context.Context) ([]model.User, error) {
+	users, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) ([]model.User, error) {
+		return repository.NewUser(tx).ListActive(ctx)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("listing the active user records: %w", err)
+	}
+
+	return users, nil
+}
+
 // Get reads one user record, active or blocked.
 func (m *Manager) Get(ctx context.Context, userID string) (*model.User, error) {
-	user, err := m.users.GetByID(ctx, userID)
+	user, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) (*model.User, error) {
+		return repository.NewUser(tx).GetByID(ctx, userID)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("reading a user record: %w", err)
 	}
@@ -175,7 +181,9 @@ func (m *Manager) AllowedPlugins(
 		return nil, err
 	}
 
-	allowed, err := m.allowed.List(ctx, userID)
+	allowed, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) ([]model.AllowedPlugin, error) {
+		return repository.NewAllowedPlugin(tx).List(ctx, userID)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("listing the allowlist: %w", err)
 	}
@@ -198,7 +206,18 @@ func (m *Manager) AllowPlugin(
 		return nil, false, fmt.Errorf("%w: %s", errs.ErrPluginNotLoaded, pluginID)
 	}
 
-	allowed, created, err := m.allowed.Add(ctx, userID, pluginID)
+	var created bool
+
+	allowed, err := database.FetchTx(ctx, m.db, func(tx *sqlx.Tx) (*model.AllowedPlugin, error) {
+		row, wrote, addErr := repository.NewAllowedPlugin(tx).Add(ctx, userID, pluginID)
+		if addErr != nil {
+			return nil, fmt.Errorf("writing the allowlist: %w", addErr)
+		}
+
+		created = wrote
+
+		return row, nil
+	})
 	if err != nil {
 		return nil, false, fmt.Errorf("adding to the allowlist: %w", err)
 	}
@@ -213,7 +232,10 @@ func (m *Manager) DisallowPlugin(ctx context.Context, userID string, pluginID st
 		return err
 	}
 
-	if err := m.allowed.Remove(ctx, userID, pluginID); err != nil {
+	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
+		return repository.NewAllowedPlugin(tx).Remove(ctx, userID, pluginID)
+	})
+	if err != nil {
 		return fmt.Errorf("removing from the allowlist: %w", err)
 	}
 
@@ -235,13 +257,15 @@ func (m *Manager) Change(
 	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
 		// Two administrators who unmark each other at the same moment each count two
 		// without the lock, and both commits leave none.
-		if err := m.users.LockAdministrators(ctx, tx); err != nil {
+		users := repository.NewUser(tx)
+
+		if err := users.LockAdministrators(ctx); err != nil {
 			return fmt.Errorf("locking the administrators: %w", err)
 		}
 
 		var err error
 
-		changed, err = m.users.Change(ctx, tx, userID, repository.UserChange{
+		changed, err = users.Change(ctx, userID, repository.UserChange{
 			FirstName:     change.FirstName,
 			LastName:      change.LastName,
 			Status:        change.Status,
@@ -252,7 +276,7 @@ func (m *Manager) Change(
 			return fmt.Errorf("changing the record: %w", err)
 		}
 
-		administrators, err := m.users.CountActiveAdministrators(ctx, tx)
+		administrators, err := users.CountActiveAdministrators(ctx)
 		if err != nil {
 			return fmt.Errorf("counting the administrators: %w", err)
 		}

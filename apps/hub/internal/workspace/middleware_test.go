@@ -10,10 +10,12 @@ import (
 	"testing"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/db"
+	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -27,7 +29,6 @@ const absentWorkspace = "01927f4e-3c2a-7b1d-9e8f-0a1b2c3d4e5f"
 // nothing.
 type world struct {
 	instance  *testdb.Instance
-	members   *repository.WorkspaceMember
 	workspace string
 	ana       string
 	nino      string
@@ -45,7 +46,6 @@ func newWorld(t *testing.T) *world {
 
 	scene := &world{
 		instance: instance,
-		members:  repository.NewWorkspaceMember(instance.DB),
 		ana: insertID(
 			t,
 			instance,
@@ -103,7 +103,7 @@ func (scene *world) router(user string, seen *recorded) http.Handler {
 		})
 	})
 
-	router.With(workspace.Middleware(slog.New(slog.DiscardHandler), scene.members)).
+	router.With(workspace.Middleware(slog.New(slog.DiscardHandler), scene.instance.DB)).
 		Get("/workspaces/{workspaceId}", func(rw http.ResponseWriter, r *http.Request) {
 			seen.ran = true
 			seen.workspace = pluginapi.ActingWorkspaceFromContext(r.Context())
@@ -208,10 +208,9 @@ func TestARemovedMemberReachesNothingAtTheNextRequest(t *testing.T) {
 
 	require.Equal(t, http.StatusNoContent, get(t, handler, scene.workspace).Code)
 
-	tx, err := scene.instance.DB.BeginTxx(t.Context(), nil)
-	require.NoError(t, err)
-	require.NoError(t, scene.members.Remove(t.Context(), tx, scene.workspace, scene.nino))
-	require.NoError(t, tx.Commit())
+	require.NoError(t, database.WithTx(t.Context(), scene.instance.DB, func(tx *sqlx.Tx) error {
+		return repository.NewWorkspaceMember(tx).Remove(t.Context(), scene.workspace, scene.nino)
+	}))
 
 	seen = recorded{}
 
