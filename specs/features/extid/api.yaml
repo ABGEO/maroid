@@ -41,7 +41,9 @@ paths:
         Realizes `EXTID-FR-004` and `EXTID-FR-006`.
         The hub writes a flow row with the intent `attach` and the identifier of the
         acting user. The callback reads that identifier from the row, never from the
-        request, so a rewritten cookie cannot move the attach.
+        request, so a rewritten cookie cannot move the attach. The provider `local`
+        answers 400, because only an administrator gives a local account.
+        `IDPROV-FR-022`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
         - name: provider
@@ -67,7 +69,7 @@ paths:
       summary: Read every provider that Maroid offers, attached or not.
       description: >
         Realizes `EXTID-FR-009`.
-        The list holds one member for each provider in `auth.providers`, whether an
+        The list holds one member for each provider that Dex holds, whether an
         external account of that provider holds an identity of the acting user or
         not. `EXTID-DD-009` gives the reason that the list lives in the
         configuration, and `EXTID-DD-016` the reason that it lives apart from
@@ -249,7 +251,7 @@ components:
       required: false
       description: >
         The identifier of the connector in Dex. The hub sends it as `connector_id`,
-        and `auth.providers` holds the list that it accepts. A request that names none
+        and Dex holds the list that it accepts. `IDPROV-FR-017`. A request that names none
         reaches the connector list of Dex, which is the page that a person picks from.
       schema:
         type: string

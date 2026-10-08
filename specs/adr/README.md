@@ -3,7 +3,7 @@ title: Architecture decision records
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-10-05
+updated: 2026-10-08
 ---
 
 # Architecture decision records
@@ -52,3 +52,4 @@ The frontmatter holds the identifier.
 | `ADR-0007` | The wire library is libs/rest | `the-wire-library-is-libs-rest.md` | accepted | 2026-09-24 | `ERR-003`, `ERR-007`, `BLD-004` |
 | `ADR-0008` | The workspace as the tenant | `the-workspace-as-the-tenant.md` | accepted | 2026-10-01 | `OWN-001` to `OWN-011`, `CFG-007`, `ERR-003`, `RES-002`, `RES-005`, `RES-009`, `SPC-003`, `UI-008`, `PLG-010`, `GLO-invitation`, `SEC-001`, `SEC-011` to `SEC-013`, `API-003`, `API-004`, `GLO-acting-user`, `GLO-scoped-table`, `GLO-shared-table`, `GLO-scoped-record`, `GLO-shared-record`, `GLO-setting`, `GLO-workspace`, `GLO-member`, `GLO-workspace-role`, `GLO-acting-workspace`, `GLO-administrator`, `GLO-plugin-allowlist`, `GLO-enablement`, `GLO-permission` |
 | `ADR-0009` | The name of a plugin lives in its metadata | `the-plugin-name-in-the-metadata.md` | accepted | 2026-10-05 | `PLG-012`, `GLO-plugin-name`, `GLO-plugin-description` |
+| `ADR-0010` | Maroid manages the providers of Dex | `sign-in-providers-managed-in-maroid.md` | accepted | 2026-10-08 | `SEC-001`, `SEC-003`, `SEC-011`, `API-003`, `CLI-001`, `GLO-provider`, `GLO-provider-preset`, `GLO-static-provider`, `GLO-local-provider` |

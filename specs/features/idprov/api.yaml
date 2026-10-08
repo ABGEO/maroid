@@ -1,0 +1,596 @@
+# The routes that IDPROV adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The providers of the instance and the local account
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /providers:
+    get:
+      operationId: listProviders
+      summary: List every provider that Dex holds.
+      description: >
+        Realizes `IDPROV-FR-001` and `IDPROV-FR-012`. An administrator alone. One page
+        holds every provider, ordered by the identifier. A connector with no
+        `maroidPreset` is static. `IDPROV-DD-002`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the providers.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Provider"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "503":
+          $ref: "#/components/responses/IdPUnavailable"
+    post:
+      operationId: createProvider
+      summary: Add a provider of one preset.
+      description: >
+        Realizes `IDPROV-FR-002` to `IDPROV-FR-008` and `IDPROV-FR-011`. An
+        administrator alone. `spec.md` section 4.4 gives the fixed fields and the
+        defaults of each preset. An issuer with no discovery document answers 422 at
+        `/issuer`. An option that the preset fixes, that Dex does not know, or that
+        holds a value of the wrong type answers 422 at `/options/<key>`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProviderInput"
+      responses:
+        "201":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            Location:
+              description: The address of the new provider.
+              schema:
+                type: string
+                format: uri
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The provider.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Provider"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/ProviderExists"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+        "503":
+          $ref: "#/components/responses/IdPUnavailable"
+
+  /providers/{providerId}:
+    parameters:
+      - $ref: "#/components/parameters/ProviderId"
+    get:
+      operationId: getProvider
+      summary: Read one provider, with the report of its removal.
+      description: >
+        Realizes `IDPROV-FR-001`, `IDPROV-FR-007`, and `IDPROV-FR-012`. An
+        administrator alone. `IDPROV-DD-007`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The provider.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Provider"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "503":
+          $ref: "#/components/responses/IdPUnavailable"
+    patch:
+      operationId: changeProvider
+      summary: Rename a provider, or change its client, its scopes, or its options.
+      description: >
+        Realizes `IDPROV-FR-008` to `IDPROV-FR-010` and `IDPROV-FR-016`. An
+        administrator alone. A body that names `id`, `preset`, `issuer`, or
+        `user_id_key` answers 422 at that member. `IDPROV-INV-001`. A body with no
+        `client_secret` keeps the secret. `options` follows merge patch, so a null
+        member removes that option.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/ProviderChange"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The provider after the change.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Provider"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/ProviderStatic"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+        "503":
+          $ref: "#/components/responses/IdPUnavailable"
+    delete:
+      operationId: removeProvider
+      summary: Remove a provider and every identity of it.
+      description: >
+        Realizes `IDPROV-FR-013` to `IDPROV-FR-016`. An administrator alone. The
+        removal of `local` also deletes every local account. The hub deletes the
+        identities and the connector together, or neither. `IDPROV-DD-003`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The provider and its identities are gone.
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/ProviderStatic"
+        "503":
+          $ref: "#/components/responses/IdPUnavailable"
+
+  /users/{userId}/identities:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+    get:
+      operationId: listUserIdentities
+      summary: List the identities of a user record.
+      description: >
+        Realizes `IDPROV-FR-018` to `IDPROV-FR-020`. An administrator alone. One page
+        holds every identity, oldest first. `IDPROV-DD-011`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the identities.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/UserIdentity"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    post:
+      operationId: createLocalAccount
+      summary: Give a user record a local account.
+      description: >
+        Realizes `IDPROV-FR-018` and `IDPROV-FR-023`. An administrator alone. The
+        provider is `local`. Any other value answers 422 at `/provider`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LocalAccountInput"
+      responses:
+        "201":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            Location:
+              description: The address of the new identity.
+              schema:
+                type: string
+                format: uri
+          description: The identity of the local account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserIdentity"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/LocalAccountRefused"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+        "503":
+          $ref: "#/components/responses/IdPUnavailable"
+
+  /users/{userId}/identities/{provider}:
+    parameters:
+      - $ref: "#/components/parameters/UserId"
+      - $ref: "#/components/parameters/IdentityProvider"
+    patch:
+      operationId: resetLocalPassword
+      summary: Set a new password for the local account of a user record.
+      description: >
+        Realizes `IDPROV-FR-019` and `IDPROV-FR-023`. An administrator alone. A
+        provider other than `local` answers 404.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/PasswordChange"
+      responses:
+        "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: Dex holds the new password.
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+        "503":
+          $ref: "#/components/responses/IdPUnavailable"
+    delete:
+      operationId: removeLocalAccount
+      summary: Remove the local account of a user record.
+      description: >
+        Realizes `IDPROV-FR-020`. An administrator alone. A provider other than
+        `local` answers 404. The last identity of a record answers
+        `/problems/hub/identity-last`, as `EXTID-FR-008` gives.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The identity and the password are gone.
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/IdentityLast"
+        "503":
+          $ref: "#/components/responses/IdPUnavailable"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: >
+        The access token that Dex issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.
+
+  parameters:
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: The identifier of the user record.
+      schema:
+        type: string
+        format: uuid
+    ProviderId:
+      name: providerId
+      in: path
+      required: true
+      description: The identifier of the connector in Dex.
+      schema:
+        type: string
+    IdentityProvider:
+      name: provider
+      in: path
+      required: true
+      description: The identifier of the provider of the identity. A write takes `local` alone.
+      schema:
+        type: string
+
+  schemas:
+    Provider:
+      type: object
+      required: [id, name, static, identity_count, administrators_without_sign_in]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          description: The label of the button on the sign in page of Dex.
+        preset:
+          type: string
+          enum: [local, telegram, oidc]
+          description: Absent on a static provider.
+        static:
+          type: boolean
+          description: True when the hub did not store the connector. `IDPROV-DD-002`.
+        issuer:
+          type: string
+          format: uri
+        client_id:
+          type: string
+        client_secret_set:
+          type: boolean
+          description: True when the connector holds a secret. The secret never shows.
+        user_id_key:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+          description: Present on a provider of the preset `oidc`.
+        options:
+          type: object
+          additionalProperties: true
+          description: The options of Dex that no preset field covers. `IDPROV-DD-005`.
+        redirect_uri:
+          type: string
+          format: uri
+          description: The address to register at the upstream provider.
+        identity_count:
+          type: integer
+          minimum: 0
+          description: The identities that a removal deletes.
+        administrators_without_sign_in:
+          type: array
+          description: >
+            Each active administrator who holds an identity of this provider and no
+            other. A removal leaves each one with no sign in. `IDPROV-DD-007`.
+          items:
+            $ref: "#/components/schemas/UserRef"
+
+    ProviderInput:
+      type: object
+      required: [preset]
+      description: >
+        A member that the preset fixes answers 422. The preset `local` takes no other
+        member. The preset `telegram` takes `client_id`, `client_secret`, and
+        `options`. The preset `oidc` requires `id`, `name`, `issuer`, `client_id`,
+        and `client_secret`. A member that the schema does not declare answers
+        `member-unknown`.
+      properties:
+        preset:
+          type: string
+          enum: [local, telegram, oidc]
+        id:
+          type: string
+          pattern: "^[a-z][a-z0-9-]{1,31}$"
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        issuer:
+          type: string
+          format: uri
+        client_id:
+          type: string
+        client_secret:
+          type: string
+          writeOnly: true
+        user_id_key:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        options:
+          type: object
+          additionalProperties: true
+
+    ProviderChange:
+      type: object
+      description: >
+        A member that the schema does not declare answers `member-unknown`. A member
+        that the preset does not take answers 422.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        client_id:
+          type: string
+        client_secret:
+          type: string
+          writeOnly: true
+        scopes:
+          type: array
+          items:
+            type: string
+        options:
+          type: object
+          additionalProperties: true
+
+    UserRef:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+        last_name:
+          type: string
+
+    UserIdentity:
+      type: object
+      required: [provider, created_at]
+      properties:
+        provider:
+          type: string
+        username:
+          type: string
+          description: The email address for a local account.
+        display_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    LocalAccountInput:
+      type: object
+      required: [provider, email, password]
+      properties:
+        provider:
+          type: string
+          const: local
+        email:
+          type: string
+          format: email
+        password:
+          $ref: "#/components/schemas/Password"
+
+    PasswordChange:
+      type: object
+      required: [password]
+      properties:
+        password:
+          $ref: "#/components/schemas/Password"
+
+    Password:
+      type: string
+      writeOnly: true
+      minLength: 12
+      description: >
+        At most 72 bytes in UTF-8. A longer one answers 422 at `/password`.
+        `IDPROV-FR-023`.
+
+  responses:
+    ProviderExists:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      description: >
+        Dex holds a connector with this identifier. The type is
+        `/problems/hub/provider-exists`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    ProviderStatic:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      description: >
+        The configuration file of Dex holds the provider, and the hub changes nothing
+        on it. The type is `/problems/hub/provider-static`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    LocalAccountRefused:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      description: >
+        `/problems/hub/local-account-exists` when another local account holds the
+        email address. `/problems/hub/local-provider-absent` when Dex holds no local
+        provider.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    IdentityLast:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      description: >
+        The local account is the last identity of the record. The type is
+        `/problems/hub/identity-last`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    IdPUnavailable:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      description: >
+        Dex refused the connection or passed `dex.timeout`. The type is
+        `/problems/hub/not-ready` with the dependency `dex`, and the hub changed
+        nothing. `IDPROV-NFR-002`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"

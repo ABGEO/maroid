@@ -4,7 +4,7 @@ title: Errors
 type: guideline
 status: active
 created: 2026-09-21
-updated: 2026-10-04
+updated: 2026-10-08
 scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, libs/rest/, libs/api-client/, plugins/]
 related: [API, DAT, LOG, OWN, PLG, RES, UI]
 ---
@@ -133,6 +133,10 @@ identity, the secret of the bot.
 | `manager-last`           | 409    | The change leaves the workspace with no manager.    |
 | `administrator-last`     | 409    | The change leaves the instance with no active administrator. |
 | `administrator-allowlist` | 409   | An administrator turns on every plugin and holds no allowlist. |
+| `provider-exists`        | 409    | The identity provider holds a provider with this identifier. |
+| `provider-static`        | 409    | The configuration of the identity provider holds the provider. |
+| `local-account-exists`   | 409    | Another local account holds the email address.      |
+| `local-provider-absent`  | 409    | The instance holds no local provider.               |
 | `webhook-secret-invalid` | 401    | The update carries no valid secret of the bot.      |
 | `settings-invalid`       | 422    | The settings do not match the schema.               |
 | `not-ready`              | 503    | The hub cannot serve a request.                     |

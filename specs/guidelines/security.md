@@ -4,7 +4,7 @@ title: Authentication and authorization
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-01
+updated: 2026-10-08
 scope: [apps/hub/internal/auth/, apps/hub/internal/middleware/]
 related: [ARC, API, TG, CFG, OWN, RES]
 ---
@@ -14,14 +14,17 @@ related: [ARC, API, TG, CFG, OWN, RES]
 ## SEC-001
 
 Identity comes from Dex. Dex is the authorization server, and the hub is its
-consumer. Telegram is one connector of Dex, and it is not the only one.
-Maroid holds no password.
+consumer. Telegram is one provider of Dex, and it is not the only one.
+
+Maroid stores no password and no password hash. An administrator sets the
+password of a local account through the hub. The hub hashes it with bcrypt in
+memory, sends the hash to Dex, and logs neither value.
 
 Maroid holds a local user record. The record carries no credential. A workspace
 owns the data, and `OWN-010` gives it.
 
-**Why:** One person holds several external accounts. A further connector costs one
-entry in the configuration of Dex, and no flow inside the hub.
+**Why:** One person holds several external accounts. A further provider costs one
+form in the deck, and no flow inside the hub.
 
 ## SEC-002
 
@@ -43,6 +46,9 @@ The subject claim of the token belongs to Dex. The hub stores it nowhere.
 The hub reads the `federated_claims` claim. That claim names the connector and the
 user identifier at the upstream provider. One row in `public.identities` maps the
 pair to the Maroid user identifier.
+
+A provider keeps its identifier for its life. A provider of the OIDC kind also
+keeps its issuer and its `userIDKey`. Deleting a provider deletes its identities.
 
 **Why:** The subject of Dex changes when the configuration of a connector changes.
 A stored subject then names nobody.
@@ -153,9 +159,10 @@ ranges it sends from lets any caller inside those ranges past an allowlist.
 A user record is an administrator or not. An administrator creates and blocks a
 user record, and sets the plugin allowlist of a user. An administrator manages every
 workspace of the instance through the management API: its members and its
-enablements. The plugin allowlist does not limit an administrator. An administrator
+enablements. An administrator manages the providers of the instance, and sets the
+password of a local account. The plugin allowlist does not limit an administrator. An administrator
 reads the rows of a workspace only as a member of it. The CLI makes the first
-administrator.
+administrator, and gives it a local account.
 
 **Why:** The person who runs the instance is not entitled to the pension of each
 person on it.

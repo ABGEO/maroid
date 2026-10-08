@@ -4,7 +4,7 @@ title: Traceability
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-07
+updated: 2026-10-08
 scope: [specs/, code comments]
 related: [LNG, PRC, GIT, RES]
 ---
@@ -284,6 +284,7 @@ Add a row before you create the file or the directory.
 | `PLUGACC` | `features/plugacc/` | The administrator, the plugin allowlist, and the enablement of a plugin. | Approved |
 | `PERMS` | `features/perms/` | The workspace roles, and the permission that every action needs. | Approved |
 | `SSACCESS` | `features/ssaccess/` | The access of Maroid to the secret store while it runs. | Approved |
+| `IDPROV` | `features/idprov/` | The providers of the instance and the local account. | Approved |
 
 ## Retired identifiers
 

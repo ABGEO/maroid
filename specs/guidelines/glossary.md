@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-10-07
+updated: 2026-10-08
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -36,7 +36,11 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-user`          | user              | A person that Maroid serves. One row in `public.users`. An identity binds it to an external account.              |
 | `GLO-identity`      | identity          | The binding of one external account to one user record. One row in `public.identities`.                          |
 | `GLO-idp`           | IdP               | The external identity provider that authenticates every person for Maroid. Dex is the IdP today.                  |
-| `GLO-provider`      | provider          | One account system that Dex federates. Telegram is one.                                                          |
+| `GLO-provider`      | provider          | One account system that Dex federates. Telegram is one. An administrator manages it, or the file of Dex holds it. |
+| `GLO-provider-preset` | provider preset | The kind of a provider that the hub offers: local, Telegram, or generic OIDC. It fixes the fields that decide the user identifier. |
+| `GLO-static-provider` | static provider | A provider that the file of Dex holds. The hub lists it and changes nothing on it. |
+| `GLO-local-provider` | local provider   | The provider whose accounts sign in with an email address and a password that Dex holds. |
+| `GLO-local-account` | local account    | The email address and the password of one person at the local provider. |
 | `GLO-external-account` | external account | The account that one person holds at one provider.                                                            |
 | `GLO-invitation`    | invitation        | A grant that an administrator issues. It lets one sign in create the first identity of one user record.          |
 | `GLO-attach`        | attach            | The operation that creates an identity.                                                                          |

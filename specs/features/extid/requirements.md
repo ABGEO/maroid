@@ -4,7 +4,7 @@ title: External identities and the delegated sign in
 type: requirements
 status: approved
 created: 2026-09-15
-updated: 2026-10-01
+updated: 2026-10-08
 approved_by: Temuri
 approved_on: 2026-09-15
 constrained_by: [OWN, SEC, API, TG, CLI, DAT]
@@ -229,7 +229,7 @@ succeeds it.
 | #   | Question                                                                            | Owner  | Answer                                                                                                                                                        |
 | --- | ------------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | What happens when the token of the identity provider expires during a session?      | Temuri | the person signs in again. Maroid holds no renewal and stores no second token. The identity provider carries the lifetime that `EXTID-NFR-002` gives. |
-| 2   | Which providers does the first iteration offer?                                     | Temuri | the providers that the identity provider federates today. A further one costs configuration only, because `EXTID-FR-009` reads the list. A provider that holds a password is not one of them, because no statement asks Maroid to serve a password. |
+| 2   | Which providers does the first iteration offer?                                     | Temuri | the providers that the identity provider federates today. A further one costs configuration only, because `EXTID-FR-009` reads the list. A provider that holds a password is not one of them, because no statement asks Maroid to serve a password. `ADR-0010` later adds the local provider, and `IDPROV` serves it. |
 | 3   | Does an invitation name the provider that redeems it?                                | Temuri | no. The person uses whichever account they hold.                                                                                                     |
 | 4   | What becomes of a user record whose invitation expired with no sign in?             | Temuri | nothing. The record holds no identity, so it reaches nobody. An administrator issues a second invitation or blocks the record.                              |
 | 5   | How does the invitation reach the person?                                           | Temuri | the administrator sends it by hand. Maroid delivers nothing.                                                                                                 |

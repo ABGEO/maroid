@@ -4,7 +4,7 @@ title: The HTTP API
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-01
+updated: 2026-10-08
 scope: [apps/hub/internal/server/, apps/hub/internal/handler/, apps/hub/internal/middleware/]
 related: [ARC, ERR, PLG, RES, SEC, UI]
 ---
@@ -88,6 +88,7 @@ The hub fixes these routes:
 | `/workspaces/{workspaceId}/plugins/{id}/api/*` | The routes of a plugin              | Member, enabled        |
 | `/workspaces/{workspaceId}/plugins/{id}/settings*` | The settings of a plugin        | Member, enabled        |
 | `/users*`                                | The user records and the plugin allowlists | Administrator         |
+| `/providers*`                            | The providers of the instance             | Administrator          |
 | `/plugins/{id}/ui/*`                     | The assets of a plugin                    | Public. See `SEC-006`. |
 | `/telegram/webhook`                      | The Telegram updates                      | Secret token, allowlist |
 | `/.well-known/oauth-protected-resource*` | The discovery of the IdP for an MCP client | Public                |

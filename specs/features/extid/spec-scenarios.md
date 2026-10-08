@@ -4,7 +4,7 @@ title: The scenarios of the external identities and the delegated sign in
 type: spec
 status: approved
 created: 2026-09-15
-updated: 2026-10-03
+updated: 2026-10-08
 approved_by: Temuri
 approved_on: 2026-09-16
 constrained_by: [TST, SEC, OWN, TRC]
@@ -125,7 +125,7 @@ identity.
 **Verifies:** `EXTID-FR-009`
 **Layer:** integration
 
-**Given** `auth.providers` lists `telegram` and `cloud`, and U holds an identity at
+**Given** Dex holds `telegram` and `cloud`, and U holds an identity at
 `telegram` only.
 **When** U reads `/auth/identities`.
 **Then** the body names both providers, marks `telegram` as attached with its handle,

@@ -4,7 +4,7 @@ title: External identities and the delegated sign in
 type: spec
 status: approved
 created: 2026-09-15
-updated: 2026-10-03
+updated: 2026-10-08
 approved_by: Temuri
 approved_on: 2026-09-16
 constrained_by: [OWN, SEC, API, ERR, TG, CLI, DAT, REP, PKG, CFG, GO, TST, LOG]
@@ -354,7 +354,7 @@ does not hold. The hub reports every outcome at that target with the query param
 | `jwt.public_key`         | Removed           | None    | No     | `SEC-002`                       |
 | `jwt.token_expiry`       | Removed           | None    | No     | `SEC-002`                       |
 | `auth.deck_url`          | String            | None    | No     | `EXTID-FR-010`                  |
-| `auth.providers`         | List of provider  | None    | No     | `EXTID-FR-009`                  |
+| `auth.providers`         | Removed. `IDPROV-FR-017` reads Dex. | None | No | `EXTID-FR-009` |
 | `auth.invitation_ttl`    | Duration          | `72h`   | No     | `EXTID-FR-014`                  |
 | `auth.flow_ttl`          | Duration          | `10m`   | No     | `EXTID-FR-006`                  |
 | `auth.session_ttl`       | Removed           | None    | No     | `EXTID-NFR-002`                 |
@@ -566,7 +566,8 @@ and writes no identity, and the record then holds no identity and no valid grant
 
 **Realizes:** `EXTID-FR-009`
 **Decision:** `auth.providers` in the configuration lists the identifier and the
-display name of each provider that Maroid offers.
+display name of each provider that Maroid offers. `ADR-0010` replaces this decision:
+the hub reads the connectors from the API of Dex, as `IDPROV-FR-017` gives.
 **Rationale:** Dex publishes no list of its connectors. The discovery document names
 the issuer and the endpoints, and no route returns the connectors. `EXTID-FR-009`
 needs the full list, including a provider that the person has not attached, so the
