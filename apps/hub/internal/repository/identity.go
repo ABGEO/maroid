@@ -48,6 +48,13 @@ type IdentityRepository interface {
 		profile model.Profile,
 	) error
 	Detach(ctx context.Context, userID string, provider string) error
+	CountByProvider(ctx context.Context) (map[string]int, error)
+	AdministratorsBySoleProvider(ctx context.Context) (map[string][]model.User, error)
+	DeleteByProvider(
+		ctx context.Context,
+		provider string,
+		beforeCommit func(context.Context) error,
+	) error
 }
 
 // identityBinding names the parameters of a write. The embedded profile carries
@@ -261,6 +268,89 @@ func (r *Identity) Detach(ctx context.Context, userID string, provider string) e
 
 	if err = tx.Commit(); err != nil {
 		return fmt.Errorf("detaching an Identity: %w", err)
+	}
+
+	return nil
+}
+
+// CountByProvider answers the count of the identities of each provider that holds one.
+func (r *Identity) CountByProvider(ctx context.Context) (map[string]int, error) {
+	var rows []struct {
+		Provider string `db:"provider"`
+		Count    int    `db:"count"`
+	}
+
+	query := `SELECT provider, count(*) AS count FROM public.identities GROUP BY provider;`
+
+	if err := r.db.SelectContext(ctx, &rows, query); err != nil {
+		return nil, fmt.Errorf("counting the Identities of each provider: %w", err)
+	}
+
+	counts := make(map[string]int, len(rows))
+	for _, row := range rows {
+		counts[row.Provider] = row.Count
+	}
+
+	return counts, nil
+}
+
+// AdministratorsBySoleProvider answers each active administrator who holds identities
+// at one provider alone, keyed by that provider.
+func (r *Identity) AdministratorsBySoleProvider(
+	ctx context.Context,
+) (map[string][]model.User, error) {
+	var rows []struct {
+		model.User
+
+		SoleProvider string `db:"sole_provider"`
+	}
+
+	query := `
+		SELECT ` + userColumnsOfU + `, min(i.provider) AS sole_provider
+		FROM public.users u
+		JOIN public.identities i ON i.user_id = u.id
+		WHERE u.is_administrator AND u.status = $1
+		GROUP BY u.id
+		HAVING count(DISTINCT i.provider) = 1
+		ORDER BY u.id;`
+
+	if err := r.db.SelectContext(ctx, &rows, query, model.StatusActive); err != nil {
+		return nil, fmt.Errorf("listing the administrators of one provider: %w", err)
+	}
+
+	sole := make(map[string][]model.User, len(rows))
+	for _, row := range rows {
+		sole[row.SoleProvider] = append(sole[row.SoleProvider], row.User)
+	}
+
+	return sole, nil
+}
+
+// DeleteByProvider removes every identity of the provider. The hook runs inside the
+// transaction, before the commit, so a hook that fails keeps every identity.
+func (r *Identity) DeleteByProvider(
+	ctx context.Context,
+	provider string,
+	beforeCommit func(context.Context) error,
+) error {
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("deleting the Identities of %s: %w", provider, err)
+	}
+
+	defer func() { _ = tx.Rollback() }()
+
+	_, err = tx.ExecContext(ctx, `DELETE FROM public.identities WHERE provider = $1;`, provider)
+	if err != nil {
+		return fmt.Errorf("deleting the Identities of %s: %w", provider, err)
+	}
+
+	if err = beforeCommit(ctx); err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("deleting the Identities of %s: %w", provider, err)
 	}
 
 	return nil

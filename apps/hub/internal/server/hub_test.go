@@ -104,9 +104,9 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	handler.RegisterHandlers(
 		router,
 		handler.NewAuth(
-			cfg, logger, verifier,
-			auth.NewOIDCFlow(oidcSvc, repository.NewAuthFlow(instance.DB), cfg.Auth.FlowTTL),
-			userRepo, identityRepo, resolver, invitationRepo, service, hubProviders(provider.URL),
+			cfg, logger, verifier, flowOf(oidcSvc, instance.DB, cfg.Auth.FlowTTL),
+			userRepo, identityRepo, resolver, invitationRepo, service,
+			hubProviders(identityRepo, provider.URL),
 		),
 		handler.NewPlugin(
 			logger, verifier, resolver, emptyCatalog(), probeUI(),
@@ -141,11 +141,16 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	}
 }
 
+// flowOf builds the flow of a sign in over the database.
+func flowOf(oidcSvc *auth.OIDCService, database *sqlx.DB, ttl time.Duration) *auth.OIDCFlow {
+	return auth.NewOIDCFlow(oidcSvc, repository.NewAuthFlow(database), ttl)
+}
+
 // hubProviders reads the one provider that the scenarios sign in with.
-func hubProviders(issuer string) *providers.Manager {
+func hubProviders(identities repository.IdentityRepository, issuer string) *providers.Manager {
 	return providers.NewManager(dextest.New(dextest.Connector(
 		auth.ProviderTelegram, "oidc", "Telegram", `{"maroidPreset":"telegram"}`,
-	)), providers.Settings{Issuer: issuer})
+	)), identities, providers.Settings{Issuer: issuer})
 }
 
 // authService builds the auth service on the database.

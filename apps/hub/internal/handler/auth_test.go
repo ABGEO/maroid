@@ -95,7 +95,7 @@ func authUnderTest(t *testing.T) *authFixture {
 		auth.NewResolver(identityRepo),
 		invitationRepo,
 		service,
-		providers.NewManager(idp, providers.Settings{Issuer: provider.URL}),
+		providers.NewManager(idp, identityRepo, providers.Settings{Issuer: provider.URL}),
 	)
 
 	router := chi.NewRouter()

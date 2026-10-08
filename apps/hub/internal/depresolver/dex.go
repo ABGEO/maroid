@@ -7,6 +7,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/dex"
 	"github.com/abgeo/maroid/apps/hub/internal/provider"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 )
 
 // DexClient initializes and returns the client of the gRPC API of Dex.
@@ -57,8 +58,15 @@ func (c *Container) ProviderService() (*provider.Manager, error) {
 			return
 		}
 
+		var identities repository.IdentityRepository
+
+		identities, err = c.IdentityRepository()
+		if err != nil {
+			return
+		}
+
 		cfg := c.Config()
-		c.providerService.instance = provider.NewManager(client, provider.Settings{
+		c.providerService.instance = provider.NewManager(client, identities, provider.Settings{
 			Issuer:        cfg.OIDC.Issuer,
 			TelegramBotID: telegramBotID(cfg.Telegram.Token),
 			Discoverer:    provider.OIDCDiscovery{Timeout: cfg.Dex.Timeout},

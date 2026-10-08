@@ -19,6 +19,7 @@ type Memory struct {
 	connectors []dex.Connector
 	passwords  []dex.Password
 	failure    error
+	once       map[string]error
 }
 
 var _ dex.Client = (*Memory)(nil)
@@ -41,13 +42,25 @@ func (m *Memory) Fail(err error) {
 	m.failure = err
 }
 
+// FailOnce makes the next call of the named method answer the error, and only that call.
+func (m *Memory) FailOnce(method string, err error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if m.once == nil {
+		m.once = map[string]error{}
+	}
+
+	m.once[method] = err
+}
+
 // ListConnectors answers every connector.
 func (m *Memory) ListConnectors(_ context.Context) ([]dex.Connector, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if m.failure != nil {
-		return nil, m.failure
+	if err := m.takeFailure("ListConnectors"); err != nil {
+		return nil, err
 	}
 
 	return slices.Clone(m.connectors), nil
@@ -58,8 +71,8 @@ func (m *Memory) CreateConnector(_ context.Context, connector dex.Connector) err
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if m.failure != nil {
-		return m.failure
+	if err := m.takeFailure("CreateConnector"); err != nil {
+		return err
 	}
 
 	if m.connectorAt(connector.ID) >= 0 {
@@ -76,8 +89,8 @@ func (m *Memory) UpdateConnector(_ context.Context, connector dex.Connector) err
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if m.failure != nil {
-		return m.failure
+	if err := m.takeFailure("UpdateConnector"); err != nil {
+		return err
 	}
 
 	at := m.connectorAt(connector.ID)
@@ -95,8 +108,8 @@ func (m *Memory) DeleteConnector(_ context.Context, id string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if m.failure != nil {
-		return m.failure
+	if err := m.takeFailure("DeleteConnector"); err != nil {
+		return err
 	}
 
 	at := m.connectorAt(id)
@@ -114,8 +127,8 @@ func (m *Memory) ListPasswords(_ context.Context) ([]dex.Password, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if m.failure != nil {
-		return nil, m.failure
+	if err := m.takeFailure("ListPasswords"); err != nil {
+		return nil, err
 	}
 
 	passwords := make([]dex.Password, 0, len(m.passwords))
@@ -132,8 +145,8 @@ func (m *Memory) CreatePassword(_ context.Context, password dex.Password) error 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if m.failure != nil {
-		return m.failure
+	if err := m.takeFailure("CreatePassword"); err != nil {
+		return err
 	}
 
 	if m.passwordAt(password.Email) >= 0 {
@@ -150,8 +163,8 @@ func (m *Memory) UpdatePassword(_ context.Context, email string, hash []byte) er
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if m.failure != nil {
-		return m.failure
+	if err := m.takeFailure("UpdatePassword"); err != nil {
+		return err
 	}
 
 	at := m.passwordAt(email)
@@ -169,8 +182,8 @@ func (m *Memory) DeletePassword(_ context.Context, email string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if m.failure != nil {
-		return m.failure
+	if err := m.takeFailure("DeletePassword"); err != nil {
+		return err
 	}
 
 	at := m.passwordAt(email)
@@ -193,6 +206,18 @@ func (m *Memory) Hash(email string) []byte {
 	}
 
 	return nil
+}
+
+// takeFailure answers the error that the call of the method must answer, if any. The
+// caller holds the lock.
+func (m *Memory) takeFailure(method string) error {
+	if err, ok := m.once[method]; ok {
+		delete(m.once, method)
+
+		return err
+	}
+
+	return m.failure
 }
 
 func (m *Memory) connectorAt(id string) int {

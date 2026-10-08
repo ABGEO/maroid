@@ -97,7 +97,7 @@ and routes under `/users/{userId}/identities` give, reset, and remove a local ac
 | `apps/hub/internal/provider/{doc,preset,options,build,discovery}.go` | create | `provider.Preset`, the fixed fields, `oidcOptions`, the checks of a preset, `provider.OIDCDiscovery` |
 | `apps/hub/internal/provider/service.go`                     | create | `provider.Service`: list, read, add, change, remove                 |
 | `apps/hub/internal/provider/local.go`                       | create | `provider.LocalAccounts`: give, reset, remove                       |
-| `apps/hub/internal/repository/identity.go`                  | change | `CountByProvider`, `DeleteByProvider`, `AdministratorsOnlyAt`, `Detach` takes a hook |
+| `apps/hub/internal/repository/identity.go`                  | change | `CountByProvider`, `AdministratorsBySoleProvider`, `DeleteByProvider` and `Detach` take a hook |
 | `apps/hub/internal/auth/resolver.go`                        | change | `ProviderLocal`                                                     |
 | `apps/hub/internal/auth/service.go`                         | change | `Detach` of `local` runs `LocalAccounts.Remove`                     |
 | `apps/hub/internal/handler/provider.go`                     | create | `handler.Provider`, the routes under `/providers`                   |
@@ -163,8 +163,9 @@ type LocalAccounts interface {
 
 // apps/hub/internal/repository/identity.go
 CountByProvider(ctx context.Context) (map[string]int, error)
-DeleteByProvider(ctx context.Context, tx *sqlx.Tx, provider string) error
-AdministratorsOnlyAt(ctx context.Context, provider string) ([]model.User, error)
+// The key is the one provider at which each active administrator holds identities.
+AdministratorsBySoleProvider(ctx context.Context) (map[string][]model.User, error)
+DeleteByProvider(ctx context.Context, provider string, beforeCommit func(context.Context) error) error
 Detach(ctx context.Context, userID string, provider string, beforeCommit func(context.Context) error) error
 ```
 
@@ -490,8 +491,8 @@ administrators overwrite the first with no warning.
 | 1   | Development certificates, the TLS block of Dex, no published port. The owner edits `.docker/dex/config.yaml`. | `IDPROV-FR-001` | [ ] |
 | 2   | `config.Dex`, `dex.Client`, `DexClient` and `CloseDexClient`                  | `IDPROV-FR-001`, `IDPROV-NFR-002`     | [x]  |
 | 3   | `provider` presets, `oidcOptions`, and the validation                         | `IDPROV-FR-002` to `IDPROV-FR-011`, `IDPROV-INV-001` to `IDPROV-INV-003` | [x] |
-| 4   | The identity repository: count, delete, report, the hook of `Detach`          | `IDPROV-FR-012`, `IDPROV-FR-014`      | [ ]  |
-| 5   | `provider.Service` and the routes under `/providers`, the problem types       | `IDPROV-FR-001` to `IDPROV-FR-016`    | [ ]  |
+| 4   | The identity repository: count, delete, report, the hook of `Detach`          | `IDPROV-FR-012`, `IDPROV-FR-014`      | [x]  |
+| 5   | `provider.Service` and the routes under `/providers`, the problem types       | `IDPROV-FR-001` to `IDPROV-FR-016`    | [x]  |
 | 6   | `GET /auth/identities` reads Dex. `auth.providers` goes. `Link` refuses `local`. | `IDPROV-FR-017`, `IDPROV-FR-022`    | [x]  |
 | 7   | `LocalAccounts`, the routes under `/users/{userId}/identities`, the detach    | `IDPROV-FR-018` to `IDPROV-FR-024`    | [ ]  |
 | 8   | `maroid user password`, and the output of `maroid user invite`                | `IDPROV-FR-025` to `IDPROV-FR-028`    | [ ]  |

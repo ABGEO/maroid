@@ -73,6 +73,24 @@ func (f *fakeIdentityRepository) Detach(_ context.Context, _ string, _ string) e
 	return errs.ErrIdentityNotFound
 }
 
+func (f *fakeIdentityRepository) CountByProvider(_ context.Context) (map[string]int, error) {
+	return map[string]int{}, nil
+}
+
+func (f *fakeIdentityRepository) AdministratorsBySoleProvider(
+	_ context.Context,
+) (map[string][]model.User, error) {
+	return map[string][]model.User{}, nil
+}
+
+func (f *fakeIdentityRepository) DeleteByProvider(
+	_ context.Context,
+	_ string,
+	_ func(context.Context) error,
+) error {
+	return nil
+}
+
 // EXTID-DD-012: One resolver serves both entry points, and it passes the provider
 // and the external account through without a change.
 func TestResolverReadsTheIdentity(t *testing.T) {

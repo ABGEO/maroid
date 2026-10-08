@@ -1,6 +1,7 @@
 package provider_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -10,13 +11,37 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/dex"
 	"github.com/abgeo/maroid/apps/hub/internal/dex/dextest"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/provider"
 )
 
 const issuer = "https://auth.maroid.localhost"
 
+// noIdentities holds no identity, so every report is empty.
+type noIdentities struct{}
+
+func (noIdentities) CountByProvider(context.Context) (map[string]int, error) {
+	return map[string]int{}, nil
+}
+
+func (noIdentities) AdministratorsBySoleProvider(context.Context) (map[string][]model.User, error) {
+	return map[string][]model.User{}, nil
+}
+
+func (noIdentities) DeleteByProvider(
+	ctx context.Context,
+	_ string,
+	beforeCommit func(context.Context) error,
+) error {
+	return beforeCommit(ctx)
+}
+
 func managerOf(connectors ...dex.Connector) *provider.Manager {
-	return provider.NewManager(dextest.New(connectors...), provider.Settings{Issuer: issuer})
+	return provider.NewManager(
+		dextest.New(connectors...),
+		noIdentities{},
+		provider.Settings{Issuer: issuer},
+	)
 }
 
 // IDPROV-SC-001: A connector with no maroidPreset is static and carries no preset.
@@ -137,7 +162,7 @@ func TestAnUnavailableDexReachesTheCaller(t *testing.T) {
 	memory := dextest.New()
 	memory.Fail(errs.ErrIDPUnavailable)
 
-	manager := provider.NewManager(memory, provider.Settings{Issuer: issuer})
+	manager := provider.NewManager(memory, noIdentities{}, provider.Settings{Issuer: issuer})
 
 	_, err := manager.List(t.Context())
 	require.ErrorIs(t, err, errs.ErrIDPUnavailable)

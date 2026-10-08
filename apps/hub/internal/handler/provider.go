@@ -72,6 +72,7 @@ func (h *Provider) Register(router chi.Router) {
 		r.Post("/", Wrap(h.logger, h.Create))
 		r.Get("/{"+providerIDParam+"}", Wrap(h.logger, h.Get))
 		r.Patch("/{"+providerIDParam+"}", Wrap(h.logger, h.Change))
+		r.Delete("/{"+providerIDParam+"}", Wrap(h.logger, h.Remove))
 	})
 }
 
@@ -88,6 +89,15 @@ type providerBody struct {
 	Scopes          []string                   `json:"scopes,omitempty"`
 	Options         map[string]json.RawMessage `json:"options,omitempty"`
 	RedirectURI     string                     `json:"redirect_uri,omitempty"`
+	IdentityCount   int                        `json:"identity_count"`
+	Stranded        []userRefBody              `json:"administrators_without_sign_in"`
+}
+
+// userRefBody names a user record in the report of a removal.
+type userRefBody struct {
+	ID        string  `json:"id"`
+	FirstName *string `json:"first_name,omitempty"`
+	LastName  *string `json:"last_name,omitempty"`
 }
 
 // providerInput is the body of a new provider. A nil member is absent.
@@ -143,16 +153,26 @@ func (in providerChangeInput) fixedMember() string {
 
 func toProviderBody(one *provider.Provider) providerBody {
 	body := providerBody{
-		ID:          one.ID,
-		Name:        one.Name,
-		Preset:      one.Preset,
-		Static:      one.Static,
-		Issuer:      one.Issuer,
-		ClientID:    one.ClientID,
-		UserIDKey:   one.UserIDKey,
-		Scopes:      one.Scopes,
-		Options:     one.Options,
-		RedirectURI: one.RedirectURI,
+		ID:            one.ID,
+		Name:          one.Name,
+		Preset:        one.Preset,
+		Static:        one.Static,
+		Issuer:        one.Issuer,
+		ClientID:      one.ClientID,
+		UserIDKey:     one.UserIDKey,
+		Scopes:        one.Scopes,
+		Options:       one.Options,
+		RedirectURI:   one.RedirectURI,
+		IdentityCount: one.IdentityCount,
+		Stranded:      make([]userRefBody, 0, len(one.AdministratorsWithoutSignIn)),
+	}
+
+	for _, administrator := range one.AdministratorsWithoutSignIn {
+		body.Stranded = append(body.Stranded, userRefBody{
+			ID:        administrator.ID,
+			FirstName: administrator.FirstName,
+			LastName:  administrator.LastName,
+		})
 	}
 
 	if one.Preset == provider.PresetTelegram || one.Preset == provider.PresetOIDC {
@@ -285,6 +305,17 @@ func (h *Provider) Change(w http.ResponseWriter, r *http.Request) error {
 
 	w.Header().Set(precondition.ETagHeader, versionTag(changed.Version))
 	render.JSON(w, r, toProviderBody(changed))
+
+	return nil
+}
+
+// Remove deletes a provider and every identity of it.
+func (h *Provider) Remove(w http.ResponseWriter, r *http.Request) error {
+	if err := h.service.Remove(r.Context(), chi.URLParam(r, providerIDParam)); err != nil {
+		return failProvider(w, r, err, "removing the provider")
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 
 	return nil
 }

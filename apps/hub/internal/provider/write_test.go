@@ -40,7 +40,7 @@ func writable(t *testing.T, connectors ...dex.Connector) (*provider.Manager, *de
 
 	memory := dextest.New(connectors...)
 
-	return provider.NewManager(memory, provider.Settings{
+	return provider.NewManager(memory, noIdentities{}, provider.Settings{
 		Issuer:        issuer,
 		TelegramBotID: botID,
 		Discoverer:    discoverer{},
@@ -324,7 +324,7 @@ func TestAnIssuerWithNoDocumentIsRefused(t *testing.T) {
 	t.Parallel()
 
 	memory := dextest.New()
-	manager := provider.NewManager(memory, provider.Settings{
+	manager := provider.NewManager(memory, noIdentities{}, provider.Settings{
 		Issuer: issuer, Discoverer: discoverer{failure: errNoDocument},
 	})
 

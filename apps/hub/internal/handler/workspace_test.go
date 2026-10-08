@@ -262,7 +262,7 @@ func workspaceRouter(
 		logger, verifier, resolver, noIdempotency{}, users, "http://maroid.localhost",
 	).Register(router)
 
-	registerProviders(router, logger, verifier, resolver, idp)
+	registerProviders(router, logger, verifier, resolver, idp, identityRepo)
 
 	return router
 }
@@ -283,9 +283,11 @@ func registerProviders(
 	verifier auth.TokenVerifier,
 	resolver auth.IdentityResolver,
 	idp *dextest.Memory,
+	identities repository.IdentityRepository,
 ) {
 	handler.NewProvider(logger, verifier, resolver, noIdempotency{}, providers.NewManager(
-		idp, providers.Settings{Issuer: dexIssuer, TelegramBotID: "1", Discoverer: anyIssuer{}},
+		idp, identities,
+		providers.Settings{Issuer: dexIssuer, TelegramBotID: "1", Discoverer: anyIssuer{}},
 	)).Register(router)
 }
 

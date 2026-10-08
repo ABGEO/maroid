@@ -8,9 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/apps/hub/internal/dex"
 	"github.com/abgeo/maroid/apps/hub/internal/dex/dextest"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
 )
 
 const (
@@ -258,4 +260,109 @@ func TestAChangeReadsIfMatch(t *testing.T) {
 	stale := fixture.call(t, zura, http.MethodPatch, "/providers/abgeo-cloud",
 		map[string]any{memberName: "Cloud 2"}, current)
 	require.Equal(t, http.StatusPreconditionFailed, stale.Code, stale.Body.String())
+}
+
+// IDPROV-SC-012: A provider reports the identities that its removal deletes, and each
+// active administrator who then holds no identity.
+func TestAProviderReportsItsRemoval(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+	zura := fixture.administrator(t)
+	fixture.storeConnector(t, "telegram", "oidc", `{"maroidPreset":"telegram"}`)
+
+	body := decode(t, fixture.call(t, zura, http.MethodGet, "/providers/telegram", nil, ""))
+	assert.InDelta(t, 5, body["identity_count"], 0, "Ana, Beka, Gio, Nino, and Zura")
+
+	stranded, ok := body["administrators_without_sign_in"].([]any)
+	require.True(t, ok)
+	require.Len(t, stranded, 1)
+
+	administrator, ok := stranded[0].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, zura.id, administrator["id"])
+	assert.Equal(t, "Zura", administrator["first_name"])
+
+	mock := decode(t, fixture.call(t, zura, http.MethodGet, "/providers/mock", nil, ""))
+	assert.InDelta(t, 0, mock["identity_count"], 0)
+	assert.Equal(t, []any{}, mock["administrators_without_sign_in"])
+}
+
+func (f *workspaceFixture) identitiesOf(t *testing.T, provider string) int {
+	t.Helper()
+
+	var count int
+
+	require.NoError(t, f.database.Get(&count,
+		`SELECT count(*) FROM public.identities WHERE provider = $1;`, provider))
+
+	return count
+}
+
+// IDPROV-SC-013: A removal that Dex fails keeps the identities and the connector. A
+// second removal deletes both.
+func TestARemovalDeletesTheIdentitiesWithTheConnector(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+	zura := fixture.administrator(t)
+	fixture.storeConnector(t, "abgeo-cloud", "oidc", `{"maroidPreset":"oidc"}`)
+
+	for _, who := range []person{fixture.ana, fixture.beka} {
+		require.NoError(t, fixture.authSvc.Attach(
+			t.Context(), who.id, "abgeo-cloud", "cloud-"+who.account, model.Profile{},
+		))
+	}
+
+	fixture.idp.FailOnce("DeleteConnector", errs.ErrIDPUnavailable)
+
+	failed := fixture.call(t, zura, http.MethodDelete, "/providers/abgeo-cloud", nil, "")
+	require.Equal(t, http.StatusServiceUnavailable, failed.Code, failed.Body.String())
+	assert.Equal(t, 2, fixture.identitiesOf(t, "abgeo-cloud"))
+	require.Equal(t, http.StatusOK,
+		fixture.call(t, zura, http.MethodGet, "/providers/abgeo-cloud", nil, "").Code)
+
+	removed := fixture.call(t, zura, http.MethodDelete, "/providers/abgeo-cloud", nil, "")
+	require.Equal(t, http.StatusNoContent, removed.Code, removed.Body.String())
+	assert.Zero(t, fixture.identitiesOf(t, "abgeo-cloud"))
+	require.Equal(t, http.StatusNotFound,
+		fixture.call(t, zura, http.MethodGet, "/providers/abgeo-cloud", nil, "").Code)
+}
+
+// IDPROV-SC-014: A removal of the local provider deletes every local account.
+func TestARemovalOfTheLocalProviderDeletesThePasswords(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+	zura := fixture.administrator(t)
+	fixture.storeConnector(t, "local", "local", `{"maroidPreset":"local"}`)
+
+	for _, email := range []string{"zura@home.example", "ana@home.example"} {
+		require.NoError(t, fixture.idp.CreatePassword(t.Context(), dex.Password{
+			Email: email, Hash: []byte("hash"), UserID: email,
+		}))
+	}
+
+	response := fixture.call(t, zura, http.MethodDelete, "/providers/local", nil, "")
+	require.Equal(t, http.StatusNoContent, response.Code, response.Body.String())
+
+	passwords, err := fixture.idp.ListPasswords(t.Context())
+	require.NoError(t, err)
+	assert.Empty(t, passwords)
+	require.Equal(t, http.StatusNotFound,
+		fixture.call(t, zura, http.MethodGet, "/providers/local", nil, "").Code)
+}
+
+// IDPROV-SC-015: A removal of a static provider answers provider-static, and Dex keeps it.
+func TestARemovalOfAStaticProviderIsRefused(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+	zura := fixture.administrator(t)
+
+	response := fixture.call(t, zura, http.MethodDelete, "/providers/mock", nil, "")
+	require.Equal(t, http.StatusConflict, response.Code, response.Body.String())
+	assert.Equal(t, problems.TypeProviderStatic, decode(t, response)["type"])
+	require.Equal(t, http.StatusOK,
+		fixture.call(t, zura, http.MethodGet, "/providers/mock", nil, "").Code)
 }
