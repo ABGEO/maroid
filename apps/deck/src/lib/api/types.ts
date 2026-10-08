@@ -23,6 +23,46 @@ export interface UserRecord {
 	updated_at: string;
 }
 
+/** One identity of a user record, as an administrator reads it. */
+export interface UserIdentity {
+	provider: string;
+	/** The email address of a local account, or the handle at the provider. */
+	username?: string;
+	display_name?: string;
+	created_at: string;
+}
+
+/** A user record that the report of a removal names. */
+export interface UserRef {
+	id: string;
+	first_name?: string;
+	last_name?: string;
+}
+
+export type ProviderPreset = 'local' | 'telegram' | 'oidc';
+
+/** One provider of the instance. It never carries a secret. */
+export interface Provider {
+	id: string;
+	/** The label of the button on the sign in page of Dex. */
+	name: string;
+	/** Absent on a static provider, which the file of Dex holds. */
+	preset?: ProviderPreset;
+	static: boolean;
+	issuer?: string;
+	client_id?: string;
+	client_secret_set?: boolean;
+	user_id_key?: string;
+	scopes?: string[];
+	options?: Record<string, unknown>;
+	/** The address to register at the upstream provider. */
+	redirect_uri?: string;
+	/** The identities that a removal deletes. */
+	identity_count: number;
+	/** The administrators who hold no sign in after a removal. */
+	administrators_without_sign_in: UserRef[];
+}
+
 /** The address that redeems an invitation. The hub answers it one time. */
 export interface Invitation {
 	address: string;

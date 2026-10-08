@@ -5,7 +5,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 
-	import { ApiError, api, type ProviderIdentity } from '$lib/api';
+	import { ApiError, LOCAL_PROVIDER, api, type ProviderIdentity } from '$lib/api';
 	import { startAttach } from '$lib/api/client';
 	import { authFailureMessage } from '$lib/auth/messages';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -185,6 +185,9 @@
 									{/if}
 									Disconnect
 								</button>
+							{:else if identity.provider === LOCAL_PROVIDER}
+								<span class="text-base-content/50 text-xs">An administrator gives this account</span
+								>
 							{:else}
 								<button type="button" class="btn btn-sm" onclick={() => connect(identity.provider)}>
 									Connect

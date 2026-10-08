@@ -2,6 +2,7 @@ import { auth } from './auth';
 import { enablements } from './enablements';
 import { identities } from './identities';
 import { plugins } from './plugins';
+import { providers } from './providers';
 import { settings } from './settings';
 import { users } from './users';
 import { workspaces } from './workspaces';
@@ -39,15 +40,23 @@ export type {
 	InvitedUser,
 	PluginRef,
 	EnabledPlugin,
-	InstanceWorkspace
+	InstanceWorkspace,
+	UserIdentity,
+	UserRef,
+	Provider,
+	ProviderPreset
 } from './types';
 export type { NewUser, UserChange } from './users';
+export { LOCAL_PROVIDER } from './users';
+export type { NewProvider, ProviderChange } from './providers';
+export type { Tagged } from '@maroid/api-client';
 
 export const api = {
 	auth,
 	enablements,
 	identities,
 	plugins,
+	providers,
 	settings,
 	users,
 	workspaces

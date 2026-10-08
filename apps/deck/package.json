@@ -45,6 +45,7 @@
 		"@sjsf/cfworker-validator": "^3.8.1",
 		"@sjsf/daisyui5-theme": "^3.8.1",
 		"@sjsf/form": "^3.8.1",
-		"daisyui": "^5.5.19"
+		"daisyui": "^5.5.19",
+		"yaml": "^2.9.1"
 	}
 }

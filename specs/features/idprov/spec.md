@@ -508,7 +508,6 @@ administrators overwrite the first with no warning.
 | 7   | `LocalAccounts`, the routes under `/users/{userId}/identities`, the detach    | `IDPROV-FR-018` to `IDPROV-FR-024`    | [x]  |
 | 8   | `maroid user password`, and the output of `maroid user invite`                | `IDPROV-FR-025` to `IDPROV-FR-028`    | [x]  |
 | 9   | The deck: the providers pages, the local account section, the sidebar entry   | `IDPROV-FR-001` to `IDPROV-FR-020`    | [x]  |
-| 10  | `config.example.yaml`, `docker-compose.yaml`, `chart/`, and the manual scenarios | `IDPROV-NFR-001`                   | [ ]  |
 
 ## 8. Out of scope for this specification
 

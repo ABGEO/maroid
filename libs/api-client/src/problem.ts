@@ -45,6 +45,11 @@ export const PROBLEM_TYPE = {
   identityLast: '/problems/hub/identity-last',
   validationFailed: '/problems/http/validation-failed',
   settingsInvalid: '/problems/hub/settings-invalid',
+  providerExists: '/problems/hub/provider-exists',
+  providerStatic: '/problems/hub/provider-static',
+  localAccountExists: '/problems/hub/local-account-exists',
+  localProviderAbsent: '/problems/hub/local-provider-absent',
+  notReady: '/problems/hub/not-ready',
   internal: '/problems/http/internal'
 } as const;
 

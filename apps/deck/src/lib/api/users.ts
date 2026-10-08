@@ -1,7 +1,17 @@
 import type { Page } from '@maroid/api-client';
 
 import { client } from './client';
-import type { Invitation, InvitedUser, PluginRef, UserRecord, UserStatus } from './types';
+import type {
+	Invitation,
+	InvitedUser,
+	PluginRef,
+	UserIdentity,
+	UserRecord,
+	UserStatus
+} from './types';
+
+/** The provider of the local accounts. Its identifier never changes. */
+export const LOCAL_PROVIDER = 'local';
 
 function path(userId: string): string {
 	return `/users/${encodeURIComponent(userId)}`;
@@ -55,5 +65,30 @@ export const users = {
 	disallowPlugin: (userId: string, pluginId: string): Promise<void> =>
 		client
 			.del<void>(`${path(userId)}/allowed-plugins/${encodeURIComponent(pluginId)}`)
-			.then(() => undefined)
+			.then(() => undefined),
+
+	identities: (userId: string): Promise<UserIdentity[] | null> =>
+		client
+			.get<Page<UserIdentity>>(`${path(userId)}/identities`)
+			.then((page) => page?.items ?? null),
+
+	giveLocalAccount: (
+		userId: string,
+		email: string,
+		password: string,
+		idempotencyKey: string
+	): Promise<UserIdentity | null> =>
+		client.post<UserIdentity>(
+			`${path(userId)}/identities`,
+			{ provider: LOCAL_PROVIDER, email, password },
+			{ idempotencyKey }
+		),
+
+	resetLocalPassword: (userId: string, password: string): Promise<void> =>
+		client
+			.patch<void>(`${path(userId)}/identities/${LOCAL_PROVIDER}`, { password })
+			.then(() => undefined),
+
+	removeLocalAccount: (userId: string): Promise<void> =>
+		client.del<void>(`${path(userId)}/identities/${LOCAL_PROVIDER}`).then(() => undefined)
 };

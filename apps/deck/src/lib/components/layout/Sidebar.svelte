@@ -247,6 +247,15 @@
 									Plugins
 								</a>
 							</li>
+							<li>
+								<a
+									href={resolve('/admin/providers')}
+									class:menu-active={page.route.id?.startsWith('/(dashboard)/admin/providers') ===
+										true}
+								>
+									Sign-in providers
+								</a>
+							</li>
 						</ul>
 					</details>
 				</li>
