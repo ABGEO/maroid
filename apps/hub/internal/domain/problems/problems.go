@@ -20,6 +20,8 @@ const (
 	TypeManagerLast            = "/problems/hub/manager-last"
 	TypeAdministratorLast      = "/problems/hub/administrator-last"
 	TypeAdministratorAllowlist = "/problems/hub/administrator-allowlist"
+	TypeProviderExists         = "/problems/hub/provider-exists"
+	TypeProviderStatic         = "/problems/hub/provider-static"
 )
 
 // NotReadyProblem reports a hub that cannot serve a request, with the name of each
@@ -53,6 +55,25 @@ func NewIdentityLast() *problem.Problem {
 	return &problem.Problem{
 		Type:   TypeIdentityLast,
 		Title:  "The last external account cannot be detached.",
+		Status: http.StatusConflict,
+	}
+}
+
+// NewProviderExists reports a provider whose identifier Dex already holds.
+func NewProviderExists() *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeProviderExists,
+		Title:  "The identity provider holds a provider with this identifier.",
+		Status: http.StatusConflict,
+	}
+}
+
+// NewProviderStatic reports a change or a removal of a provider that the configuration
+// file of Dex holds.
+func NewProviderStatic() *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeProviderStatic,
+		Title:  "The configuration of the identity provider holds the provider.",
 		Status: http.StatusConflict,
 	}
 }

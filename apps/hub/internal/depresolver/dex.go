@@ -2,6 +2,7 @@ package depresolver
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/abgeo/maroid/apps/hub/internal/dex"
@@ -56,7 +57,12 @@ func (c *Container) ProviderService() (*provider.Manager, error) {
 			return
 		}
 
-		c.providerService.instance = provider.NewManager(client, c.Config().OIDC.Issuer)
+		cfg := c.Config()
+		c.providerService.instance = provider.NewManager(client, provider.Settings{
+			Issuer:        cfg.OIDC.Issuer,
+			TelegramBotID: telegramBotID(cfg.Telegram.Token),
+			Discoverer:    provider.OIDCDiscovery{Timeout: cfg.Dex.Timeout},
+		})
 	})
 
 	if err != nil {
@@ -66,4 +72,12 @@ func (c *Container) ProviderService() (*provider.Manager, error) {
 	}
 
 	return c.providerService.instance, nil
+}
+
+// telegramBotID answers the numeric prefix of a bot token, which is the identifier of
+// the bot.
+func telegramBotID(token string) string {
+	id, _, _ := strings.Cut(token, ":")
+
+	return id
 }

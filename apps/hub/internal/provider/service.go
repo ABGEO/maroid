@@ -3,13 +3,18 @@ package provider
 import (
 	"cmp"
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"math"
 	"slices"
 	"strings"
 
 	"github.com/abgeo/maroid/apps/hub/internal/dex"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/libs/rest/precondition"
 )
 
 // Provider is one provider of the instance, read from a connector of Dex. It holds
@@ -26,29 +31,71 @@ type Provider struct {
 	Scopes          []string
 	Options         map[string]json.RawMessage
 	RedirectURI     string
+	// Version moves with each change of the name or the config in Dex.
+	Version int64
 }
 
-// Service reads the providers of the instance.
+// Input is a new provider. A nil member is absent from the request.
+type Input struct {
+	Preset       Preset
+	ID           *string
+	Name         *string
+	Issuer       *string
+	ClientID     *string
+	ClientSecret *string
+	UserIDKey    *string
+	Scopes       *[]string
+	Options      map[string]json.RawMessage
+}
+
+// Change is a merge patch of a provider. A nil member keeps its value, and a null
+// option removes that option.
+type Change struct {
+	Name         *string
+	ClientID     *string
+	ClientSecret *string
+	Scopes       *[]string
+	Options      map[string]json.RawMessage
+}
+
+// Service reads, adds, and changes the providers of the instance.
 type Service interface {
 	List(ctx context.Context) ([]Provider, error)
 	Get(ctx context.Context, id string) (*Provider, error)
+	Create(ctx context.Context, input Input) (*Provider, error)
+	// Change refuses a provider whose version moved when ifMatch names one.
+	Change(ctx context.Context, id string, change Change, ifMatch *int64) (*Provider, error)
+}
+
+// Settings holds what the presets read from the configuration of the hub.
+type Settings struct {
+	// Issuer is the address of Dex. The redirect address of every OIDC provider
+	// derives from it.
+	Issuer string
+	// TelegramBotID is the client identifier that a Telegram provider takes when the
+	// request names none.
+	TelegramBotID string
+	Discoverer    Discoverer
 }
 
 // Manager is the Service that Dex backs. It caches nothing, so a change in Dex
 // shows at the next read.
 type Manager struct {
-	client      dex.Client
-	redirectURI string
+	client        dex.Client
+	redirectURI   string
+	telegramBotID string
+	discoverer    Discoverer
 }
 
 var _ Service = (*Manager)(nil)
 
-// NewManager creates a Manager. The issuer is the address of Dex, and the redirect
-// address of every OIDC provider derives from it.
-func NewManager(client dex.Client, issuer string) *Manager {
+// NewManager creates a Manager.
+func NewManager(client dex.Client, settings Settings) *Manager {
 	return &Manager{
-		client:      client,
-		redirectURI: strings.TrimSuffix(issuer, "/") + "/callback",
+		client:        client,
+		redirectURI:   strings.TrimSuffix(settings.Issuer, "/") + "/callback",
+		telegramBotID: settings.TelegramBotID,
+		discoverer:    settings.Discoverer,
 	}
 }
 
@@ -71,22 +118,115 @@ func (m *Manager) List(ctx context.Context) ([]Provider, error) {
 
 // Get answers one provider.
 func (m *Manager) Get(ctx context.Context, id string) (*Provider, error) {
-	providers, err := m.List(ctx)
+	connector, err := m.find(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	for i := range providers {
-		if providers[i].ID == id {
-			return &providers[i], nil
+	read := m.read(connector)
+
+	return &read, nil
+}
+
+// Create adds a provider of one preset. Dex accepts any config, so every check runs
+// here before the write.
+func (m *Manager) Create(ctx context.Context, input Input) (*Provider, error) {
+	connector, err := m.build(input)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err = m.find(ctx, connector.ID); err == nil {
+		return nil, fmt.Errorf("adding the provider %s: %w", connector.ID, errs.ErrProviderExists)
+	} else if !errors.Is(err, errs.ErrProviderNotFound) {
+		return nil, err
+	}
+
+	if input.Preset != PresetLocal {
+		if err = m.discoverer.Discover(ctx, issuerOf(input)); err != nil {
+			return nil, fieldError("/issuer", "the issuer publishes no OIDC discovery document")
 		}
 	}
 
-	return nil, fmt.Errorf("reading the provider %s: %w", id, errs.ErrProviderNotFound)
+	if err = m.client.CreateConnector(ctx, connector); err != nil {
+		return nil, fmt.Errorf("adding the provider %s: %w", connector.ID, err)
+	}
+
+	read := m.read(connector)
+
+	return &read, nil
+}
+
+// Change applies a merge patch to a provider that the hub stored.
+func (m *Manager) Change(
+	ctx context.Context,
+	id string,
+	change Change,
+	ifMatch *int64,
+) (*Provider, error) {
+	connector, err := m.find(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	current := m.read(connector)
+	if current.Static {
+		return nil, fmt.Errorf("changing the provider %s: %w", id, errs.ErrProviderStatic)
+	}
+
+	if ifMatch != nil && *ifMatch != current.Version {
+		return nil, fmt.Errorf("changing the provider %s: %w", id, precondition.ErrModified)
+	}
+
+	var config map[string]json.RawMessage
+	if err = json.Unmarshal(connector.Config, &config); err != nil {
+		return nil, fmt.Errorf("reading the config of %s: %w", id, err)
+	}
+
+	if connector.Name, err = applyChange(
+		current.Preset,
+		config,
+		change,
+		connector.Name,
+	); err != nil {
+		return nil, err
+	}
+
+	if connector.Config, err = json.Marshal(config); err != nil {
+		return nil, fmt.Errorf("writing the config of %s: %w", id, err)
+	}
+
+	if err = m.client.UpdateConnector(ctx, connector); err != nil {
+		return nil, fmt.Errorf("changing the provider %s: %w", id, err)
+	}
+
+	read := m.read(connector)
+
+	return &read, nil
+}
+
+func (m *Manager) find(ctx context.Context, id string) (dex.Connector, error) {
+	connectors, err := m.client.ListConnectors(ctx)
+	if err != nil {
+		return dex.Connector{}, fmt.Errorf("listing the providers: %w", err)
+	}
+
+	for _, connector := range connectors {
+		if connector.ID == id {
+			return connector, nil
+		}
+	}
+
+	return dex.Connector{}, fmt.Errorf("reading the provider %s: %w", id, errs.ErrProviderNotFound)
 }
 
 func (m *Manager) read(connector dex.Connector) Provider {
-	read := Provider{ID: connector.ID, Name: connector.Name, Static: true}
+	read := Provider{
+		ID:      connector.ID,
+		Name:    connector.Name,
+		Static:  true,
+		Version: version(connector),
+	}
 
 	var config map[string]json.RawMessage
 	if json.Unmarshal(connector.Config, &config) != nil {
@@ -115,17 +255,35 @@ func (m *Manager) read(connector dex.Connector) Provider {
 		_ = json.Unmarshal(config[keyScopes], &read.Scopes)
 	}
 
-	for _, fixed := range []string{
-		MarkerKey, keyIssuer, keyClientID, keyClientSecret, keyRedirectURI, keyUserIDKey, keyScopes,
-	} {
-		delete(config, fixed)
-	}
-
-	if len(config) > 0 {
-		read.Options = config
+	if options := optionsOf(config); len(options) > 0 {
+		read.Options = options
 	}
 
 	return read
+}
+
+// version answers a positive integer from the SHA-256 of the name and the config, so
+// that the entity tag of precondition carries it.
+func version(connector dex.Connector) int64 {
+	digest := sha256.New()
+	digest.Write([]byte(connector.Name))
+	digest.Write([]byte{0})
+	digest.Write(connector.Config)
+
+	return int64(binary.BigEndian.Uint64(digest.Sum(nil)[:8]) & math.MaxInt64)
+}
+
+// optionsOf answers the members of a config that no field of a preset covers.
+func optionsOf(config map[string]json.RawMessage) map[string]json.RawMessage {
+	options := make(map[string]json.RawMessage, len(config))
+
+	for key, value := range config {
+		if !slices.Contains(FixedKeys(), key) {
+			options[key] = value
+		}
+	}
+
+	return options
 }
 
 // text answers the string that a member holds, or nothing when it holds another value.

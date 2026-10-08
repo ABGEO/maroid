@@ -16,7 +16,7 @@ import (
 const issuer = "https://auth.maroid.localhost"
 
 func managerOf(connectors ...dex.Connector) *provider.Manager {
-	return provider.NewManager(dextest.New(connectors...), issuer)
+	return provider.NewManager(dextest.New(connectors...), provider.Settings{Issuer: issuer})
 }
 
 // IDPROV-SC-001: A connector with no maroidPreset is static and carries no preset.
@@ -100,7 +100,7 @@ func TestTheProviderSplitsItsConfig(t *testing.T) {
 	assert.Equal(t, "cid", cloud.ClientID)
 	assert.True(t, cloud.ClientSecretSet)
 	assert.Equal(t, "sub", cloud.UserIDKey)
-	assert.Equal(t, []string{"openid", "email"}, cloud.Scopes)
+	assert.Equal(t, []string{scopeOpenID, "email"}, cloud.Scopes)
 	assert.Equal(
 		t,
 		map[string]json.RawMessage{"getUserInfo": json.RawMessage("true")},
@@ -137,7 +137,7 @@ func TestAnUnavailableDexReachesTheCaller(t *testing.T) {
 	memory := dextest.New()
 	memory.Fail(errs.ErrIDPUnavailable)
 
-	manager := provider.NewManager(memory, issuer)
+	manager := provider.NewManager(memory, provider.Settings{Issuer: issuer})
 
 	_, err := manager.List(t.Context())
 	require.ErrorIs(t, err, errs.ErrIDPUnavailable)

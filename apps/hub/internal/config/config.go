@@ -104,10 +104,10 @@ type Dex struct {
 
 // OIDC defines OpenID Connect configuration parameters for authentication.
 type OIDC struct {
-	Issuer       string `default:"https://oauth.telegram.org" mapstructure:"issuer" validate:"required,url"`
-	ClientID     string `mapstructure:"client_id"             validate:"required"`
-	ClientSecret string `mapstructure:"client_secret"         validate:"required"`
-	RedirectURI  string `mapstructure:"redirect_uri"          validate:"required"`
+	Issuer       string `mapstructure:"issuer"        validate:"required,url"`
+	ClientID     string `mapstructure:"client_id"     validate:"required"`
+	ClientSecret string `mapstructure:"client_secret" validate:"required"`
+	RedirectURI  string `mapstructure:"redirect_uri"  validate:"required"`
 }
 
 // MCP defines the Model Context Protocol server of the hub.

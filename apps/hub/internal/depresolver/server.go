@@ -178,12 +178,19 @@ func (c *Container) buildProviderHandler() (*handler.Provider, error) {
 		return nil, err
 	}
 
+	idempotencyStore, err := c.IdempotencyStore()
+	if err != nil {
+		return nil, err
+	}
+
 	providers, err := c.ProviderService()
 	if err != nil {
 		return nil, err
 	}
 
-	return handler.NewProvider(c.Logger(), verifier, identityResolver, providers), nil
+	return handler.NewProvider(
+		c.Logger(), verifier, identityResolver, idempotencyStore, providers,
+	), nil
 }
 
 // buildUserHandler resolves every dependency of the handler of /users.

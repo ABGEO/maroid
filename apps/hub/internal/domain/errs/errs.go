@@ -147,6 +147,9 @@ var (
 	// ErrProviderNotFound indicates that the identity provider holds no connector
 	// with the identifier.
 	ErrProviderNotFound = errors.New("provider: not found")
+	// ErrProviderStatic indicates a change or a removal of a provider that the
+	// configuration file of the identity provider holds.
+	ErrProviderStatic = errors.New("provider: static")
 	// ErrLocalAccountExists indicates that another local account holds the email address.
 	ErrLocalAccountExists = errors.New("local account: already exists")
 	// ErrLocalAccountNotFound indicates that the identity provider holds no password

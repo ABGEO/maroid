@@ -284,8 +284,9 @@ func registerProviders(
 	resolver auth.IdentityResolver,
 	idp *dextest.Memory,
 ) {
-	handler.NewProvider(logger, verifier, resolver, providers.NewManager(idp, dexIssuer)).
-		Register(router)
+	handler.NewProvider(logger, verifier, resolver, noIdempotency{}, providers.NewManager(
+		idp, providers.Settings{Issuer: dexIssuer, TelegramBotID: "1", Discoverer: anyIssuer{}},
+	)).Register(router)
 }
 
 // usersOf builds the service of the user records over the database, with the plugins

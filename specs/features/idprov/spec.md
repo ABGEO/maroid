@@ -94,7 +94,7 @@ and routes under `/users/{userId}/identities` give, reset, and remove a local ac
 | ----------------------------------------------------------- | ------ | ------------------------------------------------------------------- |
 | `apps/hub/internal/config/config.go`                        | change | `Dex` block. `Auth.Providers` and `Provider` go.                    |
 | `apps/hub/internal/dex/{doc,client}.go`                     | create | `dex.Client`, the gRPC client of Dex with mutual TLS and a deadline |
-| `apps/hub/internal/provider/{doc,preset,options}.go`        | create | `provider.Preset`, the fixed fields, `oidcOptions`                  |
+| `apps/hub/internal/provider/{doc,preset,options,build,discovery}.go` | create | `provider.Preset`, the fixed fields, `oidcOptions`, the checks of a preset, `provider.OIDCDiscovery` |
 | `apps/hub/internal/provider/service.go`                     | create | `provider.Service`: list, read, add, change, remove                 |
 | `apps/hub/internal/provider/local.go`                       | create | `provider.LocalAccounts`: give, reset, remove                       |
 | `apps/hub/internal/repository/identity.go`                  | change | `CountByProvider`, `DeleteByProvider`, `AdministratorsOnlyAt`, `Detach` takes a hook |
@@ -224,7 +224,8 @@ carries `issuer`, `client_id`, `user_id_key`, `options`, `client_secret_set`, an
 secret, a password, or a hash.
 
 `redirect_uri` is `oidc.issuer` with `/callback` appended. The `ETag` of a provider is
-the SHA-256 of its name and its stored config, so a change in Dex moves it too.
+an integer from the SHA-256 of its name and its stored config, so a change in Dex
+moves it too. `IDPROV-DD-013`.
 
 **CLI commands.**
 
@@ -464,6 +465,20 @@ address on the second.
 value for each line.
 **Alternatives:** A flag that switches the output, which adds a flag for one use.
 
+### `IDPROV-DD-013`
+
+**Realizes:** `IDPROV-FR-009`, `IDPROV-FR-010`
+**Decision:** The version of a provider is the first 8 bytes of the SHA-256 of its name
+and its stored config, as a positive integer. `precondition.ETag` writes it as the
+nanoseconds of a moment, and the handler of a change compares the moment of
+`If-Match` with the current version.
+**Rationale:** Dex keeps no time of a change. The middleware of `precondition` accepts
+an integer validator alone, so this tag passes it with no change to `libs/rest`, which
+every plugin builds against. A client reads the tag as opaque, as RFC 9110 asks.
+**Alternatives:** A validator of any shape in `libs/rest`, which changes the contract
+of every plugin and rebuilds each one. No tag on a provider, which lets the last of two
+administrators overwrite the first with no warning.
+
 ## 6. Scenarios
 
 [`spec-scenarios.md`](spec-scenarios.md) holds `IDPROV-SC-001` to `IDPROV-SC-031`.
@@ -474,7 +489,7 @@ value for each line.
 | --- | ----------------------------------------------------------------------------- | ------------------------------------- | ---- |
 | 1   | Development certificates, the TLS block of Dex, no published port. The owner edits `.docker/dex/config.yaml`. | `IDPROV-FR-001` | [ ] |
 | 2   | `config.Dex`, `dex.Client`, `DexClient` and `CloseDexClient`                  | `IDPROV-FR-001`, `IDPROV-NFR-002`     | [x]  |
-| 3   | `provider` presets, `oidcOptions`, and the validation                         | `IDPROV-FR-002` to `IDPROV-FR-011`, `IDPROV-INV-001` to `IDPROV-INV-003` | [ ] |
+| 3   | `provider` presets, `oidcOptions`, and the validation                         | `IDPROV-FR-002` to `IDPROV-FR-011`, `IDPROV-INV-001` to `IDPROV-INV-003` | [x] |
 | 4   | The identity repository: count, delete, report, the hook of `Detach`          | `IDPROV-FR-012`, `IDPROV-FR-014`      | [ ]  |
 | 5   | `provider.Service` and the routes under `/providers`, the problem types       | `IDPROV-FR-001` to `IDPROV-FR-016`    | [ ]  |
 | 6   | `GET /auth/identities` reads Dex. `auth.providers` goes. `Link` refuses `local`. | `IDPROV-FR-017`, `IDPROV-FR-022`    | [x]  |

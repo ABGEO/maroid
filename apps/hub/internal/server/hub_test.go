@@ -145,7 +145,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 func hubProviders(issuer string) *providers.Manager {
 	return providers.NewManager(dextest.New(dextest.Connector(
 		auth.ProviderTelegram, "oidc", "Telegram", `{"maroidPreset":"telegram"}`,
-	)), issuer)
+	)), providers.Settings{Issuer: issuer})
 }
 
 // authService builds the auth service on the database.
