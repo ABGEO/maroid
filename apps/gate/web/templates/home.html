@@ -1,12 +1,12 @@
 {{ template "header.html" . }}
 
-<div class="card gate-card mt-2 shadow-md">
+<div class="card panel mt-2">
     <div class="card-body gap-6">
         {{ if .LoggedIn }}
         <div>
-            {{ if .Username }}<h2 class="text-[15px] font-semibold">{{ .Username }}</h2>{{ end }}
+            {{ if .Username }}<h1 class="page-title">{{ .Username }}</h1>{{ end }}
             {{ if .Email }}
-            <div class="text-base-content/50 mt-0.5 text-xs">
+            <div class="meta mt-1">
                 {{ .Email }}
                 {{ if .EmailVerified }}<span class="whitespace-nowrap">(verified)</span>
                 {{ else }}<span class="text-base-content whitespace-nowrap">(not verified)</span>{{ end }}
@@ -17,15 +17,15 @@
         <dl class="border-base-300 border-t">
             {{ if .ConnectorName }}
             <div
-                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
-                <dt class="text-base-content/50">Signed in with</dt>
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-sm max-[420px]:grid-cols-1">
+                <dt class="text-base-content/60">Signed in with</dt>
                 <dd>{{ .ConnectorName }}</dd>
             </div>
             {{ end }}
             {{ if .SignedInISO }}
             <div
-                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
-                <dt class="text-base-content/50">Signed in</dt>
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-sm max-[420px]:grid-cols-1">
+                <dt class="text-base-content/60">Signed in</dt>
                 <dd>
                     <time datetime="{{ .SignedInISO }}">{{ .SignedInText }}</time>
                 </dd>
@@ -33,8 +33,8 @@
             {{ end }}
             {{ if .SessionExpiresISO }}
             <div
-                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
-                <dt class="text-base-content/50">{{ if .SessionExpiryIsIdle }}Expires if idle{{ else }}Session ends{{
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-sm max-[420px]:grid-cols-1">
+                <dt class="text-base-content/60">{{ if .SessionExpiryIsIdle }}Expires if idle{{ else }}Session ends{{
                     end }}
                 </dt>
                 <dd>
@@ -44,15 +44,15 @@
             {{ end }}
             {{ if .IPAddress }}
             <div
-                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
-                <dt class="text-base-content/50">Signed in from</dt>
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-sm max-[420px]:grid-cols-1">
+                <dt class="text-base-content/60">Signed in from</dt>
                 <dd>{{ .IPAddress }}</dd>
             </div>
             {{ end }}
             {{ if .Groups }}
             <div
-                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
-                <dt id="groups-label" class="text-base-content/50">Groups <span class="tabular-nums opacity-75">{{ len .Groups
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-sm max-[420px]:grid-cols-1">
+                <dt id="groups-label" class="text-base-content/60">Groups <span class="tabular-nums opacity-75">{{ len .Groups
             }}</span></dt>
                 <dd>
                     <ul
@@ -67,9 +67,9 @@
             {{ end }}
             {{ if .UserAgent }}
             <div
-                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-xs max-[420px]:grid-cols-1">
-                <dt class="text-base-content/50">Browser</dt>
-                <dd class="text-base-content/50 text-[11px] leading-relaxed">{{ .UserAgent }}</dd>
+                    class="border-base-300 grid grid-cols-[116px_minmax(0,1fr)] gap-x-4 gap-y-1 border-b py-2 text-sm max-[420px]:grid-cols-1">
+                <dt class="text-base-content/60">Browser</dt>
+                <dd class="text-base-content/60 leading-relaxed">{{ .UserAgent }}</dd>
             </div>
             {{ end }}
         </dl>
@@ -79,15 +79,15 @@
         </div>
         {{ else }}
         <div class="text-center">
-            <h2 class="text-base font-semibold">Not signed in</h2>
-            <p class="text-base-content/50 mx-auto mt-1.5 max-w-[34ch] text-xs leading-relaxed">
+            <h1 class="page-title">Not signed in</h1>
+            <p class="page-lead mx-auto">
                 This is the dex identity provider. Sign in from the application you want to use.
             </p>
         </div>
         {{ end }}
 
         <div class="border-base-300 border-t pt-4">
-            <a href="{{ .DiscoveryURL }}" class="text-primary text-xs underline underline-offset-2 hover:decoration-2">OpenID
+            <a href="{{ .DiscoveryURL }}" class="link link-hover meta">OpenID
                 configuration</a>
         </div>
     </div>
@@ -98,7 +98,7 @@
   (function () {
     // A long group list is capped by CSS; fade its bottom edge so the cut is
     // visible on platforms whose scrollbars only appear while scrolling. The
-    // fade tracks the scroll position — left up permanently it would dim the
+    // fade tracks the scroll position. Left up permanently, it would dim the
     // last group even once you had scrolled down to read it.
     var groups = document.querySelector('.gate-groups');
     if (groups) {

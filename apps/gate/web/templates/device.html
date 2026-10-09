@@ -1,9 +1,11 @@
 {{ template "header.html" . }}
 
-<div class="card gate-card mt-2 shadow-md">
+<div class="card panel mt-2">
   <div class="card-body gap-6">
-    <h2 class="font-display text-xl font-semibold">Enter User Code</h2>
+    <h1 class="page-title">Enter User Code</h1>
     <form method="post" action="{{ .PostURL }}" class="flex flex-col gap-4">
+      <fieldset class="fieldset">
+      <label class="fieldset-legend" for="user_code">User code</label>
       {{ if( .UserCode )}}
       <input tabindex="2" required id="user_code" name="user_code" type="text" class="input w-full" autocomplete="off"
         value="{{.UserCode}}" {{ if .Invalid }} autofocus {{ end }} />
@@ -11,9 +13,10 @@
       <input tabindex="2" required id="user_code" name="user_code" type="text" class="input w-full"
         placeholder="XXXX-XXXX" autocomplete="off" {{ if .Invalid }} autofocus {{ end }} />
       {{ end }}
+      </fieldset>
 
       {{ if .Invalid }}
-      <div id="login-error" class="alert alert-error alert-soft">
+      <div id="login-error" role="alert" class="alert alert-error alert-soft">
         Invalid or Expired User Code
       </div>
       {{ end }}

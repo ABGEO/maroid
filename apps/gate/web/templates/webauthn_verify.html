@@ -1,18 +1,19 @@
 {{ template "header.html" . }}
 
-<div class="card gate-card mt-2 shadow-md">
+<div class="card panel mt-2">
     <div class="card-body gap-6">
         {{ if eq .Mode "register" }}
-        <h2 class="font-display text-xl font-semibold">Register security key</h2>
-        <p>Register a security key for two-factor authentication.</p>
+        <h1 class="page-title">Register security key</h1>
+        <p class="page-lead">Register a security key for two-factor authentication.</p>
         {{ else }}
-        <h2 class="font-display text-xl font-semibold">Two-factor authentication</h2>
-        <p>Use your security key to verify your identity.</p>
+        <h1 class="page-title">Two-factor authentication</h1>
+        <p class="page-lead">Use your security key to verify your identity.</p>
         {{ end }}
 
-        <div id="webauthn-error" class="alert alert-error alert-soft" style="display: none;"></div>
-        <div id="webauthn-working" class="text-center" style="display: none;">
-            <p>Waiting for security key...</p>
+        <div id="webauthn-error" role="alert" class="alert alert-error alert-soft" style="display: none;"></div>
+        <div id="webauthn-working" class="meta flex items-center justify-center gap-2" style="display: none;">
+            <span class="loading loading-spinner loading-sm"></span>
+            <span>Waiting for security key...</span>
         </div>
 
         <button id="webauthn-btn" type="button" class="btn btn-primary w-full" onclick="startWebAuthn()">
@@ -165,7 +166,7 @@
               .catch(function(err) { showError(formatError(err)); });
     }
 
-    // Auto-start login flow (not registration — user should click to register).
+    // Auto-start login flow (not registration: the user clicks to register).
     if (mode === "login") {
       startWebAuthn();
     }

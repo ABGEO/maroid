@@ -1,4 +1,5 @@
 @import '@maroid/theme/maroid.css';
+@import '@maroid/theme/components.css';
 
 @import 'tailwindcss';
 @plugin 'daisyui' {
@@ -7,8 +8,8 @@
 
 @source '../web/templates';
 
-.gate-card {
-	background-color: color-mix(in oklch, var(--color-base-200) 40%, var(--color-base-100));
+.card-body .page-title {
+	font-size: 1.5rem;
 }
 
 .gate-groups {
