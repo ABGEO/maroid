@@ -7,27 +7,49 @@
 </script>
 
 <div class="max-w-2xl">
-	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">{data.workspace.name}</h1>
-	<p class="text-base-content/60 mt-3 text-sm">The records of your plugins in this workspace.</p>
+	<header class="page-header">
+		<div>
+			<h1 class="page-title">{data.workspace.name}</h1>
+			<p class="page-lead">The records of your plugins in this workspace.</p>
+		</div>
+	</header>
 
-	<div class="mt-8 flex gap-2">
-		<a
-			class="btn btn-sm"
-			href={resolve('/(dashboard)/w/[workspace]/members', { workspace: data.workspace.id })}
-		>
-			Members
-		</a>
-		<a
-			class="btn btn-sm"
-			href={resolve('/(dashboard)/w/[workspace]/plugins', { workspace: data.workspace.id })}
-		>
-			Plugins
-		</a>
-		<a
-			class="btn btn-sm"
-			href={resolve('/(dashboard)/w/[workspace]/settings', { workspace: data.workspace.id })}
-		>
-			Settings
-		</a>
-	</div>
+	<ul class="list panel">
+		<li>
+			<a
+				class="list-row hover:bg-base-200"
+				href={resolve('/(dashboard)/w/[workspace]/members', { workspace: data.workspace.id })}
+			>
+				<span class="list-col-grow">
+					<span class="block font-medium">Members</span>
+					<span class="meta block">The people who share this workspace.</span>
+				</span>
+				<span class="text-base-content/40" aria-hidden="true">&rarr;</span>
+			</a>
+		</li>
+		<li>
+			<a
+				class="list-row hover:bg-base-200"
+				href={resolve('/(dashboard)/w/[workspace]/plugins', { workspace: data.workspace.id })}
+			>
+				<span class="list-col-grow">
+					<span class="block font-medium">Plugins</span>
+					<span class="meta block">The plugins this workspace uses.</span>
+				</span>
+				<span class="text-base-content/40" aria-hidden="true">&rarr;</span>
+			</a>
+		</li>
+		<li>
+			<a
+				class="list-row hover:bg-base-200"
+				href={resolve('/(dashboard)/w/[workspace]/settings', { workspace: data.workspace.id })}
+			>
+				<span class="list-col-grow">
+					<span class="block font-medium">Settings</span>
+					<span class="meta block">The name of this workspace.</span>
+				</span>
+				<span class="text-base-content/40" aria-hidden="true">&rarr;</span>
+			</a>
+		</li>
+	</ul>
 </div>

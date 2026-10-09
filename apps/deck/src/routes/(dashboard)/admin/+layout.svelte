@@ -8,7 +8,11 @@
 	{@render children()}
 {:else}
 	<div class="max-w-2xl">
-		<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Not found</h1>
-		<p class="text-base-content/60 mt-3 text-sm">This page does not exist.</p>
+		<header class="page-header">
+			<div>
+				<h1 class="page-title">Not found</h1>
+				<p class="page-lead">This page does not exist.</p>
+			</div>
+		</header>
 	</div>
 {/if}

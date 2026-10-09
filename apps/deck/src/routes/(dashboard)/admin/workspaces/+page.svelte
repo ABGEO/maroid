@@ -29,52 +29,52 @@
 </script>
 
 <div class="max-w-3xl">
-	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Workspaces</h1>
-	<p class="text-base-content/60 mt-3 text-sm">
-		Every workspace of this instance. You manage its members and its plugins, and you read none of
-		its records.
-	</p>
+	<header class="page-header">
+		<div>
+			<h1 class="page-title">Workspaces</h1>
+			<p class="page-lead">
+				Every workspace of this instance. You manage its members and its plugins, and you read none
+				of its records.
+			</p>
+		</div>
+	</header>
 
 	{#if status === 'loading'}
-		<div class="mt-8 flex flex-col gap-2" aria-hidden="true">
+		<div class="flex flex-col gap-2" aria-hidden="true">
 			{#each [0, 1, 2] as i (i)}
-				<span class="skeleton h-12 w-full"></span>
+				<span class="skeleton h-16 w-full"></span>
 			{/each}
 		</div>
 	{:else if status === 'error'}
-		<div class="alert alert-error mt-6">
+		<div role="alert" class="alert alert-error alert-soft">
 			<span>The hub answered no workspace. Reload the page.</span>
 		</div>
 	{:else if workspaces.length === 0}
-		<div class="border-base-300 text-base-content/60 mt-8 rounded-md border border-dashed p-6">
-			This instance holds no workspace.
-		</div>
+		<div class="empty-state">This instance holds no workspace.</div>
 	{:else}
-		<ul class="border-base-300 rounded-box mt-8 divide-y border">
+		<ul class="list panel">
 			{#each workspaces as workspace (workspace.id)}
-				<li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-					<span class="min-w-0">
-						<span class="block text-sm font-semibold">{workspace.name}</span>
-						<span class="text-base-content/50 block text-[12px]">
+				<li class="list-row items-center">
+					<span class="list-col-grow min-w-0">
+						<span class="block font-medium">{workspace.name}</span>
+						<span class="meta block truncate">
 							{workspace.member_count}
 							{workspace.member_count === 1 ? 'member' : 'members'} ·
 							{workspace.plugin_ids.length === 0 ? 'no plugin' : workspace.plugin_ids.join(', ')}
 						</span>
 					</span>
-					<span class="flex gap-1">
-						<a
-							class="btn btn-ghost btn-xs"
-							href={resolve('/(dashboard)/w/[workspace]/members', { workspace: workspace.id })}
-						>
-							Members
-						</a>
-						<a
-							class="btn btn-ghost btn-xs"
-							href={resolve('/(dashboard)/w/[workspace]/plugins', { workspace: workspace.id })}
-						>
-							Plugins
-						</a>
-					</span>
+					<a
+						class="btn btn-ghost btn-sm"
+						href={resolve('/(dashboard)/w/[workspace]/members', { workspace: workspace.id })}
+					>
+						Members
+					</a>
+					<a
+						class="btn btn-ghost btn-sm"
+						href={resolve('/(dashboard)/w/[workspace]/plugins', { workspace: workspace.id })}
+					>
+						Plugins
+					</a>
 				</li>
 			{/each}
 		</ul>

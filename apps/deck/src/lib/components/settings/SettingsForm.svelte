@@ -99,13 +99,13 @@
 
 {#snippet footer()}
 	{#if failure}
-		<div class="alert alert-error mt-4">
+		<div role="alert" class="alert alert-error alert-soft mt-4">
 			<span>{failure}</span>
 		</div>
 	{/if}
 
 	{#if readonly}
-		<p class="border-base-300 text-base-content/60 mt-6 border-t pt-4 text-sm">
+		<p class="border-base-300 meta mt-6 border-t pt-4">
 			Your role reads these settings. An editor or a manager changes them.
 		</p>
 	{:else}
@@ -125,14 +125,14 @@
 				Reset
 			</button>
 			{#if saved}
-				<span class="text-success font-mono text-[11px]">Saved.</span>
+				<span class="text-success text-sm">Saved.</span>
 			{/if}
 		</div>
 	{/if}
 {/snippet}
 
 {#if status === 'loading'}
-	<div class="flex flex-col gap-4">
+	<div class="panel flex max-w-xl flex-col gap-4 p-5">
 		{#each [0, 1, 2] as i (i)}
 			<div class="flex flex-col gap-2">
 				<span class="skeleton h-3 w-28" aria-hidden="true"></span>
@@ -141,11 +141,9 @@
 		{/each}
 	</div>
 {:else if status === 'absent'}
-	<div class="alert alert-warning">
-		<span>This plugin declares no settings.</span>
-	</div>
+	<div class="empty-state">This plugin declares no settings.</div>
 {:else if status === 'error'}
-	<div class="alert alert-error">
+	<div role="alert" class="alert alert-error alert-soft">
 		<span>Failed to load the settings.</span>
 		<button type="button" class="btn btn-sm" onclick={() => void load(workspaceId, pluginId)}
 			>Retry</button
@@ -153,7 +151,7 @@
 	</div>
 {:else}
 	{#if missing.length > 0}
-		<div class="alert alert-warning mb-6">
+		<div role="alert" class="alert alert-warning alert-soft mb-6">
 			<span>
 				{missing.length}
 				{missing.length === 1 ? 'required field holds' : 'required fields hold'} no value. This plugin
@@ -162,7 +160,7 @@
 		</div>
 	{/if}
 
-	<div class="max-w-xl">
+	<div class="panel max-w-xl p-5">
 		{#key revision}
 			<SchemaForm
 				bind:this={child}

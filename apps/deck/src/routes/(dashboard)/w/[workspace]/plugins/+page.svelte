@@ -139,134 +139,143 @@
 </script>
 
 <div class="max-w-3xl">
-	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Plugins</h1>
-	<p class="text-base-content/60 mt-3 text-sm">
-		The plugins that {data.workspace.name} uses. A plugin that you switch off keeps its records and its
-		settings.
-	</p>
+	<header class="page-header">
+		<div>
+			<h1 class="page-title">Plugins</h1>
+			<p class="page-lead">
+				The plugins that {data.workspace.name} uses. A plugin that you switch off keeps its records and
+				its settings.
+			</p>
+		</div>
+	</header>
 
 	{#if banner}
-		<div class="alert alert-error mt-6">
+		<div role="alert" class="alert alert-error alert-soft mb-6">
 			<span>{banner}</span>
 		</div>
 	{/if}
 
 	{#if status === 'loading'}
-		<div class="mt-8 flex flex-col gap-2" aria-hidden="true">
+		<div class="flex flex-col gap-2" aria-hidden="true">
 			{#each [0, 1, 2] as i (i)}
 				<span class="skeleton h-16 w-full"></span>
 			{/each}
 		</div>
 	{:else if status === 'error'}
-		<div class="alert alert-error mt-6">
+		<div role="alert" class="alert alert-error alert-soft mb-6">
 			<span>The hub answered no plugin. Reload the page.</span>
 		</div>
 	{:else}
-		<h2 class="mt-8 text-sm font-semibold">In use</h2>
+		<section class="section">
+			<h2 class="section-title">In use</h2>
 
-		{#if inUse.length === 0}
-			<div class="border-base-300 text-base-content/60 mt-3 rounded-md border border-dashed p-6">
-				{data.workspace.name} uses no plugin.
-			</div>
-		{:else}
-			<ul class="border-base-300 rounded-box mt-3 divide-y border">
-				{#each inUse as row (row.id)}
-					<li class="flex items-center gap-4 px-4 py-3">
-						<div class="min-w-0 flex-1">
-							<div class="flex items-center gap-2">
-								<span class="text-[15px] font-semibold">{row.name}</span>
-								{#if row.plugin}
-									<span class="badge badge-ghost badge-xs font-mono">v{row.plugin.version}</span>
-								{/if}
-								{#if readsSettings && incomplete[row.id]}
-									<span class="badge badge-warning badge-xs">Needs attention</span>
-								{/if}
-							</div>
-							<div class="text-base-content/50 truncate font-mono text-[11px]">{row.id}</div>
-							{#if row.plugin?.description}
-								<p class="text-base-content/70 mt-1 text-sm">{row.plugin.description}</p>
-							{/if}
-							{#if row.plugin && capabilitiesOf(row.plugin).length > 0}
-								<div class="mt-1.5 flex flex-wrap gap-1">
-									{#each capabilitiesOf(row.plugin) as name (name)}
-										<span class="badge badge-soft badge-xs">
-											{labelOf(name)}{countOf(row.plugin, name) > 0
-												? `: ${countOf(row.plugin, name)}`
-												: ''}
-										</span>
-									{/each}
-								</div>
-							{/if}
-						</div>
-
-						{#if configurable(row.plugin)}
-							<a
-								class="btn btn-ghost btn-sm"
-								href={resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/settings', {
-									workspace: workspaceId,
-									plugin: row.id
-								})}
-							>
-								Configure
-							</a>
-						{/if}
-
-						{#if canSwitch}
-							<input
-								type="checkbox"
-								class="toggle toggle-primary toggle-sm"
-								aria-label="Use {row.name} in {data.workspace.name}"
-								checked
-								disabled={busy !== null}
-								onchange={(event) => toggle(row.id, event.currentTarget.checked)}
-							/>
-						{/if}
-					</li>
-				{/each}
-			</ul>
-		{/if}
-
-		{#if canSwitch}
-			<h2 class="mt-10 text-sm font-semibold">To turn on</h2>
-
-			{#if catalogLoading}
-				<div class="mt-3 flex flex-col gap-2" aria-hidden="true">
-					<span class="skeleton h-12 w-full"></span>
-				</div>
-			{:else if pluginState.status === 'error'}
-				<div class="alert alert-error mt-3">
-					<span>The hub answered no plugin to turn on. Reload the page.</span>
-				</div>
-			{:else if toTurnOn.length === 0}
-				<div class="border-base-300 text-base-content/60 mt-3 rounded-md border border-dashed p-6">
-					No other plugin is open to you. An administrator puts a plugin on your allowlist.
+			{#if inUse.length === 0}
+				<div class="empty-state">
+					{data.workspace.name} uses no plugin.
 				</div>
 			{:else}
-				<ul class="border-base-300 rounded-box mt-3 divide-y border">
-					{#each toTurnOn as plugin (plugin.id)}
-						{@const name = displayNameOf(plugin, plugin.id)}
-						<li class="flex items-center justify-between gap-3 px-4 py-3">
-							<span class="min-w-0">
-								<span class="block text-sm font-semibold">{name}</span>
-								<span class="text-base-content/50 block truncate font-mono text-[11px]">
-									{plugin.id}
-								</span>
-								{#if plugin.description}
-									<span class="text-base-content/70 mt-1 block text-sm">{plugin.description}</span>
+				<ul class="list panel">
+					{#each inUse as row (row.id)}
+						<li class="list-row flex items-center gap-4">
+							<div class="min-w-0 flex-1">
+								<div class="flex items-center gap-2">
+									<span class="font-medium">{row.name}</span>
+									{#if row.plugin}
+										<span class="badge badge-ghost badge-xs font-mono">v{row.plugin.version}</span>
+									{/if}
+									{#if readsSettings && incomplete[row.id]}
+										<span class="badge badge-warning badge-xs">Needs attention</span>
+									{/if}
+								</div>
+								<div class="meta truncate font-mono">{row.id}</div>
+								{#if row.plugin?.description}
+									<p class="text-base-content/70 mt-1 text-sm">{row.plugin.description}</p>
 								{/if}
-							</span>
-							<input
-								type="checkbox"
-								class="toggle toggle-primary toggle-sm"
-								aria-label="Use {name} in {data.workspace.name}"
-								checked={false}
-								disabled={busy !== null}
-								onchange={(event) => toggle(plugin.id, event.currentTarget.checked)}
-							/>
+								{#if row.plugin && capabilitiesOf(row.plugin).length > 0}
+									<div class="mt-1.5 flex flex-wrap gap-1">
+										{#each capabilitiesOf(row.plugin) as name (name)}
+											<span class="badge badge-soft badge-xs">
+												{labelOf(name)}{countOf(row.plugin, name) > 0
+													? `: ${countOf(row.plugin, name)}`
+													: ''}
+											</span>
+										{/each}
+									</div>
+								{/if}
+							</div>
+
+							{#if configurable(row.plugin)}
+								<a
+									class="btn btn-ghost btn-sm"
+									href={resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/settings', {
+										workspace: workspaceId,
+										plugin: row.id
+									})}
+								>
+									Configure
+								</a>
+							{/if}
+
+							{#if canSwitch}
+								<input
+									type="checkbox"
+									class="toggle toggle-primary toggle-sm"
+									aria-label="Use {row.name} in {data.workspace.name}"
+									checked
+									disabled={busy !== null}
+									onchange={(event) => toggle(row.id, event.currentTarget.checked)}
+								/>
+							{/if}
 						</li>
 					{/each}
 				</ul>
 			{/if}
+		</section>
+
+		{#if canSwitch}
+			<section class="section">
+				<h2 class="section-title">To turn on</h2>
+
+				{#if catalogLoading}
+					<div class="flex flex-col gap-2" aria-hidden="true">
+						<span class="skeleton h-12 w-full"></span>
+					</div>
+				{:else if pluginState.status === 'error'}
+					<div role="alert" class="alert alert-error alert-soft">
+						<span>The hub answered no plugin to turn on. Reload the page.</span>
+					</div>
+				{:else if toTurnOn.length === 0}
+					<div class="empty-state">
+						No other plugin is open to you. An administrator puts a plugin on your allowlist.
+					</div>
+				{:else}
+					<ul class="list panel">
+						{#each toTurnOn as plugin (plugin.id)}
+							{@const name = displayNameOf(plugin, plugin.id)}
+							<li class="list-row flex items-center justify-between gap-3">
+								<span class="min-w-0">
+									<span class="block font-medium">{name}</span>
+									<span class="meta block truncate font-mono">
+										{plugin.id}
+									</span>
+									{#if plugin.description}
+										<span class="text-base-content/70 mt-1 block text-sm">{plugin.description}</span
+										>
+									{/if}
+								</span>
+								<input
+									type="checkbox"
+									class="toggle toggle-primary toggle-sm"
+									aria-label="Use {name} in {data.workspace.name}"
+									checked={false}
+									disabled={busy !== null}
+									onchange={(event) => toggle(plugin.id, event.currentTarget.checked)}
+								/>
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</section>
 		{/if}
 	{/if}
 </div>

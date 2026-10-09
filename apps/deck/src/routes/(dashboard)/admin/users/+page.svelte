@@ -179,26 +179,30 @@
 </script>
 
 <div class="max-w-3xl">
-	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Users</h1>
-	<p class="text-base-content/60 mt-3 text-sm">
-		Every person of this instance. A block keeps the records of the person.
-	</p>
+	<header class="page-header">
+		<div>
+			<h1 class="page-title">Users</h1>
+			<p class="page-lead">
+				Every person of this instance. A block keeps the records of the person.
+			</p>
+		</div>
+	</header>
 
 	{#if banner}
-		<div class="alert alert-error mt-6">
+		<div role="alert" class="alert alert-error alert-soft mb-6">
 			<span>{banner}</span>
 		</div>
 	{/if}
 
 	{#if invitation}
-		<div class="alert alert-info mt-6 flex flex-col items-start gap-2">
+		<div role="status" class="alert alert-info alert-soft mb-6 flex flex-col items-start gap-2">
 			<span class="text-sm">
 				The invitation of {invitation.name}. It shows this one time, and it expires on
 				{new Date(invitation.invitation.expires_at).toLocaleString()}.
 			</span>
 			<div class="flex w-full gap-2">
 				<input
-					class="input input-bordered input-sm w-full font-mono text-[11px]"
+					class="input input-sm w-full font-mono text-xs"
 					readonly
 					value={invitation.invitation.address}
 					aria-label="The address of the invitation"
@@ -217,191 +221,196 @@
 		</div>
 	{/if}
 
-	<form class="mt-8" onsubmit={create}>
-		<fieldset class="fieldset bg-base-200/40 border-base-300 rounded-box w-full min-w-0 border p-4">
-			<legend class="fieldset-legend">Create a user</legend>
+	<section class="section">
+		<h2 class="section-title">Create a user</h2>
+		<form onsubmit={create}>
+			<fieldset class="fieldset panel w-full min-w-0 p-5">
+				<div class="grid gap-3 sm:grid-cols-2">
+					<label class="flex flex-col gap-1">
+						<span class="label">First name</span>
+						<input class="input input-sm w-full" bind:value={firstName} />
+					</label>
+					<label class="flex flex-col gap-1">
+						<span class="label">Last name</span>
+						<input class="input input-sm w-full" bind:value={lastName} />
+					</label>
+				</div>
 
-			<div class="grid gap-3 sm:grid-cols-2">
-				<label class="flex flex-col gap-1">
-					<span class="label">First name</span>
-					<input class="input input-sm w-full" bind:value={firstName} />
-				</label>
-				<label class="flex flex-col gap-1">
-					<span class="label">Last name</span>
-					<input class="input input-sm w-full" bind:value={lastName} />
-				</label>
-			</div>
-
-			<div class="mt-2 grid gap-3 sm:grid-cols-2">
-				{#if pluginState.plugins.length > 0}
-					<div class="flex flex-col gap-1">
-						<span class="label">Plugins</span>
-						{#if administrator}
-							<button
-								type="button"
-								class="btn btn-sm btn-outline w-full justify-start font-normal"
-								disabled
-							>
-								Every plugin
-							</button>
-						{:else}
-							<div class="dropdown w-full">
-								<div
-									tabindex="0"
-									role="button"
-									class="btn btn-sm btn-outline w-full justify-between font-normal"
-									aria-label="The plugins that this person can turn on"
+				<div class="mt-2 grid gap-3 sm:grid-cols-2">
+					{#if pluginState.plugins.length > 0}
+						<div class="flex flex-col gap-1">
+							<span class="label">Plugins</span>
+							{#if administrator}
+								<button
+									type="button"
+									class="btn btn-sm btn-outline w-full justify-start font-normal"
+									disabled
 								>
-									<span class="truncate">{allowlistLabel}</span>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										width="12"
-										height="12"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										opacity="0.5"
+									Every plugin
+								</button>
+							{:else}
+								<div class="dropdown w-full">
+									<div
+										tabindex="0"
+										role="button"
+										class="btn btn-sm btn-outline w-full justify-between font-normal"
+										aria-label="The plugins that this person can turn on"
 									>
-										<path d="m6 9 6 6 6-6" />
-									</svg>
+										<span class="truncate">{allowlistLabel}</span>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="12"
+											height="12"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											opacity="0.5"
+										>
+											<path d="m6 9 6 6 6-6" />
+										</svg>
+									</div>
+									<ul
+										tabindex="-1"
+										class="dropdown-content menu menu-sm bg-base-100 border-base-300 rounded-box z-50 mt-2 w-full border p-2 shadow-lg"
+									>
+										{#each pluginState.plugins as plugin (plugin.id)}
+											<li>
+												<label class="flex items-center gap-2">
+													<input
+														type="checkbox"
+														class="checkbox checkbox-sm"
+														value={plugin.id}
+														bind:group={allowedPlugins}
+													/>
+													<span class="truncate">{displayNameOf(plugin, plugin.id)}</span>
+												</label>
+											</li>
+										{/each}
+									</ul>
 								</div>
-								<ul
-									tabindex="-1"
-									class="dropdown-content menu menu-sm bg-base-100 border-base-300 rounded-box z-50 mt-2 w-full border p-2 shadow-lg"
-								>
-									{#each pluginState.plugins as plugin (plugin.id)}
-										<li>
-											<label class="flex items-center gap-2">
-												<input
-													type="checkbox"
-													class="checkbox checkbox-sm"
-													value={plugin.id}
-													bind:group={allowedPlugins}
-												/>
-												<span class="truncate">{displayNameOf(plugin, plugin.id)}</span>
-											</label>
-										</li>
-									{/each}
-								</ul>
-							</div>
-						{/if}
-						<span class="label whitespace-normal">
-							{administrator
-								? 'An administrator already reaches every plugin.'
-								: 'The plugins that this person can turn on in a workspace.'}
+							{/if}
+							<span class="label whitespace-normal">
+								{administrator
+									? 'An administrator already reaches every plugin.'
+									: 'The plugins that this person can turn on in a workspace.'}
+							</span>
+						</div>
+					{/if}
+
+					<label class="flex cursor-pointer flex-wrap items-center gap-2 sm:pt-6">
+						<input type="checkbox" class="toggle toggle-sm" bind:checked={administrator} />
+						<span class="text-sm">Administrator</span>
+						<span class="label whitespace-normal"
+							>Manages the users and the plugins of every workspace.</span
+						>
+					</label>
+				</div>
+
+				<div class="mt-3 flex justify-end">
+					<button type="submit" class="btn btn-primary btn-sm" disabled={busy}>Create</button>
+				</div>
+			</fieldset>
+		</form>
+	</section>
+
+	<section class="section">
+		<h2 class="section-title">All users</h2>
+
+		{#if status === 'loading'}
+			<div class="flex flex-col gap-2" aria-hidden="true">
+				{#each [0, 1, 2] as i (i)}
+					<span class="skeleton h-12 w-full"></span>
+				{/each}
+			</div>
+		{:else if status === 'error'}
+			<div role="alert" class="alert alert-error alert-soft mb-6">
+				<span>The hub answered no user. Reload the page.</span>
+			</div>
+		{:else}
+			<ul class="list panel">
+				{#each users as user (user.id)}
+					<li class="list-row flex flex-wrap items-center justify-between gap-3">
+						<span class="flex items-center gap-2 text-sm">
+							<a
+								class="link link-hover font-semibold"
+								href={resolve('/(dashboard)/admin/users/[user]', { user: user.id })}
+							>
+								{nameOf(user)}
+							</a>
+							{#if user.id === selfId}
+								<span class="badge badge-ghost badge-sm">You</span>
+							{/if}
+							{#if user.is_administrator}
+								<span class="badge badge-outline badge-sm">Administrator</span>
+							{/if}
+							{#if user.status === 'blocked'}
+								<span class="badge badge-error badge-sm">Blocked</span>
+							{/if}
 						</span>
-					</div>
-				{/if}
-
-				<label class="flex cursor-pointer flex-wrap items-center gap-2 sm:pt-6">
-					<input type="checkbox" class="toggle toggle-sm" bind:checked={administrator} />
-					<span class="text-sm">Administrator</span>
-					<span class="label whitespace-normal"
-						>Manages the users and the plugins of every workspace.</span
-					>
-				</label>
-			</div>
-
-			<div class="mt-3 flex justify-end">
-				<button type="submit" class="btn btn-primary btn-sm" disabled={busy}>Create</button>
-			</div>
-		</fieldset>
-	</form>
-
-	{#if status === 'loading'}
-		<div class="mt-8 flex flex-col gap-2" aria-hidden="true">
-			{#each [0, 1, 2] as i (i)}
-				<span class="skeleton h-12 w-full"></span>
-			{/each}
-		</div>
-	{:else if status === 'error'}
-		<div class="alert alert-error mt-6">
-			<span>The hub answered no user. Reload the page.</span>
-		</div>
-	{:else}
-		<ul class="border-base-300 rounded-box mt-8 divide-y border">
-			{#each users as user (user.id)}
-				<li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-					<span class="flex items-center gap-2 text-sm">
-						<a
-							class="link link-hover font-semibold"
-							href={resolve('/(dashboard)/admin/users/[user]', { user: user.id })}
-						>
-							{nameOf(user)}
-						</a>
-						{#if user.id === selfId}
-							<span class="badge badge-ghost badge-sm">You</span>
-						{/if}
-						{#if user.is_administrator}
-							<span class="badge badge-outline badge-sm">Administrator</span>
-						{/if}
-						{#if user.status === 'blocked'}
-							<span class="badge badge-error badge-sm">Blocked</span>
-						{/if}
-					</span>
-					<span class="flex items-center gap-1">
-						<button
-							type="button"
-							class="btn btn-ghost btn-xs"
-							disabled={busy}
-							onclick={() => invite(user)}
-						>
-							Invite
-						</button>
-						{#if user.is_administrator}
+						<span class="flex items-center gap-1">
 							<button
 								type="button"
-								class="btn btn-ghost btn-xs"
+								class="btn btn-ghost btn-sm"
 								disabled={busy}
-								onclick={() =>
-									change(
-										user,
-										{ is_administrator: false },
-										`${nameOf(user)} will no longer administer this instance.`
-									)}
+								onclick={() => invite(user)}
 							>
-								Unmark
+								Invite
 							</button>
-						{:else}
-							<button
-								type="button"
-								class="btn btn-ghost btn-xs"
-								disabled={busy}
-								onclick={() => change(user, { is_administrator: true })}
-							>
-								Mark administrator
-							</button>
-						{/if}
-						{#if user.status === 'blocked'}
-							<button
-								type="button"
-								class="btn btn-ghost btn-xs"
-								disabled={busy}
-								onclick={() => change(user, { status: 'active' })}
-							>
-								Unblock
-							</button>
-						{:else}
-							<button
-								type="button"
-								class="btn btn-ghost btn-xs text-error"
-								disabled={busy}
-								onclick={() =>
-									change(
-										user,
-										{ status: 'blocked' },
-										`${nameOf(user)} will reach nothing until you unblock them. Their records stay.`
-									)}
-							>
-								Block
-							</button>
-						{/if}
-					</span>
-				</li>
-			{/each}
-		</ul>
-	{/if}
+							{#if user.is_administrator}
+								<button
+									type="button"
+									class="btn btn-ghost btn-sm"
+									disabled={busy}
+									onclick={() =>
+										change(
+											user,
+											{ is_administrator: false },
+											`${nameOf(user)} will no longer administer this instance.`
+										)}
+								>
+									Unmark
+								</button>
+							{:else}
+								<button
+									type="button"
+									class="btn btn-ghost btn-sm"
+									disabled={busy}
+									onclick={() => change(user, { is_administrator: true })}
+								>
+									Mark administrator
+								</button>
+							{/if}
+							{#if user.status === 'blocked'}
+								<button
+									type="button"
+									class="btn btn-ghost btn-sm"
+									disabled={busy}
+									onclick={() => change(user, { status: 'active' })}
+								>
+									Unblock
+								</button>
+							{:else}
+								<button
+									type="button"
+									class="btn btn-ghost btn-sm text-error"
+									disabled={busy}
+									onclick={() =>
+										change(
+											user,
+											{ status: 'blocked' },
+											`${nameOf(user)} will reach nothing until you unblock them. Their records stay.`
+										)}
+								>
+									Block
+								</button>
+							{/if}
+						</span>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</section>
 </div>
 
 <ConfirmDialog bind:this={confirmDialog} />

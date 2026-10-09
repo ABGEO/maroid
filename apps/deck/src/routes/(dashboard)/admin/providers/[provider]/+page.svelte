@@ -232,163 +232,174 @@
 			{/each}
 		</div>
 	{:else if status === 'missing'}
-		<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Not found</h1>
-		<p class="text-base-content/60 mt-3 text-sm">Dex holds no provider with this identifier.</p>
+		<header class="page-header">
+			<div>
+				<h1 class="page-title">Not found</h1>
+				<p class="page-lead">Dex holds no provider with this identifier.</p>
+			</div>
+		</header>
 	{:else if status === 'error'}
-		<div class="alert alert-error">
+		<div role="alert" class="alert alert-error alert-soft">
 			<span>The hub answered no provider. Reload the page.</span>
 		</div>
 	{:else if provider}
-		<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">{provider.name}</h1>
-		<div class="mt-3 flex flex-wrap items-center gap-2">
-			<span class="badge badge-outline badge-sm">{presetLabel(provider)}</span>
-			<span class="text-base-content/50 font-mono text-[11px]">{provider.id}</span>
-		</div>
+		<header class="page-header">
+			<div>
+				<h1 class="page-title">{provider.name}</h1>
+				<div class="mt-2 flex flex-wrap items-center gap-2">
+					<span class="badge badge-outline badge-sm">{presetLabel(provider)}</span>
+					<span class="meta font-mono">{provider.id}</span>
+				</div>
+			</div>
+		</header>
 
 		{#if banner}
-			<div class="alert alert-error mt-6">
+			<div role="alert" class="alert alert-error alert-soft mb-6">
 				<span>{banner}</span>
 			</div>
 		{:else if saved}
-			<div class="alert alert-success alert-soft mt-6">
+			<div role="status" class="alert alert-success alert-soft mb-6">
 				<span>Saved. The next sign in reads the change.</span>
 			</div>
 		{/if}
 
 		{#if provider.static}
-			<div class="alert alert-info alert-soft mt-6">
+			<div role="status" class="alert alert-info alert-soft mb-6">
 				<span class="text-sm">
 					The configuration file of Dex holds this provider, so Maroid changes nothing on it. Edit
 					the file and restart Dex to change it.
 				</span>
 			</div>
 		{:else}
-			<form class="mt-8" onsubmit={save}>
-				<fieldset
-					class="fieldset bg-base-200/40 border-base-300 rounded-box w-full min-w-0 border p-4"
-				>
-					<legend class="fieldset-legend">Provider</legend>
+			<section class="section">
+				<h2 class="section-title">Provider</h2>
+				<form onsubmit={save}>
+					<fieldset class="fieldset panel w-full min-w-0 p-5">
+						<label class="flex flex-col gap-1">
+							<span class="label">Name</span>
+							<input class="input input-sm w-full" bind:value={name} disabled={busy} required />
+							<span class="label whitespace-normal"
+								>The label of the button on the sign in page.</span
+							>
+							{@render failure('/name')}
+						</label>
 
-					<label class="flex flex-col gap-1">
-						<span class="label">Name</span>
-						<input class="input input-sm w-full" bind:value={name} disabled={busy} required />
-						<span class="label whitespace-normal">The label of the button on the sign in page.</span
-						>
-						{@render failure('/name')}
-					</label>
-
-					{#if takesClient}
-						<div class="mt-2 grid gap-3 sm:grid-cols-2">
-							{@render fixed('Issuer', provider.issuer ?? '')}
-							{@render fixed('User identifier claim', provider.user_id_key ?? '')}
-						</div>
-
-						<div class="mt-2 grid gap-3 sm:grid-cols-2">
-							<label class="flex flex-col gap-1">
-								<span class="label">Client identifier</span>
-								<input
-									class="input input-sm w-full font-mono"
-									bind:value={clientId}
-									disabled={busy}
-									required
-								/>
-								{@render failure('/client_id')}
-							</label>
-							<label class="flex flex-col gap-1">
-								<span class="label">Client secret</span>
-								<input
-									class="input input-sm w-full font-mono"
-									type="password"
-									autocomplete="off"
-									bind:value={clientSecret}
-									disabled={busy}
-									placeholder={provider.client_secret_set ? 'Set. Leave empty to keep it.' : ''}
-								/>
-								{@render failure('/client_secret')}
-							</label>
-						</div>
-
-						{#if provider.preset === 'oidc'}
-							<label class="mt-2 flex flex-col gap-1">
-								<span class="label">Scopes</span>
-								<input
-									class="input input-sm w-full font-mono"
-									bind:value={scopes}
-									disabled={busy}
-								/>
-								{@render failure('/scopes')}
-							</label>
-						{:else}
-							<div class="mt-2">
-								{@render fixed('Scopes', 'openid profile')}
+						{#if takesClient}
+							<div class="mt-2 grid gap-3 sm:grid-cols-2">
+								{@render fixed('Issuer', provider.issuer ?? '')}
+								{@render fixed('User identifier claim', provider.user_id_key ?? '')}
 							</div>
+
+							<div class="mt-2 grid gap-3 sm:grid-cols-2">
+								<label class="flex flex-col gap-1">
+									<span class="label">Client identifier</span>
+									<input
+										class="input input-sm w-full font-mono"
+										bind:value={clientId}
+										disabled={busy}
+										required
+									/>
+									{@render failure('/client_id')}
+								</label>
+								<label class="flex flex-col gap-1">
+									<span class="label">Client secret</span>
+									<input
+										class="input input-sm w-full font-mono"
+										type="password"
+										autocomplete="off"
+										bind:value={clientSecret}
+										disabled={busy}
+										placeholder={provider.client_secret_set ? 'Set. Leave empty to keep it.' : ''}
+									/>
+									{@render failure('/client_secret')}
+								</label>
+							</div>
+
+							{#if provider.preset === 'oidc'}
+								<label class="mt-2 flex flex-col gap-1">
+									<span class="label">Scopes</span>
+									<input
+										class="input input-sm w-full font-mono"
+										bind:value={scopes}
+										disabled={busy}
+									/>
+									{@render failure('/scopes')}
+								</label>
+							{:else}
+								<div class="mt-2">
+									{@render fixed('Scopes', 'openid profile')}
+								</div>
+							{/if}
+
+							<label class="mt-2 flex flex-col gap-1">
+								<span class="label">Options</span>
+								<textarea
+									class="textarea textarea-sm w-full font-mono text-xs"
+									rows="5"
+									bind:value={options}
+									disabled={busy}
+								></textarea>
+								<span class="label whitespace-normal">
+									Further options of the connector of Dex, in YAML. A removed key goes away.
+								</span>
+								{@render failure('/options')}
+								{#each Object.entries(errors).filter( ([pointer]) => pointer.startsWith('/options/') ) as [pointer, detail] (pointer)}
+									<span class="text-error text-xs"
+										>{pointer.slice('/options/'.length)}: {detail}</span
+									>
+								{/each}
+							</label>
 						{/if}
 
-						<label class="mt-2 flex flex-col gap-1">
-							<span class="label">Options</span>
-							<textarea
-								class="textarea textarea-sm w-full font-mono text-xs"
-								rows="5"
-								bind:value={options}
-								disabled={busy}
-							></textarea>
-							<span class="label whitespace-normal">
-								Further options of the connector of Dex, in YAML. A removed key goes away.
-							</span>
-							{@render failure('/options')}
-							{#each Object.entries(errors).filter( ([pointer]) => pointer.startsWith('/options/') ) as [pointer, detail] (pointer)}
-								<span class="text-error text-xs">{pointer.slice('/options/'.length)}: {detail}</span
-								>
-							{/each}
-						</label>
-					{/if}
-
-					<div class="mt-3 flex justify-end">
-						<button type="submit" class="btn btn-primary btn-sm" disabled={busy}>Save</button>
-					</div>
-				</fieldset>
-			</form>
+						<div class="mt-3 flex justify-end">
+							<button type="submit" class="btn btn-primary btn-sm" disabled={busy}>Save</button>
+						</div>
+					</fieldset>
+				</form>
+			</section>
 
 			{#if takesClient && provider.redirect_uri}
-				<fieldset
-					class="fieldset bg-base-200/40 border-base-300 rounded-box mt-6 w-full min-w-0 border p-4"
-				>
-					<legend class="fieldset-legend">Redirect address</legend>
+				<section class="section">
+					<h2 class="section-title">Redirect address</h2>
+					<fieldset class="fieldset panel w-full min-w-0 p-5">
+						<span class="label whitespace-normal">
+							{provider.preset === 'telegram'
+								? 'Set the domain of this address in BotFather.'
+								: 'Register this address at the provider.'}
+						</span>
+						<div class="flex w-full gap-2">
+							<input
+								class="input input-sm w-full font-mono text-xs"
+								readonly
+								value={provider.redirect_uri}
+								aria-label="The redirect address of Dex"
+							/>
+							<button
+								type="button"
+								class="btn btn-sm"
+								onclick={() => provider?.redirect_uri && copy(provider.redirect_uri)}
+							>
+								{copied ? 'Copied' : 'Copy'}
+							</button>
+						</div>
+					</fieldset>
+				</section>
+			{/if}
+
+			<section class="section">
+				<h2 class="section-title text-error">Remove</h2>
+				<fieldset class="fieldset panel border-error/40 w-full min-w-0 p-5">
 					<span class="label whitespace-normal">
-						{provider.preset === 'telegram'
-							? 'Set the domain of this address in BotFather.'
-							: 'Register this address at the provider.'}
+						{provider.identity_count}
+						{provider.identity_count === 1 ? 'identity' : 'identities'} of this provider go with it.
 					</span>
-					<div class="flex w-full gap-2">
-						<input
-							class="input input-sm w-full font-mono text-[11px]"
-							readonly
-							value={provider.redirect_uri}
-							aria-label="The redirect address of Dex"
-						/>
-						<button
-							type="button"
-							class="btn btn-sm"
-							onclick={() => provider?.redirect_uri && copy(provider.redirect_uri)}
-						>
-							{copied ? 'Copied' : 'Copy'}
+					<div class="flex justify-end">
+						<button type="button" class="btn btn-error btn-sm" disabled={busy} onclick={remove}>
+							Remove the provider
 						</button>
 					</div>
 				</fieldset>
-			{/if}
-
-			<fieldset class="fieldset border-error/40 rounded-box mt-6 w-full min-w-0 border p-4">
-				<legend class="fieldset-legend text-error">Remove</legend>
-				<span class="label whitespace-normal">
-					{provider.identity_count}
-					{provider.identity_count === 1 ? 'identity' : 'identities'} of this provider go with it.
-				</span>
-				<div class="flex justify-end">
-					<button type="button" class="btn btn-error btn-sm" disabled={busy} onclick={remove}>
-						Remove the provider
-					</button>
-				</div>
-			</fieldset>
+			</section>
 		{/if}
 	{/if}
 </div>

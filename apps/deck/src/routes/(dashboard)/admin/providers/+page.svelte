@@ -149,27 +149,31 @@
 {/snippet}
 
 <div class="max-w-3xl">
-	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Sign-in providers</h1>
-	<p class="text-base-content/60 mt-3 text-sm">
-		The accounts that a person signs in with. A change reaches the sign in page of Dex at the next
-		sign in.
-	</p>
+	<header class="page-header">
+		<div>
+			<h1 class="page-title">Sign-in providers</h1>
+			<p class="page-lead">
+				The accounts that a person signs in with. A change reaches the sign in page of Dex at the
+				next sign in.
+			</p>
+		</div>
+	</header>
 
 	{#if banner}
-		<div class="alert alert-error mt-6">
+		<div role="alert" class="alert alert-error alert-soft mb-6">
 			<span>{banner}</span>
 		</div>
 	{/if}
 
 	{#if redirectUri}
-		<div class="alert alert-info alert-soft mt-6 flex flex-col items-start gap-2">
+		<div role="status" class="alert alert-info alert-soft mb-6 flex flex-col items-start gap-2">
 			<span class="text-sm">
 				Register this redirect address at an OpenID Connect provider, or set its domain in BotFather
 				for Telegram, before you add the provider here.
 			</span>
 			<div class="flex w-full gap-2">
 				<input
-					class="input input-bordered input-sm w-full font-mono text-[11px]"
+					class="input input-sm w-full font-mono text-xs"
 					readonly
 					value={redirectUri}
 					aria-label="The redirect address of Dex"
@@ -181,180 +185,187 @@
 		</div>
 	{/if}
 
-	<form class="mt-8" onsubmit={create}>
-		<fieldset class="fieldset bg-base-200/40 border-base-300 rounded-box w-full min-w-0 border p-4">
-			<legend class="fieldset-legend">Add a provider</legend>
+	<section class="section">
+		<h2 class="section-title">Add a provider</h2>
+		<form onsubmit={create}>
+			<fieldset class="fieldset panel w-full min-w-0 p-5">
+				<div class="join" role="radiogroup" aria-label="The kind of the provider">
+					{#each presets as one (one.value)}
+						<input
+							class="join-item btn btn-sm"
+							type="radio"
+							name="preset"
+							aria-label={one.label}
+							value={one.value}
+							bind:group={preset}
+							disabled={busy || (one.once !== undefined && taken.has(one.once))}
+						/>
+					{/each}
+				</div>
 
-			<div class="join" role="radiogroup" aria-label="The kind of the provider">
-				{#each presets as one (one.value)}
-					<input
-						class="join-item btn btn-sm"
-						type="radio"
-						name="preset"
-						aria-label={one.label}
-						value={one.value}
-						bind:group={preset}
-						disabled={busy || (one.once !== undefined && taken.has(one.once))}
-					/>
-				{/each}
-			</div>
+				{#if preset === 'local'}
+					<span class="label mt-2 whitespace-normal">
+						Adds "Log in with Email" to the sign in page. A person signs in with an email address
+						and a password that an administrator gives on the page of the user.
+					</span>
+				{:else}
+					{#if preset === 'oidc'}
+						<div class="mt-2 grid gap-3 sm:grid-cols-2">
+							<label class="flex flex-col gap-1">
+								<span class="label">Identifier</span>
+								<input
+									class="input input-sm w-full font-mono"
+									bind:value={id}
+									placeholder="oidc-provider"
+									required
+								/>
+								<span class="label whitespace-normal"
+									>It never changes after the provider exists.</span
+								>
+								{@render failure('/id')}
+							</label>
+							<label class="flex flex-col gap-1">
+								<span class="label">Name</span>
+								<input class="input input-sm w-full" bind:value={name} required />
+								<span class="label whitespace-normal"
+									>The label of the button on the sign in page.</span
+								>
+								{@render failure('/name')}
+							</label>
+						</div>
 
-			{#if preset === 'local'}
-				<span class="label mt-2 whitespace-normal">
-					Adds "Log in with Email" to the sign in page. A person signs in with an email address and
-					a password that an administrator gives on the page of the user.
-				</span>
-			{:else}
-				{#if preset === 'oidc'}
-					<div class="mt-2 grid gap-3 sm:grid-cols-2">
-						<label class="flex flex-col gap-1">
-							<span class="label">Identifier</span>
+						<label class="mt-2 flex flex-col gap-1">
+							<span class="label">Issuer</span>
 							<input
 								class="input input-sm w-full font-mono"
-								bind:value={id}
-								placeholder="oidc-provider"
+								type="url"
+								bind:value={issuer}
+								placeholder="https://auth.example.com"
 								required
 							/>
 							<span class="label whitespace-normal"
 								>It never changes after the provider exists.</span
 							>
-							{@render failure('/id')}
+							{@render failure('/issuer')}
 						</label>
-						<label class="flex flex-col gap-1">
-							<span class="label">Name</span>
-							<input class="input input-sm w-full" bind:value={name} required />
-							<span class="label whitespace-normal"
-								>The label of the button on the sign in page.</span
-							>
-							{@render failure('/name')}
-						</label>
-					</div>
+					{/if}
 
-					<label class="mt-2 flex flex-col gap-1">
-						<span class="label">Issuer</span>
-						<input
-							class="input input-sm w-full font-mono"
-							type="url"
-							bind:value={issuer}
-							placeholder="https://auth.example.com"
-							required
-						/>
-						<span class="label whitespace-normal">It never changes after the provider exists.</span>
-						{@render failure('/issuer')}
-					</label>
-				{/if}
-
-				<div class="mt-2 grid gap-3 sm:grid-cols-2">
-					<label class="flex flex-col gap-1">
-						<span class="label">Client identifier</span>
-						<input
-							class="input input-sm w-full font-mono"
-							bind:value={clientId}
-							placeholder={preset === 'telegram' ? 'The bot of this hub' : ''}
-							required={preset === 'oidc'}
-						/>
-						{#if preset === 'telegram'}
-							<span class="label whitespace-normal">Leave empty to use the bot of this hub.</span>
-						{/if}
-						{@render failure('/client_id')}
-					</label>
-					<label class="flex flex-col gap-1">
-						<span class="label">Client secret</span>
-						<input
-							class="input input-sm w-full font-mono"
-							type="password"
-							autocomplete="off"
-							bind:value={clientSecret}
-							required
-						/>
-						{@render failure('/client_secret')}
-					</label>
-				</div>
-
-				{#if preset === 'oidc'}
 					<div class="mt-2 grid gap-3 sm:grid-cols-2">
 						<label class="flex flex-col gap-1">
-							<span class="label">User identifier claim</span>
+							<span class="label">Client identifier</span>
 							<input
 								class="input input-sm w-full font-mono"
-								bind:value={userIdKey}
-								placeholder="sub"
+								bind:value={clientId}
+								placeholder={preset === 'telegram' ? 'The bot of this hub' : ''}
+								required={preset === 'oidc'}
 							/>
-							<span class="label whitespace-normal"
-								>It never changes after the provider exists.</span
-							>
-							{@render failure('/user_id_key')}
+							{#if preset === 'telegram'}
+								<span class="label whitespace-normal">Leave empty to use the bot of this hub.</span>
+							{/if}
+							{@render failure('/client_id')}
 						</label>
 						<label class="flex flex-col gap-1">
-							<span class="label">Scopes</span>
+							<span class="label">Client secret</span>
 							<input
 								class="input input-sm w-full font-mono"
-								bind:value={scopes}
-								placeholder="openid profile email"
+								type="password"
+								autocomplete="off"
+								bind:value={clientSecret}
+								required
 							/>
-							{@render failure('/scopes')}
+							{@render failure('/client_secret')}
 						</label>
 					</div>
+
+					{#if preset === 'oidc'}
+						<div class="mt-2 grid gap-3 sm:grid-cols-2">
+							<label class="flex flex-col gap-1">
+								<span class="label">User identifier claim</span>
+								<input
+									class="input input-sm w-full font-mono"
+									bind:value={userIdKey}
+									placeholder="sub"
+								/>
+								<span class="label whitespace-normal"
+									>It never changes after the provider exists.</span
+								>
+								{@render failure('/user_id_key')}
+							</label>
+							<label class="flex flex-col gap-1">
+								<span class="label">Scopes</span>
+								<input
+									class="input input-sm w-full font-mono"
+									bind:value={scopes}
+									placeholder="openid profile email"
+								/>
+								{@render failure('/scopes')}
+							</label>
+						</div>
+					{/if}
+
+					<label class="mt-2 flex flex-col gap-1">
+						<span class="label">Options</span>
+						<textarea
+							class="textarea textarea-sm w-full font-mono text-xs"
+							rows="4"
+							bind:value={options}
+							placeholder="getUserInfo: true"
+						></textarea>
+						<span class="label whitespace-normal">
+							Further options of the connector of Dex, in YAML. A field above sets its own key.
+						</span>
+						{@render failure('/options')}
+						{#each Object.entries(errors).filter( ([pointer]) => pointer.startsWith('/options/') ) as [pointer, detail] (pointer)}
+							<span class="text-error text-xs">{pointer.slice('/options/'.length)}: {detail}</span>
+						{/each}
+					</label>
 				{/if}
 
-				<label class="mt-2 flex flex-col gap-1">
-					<span class="label">Options</span>
-					<textarea
-						class="textarea textarea-sm w-full font-mono text-xs"
-						rows="4"
-						bind:value={options}
-						placeholder="getUserInfo: true"
-					></textarea>
-					<span class="label whitespace-normal">
-						Further options of the connector of Dex, in YAML. A field above sets its own key.
-					</span>
-					{@render failure('/options')}
-					{#each Object.entries(errors).filter( ([pointer]) => pointer.startsWith('/options/') ) as [pointer, detail] (pointer)}
-						<span class="text-error text-xs">{pointer.slice('/options/'.length)}: {detail}</span>
-					{/each}
-				</label>
-			{/if}
+				<div class="mt-3 flex justify-end">
+					<button type="submit" class="btn btn-primary btn-sm" disabled={busy}>Add</button>
+				</div>
+			</fieldset>
+		</form>
+	</section>
 
-			<div class="mt-3 flex justify-end">
-				<button type="submit" class="btn btn-primary btn-sm" disabled={busy}>Add</button>
+	<section class="section">
+		<h2 class="section-title">All providers</h2>
+
+		{#if status === 'loading'}
+			<div class="flex flex-col gap-2" aria-hidden="true">
+				{#each [0, 1, 2] as i (i)}
+					<span class="skeleton h-12 w-full"></span>
+				{/each}
 			</div>
-		</fieldset>
-	</form>
-
-	{#if status === 'loading'}
-		<div class="mt-8 flex flex-col gap-2" aria-hidden="true">
-			{#each [0, 1, 2] as i (i)}
-				<span class="skeleton h-12 w-full"></span>
-			{/each}
-		</div>
-	{:else if status === 'error'}
-		<div class="alert alert-error mt-6">
-			<span>The hub answered no provider. Reload the page.</span>
-		</div>
-	{:else}
-		<ul class="border-base-300 rounded-box mt-8 divide-y border">
-			{#each providers as provider (provider.id)}
-				<li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-					<span class="min-w-0">
-						<a
-							class="link link-hover text-sm font-semibold"
-							href={resolve('/(dashboard)/admin/providers/[provider]', { provider: provider.id })}
-						>
-							{provider.name}
-						</a>
-						<span class="text-base-content/50 block truncate font-mono text-[11px]">
-							{provider.id}
+		{:else if status === 'error'}
+			<div role="alert" class="alert alert-error alert-soft mb-6">
+				<span>The hub answered no provider. Reload the page.</span>
+			</div>
+		{:else}
+			<ul class="list panel">
+				{#each providers as provider (provider.id)}
+					<li class="list-row flex flex-wrap items-center justify-between gap-3">
+						<span class="min-w-0">
+							<a
+								class="link link-hover text-sm font-semibold"
+								href={resolve('/(dashboard)/admin/providers/[provider]', { provider: provider.id })}
+							>
+								{provider.name}
+							</a>
+							<span class="meta block truncate font-mono">
+								{provider.id}
+							</span>
 						</span>
-					</span>
-					<span class="flex items-center gap-2">
-						<span class="badge badge-outline badge-sm">{presetLabel(provider)}</span>
-						<span class="text-base-content/60 text-xs">
-							{provider.identity_count}
-							{provider.identity_count === 1 ? 'identity' : 'identities'}
+						<span class="flex items-center gap-2">
+							<span class="badge badge-outline badge-sm">{presetLabel(provider)}</span>
+							<span class="text-base-content/60 text-xs">
+								{provider.identity_count}
+								{provider.identity_count === 1 ? 'identity' : 'identities'}
+							</span>
 						</span>
-					</span>
-				</li>
-			{/each}
-		</ul>
-	{/if}
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</section>
 </div>

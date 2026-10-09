@@ -1,5 +1,6 @@
 @import '@maroid/theme/maroid.css';
 @import '@maroid/theme/maroid-dusk.css';
+@import '@maroid/theme/components.css';
 
 @import 'tailwindcss';
 @plugin 'daisyui' {

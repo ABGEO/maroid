@@ -298,247 +298,252 @@
 			{/each}
 		</div>
 	{:else if status === 'missing'}
-		<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Not found</h1>
-		<p class="text-base-content/60 mt-3 text-sm">No user has this address.</p>
+		<header class="page-header">
+			<div>
+				<h1 class="page-title">Not found</h1>
+				<p class="page-lead">No user has this address.</p>
+			</div>
+		</header>
 	{:else if status === 'error'}
-		<div class="alert alert-error">
+		<div role="alert" class="alert alert-error alert-soft">
 			<span>The hub answered no user. Reload the page.</span>
 		</div>
 	{:else if user}
-		<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">{name}</h1>
-		<div class="mt-3 flex flex-wrap items-center gap-2">
-			{#if isSelf}
-				<span class="badge badge-ghost badge-sm">You</span>
-			{/if}
-			{#if user.is_administrator}
-				<span class="badge badge-outline badge-sm">Administrator</span>
-			{/if}
-			{#if user.status === 'blocked'}
-				<span class="badge badge-error badge-sm">Blocked</span>
-			{:else}
-				<span class="badge badge-success badge-soft badge-sm">Active</span>
-			{/if}
-		</div>
+		<header class="page-header">
+			<div>
+				<h1 class="page-title">{name}</h1>
+				<div class="mt-2 flex flex-wrap items-center gap-2">
+					{#if isSelf}
+						<span class="badge badge-ghost badge-sm">You</span>
+					{/if}
+					{#if user.is_administrator}
+						<span class="badge badge-outline badge-sm">Administrator</span>
+					{/if}
+					{#if user.status === 'blocked'}
+						<span class="badge badge-error badge-sm">Blocked</span>
+					{:else}
+						<span class="badge badge-success badge-soft badge-sm">Active</span>
+					{/if}
+				</div>
+			</div>
+		</header>
 
 		{#if banner}
-			<div class="alert alert-error mt-6">
+			<div role="alert" class="alert alert-error alert-soft mb-6">
 				<span>{banner}</span>
 			</div>
 		{/if}
 
-		<form class="mt-8" onsubmit={saveNames}>
-			<fieldset
-				class="fieldset bg-base-200/40 border-base-300 rounded-box w-full min-w-0 border p-4"
-			>
-				<legend class="fieldset-legend">Profile</legend>
+		<section class="section">
+			<h2 class="section-title">Name</h2>
+			<form onsubmit={saveNames}>
+				<fieldset class="fieldset panel w-full min-w-0 p-5">
+					<div class="grid gap-3 sm:grid-cols-2">
+						<label class="flex flex-col gap-1">
+							<span class="label">First name</span>
+							<input class="input input-sm w-full" bind:value={firstName} disabled={busy} />
+						</label>
+						<label class="flex flex-col gap-1">
+							<span class="label">Last name</span>
+							<input class="input input-sm w-full" bind:value={lastName} disabled={busy} />
+						</label>
+					</div>
 
-				<div class="grid gap-3 sm:grid-cols-2">
-					<label class="flex flex-col gap-1">
-						<span class="label">First name</span>
-						<input class="input input-sm w-full" bind:value={firstName} disabled={busy} />
-					</label>
-					<label class="flex flex-col gap-1">
-						<span class="label">Last name</span>
-						<input class="input input-sm w-full" bind:value={lastName} disabled={busy} />
-					</label>
-				</div>
+					<div class="mt-3 flex justify-end">
+						<button type="submit" class="btn btn-primary btn-sm" disabled={busy || !namesChanged}>
+							Save
+						</button>
+					</div>
+				</fieldset>
+			</form>
+		</section>
 
-				<div class="mt-3 flex justify-end">
-					<button type="submit" class="btn btn-primary btn-sm" disabled={busy || !namesChanged}>
-						Save
-					</button>
-				</div>
+		<section class="section">
+			<h2 class="section-title">Access</h2>
+			<fieldset class="fieldset panel w-full min-w-0 p-5">
+				<label class="flex cursor-pointer flex-wrap items-center gap-2">
+					<input
+						type="checkbox"
+						class="toggle toggle-sm"
+						checked={user.is_administrator}
+						disabled={busy}
+						onchange={(event) => setAdministrator(event.currentTarget)}
+					/>
+					<span class="text-sm">Administrator</span>
+					<span class="label whitespace-normal"
+						>Manages the users and the plugins of every workspace.</span
+					>
+				</label>
+
+				<label class="mt-2 flex cursor-pointer flex-wrap items-center gap-2">
+					<input
+						type="checkbox"
+						class="toggle toggle-sm toggle-error"
+						checked={user.status === 'blocked'}
+						disabled={busy}
+						onchange={(event) => setBlocked(event.currentTarget)}
+					/>
+					<span class="text-sm">Blocked</span>
+					<span class="label whitespace-normal"
+						>Reaches nothing until you unblock them. Their records stay.</span
+					>
+				</label>
 			</fieldset>
-		</form>
+		</section>
 
-		<fieldset
-			class="fieldset bg-base-200/40 border-base-300 rounded-box mt-6 w-full min-w-0 border p-4"
-		>
-			<legend class="fieldset-legend">Access</legend>
-
-			<label class="flex cursor-pointer flex-wrap items-center gap-2">
-				<input
-					type="checkbox"
-					class="toggle toggle-sm"
-					checked={user.is_administrator}
-					disabled={busy}
-					onchange={(event) => setAdministrator(event.currentTarget)}
-				/>
-				<span class="text-sm">Administrator</span>
-				<span class="label whitespace-normal"
-					>Manages the users and the plugins of every workspace.</span
-				>
-			</label>
-
-			<label class="mt-2 flex cursor-pointer flex-wrap items-center gap-2">
-				<input
-					type="checkbox"
-					class="toggle toggle-sm toggle-error"
-					checked={user.status === 'blocked'}
-					disabled={busy}
-					onchange={(event) => setBlocked(event.currentTarget)}
-				/>
-				<span class="text-sm">Blocked</span>
-				<span class="label whitespace-normal"
-					>Reaches nothing until you unblock them. Their records stay.</span
-				>
-			</label>
-		</fieldset>
-
-		<fieldset
-			class="fieldset bg-base-200/40 border-base-300 rounded-box mt-6 w-full min-w-0 border p-4"
-		>
-			<legend class="fieldset-legend">Local account</legend>
-
-			{#if accountNotice}
-				<div role="status" class="alert alert-success alert-soft">
-					<span class="text-sm">{accountNotice}</span>
-				</div>
-			{/if}
-
-			{#if localAccount}
-				<span class="label whitespace-normal">
-					{name} signs in with <span class="font-mono">{localAccount.username}</span> and a password.
-				</span>
-
-				<form class="mt-1 grid gap-3 sm:grid-cols-2" onsubmit={resetPassword}>
-					<label class="flex flex-col gap-1">
-						<span class="label">New password</span>
-						<input
-							class="input input-sm w-full"
-							type="password"
-							autocomplete="new-password"
-							bind:value={password}
-							disabled={busy}
-							required
-						/>
-					</label>
-					<label class="flex flex-col gap-1">
-						<span class="label">Repeat the password</span>
-						<input
-							class="input input-sm w-full"
-							type="password"
-							autocomplete="new-password"
-							bind:value={repeated}
-							disabled={busy}
-							required
-						/>
-					</label>
-					<div class="flex justify-end gap-2 sm:col-span-2">
-						<button
-							type="button"
-							class="btn btn-ghost btn-sm text-error"
-							disabled={busy || identities.length < 2}
-							title={identities.length < 2 ? 'It is the only way that this user signs in.' : ''}
-							onclick={removeAccount}
-						>
-							Remove the account
-						</button>
-						<button type="submit" class="btn btn-primary btn-sm" disabled={busy}>
-							Set the password
-						</button>
+		<section class="section">
+			<h2 class="section-title">Local account</h2>
+			<fieldset class="fieldset panel w-full min-w-0 p-5">
+				{#if accountNotice}
+					<div role="status" class="alert alert-success alert-soft">
+						<span class="text-sm">{accountNotice}</span>
 					</div>
-				</form>
-			{:else if !localProvider}
-				<span class="label whitespace-normal">
-					Add the Email provider on the
-					<a class="link" href={resolve('/admin/providers')}>sign-in providers</a> page first.
-				</span>
-			{:else}
-				<span class="label whitespace-normal">
-					{name} holds no local account. Give one, then hand the address and the password over in person.
-				</span>
+				{/if}
 
-				<form class="mt-1 grid gap-3 sm:grid-cols-2" onsubmit={giveAccount}>
-					<label class="flex flex-col gap-1 sm:col-span-2">
-						<span class="label">Email address</span>
-						<input
-							class="input input-sm w-full"
-							type="email"
-							autocomplete="off"
-							bind:value={email}
-							disabled={busy}
-							required
-						/>
-					</label>
-					<label class="flex flex-col gap-1">
-						<span class="label">Password</span>
-						<input
-							class="input input-sm w-full"
-							type="password"
-							autocomplete="new-password"
-							bind:value={password}
-							disabled={busy}
-							required
-						/>
-					</label>
-					<label class="flex flex-col gap-1">
-						<span class="label">Repeat the password</span>
-						<input
-							class="input input-sm w-full"
-							type="password"
-							autocomplete="new-password"
-							bind:value={repeated}
-							disabled={busy}
-							required
-						/>
-					</label>
-					<div class="flex justify-end sm:col-span-2">
-						<button type="submit" class="btn btn-primary btn-sm" disabled={busy}>
-							Give the account
-						</button>
-					</div>
-				</form>
-			{/if}
-		</fieldset>
+				{#if localAccount}
+					<span class="label whitespace-normal">
+						{name} signs in with <span class="font-mono">{localAccount.username}</span> and a password.
+					</span>
 
-		<fieldset
-			class="fieldset bg-base-200/40 border-base-300 rounded-box mt-6 w-full min-w-0 border p-4"
-		>
-			<legend class="fieldset-legend">Plugins</legend>
-
-			{#if pluginState.plugins.length === 0}
-				<span class="label whitespace-normal">The hub loaded no plugin.</span>
-			{:else}
-				{#if user.is_administrator}
-					<div role="alert" class="alert alert-info alert-soft">
-						<span class="text-sm">
-							{isSelf ? 'You are' : `${name} is`} an administrator, so
-							{isSelf ? 'you' : 'they'} already reach every plugin. The allowlist applies again when the
-							mark goes.
-						</span>
-					</div>
+					<form class="mt-1 grid gap-3 sm:grid-cols-2" onsubmit={resetPassword}>
+						<label class="flex flex-col gap-1">
+							<span class="label">New password</span>
+							<input
+								class="input input-sm w-full"
+								type="password"
+								autocomplete="new-password"
+								bind:value={password}
+								disabled={busy}
+								required
+							/>
+						</label>
+						<label class="flex flex-col gap-1">
+							<span class="label">Repeat the password</span>
+							<input
+								class="input input-sm w-full"
+								type="password"
+								autocomplete="new-password"
+								bind:value={repeated}
+								disabled={busy}
+								required
+							/>
+						</label>
+						<div class="flex justify-end gap-2 sm:col-span-2">
+							<button
+								type="button"
+								class="btn btn-ghost btn-sm text-error"
+								disabled={busy || identities.length < 2}
+								title={identities.length < 2 ? 'It is the only way that this user signs in.' : ''}
+								onclick={removeAccount}
+							>
+								Remove the account
+							</button>
+							<button type="submit" class="btn btn-primary btn-sm" disabled={busy}>
+								Set the password
+							</button>
+						</div>
+					</form>
+				{:else if !localProvider}
+					<span class="label whitespace-normal">
+						Add the Email provider on the
+						<a class="link" href={resolve('/admin/providers')}>sign-in providers</a> page first.
+					</span>
 				{:else}
 					<span class="label whitespace-normal">
-						The plugins that {name} can turn on in a workspace. A removal keeps every plugin that a workspace
-						already uses.
+						{name} holds no local account. Give one, then hand the address and the password over in person.
 					</span>
-				{/if}
-				<ul class="border-base-300 bg-base-100 rounded-box mt-1 divide-y border">
-					{#each pluginState.plugins as plugin (plugin.id)}
-						<li class="flex items-center justify-between gap-3 px-4 py-3">
-							<span class="min-w-0">
-								<span class="block text-sm font-semibold">{displayNameOf(plugin, plugin.id)}</span>
-								<span class="text-base-content/50 block truncate font-mono text-[11px]">
-									{plugin.id}
-								</span>
-								{#if plugin.description}
-									<span class="text-base-content/70 mt-1 block text-sm">{plugin.description}</span>
-								{/if}
-							</span>
+
+					<form class="mt-1 grid gap-3 sm:grid-cols-2" onsubmit={giveAccount}>
+						<label class="flex flex-col gap-1 sm:col-span-2">
+							<span class="label">Email address</span>
 							<input
-								type="checkbox"
-								class="toggle toggle-primary toggle-sm"
-								aria-label="Allow {displayNameOf(plugin, plugin.id)} for {name}"
-								checked={allowed.includes(plugin.id)}
-								disabled={busy || user.is_administrator}
-								onchange={(event) => togglePlugin(plugin.id, event.currentTarget)}
+								class="input input-sm w-full"
+								type="email"
+								autocomplete="off"
+								bind:value={email}
+								disabled={busy}
+								required
 							/>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-		</fieldset>
+						</label>
+						<label class="flex flex-col gap-1">
+							<span class="label">Password</span>
+							<input
+								class="input input-sm w-full"
+								type="password"
+								autocomplete="new-password"
+								bind:value={password}
+								disabled={busy}
+								required
+							/>
+						</label>
+						<label class="flex flex-col gap-1">
+							<span class="label">Repeat the password</span>
+							<input
+								class="input input-sm w-full"
+								type="password"
+								autocomplete="new-password"
+								bind:value={repeated}
+								disabled={busy}
+								required
+							/>
+						</label>
+						<div class="flex justify-end sm:col-span-2">
+							<button type="submit" class="btn btn-primary btn-sm" disabled={busy}>
+								Give the account
+							</button>
+						</div>
+					</form>
+				{/if}
+			</fieldset>
+		</section>
+
+		<section class="section">
+			<h2 class="section-title">Plugins</h2>
+			<fieldset class="fieldset panel w-full min-w-0 p-5">
+				{#if pluginState.plugins.length === 0}
+					<span class="label whitespace-normal">The hub loaded no plugin.</span>
+				{:else}
+					{#if user.is_administrator}
+						<div role="alert" class="alert alert-info alert-soft">
+							<span class="text-sm">
+								{isSelf ? 'You are' : `${name} is`} an administrator, so
+								{isSelf ? 'you' : 'they'} already reach every plugin. The allowlist applies again when
+								the mark goes.
+							</span>
+						</div>
+					{:else}
+						<span class="label whitespace-normal">
+							The plugins that {name} can turn on in a workspace. A removal keeps every plugin that a
+							workspace already uses.
+						</span>
+					{/if}
+					<ul class="list panel">
+						{#each pluginState.plugins as plugin (plugin.id)}
+							<li class="list-row flex items-center justify-between gap-3">
+								<span class="min-w-0">
+									<span class="block font-medium">{displayNameOf(plugin, plugin.id)}</span>
+									<span class="meta block truncate font-mono">
+										{plugin.id}
+									</span>
+									{#if plugin.description}
+										<span class="text-base-content/70 mt-1 block text-sm">{plugin.description}</span
+										>
+									{/if}
+								</span>
+								<input
+									type="checkbox"
+									class="toggle toggle-primary toggle-sm"
+									aria-label="Allow {displayNameOf(plugin, plugin.id)} for {name}"
+									checked={allowed.includes(plugin.id)}
+									disabled={busy || user.is_administrator}
+									onchange={(event) => togglePlugin(plugin.id, event.currentTarget)}
+								/>
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</fieldset>
+		</section>
 	{/if}
 </div>
 

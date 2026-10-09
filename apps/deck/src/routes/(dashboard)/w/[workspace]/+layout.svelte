@@ -15,7 +15,7 @@
 </script>
 
 {#if managing}
-	<div class="alert alert-info mb-6 max-w-2xl">
+	<div role="status" class="alert alert-info alert-soft mb-6 max-w-2xl">
 		<span class="text-sm">
 			You manage {data.workspace.name} as an administrator. You change its members and its plugins, and
 			you read none of its records.

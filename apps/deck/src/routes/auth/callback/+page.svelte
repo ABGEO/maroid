@@ -22,7 +22,7 @@
 
 {#if reason}
 	<div class="bg-base-200 flex min-h-screen items-center justify-center">
-		<div class="card bg-base-100 w-full max-w-sm shadow-md">
+		<div class="card panel w-full max-w-sm">
 			<div class="card-body gap-6">
 				<div role="alert" class="alert alert-error alert-soft">
 					<span>{message}</span>

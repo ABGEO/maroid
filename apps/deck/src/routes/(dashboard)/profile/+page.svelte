@@ -229,190 +229,191 @@
 </script>
 
 <div class="max-w-2xl">
-	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Profile</h1>
-	<p class="text-base-content/60 mt-3 text-sm">
-		Your name, your password, and the accounts that reach this record.
-	</p>
+	<header class="page-header">
+		<div>
+			<h1 class="page-title">Profile</h1>
+			<p class="page-lead">Your name, your password, and the accounts that reach this record.</p>
+		</div>
+	</header>
 
 	{#if banner}
-		<div class="alert alert-error mt-6">
+		<div role="alert" class="alert alert-error alert-soft mb-6">
 			<span>{banner}</span>
 		</div>
 	{/if}
 
-	<form class="mt-8" onsubmit={saveNames}>
-		<fieldset class="fieldset bg-base-200/40 border-base-300 rounded-box w-full min-w-0 border p-4">
-			<legend class="fieldset-legend">Profile</legend>
-
-			{#if namesNotice}
-				<div role="status" class="alert alert-success alert-soft">
-					<span class="text-sm">{namesNotice}</span>
-				</div>
-			{/if}
-
-			<div class="grid gap-3 sm:grid-cols-2">
-				<label class="flex flex-col gap-1">
-					<span class="label">First name</span>
-					<input
-						class="input input-sm w-full"
-						autocomplete="given-name"
-						bind:value={firstName}
-						disabled={record === null || savingNames}
-					/>
-				</label>
-				<label class="flex flex-col gap-1">
-					<span class="label">Last name</span>
-					<input
-						class="input input-sm w-full"
-						autocomplete="family-name"
-						bind:value={lastName}
-						disabled={record === null || savingNames}
-					/>
-				</label>
-			</div>
-
-			<div class="mt-3 flex justify-end">
-				<button
-					type="submit"
-					class="btn btn-primary btn-sm"
-					disabled={!namesChanged || savingNames}
-				>
-					Save
-				</button>
-			</div>
-		</fieldset>
-	</form>
-
-	{#if localAccount}
-		<form class="mt-6" onsubmit={changePassword}>
-			<fieldset
-				class="fieldset bg-base-200/40 border-base-300 rounded-box w-full min-w-0 border p-4"
-			>
-				<legend class="fieldset-legend">Password</legend>
-
-				{#if passwordNotice}
+	<section class="section">
+		<h2 class="section-title">Name</h2>
+		<form onsubmit={saveNames}>
+			<fieldset class="fieldset panel w-full min-w-0 p-5">
+				{#if namesNotice}
 					<div role="status" class="alert alert-success alert-soft">
-						<span class="text-sm">{passwordNotice}</span>
-					</div>
-				{/if}
-				{#if passwordFailure}
-					<div role="alert" class="alert alert-error alert-soft">
-						<span class="text-sm">{passwordFailure}</span>
+						<span class="text-sm">{namesNotice}</span>
 					</div>
 				{/if}
 
-				<span class="label whitespace-normal">
-					You sign in with <span class="font-mono">{localAccount.username}</span> and a password.
-				</span>
+				<div class="grid gap-3 sm:grid-cols-2">
+					<label class="flex flex-col gap-1">
+						<span class="label">First name</span>
+						<input
+							class="input input-sm w-full"
+							autocomplete="given-name"
+							bind:value={firstName}
+							disabled={record === null || savingNames}
+						/>
+					</label>
+					<label class="flex flex-col gap-1">
+						<span class="label">Last name</span>
+						<input
+							class="input input-sm w-full"
+							autocomplete="family-name"
+							bind:value={lastName}
+							disabled={record === null || savingNames}
+						/>
+					</label>
+				</div>
 
-				<div class="mt-1 grid gap-3 sm:grid-cols-2">
-					<label class="flex flex-col gap-1 sm:col-span-2">
-						<span class="label">Current password</span>
-						<input
-							class="input input-sm w-full"
-							class:input-error={currentPasswordFailure !== null}
-							type="password"
-							autocomplete="current-password"
-							bind:value={currentPassword}
-							disabled={changingPassword}
-							required
-						/>
-						{#if currentPasswordFailure}
-							<span class="label text-error">{currentPasswordFailure}</span>
-						{/if}
-					</label>
-					<label class="flex flex-col gap-1">
-						<span class="label">New password</span>
-						<input
-							class="input input-sm w-full"
-							type="password"
-							autocomplete="new-password"
-							bind:value={newPassword}
-							disabled={changingPassword}
-							required
-						/>
-					</label>
-					<label class="flex flex-col gap-1">
-						<span class="label">Repeat the password</span>
-						<input
-							class="input input-sm w-full"
-							type="password"
-							autocomplete="new-password"
-							bind:value={repeatedPassword}
-							disabled={changingPassword}
-							required
-						/>
-					</label>
-					{#if newPasswordProblem}
-						<span class="label whitespace-normal sm:col-span-2">{newPasswordProblem}</span>
-					{/if}
-					<div class="flex justify-end sm:col-span-2">
-						<button type="submit" class="btn btn-primary btn-sm" disabled={!canChangePassword}>
-							Set the password
-						</button>
-					</div>
+				<div class="mt-3 flex justify-end">
+					<button
+						type="submit"
+						class="btn btn-primary btn-sm"
+						disabled={!namesChanged || savingNames}
+					>
+						Save
+					</button>
 				</div>
 			</fieldset>
 		</form>
+	</section>
+
+	{#if localAccount}
+		<section class="section">
+			<h2 class="section-title">Password</h2>
+			<form onsubmit={changePassword}>
+				<fieldset class="fieldset panel w-full min-w-0 p-5">
+					{#if passwordNotice}
+						<div role="status" class="alert alert-success alert-soft">
+							<span class="text-sm">{passwordNotice}</span>
+						</div>
+					{/if}
+					{#if passwordFailure}
+						<div role="alert" class="alert alert-error alert-soft">
+							<span class="text-sm">{passwordFailure}</span>
+						</div>
+					{/if}
+
+					<span class="label whitespace-normal">
+						You sign in with <span class="font-mono">{localAccount.username}</span> and a password.
+					</span>
+
+					<div class="mt-1 grid gap-3 sm:grid-cols-2">
+						<label class="flex flex-col gap-1 sm:col-span-2">
+							<span class="label">Current password</span>
+							<input
+								class="input input-sm w-full"
+								class:input-error={currentPasswordFailure !== null}
+								type="password"
+								autocomplete="current-password"
+								bind:value={currentPassword}
+								disabled={changingPassword}
+								required
+							/>
+							{#if currentPasswordFailure}
+								<span class="label text-error">{currentPasswordFailure}</span>
+							{/if}
+						</label>
+						<label class="flex flex-col gap-1">
+							<span class="label">New password</span>
+							<input
+								class="input input-sm w-full"
+								type="password"
+								autocomplete="new-password"
+								bind:value={newPassword}
+								disabled={changingPassword}
+								required
+							/>
+						</label>
+						<label class="flex flex-col gap-1">
+							<span class="label">Repeat the password</span>
+							<input
+								class="input input-sm w-full"
+								type="password"
+								autocomplete="new-password"
+								bind:value={repeatedPassword}
+								disabled={changingPassword}
+								required
+							/>
+						</label>
+						{#if newPasswordProblem}
+							<span class="label whitespace-normal sm:col-span-2">{newPasswordProblem}</span>
+						{/if}
+						<div class="flex justify-end sm:col-span-2">
+							<button type="submit" class="btn btn-primary btn-sm" disabled={!canChangePassword}>
+								Set the password
+							</button>
+						</div>
+					</div>
+				</fieldset>
+			</form>
+		</section>
 	{/if}
 
-	<fieldset
-		class="fieldset bg-base-200/40 border-base-300 rounded-box mt-6 w-full min-w-0 border p-4"
-	>
-		<legend class="fieldset-legend">Connected accounts</legend>
-
-		{#if status === 'loading'}
-			<div class="flex flex-col gap-2">
-				{#each [0, 1] as i (i)}
-					<span class="skeleton h-16 w-full" aria-hidden="true"></span>
-				{/each}
-			</div>
-		{:else if status === 'error'}
-			<div role="alert" class="alert alert-error alert-soft">
-				<span class="text-sm">Failed to load the connected accounts.</span>
-				<button type="button" class="btn btn-sm" onclick={() => void load()}>Retry</button>
-			</div>
-		{:else}
-			<ul class="border-base-300 bg-base-100 rounded-box mt-1 divide-y border">
-				{#each identities as identity (identity.provider)}
-					<li class="flex items-center justify-between gap-3 px-4 py-3">
-						<span class="min-w-0">
-							<span class="flex items-center gap-2">
-								<span class="text-sm font-semibold">{identity.name}</span>
-								{#if identity.provider === currentProvider}
-									<span class="badge badge-ghost badge-xs">Current session</span>
+	<section class="section">
+		<h2 class="section-title">Connected accounts</h2>
+		<fieldset class="fieldset panel w-full min-w-0 p-5">
+			{#if status === 'loading'}
+				<div class="flex flex-col gap-2">
+					{#each [0, 1] as i (i)}
+						<span class="skeleton h-16 w-full" aria-hidden="true"></span>
+					{/each}
+				</div>
+			{:else if status === 'error'}
+				<div role="alert" class="alert alert-error alert-soft">
+					<span class="text-sm">Failed to load the connected accounts.</span>
+					<button type="button" class="btn btn-sm" onclick={() => void load()}>Retry</button>
+				</div>
+			{:else}
+				<ul class="list panel">
+					{#each identities as identity (identity.provider)}
+						<li class="list-row flex items-center justify-between gap-3">
+							<span class="min-w-0">
+								<span class="flex items-center gap-2">
+									<span class="text-sm font-semibold">{identity.name}</span>
+									{#if identity.provider === currentProvider}
+										<span class="badge badge-ghost badge-xs">Current session</span>
+									{/if}
+								</span>
+								{#if identity.attached}
+									<span class="meta block truncate font-mono">
+										{identity.username ?? identity.display_name ?? 'Connected'}
+									</span>
+								{:else}
+									<span class="meta block font-mono">Not connected</span>
 								{/if}
 							</span>
-							{#if identity.attached}
-								<span class="text-base-content/50 block truncate font-mono text-[11px]">
-									{identity.username ?? identity.display_name ?? 'Connected'}
-								</span>
-							{:else}
-								<span class="text-base-content/35 block font-mono text-[11px]">Not connected</span>
-							{/if}
-						</span>
 
-						{#if identity.attached}
-							<button
-								type="button"
-								class="btn btn-ghost btn-sm text-error"
-								disabled={detaching === identity.provider}
-								onclick={() => void detach(identity.provider)}
-							>
-								Disconnect
-							</button>
-						{:else if identity.provider === LOCAL_PROVIDER}
-							<span class="label whitespace-normal">An administrator gives this account</span>
-						{:else}
-							<button type="button" class="btn btn-sm" onclick={() => connect(identity.provider)}>
-								Connect
-							</button>
-						{/if}
-					</li>
-				{/each}
-			</ul>
-		{/if}
-	</fieldset>
+							{#if identity.attached}
+								<button
+									type="button"
+									class="btn btn-ghost btn-sm text-error"
+									disabled={detaching === identity.provider}
+									onclick={() => void detach(identity.provider)}
+								>
+									Disconnect
+								</button>
+							{:else if identity.provider === LOCAL_PROVIDER}
+								<span class="label whitespace-normal">An administrator gives this account</span>
+							{:else}
+								<button type="button" class="btn btn-sm" onclick={() => connect(identity.provider)}>
+									Connect
+								</button>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</fieldset>
+	</section>
 </div>
 
 <ConfirmDialog bind:this={confirmDialog} />

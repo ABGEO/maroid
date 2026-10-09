@@ -12,18 +12,20 @@
 </script>
 
 <div class="max-w-4xl">
-	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">{name}</h1>
-	<p class="text-base-content/50 mt-1 font-mono text-[11px]">{data.pluginId}</p>
-	<p class="text-base-content/60 mt-3 text-sm">
-		These values belong to this workspace. A field marked personal belongs to you alone, and its
-		value serves every workspace of yours. A secret never leaves the hub once you store it.
-	</p>
+	<header class="page-header">
+		<div>
+			<h1 class="page-title">{name}</h1>
+			<p class="meta mt-1 font-mono">{data.pluginId}</p>
+			<p class="page-lead">
+				These values belong to this workspace. A field marked personal belongs to you alone, and its
+				value serves every workspace of yours. A secret never leaves the hub once you store it.
+			</p>
+		</div>
+	</header>
 
-	<div class="mt-8">
-		<SettingsForm
-			workspaceId={data.workspace.id}
-			pluginId={data.pluginId}
-			readonly={!holds(data.workspace, PERMISSION.settingsWrite)}
-		/>
-	</div>
+	<SettingsForm
+		workspaceId={data.workspace.id}
+		pluginId={data.pluginId}
+		readonly={!holds(data.workspace, PERMISSION.settingsWrite)}
+	/>
 </div>

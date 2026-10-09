@@ -61,12 +61,17 @@
 </script>
 
 <div class="max-w-2xl">
-	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Settings</h1>
-	<p class="text-base-content/60 mt-3 text-sm">The name that every member sees.</p>
+	<header class="page-header">
+		<div>
+			<h1 class="page-title">Settings</h1>
+			<p class="page-lead">The name that every member sees.</p>
+		</div>
+	</header>
 
 	{#if banner}
 		<div
-			class="alert mt-6"
+			role="alert"
+			class="alert alert-soft mb-6"
 			class:alert-success={banner.kind === 'success'}
 			class:alert-error={banner.kind === 'error'}
 		>
@@ -75,17 +80,19 @@
 	{/if}
 
 	{#if !holds(data.workspace, PERMISSION.workspaceWrite)}
-		<p class="mt-6 text-sm">{data.workspace.name}</p>
-		<p class="text-base-content/60 mt-1 text-sm">A manager renames the workspace.</p>
+		<div class="panel max-w-md p-5">
+			<p class="font-medium">{data.workspace.name}</p>
+			<p class="meta mt-1">A manager renames the workspace.</p>
+		</div>
 	{:else}
-		<form class="mt-6 flex max-w-md flex-col gap-3" onsubmit={save}>
-			<label class="form-control">
-				<span class="label-text mb-1 block text-xs">Name</span>
-				<input type="text" class="input input-bordered w-full" bind:value={name} required />
-				<span class="text-base-content/50 mt-1 text-[11px]">{length} / {MAX_NAME}</span>
-			</label>
+		<form class="panel max-w-md p-5" onsubmit={save}>
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Name</legend>
+				<input type="text" class="input w-full" bind:value={name} required />
+				<p class="label">{length} / {MAX_NAME}</p>
+			</fieldset>
 
-			<div>
+			<div class="mt-4">
 				<button type="submit" class="btn btn-primary btn-sm" disabled={saving || !valid}>
 					Save
 				</button>

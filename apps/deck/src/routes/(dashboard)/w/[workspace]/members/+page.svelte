@@ -175,86 +175,88 @@
 </script>
 
 <div class="max-w-2xl">
-	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Members</h1>
-	<p class="text-base-content/60 mt-3 text-sm">
-		The people who share the records of {data.workspace.name}.
-	</p>
+	<header class="page-header">
+		<div>
+			<h1 class="page-title">Members</h1>
+			<p class="page-lead">The people who share the records of {data.workspace.name}.</p>
+		</div>
+	</header>
 
 	{#if banner}
-		<div class="alert alert-error mt-6">
+		<div role="alert" class="alert alert-error alert-soft mb-6">
 			<span>{banner}</span>
 		</div>
 	{/if}
 
 	{#if status === 'loading'}
-		<div class="mt-8 flex flex-col gap-2" aria-hidden="true">
+		<div class="flex flex-col gap-2" aria-hidden="true">
 			{#each [0, 1, 2] as i (i)}
-				<span class="skeleton h-10 w-full"></span>
+				<span class="skeleton h-14 w-full"></span>
 			{/each}
 		</div>
 	{:else if status === 'error'}
-		<div class="alert alert-error mt-6">
+		<div role="alert" class="alert alert-error alert-soft">
 			<span>The hub answered no member. Reload the page.</span>
 		</div>
 	{:else}
-		<ul class="border-base-300 rounded-box mt-8 divide-y border">
+		<ul class="list panel">
 			{#each members as member (member.user_id)}
-				<li class="flex items-center justify-between gap-3 px-4 py-3">
-					<span class="text-sm">
+				<li class="list-row items-center">
+					<span class="list-col-grow font-medium">
 						{nameOf(member)}
 						{#if member.user_id === selfId}
 							<span class="badge badge-ghost badge-sm ml-2">You</span>
 						{/if}
 					</span>
-					<span class="flex items-center gap-2">
-						{#if canManage}
-							<select
-								class="select select-bordered select-xs"
-								aria-label="The role of {nameOf(member)}"
-								value={member.role}
-								disabled={busy}
-								onchange={(event) => changeRole(member, event.currentTarget.value as Role)}
-							>
-								{#each ROLES as role (role)}
-									<option value={role}>{roleLabel(role)}</option>
-								{/each}
-							</select>
-						{:else}
-							<span class="badge badge-outline badge-sm">{roleLabel(member.role)}</span>
-						{/if}
-						{#if canManage || member.user_id === selfId}
-							<button
-								type="button"
-								class="btn btn-ghost btn-xs text-error"
-								disabled={busy}
-								onclick={() => remove(member)}
-							>
-								{member.user_id === selfId ? 'Leave' : 'Remove'}
-							</button>
-						{/if}
-					</span>
+					{#if canManage}
+						<select
+							class="select select-sm w-32"
+							aria-label="The role of {nameOf(member)}"
+							value={member.role}
+							disabled={busy}
+							onchange={(event) => changeRole(member, event.currentTarget.value as Role)}
+						>
+							{#each ROLES as role (role)}
+								<option value={role}>{roleLabel(role)}</option>
+							{/each}
+						</select>
+					{:else}
+						<span class="badge badge-outline badge-sm">{roleLabel(member.role)}</span>
+					{/if}
+					{#if canManage || member.user_id === selfId}
+						<button
+							type="button"
+							class="btn btn-ghost btn-sm text-error"
+							disabled={busy}
+							onclick={() => remove(member)}
+						>
+							{member.user_id === selfId ? 'Leave' : 'Remove'}
+						</button>
+					{/if}
 				</li>
 			{/each}
 		</ul>
 
 		{#if canManage}
-			<section class="mt-8">
-				<h2 class="text-base-content/70 font-mono text-[11px] tracking-wider uppercase">
-					Add a member
-				</h2>
+			<section class="section">
+				<h2 class="section-title">Add a member</h2>
 
 				{#if candidates.length === 0}
-					<p class="text-base-content/60 mt-3 text-sm">Every person on this hub is a member.</p>
+					<div class="empty-state">Every person on this hub is a member.</div>
 				{:else}
-					<form class="mt-3 flex gap-2" onsubmit={add}>
-						<select class="select select-bordered select-sm w-full max-w-xs" bind:value={chosen}>
+					<form class="panel flex flex-wrap items-end gap-2 p-4" onsubmit={add}>
+						<select
+							class="select select-sm min-w-0 flex-1"
+							aria-label="The new member"
+							bind:value={chosen}
+						>
 							<option value="" disabled>Choose a person</option>
 							{#each candidates as candidate (candidate.user_id)}
 								<option value={candidate.user_id}>{nameOf(candidate)}</option>
 							{/each}
 						</select>
 						<select
-							class="select select-bordered select-sm"
+							class="select select-sm w-32"
 							aria-label="The role of the new member"
 							bind:value={newMemberRole}
 						>

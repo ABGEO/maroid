@@ -36,9 +36,9 @@
 <dialog bind:this={dialog} class="modal" onclose={() => close(false)}>
 	<div class="modal-box">
 		{#if title}
-			<h3 class="text-base font-semibold">{title}</h3>
+			<h3 class="text-lg font-semibold">{title}</h3>
 		{/if}
-		<p class="text-base-content/70 py-4 text-sm">{message}</p>
+		<p class="text-base-content/70 py-3 text-sm">{message}</p>
 		<div class="modal-action">
 			<button type="button" class="btn btn-ghost btn-sm" onclick={() => close(false)}>
 				{cancelLabel}

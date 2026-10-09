@@ -35,35 +35,37 @@
 </script>
 
 <div class="max-w-3xl">
-	<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Plugins</h1>
-	<p class="text-base-content/60 mt-3 text-sm">
-		Every plugin that the hub loaded, and the workspaces that use each one.
-	</p>
+	<header class="page-header">
+		<div>
+			<h1 class="page-title">Plugins</h1>
+			<p class="page-lead">
+				Every plugin that the hub loaded, and the workspaces that use each one.
+			</p>
+		</div>
+	</header>
 
 	{#if status === 'loading' || pluginState.status === 'idle' || pluginState.status === 'loading'}
-		<div class="mt-8 flex flex-col gap-2" aria-hidden="true">
+		<div class="flex flex-col gap-2" aria-hidden="true">
 			{#each [0, 1, 2] as i (i)}
 				<span class="skeleton h-16 w-full"></span>
 			{/each}
 		</div>
 	{:else if status === 'error' || pluginState.status === 'error'}
-		<div class="alert alert-error mt-6">
+		<div role="alert" class="alert alert-error alert-soft">
 			<span>The hub answered no plugin. Reload the page.</span>
 		</div>
 	{:else if pluginState.plugins.length === 0}
-		<div class="border-base-300 text-base-content/60 mt-8 rounded-md border border-dashed p-6">
-			The hub loaded no plugin.
-		</div>
+		<div class="empty-state">The hub loaded no plugin.</div>
 	{:else}
-		<ul class="border-base-300 rounded-box mt-8 divide-y border">
+		<ul class="list panel">
 			{#each pluginState.plugins as plugin (plugin.id)}
 				{@const using = enabling(plugin.id)}
-				<li class="px-4 py-3">
+				<li class="list-row block">
 					<div class="flex items-center gap-2">
-						<span class="text-[15px] font-semibold">{displayNameOf(plugin, plugin.id)}</span>
+						<span class="font-medium">{displayNameOf(plugin, plugin.id)}</span>
 						<span class="badge badge-ghost badge-xs font-mono">v{plugin.version}</span>
 					</div>
-					<div class="text-base-content/50 truncate font-mono text-[11px]">{plugin.id}</div>
+					<div class="meta truncate font-mono">{plugin.id}</div>
 					{#if plugin.description}
 						<p class="text-base-content/70 mt-1 text-sm">{plugin.description}</p>
 					{/if}
@@ -76,7 +78,7 @@
 							{/each}
 						</div>
 					{/if}
-					<div class="text-base-content/60 mt-2 flex flex-wrap items-center gap-1 text-[12px]">
+					<div class="meta mt-2 flex flex-wrap items-center gap-1">
 						{#if using.length === 0}
 							No workspace uses it.
 						{:else}

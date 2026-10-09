@@ -3,11 +3,11 @@
 </script>
 
 <div class="bg-base-200 flex min-h-screen items-center justify-center p-4">
-	<div class="card bg-base-100 w-full max-w-sm shadow-md">
+	<div class="card panel w-full max-w-sm">
 		<div class="card-body gap-6 text-center">
 			<div class="flex flex-col gap-2">
-				<h1 class="text-lg font-semibold">You signed out</h1>
-				<p class="text-base-content/60 text-sm">
+				<h1 class="page-title">You signed out</h1>
+				<p class="page-lead mx-auto">
 					Maroid ended this session. Sign in again to reach your records.
 				</p>
 			</div>

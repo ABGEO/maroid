@@ -51,26 +51,20 @@
 	}
 </script>
 
-<form class="mt-6 flex max-w-md flex-col gap-3" onsubmit={submit}>
-	<label class="form-control">
-		<span class="label-text mb-1 block text-xs">Name</span>
-		<input
-			type="text"
-			class="input input-bordered w-full"
-			placeholder="Home"
-			bind:value={name}
-			required
-		/>
-		<span class="text-base-content/50 mt-1 text-[11px]">{length} / {MAX_NAME}</span>
-	</label>
+<form class="panel max-w-md p-5" onsubmit={submit}>
+	<fieldset class="fieldset">
+		<legend class="fieldset-legend">Name</legend>
+		<input type="text" class="input w-full" placeholder="Home" bind:value={name} required />
+		<p class="label">{length} / {MAX_NAME}</p>
+	</fieldset>
 
 	{#if failure}
-		<div class="alert alert-error">
+		<div role="alert" class="alert alert-error alert-soft mt-4">
 			<span>{failure}</span>
 		</div>
 	{/if}
 
-	<div>
+	<div class="mt-4">
 		<button type="submit" class="btn btn-primary btn-sm" disabled={submitting || !valid}>
 			Create workspace
 		</button>

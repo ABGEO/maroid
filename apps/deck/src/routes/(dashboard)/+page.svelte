@@ -20,16 +20,20 @@
 
 {#if workspaceState.status === 'ready' && workspaceState.workspaces.length === 0}
 	<div class="max-w-2xl">
-		<h1 class="font-display text-[42px] leading-[1.05] tracking-tight">Create a workspace</h1>
-		<p class="text-base-content/60 mt-3 text-sm">
-			A workspace holds the records of your plugins. Keep it to yourself, or add the people you
-			share it with.
-		</p>
+		<header class="page-header">
+			<div>
+				<h1 class="page-title">Create a workspace</h1>
+				<p class="page-lead">
+					A workspace holds the records of your plugins. Keep it to yourself, or add the people you
+					share it with.
+				</p>
+			</div>
+		</header>
 
 		<CreateWorkspaceForm />
 	</div>
 {:else if workspaceState.status === 'error'}
-	<div class="alert alert-error max-w-2xl">
+	<div role="alert" class="alert alert-error alert-soft max-w-2xl">
 		<span>The hub answered no workspace. Reload the page.</span>
 	</div>
 {:else}
