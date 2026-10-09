@@ -20,6 +20,7 @@ const (
 	blocked     = "blocked"
 	invitationK = "invitation"
 	firstNameK  = "first_name"
+	lastNameK   = "last_name"
 	allowlistK  = "allowed_plugins"
 	nameOfNina  = "Nina"
 )
@@ -77,7 +78,7 @@ func TestAnAdministratorCreatesAndInvitesAUser(t *testing.T) {
 	zura := fixture.administrator(t)
 
 	created := fixture.call(t, zura, http.MethodPost, "/users",
-		map[string]any{firstNameK: nameOfNina, "last_name": "Beridze"}, "")
+		map[string]any{firstNameK: nameOfNina, lastNameK: "Beridze"}, "")
 	require.Equal(t, http.StatusCreated, created.Code, created.Body.String())
 
 	body := decode(t, created)
@@ -300,12 +301,12 @@ func TestAnAdministratorChangesTheNamesOfAUser(t *testing.T) {
 	renamed := fixture.call(t, zura, http.MethodPatch, path, map[string]any{firstNameK: "Beka"}, "")
 	require.Equal(t, http.StatusOK, renamed.Code, renamed.Body.String())
 	assert.Equal(t, "Beka", decode(t, renamed)[firstNameK])
-	assert.Equal(t, "Kapanadze", decode(t, renamed)["last_name"])
+	assert.Equal(t, "Kapanadze", decode(t, renamed)[lastNameK])
 
-	cleared := fixture.call(t, zura, http.MethodPatch, path, map[string]any{"last_name": ""}, "")
+	cleared := fixture.call(t, zura, http.MethodPatch, path, map[string]any{lastNameK: ""}, "")
 	require.Equal(t, http.StatusOK, cleared.Code, cleared.Body.String())
 	assert.Equal(t, "Beka", decode(t, cleared)[firstNameK])
-	assert.NotContains(t, decode(t, cleared), "last_name", "a cleared name is absent")
+	assert.NotContains(t, decode(t, cleared), lastNameK, "a cleared name is absent")
 
 	assert.Equal(t, identities, count(`SELECT count(*) FROM public.identities WHERE user_id = $1;`))
 	assert.Equal(

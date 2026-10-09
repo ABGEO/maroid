@@ -60,6 +60,11 @@ export interface ApiClient {
    * body leaves out keeps its value.
    */
   patch<T>(path: string, body: unknown, options?: RequestOptions): Promise<T | null>;
+  /**
+   * Change part of a record as `patch` does, and answer the record beside the
+   * entity tag that guards its next change.
+   */
+  patchTagged<T>(path: string, body: unknown, options?: RequestOptions): Promise<Tagged<T> | null>;
   del<T>(path: string, options?: RequestOptions): Promise<T | null>;
   /** Derive a client with an additional path prefix, sharing this client's config. */
   scope(prefix: string): ApiClient;

@@ -27,8 +27,8 @@ import (
 
 const pluginIDParam = "pluginId"
 
-// User is the handler of the routes under /users, which an administrator alone
-// reaches.
+// User is the handler of the routes under /users. An administrator alone reaches
+// every route but /users/self, which serves the record of the acting user.
 type User struct {
 	logger      *slog.Logger
 	verifier    auth.TokenVerifier
@@ -74,28 +74,40 @@ func (h *User) Register(router chi.Router) {
 
 	router.Route("/users", func(r chi.Router) {
 		r.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
-		r.Use(auth.RequireAdministrator(h.logger))
 		r.Use(idempotency.Middleware(h.logger, h.idempotency))
 
-		r.Get("/", Wrap(h.logger, h.List))
-		r.Post("/", Wrap(h.logger, h.Create))
+		r.Get("/self", Wrap(h.logger, h.GetSelf))
+		r.Patch("/self", Wrap(h.logger, h.ChangeSelf))
 
-		r.Route("/{"+userIDParam+"}", func(r chi.Router) {
-			r.Use(requireUserID)
+		r.Group(func(r chi.Router) {
+			r.Use(auth.RequireAdministrator(h.logger))
 
-			r.Get("/", Wrap(h.logger, h.Get))
-			r.Patch("/", Wrap(h.logger, h.Change))
-			r.Post("/invitations", Wrap(h.logger, h.Invite))
-			r.Get("/allowed-plugins", Wrap(h.logger, h.AllowedPlugins))
-			r.Post("/allowed-plugins", Wrap(h.logger, h.AllowPlugin))
-			r.Delete("/allowed-plugins/{"+pluginIDParam+"}", Wrap(h.logger, h.DisallowPlugin))
-			r.Get("/identities", Wrap(h.logger, h.Identities))
-			r.Post("/identities", Wrap(h.logger, h.GiveLocalAccount))
-			r.Patch("/identities/{"+identityProviderParam+"}", Wrap(h.logger, h.ResetLocalAccount))
-			r.Delete(
-				"/identities/{"+identityProviderParam+"}",
-				Wrap(h.logger, h.RemoveLocalAccount),
-			)
+			r.Get("/", Wrap(h.logger, h.List))
+			r.Post("/", Wrap(h.logger, h.Create))
+
+			r.Route("/{"+userIDParam+"}", func(r chi.Router) {
+				r.Use(requireUserID)
+
+				r.Get("/", Wrap(h.logger, h.Get))
+				r.Patch("/", Wrap(h.logger, h.Change))
+				r.Post("/invitations", Wrap(h.logger, h.Invite))
+				r.Get("/allowed-plugins", Wrap(h.logger, h.AllowedPlugins))
+				r.Post("/allowed-plugins", Wrap(h.logger, h.AllowPlugin))
+				r.Delete(
+					"/allowed-plugins/{"+pluginIDParam+"}",
+					Wrap(h.logger, h.DisallowPlugin),
+				)
+				r.Get("/identities", Wrap(h.logger, h.Identities))
+				r.Post("/identities", Wrap(h.logger, h.GiveLocalAccount))
+				r.Patch(
+					"/identities/{"+identityProviderParam+"}",
+					Wrap(h.logger, h.ResetLocalAccount),
+				)
+				r.Delete(
+					"/identities/{"+identityProviderParam+"}",
+					Wrap(h.logger, h.RemoveLocalAccount),
+				)
+			})
 		})
 	})
 }
@@ -139,6 +151,11 @@ type userChangeInput struct {
 	IsAdministrator *bool   `json:"is_administrator"`
 }
 
+type selfChangeInput struct {
+	FirstName *string `json:"first_name"`
+	LastName  *string `json:"last_name"`
+}
+
 type pluginRefInput struct {
 	PluginID *string `json:"plugin_id"`
 }
@@ -153,6 +170,12 @@ func toUserBody(record *model.User) userBody {
 		CreatedAt:       record.CreatedAt.UTC(),
 		UpdatedAt:       record.UpdatedAt.UTC(),
 	}
+}
+
+// answerUser writes the record and the entity tag that guards its next change.
+func answerUser(w http.ResponseWriter, r *http.Request, record *model.User) {
+	w.Header().Set(precondition.ETagHeader, precondition.ETag(record.UpdatedAt))
+	render.JSON(w, r, toUserBody(record))
 }
 
 // List answers every user record of the instance.
@@ -220,8 +243,45 @@ func (h *User) Get(w http.ResponseWriter, r *http.Request) error {
 		return h.fail(w, r, err, "reading the user record")
 	}
 
-	w.Header().Set(precondition.ETagHeader, precondition.ETag(record.UpdatedAt))
-	render.JSON(w, r, toUserBody(record))
+	answerUser(w, r, record)
+
+	return nil
+}
+
+// GetSelf answers the user record of the acting user.
+func (h *User) GetSelf(w http.ResponseWriter, r *http.Request) error {
+	record, err := h.service.Get(r.Context(), auth.UserIDFromContext(r.Context()))
+	if err != nil {
+		return h.fail(w, r, err, "reading the own user record")
+	}
+
+	answerUser(w, r, record)
+
+	return nil
+}
+
+// ChangeSelf changes the names of the acting user. The input declares no other field,
+// so the decoder refuses the fields that an administrator alone sets.
+func (h *User) ChangeSelf(w http.ResponseWriter, r *http.Request) error {
+	var input selfChangeInput
+
+	if failure := decodeObject(r, &input); failure != nil {
+		problem.Write(w, r, failure)
+
+		return nil
+	}
+
+	changed, err := h.service.Change(
+		r.Context(),
+		auth.UserIDFromContext(r.Context()),
+		user.Change{FirstName: trimmed(input.FirstName), LastName: trimmed(input.LastName)},
+		precondition.IfMatchFromContext(r.Context()),
+	)
+	if err != nil {
+		return h.fail(w, r, err, "changing the own user record")
+	}
+
+	answerUser(w, r, changed)
 
 	return nil
 }
@@ -265,8 +325,7 @@ func (h *User) Change(w http.ResponseWriter, r *http.Request) error {
 		return h.fail(w, r, err, "changing the user record")
 	}
 
-	w.Header().Set(precondition.ETagHeader, precondition.ETag(changed.UpdatedAt))
-	render.JSON(w, r, toUserBody(changed))
+	answerUser(w, r, changed)
 
 	return nil
 }

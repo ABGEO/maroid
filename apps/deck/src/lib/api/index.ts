@@ -46,7 +46,7 @@ export type {
 	Provider,
 	ProviderPreset
 } from './types';
-export type { NewUser, UserChange } from './users';
+export type { NewUser, SelfChange, UserChange } from './users';
 export { LOCAL_PROVIDER } from './users';
 export type { NewProvider, ProviderChange } from './providers';
 export type { Tagged } from '@maroid/api-client';

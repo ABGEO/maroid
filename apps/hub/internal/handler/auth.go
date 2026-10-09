@@ -50,6 +50,7 @@ type AuthHandler interface {
 	Link(w http.ResponseWriter, r *http.Request) error
 	Identities(w http.ResponseWriter, r *http.Request) error
 	Detach(w http.ResponseWriter, r *http.Request) error
+	ChangeOwnPassword(w http.ResponseWriter, r *http.Request) error
 	Invite(w http.ResponseWriter, r *http.Request) error
 	Logout(w http.ResponseWriter, r *http.Request) error
 }
@@ -115,7 +116,8 @@ func (h *Auth) Register(router chi.Router) {
 			r.Get("/sessions/self", Wrap(h.logger, h.Me))
 			r.Post("/identities", Wrap(h.logger, h.Link))
 			r.Get("/identities", Wrap(h.logger, h.Identities))
-			r.Delete("/identities/{provider}", Wrap(h.logger, h.Detach))
+			r.Patch("/identities/{"+identityProviderParam+"}", Wrap(h.logger, h.ChangeOwnPassword))
+			r.Delete("/identities/{"+identityProviderParam+"}", Wrap(h.logger, h.Detach))
 		})
 	})
 }
@@ -329,7 +331,7 @@ func (h *Auth) Identities(w http.ResponseWriter, r *http.Request) error {
 
 // Detach removes an external account from the acting user.
 func (h *Auth) Detach(w http.ResponseWriter, r *http.Request) error {
-	provider := chi.URLParam(r, "provider")
+	provider := chi.URLParam(r, identityProviderParam)
 	userID := auth.UserIDFromContext(r.Context())
 
 	var err error
@@ -353,6 +355,41 @@ func (h *Auth) Detach(w http.ResponseWriter, r *http.Request) error {
 	default:
 		return fmt.Errorf("detaching the external account: %w", err)
 	}
+
+	return nil
+}
+
+type ownPasswordInput struct {
+	CurrentPassword string `json:"current_password"`
+	Password        string `json:"password"`
+}
+
+// ChangeOwnPassword sets a new password on the local account of the acting user.
+func (h *Auth) ChangeOwnPassword(w http.ResponseWriter, r *http.Request) error {
+	if chi.URLParam(r, identityProviderParam) != auth.ProviderLocal {
+		problem.Write(w, r, problem.NewNotFound())
+
+		return nil
+	}
+
+	var input ownPasswordInput
+
+	if failure := decodeObject(r, &input); failure != nil {
+		problem.Write(w, r, failure)
+
+		return nil
+	}
+
+	err := h.accounts.ChangeOwn(r.Context(), auth.UserIDFromContext(r.Context()),
+		provider.PasswordChange{
+			Current: []byte(input.CurrentPassword),
+			New:     []byte(input.Password),
+		})
+	if err != nil {
+		return failLocalAccount(w, r, err, "changing the own password")
+	}
+
+	render.NoContent(w, r)
 
 	return nil
 }
@@ -485,11 +522,7 @@ func (h *Auth) finishAttach(
 		*flow.UserID,
 		federated.ConnectorID,
 		federated.UserID,
-		model.Profile{
-			Username:    claims.Username,
-			DisplayName: claims.Name,
-			PictureURL:  claims.Picture,
-		},
+		claims.Profile(),
 	)
 	if errors.Is(err, errs.ErrIdentityTaken) {
 		redirectWithReason(w, r, flow.Redirect, reasonIdentityTaken)
@@ -525,11 +558,7 @@ func (h *Auth) finishRedeem(
 		*flow.InvitationID,
 		federated.ConnectorID,
 		federated.UserID,
-		model.Profile{
-			Username:    claims.Username,
-			DisplayName: claims.Name,
-			PictureURL:  claims.Picture,
-		},
+		claims.Profile(),
 	)
 	if errors.Is(err, errs.ErrIdentityTaken) {
 		redirectWithReason(w, r, flow.Redirect, reasonIdentityTaken)
@@ -567,11 +596,7 @@ func (h *Auth) resolveAndSync(ctx context.Context, claims *auth.Claims) (*model.
 			return nil, fmt.Errorf("%w: %s", errRecordNotActive, user.ID)
 		}
 
-		err = identities.SyncProfile(ctx, federated.ConnectorID, federated.UserID, model.Profile{
-			Username:    claims.Username,
-			DisplayName: claims.Name,
-			PictureURL:  claims.Picture,
-		})
+		err = identities.SyncProfile(ctx, federated.ConnectorID, federated.UserID, claims.Profile())
 		if err != nil {
 			return nil, fmt.Errorf("syncing the profile of the identity: %w", err)
 		}

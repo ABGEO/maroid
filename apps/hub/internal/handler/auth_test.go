@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -517,6 +518,17 @@ func (f *authFixture) signIn(
 ) *httptest.ResponseRecorder {
 	t.Helper()
 
+	return f.signInWith(t, accountID, f.provider.Claims(connector, accountID))
+}
+
+// signInWith finishes a sign in whose token carries the claims that the test gives.
+func (f *authFixture) signInWith(
+	t *testing.T,
+	accountID string,
+	claims jwt.MapClaims,
+) *httptest.ResponseRecorder {
+	t.Helper()
+
 	started := httptest.NewRecorder()
 	f.router.ServeHTTP(started, httptest.NewRequestWithContext(
 		t.Context(),
@@ -528,7 +540,6 @@ func (f *authFixture) signIn(
 
 	state := stateOf(t, started)
 
-	claims := f.provider.Claims(connector, accountID)
 	claims["nonce"] = nonceOf(t, f.database, state)
 	f.provider.IssueCode("sign-in-code-"+accountID, claims)
 

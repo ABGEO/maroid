@@ -24,6 +24,12 @@ type Change struct {
 	Administrator *bool
 }
 
+// touchesAdministrators reports whether the change can leave the instance with no
+// active administrator. A change of the names alone cannot.
+func (c Change) touchesAdministrators() bool {
+	return c.Status != nil || c.Administrator != nil
+}
+
 // Invitation is the token that redeems an invitation, and the moment it expires. The
 // token appears here one time and never again.
 type Invitation struct {
@@ -254,13 +260,17 @@ func (m *Manager) Change(
 ) (*model.User, error) {
 	var changed *model.User
 
+	guarded := change.touchesAdministrators()
+
 	err := database.WithTx(ctx, m.db, func(tx *sqlx.Tx) error {
-		// Two administrators who unmark each other at the same moment each count two
-		// without the lock, and both commits leave none.
 		users := repository.NewUser(tx)
 
-		if err := users.LockAdministrators(ctx); err != nil {
-			return fmt.Errorf("locking the administrators: %w", err)
+		// Two administrators who unmark each other at the same moment each count two
+		// without the lock, and both commits leave none.
+		if guarded {
+			if err := users.LockAdministrators(ctx); err != nil {
+				return fmt.Errorf("locking the administrators: %w", err)
+			}
 		}
 
 		var err error
@@ -276,13 +286,8 @@ func (m *Manager) Change(
 			return fmt.Errorf("changing the record: %w", err)
 		}
 
-		administrators, err := users.CountActiveAdministrators(ctx)
-		if err != nil {
-			return fmt.Errorf("counting the administrators: %w", err)
-		}
-
-		if administrators == 0 {
-			return errs.ErrAdministratorLast
+		if guarded {
+			return requireActiveAdministrator(ctx, users)
 		}
 
 		return nil
@@ -292,6 +297,21 @@ func (m *Manager) Change(
 	}
 
 	return changed, nil
+}
+
+// requireActiveAdministrator refuses a change that leaves the instance with no active
+// administrator.
+func requireActiveAdministrator(ctx context.Context, users *repository.User) error {
+	administrators, err := users.CountActiveAdministrators(ctx)
+	if err != nil {
+		return fmt.Errorf("counting the administrators: %w", err)
+	}
+
+	if administrators == 0 {
+		return errs.ErrAdministratorLast
+	}
+
+	return nil
 }
 
 func (m *Manager) issue(ctx context.Context, request auth.InviteRequest) (*Invitation, error) {

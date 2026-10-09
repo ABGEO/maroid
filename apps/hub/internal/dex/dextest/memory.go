@@ -8,6 +8,8 @@ import (
 	"slices"
 	"sync"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/abgeo/maroid/apps/hub/internal/dex"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 )
@@ -194,6 +196,23 @@ func (m *Memory) DeletePassword(_ context.Context, email string) error {
 	m.passwords = slices.Delete(m.passwords, at, at+1)
 
 	return nil
+}
+
+// VerifyPassword compares the password with the stored hash, as Dex does.
+func (m *Memory) VerifyPassword(_ context.Context, email string, password []byte) (bool, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if err := m.takeFailure("VerifyPassword"); err != nil {
+		return false, err
+	}
+
+	at := m.passwordAt(email)
+	if at < 0 {
+		return false, fmt.Errorf("verifying a password: %w", errs.ErrLocalAccountNotFound)
+	}
+
+	return bcrypt.CompareHashAndPassword(m.passwords[at].Hash, password) == nil, nil
 }
 
 // Hash answers the hash that a password holds, which the real Dex never answers.

@@ -29,6 +29,7 @@ type Client interface {
 	CreatePassword(ctx context.Context, password Password) error
 	UpdatePassword(ctx context.Context, email string, hash []byte) error
 	DeletePassword(ctx context.Context, email string) error
+	VerifyPassword(ctx context.Context, email string, password []byte) (bool, error)
 }
 
 // Connector is one connector of Dex, with its config as Dex stores it.
@@ -272,6 +273,26 @@ func (c *GRPC) DeletePassword(ctx context.Context, email string) error {
 	}
 
 	return nil
+}
+
+// VerifyPassword answers whether the password matches the local account of the address.
+func (c *GRPC) VerifyPassword(ctx context.Context, email string, password []byte) (bool, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	answer, err := c.api.VerifyPassword(ctx, &api.VerifyPasswordReq{
+		Email:    email,
+		Password: string(password),
+	})
+	if err != nil {
+		return false, failure("verifying a password", err)
+	}
+
+	if answer.GetNotFound() {
+		return false, fmt.Errorf("verifying a password: %w", errs.ErrLocalAccountNotFound)
+	}
+
+	return answer.GetVerified(), nil
 }
 
 // failure marks a call that never reached an answer of Dex, so the caller can

@@ -1,4 +1,4 @@
-import type { Page } from '@maroid/api-client';
+import type { Page, Tagged } from '@maroid/api-client';
 
 import { client } from './client';
 import type {
@@ -31,7 +31,18 @@ export interface UserChange {
 	is_administrator?: boolean;
 }
 
+/** The names that a person changes on their own record. */
+export interface SelfChange {
+	first_name?: string;
+	last_name?: string;
+}
+
 export const users = {
+	self: (): Promise<Tagged<UserRecord> | null> => client.getTagged<UserRecord>('/users/self'),
+
+	changeSelf: (change: SelfChange, etag?: string): Promise<Tagged<UserRecord> | null> =>
+		client.patchTagged<UserRecord>('/users/self', change, { ifMatch: etag }),
+
 	list: (): Promise<UserRecord[] | null> =>
 		client.get<Page<UserRecord>>('/users').then((page) => page?.items ?? null),
 

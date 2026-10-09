@@ -28,7 +28,7 @@ and gains a password section. No table changes.
 | `PROFILE-FR-002`  | Section 4.2, `PROFILE-SC-002`, `PROFILE-SC-003` |
 | `PROFILE-FR-003`  | `PROFILE-DD-001`, `PROFILE-SC-004`              |
 | `PROFILE-FR-004`  | `PROFILE-DD-004`, `PROFILE-SC-005`              |
-| `PROFILE-FR-005`  | `PROFILE-DD-004`, `PROFILE-SC-005`              |
+| `PROFILE-FR-005`  | `PROFILE-DD-004`, `PROFILE-SC-005`, `PROFILE-SC-012` |
 | `PROFILE-FR-006`  | Section 4.2, `PROFILE-SC-006`, `PROFILE-SC-007` |
 | `PROFILE-FR-007`  | `PROFILE-DD-003`, `PROFILE-SC-008`              |
 | `PROFILE-FR-008`  | Section 4.1, `PROFILE-SC-009`                   |
@@ -60,12 +60,13 @@ and gains a password section. No table changes.
 | ------------------------------------------------------------- | ------ | ------------------------------------------------------------- |
 | `apps/hub/internal/dex/client.go`                             | change | `VerifyPassword` on `dex.Client` and `GRPC`                   |
 | `apps/hub/internal/dex/dextest/memory.go`                     | change | `VerifyPassword` compares with the stored hash                |
-| `apps/hub/internal/provider/local.go`                         | change | `ChangeOwn` on `LocalAccounts` and `Accounts`                 |
-| `apps/hub/internal/domain/errs/errs.go`                       | change | `ErrPasswordMismatch`                                         |
+| `apps/hub/internal/provider/local.go`                         | change | `PasswordChange`, `ChangeOwn` on `LocalAccounts` and `Accounts` |
+| `apps/hub/internal/auth/verifier.go`                          | change | `Claims.Profile`, the profile that a token gives an identity  |
 | `apps/hub/internal/handler/user.go`                           | change | The route group of `/users/self`. `GetSelf`, `ChangeSelf`     |
-| `apps/hub/internal/handler/auth.go`                           | change | `PATCH /identities/{provider}`, `ChangeOwnPassword`           |
-| `apps/hub/internal/depresolver/server.go`                     | change | `LocalAccounts` reaches `handler.Auth`, if it does not yet    |
+| `apps/hub/internal/user/service.go`                           | change | `Change` locks and counts the administrators only for a change of `status` or the mark |
+| `apps/hub/internal/handler/auth.go`                           | change | `PATCH /identities/{provider}`, `ChangeOwnPassword`. Every write of a profile reads `Claims.Profile` |
 | `apps/deck/src/lib/api/{users,identities}.ts`                 | change | `users.self`, `users.changeSelf`, `identities.changePassword` |
+| `libs/api-client/src/{client,types}.ts`                       | change | `patchTagged`, the write that answers the new entity tag      |
 | `apps/deck/src/routes/(dashboard)/profile/+page.svelte`       | change | The name form saves. The password section.                    |
 | `specs/api/components.yaml`                                   | change | `User`, `Password`, `IdPUnavailable`                          |
 | `specs/features/{plugacc,idprov}/api.yaml`                    | change | Reference the three moved components                          |
@@ -79,8 +80,17 @@ and gains a password section. No table changes.
 VerifyPassword(ctx context.Context, email string, password []byte) (bool, error)
 
 // apps/hub/internal/provider/local.go
+type PasswordChange struct {
+    Current []byte
+    New     []byte
+}
+
 // ChangeOwn sets a new password after Dex verifies the current one.
-ChangeOwn(ctx context.Context, userID string, current []byte, password []byte) error
+ChangeOwn(ctx context.Context, userID string, change PasswordChange) error
+
+// apps/hub/internal/auth/verifier.go
+// Profile answers the profile that the token gives the identity.
+func (c *Claims) Profile() model.Profile
 
 // apps/hub/internal/handler/user.go
 type selfChangeInput struct {
@@ -90,8 +100,8 @@ type selfChangeInput struct {
 
 // apps/hub/internal/handler/auth.go
 type ownPasswordInput struct {
-    CurrentPassword *string `json:"current_password"`
-    Password        *string `json:"password"`
+    CurrentPassword string `json:"current_password"`
+    Password        string `json:"password"`
 }
 ```
 
@@ -109,8 +119,13 @@ static segment `self` before `{userId}`.
 passes `user.Change{FirstName, LastName}` with `trimmed` to `user.Service.Change`, with
 the version of `If-Match`. It answers the `userBody` and the `ETag` that `Change` answers.
 
+`user.Manager.Change` locks and counts the active administrators only when the change
+names `Status` or `Administrator`. A change of the names alone leaves the count as it
+is, so an instance with no active administrator still accepts it.
+
 The deck reads `users.self` with `client.getTagged`, sends the `ETag` back on
-`users.changeSelf`, and refreshes `userState` after a change, so the sidebar shows the
+`users.changeSelf`, which answers the record and its new `ETag` through
+`client.patchTagged`, and refreshes `userState` after a change, so the sidebar shows the
 new name. The password form holds the current password, the new one, and the new one
 again. Save stays disabled until the two new entries match.
 
@@ -163,7 +178,8 @@ as `Reset` does. A record with no account stops there with
 | A provider other than `local`, or no local account       | 404      | `not-found`                                |
 | Dex refuses the connection, or passes `dex.timeout`      | 503      | `not-ready`, dependency `dex`              |
 
-`errs` gains `ErrPasswordMismatch`. `ChangeOwnPassword` maps it to the fourth row.
+`ChangeOwn` answers a `provider.FieldError` at `/current_password` for the fourth row, as
+it answers one at `/password` for the fifth.
 `dex.timeout` defaults to 5 seconds, which `PROFILE-NFR-001` asks. Dex holds the
 password until `UpdatePassword` succeeds, so a timeout before it changes nothing.
 
@@ -208,7 +224,11 @@ hash, and holding one breaks `SEC-001`.
 `local` with `attached: true`. The `username` of that identity is the email address.
 **Rationale:** `IDPROV` writes the address as the `username` of the local identity, and
 the list names only the providers that Dex holds. No new route answers what one already
-answers.
+answers. Dex fills no `preferred_username` for a local account, and it sends the name
+of the password, which `Accounts.Give` sets to the address, as `name`. A sign in through
+the local provider therefore syncs `name` into the `username` of the identity, so the
+address survives each sign in. `Claims.Profile` holds the rule for every write of a
+profile: a sign in, an attach, and a redemption.
 **Alternatives:** A field on `/users/self` duplicates the list and ties a record to a
 provider.
 
@@ -280,7 +300,7 @@ sees no section. Nina last sees no section.
 "correct-horse-1" and `password` "battery-staple-2".
 **Then** the answer is 204. Dex
 verifies "battery-staple-2" and refuses "correct-horse-1". Her session still answers
-`GET /users/self`.
+`GET /auth/sessions/self`.
 
 ### `PROFILE-SC-007`
 
@@ -330,15 +350,25 @@ to `UpdatePassword`.
 answer is 503 `not-ready` with the dependency `dex`, and Dex still verifies
 "correct-horse-1".
 
+### `PROFILE-SC-012`
+
+**Verifies:** `PROFILE-FR-005`
+**Layer:** unit
+
+**Given** Nina holds a local identity whose `username` is `nina@home.example`.
+**When** she signs in through the local provider with a token whose `name` is
+`nina@home.example` and that carries no `preferred_username`.
+**Then** `GET /auth/identities` lists `local` with `username` `nina@home.example`.
+
 ## 7. Build plan
 
 | #   | Step                                                                                     | Realizes                                         | Done |
 | --- | ---------------------------------------------------------------------------------------- | ------------------------------------------------ | ---- |
 | 1   | The row of `API-003`. The three components move to `components.yaml`.                    | `PROFILE-FR-001`                                 | [x]  |
-| 2   | `GET` and `PATCH /users/self`, and the two groups of `User.Register`                     | `PROFILE-FR-001` to `PROFILE-FR-003`, `PROFILE-INV-001` | [ ] |
-| 3   | `dex.Client.VerifyPassword`, the fake, `ErrPasswordMismatch`, `LocalAccounts.ChangeOwn`  | `PROFILE-FR-007`, `PROFILE-NFR-001`              | [ ]  |
-| 4   | `PATCH /auth/identities/{provider}`                                                      | `PROFILE-FR-006` to `PROFILE-FR-010`             | [ ]  |
-| 5   | The deck: the name form saves, the password section                                      | `PROFILE-FR-001`, `PROFILE-FR-002`, `PROFILE-FR-004` to `PROFILE-FR-008` | [ ] |
+| 2   | `GET` and `PATCH /users/self`, and the two groups of `User.Register`                     | `PROFILE-FR-001` to `PROFILE-FR-003`, `PROFILE-INV-001` | [x] |
+| 3   | `dex.Client.VerifyPassword`, the fake, `LocalAccounts.ChangeOwn`                             | `PROFILE-FR-007`, `PROFILE-NFR-001`              | [x]  |
+| 4   | `PATCH /auth/identities/{provider}`                                                      | `PROFILE-FR-006` to `PROFILE-FR-010`             | [x]  |
+| 5   | The deck: the name form saves, the password section                                      | `PROFILE-FR-001`, `PROFILE-FR-002`, `PROFILE-FR-004` to `PROFILE-FR-008` | [x] |
 
 ## 8. Out of scope for this specification
 

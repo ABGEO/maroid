@@ -28,13 +28,21 @@ const (
 	hashCost = 12
 )
 
-// LocalAccounts gives, resets, and removes the local account of a user record.
+// LocalAccounts gives, resets, changes, and removes the local account of a user record.
 type LocalAccounts interface {
 	Give(ctx context.Context, userID string, email string, password []byte) error
 	Reset(ctx context.Context, userID string, password []byte) error
+	ChangeOwn(ctx context.Context, userID string, change PasswordChange) error
 	Remove(ctx context.Context, userID string) error
 	EnsureProvider(ctx context.Context) error
 	HasAccount(ctx context.Context, userID string) (bool, error)
+}
+
+// PasswordChange is the current password of a local account and the one that replaces
+// it.
+type PasswordChange struct {
+	Current []byte
+	New     []byte
 }
 
 // Accounts is the LocalAccounts that Dex and the identities back. The user_id of a
@@ -116,6 +124,39 @@ func (a *Accounts) Reset(ctx context.Context, userID string, password []byte) er
 
 	if err = a.client.UpdatePassword(ctx, account.Email, hash); err != nil {
 		return fmt.Errorf("resetting a local account: %w", err)
+	}
+
+	return nil
+}
+
+// ChangeOwn sets a new password on the local account of the record after Dex verifies
+// the current one. A new password that fails its check costs no call to Dex.
+func (a *Accounts) ChangeOwn(ctx context.Context, userID string, change PasswordChange) error {
+	if len(change.Current) == 0 {
+		return fieldError("/current_password", "the value is required")
+	}
+
+	hash, err := hashPassword(change.New)
+	if err != nil {
+		return err
+	}
+
+	account, err := a.passwordOf(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	verified, err := a.client.VerifyPassword(ctx, account.Email, change.Current)
+	if err != nil {
+		return fmt.Errorf("verifying the current password: %w", err)
+	}
+
+	if !verified {
+		return fieldError("/current_password", "the current password does not match")
+	}
+
+	if err = a.client.UpdatePassword(ctx, account.Email, hash); err != nil {
+		return fmt.Errorf("changing the own password: %w", err)
 	}
 
 	return nil

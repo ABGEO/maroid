@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 	"fmt"
+
+	"github.com/abgeo/maroid/apps/hub/internal/model"
 )
 
 // FederatedClaims names the connector of Dex and the account at the upstream
@@ -19,6 +21,22 @@ type Claims struct {
 	Username  string          `json:"preferred_username"`
 	Picture   string          `json:"picture"`
 	Federated FederatedClaims `json:"federated_claims"`
+}
+
+// Profile answers the profile that the token gives the identity it names. Dex fills
+// no preferred_username for a local account and sends the name of its password, which
+// the hub sets to the address, so the address stays the username of a local identity.
+func (c *Claims) Profile() model.Profile {
+	username := c.Username
+	if c.Federated.ConnectorID == ProviderLocal {
+		username = c.Name
+	}
+
+	return model.Profile{
+		Username:    username,
+		DisplayName: c.Name,
+		PictureURL:  c.Picture,
+	}
 }
 
 // TokenVerifier checks a token that Dex issued.

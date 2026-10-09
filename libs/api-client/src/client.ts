@@ -1,6 +1,6 @@
 import { ApiError } from './errors';
 import { FLOW_ID_HEADER, PROBLEM_MEDIA_TYPE } from './problem';
-import type { ApiClient, ClientConfig, LinkOptions, RequestOptions } from './types';
+import type { ApiClient, ClientConfig, LinkOptions, RequestOptions, Tagged } from './types';
 
 const IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
 
@@ -119,6 +119,36 @@ export function createClient(config: ClientConfig): ApiClient {
     return exchanged?.body ?? null;
   }
 
+  /** Answer the body of an exchange beside the entity tag of its answer. */
+  function tagged<T>(exchanged: { body: T | null; response: Response } | null): Tagged<T> | null {
+    if (exchanged === null) {
+      return null;
+    }
+
+    return {
+      value: exchanged.body as T,
+      etag: exchanged.response.headers.get('ETag') ?? undefined
+    };
+  }
+
+  /** Build the exchange of a JSON Merge Patch, RFC 7396. */
+  function mergePatch(path: string, body: unknown, options: RequestOptions) {
+    const headers = new Headers(options.headers);
+    if (!headers.has('Content-Type')) {
+      headers.set('Content-Type', MERGE_PATCH_MEDIA_TYPE);
+    }
+
+    return {
+      url: buildUrl(path, options.params),
+      init: {
+        method: 'PATCH',
+        body: serializeBody(body),
+        headers,
+        signal: options.signal
+      } satisfies RequestInit
+    };
+  }
+
   function resolveLink(link: string): string {
     const hub = new URL(baseUrl || globalThis.location.origin);
     const target = new URL(link, hub);
@@ -144,20 +174,13 @@ export function createClient(config: ClientConfig): ApiClient {
     },
 
     async getTagged<T>(path: string, options: RequestOptions = {}) {
-      const exchanged = await exchange<T>(buildUrl(path, options.params), {
-        method: 'GET',
-        headers: options.headers,
-        signal: options.signal
-      });
-
-      if (exchanged === null) {
-        return null;
-      }
-
-      return {
-        value: exchanged.body as T,
-        etag: exchanged.response.headers.get('ETag') ?? undefined
-      };
+      return tagged(
+        await exchange<T>(buildUrl(path, options.params), {
+          method: 'GET',
+          headers: options.headers,
+          signal: options.signal
+        })
+      );
     },
 
     follow<T>(link: string, options: LinkOptions = {}) {
@@ -196,21 +219,15 @@ export function createClient(config: ClientConfig): ApiClient {
     },
 
     patch<T>(path: string, body: unknown, options: RequestOptions = {}) {
-      const headers = new Headers(options.headers);
-      if (!headers.has('Content-Type')) {
-        headers.set('Content-Type', MERGE_PATCH_MEDIA_TYPE);
-      }
+      const { url, init } = mergePatch(path, body, options);
 
-      return request<T>(
-        buildUrl(path, options.params),
-        {
-          method: 'PATCH',
-          body: serializeBody(body),
-          headers,
-          signal: options.signal
-        },
-        options.ifMatch
-      );
+      return request<T>(url, init, options.ifMatch);
+    },
+
+    async patchTagged<T>(path: string, body: unknown, options: RequestOptions = {}) {
+      const { url, init } = mergePatch(path, body, options);
+
+      return tagged(await exchange<T>(url, init, options.ifMatch));
     },
 
     del<T>(path: string, options: RequestOptions = {}) {
