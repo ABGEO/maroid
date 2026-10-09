@@ -12,15 +12,22 @@ import (
 	"github.com/abgeo/maroid/plugins/gwp/service"
 )
 
+// pluginID names the plugin. The constructor needs it before Meta exists.
+//
+//nolint:gochecknoglobals
+var pluginID = pluginapi.ParsePluginID("dev.maroid.gwp")
+
 type GWPPlugin struct {
 	config       *config.Config
+	settings     *pluginapi.PluginSettings
 	logger       *slog.Logger
 	apiClientSvc service.APIClientService
 }
 
 var (
-	_ pluginapi.Plugin     = (*GWPPlugin)(nil)
-	_ pluginapi.CronPlugin = (*GWPPlugin)(nil)
+	_ pluginapi.Plugin             = (*GWPPlugin)(nil)
+	_ pluginapi.ConfigurablePlugin = (*GWPPlugin)(nil)
+	_ pluginapi.CronPlugin         = (*GWPPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -28,14 +35,18 @@ var (
 //nolint:gochecknoglobals
 var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (pluginapi.Plugin, error) {
 	pluginConfig := new(config.Config)
-
-	err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig)
-	if err != nil {
+	if err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig); err != nil {
 		return nil, fmt.Errorf("validating config: %w", err)
+	}
+
+	settingsProvider, err := host.Settings()
+	if err != nil {
+		return nil, fmt.Errorf("getting host settings provider: %w", err)
 	}
 
 	plg := &GWPPlugin{
 		config:       pluginConfig,
+		settings:     pluginapi.NewPluginSettings(settingsProvider, pluginID),
 		apiClientSvc: service.NewAPIClient(pluginConfig),
 	}
 
@@ -50,7 +61,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *GWPPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:          pluginapi.ParsePluginID("dev.maroid.gwp"),
+		ID:          pluginID,
 		Name:        "GWP",
 		Description: "Water bills and usage from Georgian Water and Power.",
 		Version:     "0.1.0",
@@ -58,8 +69,13 @@ func (p *GWPPlugin) Meta() pluginapi.Metadata {
 	}
 }
 
+// SettingsModel declares the GWP account that a workspace stores.
+func (p *GWPPlugin) SettingsModel() (any, error) {
+	return config.WorkspaceSettings{}, nil
+}
+
 func (p *GWPPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 	return []pluginapi.CronJob{
-		job.NewReadingsCollector(p.config, p.logger, p.apiClientSvc),
+		job.NewReadingsCollector(p.config, p.logger, p.settings, p.apiClientSvc),
 	}, nil
 }

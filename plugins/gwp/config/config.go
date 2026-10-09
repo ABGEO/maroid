@@ -9,7 +9,13 @@ type CronSchedule struct {
 // Config represents the root plugin configuration.
 type Config struct {
 	BaseURL      string       `default:"https://www.gwp.ge/api" mapstructure:"base_url"`
-	Username     string       `mapstructure:"username"          validate:"required"`
-	Password     string       `mapstructure:"password"          validate:"required"`
 	CronSchedule CronSchedule `mapstructure:"cron_schedule"`
+}
+
+// WorkspaceSettings holds the GWP account that every member of a workspace shares.
+//
+//nolint:lll // the tags of one field share one line.
+type WorkspaceSettings struct {
+	Username string `json:"username" jsonschema:"title=Username,required"                                jsonschema_extras:"x-maroid-scope=workspace"`
+	Password string `json:"password" jsonschema:"title=Password,format=password,writeOnly=true,required" jsonschema_extras:"x-maroid-scope=workspace"`
 }
