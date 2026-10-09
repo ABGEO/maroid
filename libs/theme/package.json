@@ -4,7 +4,8 @@
 	"type": "module",
 	"exports": {
 		"./maroid.css": "./src/maroid.css",
-		"./maroid-dusk.css": "./src/maroid-dusk.css"
+		"./maroid-dusk.css": "./src/maroid-dusk.css",
+		"./components.css": "./src/components.css"
 	},
 	"scripts": {
 		"lint": "prettier --check ."
