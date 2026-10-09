@@ -119,20 +119,26 @@ func (d *BillingItem) Hash() string {
 	return hex.EncodeToString(hash[:])
 }
 
+// enterDateLayout reads the enter date, which the API gives in the time of Tbilisi with
+// no offset.
+const enterDateLayout = "2006-01-02 15:04:05-07:00"
+
 // MapToModel converts the external BillingItem representation into a
 // model.BillingItem entity suitable for persistence.
-func (d *BillingItem) MapToModel() model.BillingItem {
-	instance := model.BillingItem{
+func (d *BillingItem) MapToModel() (model.BillingItem, error) {
+	date, err := time.Parse(enterDateLayout, d.EnterDate+"+04:00")
+	if err != nil {
+		return model.BillingItem{}, fmt.Errorf("parsing the enter date %q: %w", d.EnterDate, err)
+	}
+
+	return model.BillingItem{
 		Hash:        d.Hash(),
 		Operation:   d.Operation,
 		Reading:     parseFloatOrZero(d.Reading),
 		Consumption: parseFloatOrZero(d.Consumption),
 		Amount:      parseFloatOrZero(d.Amount),
-	}
-
-	instance.Date, _ = time.Parse(`2006-01-02 15:04:05-07:00`, d.EnterDate+"+04:00")
-
-	return instance
+		Date:        date,
+	}, nil
 }
 
 func parseFloatOrZero(value string) float64 {

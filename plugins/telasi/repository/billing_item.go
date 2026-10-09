@@ -37,7 +37,7 @@ func (r *BillingItem) Insert(ctx context.Context, entity *model.BillingItem) err
 			:hash, :operation, :reading,
 			:consumption, :amount, :date
 		)
-		ON CONFLICT (hash) DO NOTHING;
+		ON CONFLICT (workspace_id, hash) DO NOTHING;
 	`
 
 	_, err := r.tx.NamedExecContext(ctx, query, entity)

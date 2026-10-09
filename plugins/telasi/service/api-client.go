@@ -17,13 +17,17 @@ var ErrRequestFailed = errors.New("request failed")
 
 // APIClientService defines the interface for interacting with the Telasi API.
 type APIClientService interface {
-	SetAuthToken(token string)
 	Authenticate(ctx context.Context, email string, password string) (string, error)
-	GetCustomers(ctx context.Context) ([]dto.CustomerResponse, error)
-	GetBillingItems(ctx context.Context, body dto.BillingItemsRequest) ([]dto.BillingItem, error)
+	GetCustomers(ctx context.Context, token string) ([]dto.CustomerResponse, error)
+	GetBillingItems(
+		ctx context.Context,
+		token string,
+		body dto.BillingItemsRequest,
+	) ([]dto.BillingItem, error)
 }
 
-// APIClient implements APIClientService.
+// APIClient implements APIClientService. It holds no credential, because one instance
+// serves the account of every workspace.
 type APIClient struct {
 	client *resty.Client
 }
@@ -40,11 +44,6 @@ func NewAPIClient(cfg *config.Config) *APIClient {
 	return &APIClient{
 		client: client,
 	}
-}
-
-// SetAuthToken sets the authentication token for subsequent API requests.
-func (s *APIClient) SetAuthToken(token string) {
-	s.client.SetAuthToken(token)
 }
 
 // Authenticate authenticates the user and returns an authentication token.
@@ -67,51 +66,47 @@ func (s *APIClient) Authenticate(
 		return "", fmt.Errorf("sending authentication request: %w", err)
 	}
 
-	if resp.StatusCode() != http.StatusOK {
-		return "", fmt.Errorf(
-			"%w: returned [%d] %v",
-			ErrRequestFailed,
-			resp.StatusCode(),
-			resp.Error(),
-		)
+	if err = statusFailure(resp); err != nil {
+		return "", err
 	}
 
 	return response.Token, nil
 }
 
-// GetCustomers retrieves the list of customers associated with the authenticated user.
-func (s *APIClient) GetCustomers(ctx context.Context) ([]dto.CustomerResponse, error) {
+// GetCustomers retrieves the customers of the account that the token names.
+func (s *APIClient) GetCustomers(
+	ctx context.Context,
+	token string,
+) ([]dto.CustomerResponse, error) {
 	var response []dto.CustomerResponse
 
 	resp, err := s.client.R().
 		SetContext(ctx).
+		SetAuthToken(token).
 		SetResult(&response).
 		Post("/telasiCustomers/info/getCustomers")
 	if err != nil {
 		return nil, fmt.Errorf("sending customers request: %w", err)
 	}
 
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf(
-			"%w: returned [%d] %v",
-			ErrRequestFailed,
-			resp.StatusCode(),
-			resp.Error(),
-		)
+	if err = statusFailure(resp); err != nil {
+		return nil, err
 	}
 
 	return response, nil
 }
 
-// GetBillingItems retrieves billing items based on the provided request body.
+// GetBillingItems retrieves the billing items of the account that the token names.
 func (s *APIClient) GetBillingItems(
 	ctx context.Context,
+	token string,
 	body dto.BillingItemsRequest,
 ) ([]dto.BillingItem, error) {
 	var response dto.ListResponse[dto.BillingItem]
 
 	resp, err := s.client.R().
 		SetContext(ctx).
+		SetAuthToken(token).
 		SetResult(&response).
 		SetBody(body).
 		Post("/telasiCustomers/info/getBillingItems")
@@ -119,14 +114,17 @@ func (s *APIClient) GetBillingItems(
 		return nil, fmt.Errorf("sending billing items request: %w", err)
 	}
 
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf(
-			"%w: returned [%d] %v",
-			ErrRequestFailed,
-			resp.StatusCode(),
-			resp.Error(),
-		)
+	if err = statusFailure(resp); err != nil {
+		return nil, err
 	}
 
 	return response.List.Items, nil
+}
+
+func statusFailure(resp *resty.Response) error {
+	if resp.StatusCode() == http.StatusOK {
+		return nil
+	}
+
+	return fmt.Errorf("%w: returned [%d] %v", ErrRequestFailed, resp.StatusCode(), resp.Error())
 }

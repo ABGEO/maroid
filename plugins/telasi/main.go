@@ -15,18 +15,25 @@ import (
 	"github.com/abgeo/maroid/plugins/telasi/service"
 )
 
+// pluginID names the plugin. The constructor needs it before Meta exists.
+//
+//nolint:gochecknoglobals
+var pluginID = pluginapi.ParsePluginID("dev.maroid.telasi")
+
 type TelasiPlugin struct {
 	config       *config.Config
 	logger       *slog.Logger
 	db           *pluginapi.PluginDB
+	settings     *pluginapi.PluginSettings
 	notifier     notifierapi.Dispatcher
 	apiClientSvc service.APIClientService
 }
 
 var (
-	_ pluginapi.Plugin          = (*TelasiPlugin)(nil)
-	_ pluginapi.CronPlugin      = (*TelasiPlugin)(nil)
-	_ pluginapi.MigrationPlugin = (*TelasiPlugin)(nil)
+	_ pluginapi.Plugin             = (*TelasiPlugin)(nil)
+	_ pluginapi.ConfigurablePlugin = (*TelasiPlugin)(nil)
+	_ pluginapi.CronPlugin         = (*TelasiPlugin)(nil)
+	_ pluginapi.MigrationPlugin    = (*TelasiPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -34,9 +41,7 @@ var (
 //nolint:gochecknoglobals
 var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (pluginapi.Plugin, error) {
 	pluginConfig := new(config.Config)
-
-	err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig)
-	if err != nil {
+	if err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig); err != nil {
 		return nil, fmt.Errorf("validating config: %w", err)
 	}
 
@@ -50,13 +55,18 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host notifier instance: %w", err)
 	}
 
+	settingsProvider, err := host.Settings()
+	if err != nil {
+		return nil, fmt.Errorf("getting host settings provider: %w", err)
+	}
+
 	plg := &TelasiPlugin{
 		config:       pluginConfig,
+		db:           pluginapi.NewPluginDB(database, pluginID),
+		settings:     pluginapi.NewPluginSettings(settingsProvider, pluginID),
 		notifier:     notifierInstance,
 		apiClientSvc: service.NewAPIClient(pluginConfig),
 	}
-
-	plg.db = pluginapi.NewPluginDB(database, plg.Meta().ID)
 
 	plg.logger = host.Logger().With(
 		slog.String("plugin", plg.Meta().ID.String()),
@@ -69,7 +79,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *TelasiPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:          pluginapi.ParsePluginID("dev.maroid.telasi"),
+		ID:          pluginID,
 		Name:        "Telasi",
 		Description: "Electricity bills and usage from Telasi.",
 		Version:     "0.1.0",
@@ -77,9 +87,16 @@ func (p *TelasiPlugin) Meta() pluginapi.Metadata {
 	}
 }
 
+// SettingsModel declares the Telasi account that a workspace stores.
+func (p *TelasiPlugin) SettingsModel() (any, error) {
+	return config.WorkspaceSettings{}, nil
+}
+
 func (p *TelasiPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 	return []pluginapi.CronJob{
-		job.NewBillingItemsCollector(p.config, p.logger, p.db, p.notifier, p.apiClientSvc),
+		job.NewBillingItemsCollector(
+			p.config, p.logger, p.db, p.settings, p.notifier, p.apiClientSvc,
+		),
 	}, nil
 }
 

@@ -2,6 +2,7 @@ package job
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -10,19 +11,29 @@ import (
 
 	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/telasi/config"
 	"github.com/abgeo/maroid/plugins/telasi/dto"
 	"github.com/abgeo/maroid/plugins/telasi/repository"
 	"github.com/abgeo/maroid/plugins/telasi/service"
 )
 
-// BillingItemsCollector is a cron job that fetches and processes billing items.
+// BillingItemsCollector is a cron job that fetches and stores the billing items of each
+// workspace, with the account that the workspace stored.
 type BillingItemsCollector struct {
 	config       *config.Config
 	logger       *slog.Logger
 	db           *pluginapi.PluginDB
+	settings     *pluginapi.PluginSettings
 	notifier     notifierapi.Dispatcher
 	apiClientSvc service.APIClientService
+}
+
+// session is one signed in run of the job for one workspace.
+type session struct {
+	token         string
+	accountNumber string
+	logger        *slog.Logger
 }
 
 var _ pluginapi.CronJob = (*BillingItemsCollector)(nil)
@@ -32,12 +43,14 @@ func NewBillingItemsCollector(
 	config *config.Config,
 	logger *slog.Logger,
 	db *pluginapi.PluginDB,
+	settings *pluginapi.PluginSettings,
 	notifier notifierapi.Dispatcher,
 	apiClientSvc service.APIClientService,
 ) *BillingItemsCollector {
 	instance := &BillingItemsCollector{
 		config:       config,
 		db:           db,
+		settings:     settings,
 		notifier:     notifier,
 		apiClientSvc: apiClientSvc,
 	}
@@ -55,62 +68,83 @@ func (j *BillingItemsCollector) Meta() pluginapi.CronJobMeta {
 	return pluginapi.CronJobMeta{
 		ID:       "billing_items_collector",
 		Schedule: j.config.CronSchedule.BillingItemsCollector,
+		Scope:    pluginapi.CronScopePerWorkspace,
 	}
 }
 
-// Run executes the job.
+// Run collects the billing items of the acting workspace. A workspace that stored no
+// account is skipped, because it enabled the plugin and has not finished its setup.
 func (j *BillingItemsCollector) Run(ctx context.Context) error {
-	if err := j.authenticate(ctx); err != nil {
-		return err
+	logger := j.logger.With(
+		slog.String("workspace_id", pluginapi.ActingWorkspaceFromContext(ctx)),
+	)
+
+	account, err := j.account(ctx)
+	if errors.Is(err, pluginapi.ErrSettingsAbsent) {
+		logger.Info("skipping the workspace, because it stored no Telasi account")
+
+		return nil
 	}
 
-	billingItems, err := j.fetchBillingItems(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err = j.storeBillingItems(ctx, billingItems); err != nil {
-		return err
-	}
-
-	j.logger.Info("billing item collection completed successfully")
-
-	if err = j.sendNotification(ctx, billingItems); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (j *BillingItemsCollector) authenticate(ctx context.Context) error {
-	token, err := j.apiClientSvc.Authenticate(ctx, j.config.Email, j.config.Password)
+	token, err := j.apiClientSvc.Authenticate(ctx, account.Email, account.Password)
 	if err != nil {
-		return fmt.Errorf("authentication failed: %w", err)
+		return fmt.Errorf("authenticating at Telasi: %w", err)
 	}
 
-	j.apiClientSvc.SetAuthToken(token)
+	current := session{token: token, accountNumber: account.AccountNumber, logger: logger}
 
-	j.logger.Info("API authentication successful")
+	billingItems, err := j.fetchBillingItems(ctx, current)
+	if err != nil {
+		return err
+	}
 
-	return nil
+	if err = j.storeBillingItems(ctx, current, billingItems); err != nil {
+		return err
+	}
+
+	logger.Info("billing item collection completed successfully")
+
+	return j.sendNotification(ctx, current, billingItems)
 }
 
-func (j *BillingItemsCollector) fetchBillingItems(ctx context.Context) ([]dto.BillingItem, error) {
+func (j *BillingItemsCollector) account(ctx context.Context) (*config.WorkspaceSettings, error) {
+	values, err := j.settings.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("reading the settings of the workspace: %w", err)
+	}
+
+	account := new(config.WorkspaceSettings)
+	if err = pluginconfig.DecodeAndValidateSettings(values, account); err != nil {
+		return nil, fmt.Errorf("decoding the settings of the workspace: %w", err)
+	}
+
+	return account, nil
+}
+
+func (j *BillingItemsCollector) fetchBillingItems(
+	ctx context.Context,
+	current session,
+) ([]dto.BillingItem, error) {
 	startDate, endDate := getPreviousMonthPeriod()
-	dateFrom := startDate.Format("2006-01-02")
-	dateTo := endDate.Format("2006-01-02")
+	dateFrom := startDate.Format(time.DateOnly)
+	dateTo := endDate.Format(time.DateOnly)
 
-	j.logger.Info(
+	current.logger.Info(
 		"fetching billing items",
 		slog.String("date_from", dateFrom),
 		slog.String("date_to", dateTo),
-		slog.String("account_number", j.config.AccountNumber),
+		slog.String("account_number", current.accountNumber),
 	)
 
 	billingItems, err := j.apiClientSvc.GetBillingItems(
 		ctx,
+		current.token,
 		dto.BillingItemsRequest{
-			AccountNumber: j.config.AccountNumber,
+			AccountNumber: current.accountNumber,
 			DateFrom:      dateFrom,
 			DateTo:        dateTo,
 		},
@@ -119,7 +153,7 @@ func (j *BillingItemsCollector) fetchBillingItems(ctx context.Context) ([]dto.Bi
 		return nil, fmt.Errorf("fetching billing items from API: %w", err)
 	}
 
-	j.logger.Info(
+	current.logger.Info(
 		"billing items fetched successfully",
 		slog.Int("items_count", len(billingItems)),
 	)
@@ -129,27 +163,28 @@ func (j *BillingItemsCollector) fetchBillingItems(ctx context.Context) ([]dto.Bi
 
 func (j *BillingItemsCollector) storeBillingItems(
 	ctx context.Context,
+	current session,
 	billingItems []dto.BillingItem,
 ) error {
 	if len(billingItems) == 0 {
-		j.logger.Info("no billing items to store")
+		current.logger.Info("no billing items to store")
 
 		return nil
 	}
 
 	err := j.db.WithTx(ctx, func(tx *sqlx.Tx) error {
-		return j.insertBillingItemsInTx(ctx, tx, billingItems)
+		return insertBillingItemsInTx(ctx, tx, billingItems)
 	})
 	if err != nil {
 		return fmt.Errorf("storing billing items in database: %w", err)
 	}
 
-	j.logger.Info("billing items stored successfully")
+	current.logger.Info("billing items stored successfully")
 
 	return nil
 }
 
-func (j *BillingItemsCollector) insertBillingItemsInTx(
+func insertBillingItemsInTx(
 	ctx context.Context,
 	tx *sqlx.Tx,
 	billingItems []dto.BillingItem,
@@ -157,9 +192,12 @@ func (j *BillingItemsCollector) insertBillingItemsInTx(
 	billingItemRepo := repository.NewBillingItem(tx)
 
 	for _, billingItem := range billingItems {
-		billingItemEntity := billingItem.MapToModel()
+		billingItemEntity, err := billingItem.MapToModel()
+		if err != nil {
+			return fmt.Errorf("mapping billing item: %w", err)
+		}
 
-		if err := billingItemRepo.Insert(ctx, &billingItemEntity); err != nil {
+		if err = billingItemRepo.Insert(ctx, &billingItemEntity); err != nil {
 			return fmt.Errorf("inserting billing item: %w", err)
 		}
 	}
@@ -169,12 +207,13 @@ func (j *BillingItemsCollector) insertBillingItemsInTx(
 
 func (j *BillingItemsCollector) sendNotification(
 	ctx context.Context,
+	current session,
 	billingItems []dto.BillingItem,
 ) error {
 	const readingOperation = "ჩვენება"
 
 	if !j.config.Notification.MonthlyBill {
-		j.logger.Info("monthly bill notification is disabled in configuration")
+		current.logger.Info("monthly bill notification is disabled in configuration")
 
 		return nil
 	}
@@ -220,11 +259,11 @@ func getPreviousMonthPeriod() (time.Time, time.Time) {
 
 func buildNotificationMessage(item dto.BillingItem) string {
 	return fmt.Sprintf(`ელექტრო ენერგიის მოხმარების ყოველთვიური ქვითარი.
-	
-	<b>თარიღი</b>: %s
-	<b>მრიცხველის ჩვენება</b>: %s კვტ/სთ
-	<b>მოხმარება</b>: %s კვტ/სთ
-	<b>სულ გადასახადი</b>: %s ₾`,
+
+<b>თარიღი</b>: %s
+<b>მრიცხველის ჩვენება</b>: %s კვტ/სთ
+<b>მოხმარება</b>: %s კვტ/სთ
+<b>სულ გადასახადი</b>: %s ₾`,
 		item.EnterDate,
 		item.Reading,
 		item.Consumption,
