@@ -17,13 +17,17 @@ import (
 
 // APIClientService defines the interface for interacting with the Tbilisi Energy API.
 type APIClientService interface {
-	SetAuthToken(token string)
 	Authenticate(ctx context.Context, username string, password string) (string, error)
-	GetTransactions(ctx context.Context, body dto.TransactionsRequest) ([]dto.Transaction, error)
-	DownloadFile(ctx context.Context, fileURL string) ([]byte, error)
+	GetTransactions(
+		ctx context.Context,
+		token string,
+		body dto.TransactionsRequest,
+	) ([]dto.Transaction, error)
+	DownloadFile(ctx context.Context, token string, fileURL string) ([]byte, error)
 }
 
-// APIClient implements APIClientService.
+// APIClient implements APIClientService. It holds no credential, because one instance
+// serves the account of every workspace.
 type APIClient struct {
 	client *resty.Client
 }
@@ -42,11 +46,6 @@ func NewAPIClient(cfg *config.Config) *APIClient {
 	return &APIClient{
 		client: client,
 	}
-}
-
-// SetAuthToken sets the authentication token for subsequent API requests.
-func (s *APIClient) SetAuthToken(token string) {
-	s.client.SetAuthToken(token)
 }
 
 // Authenticate authenticates the user and returns an authentication token.
@@ -79,15 +78,17 @@ func (s *APIClient) Authenticate(ctx context.Context, username, password string)
 	return response.Token, nil
 }
 
-// GetTransactions retrieves transactions based on the provided request parameters.
+// GetTransactions retrieves the transactions of the account that the token names.
 func (s *APIClient) GetTransactions(
 	ctx context.Context,
+	token string,
 	body dto.TransactionsRequest,
 ) ([]dto.Transaction, error) {
 	var response dto.TransactionsResponse
 
 	resp, err := s.client.R().
 		SetContext(ctx).
+		SetAuthToken(token).
 		SetResult(&response).
 		SetBody(body).
 		Post("/Customer/GetTransactions")
@@ -111,12 +112,17 @@ func (s *APIClient) GetTransactions(
 	return response.Transactions, nil
 }
 
-// DownloadFile downloads a file from the specified URL.
-func (s *APIClient) DownloadFile(ctx context.Context, fileURL string) ([]byte, error) {
+// DownloadFile downloads a file of the account that the token names.
+func (s *APIClient) DownloadFile(
+	ctx context.Context,
+	token string,
+	fileURL string,
+) ([]byte, error) {
 	fileURL = strings.TrimPrefix(fileURL, "api/")
 
 	resp, err := s.client.R().
 		SetContext(ctx).
+		SetAuthToken(token).
 		SetDoNotParseResponse(true).
 		Get(fileURL)
 	if err != nil {

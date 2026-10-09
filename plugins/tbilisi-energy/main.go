@@ -15,18 +15,25 @@ import (
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/service"
 )
 
+// pluginID names the plugin. The constructor needs it before Meta exists.
+//
+//nolint:gochecknoglobals
+var pluginID = pluginapi.ParsePluginID("dev.maroid.tbilisi-energy")
+
 type TbilisiEnergyPlugin struct {
 	config       *config.Config
 	logger       *slog.Logger
 	db           *pluginapi.PluginDB
+	settings     *pluginapi.PluginSettings
 	notifier     notifierapi.Dispatcher
 	apiClientSvc service.APIClientService
 }
 
 var (
-	_ pluginapi.Plugin          = (*TbilisiEnergyPlugin)(nil)
-	_ pluginapi.CronPlugin      = (*TbilisiEnergyPlugin)(nil)
-	_ pluginapi.MigrationPlugin = (*TbilisiEnergyPlugin)(nil)
+	_ pluginapi.Plugin             = (*TbilisiEnergyPlugin)(nil)
+	_ pluginapi.ConfigurablePlugin = (*TbilisiEnergyPlugin)(nil)
+	_ pluginapi.CronPlugin         = (*TbilisiEnergyPlugin)(nil)
+	_ pluginapi.MigrationPlugin    = (*TbilisiEnergyPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -34,9 +41,7 @@ var (
 //nolint:gochecknoglobals
 var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (pluginapi.Plugin, error) {
 	pluginConfig := new(config.Config)
-
-	err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig)
-	if err != nil {
+	if err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig); err != nil {
 		return nil, fmt.Errorf("validating config: %w", err)
 	}
 
@@ -50,13 +55,18 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host notifier instance: %w", err)
 	}
 
+	settingsProvider, err := host.Settings()
+	if err != nil {
+		return nil, fmt.Errorf("getting host settings provider: %w", err)
+	}
+
 	plg := &TbilisiEnergyPlugin{
 		config:       pluginConfig,
+		db:           pluginapi.NewPluginDB(database, pluginID),
+		settings:     pluginapi.NewPluginSettings(settingsProvider, pluginID),
 		notifier:     notifierInstance,
 		apiClientSvc: service.NewAPIClient(pluginConfig),
 	}
-
-	plg.db = pluginapi.NewPluginDB(database, plg.Meta().ID)
 
 	plg.logger = host.Logger().With(
 		slog.String("plugin", plg.Meta().ID.String()),
@@ -69,7 +79,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *TbilisiEnergyPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:          pluginapi.ParsePluginID("dev.maroid.tbilisi-energy"),
+		ID:          pluginID,
 		Name:        "Tbilisi Energy",
 		Description: "Gas bills and usage from Tbilisi Energy.",
 		Version:     "0.1.0",
@@ -77,9 +87,16 @@ func (p *TbilisiEnergyPlugin) Meta() pluginapi.Metadata {
 	}
 }
 
+// SettingsModel declares the Tbilisi Energy account that a workspace stores.
+func (p *TbilisiEnergyPlugin) SettingsModel() (any, error) {
+	return config.WorkspaceSettings{}, nil
+}
+
 func (p *TbilisiEnergyPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 	return []pluginapi.CronJob{
-		job.NewTransactionsCollector(p.config, p.logger, p.db, p.notifier, p.apiClientSvc),
+		job.NewTransactionsCollector(
+			p.config, p.logger, p.db, p.settings, p.notifier, p.apiClientSvc,
+		),
 	}, nil
 }
 

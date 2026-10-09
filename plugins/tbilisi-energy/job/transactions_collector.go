@@ -11,6 +11,7 @@ import (
 
 	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/config"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/dto"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/repository"
@@ -19,13 +20,22 @@ import (
 
 var errEmptyURL = errors.New("file URL is empty")
 
-// TransactionsCollector is a cron job that fetches and processes transactions.
+// TransactionsCollector is a cron job that fetches and stores the transactions of each
+// workspace, with the account that the workspace stored.
 type TransactionsCollector struct {
 	config       *config.Config
 	logger       *slog.Logger
 	db           *pluginapi.PluginDB
+	settings     *pluginapi.PluginSettings
 	notifier     notifierapi.Dispatcher
 	apiClientSvc service.APIClientService
+}
+
+// session is one signed in run of the job for one workspace.
+type session struct {
+	token          string
+	customerNumber string
+	logger         *slog.Logger
 }
 
 var _ pluginapi.CronJob = (*TransactionsCollector)(nil)
@@ -35,12 +45,14 @@ func NewTransactionsCollector(
 	config *config.Config,
 	logger *slog.Logger,
 	db *pluginapi.PluginDB,
+	settings *pluginapi.PluginSettings,
 	notifier notifierapi.Dispatcher,
 	apiClientSvc service.APIClientService,
 ) *TransactionsCollector {
 	instance := &TransactionsCollector{
 		config:       config,
 		db:           db,
+		settings:     settings,
 		notifier:     notifier,
 		apiClientSvc: apiClientSvc,
 	}
@@ -58,62 +70,83 @@ func (j *TransactionsCollector) Meta() pluginapi.CronJobMeta {
 	return pluginapi.CronJobMeta{
 		ID:       "transactions_collector",
 		Schedule: j.config.CronSchedule.TransactionsCollector,
+		Scope:    pluginapi.CronScopePerWorkspace,
 	}
 }
 
-// Run executes the job.
+// Run collects the transactions of the acting workspace. A workspace that stored no
+// account is skipped, because it enabled the plugin and has not finished its setup.
 func (j *TransactionsCollector) Run(ctx context.Context) error {
-	if err := j.authenticate(ctx); err != nil {
-		return err
+	logger := j.logger.With(
+		slog.String("workspace_id", pluginapi.ActingWorkspaceFromContext(ctx)),
+	)
+
+	account, err := j.account(ctx)
+	if errors.Is(err, pluginapi.ErrSettingsAbsent) {
+		logger.Info("skipping the workspace, because it stored no Tbilisi Energy account")
+
+		return nil
 	}
 
-	transactions, err := j.fetchTransactions(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err = j.storeTransactions(ctx, transactions); err != nil {
-		return err
-	}
-
-	j.logger.Info("transaction collection completed successfully")
-
-	if err = j.sendNotification(ctx, transactions); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (j *TransactionsCollector) authenticate(ctx context.Context) error {
-	token, err := j.apiClientSvc.Authenticate(ctx, j.config.Username, j.config.Password)
+	token, err := j.apiClientSvc.Authenticate(ctx, account.Username, account.Password)
 	if err != nil {
-		return fmt.Errorf("authentication failed: %w", err)
+		return fmt.Errorf("authenticating at Tbilisi Energy: %w", err)
 	}
 
-	j.apiClientSvc.SetAuthToken(token)
+	current := session{token: token, customerNumber: account.CustomerNumber, logger: logger}
 
-	j.logger.Info("API authentication successful")
+	transactions, err := j.fetchTransactions(ctx, current)
+	if err != nil {
+		return err
+	}
 
-	return nil
+	if err = j.storeTransactions(ctx, current, transactions); err != nil {
+		return err
+	}
+
+	logger.Info("transaction collection completed successfully")
+
+	return j.sendNotification(ctx, current, transactions)
 }
 
-func (j *TransactionsCollector) fetchTransactions(ctx context.Context) ([]dto.Transaction, error) {
+func (j *TransactionsCollector) account(ctx context.Context) (*config.WorkspaceSettings, error) {
+	values, err := j.settings.Get(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("reading the settings of the workspace: %w", err)
+	}
+
+	account := new(config.WorkspaceSettings)
+	if err = pluginconfig.DecodeAndValidateSettings(values, account); err != nil {
+		return nil, fmt.Errorf("decoding the settings of the workspace: %w", err)
+	}
+
+	return account, nil
+}
+
+func (j *TransactionsCollector) fetchTransactions(
+	ctx context.Context,
+	current session,
+) ([]dto.Transaction, error) {
 	startDate, endDate := getPreviousMonthPeriod()
-	dateFrom := startDate.Format("2006-01-02")
-	dateTo := endDate.Format("2006-01-02")
+	dateFrom := startDate.Format(time.DateOnly)
+	dateTo := endDate.Format(time.DateOnly)
 
-	j.logger.Info(
+	current.logger.Info(
 		"fetching transactions",
 		slog.String("date_from", dateFrom),
 		slog.String("date_to", dateTo),
-		slog.String("customer_number", j.config.CustomerNumber),
+		slog.String("customer_number", current.customerNumber),
 	)
 
 	transactions, err := j.apiClientSvc.GetTransactions(
 		ctx,
+		current.token,
 		dto.TransactionsRequest{
-			CustomerNumber: j.config.CustomerNumber,
+			CustomerNumber: current.customerNumber,
 			DateFrom:       dateFrom,
 			DateTo:         dateTo,
 		},
@@ -122,7 +155,7 @@ func (j *TransactionsCollector) fetchTransactions(ctx context.Context) ([]dto.Tr
 		return nil, fmt.Errorf("fetching transactions from API: %w", err)
 	}
 
-	j.logger.Info(
+	current.logger.Info(
 		"transactions fetched successfully",
 		slog.Int("transaction_count", len(transactions)),
 	)
@@ -132,27 +165,28 @@ func (j *TransactionsCollector) fetchTransactions(ctx context.Context) ([]dto.Tr
 
 func (j *TransactionsCollector) storeTransactions(
 	ctx context.Context,
+	current session,
 	transactions []dto.Transaction,
 ) error {
 	if len(transactions) == 0 {
-		j.logger.Info("no transactions to store")
+		current.logger.Info("no transactions to store")
 
 		return nil
 	}
 
 	err := j.db.WithTx(ctx, func(tx *sqlx.Tx) error {
-		return j.insertTransactionsInTx(ctx, tx, transactions)
+		return insertTransactionsInTx(ctx, tx, transactions)
 	})
 	if err != nil {
 		return fmt.Errorf("storing transactions in database: %w", err)
 	}
 
-	j.logger.Info("transactions stored successfully")
+	current.logger.Info("transactions stored successfully")
 
 	return nil
 }
 
-func (j *TransactionsCollector) insertTransactionsInTx(
+func insertTransactionsInTx(
 	ctx context.Context,
 	tx *sqlx.Tx,
 	transactions []dto.Transaction,
@@ -161,13 +195,16 @@ func (j *TransactionsCollector) insertTransactionsInTx(
 	transactionRepo := repository.NewTransaction(tx)
 
 	for _, transaction := range transactions {
-		transactionEntity := transaction.MapToModel()
+		transactionEntity, err := transaction.MapToModel()
+		if err != nil {
+			return fmt.Errorf("mapping transaction: %w", err)
+		}
 
-		if err := transactionTypeRepo.Insert(ctx, transactionEntity.Type); err != nil {
+		if err = transactionTypeRepo.Insert(ctx, transactionEntity.Type); err != nil {
 			return fmt.Errorf("inserting transaction type: %w", err)
 		}
 
-		if err := transactionRepo.Insert(ctx, &transactionEntity); err != nil {
+		if err = transactionRepo.Insert(ctx, &transactionEntity); err != nil {
 			return fmt.Errorf("inserting transaction: %w", err)
 		}
 	}
@@ -188,19 +225,20 @@ func getPreviousMonthPeriod() (time.Time, time.Time) {
 
 func (j *TransactionsCollector) sendNotification(
 	ctx context.Context,
+	current session,
 	transactions []dto.Transaction,
 ) error {
 	const utilityBillOperationID = 125
 
 	if !j.config.Notification.MonthlyBill {
-		j.logger.Info("monthly bill notification is disabled in configuration")
+		current.logger.Info("monthly bill notification is disabled in configuration")
 
 		return nil
 	}
 
 	for _, transaction := range transactions {
 		if transaction.OperationID == utilityBillOperationID {
-			return j.sendUtilityBillNotification(ctx, transaction)
+			return j.sendUtilityBillNotification(ctx, current, transaction)
 		}
 	}
 
@@ -209,9 +247,10 @@ func (j *TransactionsCollector) sendNotification(
 
 func (j *TransactionsCollector) sendUtilityBillNotification(
 	ctx context.Context,
+	current session,
 	transaction dto.Transaction,
 ) error {
-	attachments, err := j.buildUtilityBillAttachments(ctx, transaction)
+	attachments, err := j.buildUtilityBillAttachments(ctx, current, transaction)
 	if err != nil {
 		return err
 	}
@@ -234,11 +273,12 @@ func (j *TransactionsCollector) sendUtilityBillNotification(
 
 func (j *TransactionsCollector) buildUtilityBillAttachments(
 	ctx context.Context,
+	current session,
 	transaction dto.Transaction,
 ) ([]notifierapi.Attachment, error) {
 	var attachments []notifierapi.Attachment
 
-	billingDoc, err := j.buildBillingDocumentAttachment(ctx, transaction)
+	billingDoc, err := j.buildBillingDocumentAttachment(ctx, current, transaction)
 	if err != nil && !errors.Is(err, errEmptyURL) {
 		return attachments, err
 	}
@@ -247,7 +287,7 @@ func (j *TransactionsCollector) buildUtilityBillAttachments(
 		attachments = append(attachments, *billingDoc)
 	}
 
-	meterPhoto, err := j.buildMeterPhotoAttachment(ctx, transaction)
+	meterPhoto, err := j.buildMeterPhotoAttachment(ctx, current, transaction)
 	if err != nil && !errors.Is(err, errEmptyURL) {
 		return attachments, err
 	}
@@ -261,13 +301,14 @@ func (j *TransactionsCollector) buildUtilityBillAttachments(
 
 func (j *TransactionsCollector) buildBillingDocumentAttachment(
 	ctx context.Context,
+	current session,
 	transaction dto.Transaction,
 ) (*notifierapi.Attachment, error) {
 	if transaction.BillingDocumentURL == "" {
 		return nil, errEmptyURL
 	}
 
-	content, err := j.apiClientSvc.DownloadFile(ctx, transaction.BillingDocumentURL)
+	content, err := j.apiClientSvc.DownloadFile(ctx, current.token, transaction.BillingDocumentURL)
 	if err != nil {
 		return nil, fmt.Errorf("downloading billing document: %w", err)
 	}
@@ -281,13 +322,14 @@ func (j *TransactionsCollector) buildBillingDocumentAttachment(
 
 func (j *TransactionsCollector) buildMeterPhotoAttachment(
 	ctx context.Context,
+	current session,
 	transaction dto.Transaction,
 ) (*notifierapi.Attachment, error) {
 	if transaction.MeterPhotoURL == "" {
 		return nil, errEmptyURL
 	}
 
-	content, err := j.apiClientSvc.DownloadFile(ctx, transaction.MeterPhotoURL)
+	content, err := j.apiClientSvc.DownloadFile(ctx, current.token, transaction.MeterPhotoURL)
 	if err != nil {
 		return nil, fmt.Errorf("downloading meter photo: %w", err)
 	}

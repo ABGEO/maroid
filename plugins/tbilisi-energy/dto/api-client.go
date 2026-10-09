@@ -93,15 +93,29 @@ func (d *Transaction) Hash() string {
 	return hex.EncodeToString(hash[:])
 }
 
+// operationDateLayout reads the operation date, which the API gives in the time of
+// Tbilisi with no offset.
+const operationDateLayout = "2006-01-02T15:04:05-07:00"
+
 // MapToModel converts the external Transaction representation into a
 // model.Transaction entity suitable for persistence.
-func (d *Transaction) MapToModel() model.Transaction {
-	instance := model.Transaction{
+func (d *Transaction) MapToModel() (model.Transaction, error) {
+	date, err := time.Parse(operationDateLayout, d.OperationDate+"+04:00")
+	if err != nil {
+		return model.Transaction{}, fmt.Errorf(
+			"parsing the operation date %q: %w",
+			d.OperationDate,
+			err,
+		)
+	}
+
+	return model.Transaction{
 		Hash:               d.Hash(),
 		Consumption:        d.Consumption,
 		Amount:             d.Amount,
 		MeterReading:       d.MeterReading,
 		Balance:            d.Balance,
+		Date:               date,
 		BillingDocumentURL: d.BillingDocumentURL,
 		MeterPhotoURL:      d.MeterPhotoURL,
 		TransactionTypeID:  d.OperationID,
@@ -109,9 +123,5 @@ func (d *Transaction) MapToModel() model.Transaction {
 			ID:   d.OperationID,
 			Name: d.OperationName,
 		},
-	}
-
-	instance.Date, _ = time.Parse(`2006-01-02T15:04:05-07:00`, d.OperationDate+"+04:00")
-
-	return instance
+	}, nil
 }

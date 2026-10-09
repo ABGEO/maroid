@@ -37,7 +37,7 @@ func (r *Transaction) Insert(ctx context.Context, entity *model.Transaction) err
 			:hash, :consumption, :amount, :meter_reading, :balance, :date,
 			:billing_document_url, :meter_photo_url, :transaction_type_id
 		)
-		ON CONFLICT (hash) DO NOTHING;
+		ON CONFLICT (workspace_id, hash) DO NOTHING;
 	`
 
 	_, err := r.tx.NamedExecContext(ctx, query, entity)
