@@ -119,6 +119,39 @@ components:
           type: string
           format: uri
 
+    User:
+      type: object
+      required: [id, status, is_administrator, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        first_name:
+          type: string
+          description: Absent when the record holds none. `APIFMT-FR-009`.
+        last_name:
+          type: string
+          description: Absent when the record holds none. `APIFMT-FR-009`.
+        status:
+          type: string
+          enum: [active, blocked]
+        is_administrator:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Password:
+      type: string
+      writeOnly: true
+      minLength: 12
+      description: >
+        At most 72 bytes in UTF-8. A longer one answers 422 at the pointer of the field.
+        `IDPROV-FR-023`.
+
   responses:
     PreconditionFailed:
       description: >
@@ -190,6 +223,19 @@ components:
       headers:
         X-Flow-ID:
           $ref: "#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+
+    IdPUnavailable:
+      headers:
+        X-Flow-ID:
+          $ref: "#/components/headers/FlowId"
+      description: >
+        Dex refused the connection or passed `dex.timeout`. The type is
+        `/problems/hub/not-ready` with the dependency `dex`, and the hub changed
+        nothing. `IDPROV-NFR-002`.
       content:
         application/problem+json:
           schema:

@@ -1,0 +1,152 @@
+# The routes that PROFILE adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The profile that a person changes on their own record
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /users/self:
+    get:
+      operationId: getSelf
+      summary: Read the user record of the acting user.
+      description: >
+        Realizes `PROFILE-FR-001`. Any user who signed in. The session names the
+        record. `PROFILE-DD-001`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The user record of the acting user.
+          content:
+            application/json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/User"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+    patch:
+      operationId: changeSelf
+      summary: Change the names of the acting user.
+      description: >
+        Realizes `PROFILE-FR-002` and `PROFILE-FR-003`. Any user who signed in. A
+        member other than `first_name` and `last_name` answers
+        `/problems/http/member-unknown`, and the record does not change.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/SelfChange"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The user record after the change.
+          content:
+            application/json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/User"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+
+  /auth/identities/{provider}:
+    parameters:
+      - name: provider
+        in: path
+        required: true
+        description: The identifier of the connector in Dex.
+        schema:
+          type: string
+    patch:
+      operationId: changeOwnPassword
+      summary: Set a new password on the local account of the acting user.
+      description: >
+        Realizes `PROFILE-FR-006`, `PROFILE-FR-007`, `PROFILE-FR-009`, and
+        `PROFILE-FR-010`. Any user who signed in. A provider other than `local`, or
+        a user with no local account, answers 404. `EXTID` declares `DELETE` on
+        this path. The merge joins the two methods. `PROFILE-DD-002`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/OwnPasswordChange"
+      responses:
+        "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: Dex holds the new password. Every session stays.
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+        "503":
+          $ref: "../../api/components.yaml#/components/responses/IdPUnavailable"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: >
+        The access token that Dex issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.
+
+  schemas:
+    SelfChange:
+      type: object
+      additionalProperties: false
+      description: A merge patch. A member that the body leaves out changes nothing.
+      properties:
+        first_name:
+          type: string
+          description: A string sets the name, and an empty string clears it.
+        last_name:
+          type: string
+          description: A string sets the name, and an empty string clears it.
+
+    OwnPasswordChange:
+      type: object
+      additionalProperties: false
+      required: [current_password, password]
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+          description: >
+            The password that Dex holds now. A wrong one answers 422 at
+            `/current_password`. `PROFILE-FR-007`.
+        password:
+          $ref: "../../api/components.yaml#/components/schemas/Password"

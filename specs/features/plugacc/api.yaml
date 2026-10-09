@@ -40,7 +40,7 @@ paths:
                       items:
                         type: array
                         items:
-                          $ref: "#/components/schemas/User"
+                          $ref: "../../api/components.yaml#/components/schemas/User"
         "400":
           $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
         "401":
@@ -112,7 +112,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "../../api/components.yaml#/components/schemas/User"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
@@ -146,7 +146,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "../../api/components.yaml#/components/schemas/User"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
@@ -445,31 +445,6 @@ components:
         examples: [dev.maroid.jasmine]
 
   schemas:
-    User:
-      type: object
-      required: [id, status, is_administrator, created_at, updated_at]
-      properties:
-        id:
-          type: string
-          format: uuid
-        first_name:
-          type: string
-          description: Absent when the record holds none. `APIFMT-FR-009`.
-        last_name:
-          type: string
-          description: Absent when the record holds none. `APIFMT-FR-009`.
-        status:
-          type: string
-          enum: [active, blocked]
-        is_administrator:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
     UserInput:
       type: object
       properties:
@@ -521,7 +496,7 @@ components:
       required: [user, invitation]
       properties:
         user:
-          $ref: "#/components/schemas/User"
+          $ref: "../../api/components.yaml#/components/schemas/User"
         invitation:
           $ref: "#/components/schemas/Invitation"
 

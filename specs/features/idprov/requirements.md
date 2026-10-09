@@ -33,7 +33,6 @@ nobody redeems the invitation of the first administrator.
 ## 3. Out of scope
 
 - A provider kind other than the three presets. Generic OIDC covers any OIDC service.
-- A page where a person sets or changes their own local password.
 - A lockout after failed local sign ins.
 - A second factor for a local account.
 - Ending the live sessions of a removed provider.
@@ -347,7 +346,7 @@ Every local account belongs to exactly one user record, through one identity.
 | 2   | What length does a local password take?                          | Temuri | 12 characters to 72 bytes.                                                |
 | 3   | Does blocking a record remove its local account?                 | Temuri | No. `SEC-004` already stops the person.                                   |
 | 4   | Does removing a provider end its live sessions?                  | Temuri | No, not in this feature.                                                  |
-| 5   | Does a local user change their own password?                     | Temuri | No, not in this feature. An administrator sets it.                        |
+| 5   | Does a local user change their own password?                     | Temuri | Not here. `PROFILE` gives the change with the current password.           |
 
 ## Retired identifiers
 

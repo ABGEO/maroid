@@ -4,7 +4,7 @@ title: The HTTP API
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-08
+updated: 2026-10-09
 scope: [apps/hub/internal/server/, apps/hub/internal/handler/, apps/hub/internal/middleware/]
 related: [ARC, ERR, PLG, RES, SEC, UI]
 ---
@@ -87,6 +87,7 @@ The hub fixes these routes:
 | `/workspaces*`                           | The workspaces, the members, and the enablements | Authenticated   |
 | `/workspaces/{workspaceId}/plugins/{id}/api/*` | The routes of a plugin              | Member, enabled        |
 | `/workspaces/{workspaceId}/plugins/{id}/settings*` | The settings of a plugin        | Member, enabled        |
+| `GET, PATCH /users/self`                 | The user record of the acting user        | Authenticated          |
 | `/users*`                                | The user records and the plugin allowlists | Administrator         |
 | `/providers*`                            | The providers of the instance             | Administrator          |
 | `/plugins/{id}/ui/*`                     | The assets of a plugin                    | Public. See `SEC-006`. |
@@ -109,6 +110,9 @@ of the IdP holds one redirect address, so one route finishes all three.
 
 `self` is the pseudo-identifier that `Z-143` names for a resource whose
 identifier comes from the session cookie.
+
+`/users/self` is the one route under `/users*` that a user who is no
+administrator reaches. It reads and changes the names of the acting user alone.
 
 `DELETE /auth/sessions/self` is public. A sign out behind an access check
 answers 401 for a dead cookie. A second sign out must answer as the first one did.
