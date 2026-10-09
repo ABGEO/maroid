@@ -8,20 +8,21 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/pensions/config"
 	"github.com/abgeo/maroid/plugins/pensions/dto"
 	"github.com/abgeo/maroid/plugins/pensions/repository"
 	"github.com/abgeo/maroid/plugins/pensions/service"
 )
 
-// ContributionsCollector is a job that collects contributions data.
+// ContributionsCollector is a cron job that collects the contributions of each person,
+// with the pension account that the person stored.
 type ContributionsCollector struct {
 	config       *config.Config
 	logger       *slog.Logger
 	db           *pluginapi.PluginDB
-	notifier     notifierapi.Dispatcher
+	settings     *pluginapi.PluginSettings
 	apiClientSvc service.APIClientService
 }
 
@@ -32,13 +33,13 @@ func NewContributionsCollector(
 	config *config.Config,
 	logger *slog.Logger,
 	db *pluginapi.PluginDB,
-	notifier notifierapi.Dispatcher,
+	settings *pluginapi.PluginSettings,
 	apiClientSvc service.APIClientService,
 ) *ContributionsCollector {
 	instance := &ContributionsCollector{
 		config:       config,
 		db:           db,
-		notifier:     notifier,
+		settings:     settings,
 		apiClientSvc: apiClientSvc,
 	}
 
@@ -55,57 +56,66 @@ func (j *ContributionsCollector) Meta() pluginapi.CronJobMeta {
 	return pluginapi.CronJobMeta{
 		ID:       "contributions_collector",
 		Schedule: j.config.CronSchedule.ContributionsCollector,
+		Scope:    pluginapi.CronScopePerUser,
 	}
 }
 
-// Run executes the job.
+// Run collects the contributions of the acting user. A person who stored no account
+// answers pluginapi.ErrSettingsAbsent, which the scheduler reports as a skip.
 func (j *ContributionsCollector) Run(ctx context.Context) error {
-	if err := j.authenticate(ctx); err != nil {
-		return err
-	}
+	logger := j.logger.With(slog.String("user_id", pluginapi.ActingUserFromContext(ctx)))
 
-	contributions, err := j.fetchContributions(ctx)
+	account, err := j.account(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err = j.storeContributions(ctx, contributions); err != nil {
+	token, err := j.apiClientSvc.Authenticate(ctx, account.Username, account.Password)
+	if err != nil {
+		return fmt.Errorf("authenticating at the pension agency: %w", err)
+	}
+
+	contributions, err := j.fetchContributions(ctx, logger, token)
+	if err != nil {
 		return err
 	}
 
-	j.logger.Info("contributions collection completed successfully")
-
-	return nil
+	return j.storeContributions(ctx, logger, contributions)
 }
 
-func (j *ContributionsCollector) authenticate(ctx context.Context) error {
-	token, err := j.apiClientSvc.Authenticate(ctx, j.config.Username, j.config.Password)
+func (j *ContributionsCollector) account(ctx context.Context) (*config.UserSettings, error) {
+	values, err := j.settings.Get(ctx)
 	if err != nil {
-		return fmt.Errorf("authentication failed: %w", err)
+		return nil, fmt.Errorf("reading the settings of the user: %w", err)
 	}
 
-	j.apiClientSvc.SetAuthToken(token)
+	account := new(config.UserSettings)
+	if err = pluginconfig.DecodeAndValidateSettings(values, account); err != nil {
+		return nil, fmt.Errorf("decoding the settings of the user: %w", err)
+	}
 
-	j.logger.Info("API authentication successful")
-
-	return nil
+	return account, nil
 }
 
 func (j *ContributionsCollector) fetchContributions(
 	ctx context.Context,
+	logger *slog.Logger,
+	token string,
 ) ([]dto.Contribution, error) {
 	const pageSize = 10
 
 	startDate, endDate := getPreviousMonthPeriod()
 
-	j.logger.Info(
+	logger.InfoContext(
+		ctx,
 		"fetching contributions",
-		slog.Any("date_from", startDate),
-		slog.Any("date_to", endDate),
+		slog.Time("date_from", startDate),
+		slog.Time("date_to", endDate),
 	)
 
 	contributions, err := j.apiClientSvc.GetContributions(
 		ctx,
+		token,
 		dto.ContributionsRequest{
 			Page:      1,
 			PageSize:  pageSize,
@@ -117,7 +127,8 @@ func (j *ContributionsCollector) fetchContributions(
 		return nil, fmt.Errorf("fetching contributions from API: %w", err)
 	}
 
-	j.logger.Info(
+	logger.InfoContext(
+		ctx,
 		"contributions fetched successfully",
 		slog.Int("contributions_count", len(contributions)),
 	)
@@ -127,27 +138,28 @@ func (j *ContributionsCollector) fetchContributions(
 
 func (j *ContributionsCollector) storeContributions(
 	ctx context.Context,
+	logger *slog.Logger,
 	contributions []dto.Contribution,
 ) error {
 	if len(contributions) == 0 {
-		j.logger.Info("no contributions to store")
+		logger.InfoContext(ctx, "no contributions to store")
 
 		return nil
 	}
 
 	err := j.db.WithTx(ctx, func(tx *sqlx.Tx) error {
-		return j.insertContributionsInTx(ctx, tx, contributions)
+		return insertContributionsInTx(ctx, tx, contributions)
 	})
 	if err != nil {
 		return fmt.Errorf("storing contributions in database: %w", err)
 	}
 
-	j.logger.Info("contributions stored successfully")
+	logger.InfoContext(ctx, "contributions stored successfully")
 
 	return nil
 }
 
-func (j *ContributionsCollector) insertContributionsInTx(
+func insertContributionsInTx(
 	ctx context.Context,
 	tx *sqlx.Tx,
 	contributions []dto.Contribution,
@@ -156,15 +168,18 @@ func (j *ContributionsCollector) insertContributionsInTx(
 	contributionRepo := repository.NewContribution(tx)
 
 	for _, contribution := range contributions {
-		contributionEntity := contribution.MapToModel()
+		contributionEntity, err := contribution.MapToModel()
+		if err != nil {
+			return fmt.Errorf("mapping contribution: %w", err)
+		}
 
 		if contributionEntity.Organization != nil {
-			if err := organizationRepo.Insert(ctx, contributionEntity.Organization); err != nil {
+			if err = organizationRepo.Insert(ctx, contributionEntity.Organization); err != nil {
 				return fmt.Errorf("inserting organization: %w", err)
 			}
 		}
 
-		if err := contributionRepo.Insert(ctx, &contributionEntity); err != nil {
+		if err = contributionRepo.Insert(ctx, &contributionEntity); err != nil {
 			return fmt.Errorf("inserting contribution: %w", err)
 		}
 	}

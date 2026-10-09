@@ -128,15 +128,23 @@ func (d *Contribution) Hash() string {
 		return *f
 	}
 
+	pi := func(i *int) string {
+		if i == nil {
+			return ""
+		}
+
+		return strconv.Itoa(*i)
+	}
+
 	data := fmt.Sprintf(
-		"%s|%s|%s|%s|%s|%d|%d|%f|%s|%s|%f|%f",
+		"%s|%s|%s|%s|%s|%s|%s|%f|%s|%s|%f|%f",
 		d.BasisID,
 		d.Date,
 		ps(d.ClosingDate),
 		ps(d.OrganizationCode),
 		ps(d.OrganizationName),
-		d.Year,
-		d.Month,
+		pi(d.Year),
+		pi(d.Month),
 		d.GrossSalary,
 		d.Type,
 		d.Source,
@@ -150,7 +158,7 @@ func (d *Contribution) Hash() string {
 
 // MapToModel converts the external Contribution representation into a
 // model.Contribution entity suitable for persistence.
-func (d *Contribution) MapToModel() model.Contribution {
+func (d *Contribution) MapToModel() (model.Contribution, error) {
 	instance := model.Contribution{
 		Hash:        d.Hash(),
 		BasisID:     d.BasisID,
@@ -163,15 +171,20 @@ func (d *Contribution) MapToModel() model.Contribution {
 		Units:       d.Units,
 	}
 
-	if d.Date != "" {
-		fixed := strings.TrimSuffix(d.Date, "Z") + "+04:00"
-		instance.Date, _ = time.Parse(time.RFC3339Nano, fixed)
+	date, err := parseTbilisiTime(d.Date)
+	if err != nil {
+		return model.Contribution{}, fmt.Errorf("parsing the date: %w", err)
 	}
 
+	instance.Date = date
+
 	if d.ClosingDate != nil {
-		fixed := strings.TrimSuffix(*d.ClosingDate, "Z") + "+04:00"
-		parsed, _ := time.Parse(time.RFC3339Nano, fixed)
-		instance.ClosingDate = &parsed
+		closingDate, err := parseTbilisiTime(*d.ClosingDate)
+		if err != nil {
+			return model.Contribution{}, fmt.Errorf("parsing the closing date: %w", err)
+		}
+
+		instance.ClosingDate = &closingDate
 	}
 
 	if d.OrganizationCode != nil && d.OrganizationName != nil {
@@ -182,5 +195,16 @@ func (d *Contribution) MapToModel() model.Contribution {
 		}
 	}
 
-	return instance
+	return instance, nil
+}
+
+// parseTbilisiTime reads a time that the API marks as UTC but gives in the time of
+// Tbilisi.
+func parseTbilisiTime(value string) (time.Time, error) {
+	parsed, err := time.Parse(time.RFC3339Nano, strings.TrimSuffix(value, "Z")+"+04:00")
+	if err != nil {
+		return time.Time{}, fmt.Errorf("parsing %q: %w", value, err)
+	}
+
+	return parsed, nil
 }

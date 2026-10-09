@@ -3,7 +3,6 @@ module github.com/abgeo/maroid/plugins/pensions
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664
 	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261007201113-f0f51ecfa664
 	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261007201113-f0f51ecfa664
 	github.com/google/uuid v1.6.0
@@ -13,6 +12,7 @@ require (
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20261006220739-8c912ac31dd4 // indirect
+	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664 // indirect
 	github.com/abgeo/maroid/libs/testdb v0.0.0-20261007201113-f0f51ecfa664 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.4 // indirect

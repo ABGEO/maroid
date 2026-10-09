@@ -37,7 +37,7 @@ func (r *Contribution) Insert(ctx context.Context, entity *model.Contribution) e
 			:hash, :basis_id, :date, :closing_date, :year, :month,
 			:gross_salary, :type, :source, :amount, :units, :organization_code
 		)
-		ON CONFLICT (hash) DO NOTHING;
+		ON CONFLICT (user_id, hash) DO NOTHING;
 	`
 
 	_, err := r.tx.NamedExecContext(ctx, query, entity)

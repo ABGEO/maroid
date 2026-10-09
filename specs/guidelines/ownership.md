@@ -4,7 +4,7 @@ title: Record ownership
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-01
+updated: 2026-10-09
 scope: [apps/hub/, libs/pluginapi/, plugins/*/db/, plugins/*/repository/]
 related: [DAT, SEC, REP, TG, JOB, PLG]
 ---
@@ -50,12 +50,12 @@ gets `not-found`.
 ## OWN-004
 
 A table is scoped to a workspace, scoped to a user, or shared, and the migration
-states which. A table of a plugin is scoped to a workspace or shared. A table that
-a user scopes belongs to the hub. It holds a value that belongs to one person in
-every workspace: an idempotency key, a setting that a plugin declares personal.
-A shared table holds a row that belongs to nobody: `public.users`, a reference
-table, `schema_migrations`. A new table of a plugin is scoped to a workspace. A
-shared table gives its reason in a comment.
+states which. A table that a user scopes holds a value that belongs to one person
+in every workspace: an idempotency key, a setting that a plugin declares personal,
+the records of a personal account that a plugin collects. A shared table holds a
+row that belongs to nobody: `public.users`, a reference table, `schema_migrations`.
+A new table of a plugin is scoped to a workspace, unless each row belongs to one
+person. A table that a user scopes, and a shared table, give the reason in a comment.
 
 ## OWN-005
 
@@ -124,8 +124,7 @@ workspace and no acting user, and reaches only a shared table. A job for each
 workspace runs one time for each workspace that enables the plugin, and the
 scheduler sets the acting workspace of each run. A job for each user runs one
 time for each active user, and the scheduler sets the acting user of each run.
-Only a job of the hub runs for each user, because a table that a user scopes
-belongs to the hub.
+A job of a plugin runs for each user only when it writes a table that a user scopes.
 
 ## OWN-010
 

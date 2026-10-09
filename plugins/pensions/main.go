@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"log/slog"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/pensions/config"
@@ -15,18 +14,24 @@ import (
 	"github.com/abgeo/maroid/plugins/pensions/service"
 )
 
+// pluginID names the plugin. The constructor needs it before Meta exists.
+//
+//nolint:gochecknoglobals
+var pluginID = pluginapi.ParsePluginID("dev.maroid.pensions")
+
 type PensionsPlugin struct {
 	config       *config.Config
 	logger       *slog.Logger
 	db           *pluginapi.PluginDB
-	notifier     notifierapi.Dispatcher
+	settings     *pluginapi.PluginSettings
 	apiClientSvc service.APIClientService
 }
 
 var (
-	_ pluginapi.Plugin          = (*PensionsPlugin)(nil)
-	_ pluginapi.CronPlugin      = (*PensionsPlugin)(nil)
-	_ pluginapi.MigrationPlugin = (*PensionsPlugin)(nil)
+	_ pluginapi.Plugin             = (*PensionsPlugin)(nil)
+	_ pluginapi.ConfigurablePlugin = (*PensionsPlugin)(nil)
+	_ pluginapi.CronPlugin         = (*PensionsPlugin)(nil)
+	_ pluginapi.MigrationPlugin    = (*PensionsPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -34,9 +39,7 @@ var (
 //nolint:gochecknoglobals
 var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (pluginapi.Plugin, error) {
 	pluginConfig := new(config.Config)
-
-	err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig)
-	if err != nil {
+	if err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig); err != nil {
 		return nil, fmt.Errorf("validating config: %w", err)
 	}
 
@@ -45,18 +48,17 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host database instance: %w", err)
 	}
 
-	notifierInstance, err := host.Notifier()
+	settingsProvider, err := host.Settings()
 	if err != nil {
-		return nil, fmt.Errorf("getting host notifier instance: %w", err)
+		return nil, fmt.Errorf("getting host settings provider: %w", err)
 	}
 
 	plg := &PensionsPlugin{
 		config:       pluginConfig,
-		notifier:     notifierInstance,
+		db:           pluginapi.NewPluginDB(database, pluginID),
+		settings:     pluginapi.NewPluginSettings(settingsProvider, pluginID),
 		apiClientSvc: service.NewAPIClient(pluginConfig),
 	}
-
-	plg.db = pluginapi.NewPluginDB(database, plg.Meta().ID)
 
 	plg.logger = host.Logger().With(
 		slog.String("plugin", plg.Meta().ID.String()),
@@ -69,7 +71,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 func (p *PensionsPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
-		ID:          pluginapi.ParsePluginID("dev.maroid.pensions"),
+		ID:          pluginID,
 		Name:        "Pensions",
 		Description: "Contributions and balance from the pension agency.",
 		Version:     "0.1.0",
@@ -77,9 +79,14 @@ func (p *PensionsPlugin) Meta() pluginapi.Metadata {
 	}
 }
 
+// SettingsModel declares the pension account that one person stores.
+func (p *PensionsPlugin) SettingsModel() (any, error) {
+	return config.UserSettings{}, nil
+}
+
 func (p *PensionsPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 	return []pluginapi.CronJob{
-		job.NewContributionsCollector(p.config, p.logger, p.db, p.notifier, p.apiClientSvc),
+		job.NewContributionsCollector(p.config, p.logger, p.db, p.settings, p.apiClientSvc),
 	}, nil
 }
 

@@ -17,16 +17,17 @@ var ErrRequestFailed = errors.New("request failed")
 
 // APIClientService defines the interface for interacting with the Pensions API.
 type APIClientService interface {
-	SetAuthToken(token string)
 	Authenticate(ctx context.Context, username string, password string) (string, error)
-	GetParticipantInfo(ctx context.Context) (*dto.ParticipantInfoResponse, error)
+	GetParticipantInfo(ctx context.Context, token string) (*dto.ParticipantInfoResponse, error)
 	GetContributions(
 		ctx context.Context,
+		token string,
 		query dto.ContributionsRequest,
 	) ([]dto.Contribution, error)
 }
 
-// APIClient implements APIClientService.
+// APIClient implements APIClientService. It holds no credential, because one instance
+// serves the account of every person.
 type APIClient struct {
 	client *resty.Client
 }
@@ -43,11 +44,6 @@ func NewAPIClient(cfg *config.Config) *APIClient {
 	return &APIClient{
 		client: client,
 	}
-}
-
-// SetAuthToken sets the authentication token for subsequent API requests.
-func (s *APIClient) SetAuthToken(token string) {
-	s.client.SetAuthToken(token)
 }
 
 // Authenticate authenticates the user and returns an authentication token.
@@ -72,13 +68,8 @@ func (s *APIClient) Authenticate(
 		return "", fmt.Errorf("sending authentication request: %w", err)
 	}
 
-	if resp.StatusCode() != http.StatusOK {
-		return "", fmt.Errorf(
-			"%w: returned [%d] %v",
-			ErrRequestFailed,
-			resp.StatusCode(),
-			resp.Error(),
-		)
+	if err = statusFailure(resp); err != nil {
+		return "", err
 	}
 
 	if response.AccessToken == "" {
@@ -88,41 +79,40 @@ func (s *APIClient) Authenticate(
 	return response.AccessToken, nil
 }
 
-// GetParticipantInfo retrieves participant information from the API.
+// GetParticipantInfo retrieves the participant of the account that the token names.
 func (s *APIClient) GetParticipantInfo(
 	ctx context.Context,
+	token string,
 ) (*dto.ParticipantInfoResponse, error) {
 	var response *dto.ParticipantInfoResponse
 
 	resp, err := s.client.R().
 		SetContext(ctx).
+		SetAuthToken(token).
 		SetResult(&response).
 		Get("/v2/contributions/participant/get")
 	if err != nil {
 		return nil, fmt.Errorf("sending participant info request: %w", err)
 	}
 
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf(
-			"%w: returned [%d] %v",
-			ErrRequestFailed,
-			resp.StatusCode(),
-			resp.Error(),
-		)
+	if err = statusFailure(resp); err != nil {
+		return nil, err
 	}
 
 	return response, nil
 }
 
-// GetContributions retrieves contributions from the API based on the provided query.
+// GetContributions retrieves the contributions of the account that the token names.
 func (s *APIClient) GetContributions(
 	ctx context.Context,
+	token string,
 	query dto.ContributionsRequest,
 ) ([]dto.Contribution, error) {
 	var response *dto.PaginatedResponse[dto.Contribution]
 
 	resp, err := s.client.R().
 		SetContext(ctx).
+		SetAuthToken(token).
 		SetResult(&response).
 		SetQueryParams(query.ToQueryParams()).
 		Get("/v1/fbo/contributions")
@@ -130,13 +120,8 @@ func (s *APIClient) GetContributions(
 		return nil, fmt.Errorf("sending contributions request: %w", err)
 	}
 
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf(
-			"%w: returned [%d] %v",
-			ErrRequestFailed,
-			resp.StatusCode(),
-			resp.Error(),
-		)
+	if err = statusFailure(resp); err != nil {
+		return nil, err
 	}
 
 	if response.Status != "success" || response.Code != http.StatusOK {
@@ -144,4 +129,12 @@ func (s *APIClient) GetContributions(
 	}
 
 	return response.Data.Result, nil
+}
+
+func statusFailure(resp *resty.Response) error {
+	if resp.StatusCode() == http.StatusOK {
+		return nil
+	}
+
+	return fmt.Errorf("%w: returned [%d] %v", ErrRequestFailed, resp.StatusCode(), resp.Error())
 }
