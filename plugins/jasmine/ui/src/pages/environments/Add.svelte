@@ -43,18 +43,27 @@
   }
 </script>
 
-<div>
-  <h2 class="mb-4 text-lg font-semibold">Add Environment</h2>
+<div class="max-w-2xl">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Add an environment</h1>
+      <p class="page-lead">A place where your plants grow, such as a room or a balcony.</p>
+    </div>
+  </header>
 
-  <form class="flex max-w-sm flex-col gap-2" onsubmit={submit}>
-    <label class="label" for="name">Name</label>
-    <input class="input" id="name" bind:value={name} required disabled={submitting} />
+  <form class="panel max-w-md p-5" onsubmit={submit}>
+    <fieldset class="fieldset">
+      <legend class="fieldset-legend">Name</legend>
+      <input class="input w-full" id="name" bind:value={name} required disabled={submitting} />
+    </fieldset>
 
     {#if error}
-      <p class="text-error">{error}</p>
+      <div role="alert" class="alert alert-error alert-soft mt-4">
+        <span>{error}</span>
+      </div>
     {/if}
 
-    <div class="mt-2 flex items-center gap-4">
+    <div class="mt-4 flex items-center gap-2">
       <button class="btn btn-primary btn-sm" type="submit" disabled={submitting || name.trim() === ''}>
         {submitting ? 'Saving…' : 'Save'}
       </button>

@@ -19,32 +19,37 @@
   });
 </script>
 
-<div>
-    <div class="mb-4 flex items-center justify-between">
-      <h2 class="text-lg font-semibold">Environments</h2>
-      <a class="btn btn-primary btn-sm" href={host.href('/environments/add')}>Add environment</a>
+<div class="max-w-3xl">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Environments</h1>
+      <p class="page-lead">The places where your plants grow.</p>
     </div>
+    <a class="btn btn-primary btn-sm" href={host.href('/environments/add')}>Add environment</a>
+  </header>
 
-    {#if pager.status === 'loading'}
-      <p>Loading…</p>
-    {:else if pager.status === 'error'}
-      <p class="text-error">Failed to load environments. <button class="btn btn-sm" onclick={() => pager.reload()}>Retry</button></p>
-    {:else if pager.page?.items.length === 0}
-      <p>No environments yet.</p>
-    {:else}
-      <table class="table">
-        <thead>
-          <tr><th>Name</th><th>Created</th></tr>
-        </thead>
-        <tbody>
-          {#each pager.page?.items ?? [] as environment (environment.id)}
-            <tr>
-              <td>{environment.name}</td>
-              <td>{formatDate(environment.created_at)}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-      <Pagination {pager} class="mt-4 ml-auto w-fit" />
-    {/if}
+  {#if pager.status === 'loading'}
+    <div class="flex flex-col gap-2" aria-hidden="true">
+      {#each [0, 1, 2] as i (i)}
+        <span class="skeleton h-12 w-full"></span>
+      {/each}
+    </div>
+  {:else if pager.status === 'error'}
+    <div role="alert" class="alert alert-error alert-soft">
+      <span>Failed to load the environments.</span>
+      <button type="button" class="btn btn-sm" onclick={() => pager.reload()}>Retry</button>
+    </div>
+  {:else if pager.page?.items.length === 0}
+    <div class="empty-state">This workspace holds no environment.</div>
+  {:else}
+    <ul class="list panel">
+      {#each pager.page?.items ?? [] as environment (environment.id)}
+        <li class="list-row items-center">
+          <span class="list-col-grow font-medium">{environment.name}</span>
+          <span class="meta">{formatDate(environment.created_at)}</span>
+        </li>
+      {/each}
+    </ul>
+    <Pagination {pager} class="mt-4 ml-auto w-fit" />
+  {/if}
 </div>

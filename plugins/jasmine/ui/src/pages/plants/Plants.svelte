@@ -50,16 +50,29 @@
   });
 </script>
 
-<div>
-    <h2 class="mb-4 text-lg font-semibold">Plants</h2>
+<div class="max-w-4xl">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Plants</h1>
+      <p class="page-lead">The plants of this workspace and the environment of each one.</p>
+    </div>
+  </header>
 
-    {#if pager.status === 'loading'}
-      <p>Loading…</p>
-    {:else if pager.status === 'error'}
-      <p class="text-error">Failed to load plants. <button class="btn btn-sm" onclick={() => pager.reload()}>Retry</button></p>
-    {:else if pager.page?.items.length === 0}
-      <p>No plants yet.</p>
-    {:else}
+  {#if pager.status === 'loading'}
+    <div class="flex flex-col gap-2" aria-hidden="true">
+      {#each [0, 1, 2] as i (i)}
+        <span class="skeleton h-12 w-full"></span>
+      {/each}
+    </div>
+  {:else if pager.status === 'error'}
+    <div role="alert" class="alert alert-error alert-soft">
+      <span>Failed to load the plants.</span>
+      <button type="button" class="btn btn-sm" onclick={() => pager.reload()}>Retry</button>
+    </div>
+  {:else if pager.page?.items.length === 0}
+    <div class="empty-state">This workspace holds no plant.</div>
+  {:else}
+    <div class="panel overflow-x-auto">
       <table class="table">
         <thead>
           <tr><th>Name</th><th>Species</th><th>Environment</th><th>Created</th></tr>
@@ -67,14 +80,15 @@
         <tbody>
           {#each pager.page?.items ?? [] as plant (plant.id)}
             <tr>
-              <td>{plant.name}</td>
+              <td class="font-medium">{plant.name}</td>
               <td>{plant.species ?? '—'}</td>
               <td>{environmentName(plant.environment_id)}</td>
-              <td>{formatDate(plant.created_at)}</td>
+              <td class="meta">{formatDate(plant.created_at)}</td>
             </tr>
           {/each}
         </tbody>
       </table>
-      <Pagination {pager} class="mt-4 ml-auto w-fit" />
-    {/if}
+    </div>
+    <Pagination {pager} class="mt-4 ml-auto w-fit" />
+  {/if}
 </div>
