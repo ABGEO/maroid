@@ -2,7 +2,9 @@
 	import { resolve } from '$app/paths';
 
 	import { api, type InstanceWorkspace } from '$lib/api';
-	import { capabilitiesOf, countOf, displayNameOf, labelOf } from '$lib/plugins/capabilities';
+	import PluginSummary from '$lib/components/plugins/PluginSummary.svelte';
+	import Alert from '$lib/components/ui/Alert.svelte';
+	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
 	import { pluginState } from '$lib/state/plugins.svelte';
 
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
@@ -45,15 +47,9 @@
 	</header>
 
 	{#if status === 'loading' || pluginState.status === 'idle' || pluginState.status === 'loading'}
-		<div class="flex flex-col gap-2" aria-hidden="true">
-			{#each [0, 1, 2] as i (i)}
-				<span class="skeleton h-16 w-full"></span>
-			{/each}
-		</div>
+		<SkeletonList row="h-16" />
 	{:else if status === 'error' || pluginState.status === 'error'}
-		<div role="alert" class="alert alert-error alert-soft">
-			<span>The hub answered no plugin. Reload the page.</span>
-		</div>
+		<Alert kind="error"><span>The hub answered no plugin. Reload the page.</span></Alert>
 	{:else if pluginState.plugins.length === 0}
 		<div class="empty-state">The hub loaded no plugin.</div>
 	{:else}
@@ -61,38 +57,25 @@
 			{#each pluginState.plugins as plugin (plugin.id)}
 				{@const using = enabling(plugin.id)}
 				<li class="list-row block">
-					<div class="flex items-center gap-2">
-						<span class="font-medium">{displayNameOf(plugin, plugin.id)}</span>
-						<span class="badge badge-ghost badge-xs font-mono">v{plugin.version}</span>
-					</div>
-					<div class="meta truncate font-mono">{plugin.id}</div>
-					{#if plugin.description}
-						<p class="text-base-content/70 mt-1 text-sm">{plugin.description}</p>
-					{/if}
-					{#if capabilitiesOf(plugin).length > 0}
-						<div class="mt-1.5 flex flex-wrap gap-1">
-							{#each capabilitiesOf(plugin) as name (name)}
-								<span class="badge badge-soft badge-xs">
-									{labelOf(name)}{countOf(plugin, name) > 0 ? `: ${countOf(plugin, name)}` : ''}
-								</span>
-							{/each}
+					<PluginSummary id={plugin.id} {plugin} detailed>
+						<div class="meta mt-2 flex flex-wrap items-center gap-1">
+							{#if using.length === 0}
+								No workspace uses it.
+							{:else}
+								<span>Used in</span>
+								{#each using as workspace (workspace.id)}
+									<a
+										class="link link-hover"
+										href={resolve('/(dashboard)/w/[workspace]/plugins', {
+											workspace: workspace.id
+										})}
+									>
+										{workspace.name}
+									</a>
+								{/each}
+							{/if}
 						</div>
-					{/if}
-					<div class="meta mt-2 flex flex-wrap items-center gap-1">
-						{#if using.length === 0}
-							No workspace uses it.
-						{:else}
-							<span>Used in</span>
-							{#each using as workspace (workspace.id)}
-								<a
-									class="link link-hover"
-									href={resolve('/(dashboard)/w/[workspace]/plugins', { workspace: workspace.id })}
-								>
-									{workspace.name}
-								</a>
-							{/each}
-						{/if}
-					</div>
+					</PluginSummary>
 				</li>
 			{/each}
 		</ul>

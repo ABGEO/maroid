@@ -1,22 +1,13 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	import {
-		ApiError,
-		PROBLEM_TYPE,
-		api,
-		isProblem,
-		type EnabledPlugin,
-		type Plugin
-	} from '$lib/api';
+	import { ApiError, PROBLEM_TYPE, api, type EnabledPlugin, type Plugin } from '$lib/api';
+	import PluginSummary from '$lib/components/plugins/PluginSummary.svelte';
+	import Alert from '$lib/components/ui/Alert.svelte';
+	import Section from '$lib/components/ui/Section.svelte';
+	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
 	import { PERMISSION, holds } from '$lib/permissions';
-	import {
-		capabilitiesOf,
-		countOf,
-		displayNameOf,
-		hasCapability,
-		labelOf
-	} from '$lib/plugins/capabilities';
+	import { displayNameOf, hasCapability } from '$lib/plugins/capabilities';
 	import { fieldsOf, missingFields } from '$lib/settings/schema';
 	import { loadEnabled, pluginState } from '$lib/state/plugins.svelte';
 	import { isMember } from '$lib/state/workspaces.svelte';
@@ -60,12 +51,12 @@
 	}
 
 	function failureMessage(error: unknown, fallback: string): string {
-		if (error instanceof ApiError && isProblem(error.body)) {
-			if (error.body.type === PROBLEM_TYPE.permissionDenied && error.body.detail) {
-				return error.body.detail;
+		if (error instanceof ApiError && error.problem !== null) {
+			if (error.is(PROBLEM_TYPE.permissionDenied) && error.problem.detail) {
+				return error.problem.detail;
 			}
 
-			return error.body.errors?.[0]?.detail ?? error.body.title;
+			return error.problem.errors?.[0]?.detail ?? error.problem.title;
 		}
 
 		return fallback;
@@ -150,25 +141,17 @@
 	</header>
 
 	{#if banner}
-		<div role="alert" class="alert alert-error alert-soft mb-6">
-			<span>{banner}</span>
-		</div>
+		<Alert kind="error" class="mb-6"><span>{banner}</span></Alert>
 	{/if}
 
 	{#if status === 'loading'}
-		<div class="flex flex-col gap-2" aria-hidden="true">
-			{#each [0, 1, 2] as i (i)}
-				<span class="skeleton h-16 w-full"></span>
-			{/each}
-		</div>
+		<SkeletonList row="h-16" />
 	{:else if status === 'error'}
-		<div role="alert" class="alert alert-error alert-soft mb-6">
-			<span>The hub answered no plugin. Reload the page.</span>
-		</div>
+		<Alert kind="error" class="mb-6"
+			><span>The hub answered no plugin. Reload the page.</span></Alert
+		>
 	{:else}
-		<section class="section">
-			<h2 class="section-title">In use</h2>
-
+		<Section title="In use">
 			{#if inUse.length === 0}
 				<div class="empty-state">
 					{data.workspace.name} uses no plugin.
@@ -177,32 +160,13 @@
 				<ul class="list panel">
 					{#each inUse as row (row.id)}
 						<li class="list-row flex items-center gap-4">
-							<div class="min-w-0 flex-1">
-								<div class="flex items-center gap-2">
-									<span class="font-medium">{row.name}</span>
-									{#if row.plugin}
-										<span class="badge badge-ghost badge-xs font-mono">v{row.plugin.version}</span>
-									{/if}
+							<PluginSummary id={row.id} plugin={row.plugin} detailed>
+								{#snippet badges()}
 									{#if readsSettings && incomplete[row.id]}
 										<span class="badge badge-warning badge-xs">Needs attention</span>
 									{/if}
-								</div>
-								<div class="meta truncate font-mono">{row.id}</div>
-								{#if row.plugin?.description}
-									<p class="text-base-content/70 mt-1 text-sm">{row.plugin.description}</p>
-								{/if}
-								{#if row.plugin && capabilitiesOf(row.plugin).length > 0}
-									<div class="mt-1.5 flex flex-wrap gap-1">
-										{#each capabilitiesOf(row.plugin) as name (name)}
-											<span class="badge badge-soft badge-xs">
-												{labelOf(name)}{countOf(row.plugin, name) > 0
-													? `: ${countOf(row.plugin, name)}`
-													: ''}
-											</span>
-										{/each}
-									</div>
-								{/if}
-							</div>
+								{/snippet}
+							</PluginSummary>
 
 							{#if configurable(row.plugin)}
 								<a
@@ -230,20 +194,16 @@
 					{/each}
 				</ul>
 			{/if}
-		</section>
+		</Section>
 
 		{#if canSwitch}
-			<section class="section">
-				<h2 class="section-title">To turn on</h2>
-
+			<Section title="To turn on">
 				{#if catalogLoading}
-					<div class="flex flex-col gap-2" aria-hidden="true">
-						<span class="skeleton h-12 w-full"></span>
-					</div>
+					<SkeletonList count={1} />
 				{:else if pluginState.status === 'error'}
-					<div role="alert" class="alert alert-error alert-soft">
+					<Alert kind="error">
 						<span>The hub answered no plugin to turn on. Reload the page.</span>
-					</div>
+					</Alert>
 				{:else if toTurnOn.length === 0}
 					<div class="empty-state">
 						No other plugin is open to you. An administrator puts a plugin on your allowlist.
@@ -251,22 +211,12 @@
 				{:else}
 					<ul class="list panel">
 						{#each toTurnOn as plugin (plugin.id)}
-							{@const name = displayNameOf(plugin, plugin.id)}
 							<li class="list-row flex items-center justify-between gap-3">
-								<span class="min-w-0">
-									<span class="block font-medium">{name}</span>
-									<span class="meta block truncate font-mono">
-										{plugin.id}
-									</span>
-									{#if plugin.description}
-										<span class="text-base-content/70 mt-1 block text-sm">{plugin.description}</span
-										>
-									{/if}
-								</span>
+								<PluginSummary id={plugin.id} {plugin} />
 								<input
 									type="checkbox"
 									class="toggle toggle-primary toggle-sm"
-									aria-label="Use {name} in {data.workspace.name}"
+									aria-label="Use {displayNameOf(plugin, plugin.id)} in {data.workspace.name}"
 									checked={false}
 									disabled={busy !== null}
 									onchange={(event) => toggle(plugin.id, event.currentTarget.checked)}
@@ -275,7 +225,7 @@
 						{/each}
 					</ul>
 				{/if}
-			</section>
+			</Section>
 		{/if}
 	{/if}
 </div>

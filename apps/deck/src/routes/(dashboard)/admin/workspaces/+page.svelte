@@ -2,6 +2,8 @@
 	import { resolve } from '$app/paths';
 
 	import { api, type InstanceWorkspace } from '$lib/api';
+	import Alert from '$lib/components/ui/Alert.svelte';
+	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
 
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let workspaces = $state<InstanceWorkspace[]>([]);
@@ -40,15 +42,9 @@
 	</header>
 
 	{#if status === 'loading'}
-		<div class="flex flex-col gap-2" aria-hidden="true">
-			{#each [0, 1, 2] as i (i)}
-				<span class="skeleton h-16 w-full"></span>
-			{/each}
-		</div>
+		<SkeletonList row="h-16" />
 	{:else if status === 'error'}
-		<div role="alert" class="alert alert-error alert-soft">
-			<span>The hub answered no workspace. Reload the page.</span>
-		</div>
+		<Alert kind="error"><span>The hub answered no workspace. Reload the page.</span></Alert>
 	{:else if workspaces.length === 0}
 		<div class="empty-state">This instance holds no workspace.</div>
 	{:else}
