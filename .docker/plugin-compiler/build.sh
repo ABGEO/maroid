@@ -30,12 +30,12 @@ fi
 mkdir -p "$PLUGIN_OUT_DIR"
 cd "$PLUGIN_SOURCE_PATH"
 
-echo "-> Running go mod tidy..."
-go mod tidy
+echo "-> Verifying the modules..."
+go mod download
+go mod verify
 
 echo "-> Compiling ${PLUGIN_NAME}.so..."
 CGO_ENABLED=1 go build \
-  -v \
   -ldflags="-s -w" \
   -trimpath \
   -buildmode=plugin \
