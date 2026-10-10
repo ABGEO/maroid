@@ -1,0 +1,23 @@
+*
+
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+
+!apps/deck
+!libs/api-client
+!libs/plugin-sdk
+!libs/theme
+
+# A frozen install checks the manifest of every workspace member.
+!apps/*/package.json
+!libs/*/package.json
+!plugins/*/ui/package.json
+
+**/node_modules
+**/.svelte-kit
+apps/deck/build
+apps/deck/Dockerfile*
+
+**/.env
+**/.env.*

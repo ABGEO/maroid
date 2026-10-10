@@ -9,10 +9,16 @@ importers:
   .: {}
 
   apps/deck:
-    dependencies:
+    devDependencies:
       '@cfworker/json-schema':
         specifier: ^4.1.1
         version: 4.1.1
+      '@eslint/compat':
+        specifier: ^2.0.3
+        version: 2.0.4(eslint@10.2.0(jiti@2.6.1))
+      '@eslint/js':
+        specifier: ^10.0.1
+        version: 10.0.1(eslint@10.2.0(jiti@2.6.1))
       '@maroid/api-client':
         specifier: workspace:*
         version: link:../../libs/api-client
@@ -37,19 +43,6 @@ importers:
       '@sjsf/form':
         specifier: ^3.8.1
         version: 3.8.1(@standard-schema/spec@1.1.0)(esm-env@1.2.2)(svelte@5.55.1)
-      daisyui:
-        specifier: ^5.5.19
-        version: 5.5.19
-      yaml:
-        specifier: ^2.9.1
-        version: 2.9.1
-    devDependencies:
-      '@eslint/compat':
-        specifier: ^2.0.3
-        version: 2.0.4(eslint@10.2.0(jiti@2.6.1))
-      '@eslint/js':
-        specifier: ^10.0.1
-        version: 10.0.1(eslint@10.2.0(jiti@2.6.1))
       '@sveltejs/adapter-node':
         specifier: ^5.5.7
         version: 5.5.7(@sveltejs/kit@2.55.0(@sveltejs/vite-plugin-svelte@6.2.4(svelte@5.55.1)(vite@7.3.1(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.9.1)))(svelte@5.55.1)(typescript@5.9.3)(vite@7.3.1(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.9.1)))
@@ -65,6 +58,9 @@ importers:
       '@types/node':
         specifier: ^24
         version: 24.12.2
+      daisyui:
+        specifier: ^5.5.19
+        version: 5.5.19
       eslint:
         specifier: ^10.0.3
         version: 10.2.0(jiti@2.6.1)
@@ -104,6 +100,9 @@ importers:
       vite:
         specifier: ^7.3.1
         version: 7.3.1(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.9.1)
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
 
   apps/gate:
     dependencies:
