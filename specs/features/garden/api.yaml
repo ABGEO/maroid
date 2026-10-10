@@ -1,0 +1,1027 @@
+# The routes that GARDEN adds and changes. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The plants of a workspace, their environments, and their care
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/environments:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listEnvironments
+      summary: List the environments of the acting workspace.
+      description: >
+        Realizes `GARDEN-FR-010` and `GARDEN-FR-022`. The page holds the rows of
+        the acting workspace alone, sorted by `id`, which is the order of creation.
+        The permission is `environments.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: One page of environments.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    post:
+      operationId: createEnvironment
+      summary: Create an environment in the acting workspace.
+      description: >
+        Realizes `GARDEN-FR-001` and `GARDEN-FR-007`. The hub gives the next
+        display identifier of the workspace. The permission is `environments.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentInput"
+      responses:
+        "201":
+          description: The created environment.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Environment"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/environments/{id}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getEnvironment
+      summary: Read one environment.
+      description: Realizes `GARDEN-FR-010`. The permission is `environments.read`.
+      responses:
+        "200":
+          description: The environment.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Environment"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    put:
+      operationId: replaceEnvironment
+      summary: Rename an environment.
+      description: >
+        Realizes `GARDEN-FR-001` and `GARDEN-FR-009`. A body that names
+        `display_id` answers `member-unknown`. The permission is `environments.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentInput"
+      responses:
+        "200":
+          description: The changed environment.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Environment"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+    delete:
+      operationId: deleteEnvironment
+      summary: Delete an environment that holds no plant.
+      description: Realizes `GARDEN-FR-001` and `GARDEN-FR-002`. The permission is `environments.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: The environment is gone.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/EnvironmentOccupied"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/plants:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listPlants
+      summary: List the plants of the acting workspace.
+      description: >
+        Realizes `GARDEN-FR-022`. The page holds the rows of the acting workspace
+        alone, sorted by `id`. With no `status`, the page holds the active plants.
+        The permission is `plants.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+        - name: environment_id
+          in: query
+          required: false
+          description: Keep the plants of this environment.
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          description: Keep the plants with this state.
+          schema:
+            $ref: "#/components/schemas/PlantStatus"
+      responses:
+        "200":
+          description: One page of plants.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlantPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    post:
+      operationId: createPlant
+      summary: Create a plant in the acting workspace.
+      description: >
+        Realizes `GARDEN-FR-003`, `GARDEN-FR-005`, and `GARDEN-FR-007`. A new plant
+        is `active`. The hub gives the next display identifier of the workspace.
+        The permission is `plants.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlantInput"
+      responses:
+        "201":
+          description: The created plant.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plant"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/plants/{id}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getPlant
+      summary: Read one plant.
+      description: Realizes `GARDEN-FR-022`. The permission is `plants.read`.
+      responses:
+        "200":
+          description: The plant.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plant"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    put:
+      operationId: replacePlant
+      summary: Change every value of a plant.
+      description: >
+        Realizes `GARDEN-FR-004`, `GARDEN-FR-005`, and `GARDEN-FR-009`. An optional
+        value that the body omits becomes null. A body that names `display_id`
+        answers `member-unknown`. The permission is `plants.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlantUpdate"
+      responses:
+        "200":
+          description: The changed plant.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plant"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+    delete:
+      operationId: deletePlant
+      summary: Delete a plant, its care intervals, and its maintenance entries.
+      description: Realizes `GARDEN-FR-006`. The permission is `plants.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: The plant is gone.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/plants/{plantId}/care-intervals:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/PlantId"
+    get:
+      operationId: listPlantCareIntervals
+      summary: List the care intervals of one plant.
+      description: >
+        Realizes `GARDEN-FR-022`. A plant holds at most eight care intervals, so the
+        page holds every one and takes no limit and no cursor. `RES-005`. The
+        permission is `plants.read`.
+      responses:
+        "200":
+          description: Every care interval of the plant.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CareIntervalPage"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/plants/{plantId}/care-intervals/{type}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/PlantId"
+      - name: type
+        in: path
+        required: true
+        description: The maintenance type. A value outside the list answers `not-found`.
+        schema:
+          $ref: "#/components/schemas/MaintenanceType"
+    put:
+      operationId: putCareInterval
+      summary: Set the care interval of one maintenance type of a plant.
+      description: >
+        Realizes `GARDEN-FR-018` and `GARDEN-FR-020`. The call creates the care
+        interval or changes its days. `set_at` moves to the current time only when
+        the days change. The permission is `plants.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CareIntervalInput"
+      responses:
+        "200":
+          description: The care interval, with its state.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CareInterval"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+    delete:
+      operationId: deleteCareInterval
+      summary: Remove the care interval of one maintenance type of a plant.
+      description: Realizes `GARDEN-FR-018`. The permission is `plants.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: The care interval is gone.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/care-intervals:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listCareIntervals
+      summary: List the care intervals of the acting workspace, with their state.
+      description: >
+        Realizes `GARDEN-FR-021`, `GARDEN-FR-022`, and `GARDEN-FR-023`. The page
+        holds the rows of the acting workspace alone, sorted by `id`. A care
+        interval of an inactive plant has no state, so a `state` filter omits it.
+        The permission is `plants.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+        - name: state
+          in: query
+          required: false
+          style: form
+          explode: false
+          description: Keep the care intervals in one of these states.
+          schema:
+            type: array
+            maxItems: 3
+            uniqueItems: true
+            items:
+              $ref: "#/components/schemas/CareState"
+          examples:
+            attention:
+              value: [due, overdue]
+        - name: environment_id
+          in: query
+          required: false
+          description: Keep the care intervals of the plants of this environment.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: One page of care intervals.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CareIntervalPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/maintenance-entries:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listMaintenanceEntries
+      summary: List the maintenance entries of the acting workspace.
+      description: >
+        Realizes `GARDEN-FR-022`. The page holds the rows of the acting workspace
+        alone. `sort` takes `performed_at`, and the default is `-performed_at`. A
+        tie on `performed_at` sorts by `id` in the same direction. The permission
+        is `maintenance.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+        - $ref: "../../api/components.yaml#/components/parameters/Sort"
+        - name: plant_id
+          in: query
+          required: false
+          description: Keep the entries of this plant.
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          required: false
+          description: Keep the entries of this maintenance type.
+          schema:
+            $ref: "#/components/schemas/MaintenanceType"
+      responses:
+        "200":
+          description: One page of maintenance entries.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceEntryPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    post:
+      operationId: createMaintenanceEntries
+      summary: Record one maintenance entry for each named plant.
+      description: >
+        Realizes `GARDEN-FR-012`, `GARDEN-FR-013`, `GARDEN-FR-014`, and
+        `GARDEN-FR-017`. Every entry lands, or none does. An absent `performed_at`
+        takes the current time of the hub. The permission is `maintenance.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaintenanceEntryBatchInput"
+      responses:
+        "201":
+          description: The created entries, in the order of `plant_ids`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceEntryList"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/maintenance-entries/{id}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getMaintenanceEntry
+      summary: Read one maintenance entry.
+      description: Realizes `GARDEN-FR-015`. The permission is `maintenance.read`.
+      responses:
+        "200":
+          description: The entry.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceEntry"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    put:
+      operationId: replaceMaintenanceEntry
+      summary: Change the type, the time, and the note of a maintenance entry.
+      description: >
+        Realizes `GARDEN-FR-015`. The plant of an entry does not change. A note that
+        the body omits becomes null. The permission is `maintenance.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MaintenanceEntryInput"
+      responses:
+        "200":
+          description: The changed entry.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceEntry"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+    delete:
+      operationId: deleteMaintenanceEntry
+      summary: Delete a maintenance entry.
+      description: Realizes `GARDEN-FR-016`. The permission is `maintenance.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: The entry is gone.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: The internal identifier of the record. `DAT-009`.
+      schema:
+        type: string
+        format: uuid
+    PlantId:
+      name: plantId
+      in: path
+      required: true
+      description: The internal identifier of the plant.
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    DisplayId:
+      type: string
+      description: >
+        The display identifier: `E` for an environment or `P` for a plant, then the
+        number of the workspace with at least three digits. No client writes it.
+        `GARDEN-FR-007`, `GARDEN-FR-009`.
+      pattern: "^[EP][0-9]{3,}$"
+      readOnly: true
+      examples: [P007, E001, P1000]
+
+    MaintenanceType:
+      type: string
+      description: The maintenance type. `GARDEN-FR-011`.
+      enum: [watering, fertilizing, pruning, repotting, pest_treatment, cleaning, misting, other]
+
+    PlantStatus:
+      type: string
+      description: The state of a plant. `GARDEN-FR-005`.
+      enum: [active, inactive]
+
+    CareState:
+      type: string
+      description: The care state of a care interval. `GARDEN-FR-021`.
+      enum: [on_schedule, due, overdue]
+
+    EnvironmentInput:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+
+    EnvironmentRef:
+      type: object
+      required: [id, display_id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_id:
+          $ref: "#/components/schemas/DisplayId"
+        name:
+          type: string
+
+    Environment:
+      allOf:
+        - $ref: "#/components/schemas/EnvironmentRef"
+        - type: object
+          required: [active_plant_count, created_at, updated_at]
+          properties:
+            active_plant_count:
+              type: integer
+              format: int32
+              minimum: 0
+              readOnly: true
+            created_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+
+    EnvironmentPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Environment"
+
+    PlantInput:
+      type: object
+      additionalProperties: false
+      required: [common_name, environment_id]
+      properties:
+        common_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        scientific_name:
+          type: [string, "null"]
+          minLength: 1
+          maxLength: 150
+        environment_id:
+          type: string
+          format: uuid
+          description: An environment of the acting workspace.
+        acquired_on:
+          type: [string, "null"]
+          format: date
+          description: >
+            A date with no zone. The hub refuses a date after the UTC date of
+            tomorrow. `GARDEN-DD-007`.
+        care_notes:
+          type: [string, "null"]
+          minLength: 1
+          maxLength: 10000
+
+    PlantUpdate:
+      allOf:
+        - $ref: "#/components/schemas/PlantInput"
+        - type: object
+          required: [status]
+          properties:
+            status:
+              $ref: "#/components/schemas/PlantStatus"
+
+    PlantRef:
+      type: object
+      required: [id, display_id, common_name, environment]
+      properties:
+        id:
+          type: string
+          format: uuid
+        display_id:
+          $ref: "#/components/schemas/DisplayId"
+        common_name:
+          type: string
+        environment:
+          $ref: "#/components/schemas/EnvironmentRef"
+
+    Plant:
+      allOf:
+        - $ref: "#/components/schemas/PlantRef"
+        - type: object
+          required: [status, created_at, updated_at]
+          properties:
+            scientific_name:
+              type: string
+            acquired_on:
+              type: string
+              format: date
+            care_notes:
+              type: string
+            status:
+              $ref: "#/components/schemas/PlantStatus"
+            created_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+
+    PlantPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Plant"
+
+    CareIntervalInput:
+      type: object
+      additionalProperties: false
+      required: [days]
+      properties:
+        days:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 365
+
+    CareInterval:
+      type: object
+      required: [id, plant, type, days, set_at, counted_from, days_since, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        plant:
+          $ref: "#/components/schemas/PlantRef"
+        type:
+          $ref: "#/components/schemas/MaintenanceType"
+        days:
+          type: integer
+          format: int32
+        set_at:
+          type: string
+          format: date-time
+          description: The moment that the days last changed. `GARDEN-FR-020`.
+        last_performed_at:
+          type: string
+          format: date-time
+          description: The latest entry of this type. Absent when the plant has none.
+        counted_from:
+          type: string
+          format: date
+          description: The UTC date that the count starts from. `GARDEN-FR-019`.
+        days_since:
+          type: integer
+          format: int32
+          minimum: 0
+        state:
+          $ref: "#/components/schemas/CareState"
+          description: Absent when the plant is inactive.
+        updated_at:
+          type: string
+          format: date-time
+
+    CareIntervalPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/CareInterval"
+
+    MaintenanceEntryBatchInput:
+      type: object
+      additionalProperties: false
+      required: [plant_ids, type]
+      properties:
+        plant_ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+        type:
+          $ref: "#/components/schemas/MaintenanceType"
+        performed_at:
+          type: string
+          format: date-time
+          description: Not after the current time of the hub. Absent means now.
+        note:
+          type: [string, "null"]
+          minLength: 1
+          maxLength: 1000
+
+    MaintenanceEntryInput:
+      type: object
+      additionalProperties: false
+      required: [type, performed_at]
+      properties:
+        type:
+          $ref: "#/components/schemas/MaintenanceType"
+        performed_at:
+          type: string
+          format: date-time
+          description: Not after the current time of the hub.
+        note:
+          type: [string, "null"]
+          minLength: 1
+          maxLength: 1000
+
+    MaintenanceEntry:
+      type: object
+      required: [id, plant, type, performed_at, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        plant:
+          $ref: "#/components/schemas/PlantRef"
+        type:
+          $ref: "#/components/schemas/MaintenanceType"
+        performed_at:
+          type: string
+          format: date-time
+        note:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    MaintenanceEntryList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MaintenanceEntry"
+
+    MaintenanceEntryPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/MaintenanceEntry"
+
+  responses:
+    MalformedBody:
+      description: >
+        The body is not a JSON object, with the type `/problems/http/body-invalid`,
+        or it names a member that the schema does not declare, with the type
+        `/problems/http/member-unknown`.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    EnvironmentOccupied:
+      description: >
+        The environment holds a plant, active or inactive. The type is
+        `/problems/dev.maroid.jasmine/environment-occupied`, and `detail` names the
+        count of plants. `GARDEN-FR-002`.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: >
+        The access token that Dex issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.

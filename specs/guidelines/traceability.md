@@ -286,6 +286,7 @@ Add a row before you create the file or the directory.
 | `SSACCESS` | `features/ssaccess/` | The access of Maroid to the secret store while it runs. | Approved |
 | `IDPROV` | `features/idprov/` | The providers of the instance and the local account. | Approved |
 | `PROFILE` | `features/profile/` | The profile that a person changes on their own record. | Approved |
+| `GARDEN` | `features/garden/` | The plants of a workspace, their environments, and their care. | Approved |
 
 ## Retired identifiers
 
