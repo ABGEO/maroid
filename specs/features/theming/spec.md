@@ -4,7 +4,7 @@ title: The shared theme and the identity provider's pages
 type: spec
 status: approved
 created: 2026-09-17
-updated: 2026-09-17
+updated: 2026-10-10
 approved_by: Temuri
 approved_on: 2026-09-17
 constrained_by: [ARC, TS, BLD]
@@ -39,7 +39,7 @@ dex's own stock look.
 | `ARC-003` | Architecture   | `libs/theme` ships plain CSS. The shell's own TypeScript toolchain (Tailwind, in `apps/deck`) imports it with no extra build step, the same way it already imports `tailwindcss` itself. |
 | `ARC-005` | Architecture   | `libs/theme` is a shared library, the kind `libs/*` already names. `apps/gate` joins `apps/hub` and `apps/deck` under `apps/`, a buildable package like `apps/deck`, with no server of its own. |
 | `ARC-007` | Architecture   | Section 7 adds `libs/theme` and `apps/gate` to `pnpm-workspace.yaml`. |
-| `ARC-009` | Architecture   | `.docker/dex/Dockerfile` builds one container image. Deploying it through `chart/` is unchanged by this specification. |
+| `ARC-009` | Architecture   | `apps/gate/Dockerfile` builds one container image. Deploying it through `chart/` is unchanged by this specification. |
 | `TS-005`  | Frontend style | `libs/theme` and the identity provider's stylesheet both compile through Tailwind CSS 4 and daisyUI, the same as `apps/deck`. `TS-001` to `TS-004` do not apply: the package holds no TypeScript and no Svelte file. |
 | `BLD-001` | Build and release | Section 7 gives the lint and build command for `libs/theme` and `apps/gate`. |
 
@@ -97,7 +97,7 @@ sign-out page, and a signed-in account page a person reaches once a session
 exists. Every one of them carries the theme. `THEMING-DD-008` gives why this
 specification owns all of them rather than a named subset.
 
-**`.docker/dex/Dockerfile`.** A multi-stage build. The first stage installs
+**`apps/gate/Dockerfile`.** A multi-stage build. The first stage installs
 the workspace's dependencies and runs `apps/gate`'s own build, producing
 `apps/gate/web`. The second stage starts from the identity provider's base
 image, configurable through a build argument, and copies `apps/gate/web`
@@ -188,7 +188,7 @@ requirements put a dark theme at the identity provider out of scope.
 **Realizes:** `THEMING-FR-002`
 **Decision:** The identity provider's build lives at `apps/gate`. It owns
 its own `package.json` and imports `@maroid/theme` as a workspace dependency.
-`.docker/dex/Dockerfile` builds it the same way `.docker/deck/Dockerfile`
+`apps/gate/Dockerfile` builds it the same way `apps/deck/Dockerfile`
 builds `apps/deck`, then copies its output into the identity provider's own
 image.
 **Rationale:** Matches how every other buildable frontend in the repository
