@@ -57,34 +57,38 @@
 		<button type="button" class="btn btn-ghost btn-sm" {disabled} onclick={oninvite}>
 			Invite
 		</button>
-		{#if user.is_administrator}
-			<button type="button" class="btn btn-ghost btn-sm" {disabled} onclick={unmark}>
-				Unmark
-			</button>
-		{:else}
-			<button
-				type="button"
-				class="btn btn-ghost btn-sm"
-				{disabled}
-				onclick={() => onchange({ is_administrator: true })}
-			>
-				Mark administrator
-			</button>
-		{/if}
-		{#if user.status === 'blocked'}
-			<button
-				type="button"
-				class="btn btn-ghost btn-sm"
-				{disabled}
-				onclick={() => onchange({ status: 'active' })}
-			>
-				Unblock
-			</button>
-		{:else}
-			<button type="button" class="btn btn-ghost btn-sm text-error" {disabled} onclick={block}>
-				Block
-			</button>
-		{/if}
+		<span class="flex w-40 justify-end">
+			{#if user.is_administrator}
+				<button type="button" class="btn btn-ghost btn-sm" {disabled} onclick={unmark}>
+					Unmark
+				</button>
+			{:else}
+				<button
+					type="button"
+					class="btn btn-ghost btn-sm"
+					{disabled}
+					onclick={() => onchange({ is_administrator: true })}
+				>
+					Mark administrator
+				</button>
+			{/if}
+		</span>
+		<span class="flex w-24 justify-end">
+			{#if user.status === 'blocked'}
+				<button
+					type="button"
+					class="btn btn-ghost btn-sm"
+					{disabled}
+					onclick={() => onchange({ status: 'active' })}
+				>
+					Unblock
+				</button>
+			{:else}
+				<button type="button" class="btn btn-ghost btn-sm text-error" {disabled} onclick={block}>
+					Block
+				</button>
+			{/if}
+		</span>
 	</span>
 
 	<ConfirmDialog bind:this={confirmDialog} />

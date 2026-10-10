@@ -27,7 +27,7 @@
 			</span>
 			<span class="flex items-center gap-2">
 				<span class="badge badge-outline badge-sm">{presetLabel(provider)}</span>
-				<span class="text-base-content/60 text-xs">
+				<span class="text-base-content/60 w-20 text-right text-xs">
 					{provider.identity_count}
 					{provider.identity_count === 1 ? 'identity' : 'identities'}
 				</span>

@@ -56,13 +56,17 @@
 			{/each}
 		</select>
 	{:else}
-		<span class="badge badge-outline badge-sm">{roleLabel(member.role)}</span>
+		<span class="w-32">
+			<span class="badge badge-outline badge-sm">{roleLabel(member.role)}</span>
+		</span>
 	{/if}
-	{#if canManage || isSelf}
-		<button type="button" class="btn btn-ghost btn-sm text-error" {disabled} onclick={remove}>
-			{isSelf ? 'Leave' : 'Remove'}
-		</button>
-	{/if}
+	<span class="flex w-20 justify-end">
+		{#if canManage || isSelf}
+			<button type="button" class="btn btn-ghost btn-sm text-error" {disabled} onclick={remove}>
+				{isSelf ? 'Leave' : 'Remove'}
+			</button>
+		{/if}
+	</span>
 
 	<ConfirmDialog bind:this={confirmDialog} />
 </li>
