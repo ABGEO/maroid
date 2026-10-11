@@ -2,6 +2,7 @@ package registrar
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	pluginui "github.com/abgeo/maroid/apps/hub/internal/registry"
@@ -57,8 +58,33 @@ func (r *UIRegistrar) Register(plugin pluginapi.Plugin) error {
 		return fmt.Errorf("retrieving UI manifest for plugin %s: %w", id, err)
 	}
 
+	if manifest != nil {
+		for _, route := range manifest.Routes {
+			if hasParameterSegment(route.Path) {
+				return fmt.Errorf(
+					"checking the route %s of plugin %s: %w",
+					route.Path,
+					id,
+					errs.ErrInvalidUIRoute,
+				)
+			}
+		}
+	}
+
 	r.registry.Register(id, manifest)
 	r.capabilities.Record(id, pluginui.CapUI, manifest)
 
 	return nil
+}
+
+// hasParameterSegment reports whether a segment of the path takes a value, which
+// the navigation cannot give.
+func hasParameterSegment(path string) bool {
+	for segment := range strings.SplitSeq(path, "/") {
+		if strings.HasPrefix(segment, ":") {
+			return true
+		}
+	}
+
+	return false
 }

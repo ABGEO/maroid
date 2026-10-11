@@ -43,6 +43,9 @@ var (
 	ErrMQTTSubscriberAlreadyRegistered = errors.New("mqtt subscriber: already registered for topic")
 	// ErrInvalidMQTTTopic indicates that an MQTT subscriber topic is invalid.
 	ErrInvalidMQTTTopic = errors.New("mqtt subscriber: invalid topic")
+	// ErrInvalidUIRoute indicates a navigation entry of a UI manifest that holds a
+	// parameter segment, which no entry of the navigation can open.
+	ErrInvalidUIRoute = errors.New("ui manifest: navigation entry with a parameter segment")
 	// ErrMQTTBrokerNotConfigured indicates that MQTT subscribers are registered but no broker is configured.
 	ErrMQTTBrokerNotConfigured = errors.New("mqtt: broker not configured")
 	// ErrUnknownWorkerType indicates that a requested worker type is not registered.
