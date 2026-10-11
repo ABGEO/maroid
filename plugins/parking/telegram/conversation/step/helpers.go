@@ -11,6 +11,7 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/model"
+	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 const (
@@ -130,4 +131,23 @@ func vehicleLabel(vehicle model.Vehicle) string {
 func selectVehicle(ctx *conversationapi.Context, vehicle model.Vehicle) {
 	ctx.Data[dataVehicleID] = vehicle.ID
 	ctx.Data[dataVehicleLabel] = vehicleLabel(vehicle)
+}
+
+// endWithNotice turns the control message into the answer for a failure that the
+// person can act on, and reports true. The conversation then ends with no failure,
+// because the person, not the code, has the next step. Any other failure reports false.
+func endWithNotice(
+	bot pluginapi.TelegramBot,
+	ctx *conversationapi.Context,
+	answers *notice.Notice,
+	err error,
+) bool {
+	text, known := answers.Text(ctx, err)
+	if !known {
+		return false
+	}
+
+	_ = editCtrlMessage(bot, ctx, text)
+
+	return true
 }

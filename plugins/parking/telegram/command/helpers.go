@@ -6,6 +6,8 @@ import (
 	"github.com/mymmrac/telego"
 	th "github.com/mymmrac/telego/telegohandler"
 	tu "github.com/mymmrac/telego/telegoutil"
+
+	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 func sendMessage(ctx *th.Context, update telego.Update, text string) error {
@@ -27,6 +29,16 @@ func sendMessage(ctx *th.Context, update telego.Update, text string) error {
 	}
 
 	return nil
+}
+
+// replyFailure answers a failure that the person can act on, and returns any other
+// failure to the engine, which logs it.
+func replyFailure(ctx *th.Context, update telego.Update, answers *notice.Notice, err error) error {
+	if text, known := answers.Text(ctx.Context(), err); known {
+		return sendMessage(ctx, update, text)
+	}
+
+	return err
 }
 
 func ptrOr(s *string, fallback string) string {

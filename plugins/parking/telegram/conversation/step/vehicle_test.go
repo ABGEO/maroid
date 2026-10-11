@@ -7,11 +7,13 @@ import (
 	"github.com/mymmrac/telego"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/dto"
 	"github.com/abgeo/maroid/plugins/parking/model"
 	"github.com/abgeo/maroid/plugins/parking/service"
 	"github.com/abgeo/maroid/plugins/parking/telegram/conversation/step"
+	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 const (
@@ -19,6 +21,7 @@ const (
 	stepConfirm    = "confirm"
 	stepVehicle    = "select_vehicle"
 	lotNumber      = "A123"
+	accountURL     = "https://deck.example/w/W/plugins/dev.maroid.parking/account"
 )
 
 // fakeBot records the text and the keyboard of each edit of the control message.
@@ -50,6 +53,7 @@ type fakeClient struct {
 	service.APIClientService
 
 	vehicles      []model.Vehicle
+	vehicleErr    error
 	vehicleReads  int
 	startedWithID int
 }
@@ -57,7 +61,7 @@ type fakeClient struct {
 func (c *fakeClient) ListVehicles(context.Context) ([]model.Vehicle, error) {
 	c.vehicleReads++
 
-	return c.vehicles, nil
+	return c.vehicles, c.vehicleErr
 }
 
 func (c *fakeClient) StartParking(
@@ -69,6 +73,17 @@ func (c *fakeClient) StartParking(
 	c.startedWithID = vehicleID
 
 	return &dto.ParkingSession{}, nil
+}
+
+// fakePages answers one address for every page.
+type fakePages struct{}
+
+func (fakePages) PageURL(context.Context, *pluginapi.PluginID, string) (string, error) {
+	return accountURL, nil
+}
+
+func newNotice() *notice.Notice {
+	return notice.New(fakePages{}, pluginapi.ParsePluginID("dev.maroid.parking"))
 }
 
 func newContext() *conversationapi.Context {
@@ -102,12 +117,12 @@ func TestOneVehicleIsSelectedWithNoQuestion(t *testing.T) {
 	client := &fakeClient{vehicles: []model.Vehicle{{ID: 584842, Name: "Chevy", Plate: "AB000EO"}}}
 	ctx := newContext()
 
-	next, err := step.NewSelectType(bot, client).OnMessage(ctx, press(typeOnlyPriced))
+	next, err := step.NewSelectType(bot, client, newNotice()).OnMessage(ctx, press(typeOnlyPriced))
 	require.NoError(t, err)
 	require.Equal(t, stepConfirm, next)
 	require.Equal(t, 1, client.vehicleReads)
 
-	confirm := step.NewConfirm(bot, client)
+	confirm := step.NewConfirm(bot, client, newNotice())
 	require.NoError(t, confirm.OnEnter(ctx, telego.Update{}))
 	require.Contains(t, bot.texts[len(bot.texts)-1], "Chevy (AB000EO)")
 
@@ -125,7 +140,7 @@ func TestTwoVehiclesAskForAChoice(t *testing.T) {
 	client := &fakeClient{vehicles: chevyAndFiat()}
 	ctx := newContext()
 
-	next, err := step.NewSelectType(bot, client).OnMessage(ctx, press(typeOnlyPriced))
+	next, err := step.NewSelectType(bot, client, newNotice()).OnMessage(ctx, press(typeOnlyPriced))
 	require.NoError(t, err)
 	require.Equal(t, stepVehicle, next)
 
@@ -147,7 +162,7 @@ func TestTwoVehiclesAskForAChoice(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, stepConfirm, next)
 
-	_, err = step.NewConfirm(bot, client).OnMessage(ctx, press(stepConfirm))
+	_, err = step.NewConfirm(bot, client, newNotice()).OnMessage(ctx, press(stepConfirm))
 	require.NoError(t, err)
 	require.Equal(t, 2, client.startedWithID)
 }
@@ -159,10 +174,27 @@ func TestNoVehicleEndsTheConversation(t *testing.T) {
 	bot := &fakeBot{}
 	client := &fakeClient{}
 
-	next, err := step.NewSelectType(bot, client).OnMessage(newContext(), press(typeOnlyPriced))
+	next, err := step.NewSelectType(bot, client, newNotice()).
+		OnMessage(newContext(), press(typeOnlyPriced))
 
 	require.NoError(t, err)
 	require.Empty(t, next)
 	require.Contains(t, bot.texts[len(bot.texts)-1], "no vehicle")
 	require.Zero(t, client.startedWithID)
+}
+
+// PARKACC-SC-018: A conversation whose token the parking service rejects ends with the
+// answer of a user with no connection, and reports no failure.
+func TestARejectedTokenEndsTheConversationWithTheLink(t *testing.T) {
+	t.Parallel()
+
+	bot := &fakeBot{}
+	client := &fakeClient{vehicleErr: service.ErrNotConnected}
+
+	next, err := step.NewSelectType(bot, client, newNotice()).
+		OnMessage(newContext(), press(typeOnlyPriced))
+
+	require.NoError(t, err)
+	require.Empty(t, next)
+	require.Contains(t, bot.texts[len(bot.texts)-1], `href="`+accountURL+`"`)
 }

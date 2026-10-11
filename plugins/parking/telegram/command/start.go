@@ -14,12 +14,14 @@ import (
 	"github.com/abgeo/maroid/plugins/parking/model"
 	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
+	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 // Parking is a Telegram command that allows users to start a parking session.
 type Parking struct {
 	telegramConversationEngine conversation.Engine
 	apiClientSvc               service.APIClientService
+	answers                    *notice.Notice
 }
 
 var _ pluginapi.TelegramCommand = (*Parking)(nil)
@@ -28,10 +30,12 @@ var _ pluginapi.TelegramCommand = (*Parking)(nil)
 func NewParking(
 	telegramConversationEngine conversation.Engine,
 	apiClientSvc service.APIClientService,
+	answers *notice.Notice,
 ) *Parking {
 	return &Parking{
 		telegramConversationEngine: telegramConversationEngine,
 		apiClientSvc:               apiClientSvc,
+		answers:                    answers,
 	}
 }
 
@@ -53,7 +57,7 @@ func (c *Parking) Validate(_ telego.Update) error {
 func (c *Parking) Handle(ctx *th.Context, update telego.Update) error {
 	state, err := c.preflight(ctx.Context())
 	if err != nil {
-		return err
+		return replyFailure(ctx, update, c.answers, err)
 	}
 
 	if msg := validateStart(state); msg != "" {

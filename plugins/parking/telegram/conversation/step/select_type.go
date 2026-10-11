@@ -10,6 +10,7 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/service"
+	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 // SelectType is a conversation step that prompts the user to select the parking type (free, paid, or both)
@@ -17,6 +18,7 @@ import (
 type SelectType struct {
 	telegramBot  pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
+	answers      *notice.Notice
 }
 
 var _ conversationapi.Step = (*SelectType)(nil)
@@ -25,10 +27,12 @@ var _ conversationapi.Step = (*SelectType)(nil)
 func NewSelectType(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
+	answers *notice.Notice,
 ) *SelectType {
 	return &SelectType{
 		telegramBot:  telegramBot,
 		apiClientSvc: apiClientSvc,
+		answers:      answers,
 	}
 }
 
@@ -88,6 +92,10 @@ func (s *SelectType) OnMessage(
 func (s *SelectType) routeToVehicle(ctx *conversationapi.Context) (string, error) {
 	vehicles, err := s.apiClientSvc.ListVehicles(ctx)
 	if err != nil {
+		if endWithNotice(s.telegramBot, ctx, s.answers, err) {
+			return "", nil
+		}
+
 		_ = editCtrlMessage(s.telegramBot, ctx, "Failed to read the vehicles. Please try again.")
 
 		return "", fmt.Errorf("reading the vehicles: %w", err)

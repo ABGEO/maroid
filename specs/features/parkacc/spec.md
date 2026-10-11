@@ -325,8 +325,9 @@ and a link to `/account`. Any other error goes back to the engine as today.
 sign in whose status is not `REQUIRES_TWO_FA`, or whose `TWO_FA.PHONE_VERIFICATION` is
 false, is `ErrVerificationUnsupported`. A submit that answers a 4xx, or a status other
 than `SUCCESS`, is `ErrCodeRejected`. A `SUCCESS` with no `session-token` header is `ErrRequestFailed`.
-**Rationale:** The capture holds no answer for wrong credentials or a wrong code. Build
-step 8 records the real answers and corrects this table before the release.
+**Rationale:** The capture held no answer for wrong credentials or a wrong code. Build
+step 8 ran the flow against the parking service on 2026-10-12, and each answer landed
+in the condition above.
 **Alternatives:** Match a message text of the parking service. The text is Georgian and changes without notice.
 
 ### `PARKACC-DD-007`
@@ -335,8 +336,8 @@ step 8 records the real answers and corrects this table before the release.
 **Decision:** `pending` stores `resend_at` as the time of the request plus `delay` seconds.
 `ResendCode` refuses with `ErrCodeWait` before `resend_at`, and calls the send route again
 with the same identifier after it. A `delay` that is not a number counts as 60.
-**Rationale:** The refusal costs no call to the parking service. The capture shows the send
-route takes only the identifier, so a second call sends a second code. Build step 8 confirms it.
+**Rationale:** The refusal costs no call to the parking service. The send route takes only
+the identifier, so a second call sends a second code. Build step 8 confirmed it on 2026-10-12.
 **Alternatives:** A new sign in for each new code. It costs a second call and a second password check.
 
 ### `PARKACC-DD-008`
@@ -397,10 +398,10 @@ check it. `PSET-FR-004` returns it to that user alone.
 | 3   | The DTOs, `model/`, and the API client: the token from `session`, the 401 rule, the sign in calls, the vehicles | `PARKACC-FR-009` to `PARKACC-FR-019` | [x]  |
 | 4   | `service/connection.go`                                                                      | `PARKACC-FR-004` to `PARKACC-FR-020`             | [x]  |
 | 5   | `handler/` and `api.yaml`                                                                    | `PARKACC-FR-004` to `PARKACC-FR-018`             | [x]  |
-| 6   | The bot: `replyFailure`, `endNotConnected`, the preflight, `select_vehicle`, `confirm`       | `PARKACC-FR-021`, `PARKACC-FR-024` to `PARKACC-FR-028` | [ ]  |
+| 6   | The bot: `replyFailure`, `endNotConnected`, the preflight, `select_vehicle`, `confirm`       | `PARKACC-FR-021`, `PARKACC-FR-024` to `PARKACC-FR-028` | [x]  |
 | 7   | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`).              | `PARKACC-FR-004` to `PARKACC-FR-018`             | [x]  |
-| 8   | `PARKACC-SC-028` against the parking service. Correct `PARKACC-DD-006` and `PARKACC-DD-007`. | `PARKACC-FR-012`, `PARKACC-FR-015`, `PARKACC-FR-017` | [ ]  |
-| 9   | The tests of `spec-scenarios.md`. Lint and build the plugin and the hub.                     | Every statement                                  | [ ]  |
+| 8   | `PARKACC-SC-028` against the parking service. Correct `PARKACC-DD-006` and `PARKACC-DD-007`. | `PARKACC-FR-012`, `PARKACC-FR-015`, `PARKACC-FR-017` | [x]  |
+| 9   | The tests of `spec-scenarios.md`. Lint and build the plugin and the hub.                     | Every statement                                  | [x]  |
 
 ## Retired identifiers
 

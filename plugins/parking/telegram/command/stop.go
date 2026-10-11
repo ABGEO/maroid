@@ -9,11 +9,13 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
+	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 // Stop is a Telegram command that allows users to stop their active parking session.
 type Stop struct {
 	apiClientSvc service.APIClientService
+	answers      *notice.Notice
 }
 
 var _ pluginapi.TelegramCommand = (*Stop)(nil)
@@ -21,9 +23,11 @@ var _ pluginapi.TelegramCommand = (*Stop)(nil)
 // NewStop creates a new Stop.
 func NewStop(
 	apiClientSvc service.APIClientService,
+	answers *notice.Notice,
 ) *Stop {
 	return &Stop{
 		apiClientSvc: apiClientSvc,
+		answers:      answers,
 	}
 }
 
@@ -45,7 +49,7 @@ func (c *Stop) Validate(_ telego.Update) error {
 func (c *Stop) Handle(ctx *th.Context, update telego.Update) error {
 	session, err := c.apiClientSvc.GetActiveSession(ctx.Context())
 	if err != nil {
-		return fmt.Errorf("fetching active session: %w", err)
+		return replyFailure(ctx, update, c.answers, fmt.Errorf("fetching active session: %w", err))
 	}
 
 	if session == nil {
@@ -54,7 +58,7 @@ func (c *Stop) Handle(ctx *th.Context, update telego.Update) error {
 
 	stopped, err := c.apiClientSvc.StopParking(ctx.Context(), session.ID)
 	if err != nil {
-		return fmt.Errorf("stopping parking session: %w", err)
+		return replyFailure(ctx, update, c.answers, fmt.Errorf("stopping parking session: %w", err))
 	}
 
 	text := fmt.Sprintf(

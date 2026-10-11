@@ -11,11 +11,13 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
+	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 // Status is a Telegram command that allows users to check the status of their active parking session.
 type Status struct {
 	apiClientSvc service.APIClientService
+	answers      *notice.Notice
 }
 
 var _ pluginapi.TelegramCommand = (*Status)(nil)
@@ -23,9 +25,11 @@ var _ pluginapi.TelegramCommand = (*Status)(nil)
 // NewStatus creates a new Status.
 func NewStatus(
 	apiClientSvc service.APIClientService,
+	answers *notice.Notice,
 ) *Status {
 	return &Status{
 		apiClientSvc: apiClientSvc,
+		answers:      answers,
 	}
 }
 
@@ -47,7 +51,7 @@ func (c *Status) Validate(_ telego.Update) error {
 func (c *Status) Handle(ctx *th.Context, update telego.Update) error {
 	session, err := c.apiClientSvc.GetActiveSession(ctx.Context())
 	if err != nil {
-		return fmt.Errorf("fetching active session: %w", err)
+		return replyFailure(ctx, update, c.answers, fmt.Errorf("fetching active session: %w", err))
 	}
 
 	if session == nil {

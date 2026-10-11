@@ -11,6 +11,7 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/service"
+	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 var lotNumberRegex = regexp.MustCompile(`^[A-Ca-c]\d+$`)
@@ -19,6 +20,7 @@ var lotNumberRegex = regexp.MustCompile(`^[A-Ca-c]\d+$`)
 type EnterLot struct {
 	telegramBot  pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
+	answers      *notice.Notice
 }
 
 var _ conversationapi.Step = (*EnterLot)(nil)
@@ -27,10 +29,12 @@ var _ conversationapi.Step = (*EnterLot)(nil)
 func NewEnterLot(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
+	answers *notice.Notice,
 ) *EnterLot {
 	return &EnterLot{
 		telegramBot:  telegramBot,
 		apiClientSvc: apiClientSvc,
+		answers:      answers,
 	}
 }
 
@@ -113,6 +117,10 @@ func (s *EnterLot) processLot(ctx *conversationapi.Context, update telego.Update
 	}
 
 	if err != nil {
+		if endWithNotice(s.telegramBot, ctx, s.answers, err) {
+			return "", nil
+		}
+
 		return "", fmt.Errorf("fetching parking place: %w", err)
 	}
 

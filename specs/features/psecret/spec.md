@@ -367,7 +367,7 @@ in the past" then has no value to reject.
 | 7   | `Workspace.ListIDs`, `Enablements.AllWorkspaces`, the cron worker, the removal of `ErrCronScopeWithoutPlugin` | `PSECRET-FR-010`                          | [x]  |
 | 8   | `pluginsecret.Sweep` and the two entries of `coreCronJobs`                                             | `PSECRET-FR-010`                                 | [x]  |
 | 9   | The tests of `spec-scenarios.md`                                                                       | Every statement                                  | [x]  |
-| 10  | Lint and build the hub. Build every plugin and load each one (`BLD-004`).                              | `PSECRET-DD-007`                                 | [ ]  |
+| 10  | Lint and build the hub. Build every plugin and load each one (`BLD-004`).                              | `PSECRET-DD-007`                                 | [x]  |
 
 Step 7 replaces the test that `worker/cron_test.go` holds for `ErrCronScopeWithoutPlugin`.
 `ADR-0014` changes the rule that the test verified, so `TST-003` permits the change.

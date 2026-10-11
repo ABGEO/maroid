@@ -9,12 +9,14 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/service"
+	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 // Confirm is a conversation step that confirms the user's parking session details before starting it.
 type Confirm struct {
 	telegramBot  pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
+	answers      *notice.Notice
 }
 
 var _ conversationapi.Step = (*Confirm)(nil)
@@ -23,10 +25,12 @@ var _ conversationapi.Step = (*Confirm)(nil)
 func NewConfirm(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
+	answers *notice.Notice,
 ) *Confirm {
 	return &Confirm{
 		telegramBot:  telegramBot,
 		apiClientSvc: apiClientSvc,
+		answers:      answers,
 	}
 }
 
@@ -97,6 +101,10 @@ func (s *Confirm) OnMessage(
 		ctx, lot, parkingType, vehicleID,
 	)
 	if err != nil {
+		if endWithNotice(s.telegramBot, ctx, s.answers, err) {
+			return "", nil
+		}
+
 		_ = editCtrlMessage(
 			s.telegramBot, ctx,
 			"Failed to start parking. Please try again.",

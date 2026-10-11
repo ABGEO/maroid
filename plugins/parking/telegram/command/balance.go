@@ -9,11 +9,13 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
+	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 // Balance is a Telegram command that allows users to check their parking balance and daily free parking left.
 type Balance struct {
 	apiClientSvc service.APIClientService
+	answers      *notice.Notice
 }
 
 var _ pluginapi.TelegramCommand = (*Balance)(nil)
@@ -21,9 +23,11 @@ var _ pluginapi.TelegramCommand = (*Balance)(nil)
 // NewBalance creates a new Balance.
 func NewBalance(
 	apiClientSvc service.APIClientService,
+	answers *notice.Notice,
 ) *Balance {
 	return &Balance{
 		apiClientSvc: apiClientSvc,
+		answers:      answers,
 	}
 }
 
@@ -45,7 +49,7 @@ func (c *Balance) Validate(_ telego.Update) error {
 func (c *Balance) Handle(ctx *th.Context, update telego.Update) error {
 	person, err := c.apiClientSvc.GetPerson(ctx.Context())
 	if err != nil {
-		return fmt.Errorf("fetching person: %w", err)
+		return replyFailure(ctx, update, c.answers, fmt.Errorf("fetching person: %w", err))
 	}
 
 	text := fmt.Sprintf(

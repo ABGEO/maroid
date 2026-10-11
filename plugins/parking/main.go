@@ -16,6 +16,7 @@ import (
 	"github.com/abgeo/maroid/plugins/parking/service"
 	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 	"github.com/abgeo/maroid/plugins/parking/telegram/conversation"
+	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 // pluginID names the plugin. The constructor needs it before Meta exists.
@@ -30,6 +31,7 @@ type ParkingPlugin struct {
 	telegramConversationEngine telegramconversationapi.Engine
 	apiClientSvc               service.APIClientService
 	connections                service.ConnectionService
+	answers                    *notice.Notice
 }
 
 var (
@@ -61,6 +63,11 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host settings provider: %w", err)
 	}
 
+	pages, err := host.Pages()
+	if err != nil {
+		return nil, fmt.Errorf("getting host page linker: %w", err)
+	}
+
 	secretProvider, err := host.Secrets()
 	if err != nil {
 		return nil, fmt.Errorf("getting host secret provider: %w", err)
@@ -76,6 +83,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		telegramConversationEngine: host.TelegramConversationEngine(),
 		apiClientSvc:               apiClient,
 		connections:                service.NewConnections(apiClient, settings, secrets),
+		answers:                    notice.New(pages, pluginID),
 	}
 
 	plg.logger = host.Logger().With(
@@ -143,15 +151,15 @@ func (p *ParkingPlugin) Routes() ([]pluginapi.Route, error) {
 
 func (p *ParkingPlugin) TelegramCommands() ([]pluginapi.TelegramCommand, error) {
 	return []pluginapi.TelegramCommand{
-		command.NewParking(p.telegramConversationEngine, p.apiClientSvc),
-		command.NewBalance(p.apiClientSvc),
-		command.NewStatus(p.apiClientSvc),
-		command.NewStop(p.apiClientSvc),
+		command.NewParking(p.telegramConversationEngine, p.apiClientSvc, p.answers),
+		command.NewBalance(p.apiClientSvc, p.answers),
+		command.NewStatus(p.apiClientSvc, p.answers),
+		command.NewStop(p.apiClientSvc, p.answers),
 	}, nil
 }
 
 func (p *ParkingPlugin) TelegramConversations() ([]telegramconversationapi.Conversation, error) {
 	return []telegramconversationapi.Conversation{
-		conversation.NewParkingConversation(p.telegramBot, p.apiClientSvc),
+		conversation.NewParkingConversation(p.telegramBot, p.apiClientSvc, p.answers),
 	}, nil
 }
