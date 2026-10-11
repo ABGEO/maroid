@@ -112,8 +112,10 @@ func (p *JasminePlugin) UIManifest() (*pluginapi.UIManifest, error) {
 
 	return &pluginapi.UIManifest{
 		Routes: []pluginapi.UIRoute{
+			{Path: "/attention", Label: "Needs attention"},
 			{Path: "/plants", Label: "Plants"},
 			{Path: "/environments", Label: "Environments"},
+			{Path: "/maintenance", Label: "Maintenance log"},
 		},
 		Assets: assets,
 	}, nil

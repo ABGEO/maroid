@@ -8,12 +8,17 @@ export function toMoment(local: string): string | undefined {
   return local === "" ? undefined : new Date(local).toISOString();
 }
 
+/** A moment as the value of a datetime-local input, in the zone of the browser. */
+export function toLocalInput(value: string | Date): string {
+  const moment = new Date(value);
+  moment.setMinutes(moment.getMinutes() - moment.getTimezoneOffset());
+
+  return moment.toISOString().slice(0, 16);
+}
+
 /** The current time as the value of a datetime-local input, the latest it takes. */
 export function localNow(): string {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-
-  return now.toISOString().slice(0, 16);
+  return toLocalInput(new Date());
 }
 
 /** A count of days, with the singular for one. */
