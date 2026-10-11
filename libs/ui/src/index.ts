@@ -1,3 +1,4 @@
+export { default as ConfirmDialog } from './dialog/ConfirmDialog.svelte';
 export { default as Pagination } from './pagination/Pagination.svelte';
 export {
 	createPager,
