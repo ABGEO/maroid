@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
+	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/jasmine/config"
 	"github.com/abgeo/maroid/plugins/jasmine/job"
 )
@@ -51,17 +51,22 @@ SELECT p.id,
 FROM plants p
 CROSS JOIN generate_series(1, 200) AS s;`
 
-// slowDispatcher waits for each send, as a channel with a slow transport does,
-// and records the moment the last send ends.
-type slowDispatcher struct {
+// slowSender waits for each send, as a slow notification route does, and records
+// the moment the last send ends.
+type slowSender struct {
 	mu       sync.Mutex
 	sends    int
 	lastSent time.Time
 }
 
-var _ notifierapi.Dispatcher = (*slowDispatcher)(nil)
+var _ pluginapi.NotificationSender = (*slowSender)(nil)
 
-func (d *slowDispatcher) Send(_ context.Context, _ string, _ notifierapi.Message) error {
+func (d *slowSender) Send(
+	_ context.Context,
+	_ *pluginapi.PluginID,
+	_ string,
+	_ pluginapi.Message,
+) error {
 	time.Sleep(sendDelay)
 
 	d.mu.Lock()
@@ -73,13 +78,9 @@ func (d *slowDispatcher) Send(_ context.Context, _ string, _ notifierapi.Message
 	return nil
 }
 
-func (d *slowDispatcher) Channels() []string {
-	return []string{channel}
-}
-
 // GARDEN-SC-033: The reminder of 50 workspaces of 500 plants each, run one
-// workspace after the other with a channel that takes 300 ms for each send,
-// reaches the channel for the last workspace in less than 60 seconds.
+// workspace after the other with a notifier that takes 300 ms for each send,
+// reaches the notifier for the last workspace in less than 60 seconds.
 //
 //nolint:paralleltest // a measurement runs alone, so no other test takes its time
 func TestTheRemindersOfFiftyWorkspacesEndWithinOneMinute(t *testing.T) {
@@ -120,12 +121,12 @@ func TestTheRemindersOfFiftyWorkspacesEndWithinOneMinute(t *testing.T) {
 		return nil
 	}))
 
-	sink := &slowDispatcher{}
+	sink := &slowSender{}
 	settings := &config.Config{
 		CronSchedule: config.CronSchedule{CareReminder: "0 9 * * *"},
-		Notification: config.Notification{CareReminderChannel: channel},
 	}
-	reminder := job.NewCareReminder(settings, slog.New(slog.DiscardHandler), database, sink)
+	notifier := pluginapi.NewPluginNotifier(sink, pluginapi.ParsePluginID(pluginID))
+	reminder := job.NewCareReminder(settings, slog.New(slog.DiscardHandler), database, notifier)
 
 	start := time.Now()
 

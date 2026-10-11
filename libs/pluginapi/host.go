@@ -5,7 +5,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
 
@@ -14,7 +13,7 @@ import (
 type Host interface {
 	Logger() *slog.Logger
 	Database() (*sqlx.DB, error)
-	Notifier() (notifierapi.Dispatcher, error)
+	Notifier() (NotificationSender, error)
 	TelegramBot() (TelegramBot, error)
 	TelegramConversationEngine() conversation.Engine
 	Settings() (SettingsProvider, error)

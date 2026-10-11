@@ -4,7 +4,7 @@ title: The plants of a workspace, their environments, and their care
 type: requirements
 status: approved
 created: 2026-10-10
-updated: 2026-10-10
+updated: 2026-10-11
 approved_by: Temuri
 approved_on: 2026-10-10
 constrained_by: [OWN, DAT, SEC, NTF, JOB, CFG, RES]
@@ -228,9 +228,9 @@ A view must show each time and each date in the time zone of the browser.
 
 ### `GARDEN-FR-025`
 
-The configuration of the installation must hold the schedule of the reminder, and the notification channel.
+The configuration of the installation must hold the schedule of the reminder.
 
-**Why:** A preference for each workspace comes with a later feature.
+**Why:** One schedule serves the installation. `NOTIF` gives each workspace the place that its reminder goes.
 
 ### `GARDEN-FR-026`
 
@@ -238,8 +238,14 @@ At each run of the schedule, Maroid must send one reminder for each workspace th
 
 **Examples:**
 
-- Normal case: two workspaces have due plants. The channel receives two reminders.
+- Normal case: two workspaces have due plants. Each workspace receives one reminder through its notification routes.
 - Limit case: no care interval is due. Maroid sends nothing for that workspace.
+
+### `GARDEN-FR-033`
+
+The plugin must declare the reminder as one notification topic.
+
+**Why:** A manager routes the reminder of the workspace. See `NOTIF-FR-001`.
 
 ### `GARDEN-FR-032`
 
@@ -247,7 +253,7 @@ A reminder must hold each line of `GARDEN-FR-023`, grouped by environment.
 
 ### `GARDEN-FR-028`
 
-When the channel fails, Maroid must record the failure and send the reminder at the next run only.
+When every notification route fails, Maroid must record the failure and send the reminder at the next run only.
 
 ### Change
 
@@ -265,7 +271,7 @@ The attention list must answer in less than 1 second, for a workspace with 500 p
 
 ### `GARDEN-NFR-002`
 
-The reminder must reach the channel in less than 60 seconds after the scheduled time, for 50 workspaces of 500 plants each. Measure from the scheduled time to the call to the channel.
+The reminder must reach the notifier in less than 60 seconds after the scheduled time, for 50 workspaces of 500 plants each. Measure from the scheduled time to the call to the notifier.
 
 ## 7. Invariants
 
@@ -289,8 +295,8 @@ A plant holds at most one care interval for each maintenance type.
 | `OWN-009` | Ownership     | The reminder is a job for each workspace. |
 | `DAT-009` | Data          | The internal identifier is a UUID version 7. The display identifier is a second value. |
 | `SEC-013` | Security      | The plugin declares a read and a write permission for maintenance. Read is viewer, write is editor. |
-| `NTF-002` | Notifications | The reminder names a channel, not a transport. |
-| `CFG-007` | Configuration | The channel in the installation configuration is a temporary exception. See question 3. |
+| `NTF-002` | Notifications | The reminder names a notification topic, not a notification provider. |
+| `CFG-007` | Configuration | The configuration holds the schedule only. `NOTIF` holds the routing of each workspace. |
 | `JOB-006` | Jobs          | A slow reminder run does not start a second run. |
 | `RES-005` | REST          | Each list answers a page. |
 
@@ -299,7 +305,7 @@ A plant holds at most one care interval for each maintenance type.
 | #   | Question | Owner | Answer |
 | --- | -------- | ----- | ------ |
 | 1   | `GARDEN-FR-019` needs a time zone. Is one time zone in the plugin configuration correct, with UTC as the default? | Owner | No. Maroid stores and counts in UTC. A view shows the time zone of the browser. |
-| 2   | `CFG-007` puts a value of one workspace in the database. One channel for every workspace is a value of the installation. Is that the reading you accept until the notification rework? | Owner | Yes, until the notification rework. |
+| 2   | `CFG-007` puts a value of one workspace in the database. One channel for every workspace is a value of the installation. Is that the reading you accept until the notification rework? | Owner | Yes, until the notification rework. On 2026-10-11 `NOTIF` replaced the channel with a notification topic. |
 
 ## Retired identifiers
 

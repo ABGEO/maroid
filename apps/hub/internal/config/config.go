@@ -15,7 +15,6 @@ import (
 	"github.com/mcuadros/go-defaults"
 	"github.com/spf13/viper"
 
-	"github.com/abgeo/maroid/libs/notifier"
 	"github.com/abgeo/maroid/libs/pluginconfig"
 )
 
@@ -161,7 +160,6 @@ type Config struct {
 	MQTT     MQTT
 	OpenBao  OpenBao
 	Telegram Telegram
-	Notifier notifier.Config
 	Plugins  []pluginconfig.Config
 }
 

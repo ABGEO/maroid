@@ -22,6 +22,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/healthcheck"
 	"github.com/abgeo/maroid/apps/hub/internal/logger"
 	"github.com/abgeo/maroid/apps/hub/internal/migrator"
+	"github.com/abgeo/maroid/apps/hub/internal/notification"
 	"github.com/abgeo/maroid/apps/hub/internal/openbao"
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
@@ -33,8 +34,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/conversation"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
-	"github.com/abgeo/maroid/libs/notifier/dispatcher"
-	notifierregistry "github.com/abgeo/maroid/libs/notifier/registry"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
 )
 
@@ -85,8 +84,8 @@ type Resolver interface {
 	PermissionRegistry() (*registry.PermissionRegistry, error)
 	Authorizer() (authz.Authorizer, error)
 	Cron() *cron.Cron
-	NotifierRegistry() (*notifierregistry.SchemeRegistry, error)
-	NotifierDispatcher() (*dispatcher.ChannelDispatcher, error)
+	NotificationTopicRegistry() *registry.NotificationTopicRegistry
+	NotificationDispatcher() (*notification.Dispatcher, error)
 	TelegramBot() (*telego.Bot, error)
 	TelegramUpdatesHandler() (*telegram.ChannelHandler, error)
 	Close(ctx context.Context) error
@@ -313,16 +312,15 @@ type Container struct {
 		instance *registry.PermissionRegistry
 	}
 
-	notifierRegistry struct {
-		mu       sync.Mutex
+	notificationTopicRegistry struct {
 		once     sync.Once
-		instance *notifierregistry.SchemeRegistry
+		instance *registry.NotificationTopicRegistry
 	}
 
-	notifierDispatcher struct {
+	notificationDispatcher struct {
 		mu       sync.Mutex
 		once     sync.Once
-		instance *dispatcher.ChannelDispatcher
+		instance *notification.Dispatcher
 	}
 
 	telegramBot struct {

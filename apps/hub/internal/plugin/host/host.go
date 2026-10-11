@@ -8,7 +8,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/mymmrac/telego"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
@@ -18,7 +17,7 @@ import (
 type Host struct {
 	logger                     *slog.Logger
 	database                   *sqlx.DB
-	notifier                   notifierapi.Dispatcher
+	notifier                   pluginapi.NotificationSender
 	telegramBot                *telego.Bot
 	telegramConversationEngine conversation.Engine
 	settings                   pluginapi.SettingsProvider
@@ -30,7 +29,7 @@ var _ pluginapi.Host = (*Host)(nil)
 func New(
 	logger *slog.Logger,
 	database *sqlx.DB,
-	notifier notifierapi.Dispatcher,
+	notifier pluginapi.NotificationSender,
 	telegramBot *telego.Bot,
 	telegramConversationEngine conversation.Engine,
 	settings pluginapi.SettingsProvider,
@@ -55,8 +54,8 @@ func (h *Host) Database() (*sqlx.DB, error) {
 	return h.database, nil
 }
 
-// Notifier returns the notifier dispatcher instance from the dependency container.
-func (h *Host) Notifier() (notifierapi.Dispatcher, error) {
+// Notifier returns the notification sender from the dependency container.
+func (h *Host) Notifier() (pluginapi.NotificationSender, error) {
 	return h.notifier, nil
 }
 

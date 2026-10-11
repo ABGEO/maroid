@@ -3,7 +3,6 @@ module github.com/abgeo/maroid/plugins/jasmine
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664
 	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261007201113-f0f51ecfa664
 	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261007201113-f0f51ecfa664
 	github.com/abgeo/maroid/libs/rest v0.0.0-20261007201113-f0f51ecfa664
@@ -22,6 +21,7 @@ require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20261006220739-8c912ac31dd4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
+	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664 // indirect
 	github.com/ajg/form v1.7.1 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.4 // indirect

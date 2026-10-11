@@ -11,8 +11,6 @@ github.com/Masterminds/semver/v3 v3.1.1 h1:hLg3sBzpNErnxhQtUy/mmLR2I9foDujNK030I
 github.com/Masterminds/semver/v3 v3.1.1/go.mod h1:VPu/7SZ7ePZ3QOrcuXROw5FAcLl4a0cBrbBpGY/8hQs=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
-github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664 h1:n6NZ1muJxInbvUNL/8e8yn3p92hbYfEdY5YycO7kZzI=
-github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664/go.mod h1:eAkT4x31SwNKNAQOvzqAjsBcqI13W9A1RRnT6w4/cQI=
 github.com/abgeo/maroid/libs/testdb v0.0.0-20261007201113-f0f51ecfa664 h1:kHtVCWmfF/f0+gobW/CZjIrEABdiitFwxGEkIRsb300=
 github.com/abgeo/maroid/libs/testdb v0.0.0-20261007201113-f0f51ecfa664/go.mod h1:qzJOlTckRhP7fYC5rd5a5TESckNWksjKjkIQ+NivVr8=
 github.com/bytedance/gopkg v0.1.4 h1:oZnQwnX82KAIWb7033bEwtxvTqXcYMxDBaQxo5JJHWM=

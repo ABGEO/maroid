@@ -272,9 +272,9 @@ hub is not part of it. "Today" is the UTC date of the database at the run.
 **Verifies:** `GARDEN-FR-026`, `GARDEN-FR-032`
 **Layer:** integration
 
-**Given** a fake dispatcher. In H: `P003` "Gardenia" in `E001` "Office", watering overdue at 11 of 7 days; `P001` "Rose" in `E001`, watering due at 7 of 7 days; `P004` "Fern" in `E002` "Kitchen", misting due at 2 of 2 days. In G: one plant with a due care interval.
+**Given** a fake notifier. In H: `P003` "Gardenia" in `E001` "Office", watering overdue at 11 of 7 days; `P001` "Rose" in `E001`, watering due at 7 of 7 days; `P004` "Fern" in `E002` "Kitchen", misting due at 2 of 2 days. In G: one plant with a due care interval.
 **When** `CareReminder.Run` runs for H, then for G.
-**Then** the dispatcher receives two messages on the configured channel. The body of the first is:
+**Then** the notifier receives two messages of the topic `care_reminder`. The body of the first is:
 
 ```
 E001 Office
@@ -290,9 +290,9 @@ P004 Fern: misting, 2 days, every 2 days, due
 **Verifies:** `GARDEN-FR-026`
 **Layer:** integration
 
-**Given** a workspace with every care interval `on_schedule`. Then a configuration with an empty channel.
-**When** `CareReminder.Run` runs. Then `CronJobs()` runs.
-**Then** the dispatcher receives nothing, and `Run` answers nil. `CronJobs()` answers no job.
+**Given** a workspace with every care interval `on_schedule`.
+**When** `CareReminder.Run` runs.
+**Then** the notifier receives nothing, and `Run` answers nil.
 
 ### `GARDEN-SC-029`
 
@@ -342,6 +342,14 @@ P004 Fern: misting, 2 days, every 2 days, due
 **Given** 50 workspaces, each with the data of `GARDEN-SC-032`, and a fake dispatcher that waits 300 ms for each send.
 **When** `Run` runs one time for each workspace, one after the other, as `runForEachWorkspace` does.
 **Then** the last send ends less than 60 seconds after the first run starts.
+
+### `GARDEN-SC-034`
+
+**Verifies:** `GARDEN-FR-033`
+**Layer:** unit
+
+**When** the plugin answers `NotificationTopics()`.
+**Then** the list holds one topic: `care_reminder`, with the name "Care reminder".
 
 ## Retired identifiers
 

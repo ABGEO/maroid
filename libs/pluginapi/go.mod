@@ -3,7 +3,6 @@ module github.com/abgeo/maroid/libs/pluginapi
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664
 	github.com/abgeo/maroid/libs/testdb v0.0.0-20261007201113-f0f51ecfa664
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/mymmrac/telego v1.12.1

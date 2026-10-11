@@ -122,6 +122,12 @@ var (
 	// ErrPermissionAlreadyRegistered indicates a permission name that the registry
 	// already holds.
 	ErrPermissionAlreadyRegistered = errors.New("permission: already registered")
+	// ErrNotificationTopicAlreadyRegistered indicates a notification topic that the
+	// registry already holds for the plugin.
+	ErrNotificationTopicAlreadyRegistered = errors.New("notification topic: already registered")
+	// ErrInvalidNotificationTopic indicates a notification topic whose identifier, name,
+	// or description breaks a limit.
+	ErrInvalidNotificationTopic = errors.New("notification topic: invalid")
 	// ErrInvalidPermission indicates a permission with no name or with no known lowest role.
 	ErrInvalidPermission = errors.New("permission: invalid")
 	// ErrPermissionMissing indicates an entry of a plugin that names no permission.

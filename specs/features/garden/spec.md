@@ -21,7 +21,7 @@ codes of every route.
 The jasmine plugin drops its two tables and creates four scoped tables: the
 environments, the plants, the care intervals, and the maintenance entries. A fifth
 table holds the counter of the display identifiers. A cron job for each workspace
-sends one reminder to one channel of the installation. The remote gets four pages.
+sends one reminder as the notification topic `care_reminder`. The remote gets four pages.
 
 ## 2. Coverage
 
@@ -51,7 +51,8 @@ sends one reminder to one channel of the installation. The remote gets four page
 | `GARDEN-FR-022`   | Section 4.3, 4.6, `GARDEN-DD-008`, `GARDEN-SC-025`, `GARDEN-SC-031` |
 | `GARDEN-FR-023`   | Section 4.3, `GARDEN-SC-026`                              |
 | `GARDEN-FR-024`   | Section 4.6, `GARDEN-SC-031`                              |
-| `GARDEN-FR-025`   | Section 4.3, `GARDEN-DD-009`                              |
+| `GARDEN-FR-025`   | Section 4.3                                               |
+| `GARDEN-FR-033`   | Section 4.3, `GARDEN-SC-034`                              |
 | `GARDEN-FR-026`   | Section 4.3, 4.4, `GARDEN-SC-027`, `GARDEN-SC-028`        |
 | `GARDEN-FR-028`   | Section 4.4, `GARDEN-SC-029`                              |
 | `GARDEN-FR-031`   | Section 4.2, `GARDEN-DD-001`                              |
@@ -77,8 +78,8 @@ sends one reminder to one channel of the installation. The remote gets four page
 | `RES-005`, `RES-006` | REST          | Every collection answers a page. `GARDEN-DD-008`. |
 | `API-007`            | HTTP API      | A record answers `ETag`. A write reads `If-Match`. A create reads `Idempotency-Key` through the hub. |
 | `ERR-002`            | Errors        | `/problems/dev.maroid.jasmine/environment-occupied`. Section 4.5. |
-| `NTF-002`            | Notifications | The job names the channel of the configuration. |
-| `CFG-006`, `CFG-007` | Configuration | `config.Config` decodes the map. Requirements question 2 accepts one channel for the installation. |
+| `NTF-001`, `NTF-002` | Notifications | The plugin declares `care_reminder`, and the job names it. |
+| `CFG-006`, `CFG-007` | Configuration | `config.Config` decodes the map. The schedule is a value of the installation. |
 | `PKG-001`            | Package layout | `config/`, `job/` are new directories. |
 | `UI-005`, `UI-007`, `UI-008` | Web UI | Four routes. The pages call `host.api` and read `host.can`. |
 | `TS-002`             | Frontend style | Every component uses runes. |
@@ -91,8 +92,8 @@ Every path is under `plugins/jasmine/`.
 
 | Path                                   | Action | Holds |
 | -------------------------------------- | ------ | ----- |
-| `main.go`                              | change | Decode `config.Config`. Get `Host.Notifier()`. Add `pluginapi.CronPlugin`. Add two permissions, the new routes, and the UI routes of section 4.6. |
-| `config/config.go`, `config/doc.go`    | create | `Config`, `CronSchedule`, `Notification`. Section 4.3. |
+| `main.go`                              | change | Decode `config.Config`. Bind `Host.Notifier()` with `pluginapi.NewPluginNotifier`. Add `pluginapi.CronPlugin` and `pluginapi.NotifyingPlugin`. Add two permissions, the new routes, and the UI routes of section 4.6. |
+| `config/config.go`, `config/doc.go`    | create | `Config`, `CronSchedule`. Section 4.3. |
 | `permission/permission.go`             | change | Add `MaintenanceRead = "maintenance.read"`, `MaintenanceWrite = "maintenance.write"`. |
 | `errs/errs.go`                         | change | Add `ErrEnvironmentOccupied`, `ErrEnvironmentUnknown`, `ErrPlantUnknown`, `ErrUnknownCareState`, `ErrUnknownMaintenanceType`, `ErrUnknownPlantStatus`. |
 | `model/display_id.go`                  | create | `FormatDisplayID(prefix rune, number int) string`. Constants `PrefixEnvironment = 'E'`, `PrefixPlant = 'P'`. |
@@ -252,18 +253,17 @@ The access of every route is "Member, enabled". `api.yaml` holds the bodies.
 | --------------- | ------------------------------------- | -------------- | -------- | -------- |
 | `care_reminder` | `cron_schedule.care_reminder`, in UTC | Each workspace | Section 4.4 | `GARDEN-FR-026`, `GARDEN-FR-028`, `GARDEN-FR-032` |
 
-**Notification channel.**
+**Notification topic.**
 
-| Channel                                       | Sent when | Realizes |
-| --------------------------------------------- | --------- | -------- |
-| The value of `notification.care_reminder_channel` | A run finds a due or overdue care interval. | `GARDEN-FR-026` |
+| Identifier      | Name          | Sent when                                   | Realizes                          |
+| --------------- | ------------- | ------------------------------------------- | --------------------------------- |
+| `care_reminder` | Care reminder | A run finds a due or overdue care interval. | `GARDEN-FR-026`, `GARDEN-FR-033`  |
 
 **Configuration scheme.** The keys are under `plugins[].config` of the jasmine entry.
 
 | Key                                  | Type   | Default     | Secret | Realizes |
 | ------------------------------------ | ------ | ----------- | ------ | -------- |
 | `cron_schedule.care_reminder`        | string, `validate:"cron"` | `0 9 * * *` | No | `GARDEN-FR-025` |
-| `notification.care_reminder_channel` | string | empty       | No     | `GARDEN-FR-025`, `GARDEN-DD-009` |
 
 ### 4.4 Flow
 
@@ -274,7 +274,7 @@ sequenceDiagram
     participant S as The cron worker
     participant J as CareReminder
     participant D as The database
-    participant N as The dispatcher
+    participant N as The notifier
     S->>J: Run, with the acting workspace in the context
     J->>D: WithTx, ListAttention
     D-->>J: The due and the overdue care intervals
@@ -282,8 +282,8 @@ sequenceDiagram
         J-->>S: nil, and nothing is sent
     else one line or more
         J->>J: Digest groups the lines by environment
-        J->>N: Send(channel, message)
-        N-->>J: nil, or the error of every transport
+        J->>N: Notify("care_reminder", message)
+        N-->>J: nil, or the error of every notification route
         J-->>S: nil, or the wrapped error
     end
 ```
@@ -390,13 +390,6 @@ shows a control that writes only when `host.can` holds its permission.
 **Rationale:** `libs/rest/page` seeks by `id` alone, and the subquery gives the second sort with no change to the library. A plant holds at most eight care intervals.
 **Alternatives:** A singular resource for the attention list. `RES-002` holds no deviation for it. A change to `libs/rest/page`. It changes every plugin.
 
-### `GARDEN-DD-009`
-
-**Realizes:** `GARDEN-FR-025`
-**Decision:** `CronJobs()` returns no job when `care_reminder_channel` is empty.
-**Rationale:** An installation with no channel loads the plugin and sends nothing. A run that cannot send never starts.
-**Alternatives:** Make the channel required. Every installation must then name a channel before the plugin loads.
-
 ### `GARDEN-DD-011`
 
 **Realizes:** `GARDEN-FR-022`
@@ -432,4 +425,5 @@ shows a control that writes only when `host.can` holds its permission.
 
 | ID              | Retired    | Reason                                                        |
 | --------------- | ---------- | ------------------------------------------------------------- |
+| GARDEN-DD-009   | 2026-10-11 | `NOTIF` routes the reminder in each workspace. An unrouted topic sends nothing. |
 | GARDEN-DD-010   | 2026-10-11 | `PLROUTE` gives the plant view its own route. `GARDEN-DD-011` replaces it. |

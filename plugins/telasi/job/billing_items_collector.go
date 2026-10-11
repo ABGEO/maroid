@@ -9,7 +9,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/telasi/config"
@@ -18,6 +17,9 @@ import (
 	"github.com/abgeo/maroid/plugins/telasi/service"
 )
 
+// MonthlyBillTopic is the notification topic of the bill of the last month.
+const MonthlyBillTopic = "monthly_bill"
+
 // BillingItemsCollector is a cron job that fetches and stores the billing items of each
 // workspace, with the account that the workspace stored.
 type BillingItemsCollector struct {
@@ -25,7 +27,7 @@ type BillingItemsCollector struct {
 	logger       *slog.Logger
 	db           *pluginapi.PluginDB
 	settings     *pluginapi.PluginSettings
-	notifier     notifierapi.Dispatcher
+	notifier     *pluginapi.PluginNotifier
 	apiClientSvc service.APIClientService
 }
 
@@ -44,7 +46,7 @@ func NewBillingItemsCollector(
 	logger *slog.Logger,
 	db *pluginapi.PluginDB,
 	settings *pluginapi.PluginSettings,
-	notifier notifierapi.Dispatcher,
+	notifier *pluginapi.PluginNotifier,
 	apiClientSvc service.APIClientService,
 ) *BillingItemsCollector {
 	instance := &BillingItemsCollector{
@@ -108,7 +110,7 @@ func (j *BillingItemsCollector) Run(ctx context.Context) error {
 
 	logger.Info("billing item collection completed successfully")
 
-	return j.sendNotification(ctx, current, billingItems)
+	return j.sendNotification(ctx, billingItems)
 }
 
 func (j *BillingItemsCollector) account(ctx context.Context) (*config.WorkspaceSettings, error) {
@@ -207,16 +209,9 @@ func insertBillingItemsInTx(
 
 func (j *BillingItemsCollector) sendNotification(
 	ctx context.Context,
-	current session,
 	billingItems []dto.BillingItem,
 ) error {
 	const readingOperation = "ჩვენება"
-
-	if !j.config.Notification.MonthlyBill {
-		current.logger.Info("monthly bill notification is disabled in configuration")
-
-		return nil
-	}
 
 	for _, billingItem := range billingItems {
 		if billingItem.Operation == readingOperation {
@@ -231,10 +226,10 @@ func (j *BillingItemsCollector) sendUtilityBillNotification(
 	ctx context.Context,
 	billingItem dto.BillingItem,
 ) error {
-	err := j.notifier.Send(
+	err := j.notifier.Notify(
 		ctx,
-		"utility_bills",
-		notifierapi.Message{
+		MonthlyBillTopic,
+		pluginapi.Message{
 			Title: "თელასი | ქვითარი",
 			Body:  buildNotificationMessage(billingItem),
 		},

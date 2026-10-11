@@ -9,7 +9,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/config"
@@ -20,6 +19,9 @@ import (
 
 var errEmptyURL = errors.New("file URL is empty")
 
+// MonthlyBillTopic is the notification topic of the bill of the last month.
+const MonthlyBillTopic = "monthly_bill"
+
 // TransactionsCollector is a cron job that fetches and stores the transactions of each
 // workspace, with the account that the workspace stored.
 type TransactionsCollector struct {
@@ -27,7 +29,7 @@ type TransactionsCollector struct {
 	logger       *slog.Logger
 	db           *pluginapi.PluginDB
 	settings     *pluginapi.PluginSettings
-	notifier     notifierapi.Dispatcher
+	notifier     *pluginapi.PluginNotifier
 	apiClientSvc service.APIClientService
 }
 
@@ -46,7 +48,7 @@ func NewTransactionsCollector(
 	logger *slog.Logger,
 	db *pluginapi.PluginDB,
 	settings *pluginapi.PluginSettings,
-	notifier notifierapi.Dispatcher,
+	notifier *pluginapi.PluginNotifier,
 	apiClientSvc service.APIClientService,
 ) *TransactionsCollector {
 	instance := &TransactionsCollector{
@@ -230,12 +232,6 @@ func (j *TransactionsCollector) sendNotification(
 ) error {
 	const utilityBillOperationID = 125
 
-	if !j.config.Notification.MonthlyBill {
-		current.logger.Info("monthly bill notification is disabled in configuration")
-
-		return nil
-	}
-
 	for _, transaction := range transactions {
 		if transaction.OperationID == utilityBillOperationID {
 			return j.sendUtilityBillNotification(ctx, current, transaction)
@@ -255,10 +251,10 @@ func (j *TransactionsCollector) sendUtilityBillNotification(
 		return err
 	}
 
-	err = j.notifier.Send(
+	err = j.notifier.Notify(
 		ctx,
-		"utility_bills",
-		notifierapi.Message{
+		MonthlyBillTopic,
+		pluginapi.Message{
 			Title:       "თბილისი ენერჯი | ქვითარი",
 			Body:        buildNotificationMessage(transaction),
 			Attachments: attachments,
@@ -275,8 +271,8 @@ func (j *TransactionsCollector) buildUtilityBillAttachments(
 	ctx context.Context,
 	current session,
 	transaction dto.Transaction,
-) ([]notifierapi.Attachment, error) {
-	var attachments []notifierapi.Attachment
+) ([]pluginapi.Attachment, error) {
+	var attachments []pluginapi.Attachment
 
 	billingDoc, err := j.buildBillingDocumentAttachment(ctx, current, transaction)
 	if err != nil && !errors.Is(err, errEmptyURL) {
@@ -303,7 +299,7 @@ func (j *TransactionsCollector) buildBillingDocumentAttachment(
 	ctx context.Context,
 	current session,
 	transaction dto.Transaction,
-) (*notifierapi.Attachment, error) {
+) (*pluginapi.Attachment, error) {
 	if transaction.BillingDocumentURL == "" {
 		return nil, errEmptyURL
 	}
@@ -313,7 +309,7 @@ func (j *TransactionsCollector) buildBillingDocumentAttachment(
 		return nil, fmt.Errorf("downloading billing document: %w", err)
 	}
 
-	return &notifierapi.Attachment{
+	return &pluginapi.Attachment{
 		Filename: fmt.Sprintf("bill_%s.pdf", transaction.OperationDateString),
 		Content:  content,
 		MIMEType: "application/pdf",
@@ -324,7 +320,7 @@ func (j *TransactionsCollector) buildMeterPhotoAttachment(
 	ctx context.Context,
 	current session,
 	transaction dto.Transaction,
-) (*notifierapi.Attachment, error) {
+) (*pluginapi.Attachment, error) {
 	if transaction.MeterPhotoURL == "" {
 		return nil, errEmptyURL
 	}
@@ -334,7 +330,7 @@ func (j *TransactionsCollector) buildMeterPhotoAttachment(
 		return nil, fmt.Errorf("downloading meter photo: %w", err)
 	}
 
-	return &notifierapi.Attachment{
+	return &pluginapi.Attachment{
 		Filename: fmt.Sprintf("meter_photo_%s.jpg", transaction.OperationDateString),
 		Content:  content,
 		MIMEType: "image/jpeg",

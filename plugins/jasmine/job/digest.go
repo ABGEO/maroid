@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
+	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 )
 
@@ -13,7 +13,7 @@ const digestTitle = "Plant care due"
 // digest renders the care intervals as one message with one block for each
 // environment. The intervals arrive grouped by environment, so a new block starts
 // where the environment changes.
-func digest(intervals []model.CareInterval) notifierapi.Message {
+func digest(intervals []model.CareInterval) pluginapi.Message {
 	var (
 		body strings.Builder
 		last string
@@ -35,7 +35,7 @@ func digest(intervals []model.CareInterval) notifierapi.Message {
 		body.WriteString("\n" + line(care))
 	}
 
-	return notifierapi.Message{Title: digestTitle, Body: body.String()}
+	return pluginapi.Message{Title: digestTitle, Body: body.String()}
 }
 
 // line renders one care interval: the plant, the type, the days since the latest

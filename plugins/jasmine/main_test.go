@@ -11,28 +11,26 @@ import (
 	"github.com/abgeo/maroid/plugins/jasmine/config"
 )
 
-// GARDEN-SC-028: A configuration with no channel schedules no reminder. A
-// configuration with a channel schedules one reminder for each workspace.
-func TestTheReminderNeedsAChannel(t *testing.T) {
+// GARDEN-SC-027: The plugin schedules one reminder that runs for each workspace.
+func TestTheReminderRunsForEachWorkspace(t *testing.T) {
 	t.Parallel()
 
-	logger := slog.New(slog.DiscardHandler)
-	silent := &JasminePlugin{config: &config.Config{}, logger: logger}
+	plugin := &JasminePlugin{config: &config.Config{}, logger: slog.New(slog.DiscardHandler)}
 
-	jobs, err := silent.CronJobs()
-	require.NoError(t, err)
-	assert.Empty(t, jobs)
-
-	configured := &JasminePlugin{
-		config: &config.Config{
-			Notification: config.Notification{CareReminderChannel: "garden"},
-		},
-		logger: logger,
-	}
-
-	jobs, err = configured.CronJobs()
+	jobs, err := plugin.CronJobs()
 	require.NoError(t, err)
 	require.Len(t, jobs, 1)
 	assert.Equal(t, "care_reminder", jobs[0].Meta().ID)
 	assert.Equal(t, pluginapi.CronScopePerWorkspace, jobs[0].Meta().Scope)
+}
+
+// GARDEN-SC-034: The plugin declares the reminder as one notification topic.
+func TestThePluginDeclaresTheReminderTopic(t *testing.T) {
+	t.Parallel()
+
+	topics, err := (&JasminePlugin{}).NotificationTopics()
+	require.NoError(t, err)
+	require.Len(t, topics, 1)
+	assert.Equal(t, "care_reminder", topics[0].ID)
+	assert.Equal(t, "Care reminder", topics[0].Name)
 }

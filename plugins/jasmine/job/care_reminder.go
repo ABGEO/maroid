@@ -7,20 +7,22 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/jasmine/config"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 	"github.com/abgeo/maroid/plugins/jasmine/repository"
 )
 
+// CareReminderTopic is the notification topic of the reminder.
+const CareReminderTopic = "care_reminder"
+
 // CareReminder is a cron job that sends each workspace one reminder of its due
 // and overdue care intervals.
 type CareReminder struct {
-	config     *config.Config
-	logger     *slog.Logger
-	db         *pluginapi.PluginDB
-	dispatcher notifierapi.Dispatcher
+	config   *config.Config
+	logger   *slog.Logger
+	db       *pluginapi.PluginDB
+	notifier *pluginapi.PluginNotifier
 }
 
 var _ pluginapi.CronJob = (*CareReminder)(nil)
@@ -30,12 +32,12 @@ func NewCareReminder(
 	config *config.Config,
 	logger *slog.Logger,
 	db *pluginapi.PluginDB,
-	dispatcher notifierapi.Dispatcher,
+	notifier *pluginapi.PluginNotifier,
 ) *CareReminder {
 	instance := &CareReminder{
-		config:     config,
-		db:         db,
-		dispatcher: dispatcher,
+		config:   config,
+		db:       db,
+		notifier: notifier,
 	}
 
 	instance.logger = logger.With(
@@ -79,8 +81,7 @@ func (j *CareReminder) Run(ctx context.Context) error {
 		return nil
 	}
 
-	channel := j.config.Notification.CareReminderChannel
-	if err = j.dispatcher.Send(ctx, channel, digest(intervals)); err != nil {
+	if err = j.notifier.Notify(ctx, CareReminderTopic, digest(intervals)); err != nil {
 		return fmt.Errorf("sending the care reminder: %w", err)
 	}
 

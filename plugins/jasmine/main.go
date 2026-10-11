@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"slices"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/jasmine/config"
@@ -21,10 +20,10 @@ import (
 // JasminePlugin keeps the plants of each workspace, their environments, and
 // their care.
 type JasminePlugin struct {
-	config     *config.Config
-	logger     *slog.Logger
-	db         *pluginapi.PluginDB
-	dispatcher notifierapi.Dispatcher
+	config   *config.Config
+	logger   *slog.Logger
+	db       *pluginapi.PluginDB
+	notifier *pluginapi.PluginNotifier
 }
 
 var (
@@ -35,6 +34,7 @@ var (
 	_ pluginapi.RoutePlugin          = (*JasminePlugin)(nil)
 	_ pluginapi.PermissionPlugin     = (*JasminePlugin)(nil)
 	_ pluginapi.CronPlugin           = (*JasminePlugin)(nil)
+	_ pluginapi.NotifyingPlugin      = (*JasminePlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -51,14 +51,15 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host database instance: %w", err)
 	}
 
-	dispatcher, err := host.Notifier()
+	sender, err := host.Notifier()
 	if err != nil {
 		return nil, fmt.Errorf("getting host notifier instance: %w", err)
 	}
 
-	plg := &JasminePlugin{config: pluginConfig, dispatcher: dispatcher}
+	plg := &JasminePlugin{config: pluginConfig}
 
 	plg.db = pluginapi.NewPluginDB(database, plg.Meta().ID)
+	plg.notifier = pluginapi.NewPluginNotifier(sender, plg.Meta().ID)
 
 	plg.logger = host.Logger().With(
 		slog.String("plugin", plg.Meta().ID.String()),
@@ -80,15 +81,21 @@ func (p *JasminePlugin) Meta() pluginapi.Metadata {
 	}
 }
 
-// CronJobs returns the reminder, or no job when the configuration names no
-// channel for it.
+// CronJobs returns the reminder.
 func (p *JasminePlugin) CronJobs() ([]pluginapi.CronJob, error) {
-	if p.config.Notification.CareReminderChannel == "" {
-		return nil, nil
-	}
-
 	return []pluginapi.CronJob{
-		job.NewCareReminder(p.config, p.logger, p.db, p.dispatcher),
+		job.NewCareReminder(p.config, p.logger, p.db, p.notifier),
+	}, nil
+}
+
+// NotificationTopics returns the reminder, which a manager routes in each workspace.
+func (p *JasminePlugin) NotificationTopics() ([]pluginapi.NotificationTopic, error) {
+	return []pluginapi.NotificationTopic{
+		{
+			ID:          job.CareReminderTopic,
+			Name:        "Care reminder",
+			Description: "The due and the overdue care of the plants, grouped by environment.",
+		},
 	}, nil
 }
 

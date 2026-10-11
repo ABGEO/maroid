@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"log/slog"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/telasi/config"
@@ -25,7 +24,7 @@ type TelasiPlugin struct {
 	logger       *slog.Logger
 	db           *pluginapi.PluginDB
 	settings     *pluginapi.PluginSettings
-	notifier     notifierapi.Dispatcher
+	notifier     *pluginapi.PluginNotifier
 	apiClientSvc service.APIClientService
 }
 
@@ -34,6 +33,7 @@ var (
 	_ pluginapi.ConfigurablePlugin = (*TelasiPlugin)(nil)
 	_ pluginapi.CronPlugin         = (*TelasiPlugin)(nil)
 	_ pluginapi.MigrationPlugin    = (*TelasiPlugin)(nil)
+	_ pluginapi.NotifyingPlugin    = (*TelasiPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -50,7 +50,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host database instance: %w", err)
 	}
 
-	notifierInstance, err := host.Notifier()
+	sender, err := host.Notifier()
 	if err != nil {
 		return nil, fmt.Errorf("getting host notifier instance: %w", err)
 	}
@@ -64,7 +64,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		config:       pluginConfig,
 		db:           pluginapi.NewPluginDB(database, pluginID),
 		settings:     pluginapi.NewPluginSettings(settingsProvider, pluginID),
-		notifier:     notifierInstance,
+		notifier:     pluginapi.NewPluginNotifier(sender, pluginID),
 		apiClientSvc: service.NewAPIClient(pluginConfig),
 	}
 
@@ -97,6 +97,18 @@ func (p *TelasiPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 		job.NewBillingItemsCollector(
 			p.config, p.logger, p.db, p.settings, p.notifier, p.apiClientSvc,
 		),
+	}, nil
+}
+
+// NotificationTopics returns the bill of the last month, which a manager routes in
+// each workspace.
+func (p *TelasiPlugin) NotificationTopics() ([]pluginapi.NotificationTopic, error) {
+	return []pluginapi.NotificationTopic{
+		{
+			ID:          job.MonthlyBillTopic,
+			Name:        "Monthly bill",
+			Description: "The electricity bill of the last month.",
+		},
 	}, nil
 }
 

@@ -50,6 +50,7 @@ func New(
 	mcpToolRegistry *registry.MCPToolRegistry,
 	capabilityRegistry *registry.CapabilityRegistry,
 	permissionRegistry *registry.PermissionRegistry,
+	notificationTopicRegistry *registry.NotificationTopicRegistry,
 ) *Loader {
 	logger := host.Logger()
 
@@ -86,6 +87,7 @@ func New(
 			registrar.NewUIRegistrar(uiRegistry, capabilityRegistry),
 			registrar.NewSettingsRegistrar(settingsRegistry, capabilityRegistry),
 			registrar.NewMCPToolRegistrar(mcpToolRegistry, capabilityRegistry, permissionRegistry),
+			registrar.NewNotificationTopicRegistrar(notificationTopicRegistry, capabilityRegistry),
 		},
 	}
 }

@@ -35,7 +35,7 @@ func (c *Container) PluginHost() (*pluginhost.Host, error) {
 			return
 		}
 
-		notifier, notifierErr := c.NotifierDispatcher()
+		notifier, notifierErr := c.NotificationDispatcher()
 		if notifierErr != nil {
 			err = notifierErr
 
@@ -158,6 +158,7 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		registries.mcpTool,
 		c.CapabilityRegistry(),
 		registries.permission,
+		c.NotificationTopicRegistry(),
 	), nil
 }
 

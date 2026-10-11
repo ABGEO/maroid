@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/notifierapi"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/testdb"
 	"github.com/abgeo/maroid/plugins/jasmine/config"
@@ -22,7 +21,6 @@ import (
 
 const (
 	pluginID = "dev.maroid.jasmine"
-	channel  = "garden"
 
 	workspaceH = "01927f4e-3c2a-7b1d-9e8f-0a1b2c3d4e5f"
 	workspaceG = "01927f4e-3c2a-7b1d-9e8f-0a1b2c3d4e60"
@@ -93,21 +91,26 @@ SELECT id, 'watering', 7 FROM plants;
 INSERT INTO maintenance_entries (plant_id, type, performed_at)
 SELECT id, 'watering', now() FROM plants;`
 
-var errChannelDown = errors.New("the channel is down")
+var errRoutesDown = errors.New("every notification route failed")
 
-// dispatcher records every message that a job tries to send, and fails the first
+// sender records every message that a job tries to send, and fails the first
 // failures attempts.
-type dispatcher struct {
+type sender struct {
 	mu       sync.Mutex
 	failures int
-	attempts []notifierapi.Message
-	sent     []notifierapi.Message
-	channels []string
+	attempts []pluginapi.Message
+	sent     []pluginapi.Message
+	topics   []string
 }
 
-var _ notifierapi.Dispatcher = (*dispatcher)(nil)
+var _ pluginapi.NotificationSender = (*sender)(nil)
 
-func (d *dispatcher) Send(_ context.Context, channelName string, msg notifierapi.Message) error {
+func (d *sender) Send(
+	_ context.Context,
+	_ *pluginapi.PluginID,
+	topicID string,
+	msg pluginapi.Message,
+) error {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
@@ -116,17 +119,13 @@ func (d *dispatcher) Send(_ context.Context, channelName string, msg notifierapi
 	if d.failures > 0 {
 		d.failures--
 
-		return errChannelDown
+		return errRoutesDown
 	}
 
 	d.sent = append(d.sent, msg)
-	d.channels = append(d.channels, channelName)
+	d.topics = append(d.topics, topicID)
 
 	return nil
-}
-
-func (d *dispatcher) Channels() []string {
-	return []string{channel}
 }
 
 // gardenUnderTest starts a database, applies the migrations of the plugin, and
@@ -162,29 +161,29 @@ func actingIn(workspace string) context.Context {
 	return pluginapi.ContextWithActingWorkspace(context.Background(), workspace)
 }
 
-func reminderUnderTest(database *pluginapi.PluginDB, sink *dispatcher) *job.CareReminder {
+func reminderUnderTest(database *pluginapi.PluginDB, sink *sender) *job.CareReminder {
 	settings := &config.Config{
 		CronSchedule: config.CronSchedule{CareReminder: "0 9 * * *"},
-		Notification: config.Notification{CareReminderChannel: channel},
 	}
+	notifier := pluginapi.NewPluginNotifier(sink, pluginapi.ParsePluginID(pluginID))
 
-	return job.NewCareReminder(settings, slog.New(slog.DiscardHandler), database, sink)
+	return job.NewCareReminder(settings, slog.New(slog.DiscardHandler), database, notifier)
 }
 
-// GARDEN-SC-027: Each workspace with a due care interval receives one reminder on
-// the configured channel, grouped by environment, overdue first.
+// GARDEN-SC-027: Each workspace with a due care interval receives one reminder of
+// the topic care_reminder, grouped by environment, overdue first.
 func TestTheReminderGroupsTheDueCareByEnvironment(t *testing.T) {
 	t.Parallel()
 
 	database := gardenUnderTest(t, map[string]string{workspaceH: gardenH, workspaceG: oneDue})
-	sink := &dispatcher{}
+	sink := &sender{}
 	reminder := reminderUnderTest(database, sink)
 
 	require.NoError(t, reminder.Run(actingIn(workspaceH)))
 	require.NoError(t, reminder.Run(actingIn(workspaceG)))
 
 	require.Len(t, sink.sent, 2)
-	assert.Equal(t, []string{channel, channel}, sink.channels)
+	assert.Equal(t, []string{job.CareReminderTopic, job.CareReminderTopic}, sink.topics)
 	assert.Equal(t, "Plant care due", sink.sent[0].Title)
 	assert.Equal(t, `E001 Office
 P003 Gardenia: watering, 11 days, every 7 days, overdue
@@ -206,23 +205,23 @@ func TestTheReminderSendsNothingWhenNothingIsDue(t *testing.T) {
 	t.Parallel()
 
 	database := gardenUnderTest(t, map[string]string{workspaceH: onSchedule})
-	sink := &dispatcher{}
+	sink := &sender{}
 
 	require.NoError(t, reminderUnderTest(database, sink).Run(actingIn(workspaceH)))
 	assert.Empty(t, sink.attempts)
 }
 
-// GARDEN-SC-029: A failed send answers the error of the channel, and the next run
+// GARDEN-SC-029: A failed send answers the error of the notifier, and the next run
 // sends the same reminder again.
 func TestAFailedReminderIsSentAtTheNextRun(t *testing.T) {
 	t.Parallel()
 
 	database := gardenUnderTest(t, map[string]string{workspaceH: oneDue})
-	sink := &dispatcher{failures: 1}
+	sink := &sender{failures: 1}
 	reminder := reminderUnderTest(database, sink)
 
 	err := reminder.Run(actingIn(workspaceH))
-	require.ErrorIs(t, err, errChannelDown)
+	require.ErrorIs(t, err, errRoutesDown)
 
 	require.NoError(t, reminder.Run(actingIn(workspaceH)))
 	require.Len(t, sink.attempts, 2)
