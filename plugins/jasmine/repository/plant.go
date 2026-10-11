@@ -37,6 +37,7 @@ type PlantRepository interface {
 	List(ctx context.Context, seek page.Seek, filter PlantFilter) ([]model.Plant, error)
 	Update(ctx context.Context, entity *model.Plant, ifMatch *time.Time) error
 	Delete(ctx context.Context, id string, ifMatch *time.Time) error
+	Lock(ctx context.Context, ids []string) ([]string, error)
 }
 
 // Plant is a SQL-based implementation of PlantRepository.
@@ -113,10 +114,10 @@ func (r *Plant) List(
 		LIMIT :limit;`
 
 	query, args, err := sqlx.Named(query, map[string]any{
-		"boundary":       nullable(seek.Boundary),
+		paramBoundary:    nullable(seek.Boundary),
 		"environment_id": nullable(filter.EnvironmentID),
 		"status":         string(filter.Status),
-		"limit":          seek.Limit,
+		paramLimit:       seek.Limit,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("binding Plant list arguments: %w", err)
@@ -209,6 +210,23 @@ func (r *Plant) Delete(ctx context.Context, id string, ifMatch *time.Time) error
 	}
 
 	return nil
+}
+
+// Lock holds the named plants of the acting workspace against a delete until the
+// transaction ends, and answers their identifiers. An identifier that names no
+// plant of the workspace is absent from the answer.
+func (r *Plant) Lock(ctx context.Context, ids []string) ([]string, error) {
+	query, args, err := sqlx.In(`SELECT id FROM plants WHERE id IN (?) FOR SHARE;`, ids)
+	if err != nil {
+		return nil, fmt.Errorf("binding Plant lock arguments: %w", err)
+	}
+
+	var locked []string
+	if err = r.tx.SelectContext(ctx, &locked, r.tx.Rebind(query), args...); err != nil {
+		return nil, fmt.Errorf("locking Plants: %w", err)
+	}
+
+	return locked, nil
 }
 
 // refresh reads the stored values of the Plant, with its environment, into entity.

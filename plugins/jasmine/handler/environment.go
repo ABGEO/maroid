@@ -83,7 +83,7 @@ func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 		h.db,
 		"listing the environments",
 		page.Options{},
-		func(ctx context.Context, tx *sqlx.Tx, seek page.Seek, _ map[string]string) ([]model.Environment, error) {
+		func(ctx context.Context, tx *sqlx.Tx, seek page.Seek, _ page.Request) ([]model.Environment, error) {
 			return repository.NewEnvironment(tx).List(ctx, seek)
 		},
 		func(row model.Environment) string { return row.ID },
@@ -157,38 +157,13 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ifMatch := precondition.IfMatchFromContext(r.Context())
-
-	env, err := fetchInTx(
-		r.Context(),
-		h.db,
-		"updating the environment "+id,
-		func(ctx context.Context, tx *sqlx.Tx) (*model.Environment, error) {
-			repo := repository.NewEnvironment(tx)
-
-			existing, txErr := repo.GetByID(ctx, id)
-			if txErr != nil {
-				return nil, fmt.Errorf("getting the current record: %w", txErr)
-			}
-
-			existing.Name = req.Name
-
-			if txErr = repo.Update(ctx, existing, ifMatch); txErr != nil {
-				return nil, fmt.Errorf("writing the record: %w", txErr)
-			}
-
-			return existing, nil
-		},
+	replaceRecord(
+		w, r, h.logger, h.db, id,
+		func(tx *sqlx.Tx) replacer[model.Environment] { return repository.NewEnvironment(tx) },
+		func(existing *model.Environment) { existing.Name = req.Name },
+		func(row *model.Environment) time.Time { return row.UpdatedAt },
+		dto.NewEnvironmentResponse,
 	)
-	if err != nil {
-		failWrite(w, r, h.logger, "failed to update environment", err)
-
-		return
-	}
-
-	w.Header().Set(precondition.ETagHeader, precondition.ETag(env.UpdatedAt))
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, dto.NewEnvironmentResponse(env))
 }
 
 // Delete handles DELETE /environments/{id}. An environment that holds a plant,

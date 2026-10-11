@@ -6,12 +6,21 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+
+	"github.com/abgeo/maroid/plugins/jasmine/model"
 )
 
 // TagNotAfterTomorrow names the rule that refuses a date after the UTC date of
 // tomorrow. A browser east of UTC reads a local date that is one day ahead of the
 // UTC date for part of each day, so the rule keeps one day of margin.
 const TagNotAfterTomorrow = "not_after_tomorrow"
+
+// TagNotFuture names the rule that refuses a date-time after the current time.
+const TagNotFuture = "not_future"
+
+// TagMaintenanceType names the rule that refuses a value outside the maintenance
+// types.
+const TagMaintenanceType = "maintenance_type"
 
 // validate is the shared validator used by the request Validate methods.
 // validator.Validate caches struct metadata and is safe for concurrent use,
@@ -33,8 +42,16 @@ func newValidator() *validator.Validate {
 		return name
 	})
 
-	if err := instance.RegisterValidation(TagNotAfterTomorrow, notAfterTomorrow); err != nil {
-		panic(err)
+	rules := map[string]validator.Func{
+		TagNotAfterTomorrow: notAfterTomorrow,
+		TagNotFuture:        notFuture,
+		TagMaintenanceType:  maintenanceType,
+	}
+
+	for tag, rule := range rules {
+		if err := instance.RegisterValidation(tag, rule); err != nil {
+			panic(err)
+		}
 	}
 
 	return instance
@@ -50,4 +67,19 @@ func notAfterTomorrow(field validator.FieldLevel) bool {
 	latest := time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, time.UTC)
 
 	return !date.After(latest)
+}
+
+func notFuture(field validator.FieldLevel) bool {
+	moment, err := time.Parse(time.RFC3339, field.Field().String())
+	if err != nil {
+		return false
+	}
+
+	return !moment.After(time.Now())
+}
+
+func maintenanceType(field validator.FieldLevel) bool {
+	_, err := model.ParseMaintenanceType(field.Field().String())
+
+	return err == nil
 }

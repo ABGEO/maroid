@@ -4,7 +4,7 @@ title: The plants of a workspace, their environments, and their care
 type: spec
 status: approved
 created: 2026-10-10
-updated: 2026-10-10
+updated: 2026-10-11
 approved_by: Temuri
 approved_on: 2026-10-10
 constrained_by: [OWN, DAT, REP, SEC, RES, API, ERR, NTF, JOB, CFG, PKG, UI, TS, TST]
@@ -100,7 +100,7 @@ Every path is under `plugins/jasmine/`.
 | `model/plant.go`                       | change | `Plant{ID, Number, CommonName, ScientificName, Environment, AcquiredOn, CareNotes, Status, CreatedAt, UpdatedAt}`; `Environment` is an `EnvironmentReference{ID, Number, Name}` that the read joins. |
 | `model/plant_status.go`                | create | `PlantStatus` with `active`, `inactive`, and `ParsePlantStatus`. |
 | `model/maintenance_type.go`            | create | `MaintenanceType` with the eight values of `GARDEN-FR-011` in that order, `MaintenanceTypes()`, and `ParseMaintenanceType`. |
-| `model/maintenance_entry.go`           | create | `MaintenanceEntry{ID, PlantID, PlantNumber, PlantCommonName, Type, PerformedAt, Note, CreatedAt, UpdatedAt}`. |
+| `model/maintenance_entry.go`           | create | `MaintenanceEntry{ID, Plant, Type, PerformedAt, Note, CreatedAt, UpdatedAt}`; `Plant` is a `PlantReference{ID, Number, CommonName, Environment}` that the read joins. |
 | `model/care_interval.go`               | create | `CareInterval` with the columns of section 4.2 and the read values `LastPerformedAt`, `CountedFrom`, `DaysSince`, `State`. `CareState` with `on_schedule`, `due`, `overdue`. |
 | `repository/counter.go`                | create | `CounterRepository.Next(ctx, kind CounterKind) (int, error)`. |
 | `repository/environment.go`            | change | Insert takes the number. List and `GetByID` read `active_plant_count`. Delete maps `23503` to `errs.ErrEnvironmentOccupied`. `PlantCount` gives the count for the detail. |
@@ -111,7 +111,7 @@ Every path is under `plugins/jasmine/`.
 | `handler/body.go`                      | create | `decodeBody` that refuses an unknown member with `member-unknown`. It replaces `render.Bind`. |
 | `handler/environment.go`, `handler/plant.go` | change | The new members and filters. |
 | `handler/care_interval.go`, `handler/maintenance_entry.go` | create | The routes of section 4.3. |
-| `handler/problem.go`                   | change | `writeEnvironmentOccupied`, and the details for `oneof`, `unique`, `lte`, and `dive`. |
+| `handler/problem.go`                   | change | `writeEnvironmentOccupied`, the details for `oneof`, `unique`, `maintenance_type`, and `not_future`, and the pointer `#/plant_ids/<index>` of a `dive` failure. |
 | `job/care_reminder.go`, `job/digest.go`, `job/doc.go` | create | `CareReminder` and the text of the reminder. Section 4.4. |
 | `db/migrations/20261010120000_tables_garden_scope_to_workspace.{up,down}.sql` | create | Section 4.2. |
 | `ui/src/api/*.ts`                      | change, create | A client for each resource. |
@@ -370,7 +370,7 @@ shows a control that writes only when `host.can` holds its permission.
 ### `GARDEN-DD-006`
 
 **Realizes:** `GARDEN-FR-012`, `GARDEN-FR-013`, `GARDEN-FR-014`
-**Decision:** One route takes `plant_ids` with 1 to 100 unique items. The handler runs `Plant.Lock` (`SELECT id FROM plants WHERE id = ANY($1) FOR SHARE`) and `InsertMany` in one transaction. An absent `performed_at` takes `now()` of the hub. The answer is 201 with `{"items": [...]}` in the order of `plant_ids`.
+**Decision:** One route takes `plant_ids` with 1 to 100 unique items. The handler runs `Plant.Lock` (`SELECT id FROM plants WHERE id IN (...) FOR SHARE`) and `InsertMany` in one transaction. An absent `performed_at` takes `now()` of the hub. The answer is 201 with `{"items": [...]}` in the order of `plant_ids`.
 **Rationale:** One form, one button, and one plant are the same call. The lock stops a delete between the check and the insert, so the batch is whole or absent.
 **Alternatives:** One request for each plant. A failure in the middle leaves half the batch. A batch resource of its own. It adds a path for no new behavior.
 

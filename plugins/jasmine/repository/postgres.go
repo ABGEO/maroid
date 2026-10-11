@@ -8,7 +8,13 @@ import (
 	"github.com/abgeo/maroid/libs/rest/page"
 )
 
-const foreignKeyViolation = "23503"
+const (
+	foreignKeyViolation = "23503"
+
+	// paramBoundary and paramLimit name the parameters of every keyset read.
+	paramBoundary = "boundary"
+	paramLimit    = "limit"
+)
 
 // isForeignKeyViolation reports whether err is the foreign key violation of the
 // constraint.

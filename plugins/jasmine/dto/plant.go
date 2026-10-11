@@ -63,18 +63,34 @@ func (req *PlantUpdateRequest) ApplyTo(plant *model.Plant) {
 	plant.Status = model.PlantStatus(req.Status)
 }
 
+// PlantReference names a plant, with its environment, inside another resource.
+type PlantReference struct {
+	ID          string               `json:"id"`
+	DisplayID   string               `json:"display_id"`
+	CommonName  string               `json:"common_name"`
+	Environment EnvironmentReference `json:"environment"`
+}
+
+// NewPlantReference maps a plant reference model to its response representation.
+func NewPlantReference(ref *model.PlantReference) PlantReference {
+	return PlantReference{
+		ID:          ref.ID,
+		DisplayID:   ref.DisplayID(),
+		CommonName:  ref.CommonName,
+		Environment: NewEnvironmentReference(&ref.Environment),
+	}
+}
+
 // PlantResponse represents a plant returned by the HTTP handlers.
 type PlantResponse struct {
-	ID             string               `json:"id"`
-	DisplayID      string               `json:"display_id"`
-	CommonName     string               `json:"common_name"`
-	ScientificName *string              `json:"scientific_name,omitempty"`
-	Environment    EnvironmentReference `json:"environment"`
-	AcquiredOn     *string              `json:"acquired_on,omitempty"`
-	CareNotes      *string              `json:"care_notes,omitempty"`
-	Status         string               `json:"status"`
-	CreatedAt      string               `json:"created_at"`
-	UpdatedAt      string               `json:"updated_at"`
+	PlantReference
+
+	ScientificName *string `json:"scientific_name,omitempty"`
+	AcquiredOn     *string `json:"acquired_on,omitempty"`
+	CareNotes      *string `json:"care_notes,omitempty"`
+	Status         string  `json:"status"`
+	CreatedAt      string  `json:"created_at"`
+	UpdatedAt      string  `json:"updated_at"`
 }
 
 // NewPlantResponse maps a plant model to its response representation.
@@ -87,11 +103,13 @@ func NewPlantResponse(plant *model.Plant) PlantResponse {
 	}
 
 	return PlantResponse{
-		ID:             plant.ID,
-		DisplayID:      plant.DisplayID(),
-		CommonName:     plant.CommonName,
+		PlantReference: PlantReference{
+			ID:          plant.ID,
+			DisplayID:   plant.DisplayID(),
+			CommonName:  plant.CommonName,
+			Environment: NewEnvironmentReference(&plant.Environment),
+		},
 		ScientificName: plant.ScientificName,
-		Environment:    NewEnvironmentReference(&plant.Environment),
 		AcquiredOn:     acquiredOn,
 		CareNotes:      plant.CareNotes,
 		Status:         string(plant.Status),

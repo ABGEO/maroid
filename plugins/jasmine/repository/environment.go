@@ -90,8 +90,8 @@ func (r *Environment) List(ctx context.Context, seek page.Seek) ([]model.Environ
 	query := selectEnvironments + " WHERE " + condition + " ORDER BY " + order + " LIMIT :limit;"
 
 	query, args, err := sqlx.Named(query, map[string]any{
-		"boundary": nullable(seek.Boundary),
-		"limit":    seek.Limit,
+		paramBoundary: nullable(seek.Boundary),
+		paramLimit:    seek.Limit,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("binding Environment list arguments: %w", err)

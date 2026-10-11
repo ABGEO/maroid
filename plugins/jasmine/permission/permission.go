@@ -10,4 +10,8 @@ const (
 	PlantsRead = "plants.read"
 	// PlantsWrite creates, changes, and deletes the plants.
 	PlantsWrite = "plants.write"
+	// MaintenanceRead reads the maintenance entries.
+	MaintenanceRead = "maintenance.read"
+	// MaintenanceWrite records, changes, and deletes the maintenance entries.
+	MaintenanceWrite = "maintenance.write"
 )

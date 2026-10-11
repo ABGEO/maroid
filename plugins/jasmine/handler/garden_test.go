@@ -29,6 +29,8 @@ const (
 	memberScientificName = "scientific_name"
 
 	nameFern = "Fern"
+
+	statusInactive = "inactive"
 )
 
 type reference struct {
@@ -200,7 +202,7 @@ func TestAnEnvironmentThatHoldsAPlantIsNotDeleted(t *testing.T) {
 	environment := makeEnvironment(t, router, "Office")
 	plant := makePlant(t, router, "Gardenia", environment.ID)
 
-	inactive := replacePlant(t, router, plant, map[string]any{memberStatus: "inactive"})
+	inactive := replacePlant(t, router, plant, map[string]any{memberStatus: statusInactive})
 	require.Equal(t, http.StatusOK, inactive.Code, inactive.Body.String())
 
 	refused := send(t, router, http.MethodDelete, "/environments/"+environment.ID, "", "")
@@ -306,7 +308,8 @@ func TestAPlantThatMovesKeepsItsIdentifierAndHistory(t *testing.T) {
 	office := makeEnvironment(t, router, "Office")
 	kitchen := makeEnvironment(t, router, "Kitchen")
 	plant := makePlant(t, router, "Gardenia", office.ID)
-	insertCare(t, fixture, plant.ID, nil, 2)
+	recordEntry(t, router, typeWatering, time.Now().UTC(), plant.ID)
+	recordEntry(t, router, "misting", time.Now().UTC(), plant.ID)
 
 	moved := replacePlant(t, router, plant, map[string]any{
 		memberEnvironmentID: kitchen.ID,
@@ -318,7 +321,7 @@ func TestAPlantThatMovesKeepsItsIdentifierAndHistory(t *testing.T) {
 	assert.Equal(t, "P001", answer.DisplayID)
 	assert.Equal(t, "E002", answer.Environment.DisplayID)
 	assert.Equal(t, "Cape jasmine", answer.CommonName)
-	assert.Equal(t, 2, countRows(t, fixture, "maintenance_entries", plant.ID))
+	assert.Len(t, readEveryEntry(t, router, externalURL+pathEntries+"?plant_id="+plant.ID), 2)
 }
 
 // GARDEN-SC-006: A new plant is active. The editor makes it inactive and active
@@ -332,7 +335,7 @@ func TestAPlantChangesItsStateInBothDirections(t *testing.T) {
 	plant := makePlant(t, router, "Gardenia", environment.ID)
 	require.Equal(t, "active", plant.Status)
 
-	for _, status := range []string{"inactive", "active"} {
+	for _, status := range []string{statusInactive, "active"} {
 		changed := replacePlant(t, router, plant, map[string]any{memberStatus: status})
 		require.Equal(t, http.StatusOK, changed.Code, changed.Body.String())
 		assert.Equal(t, status, decode[plantAnswer](t, changed).Status)

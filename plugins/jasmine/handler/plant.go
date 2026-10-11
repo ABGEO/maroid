@@ -94,8 +94,8 @@ func (h *PlantHandler) List(w http.ResponseWriter, r *http.Request) {
 		h.db,
 		"listing the plants",
 		options,
-		func(ctx context.Context, tx *sqlx.Tx, seek page.Seek, filters map[string]string) ([]model.Plant, error) {
-			return repository.NewPlant(tx).List(ctx, seek, plantFilter(filters))
+		func(ctx context.Context, tx *sqlx.Tx, seek page.Seek, asked page.Request) ([]model.Plant, error) {
+			return repository.NewPlant(tx).List(ctx, seek, plantFilter(asked.Filters))
 		},
 		func(row model.Plant) string { return row.ID },
 		dto.NewPlantResponseList,
@@ -169,38 +169,13 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ifMatch := precondition.IfMatchFromContext(r.Context())
-
-	plant, err := fetchInTx(
-		r.Context(),
-		h.db,
-		"updating the plant "+id,
-		func(ctx context.Context, tx *sqlx.Tx) (*model.Plant, error) {
-			repo := repository.NewPlant(tx)
-
-			existing, txErr := repo.GetByID(ctx, id)
-			if txErr != nil {
-				return nil, fmt.Errorf("getting the current record: %w", txErr)
-			}
-
-			req.ApplyTo(existing)
-
-			if txErr = repo.Update(ctx, existing, ifMatch); txErr != nil {
-				return nil, fmt.Errorf("writing the record: %w", txErr)
-			}
-
-			return existing, nil
-		},
+	replaceRecord(
+		w, r, h.logger, h.db, id,
+		func(tx *sqlx.Tx) replacer[model.Plant] { return repository.NewPlant(tx) },
+		func(existing *model.Plant) { req.ApplyTo(existing) },
+		func(row *model.Plant) time.Time { return row.UpdatedAt },
+		dto.NewPlantResponse,
 	)
-	if err != nil {
-		failWrite(w, r, h.logger, "failed to update plant", err)
-
-		return
-	}
-
-	w.Header().Set(precondition.ETagHeader, precondition.ETag(plant.UpdatedAt))
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, dto.NewPlantResponse(plant))
 }
 
 // Delete handles DELETE /plants/{id}. The care intervals and the maintenance

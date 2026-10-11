@@ -16,12 +16,15 @@ export interface EnvironmentPayload {
 
 export type PlantStatus = "active" | "inactive";
 
-export interface Plant {
+export interface PlantReference {
   id: string;
   display_id: string;
   common_name: string;
-  scientific_name?: string;
   environment: EnvironmentReference;
+}
+
+export interface Plant extends PlantReference {
+  scientific_name?: string;
   acquired_on?: string;
   care_notes?: string;
   status: PlantStatus;
@@ -39,4 +42,43 @@ export interface PlantPayload {
 
 export interface PlantUpdatePayload extends PlantPayload {
   status: PlantStatus;
+}
+
+export type MaintenanceType =
+  | "watering"
+  | "fertilizing"
+  | "pruning"
+  | "repotting"
+  | "pest_treatment"
+  | "cleaning"
+  | "misting"
+  | "other";
+
+export interface MaintenanceEntry {
+  id: string;
+  plant: PlantReference;
+  type: MaintenanceType;
+  performed_at: string;
+  note?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MaintenanceEntryBatchPayload {
+  plant_ids: string[];
+  type: MaintenanceType;
+  performed_at?: string;
+  note?: string | null;
+}
+
+export interface MaintenanceEntryPayload {
+  type: MaintenanceType;
+  performed_at: string;
+  note?: string | null;
+}
+
+export interface MaintenanceEntryFilter {
+  plant_id?: string;
+  type?: MaintenanceType;
+  sort?: "performed_at" | "-performed_at";
 }

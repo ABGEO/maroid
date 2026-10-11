@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"slices"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/jasmine/db"
@@ -112,19 +113,23 @@ func (p *JasminePlugin) Permissions() ([]pluginapi.Permission, error) {
 			Description: "Create, change, and delete the plants",
 			Lowest:      pluginapi.RoleEditor,
 		},
+		{
+			Name:        permission.MaintenanceRead,
+			Description: "Read the maintenance log",
+			Lowest:      pluginapi.RoleViewer,
+		},
+		{
+			Name:        permission.MaintenanceWrite,
+			Description: "Record, change, and delete the maintenance entries",
+			Lowest:      pluginapi.RoleEditor,
+		},
 	}, nil
 }
 
 func (p *JasminePlugin) Routes() ([]pluginapi.Route, error) {
-	envHandler := jasminehandler.NewEnvironmentHandler(p.logger, p.db)
-	plantHandler := jasminehandler.NewPlantHandler(p.logger, p.db)
-
-	envRoutes := envHandler.Routes()
-	plantRoutes := plantHandler.Routes()
-
-	routes := make([]pluginapi.Route, 0, len(envRoutes)+len(plantRoutes))
-	routes = append(routes, envRoutes...)
-	routes = append(routes, plantRoutes...)
-
-	return routes, nil
+	return slices.Concat(
+		jasminehandler.NewEnvironmentHandler(p.logger, p.db).Routes(),
+		jasminehandler.NewPlantHandler(p.logger, p.db).Routes(),
+		jasminehandler.NewMaintenanceEntryHandler(p.logger, p.db).Routes(),
+	), nil
 }

@@ -16,4 +16,10 @@ var (
 	// ErrEnvironmentUnknown is returned when a plant names an environment that the
 	// acting workspace does not hold.
 	ErrEnvironmentUnknown = errors.New("plant: unknown environment")
+	// ErrPlantUnknown is returned when a maintenance entry names a plant that the
+	// acting workspace does not hold.
+	ErrPlantUnknown = errors.New("maintenance entry: unknown plant")
+	// ErrUnknownMaintenanceType is returned when a string does not name a
+	// maintenance type.
+	ErrUnknownMaintenanceType = errors.New("maintenance entry: unknown type")
 )

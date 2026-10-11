@@ -76,6 +76,7 @@ func (g *garden) router(workspace string) http.Handler {
 	routes := slices.Concat(
 		handler.NewEnvironmentHandler(logger, g.db).Routes(),
 		handler.NewPlantHandler(logger, g.db).Routes(),
+		handler.NewMaintenanceEntryHandler(logger, g.db).Routes(),
 	)
 
 	router := chi.NewRouter()
