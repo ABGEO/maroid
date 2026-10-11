@@ -418,7 +418,7 @@ shows a control that writes only when `host.can` holds its permission.
 | 5   | `handler/body.go`, the DTOs, and the handlers. `api.yaml` matches. | `GARDEN-FR-001` to `GARDEN-FR-023` | [x] |
 | 6   | `job/`, and the wiring in `main.go`. | `GARDEN-FR-025`, `GARDEN-FR-026`, `GARDEN-FR-028`, `GARDEN-FR-032` | [x] |
 | 7   | The remote: the API clients and the four pages. Build it before the `.so`. `BLD-003`. | `GARDEN-FR-010`, `GARDEN-FR-014`, `GARDEN-FR-022` to `GARDEN-FR-024` | [x] |
-| 8   | The two measurements of `GARDEN-NFR-001` and `GARDEN-NFR-002`. | `GARDEN-NFR-001`, `GARDEN-NFR-002` | [ ] |
+| 8   | The two measurements of `GARDEN-NFR-001` and `GARDEN-NFR-002`. | `GARDEN-NFR-001`, `GARDEN-NFR-002` | [x] |
 
 ## 8. Out of scope for this specification
 
