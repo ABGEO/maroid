@@ -45,7 +45,9 @@
     <ul class="list panel">
       {#each pager.page?.items ?? [] as environment (environment.id)}
         <li class="list-row items-center">
+          <span class="meta">{environment.display_id}</span>
           <span class="list-col-grow font-medium">{environment.name}</span>
+          <span class="meta">{environment.active_plant_count} active plants</span>
           <span class="meta">{formatDate(environment.created_at)}</span>
         </li>
       {/each}

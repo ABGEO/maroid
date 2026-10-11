@@ -1,0 +1,70 @@
+package handler
+
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strings"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
+
+	"github.com/abgeo/maroid/libs/rest/problem"
+)
+
+// unknownFieldPrefix starts the error that encoding/json answers for a member that
+// the target does not declare.
+const unknownFieldPrefix = "json: unknown field "
+
+// validatable is a request body that checks its own rules after it decodes.
+type validatable interface {
+	Validate() error
+}
+
+// readBody decodes the body into target and checks its rules. A member that
+// target does not declare is refused rather than dropped, so a client learns that
+// it sent a value that no write takes. It writes the problem and answers false
+// when the body is refused.
+func readBody(w http.ResponseWriter, r *http.Request, target validatable) bool {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	err := decoder.Decode(target)
+
+	var syntaxErr *json.SyntaxError
+
+	switch {
+	case err == nil:
+	case !errors.As(err, &syntaxErr) && strings.HasPrefix(err.Error(), unknownFieldPrefix):
+		problem.Write(w, r, problem.NewMemberUnknown().WithDetail(
+			"The body carries "+strings.TrimPrefix(err.Error(), unknownFieldPrefix)+".",
+		))
+
+		return false
+	default:
+		problem.Write(w, r, problem.NewBodyInvalid())
+
+		return false
+	}
+
+	if err = target.Validate(); err != nil {
+		writeRequestProblem(w, r, err)
+
+		return false
+	}
+
+	return true
+}
+
+// pathID reads the identifier segment of the route. A value that is no UUID names
+// no record, so it answers 404 before any query runs.
+func pathID(w http.ResponseWriter, r *http.Request) (string, bool) {
+	id := chi.URLParam(r, "id")
+	if _, err := uuid.Parse(id); err != nil {
+		problem.Write(w, r, problem.NewNotFound())
+
+		return "", false
+	}
+
+	return id, true
+}

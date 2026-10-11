@@ -6,8 +6,11 @@ import { createPlantsApi } from "./plants";
 export type {
   Environment,
   EnvironmentPayload,
+  EnvironmentReference,
   Plant,
   PlantPayload,
+  PlantStatus,
+  PlantUpdatePayload,
 } from "./types";
 
 export function createJasmineApi(host: PluginHost) {

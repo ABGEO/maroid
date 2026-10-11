@@ -2,14 +2,13 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -17,6 +16,7 @@ import (
 	"github.com/abgeo/maroid/libs/rest/precondition"
 	"github.com/abgeo/maroid/libs/rest/problem"
 	"github.com/abgeo/maroid/plugins/jasmine/dto"
+	"github.com/abgeo/maroid/plugins/jasmine/errs"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 	"github.com/abgeo/maroid/plugins/jasmine/permission"
 	"github.com/abgeo/maroid/plugins/jasmine/repository"
@@ -77,8 +77,13 @@ func (h *EnvironmentHandler) Routes() []pluginapi.Route {
 // List handles GET /environments.
 func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 	listPage(
-		w, r, h.logger, h.db, "listing the environments",
-		func(ctx context.Context, tx *sqlx.Tx, seek page.Seek) ([]model.Environment, error) {
+		w,
+		r,
+		h.logger,
+		h.db,
+		"listing the environments",
+		page.Options{},
+		func(ctx context.Context, tx *sqlx.Tx, seek page.Seek, _ map[string]string) ([]model.Environment, error) {
 			return repository.NewEnvironment(tx).List(ctx, seek)
 		},
 		func(row model.Environment) string { return row.ID },
@@ -88,7 +93,10 @@ func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // GetByID handles GET /environments/{id}.
 func (h *EnvironmentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
 
 	readRecord(
 		w, r, h.logger, h.db, "getting the environment "+id,
@@ -100,25 +108,28 @@ func (h *EnvironmentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-// Create handles POST /environments.
+// Create handles POST /environments. The environment takes the next display
+// number of the acting workspace.
 func (h *EnvironmentHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.EnvironmentRequest
-	if err := render.Bind(r, &req); err != nil {
-		writeRequestProblem(w, r, err)
-
+	if !readBody(w, r, &req) {
 		return
 	}
 
-	env := &model.Environment{
-		ID:   uuid.NewString(),
-		Name: req.Name,
-	}
+	env := &model.Environment{Name: req.Name}
 
 	err := execInTx(
 		r.Context(),
 		h.db,
 		"inserting the environment",
 		func(ctx context.Context, tx *sqlx.Tx) error {
+			number, txErr := repository.NewCounter(tx).Next(ctx, repository.CounterKindEnvironment)
+			if txErr != nil {
+				return fmt.Errorf("taking the display number: %w", txErr)
+			}
+
+			env.Number = number
+
 			return repository.NewEnvironment(tx).Insert(ctx, env)
 		},
 	)
@@ -136,12 +147,13 @@ func (h *EnvironmentHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // Update handles PUT /environments/{id}.
 func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
 
 	var req dto.EnvironmentRequest
-	if err := render.Bind(r, &req); err != nil {
-		writeRequestProblem(w, r, err)
-
+	if !readBody(w, r, &req) {
 		return
 	}
 
@@ -179,24 +191,46 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, dto.NewEnvironmentResponse(env))
 }
 
-// Delete handles DELETE /environments/{id}.
+// Delete handles DELETE /environments/{id}. An environment that holds a plant,
+// active or inactive, stays.
 func (h *EnvironmentHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
+
 	ifMatch := precondition.IfMatchFromContext(r.Context())
+
+	var plants int
 
 	err := execInTx(
 		r.Context(),
 		h.db,
 		"deleting the environment "+id,
 		func(ctx context.Context, tx *sqlx.Tx) error {
-			return repository.NewEnvironment(tx).Delete(ctx, id, ifMatch)
+			repo := repository.NewEnvironment(tx)
+
+			count, txErr := repo.PlantCount(ctx, id)
+			if txErr != nil {
+				return fmt.Errorf("counting the plants: %w", txErr)
+			}
+
+			if count > 0 {
+				plants = count
+
+				return errs.ErrEnvironmentOccupied
+			}
+
+			return repo.Delete(ctx, id, ifMatch)
 		},
 	)
-	if err != nil {
+
+	switch {
+	case errors.Is(err, errs.ErrEnvironmentOccupied):
+		writeEnvironmentOccupied(w, r, plants)
+	case err != nil:
 		failWrite(w, r, h.logger, "failed to delete environment", err)
-
-		return
+	default:
+		render.NoContent(w, r)
 	}
-
-	render.NoContent(w, r)
 }

@@ -2,99 +2,15 @@ package handler_test
 
 import (
 	"encoding/json"
-	"io/fs"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/rest/address"
 	"github.com/abgeo/maroid/libs/rest/precondition"
-	"github.com/abgeo/maroid/libs/testdb"
-	"github.com/abgeo/maroid/plugins/jasmine/db"
-	"github.com/abgeo/maroid/plugins/jasmine/handler"
 )
-
-const (
-	pluginID    = "dev.maroid.jasmine"
-	externalURL = "https://hub.test"
-)
-
-// setUpdatedAt is the trigger function that a core migration of the hub creates.
-// A plugin test owns no core migration, so it creates the function itself.
-const setUpdatedAt = `
-CREATE OR REPLACE FUNCTION set_updated_at() RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = now();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;`
-
-// routerUnderTest mounts the environment routes over a migrated database.
-func routerUnderTest(t *testing.T) http.Handler {
-	t.Helper()
-
-	instance := testdb.Start(t)
-
-	_, err := instance.DB.Exec(setUpdatedAt)
-	require.NoError(t, err)
-
-	migrations, err := fs.Sub(db.Migrations, "migrations")
-	require.NoError(t, err)
-
-	identifier := pluginapi.ParsePluginID(pluginID)
-	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
-
-	routes := handler.NewEnvironmentHandler(
-		slog.New(slog.DiscardHandler),
-		pluginapi.NewPluginDB(instance.DB, identifier),
-	).Routes()
-
-	router := chi.NewRouter()
-	router.Use(address.Middleware(externalURL))
-
-	// The hub mounts this for every route, so a plugin route reads the validator
-	// off the context and parses nothing.
-	router.Use(precondition.IfMatch)
-
-	for _, route := range routes {
-		router.Method(route.Method, route.Pattern, route.Handler)
-	}
-
-	return router
-}
-
-// send runs one request and answers the recorder that holds its answer.
-func send(
-	t *testing.T,
-	router http.Handler,
-	method string,
-	target string,
-	body string,
-	ifMatch string,
-) *httptest.ResponseRecorder {
-	t.Helper()
-
-	request := httptest.NewRequestWithContext(
-		t.Context(), method, target, strings.NewReader(body),
-	)
-	request.Header.Set("Content-Type", "application/json")
-
-	if ifMatch != "" {
-		request.Header.Set(precondition.IfMatchHeader, ifMatch)
-	}
-
-	recorder := httptest.NewRecorder()
-	router.ServeHTTP(recorder, request)
-
-	return recorder
-}
 
 // nameOf reads the name that an answer carries.
 func nameOf(t *testing.T, recorder *httptest.ResponseRecorder) string {

@@ -30,11 +30,11 @@ func TestAPlantAnswersEveryMomentInUTC(t *testing.T) {
 	t.Parallel()
 
 	answer := dto.NewPlantResponse(&model.Plant{
-		ID:            "01a0cae5-eb36-777a-824e-6e7e28d7a6b1",
-		Name:          "Jasmine",
-		EnvironmentID: "01a0cae5-eb36-777a-824e-71285629ec17",
-		CreatedAt:     moment(),
-		UpdatedAt:     moment(),
+		ID:          "01a0cae5-eb36-777a-824e-6e7e28d7a6b1",
+		CommonName:  "Jasmine",
+		Environment: model.EnvironmentReference{ID: "01a0cae5-eb36-777a-824e-71285629ec17"},
+		CreatedAt:   moment(),
+		UpdatedAt:   moment(),
 	})
 
 	for name, value := range map[string]string{

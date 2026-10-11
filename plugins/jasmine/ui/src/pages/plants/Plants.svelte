@@ -3,43 +3,13 @@
   import { createPager, Pagination } from '@maroid/ui';
 
   import '../../app.css';
-  import { createJasmineApi, type Plant } from '../../api';
+  import { createJasmineApi } from '../../api';
 
   let { host }: { host: PluginHost } = $props();
 
   const api = createJasmineApi(host);
 
-  let environmentNames = $state<Record<string, string>>({});
-
-  // A page of plants names only its own environments, so the page reads each of
-  // those by identifier rather than every page of environments. An environment
-  // that fails to read shows its identifier.
-  async function nameEnvironments(plants: Plant[]): Promise<void> {
-    const unnamed = [...new Set(plants.map((plant) => plant.environment_id))].filter(
-      (id) => !(id in environmentNames)
-    );
-
-    const environments = await Promise.all(unnamed.map((id) => api.environments.get(id).catch(() => null)));
-
-    for (const environment of environments) {
-      if (environment !== null) {
-        environmentNames[environment.id] = environment.name;
-      }
-    }
-  }
-
-  const pager = createPager(async (link?: string) => {
-    const page = await api.plants.list(link);
-    if (page !== null) {
-      await nameEnvironments(page.items);
-    }
-
-    return page;
-  });
-
-  function environmentName(id: string): string {
-    return environmentNames[id] ?? id;
-  }
+  const pager = createPager(api.plants.list);
 
   function formatDate(value: string): string {
     return new Date(value).toLocaleDateString();
@@ -75,14 +45,15 @@
     <div class="panel overflow-x-auto">
       <table class="table">
         <thead>
-          <tr><th>Name</th><th>Species</th><th>Environment</th><th>Created</th></tr>
+          <tr><th>ID</th><th>Name</th><th>Scientific name</th><th>Environment</th><th>Created</th></tr>
         </thead>
         <tbody>
           {#each pager.page?.items ?? [] as plant (plant.id)}
             <tr>
-              <td class="font-medium">{plant.name}</td>
-              <td>{plant.species ?? '—'}</td>
-              <td>{environmentName(plant.environment_id)}</td>
+              <td class="meta">{plant.display_id}</td>
+              <td class="font-medium">{plant.common_name}</td>
+              <td>{plant.scientific_name ?? ''}</td>
+              <td>{plant.environment.display_id} {plant.environment.name}</td>
               <td class="meta">{formatDate(plant.created_at)}</td>
             </tr>
           {/each}

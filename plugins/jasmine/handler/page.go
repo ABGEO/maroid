@@ -14,18 +14,20 @@ import (
 )
 
 // listPage answers one page of a collection. Every read of the page runs in one
-// transaction, so the page and its links see one state of the table.
+// transaction, so the page and its links see one state of the table. The read
+// receives the filters that options declares and the request carries.
 func listPage[T any, R any](
 	w http.ResponseWriter,
 	r *http.Request,
 	logger *slog.Logger,
 	db *pluginapi.PluginDB,
 	action string,
-	read func(ctx context.Context, tx *sqlx.Tx, seek page.Seek) ([]T, error),
+	options page.Options,
+	read func(ctx context.Context, tx *sqlx.Tx, seek page.Seek, filters map[string]string) ([]T, error),
 	identify func(T) string,
 	present func([]T) []R,
 ) {
-	asked, failure := page.ReadRequest(r, page.Options{})
+	asked, failure := page.ReadRequest(r, options)
 	if failure != nil {
 		problem.Write(w, r, failure)
 
@@ -36,7 +38,7 @@ func listPage[T any, R any](
 		r.Context(), db, action,
 		func(ctx context.Context, tx *sqlx.Tx) (page.Window[T], error) {
 			fetch := func(ctx context.Context, seek page.Seek) ([]T, error) {
-				return read(ctx, tx, seek)
+				return read(ctx, tx, seek, asked.Filters)
 			}
 
 			return page.Read(ctx, asked, fetch, identify)

@@ -94,17 +94,17 @@ Every path is under `plugins/jasmine/`.
 | `main.go`                              | change | Decode `config.Config`. Get `Host.Notifier()`. Add `pluginapi.CronPlugin`. Add two permissions, the new routes, and the UI routes of section 4.6. |
 | `config/config.go`, `config/doc.go`    | create | `Config`, `CronSchedule`, `Notification`. Section 4.3. |
 | `permission/permission.go`             | change | Add `MaintenanceRead = "maintenance.read"`, `MaintenanceWrite = "maintenance.write"`. |
-| `errs/errs.go`                         | change | Add `ErrEnvironmentOccupied`, `ErrPlantUnknown`, `ErrUnknownMaintenanceType`, `ErrUnknownPlantStatus`. |
+| `errs/errs.go`                         | change | Add `ErrEnvironmentOccupied`, `ErrEnvironmentUnknown`, `ErrPlantUnknown`, `ErrUnknownMaintenanceType`, `ErrUnknownPlantStatus`. |
 | `model/display_id.go`                  | create | `FormatDisplayID(prefix rune, number int) string`. Constants `PrefixEnvironment = 'E'`, `PrefixPlant = 'P'`. |
 | `model/environment.go`                 | change | `Environment{ID, Number, Name, ActivePlantCount, CreatedAt, UpdatedAt}`. |
-| `model/plant.go`                       | change | `Plant{ID, Number, CommonName, ScientificName, EnvironmentID, EnvironmentNumber, EnvironmentName, AcquiredOn, CareNotes, Status, CreatedAt, UpdatedAt}`. |
+| `model/plant.go`                       | change | `Plant{ID, Number, CommonName, ScientificName, Environment, AcquiredOn, CareNotes, Status, CreatedAt, UpdatedAt}`; `Environment` is an `EnvironmentReference{ID, Number, Name}` that the read joins. |
 | `model/plant_status.go`                | create | `PlantStatus` with `active`, `inactive`, and `ParsePlantStatus`. |
 | `model/maintenance_type.go`            | create | `MaintenanceType` with the eight values of `GARDEN-FR-011` in that order, `MaintenanceTypes()`, and `ParseMaintenanceType`. |
 | `model/maintenance_entry.go`           | create | `MaintenanceEntry{ID, PlantID, PlantNumber, PlantCommonName, Type, PerformedAt, Note, CreatedAt, UpdatedAt}`. |
 | `model/care_interval.go`               | create | `CareInterval` with the columns of section 4.2 and the read values `LastPerformedAt`, `CountedFrom`, `DaysSince`, `State`. `CareState` with `on_schedule`, `due`, `overdue`. |
 | `repository/counter.go`                | create | `CounterRepository.Next(ctx, kind CounterKind) (int, error)`. |
-| `repository/environment.go`            | change | Insert takes the number. List and `GetByID` read `active_plant_count`. Delete maps `23503` to `errs.ErrEnvironmentOccupied`. |
-| `repository/plant.go`                  | change | The new columns. `List(ctx, seek, filter PlantFilter)`. `Lock(ctx, ids []string) ([]string, error)` for `GARDEN-DD-006`. |
+| `repository/environment.go`            | change | Insert takes the number. List and `GetByID` read `active_plant_count`. Delete maps `23503` to `errs.ErrEnvironmentOccupied`. `PlantCount` gives the count for the detail. |
+| `repository/plant.go`                  | change | The new columns. `List(ctx, seek, filter PlantFilter)`. Insert and Update map `23503` to `errs.ErrEnvironmentUnknown`. `Lock(ctx, ids []string) ([]string, error)` for `GARDEN-DD-006`. |
 | `repository/care_interval.go`          | create | `Put`, `Delete`, `ListForPlant`, `List(ctx, seek, filter CareIntervalFilter)`, `ListAttention(ctx)`. Section 4.2 gives the state query. |
 | `repository/maintenance_entry.go`      | create | `InsertMany`, `GetByID`, `List(ctx, seek, order, filter)`, `Update`, `Delete`. |
 | `dto/*.go`                             | change, create | One request and one response for each resource of `api.yaml`. |
@@ -410,9 +410,9 @@ shows a control that writes only when `host.can` holds its permission.
 
 | #   | Step | Realizes | Done |
 | --- | ---- | -------- | ---- |
-| 1   | The migration pair, and the integration test of every constraint. | `GARDEN-FR-031`, `GARDEN-INV-001` to `GARDEN-INV-003` | [ ] |
+| 1   | The migration pair, and the integration test of every constraint. | `GARDEN-FR-031`, `GARDEN-INV-001` to `GARDEN-INV-003` | [x] |
 | 2   | `model/`, `errs/`, `permission/`, `config/`. | `GARDEN-FR-011`, `GARDEN-FR-025` | [ ] |
-| 3   | `repository/counter.go`, `environment.go`, `plant.go`, with their tests. | `GARDEN-FR-001` to `GARDEN-FR-009` | [ ] |
+| 3   | `repository/counter.go`, `environment.go`, `plant.go`, with their tests. | `GARDEN-FR-001` to `GARDEN-FR-009` | [x] |
 | 4   | `repository/care_interval.go`, `maintenance_entry.go`, with the state tests. | `GARDEN-FR-012` to `GARDEN-FR-021` | [ ] |
 | 5   | `handler/body.go`, the DTOs, and the handlers. `api.yaml` matches. | `GARDEN-FR-001` to `GARDEN-FR-023` | [ ] |
 | 6   | `job/`, and the wiring in `main.go`. | `GARDEN-FR-025`, `GARDEN-FR-026`, `GARDEN-FR-028`, `GARDEN-FR-032` | [ ] |

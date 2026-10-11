@@ -1,6 +1,6 @@
 import type { ApiClient, Page, RequestOptions } from "@maroid/plugin-sdk";
 
-import type { Plant, PlantPayload } from "./types";
+import type { Plant, PlantPayload, PlantUpdatePayload } from "./types";
 
 export function createPlantsApi(api: ApiClient) {
   return {
@@ -11,7 +11,7 @@ export function createPlantsApi(api: ApiClient) {
     get: (id: string) => api.get<Plant>(`/plants/${id}`),
     create: (payload: PlantPayload, options?: RequestOptions) =>
       api.post<Plant>("/plants", payload, options),
-    update: (id: string, payload: PlantPayload) =>
+    update: (id: string, payload: PlantUpdatePayload) =>
       api.put<Plant>(`/plants/${id}`, payload),
     remove: (id: string) => api.del<null>(`/plants/${id}`),
   };

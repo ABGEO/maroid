@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -25,6 +24,9 @@ import (
 const (
 	pathPlants    = "/plants"
 	pathPlantByID = "/plants/{id}"
+
+	filterEnvironmentID = "environment_id"
+	filterStatus        = "status"
 )
 
 // PlantHandler provides HTTP handlers for plant CRUD.
@@ -74,12 +76,26 @@ func (h *PlantHandler) Routes() []pluginapi.Route {
 	}
 }
 
-// List handles GET /plants.
+// List handles GET /plants. With no status filter, the page holds the active
+// plants.
 func (h *PlantHandler) List(w http.ResponseWriter, r *http.Request) {
+	if failure := checkPlantFilters(r); failure != nil {
+		problem.Write(w, r, failure)
+
+		return
+	}
+
+	options := page.Options{Filters: []string{filterEnvironmentID, filterStatus}}
+
 	listPage(
-		w, r, h.logger, h.db, "listing the plants",
-		func(ctx context.Context, tx *sqlx.Tx, seek page.Seek) ([]model.Plant, error) {
-			return repository.NewPlant(tx).List(ctx, seek)
+		w,
+		r,
+		h.logger,
+		h.db,
+		"listing the plants",
+		options,
+		func(ctx context.Context, tx *sqlx.Tx, seek page.Seek, filters map[string]string) ([]model.Plant, error) {
+			return repository.NewPlant(tx).List(ctx, seek, plantFilter(filters))
 		},
 		func(row model.Plant) string { return row.ID },
 		dto.NewPlantResponseList,
@@ -88,7 +104,10 @@ func (h *PlantHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // GetByID handles GET /plants/{id}.
 func (h *PlantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
 
 	readRecord(
 		w, r, h.logger, h.db, "getting the plant "+id,
@@ -100,33 +119,34 @@ func (h *PlantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-// Create handles POST /plants.
+// Create handles POST /plants. The plant starts active, and takes the next
+// display number of the acting workspace.
 func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req dto.PlantRequest
-	if err := render.Bind(r, &req); err != nil {
-		writeRequestProblem(w, r, err)
-
+	if !readBody(w, r, &req) {
 		return
 	}
 
-	plant := &model.Plant{
-		ID:            uuid.NewString(),
-		Name:          req.Name,
-		Species:       req.Species,
-		EnvironmentID: req.EnvironmentID,
-	}
+	plant := &model.Plant{}
+	req.ApplyTo(plant)
 
 	err := execInTx(
 		r.Context(),
 		h.db,
 		"inserting the plant",
 		func(ctx context.Context, tx *sqlx.Tx) error {
+			number, txErr := repository.NewCounter(tx).Next(ctx, repository.CounterKindPlant)
+			if txErr != nil {
+				return fmt.Errorf("taking the display number: %w", txErr)
+			}
+
+			plant.Number = number
+
 			return repository.NewPlant(tx).Insert(ctx, plant)
 		},
 	)
 	if err != nil {
-		h.logger.ErrorContext(r.Context(), "failed to create plant", slog.Any("error", err))
-		problem.Write(w, r, problem.NewInternal())
+		failWrite(w, r, h.logger, "failed to create plant", err)
 
 		return
 	}
@@ -136,14 +156,16 @@ func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, dto.NewPlantResponse(plant))
 }
 
-// Update handles PUT /plants/{id}.
+// Update handles PUT /plants/{id}. The display identifier and the history stay
+// when the environment changes.
 func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
 
-	var req dto.PlantRequest
-	if err := render.Bind(r, &req); err != nil {
-		writeRequestProblem(w, r, err)
-
+	var req dto.PlantUpdateRequest
+	if !readBody(w, r, &req) {
 		return
 	}
 
@@ -161,9 +183,7 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 				return nil, fmt.Errorf("getting the current record: %w", txErr)
 			}
 
-			existing.Name = req.Name
-			existing.Species = req.Species
-			existing.EnvironmentID = req.EnvironmentID
+			req.ApplyTo(existing)
 
 			if txErr = repo.Update(ctx, existing, ifMatch); txErr != nil {
 				return nil, fmt.Errorf("writing the record: %w", txErr)
@@ -183,9 +203,14 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, dto.NewPlantResponse(plant))
 }
 
-// Delete handles DELETE /plants/{id}.
+// Delete handles DELETE /plants/{id}. The care intervals and the maintenance
+// entries of the plant go with it.
 func (h *PlantHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
+
 	ifMatch := precondition.IfMatchFromContext(r.Context())
 
 	err := execInTx(
@@ -203,4 +228,42 @@ func (h *PlantHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.NoContent(w, r)
+}
+
+// checkPlantFilters refuses a filter value that names no environment identifier
+// or no plant status, before any query runs.
+func checkPlantFilters(r *http.Request) *problem.Problem {
+	query := r.URL.Query()
+
+	if value := query.Get(filterEnvironmentID); value != "" {
+		if _, err := uuid.Parse(value); err != nil {
+			return problem.NewRequestInvalid().WithDetail(
+				"The parameter environment_id must be a UUID.",
+			)
+		}
+	}
+
+	if value := query.Get(filterStatus); value != "" {
+		if _, err := model.ParsePlantStatus(value); err != nil {
+			return problem.NewRequestInvalid().WithDetail(
+				"The parameter status must be active or inactive.",
+			)
+		}
+	}
+
+	return nil
+}
+
+// plantFilter builds the filter of a list from the values that
+// checkPlantFilters already accepted.
+func plantFilter(filters map[string]string) repository.PlantFilter {
+	status := model.PlantStatusActive
+	if value, ok := filters[filterStatus]; ok {
+		status = model.PlantStatus(value)
+	}
+
+	return repository.PlantFilter{
+		EnvironmentID: filters[filterEnvironmentID],
+		Status:        status,
+	}
 }
