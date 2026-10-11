@@ -10,10 +10,11 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/dto"
+	"github.com/abgeo/maroid/plugins/parking/errs"
 	"github.com/abgeo/maroid/plugins/parking/model"
 	"github.com/abgeo/maroid/plugins/parking/service"
+	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 	"github.com/abgeo/maroid/plugins/parking/telegram/conversation/step"
-	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 const (
@@ -82,8 +83,8 @@ func (fakePages) PageURL(context.Context, *pluginapi.PluginID, string) (string, 
 	return accountURL, nil
 }
 
-func newNotice() *notice.Notice {
-	return notice.New(fakePages{}, pluginapi.ParsePluginID("dev.maroid.parking"))
+func newNotice() *command.Notice {
+	return command.NewNotice(fakePages{}, pluginapi.ParsePluginID("dev.maroid.parking"))
 }
 
 func newContext() *conversationapi.Context {
@@ -189,7 +190,7 @@ func TestARejectedTokenEndsTheConversationWithTheLink(t *testing.T) {
 	t.Parallel()
 
 	bot := &fakeBot{}
-	client := &fakeClient{vehicleErr: service.ErrNotConnected}
+	client := &fakeClient{vehicleErr: errs.ErrNotConnected}
 
 	next, err := step.NewSelectType(bot, client, newNotice()).
 		OnMessage(newContext(), press(typeOnlyPriced))

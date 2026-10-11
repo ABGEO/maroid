@@ -4,8 +4,8 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/service"
+	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 	"github.com/abgeo/maroid/plugins/parking/telegram/conversation/step"
-	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 // ParkingConversation implements the conversation flow for starting a parking session with the Telegram bot.
@@ -19,7 +19,7 @@ var _ conversation.Conversation = (*ParkingConversation)(nil)
 func NewParkingConversation(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
-	answers *notice.Notice,
+	answers *command.Notice,
 ) *ParkingConversation {
 	steps := []conversation.Step{
 		step.NewSelectLot(telegramBot, apiClientSvc, answers),

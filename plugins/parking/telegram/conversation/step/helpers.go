@@ -11,7 +11,7 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/model"
-	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
+	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 )
 
 const (
@@ -139,7 +139,7 @@ func selectVehicle(ctx *conversationapi.Context, vehicle model.Vehicle) {
 func endWithNotice(
 	bot pluginapi.TelegramBot,
 	ctx *conversationapi.Context,
-	answers *notice.Notice,
+	answers *command.Notice,
 	err error,
 ) bool {
 	text, known := answers.Text(ctx, err)

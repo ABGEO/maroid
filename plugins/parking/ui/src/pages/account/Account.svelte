@@ -150,24 +150,35 @@
     </div>
   {:else}
     <section class="panel mb-6 p-4">
-      {#if connected && connection?.account}
+      {#if connected}
         <div class="mb-4 flex items-center justify-between gap-2">
           <h2 class="font-medium">
-            Connected as {connection.account.first_name}
-            {connection.account.last_name}
+            {#if connection?.account}
+              Connected as {connection.account.first_name}
+              {connection.account.last_name}
+            {:else}
+              Connected
+            {/if}
           </h2>
           <span class="badge badge-success badge-soft">Connected</span>
         </div>
-        <div class="stats stats-vertical sm:stats-horizontal mb-4 w-full">
-          <div class="stat">
-            <div class="stat-title">Balance</div>
-            <div class="stat-value text-2xl">{connection.account.balance.toFixed(2)} GEL</div>
+        {#if connection?.account}
+          <div class="stats stats-vertical sm:stats-horizontal mb-4 w-full">
+            <div class="stat">
+              <div class="stat-title">Balance</div>
+              <div class="stat-value text-2xl">
+                {connection.account.balance.amount.toFixed(2)}
+                {connection.account.balance.currency}
+              </div>
+            </div>
+            <div class="stat">
+              <div class="stat-title">Free parkings left today</div>
+              <div class="stat-value text-2xl">{connection.account.free_parkings_left}</div>
+            </div>
           </div>
-          <div class="stat">
-            <div class="stat-title">Free parkings left today</div>
-            <div class="stat-value text-2xl">{connection.account.free_parkings_left}</div>
-          </div>
-        </div>
+        {:else}
+          <p class="meta mb-4">The parking service did not report the account. Reload the page to read it.</p>
+        {/if}
         <div class="flex gap-2">
           <button type="button" class="btn btn-sm" disabled={busy || pending !== null} onclick={connect}>
             Connect again

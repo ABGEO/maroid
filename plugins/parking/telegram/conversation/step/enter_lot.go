@@ -10,8 +10,9 @@ import (
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
+	"github.com/abgeo/maroid/plugins/parking/errs"
 	"github.com/abgeo/maroid/plugins/parking/service"
-	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
+	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 )
 
 var lotNumberRegex = regexp.MustCompile(`^[A-Ca-c]\d+$`)
@@ -20,7 +21,7 @@ var lotNumberRegex = regexp.MustCompile(`^[A-Ca-c]\d+$`)
 type EnterLot struct {
 	telegramBot  pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
-	answers      *notice.Notice
+	answers      *command.Notice
 }
 
 var _ conversationapi.Step = (*EnterLot)(nil)
@@ -29,7 +30,7 @@ var _ conversationapi.Step = (*EnterLot)(nil)
 func NewEnterLot(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
-	answers *notice.Notice,
+	answers *command.Notice,
 ) *EnterLot {
 	return &EnterLot{
 		telegramBot:  telegramBot,
@@ -105,7 +106,7 @@ func (s *EnterLot) processLot(ctx *conversationapi.Context, update telego.Update
 	place, err := s.apiClientSvc.GetParkingPlace(
 		ctx, zone, number,
 	)
-	if errors.Is(err, service.ErrParkingPlaceNotFound) {
+	if errors.Is(err, errs.ErrParkingPlaceNotFound) {
 		_ = editCtrlMessageWithKeyboard(
 			s.telegramBot, ctx,
 			"Parking lot <b>"+lot+"</b> was not found."+

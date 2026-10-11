@@ -44,7 +44,8 @@ service, a fake `SecretProvider`, a fake `SettingsProvider`, and a fake `PageLin
 **Given** a `session` secret, and the fake service answers the person check with
 `firstName: Nino`, `lastName: Beridze`, `balanceAmount: 4.52`, `dailyFreeParkingLeft: 4`.
 **When** user A reads `GET /connections/self`.
-**Then** the answer is 200 with `state: connected` and the account `Nino`, `Beridze`, `4.52`, `4`.
+**Then** the answer is 200 with `state: connected`, the names `Nino` and `Beridze`, the
+balance `{"amount": 4.52, "currency": "GEL"}`, and `free_parkings_left: 4`.
 
 ## `PARKACC-SC-004`
 
@@ -61,8 +62,8 @@ service, a fake `SecretProvider`, a fake `SettingsProvider`, and a fake `PageLin
 **Layer:** unit
 
 **Given** the settings of user A are absent.
-**When** user A reads `GET /connections/self`, then calls `PUT /pending-connections/self`.
-**Then** the read answers `credentials_stored: false`. The `PUT` answers 422
+**When** user A reads `GET /connections/self`, then calls `POST /pending-connections`.
+**Then** the read answers `credentials_stored: false`. The `POST` answers 422
 `/problems/dev.maroid.parking/credentials-absent`. The fake service records no call.
 
 ## `PARKACC-SC-006`
@@ -72,11 +73,12 @@ service, a fake `SecretProvider`, a fake `SettingsProvider`, and a fake `PageLin
 
 **Given** stored credentials, and the fake service answers the sign in with `REQUIRES_TWO_FA`
 and the send with `phone: 5******27`, `delay: "60"`.
-**When** user A calls `PUT /pending-connections/self` at time T.
+**When** user A calls `POST /pending-connections` at time T.
 **Then** the fake service records the sign in with the stored credentials and no
 `Authorization` header, then the send with the identifier of the sign in. The answer is
-200 with `phone: 5******27`, `resend_at: T + 60 s`, `expires_at: T + 5 min`. A `pending`
-secret exists with that expiry.
+`phone: 5******27`, `resend_at: T + 60 s`, `expires_at: T + 5 min`. A `pending`
+secret exists with that expiry. The answer is 201, and `Location` ends with
+`/pending-connections/self`.
 
 ## `PARKACC-SC-007`
 
@@ -84,7 +86,7 @@ secret exists with that expiry.
 **Layer:** unit
 
 **Given** stored credentials, and the fake service answers the sign in with 401.
-**When** user A calls `PUT /pending-connections/self`.
+**When** user A calls `POST /pending-connections`.
 **Then** the answer is 422 `/problems/dev.maroid.parking/credentials-rejected`. No `pending` secret exists.
 
 ## `PARKACC-SC-008`
@@ -93,7 +95,7 @@ secret exists with that expiry.
 **Layer:** unit
 
 **Given** the fake service answers the sign in with `TWO_FA.PHONE_VERIFICATION: false`.
-**When** user A calls `PUT /pending-connections/self`.
+**When** user A calls `POST /pending-connections`.
 **Then** the answer is 422 `/problems/dev.maroid.parking/verification-unsupported`. The fake service records no send.
 
 ## `PARKACC-SC-009`
@@ -281,6 +283,26 @@ with the password `p4ss`, the code `0118`, the identifier `uuid-1`, and the toke
 wrong code, asks for a second code after 60 seconds, and types the second code.
 **Then** the page reports each state of section 4.5. The owner records the status and the
 body of each answer of the parking service in `PARKACC-DD-006` and `PARKACC-DD-007`.
+
+## `PARKACC-SC-029`
+
+**Verifies:** `PARKACC-FR-021`
+**Layer:** unit
+
+**Given** a call that fails because the parking service answered 503.
+**When** the notice builds the answer of the bot.
+**Then** the answer says that the parking service is unavailable. Any other failure gets
+no answer of the notice and goes back to the engine.
+
+## `PARKACC-SC-030`
+
+**Verifies:** `PARKACC-FR-014`
+**Layer:** unit
+
+**Given** a `pending` secret, the fake service accepts the code with the header
+`session-token: T1`, and answers the person check with 503.
+**When** user A posts the code to `/pending-connections/self/verifications`.
+**Then** the answer is 200 with `state: connected` and no `account`. The `session` secret holds `T1`.
 
 ## Retired identifiers
 

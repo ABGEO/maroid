@@ -63,22 +63,29 @@ paths:
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
 
-  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/pending-connections/self:
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/pending-connections:
     parameters:
       - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
       - $ref: "../../api/components.yaml#/components/parameters/FlowId"
-    put:
+    post:
       operationId: startParkingConnection
       summary: Sign in with the stored credentials and send a code.
       description: >
-        Realizes `PARKACC-FR-007` to `PARKACC-FR-013`. A call replaces the pending
-        connection that exists. The permission is `account.connect`.
+        Realizes `PARKACC-FR-007` to `PARKACC-FR-013` and `PARKACC-DD-013`. Each call
+        sends a new code and replaces the pending connection that exists, so the method
+        is `POST`. The collection answers no `GET`, as `ADR-0015` permits. The
+        permission is `account.connect`.
       responses:
-        "200":
+        "201":
           description: The parking service sent a code.
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
+            Location:
+              description: The pending connection, `/pending-connections/self`.
+              schema:
+                type: string
+                format: uri-reference
           content:
             application/json:
               schema:
@@ -186,7 +193,8 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/NotFound"
         "422":
           description: >
-            The body failed validation, or the type is
+            The body failed validation, with the type
+            `/problems/http/validation-failed`, or the type is
             `/problems/dev.maroid.parking/code-rejected`.
           headers:
             X-Flow-ID:
@@ -194,7 +202,9 @@ paths:
           content:
             application/problem+json:
               schema:
-                $ref: "../../api/components.yaml#/components/schemas/ValidationProblem"
+                oneOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/ValidationProblem"
+                  - $ref: "../../api/components.yaml#/components/schemas/Problem"
         "502":
           $ref: "#/components/responses/ServiceUnavailable"
 
@@ -223,7 +233,9 @@ components:
           $ref: "#/components/schemas/PendingConnection"
     Account:
       type: object
-      description: Present when `state` is `connected`.
+      description: >
+        Present when `state` is `connected`. A verification whose read of the account
+        failed answers `connected` with no account. `PARKACC-DD-015`.
       required: [first_name, last_name, balance, free_parkings_left]
       properties:
         first_name:
@@ -231,13 +243,24 @@ components:
         last_name:
           type: string
         balance:
-          type: number
-          format: decimal
-          description: The balance in GEL.
+          $ref: "#/components/schemas/Money"
         free_parkings_left:
           type: integer
           format: int32
           description: The free parkings left today.
+    Money:
+      type: object
+      description: An amount of money. `Z-173`, `PARKACC-DD-014`.
+      required: [amount, currency]
+      properties:
+        amount:
+          type: number
+          format: decimal
+          examples: [4.52]
+        currency:
+          type: string
+          format: iso-4217
+          examples: [GEL]
     PendingConnection:
       type: object
       description: Present while a pending connection exists.

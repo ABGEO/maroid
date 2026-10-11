@@ -16,9 +16,10 @@ import (
 
 const (
 	pathConnection   = "/connections/self"
-	pathPending      = "/pending-connections/self"
-	pathCodeRequests = "/pending-connections/self/code-requests"
-	pathVerification = "/pending-connections/self/verifications"
+	pathPending      = "/pending-connections"
+	selfSegment      = "/self"
+	pathCodeRequests = pathPending + selfSegment + "/code-requests"
+	pathVerification = pathPending + selfSegment + "/verifications"
 
 	minCodeLength = 4
 	maxCodeLength = 8
@@ -58,7 +59,7 @@ func (h *ConnectionHandler) Routes() []pluginapi.Route {
 			Permission: permission.AccountConnect,
 		},
 		{
-			Method:     http.MethodPut,
+			Method:     http.MethodPost,
 			Pattern:    pathPending,
 			Handler:    h.Start,
 			Permission: permission.AccountConnect,
@@ -87,7 +88,7 @@ func (h *ConnectionHandler) Read(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, r, dto.NewConnectionResponse(connection))
+	h.writeJSON(w, r, http.StatusOK, dto.NewConnectionResponse(connection))
 }
 
 // Disconnect handles DELETE /connections/self.
@@ -101,7 +102,8 @@ func (h *ConnectionHandler) Disconnect(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// Start handles PUT /pending-connections/self.
+// Start handles POST /pending-connections. Each call sends a new code, so the method
+// is POST, and Location names the pending connection.
 func (h *ConnectionHandler) Start(w http.ResponseWriter, r *http.Request) {
 	pending, err := h.connections.Start(r.Context())
 	if err != nil {
@@ -110,7 +112,8 @@ func (h *ConnectionHandler) Start(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, r, dto.NewPendingConnectionResponse(pending))
+	w.Header().Set("Location", r.URL.Path+selfSegment)
+	h.writeJSON(w, r, http.StatusCreated, dto.NewPendingConnectionResponse(pending))
 }
 
 // ResendCode handles POST /pending-connections/self/code-requests.
@@ -122,7 +125,7 @@ func (h *ConnectionHandler) ResendCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, r, dto.NewPendingConnectionResponse(pending))
+	h.writeJSON(w, r, http.StatusOK, dto.NewPendingConnectionResponse(pending))
 }
 
 // Verify handles POST /pending-connections/self/verifications.
@@ -139,7 +142,7 @@ func (h *ConnectionHandler) Verify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, r, dto.NewConnectionResponse(connection))
+	h.writeJSON(w, r, http.StatusOK, dto.NewConnectionResponse(connection))
 }
 
 // readVerification decodes the body and checks the code. It writes the problem and
@@ -196,11 +199,16 @@ func isCode(code string) bool {
 	return true
 }
 
-// writeJSON answers 200 with the body. The status line is gone when the encode fails,
-// so the failure goes to the log alone.
-func (h *ConnectionHandler) writeJSON(w http.ResponseWriter, r *http.Request, body any) {
+// writeJSON answers the status with the body. The status line is gone when the encode
+// fails, so the failure goes to the log alone.
+func (h *ConnectionHandler) writeJSON(
+	w http.ResponseWriter,
+	r *http.Request,
+	status int,
+	body any,
+) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(status)
 
 	if err := json.NewEncoder(w).Encode(body); err != nil {
 		h.logger.ErrorContext(r.Context(), "failed to encode the answer", slog.Any("error", err))

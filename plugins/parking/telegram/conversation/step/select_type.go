@@ -10,7 +10,7 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/service"
-	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
+	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 )
 
 // SelectType is a conversation step that prompts the user to select the parking type (free, paid, or both)
@@ -18,7 +18,7 @@ import (
 type SelectType struct {
 	telegramBot  pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
-	answers      *notice.Notice
+	answers      *command.Notice
 }
 
 var _ conversationapi.Step = (*SelectType)(nil)
@@ -27,7 +27,7 @@ var _ conversationapi.Step = (*SelectType)(nil)
 func NewSelectType(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
-	answers *notice.Notice,
+	answers *command.Notice,
 ) *SelectType {
 	return &SelectType{
 		telegramBot:  telegramBot,

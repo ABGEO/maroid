@@ -19,9 +19,9 @@ const (
 func pagesOf(t *testing.T, deck string) pluginapi.PageLinker {
 	t.Helper()
 
-	cfg := &config.Config{Auth: config.Auth{DeckURL: deck}}
-
-	instance, err := host.New(cfg, nil, nil, nil, nil, nil, nil, nil)
+	instance, err := host.New(host.Dependencies{
+		Config: &config.Config{Auth: config.Auth{DeckURL: deck}},
+	})
 	require.NoError(t, err)
 
 	pages, err := instance.Pages()

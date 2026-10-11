@@ -9,13 +9,12 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
-	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 // Stop is a Telegram command that allows users to stop their active parking session.
 type Stop struct {
 	apiClientSvc service.APIClientService
-	answers      *notice.Notice
+	answers      *Notice
 }
 
 var _ pluginapi.TelegramCommand = (*Stop)(nil)
@@ -23,7 +22,7 @@ var _ pluginapi.TelegramCommand = (*Stop)(nil)
 // NewStop creates a new Stop.
 func NewStop(
 	apiClientSvc service.APIClientService,
-	answers *notice.Notice,
+	answers *Notice,
 ) *Stop {
 	return &Stop{
 		apiClientSvc: apiClientSvc,

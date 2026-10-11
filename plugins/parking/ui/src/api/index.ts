@@ -6,6 +6,7 @@ export type {
   Account,
   Connection,
   ConnectionState,
+  Money,
   PendingConnection,
 } from "./types";
 

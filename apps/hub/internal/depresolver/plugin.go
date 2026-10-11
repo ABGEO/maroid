@@ -71,16 +71,16 @@ func (c *Container) newPluginHost() (*pluginhost.Host, error) {
 		return nil, err
 	}
 
-	host, err := pluginhost.New(
-		c.Config(),
-		c.Logger(),
-		db,
-		notifier,
-		telegramBot,
-		telegramConversationEngine,
-		settingsService,
-		secretStore,
-	)
+	host, err := pluginhost.New(pluginhost.Dependencies{
+		Config:                     c.Config(),
+		Logger:                     c.Logger(),
+		Database:                   db,
+		Notifier:                   notifier,
+		TelegramBot:                telegramBot,
+		TelegramConversationEngine: telegramConversationEngine,
+		Settings:                   settingsService,
+		Secrets:                    secretStore,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("building the plugin host: %w", err)
 	}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/parking/config"
+	"github.com/abgeo/maroid/plugins/parking/errs"
 	"github.com/abgeo/maroid/plugins/parking/service"
 )
 
@@ -115,7 +116,7 @@ func TestARejectedTokenIsRemoved(t *testing.T) {
 
 	_, err := fix.client.GetActiveSession(as(userA))
 
-	require.ErrorIs(t, err, service.ErrNotConnected)
+	require.ErrorIs(t, err, errs.ErrNotConnected)
 	require.NotContains(t, fix.secrets.values, userA+"/"+service.SecretSession)
 }
 
@@ -144,6 +145,6 @@ func TestAUserWithNoTokenReachesNoCall(t *testing.T) {
 
 	_, err := fix.client.GetPerson(as(userB))
 
-	require.ErrorIs(t, err, service.ErrNotConnected)
+	require.ErrorIs(t, err, errs.ErrNotConnected)
 	require.Empty(t, fix.credentials)
 }

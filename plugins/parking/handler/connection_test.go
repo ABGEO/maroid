@@ -20,7 +20,7 @@ import (
 
 const (
 	pathConnection   = "/connections/self"
-	pathPending      = "/pending-connections/self"
+	pathPending      = "/pending-connections"
 	pathCodeRequests = "/pending-connections/self/code-requests"
 	pathVerification = "/pending-connections/self/verifications"
 
@@ -173,7 +173,7 @@ func TestReadOfAConnectedAccount(t *testing.T) {
 	require.Equal(t, map[string]any{
 		"first_name":         "Nino",
 		"last_name":          "Beridze",
-		"balance":            4.52,
+		"balance":            map[string]any{"amount": 4.52, "currency": "GEL"},
 		"free_parkings_left": float64(4),
 	}, body["account"])
 	require.Equal(t, "Bearer "+sessionT1, parking.service.recorded()[0].authorization)
@@ -205,7 +205,7 @@ func TestAbsentCredentials(t *testing.T) {
 	require.Equal(t, http.StatusOK, read.Code)
 	require.Equal(t, false, decode(t, read)["credentials_stored"])
 
-	start := parking.do(t, http.MethodPut, pathPending, "")
+	start := parking.do(t, http.MethodPost, pathPending, "")
 	requireProblem(t, start, http.StatusUnprocessableEntity, problemPrefix+"credentials-absent")
 	require.Empty(t, parking.service.recorded())
 }
@@ -220,9 +220,10 @@ func TestStartAConnection(t *testing.T) {
 	parking.service.on(http.MethodPost, pathSend, ok(sendAnswer))
 
 	start := time.Now()
-	recorder := parking.do(t, http.MethodPut, pathPending, "")
+	recorder := parking.do(t, http.MethodPost, pathPending, "")
 
-	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+	require.Equal(t, http.StatusCreated, recorder.Code, recorder.Body.String())
+	require.Equal(t, pathPending+"/self", recorder.Header().Get("Location"))
 
 	body := decode(t, recorder)
 	require.Equal(t, "5******27", body["phone"])
@@ -257,7 +258,7 @@ func TestStartWithRejectedCredentials(t *testing.T) {
 		answer{status: http.StatusUnauthorized, body: `{}`},
 	)
 
-	recorder := parking.do(t, http.MethodPut, pathPending, "")
+	recorder := parking.do(t, http.MethodPost, pathPending, "")
 
 	requireProblem(
 		t,
@@ -279,7 +280,7 @@ func TestStartWithNoPhoneVerification(t *testing.T) {
 		`{"UUID":"`+signInID+`","status":"REQUIRES_TWO_FA","TWO_FA":{"PHONE_VERIFICATION":false}}`,
 	))
 
-	recorder := parking.do(t, http.MethodPut, pathPending, "")
+	recorder := parking.do(t, http.MethodPost, pathPending, "")
 
 	requireProblem(
 		t,
@@ -474,7 +475,7 @@ func TestNoAnswerHoldsACredential(t *testing.T) {
 	parking.service.on(http.MethodGet, pathPerson, ok(personAnswer))
 
 	answers := []*httptest.ResponseRecorder{
-		parking.do(t, http.MethodPut, pathPending, ""),
+		parking.do(t, http.MethodPost, pathPending, ""),
 		parking.do(t, http.MethodPost, pathCodeRequests, ""),
 		parking.do(t, http.MethodPost, pathVerification, `{"code":"`+codeCorrect+`"}`),
 		parking.do(t, http.MethodPost, pathVerification, `{"code":"`+codeCorrect+`"}`),
@@ -491,4 +492,31 @@ func TestNoAnswerHoldsACredential(t *testing.T) {
 	for _, credential := range []string{password, codeCorrect, signInID, sessionT1} {
 		require.NotContains(t, parking.logs.String(), credential)
 	}
+}
+
+// PARKACC-SC-030: A code that the parking service accepts connects the account, also when
+// the read of the account fails right after it.
+func TestVerifyConnectsWhenTheReadOfTheAccountFails(t *testing.T) {
+	t.Parallel()
+
+	parking := newRig(t, storedCredentials())
+	parking.pending(time.Now())
+	parking.service.on(http.MethodPost, pathSubmit, answer{
+		status:  http.StatusOK,
+		body:    data(`{"status":"SUCCESS"}`),
+		headers: map[string]string{tokenHeader: sessionT1},
+	})
+	parking.service.on(http.MethodGet, pathPerson, answer{status: http.StatusServiceUnavailable})
+
+	recorder := parking.do(t, http.MethodPost, pathVerification, `{"code":"`+codeCorrect+`"}`)
+
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+
+	body := decode(t, recorder)
+	require.Equal(t, "connected", body["state"])
+	require.NotContains(t, body, "account")
+
+	session, found := parking.secrets.entry(sessionName)
+	require.True(t, found)
+	require.Equal(t, sessionT1, session.value)
 }

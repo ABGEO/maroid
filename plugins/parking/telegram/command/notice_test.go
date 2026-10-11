@@ -1,4 +1,4 @@
-package notice_test
+package command_test
 
 import (
 	"context"
@@ -9,8 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/plugins/parking/errs"
 	"github.com/abgeo/maroid/plugins/parking/service"
-	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
+	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 )
 
 const accountURL = "https://deck.example/w/W/plugins/dev.maroid.parking/account"
@@ -30,8 +31,8 @@ func (p *fakePages) PageURL(_ context.Context, _ *pluginapi.PluginID, path strin
 	return p.address, p.err
 }
 
-func noticeOf(pages *fakePages) *notice.Notice {
-	return notice.New(pages, pluginapi.ParsePluginID("dev.maroid.parking"))
+func noticeOf(pages *fakePages) *command.Notice {
+	return command.NewNotice(pages, pluginapi.ParsePluginID("dev.maroid.parking"))
 }
 
 // PARKACC-SC-018: The answer to a user with no connection says so and links to the
@@ -43,7 +44,7 @@ func TestNotConnectedLinksToTheAccountPage(t *testing.T) {
 
 	text, known := noticeOf(
 		pages,
-	).Text(context.Background(), fmt.Errorf("fetching person: %w", service.ErrNotConnected))
+	).Text(context.Background(), fmt.Errorf("fetching person: %w", errs.ErrNotConnected))
 
 	require.True(t, known)
 	require.Contains(t, text, "not connected")
@@ -56,7 +57,7 @@ func TestNotConnectedWithNoAddressNamesThePage(t *testing.T) {
 	t.Parallel()
 
 	text, known := noticeOf(&fakePages{err: pluginapi.ErrPageAddressAbsent}).
-		Text(context.Background(), service.ErrNotConnected)
+		Text(context.Background(), errs.ErrNotConnected)
 
 	require.True(t, known)
 	require.Contains(t, text, "not connected")
@@ -64,8 +65,8 @@ func TestNotConnectedWithNoAddressNamesThePage(t *testing.T) {
 	require.NotContains(t, text, "href")
 }
 
-// The bot answer of section 4.5: a failure of the parking service says so, and any
-// other failure goes back to the caller.
+// PARKACC-SC-029: A failure of the parking service says so, and any other failure
+// goes back to the caller.
 func TestOtherFailures(t *testing.T) {
 	t.Parallel()
 

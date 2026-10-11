@@ -10,6 +10,7 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/parking/config"
+	"github.com/abgeo/maroid/plugins/parking/errs"
 	"github.com/abgeo/maroid/plugins/parking/model"
 )
 
@@ -22,28 +23,20 @@ const (
 	defaultCodeDelay = 60 * time.Second
 )
 
-var (
-	// ErrCredentialsAbsent is returned when the acting user stored no username or no password.
-	ErrCredentialsAbsent = errors.New("parking: credentials absent")
-	// ErrPendingAbsent is returned when no pending connection exists, or when it expired.
-	ErrPendingAbsent = errors.New("parking: no pending connection")
-	// ErrCodeWait is returned when a new code is asked for before the wait ends.
-	ErrCodeWait = errors.New("parking: the wait for a new code has not ended")
-)
-
 // CodeWaitError reports the time left before the parking service sends a new code.
-// It matches ErrCodeWait.
+// It matches errs.ErrCodeWait.
 type CodeWaitError struct {
 	Left time.Duration
 }
 
+// Error names the time left.
 func (e *CodeWaitError) Error() string {
-	return fmt.Sprintf("%s: %s left", ErrCodeWait, e.Left.Round(time.Second))
+	return fmt.Sprintf("%s: %s left", errs.ErrCodeWait, e.Left.Round(time.Second))
 }
 
-// Is reports whether target is ErrCodeWait.
+// Is reports whether target is errs.ErrCodeWait.
 func (e *CodeWaitError) Is(target error) bool {
-	return target == ErrCodeWait
+	return target == errs.ErrCodeWait
 }
 
 // ConnectionService connects the parking account of the acting user.
@@ -90,12 +83,12 @@ func NewConnections(
 // parking service, which also proves that the token still works.
 func (c *Connections) Status(ctx context.Context) (*model.Connection, error) {
 	credentials, err := c.credentials(ctx)
-	if err != nil && !errors.Is(err, ErrCredentialsAbsent) {
+	if err != nil && !errors.Is(err, errs.ErrCredentialsAbsent) {
 		return nil, err
 	}
 
 	pending, err := c.pending(ctx)
-	if err != nil && !errors.Is(err, ErrPendingAbsent) {
+	if err != nil && !errors.Is(err, errs.ErrPendingAbsent) {
 		return nil, err
 	}
 
@@ -108,7 +101,7 @@ func (c *Connections) Status(ctx context.Context) (*model.Connection, error) {
 	person, err := c.client.GetPerson(ctx)
 
 	switch {
-	case errors.Is(err, ErrNotConnected):
+	case errors.Is(err, errs.ErrNotConnected):
 		return connection, nil
 	case err != nil:
 		return nil, fmt.Errorf("reading the parking account: %w", err)
@@ -139,7 +132,11 @@ func (c *Connections) Start(ctx context.Context) (*model.PendingConnection, erro
 	}
 
 	if result.Status != statusTwoFactor || !result.TwoFA.PhoneVerification {
-		return nil, fmt.Errorf("%w: the status is %q", ErrVerificationUnsupported, result.Status)
+		return nil, fmt.Errorf(
+			"%w: the status is %q",
+			errs.ErrVerificationUnsupported,
+			result.Status,
+		)
 	}
 
 	return c.requestCode(ctx, result.UUID)
@@ -182,7 +179,17 @@ func (c *Connections) Verify(ctx context.Context, code string) (*model.Connectio
 		return nil, fmt.Errorf("removing the pending connection: %w", err)
 	}
 
-	return c.Status(ctx)
+	connection, err := c.Status(ctx)
+	if err != nil {
+		// The token is stored, so the account is connected. Only its read failed, and an
+		// error would send the member back to a code that no pending connection holds.
+		return &model.Connection{ //nolint:nilerr // see the reason above.
+			State:             model.ConnectionStateConnected,
+			CredentialsStored: true,
+		}, nil
+	}
+
+	return connection, nil
 }
 
 // Disconnect removes the session token of the acting user. The settings stay.
@@ -233,7 +240,7 @@ func (c *Connections) requestCode(
 func (c *Connections) credentials(ctx context.Context) (*config.UserSettings, error) {
 	values, err := c.settings.Get(ctx)
 	if errors.Is(err, pluginapi.ErrSettingsAbsent) {
-		return nil, ErrCredentialsAbsent
+		return nil, errs.ErrCredentialsAbsent
 	}
 
 	if err != nil {
@@ -246,7 +253,7 @@ func (c *Connections) credentials(ctx context.Context) (*config.UserSettings, er
 	}
 
 	if credentials.Username == "" || credentials.Password == "" {
-		return nil, ErrCredentialsAbsent
+		return nil, errs.ErrCredentialsAbsent
 	}
 
 	return credentials, nil
@@ -255,7 +262,7 @@ func (c *Connections) credentials(ctx context.Context) (*config.UserSettings, er
 func (c *Connections) pending(ctx context.Context) (*model.PendingConnection, error) {
 	encoded, err := c.secrets.Get(ctx, pluginapi.SecretScopeUser, SecretPending)
 	if errors.Is(err, pluginapi.ErrSecretAbsent) {
-		return nil, ErrPendingAbsent
+		return nil, errs.ErrPendingAbsent
 	}
 
 	if err != nil {

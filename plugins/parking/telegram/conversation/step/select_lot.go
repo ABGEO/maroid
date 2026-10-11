@@ -11,7 +11,7 @@ import (
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/dto"
 	"github.com/abgeo/maroid/plugins/parking/service"
-	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
+	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 )
 
 // bboxOffset defines the approximate bounding box offset in degrees
@@ -22,7 +22,7 @@ const bboxOffset = 0.0001
 type SelectLot struct {
 	telegramBot  pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
-	answers      *notice.Notice
+	answers      *command.Notice
 }
 
 var _ conversationapi.Step = (*SelectLot)(nil)
@@ -31,7 +31,7 @@ var _ conversationapi.Step = (*SelectLot)(nil)
 func NewSelectLot(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
-	answers *notice.Notice,
+	answers *command.Notice,
 ) *SelectLot {
 	return &SelectLot{
 		telegramBot:  telegramBot,

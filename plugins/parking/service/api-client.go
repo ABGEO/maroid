@@ -13,23 +13,8 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/parking/config"
 	"github.com/abgeo/maroid/plugins/parking/dto"
+	"github.com/abgeo/maroid/plugins/parking/errs"
 	"github.com/abgeo/maroid/plugins/parking/model"
-)
-
-var (
-	// ErrRequestFailed is returned when an HTTP or API request fails.
-	ErrRequestFailed = errors.New("request failed")
-	// ErrParkingPlaceNotFound is returned when a parking place does not exist.
-	ErrParkingPlaceNotFound = errors.New("parking place not found")
-	// ErrNotConnected is returned when Maroid holds no session token for the acting
-	// user, or when the parking service rejected the one it held.
-	ErrNotConnected = errors.New("parking: not connected")
-	// ErrCredentialsRejected is returned when the parking service rejects a sign in.
-	ErrCredentialsRejected = errors.New("parking: credentials rejected")
-	// ErrVerificationUnsupported is returned when a sign in asks for no code by phone.
-	ErrVerificationUnsupported = errors.New("parking: verification unsupported")
-	// ErrCodeRejected is returned when the parking service rejects a code.
-	ErrCodeRejected = errors.New("parking: code rejected")
 )
 
 const (
@@ -117,11 +102,11 @@ func (s *APIClient) SignIn(
 		}).
 		Post(pathSignIn)
 	if err != nil {
-		return nil, fmt.Errorf("%w: sending the sign in: %w", ErrRequestFailed, err)
+		return nil, fmt.Errorf("%w: sending the sign in: %w", errs.ErrRequestFailed, err)
 	}
 
 	if isRejection(resp.StatusCode()) {
-		return nil, fmt.Errorf("%w: returned [%d]", ErrCredentialsRejected, resp.StatusCode())
+		return nil, fmt.Errorf("%w: returned [%d]", errs.ErrCredentialsRejected, resp.StatusCode())
 	}
 
 	if err = requireSuccess(resp); err != nil {
@@ -146,7 +131,7 @@ func (s *APIClient) RequestCode(
 		}).
 		Post(pathCodeRequest)
 	if err != nil {
-		return nil, fmt.Errorf("%w: sending the code request: %w", ErrRequestFailed, err)
+		return nil, fmt.Errorf("%w: sending the code request: %w", errs.ErrRequestFailed, err)
 	}
 
 	if err = requireSuccess(resp); err != nil {
@@ -169,12 +154,12 @@ func (s *APIClient) SubmitCode(ctx context.Context, signInID, code string) (stri
 		}).
 		Post(pathCodeSubmit)
 	if err != nil {
-		return "", fmt.Errorf("%w: sending the code: %w", ErrRequestFailed, err)
+		return "", fmt.Errorf("%w: sending the code: %w", errs.ErrRequestFailed, err)
 	}
 
 	if resp.StatusCode() >= http.StatusBadRequest &&
 		resp.StatusCode() < http.StatusInternalServerError {
-		return "", fmt.Errorf("%w: returned [%d]", ErrCodeRejected, resp.StatusCode())
+		return "", fmt.Errorf("%w: returned [%d]", errs.ErrCodeRejected, resp.StatusCode())
 	}
 
 	if err = requireSuccess(resp); err != nil {
@@ -182,12 +167,16 @@ func (s *APIClient) SubmitCode(ctx context.Context, signInID, code string) (stri
 	}
 
 	if response.Result.Data.Status != statusSuccess {
-		return "", fmt.Errorf("%w: the status is %q", ErrCodeRejected, response.Result.Data.Status)
+		return "", fmt.Errorf(
+			"%w: the status is %q",
+			errs.ErrCodeRejected,
+			response.Result.Data.Status,
+		)
 	}
 
 	token := resp.Header().Get(headerSessionToken)
 	if token == "" {
-		return "", fmt.Errorf("%w: the answer carries no session token", ErrRequestFailed)
+		return "", fmt.Errorf("%w: the answer carries no session token", errs.ErrRequestFailed)
 	}
 
 	return token, nil
@@ -259,7 +248,7 @@ func (s *APIClient) GetParkingPlace(
 		},
 	)
 	if _, isStatus := errors.AsType[*StatusError](err); isStatus {
-		return nil, ErrParkingPlaceNotFound
+		return nil, errs.ErrParkingPlaceNotFound
 	}
 
 	if err != nil {
@@ -361,8 +350,8 @@ func (s *APIClient) GetPerson(
 }
 
 // send runs one call with the session token of the acting user. A user with no token
-// gets ErrNotConnected with no call. A 401 is the only sign that the parking service
-// ended the token, so send removes the token and answers ErrNotConnected.
+// gets errs.ErrNotConnected with no call. A 401 is the only sign that the parking service
+// ended the token, so send removes the token and answers errs.ErrNotConnected.
 func (s *APIClient) send(
 	ctx context.Context,
 	action string,
@@ -370,7 +359,7 @@ func (s *APIClient) send(
 ) error {
 	token, err := s.secrets.Get(ctx, pluginapi.SecretScopeUser, SecretSession)
 	if errors.Is(err, pluginapi.ErrSecretAbsent) {
-		return ErrNotConnected
+		return errs.ErrNotConnected
 	}
 
 	if err != nil {
@@ -379,7 +368,7 @@ func (s *APIClient) send(
 
 	resp, err := call(s.client.R().SetContext(ctx).SetAuthToken(token))
 	if err != nil {
-		return fmt.Errorf("%w: %s: %w", ErrRequestFailed, action, err)
+		return fmt.Errorf("%w: %s: %w", errs.ErrRequestFailed, action, err)
 	}
 
 	if resp.StatusCode() == http.StatusUnauthorized {
@@ -387,7 +376,7 @@ func (s *APIClient) send(
 			return fmt.Errorf("removing the rejected session token: %w", err)
 		}
 
-		return ErrNotConnected
+		return errs.ErrNotConnected
 	}
 
 	if err = requireSuccess(resp); err != nil {
@@ -407,18 +396,19 @@ func isRejection(status int) bool {
 }
 
 // StatusError reports an answer of the parking service whose status is not 200. It
-// matches ErrRequestFailed.
+// matches errs.ErrRequestFailed.
 type StatusError struct {
 	Status int
 }
 
+// Error names the status.
 func (e *StatusError) Error() string {
-	return fmt.Sprintf("%s: returned [%d]", ErrRequestFailed, e.Status)
+	return fmt.Sprintf("%s: returned [%d]", errs.ErrRequestFailed, e.Status)
 }
 
-// Is reports whether target is ErrRequestFailed.
+// Is reports whether target is errs.ErrRequestFailed.
 func (e *StatusError) Is(target error) bool {
-	return target == ErrRequestFailed
+	return target == errs.ErrRequestFailed
 }
 
 func requireSuccess(resp *resty.Response) error {

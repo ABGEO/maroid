@@ -87,8 +87,11 @@ hour, one for each user and one for each workspace. `ADR-0014` permits the secon
 | `apps/hub/db/migrations/20261012100100_table_plugin_workspace_secrets_create.{up,down}.sql` | create | `public.plugin_workspace_secrets`                                             |
 | `apps/hub/internal/model/plugin_secret.go`                                        | create | `PluginSecret`                                                                                 |
 | `apps/hub/internal/repository/plugin_secret.go`                                   | create | `PluginSecretRepository`, `PluginSecret`, `NewPluginSecret`                                    |
+| `apps/hub/internal/repository/plugin_settings.go`                                 | change | `settingsTable` becomes `scopedTable`, which both repositories use                             |
+| `apps/hub/internal/database/tx.go`                                                | change | `FetchScopeTx`, the scoped form of `FetchTx`                                                   |
+| `apps/hub/internal/testbao/testbao.go`                                            | create | `Start`, `Server`, `CreateKeys`, `Cipher`: an OpenBao that one integration test owns          |
 | `apps/hub/internal/pluginsecret/{doc,store,validate,sweep}.go`                    | create | `Store`, `NewStore`, `Sweep`, `NewSweep`, `UserSweepJobID`, `WorkspaceSweepJobID`              |
-| `apps/hub/internal/plugin/host/host.go`                                           | change | The `secrets` field, the `secrets` argument of `New`, `Host.Secrets`                           |
+| `apps/hub/internal/plugin/host/host.go`                                           | change | The `secrets` field, `Dependencies.Secrets`, `Host.Secrets`                                    |
 | `apps/hub/internal/depresolver/secret.go`                                         | change | `Container.PluginSecretStore`                                                                  |
 | `apps/hub/internal/depresolver/resolver.go`                                       | change | The `pluginSecretStore` field of `Container`                                                   |
 | `apps/hub/internal/depresolver/plugin.go`                                         | change | Passes `PluginSecretStore` to `pluginhost.New`                                                 |
@@ -96,7 +99,7 @@ hour, one for each user and one for each workspace. `ADR-0014` permits the secon
 | `apps/hub/internal/worker/cron.go`                                                | change | `WorkspaceLister.AllWorkspaces`. `Prepare` accepts a job of the hub for each workspace         |
 | `apps/hub/internal/workspace/enablement.go`                                       | change | `Enablements.AllWorkspaces`                                                                    |
 | `apps/hub/internal/repository/workspace.go`                                       | change | `Workspace.ListIDs`                                                                            |
-| `apps/hub/internal/domain/errs/errs.go`                                           | change | Removes `ErrCronScopeWithoutPlugin`                                                            |
+| `apps/hub/internal/domain/errs/errs.go`                                           | change | Removes `ErrCronScopeWithoutPlugin`. Adds `ErrUnknownSecretScope`                              |
 
 The contract in `libs/pluginapi/secret.go`:
 

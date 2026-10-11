@@ -28,26 +28,30 @@ type Host struct {
 
 var _ pluginapi.Host = (*Host)(nil)
 
-// New creates and returns a new Host instance using the given dependency container.
-func New(
-	cfg *config.Config,
-	logger *slog.Logger,
-	database *sqlx.DB,
-	notifier pluginapi.NotificationSender,
-	telegramBot *telego.Bot,
-	telegramConversationEngine conversation.Engine,
-	settings pluginapi.SettingsProvider,
-	secrets pluginapi.SecretProvider,
-) (*Host, error) {
+// Dependencies holds what the host hands to a plugin. Config comes first, because
+// the host reads its own settings from it.
+type Dependencies struct {
+	Config                     *config.Config
+	Logger                     *slog.Logger
+	Database                   *sqlx.DB
+	Notifier                   pluginapi.NotificationSender
+	TelegramBot                *telego.Bot
+	TelegramConversationEngine conversation.Engine
+	Settings                   pluginapi.SettingsProvider
+	Secrets                    pluginapi.SecretProvider
+}
+
+// New creates and returns a new Host instance over the given dependencies.
+func New(deps Dependencies) (*Host, error) {
 	return &Host{
-		logger:                     logger,
-		database:                   database,
-		notifier:                   notifier,
-		telegramBot:                telegramBot,
-		telegramConversationEngine: telegramConversationEngine,
-		settings:                   settings,
-		secrets:                    secrets,
-		pages:                      &pageLinker{deckURL: cfg.Auth.DeckURL},
+		logger:                     deps.Logger,
+		database:                   deps.Database,
+		notifier:                   deps.Notifier,
+		telegramBot:                deps.TelegramBot,
+		telegramConversationEngine: deps.TelegramConversationEngine,
+		settings:                   deps.Settings,
+		secrets:                    deps.Secrets,
+		pages:                      &pageLinker{deckURL: deps.Config.Auth.DeckURL},
 	}, nil
 }
 

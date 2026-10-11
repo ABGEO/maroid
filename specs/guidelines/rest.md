@@ -4,7 +4,7 @@ title: The REST conventions
 type: guideline
 status: active
 created: 2026-09-22
-updated: 2026-10-01
+updated: 2026-10-12
 scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, plugins/, libs/api-client/, libs/plugin-sdk/, apps/deck/, specs/features/*/api.yaml, specs/templates/api.yaml, specs/api/, build/openapi/]
 related: [API, ERR, SPC, DAT, EXT, SEC, OWN, UI, TG, MQT, CFG, BLD, CLI]
 ---
@@ -51,7 +51,7 @@ registers. Every rule that neither table names binds in full.
 | `Z-150`, `Z-251` | `GET /auth/callback` answers 302. `Z-150` marks 302 do-not-use and `Z-251` advises against a redirection code. The browser arrives at that route by redirect and leaves by one, which RFC 6749 section 4.1.2 fixes. |
 | `Z-217`        | The first sentence of `Z-217` is a must, and `RES-005` meets it with an absolute address. The deviation is from the second, a should: it asks for the scheme, the host, and the port of the request. A proxy sets the `Host` header, and a caller sets it behind a proxy that passes it, so a link built from it points where the caller chose. |
 | `Z-110`        | `GET /workspaces/{workspaceId}/plugins/{id}/settings` answers a map at the top level, which `Z-110` forbids because a map grows no member. The settings of a plugin hold that shape, and an envelope changes the route and the deck together. `Z-110` binds a response body, so the request body of the `PUT` is not in scope, and that `PUT` answers 204 with no body at all. |
-| `Z-143`        | `Z-143` asks that every intermediate path resolve. `/plugins/{id}`, `/auth`, `/.well-known`, the mount prefix of `API-004`, and the asset prefix of `SEC-006` answer nothing. `/plugins/{id}` would repeat one row of the list that `/plugins` answers, and the other four name no resource of their own. |
+| `Z-143`        | `Z-143` asks that every intermediate path resolve. `/plugins/{id}`, `/auth`, `/.well-known`, the mount prefix of `API-004`, and the asset prefix of `SEC-006` answer nothing. `/plugins/{id}` would repeat one row of the list that `/plugins` answers, and the other four name no resource of their own. A collection whose only member a client reaches is the `self` record of the acting user answers no `GET` either, `/connections` of a plugin for example. `ADR-0015`. |
 | `Z-144`        | `DAT-009` gives every row a UUID version 7, and `Z-144` discourages a UUID as the primary key of configuration data. Version 7 sorts by time, so the primary key answers the keyset page of `RES-006` at no index cost, which is the case that the hint of `Z-144` concedes. |
 | `Z-186`        | The rule asks every external partner to consent to the window before it uses the API. `RES-007` gives the audience `external-public`, so no deployment can tell whether a consumer is a partner. The condition cannot be discharged, rather than being unmet. `RES-011` publishes the window, which answers the first sentence of the rule and not the second. |
 | `Z-185`        | The rule asks for the consent of every client before a route goes. `RES-007` gives the audience `external-public`, so a deployment cannot enumerate its clients. `RES-011` publishes a window in place of the consent. |

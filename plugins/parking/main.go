@@ -16,7 +16,6 @@ import (
 	"github.com/abgeo/maroid/plugins/parking/service"
 	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 	"github.com/abgeo/maroid/plugins/parking/telegram/conversation"
-	"github.com/abgeo/maroid/plugins/parking/telegram/notice"
 )
 
 // pluginID names the plugin. The constructor needs it before Meta exists.
@@ -31,7 +30,7 @@ type ParkingPlugin struct {
 	telegramConversationEngine telegramconversationapi.Engine
 	apiClientSvc               service.APIClientService
 	connections                service.ConnectionService
-	answers                    *notice.Notice
+	answers                    *command.Notice
 }
 
 var (
@@ -83,7 +82,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		telegramConversationEngine: host.TelegramConversationEngine(),
 		apiClientSvc:               apiClient,
 		connections:                service.NewConnections(apiClient, settings, secrets),
-		answers:                    notice.New(pages, pluginID),
+		answers:                    command.NewNotice(pages, pluginID),
 	}
 
 	plg.logger = host.Logger().With(

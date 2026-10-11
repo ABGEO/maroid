@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/abgeo/maroid/libs/rest/problem"
+	"github.com/abgeo/maroid/plugins/parking/errs"
 	"github.com/abgeo/maroid/plugins/parking/service"
 )
 
@@ -33,19 +34,19 @@ func writeFailure(
 	var wait *service.CodeWaitError
 
 	switch {
-	case errors.Is(err, service.ErrCredentialsAbsent):
+	case errors.Is(err, errs.ErrCredentialsAbsent):
 		writeProblem(w, r, typeCredentialsAbsent, http.StatusUnprocessableEntity,
 			"The settings hold no username or no password.",
 			"Store the username and the password of the parking account in the settings.")
-	case errors.Is(err, service.ErrCredentialsRejected):
+	case errors.Is(err, errs.ErrCredentialsRejected):
 		writeProblem(w, r, typeCredentialsRejected, http.StatusUnprocessableEntity,
 			"The parking service rejected the credentials.",
 			"Check the username and the password in the settings.")
-	case errors.Is(err, service.ErrVerificationUnsupported):
+	case errors.Is(err, errs.ErrVerificationUnsupported):
 		writeProblem(w, r, typeVerificationUnsupported, http.StatusUnprocessableEntity,
 			"The parking account does not confirm a sign in by phone.",
 			"Maroid connects a parking account that the parking service confirms with an SMS code.")
-	case errors.Is(err, service.ErrCodeRejected):
+	case errors.Is(err, errs.ErrCodeRejected):
 		writeProblem(w, r, typeCodeRejected, http.StatusUnprocessableEntity,
 			"The parking service rejected the code.",
 			"Type the code again, or ask for a new one.")
@@ -55,13 +56,13 @@ func writeFailure(
 		writeProblem(w, r, typeCodeWait, http.StatusTooManyRequests,
 			"The wait for a new code has not ended.",
 			"Ask for a new code in "+seconds+" seconds.")
-	case errors.Is(err, service.ErrPendingAbsent):
+	case errors.Is(err, errs.ErrPendingAbsent):
 		problem.Write(
 			w,
 			r,
 			problem.NewNotFound().WithDetail("No pending connection exists. Connect again."),
 		)
-	case errors.Is(err, service.ErrRequestFailed):
+	case errors.Is(err, errs.ErrRequestFailed):
 		logger.WarnContext(
 			r.Context(),
 			"the parking service failed",

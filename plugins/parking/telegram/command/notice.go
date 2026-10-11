@@ -1,5 +1,4 @@
-// Package notice writes the answers of the bot to a failure that a person can act on.
-package notice
+package command
 
 import (
 	"context"
@@ -7,7 +6,7 @@ import (
 	"html"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/plugins/parking/service"
+	"github.com/abgeo/maroid/plugins/parking/errs"
 )
 
 const (
@@ -18,14 +17,15 @@ const (
 	noLinkText       = notConnectedText + "\n\nOpen the Account page of Tbilisi Parking in Maroid to connect it."
 )
 
-// Notice builds the answer to a failure of the parking account.
+// Notice builds the answer of the bot to a failure that a person can act on. The
+// commands and the conversation steps share it.
 type Notice struct {
 	pages    pluginapi.PageLinker
 	pluginID *pluginapi.PluginID
 }
 
-// New creates a new Notice.
-func New(pages pluginapi.PageLinker, pluginID *pluginapi.PluginID) *Notice {
+// NewNotice creates a new Notice.
+func NewNotice(pages pluginapi.PageLinker, pluginID *pluginapi.PluginID) *Notice {
 	return &Notice{
 		pages:    pages,
 		pluginID: pluginID,
@@ -36,9 +36,9 @@ func New(pages pluginapi.PageLinker, pluginID *pluginapi.PluginID) *Notice {
 // connection, or a parking service that failed. It answers false for any other failure.
 func (n *Notice) Text(ctx context.Context, err error) (string, bool) {
 	switch {
-	case errors.Is(err, service.ErrNotConnected):
+	case errors.Is(err, errs.ErrNotConnected):
 		return n.notConnected(ctx), true
-	case errors.Is(err, service.ErrRequestFailed):
+	case errors.Is(err, errs.ErrRequestFailed):
 		return unavailableText, true
 	default:
 		return "", false

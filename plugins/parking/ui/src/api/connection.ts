@@ -6,7 +6,7 @@ export function createConnectionApi(api: ApiClient) {
   return {
     read: () => api.get<Connection>("/connections/self"),
     disconnect: () => api.del<null>("/connections/self"),
-    start: () => api.put<PendingConnection>("/pending-connections/self"),
+    start: () => api.post<PendingConnection>("/pending-connections"),
     requestCode: () =>
       api.post<PendingConnection>("/pending-connections/self/code-requests"),
     verify: (code: string) =>
