@@ -312,7 +312,7 @@ against `pnpm hub:serve` and `pnpm deck:dev`, in workspace H with jasmine enable
 | 3   | `libs/plugin-sdk`: `RouteParams`, `setTitle`. `pnpm --filter @maroid/plugin-sdk check`. | `PLROUTE-FR-004`, `PLROUTE-FR-011` | [x] |
 | 4   | The deck: `routes.ts`, the loader, the plugin page, the title state, the trail, the navigation. `pnpm --filter @maroid/deck lint`, `pnpm --filter @maroid/deck check`. | `PLROUTE-FR-001` to `PLROUTE-FR-012`, `PLROUTE-INV-001` | [x] |
 | 5   | Jasmine: the plant route and the pages, and the change to the GARDEN spec. The remote build, then the `.so`. `BLD-003`, `BLD-004`. | `PLROUTE-FR-013` to `PLROUTE-FR-016` | [x] |
-| 6   | The manual scenarios. | Every manual scenario | [ ] |
+| 6   | The manual scenarios. | Every manual scenario | [x] |
 
 ## 8. Out of scope for this specification
 
