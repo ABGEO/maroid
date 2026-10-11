@@ -5,7 +5,8 @@ export const PERMISSION = {
 	workspaceWrite: 'workspace.write',
 	membersWrite: 'members.write',
 	pluginsWrite: 'plugins.write',
-	settingsWrite: 'settings.write'
+	settingsWrite: 'settings.write',
+	notificationsWrite: 'notifications.write'
 } as const;
 
 /** The roles, from the most access to the least. */

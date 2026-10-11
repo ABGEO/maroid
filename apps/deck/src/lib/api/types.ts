@@ -232,6 +232,47 @@ export type SettingsValues = Record<string, SettingsValue>;
 
 export type SettingsInput = Record<string, string | boolean | null>;
 
+/** An external messaging service that the hub delivers a notification through. */
+export interface NotificationProviderKind {
+	id: string;
+	name: string;
+	provider_schema: SettingsSchema;
+	destination_schema: SettingsSchema;
+}
+
+/** An account at an external messaging service that the workspace stores. */
+export interface NotificationProvider {
+	id: string;
+	kind: string;
+	name: string;
+	fields: SettingsValues;
+	enabled: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+/** The rule that sends one topic through one provider to one destination. */
+export interface NotificationRoute {
+	id: string;
+	plugin_id: string;
+	topic_id: string;
+	provider_id: string;
+	destination: SettingsValues;
+	enabled: boolean;
+	created_at: string;
+	updated_at: string;
+}
+
+/** One kind of notification that a plugin of the workspace sends, with its routes. */
+export interface NotificationTopic {
+	plugin_id: string;
+	topic_id: string;
+	name: string;
+	description?: string;
+	unrouted: boolean;
+	routes: NotificationRoute[];
+}
+
 /** A workspace that the person is a member of. */
 /** The role of a member in a workspace, from the most access to the least. */
 export type Role = 'manager' | 'editor' | 'viewer';

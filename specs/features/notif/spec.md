@@ -4,7 +4,7 @@ title: The notification providers of a workspace and the routes of a notificatio
 type: spec
 status: approved
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-12
 approved_by: Temuri
 approved_on: 2026-10-11
 constrained_by: [NTF, PLG, CFG, OWN, SEC, ARC, API, ERR, EXT, DAT, REP, PKG, LOG, JOB, TST, SPC, RES, BLD]
@@ -135,6 +135,7 @@ notification provider takes the transit key of its workspace through `secret.Cip
 | `apps/hub/internal/config/config.go`                                     | change | Drop the `Notifier` field                                                               |
 | `libs/notifier/`, `libs/notifierapi/`                                    | delete | `ADR-0013`                                                                              |
 | `go.work`, `.golangci.yaml`, `config.yaml`, `chart/values.yaml`          | change | Drop both modules and the `notifier` section. `ireturn` swaps `notifierapi.*` for `pluginapi.NotificationSender` and `notification.Kind`. |
+| `libs/api-client/src/problem.ts`                                        | change | `PROBLEM_TYPE` gains the three types of section 4.5                                     |
 | `apps/deck/src/lib/api/notifications.ts`                                 | create | The client of every route of section 4.3                                                |
 | `apps/deck/src/routes/(dashboard)/w/[workspace]/settings/notifications/` | create | The page: the providers list, the topics list, the two dialogs                          |
 | `apps/deck/src/lib/components/notifications/`                            | create | `ProviderDialog.svelte`, `RouteDialog.svelte`. Each renders `SchemaForm`.               |
@@ -522,8 +523,8 @@ about it.
 | 9   | The depresolver. Delete `libs/notifier`, `libs/notifierapi`, the `notifier` configuration. | `NOTIF-INV-004`                        | [x]  |
 | 10  | Each plugin that sends declares its topics and calls `Notify`. Its notification keys leave its configuration. | `NOTIF-FR-001`, `NOTIF-FR-003` | [x]  |
 | 11  | Rebuild and lint every plugin, as `BLD-004` gives.                                        | `NOTIF-FR-001`                          | [x]  |
-| 12  | The deck: the client, the page, the two dialogs, the trail.                               | `NOTIF-FR-004` to `NOTIF-FR-021`        | [ ]  |
-| 13  | The manual scenarios against a real bot.                                                  | `NOTIF-FR-013`, `NOTIF-FR-021`, `NOTIF-FR-032` | [ ]  |
+| 12  | The deck: the client, the page, the two dialogs, the trail.                               | `NOTIF-FR-004` to `NOTIF-FR-021`        | [x]  |
+| 13  | The manual scenarios against a real bot.                                                  | `NOTIF-FR-013`, `NOTIF-FR-021`, `NOTIF-FR-032` | [x]  |
 
 ## 8. Out of scope for this specification
 

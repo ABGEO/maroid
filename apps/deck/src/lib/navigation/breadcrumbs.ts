@@ -146,6 +146,25 @@ export function crumbsFor(
 			];
 		}
 
+		case '/(dashboard)/w/[workspace]/settings/notifications': {
+			const workspaceId = params.workspace ?? '';
+
+			return [
+				HUB,
+				workspaceCrumb(workspaceId, workspaces),
+				{
+					label: 'Settings',
+					href: resolve('/(dashboard)/w/[workspace]/settings', { workspace: workspaceId })
+				},
+				{
+					label: 'Notifications',
+					href: resolve('/(dashboard)/w/[workspace]/settings/notifications', {
+						workspace: workspaceId
+					})
+				}
+			];
+		}
+
 		case '/(dashboard)/profile':
 			return [HUB, { label: 'Profile', href: resolve('/profile') }];
 

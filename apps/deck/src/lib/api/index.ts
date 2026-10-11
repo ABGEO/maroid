@@ -1,6 +1,7 @@
 import { auth } from './auth';
 import { enablements } from './enablements';
 import { identities } from './identities';
+import { notifications } from './notifications';
 import { plugins } from './plugins';
 import { providers } from './providers';
 import { settings } from './settings';
@@ -44,17 +45,28 @@ export type {
 	UserIdentity,
 	UserRef,
 	Provider,
-	ProviderPreset
+	ProviderPreset,
+	NotificationProviderKind,
+	NotificationProvider,
+	NotificationRoute,
+	NotificationTopic
 } from './types';
 export type { NewUser, SelfChange, UserChange } from './users';
 export { LOCAL_PROVIDER } from './users';
 export type { NewProvider, ProviderChange } from './providers';
+export type {
+	NewNotificationProvider,
+	NotificationProviderChange,
+	NewNotificationRoute,
+	NotificationRouteChange
+} from './notifications';
 export type { Tagged } from '@maroid/api-client';
 
 export const api = {
 	auth,
 	enablements,
 	identities,
+	notifications,
 	plugins,
 	providers,
 	settings,

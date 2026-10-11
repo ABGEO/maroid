@@ -42,6 +42,20 @@
 		<li>
 			<a
 				class="list-row hover:bg-base-200"
+				href={resolve('/(dashboard)/w/[workspace]/settings/notifications', {
+					workspace: data.workspace.id
+				})}
+			>
+				<span class="list-col-grow">
+					<span class="block font-medium">Notifications</span>
+					<span class="meta block">Where the notifications of this workspace go.</span>
+				</span>
+				<span class="text-base-content/40" aria-hidden="true">&rarr;</span>
+			</a>
+		</li>
+		<li>
+			<a
+				class="list-row hover:bg-base-200"
 				href={resolve('/(dashboard)/w/[workspace]/settings', { workspace: data.workspace.id })}
 			>
 				<span class="list-col-grow">

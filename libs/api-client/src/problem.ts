@@ -49,6 +49,9 @@ export const PROBLEM_TYPE = {
   providerStatic: '/problems/hub/provider-static',
   localAccountExists: '/problems/hub/local-account-exists',
   localProviderAbsent: '/problems/hub/local-provider-absent',
+  notificationRouteExists: '/problems/hub/notification-route-exists',
+  deliveryRefused: '/problems/hub/delivery-refused',
+  messagingUnreachable: '/problems/hub/messaging-unreachable',
   notReady: '/problems/hub/not-ready',
   internal: '/problems/http/internal'
 } as const;
