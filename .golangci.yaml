@@ -41,8 +41,7 @@ linters:
         - stdlib
         - generic
         - pluginapi.Plugin
-        - notifierapi.Transport
-        - notifierapi.Dispatcher
+        - pluginapi.NotificationSender
         - pluginapi.TelegramBot
         - paho.mqtt.golang.Client
         - repository.UserRepository

@@ -225,11 +225,11 @@ type TopicView struct {
 
 // apps/hub/internal/notification/telegram/kind.go
 type ProviderFields struct {
-    BotToken string `json:"botToken" jsonschema:"title=Bot token,format=password,writeOnly=true,required"`
+    BotToken string `json:"bot_token" jsonschema:"title=Bot token,format=password,writeOnly=true,required"`
 }
 type DestinationFields struct {
-    ChatID   string `json:"chatId"   jsonschema:"title=Chat ID,pattern=^-?[0-9]+$,required"`
-    ThreadID string `json:"threadId" jsonschema:"title=Thread ID,pattern=^[0-9]*$"`
+    ChatID   string `json:"chat_id"   jsonschema:"title=Chat ID,pattern=^-?[0-9]+$,required"`
+    ThreadID string `json:"thread_id" jsonschema:"title=Thread ID,pattern=^[0-9]*$"`
 }
 
 // apps/hub/internal/registry/notification_topic.go
@@ -480,7 +480,7 @@ a fault of a plugin that a person reads.
 **Realizes:** `NOTIF-FR-032`
 **Decision:** `telegram.Kind.Send` keeps the behavior of `libs/notifier/transport/telegram`:
 a text message, a photo or a document for one attachment, and media groups for more. It
-reads `chatId` and the optional `threadId` from the destination. The `x-debug` option ends.
+reads `chat_id` and the optional `thread_id` from the destination. The `x-debug` option ends.
 **Rationale:** The behavior is in production today.
 **Alternatives:** None considered.
 
@@ -513,11 +513,11 @@ about it.
 | --- | ----------------------------------------------------------------------------------------- | --------------------------------------- | ---- |
 | 1   | `libs/pluginapi/notification.go`, and `Host.Notifier()`.                                  | `NOTIF-FR-001`, `NOTIF-FR-003`          | [x]  |
 | 2   | The topic registry, the registrar, the capability, the loader.                            | `NOTIF-FR-001`, `NOTIF-FR-002`          | [x]  |
-| 3   | The two migrations, the model, the two repositories.                                      | `NOTIF-FR-009`, `NOTIF-FR-017`, `NOTIF-INV-001`, `NOTIF-INV-002` | [ ]  |
-| 4   | `notification.Kind`, `KindRegistry`, and `telegram.Kind` with `Verify` and `Send`.        | `NOTIF-FR-011`, `NOTIF-FR-013`, `NOTIF-FR-032` | [ ]  |
+| 3   | The two migrations, the model, the two repositories.                                      | `NOTIF-FR-009`, `NOTIF-FR-017`, `NOTIF-INV-001`, `NOTIF-INV-002` | [x]  |
+| 4   | `notification.Kind`, `KindRegistry`, and `telegram.Kind` with `Verify` and `Send`.        | `NOTIF-FR-011`, `NOTIF-FR-013`, `NOTIF-FR-032` | [x]  |
 | 5   | `notification.Manager`: providers, with the protection of the secrets.                    | `NOTIF-FR-004` to `NOTIF-FR-010`, `NOTIF-FR-033` to `NOTIF-FR-035` | [ ]  |
 | 6   | `notification.Manager`: topics, routes, and the test message.                             | `NOTIF-FR-014` to `NOTIF-FR-023`        | [ ]  |
-| 7   | `notification.Dispatcher`, and `Host.Notifier()` in the hub.                              | `NOTIF-FR-024` to `NOTIF-FR-031`, `NOTIF-NFR-001`, `NOTIF-NFR-002` | [ ]  |
+| 7   | `notification.Dispatcher`, and `Host.Notifier()` in the hub.                              | `NOTIF-FR-024` to `NOTIF-FR-031`, `NOTIF-NFR-001`, `NOTIF-NFR-002` | [x]  |
 | 8   | The permissions, `handler.Notification`, the problems, `api.yaml`.                        | `NOTIF-FR-004` to `NOTIF-FR-021`        | [ ]  |
 | 9   | The depresolver. Delete `libs/notifier`, `libs/notifierapi`, the `notifier` configuration. | `NOTIF-INV-004`                        | [x]  |
 | 10  | Each plugin that sends declares its topics and calls `Notify`. Its notification keys leave its configuration. | `NOTIF-FR-001`, `NOTIF-FR-003` | [x]  |

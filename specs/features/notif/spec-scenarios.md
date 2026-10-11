@@ -65,7 +65,7 @@ and the Bot API stub records no call.
 **Given** workspace A holds "Family bot" with a stored token.
 **When** user V reads `GET /workspaces/A/notification-providers`.
 **Then** the answer is 200. The item holds the name, the kind `telegram`, `enabled: true`,
-and `fields.botToken` equal to `******`. No byte of the token or of its ciphertext appears.
+and `fields.bot_token` equal to `******`. No byte of the token or of its ciphertext appears.
 
 ## `NOTIF-SC-005`
 
@@ -87,7 +87,7 @@ and `fields.botToken` equal to `******`. No byte of the token or of its cipherte
 **Layer:** integration
 
 **Given** "Family bot" with the token `T1`.
-**When** user A sends `PATCH` with `name: "Home bot"` and `fields.botToken: "******"`.
+**When** user A sends `PATCH` with `name: "Home bot"` and `fields.bot_token: "******"`.
 **Then** the answer is 200, the name is "Home bot", the dispatcher decrypts `T1`, and the
 Bot API stub records no `getMe`.
 
@@ -121,9 +121,9 @@ marks both topics unrouted.
 
 | Case                 | Body                                      | Pointers                   |
 | -------------------- | ----------------------------------------- | -------------------------- |
-| Empty token          | `fields: {}`                              | `/fields/botToken`         |
-| Unknown field        | `fields: {botToken: "x", proxy: "y"}`     | `/fields/proxy`            |
-| Chat id not a number | route with `destination: {chatId: "abc"}` | `/destination/chatId`      |
+| Empty token          | `fields: {}`                              | `/fields/bot_token`         |
+| Unknown field        | `fields: {bot_token: "x", proxy: "y"}`     | `/fields/proxy`            |
+| Chat id not a number | route with `destination: {chat_id: "abc"}` | `/destination/chat_id`      |
 
 **Then** each answer is 422 `settings-invalid`, each names the pointers of its row, and
 no row changes.
@@ -148,8 +148,8 @@ no row changes.
 
 **Given** `reminder` has one enabled route to chat `-100` thread `2749`, and `report` has none.
 **When** user V reads `GET /workspaces/A/notification-topics`.
-**Then** `reminder` holds the route with its provider and `destination: {chatId: "-100",
-threadId: "2749"}`, and `unrouted: false`. `report` holds no route, and `unrouted: true`.
+**Then** `reminder` holds the route with its provider and `destination: {chat_id: "-100",
+thread_id: "2749"}`, and `unrouted: false`. `report` holds no route, and `unrouted: true`.
 
 ## `NOTIF-SC-012`
 
@@ -168,8 +168,8 @@ threadId: "2749"}`, and `unrouted: false`. `report` holds no route, and `unroute
 **Verifies:** `NOTIF-FR-017`
 **Layer:** integration
 
-**Given** a route of `reminder` through "Family bot" to `{chatId: "-100", threadId: "2749"}`.
-**When** user A posts the same route with the members in the order `threadId`, `chatId`.
+**Given** a route of `reminder` through "Family bot" to `{chat_id: "-100", thread_id: "2749"}`.
+**When** user A posts the same route with the members in the order `thread_id`, `chat_id`.
 **Then** the answer is 409 `notification-route-exists`, and workspace A holds one route.
 
 ## `NOTIF-SC-014`
@@ -178,7 +178,7 @@ threadId: "2749"}`, and `unrouted: false`. `report` holds no route, and `unroute
 **Layer:** integration
 
 **Given** a route of `reminder` to chat `-100`.
-**When** user A patches `destination.chatId` to `-200`, and the plugin sends `reminder`.
+**When** user A patches `destination.chat_id` to `-200`, and the plugin sends `reminder`.
 **Then** the stub records `chat_id: -200`.
 **When** user A deletes the route.
 **Then** the answer is 204, and `reminder` is unrouted.
@@ -282,7 +282,7 @@ unrouted" carries `workspace_id`, `plugin`, and `topic`.
 | One PDF                      | `sendDocument` with the caption                   |
 | Two PNG files and one PDF    | `sendMessage`, then two `sendMediaGroup` calls     |
 
-**Then** each call carries `message_thread_id` when the destination holds `threadId`.
+**Then** each call carries `message_thread_id` when the destination holds `thread_id`.
 
 ## `NOTIF-SC-024`
 
@@ -291,7 +291,7 @@ unrouted" carries `workspace_id`, `plugin`, and `topic`.
 
 **Given** user A stores "Family bot" with the token `T1`.
 **When** the test reads `fields` of the row with SQL.
-**Then** the entry `botToken` holds the ciphertext that the stub cipher returned, and
+**Then** the entry `bot_token` holds the ciphertext that the stub cipher returned, and
 does not hold `T1`. The stub cipher records the key `maroid-workspace-<A>`.
 
 ## `NOTIF-SC-025`

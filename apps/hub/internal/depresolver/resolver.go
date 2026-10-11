@@ -85,6 +85,7 @@ type Resolver interface {
 	Authorizer() (authz.Authorizer, error)
 	Cron() *cron.Cron
 	NotificationTopicRegistry() *registry.NotificationTopicRegistry
+	NotificationKinds() (*notification.KindRegistry, error)
 	NotificationDispatcher() (*notification.Dispatcher, error)
 	TelegramBot() (*telego.Bot, error)
 	TelegramUpdatesHandler() (*telegram.ChannelHandler, error)
@@ -315,6 +316,12 @@ type Container struct {
 	notificationTopicRegistry struct {
 		once     sync.Once
 		instance *registry.NotificationTopicRegistry
+	}
+
+	notificationKinds struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *notification.KindRegistry
 	}
 
 	notificationDispatcher struct {

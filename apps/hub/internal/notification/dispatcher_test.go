@@ -13,7 +13,11 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
-const probeID = "dev.maroid.probe"
+const (
+	probeID       = "dev.maroid.probe"
+	reminderTopic = "reminder"
+	reportTopic   = "report"
+)
 
 func newDispatcher(t *testing.T) (*notification.Dispatcher, *bytes.Buffer) {
 	t.Helper()
@@ -21,14 +25,20 @@ func newDispatcher(t *testing.T) (*notification.Dispatcher, *bytes.Buffer) {
 	topics := registry.NewNotificationTopicRegistry()
 	require.NoError(t, topics.Register(
 		pluginapi.ParsePluginID(probeID),
-		pluginapi.NotificationTopic{ID: "reminder", Name: "Reminder"},
-		pluginapi.NotificationTopic{ID: "report", Name: "Report"},
+		pluginapi.NotificationTopic{ID: reminderTopic, Name: "Reminder"},
+		pluginapi.NotificationTopic{ID: reportTopic, Name: "Report"},
 	))
 
 	lines := &bytes.Buffer{}
 	logger := slog.New(slog.NewJSONHandler(lines, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	return notification.NewDispatcher(logger, topics), lines
+	return notification.NewDispatcher(
+		logger,
+		topics,
+		nil,
+		notification.NewKindRegistry(),
+		nil,
+	), lines
 }
 
 func logLines(t *testing.T, lines *bytes.Buffer) []map[string]any {
@@ -69,7 +79,12 @@ func TestSendWithNoWorkspaceDropsTheNotification(t *testing.T) {
 	dispatcher, lines := newDispatcher(t)
 	ctx := pluginapi.ContextWithActingUser(t.Context(), "0199d4a0-0000-7000-8000-00000000000a")
 
-	err := dispatcher.Send(ctx, pluginapi.ParsePluginID(probeID), "reminder", pluginapi.Message{})
+	err := dispatcher.Send(
+		ctx,
+		pluginapi.ParsePluginID(probeID),
+		reminderTopic,
+		pluginapi.Message{},
+	)
 
 	require.NoError(t, err)
 
@@ -78,5 +93,5 @@ func TestSendWithNoWorkspaceDropsTheNotification(t *testing.T) {
 	require.Equal(t, "WARN", records[0]["level"])
 	require.Equal(t, "notification has no workspace", records[0]["msg"])
 	require.Equal(t, probeID, records[0]["plugin"])
-	require.Equal(t, "reminder", records[0]["topic"])
+	require.Equal(t, reminderTopic, records[0]["topic"])
 }

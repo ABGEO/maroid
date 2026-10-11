@@ -122,6 +122,18 @@ var (
 	// ErrPermissionAlreadyRegistered indicates a permission name that the registry
 	// already holds.
 	ErrPermissionAlreadyRegistered = errors.New("permission: already registered")
+	// ErrNotificationKindAlreadyRegistered indicates a notification provider kind that
+	// the registry already holds.
+	ErrNotificationKindAlreadyRegistered = errors.New("notification kind: already registered")
+	// ErrNilNotificationKind indicates a registration of no notification provider kind.
+	ErrNilNotificationKind = errors.New("notification kind: nil")
+	// ErrInvalidNotificationKind indicates a kind whose models cannot serve a
+	// notification provider or a destination.
+	ErrInvalidNotificationKind = errors.New("notification kind: invalid")
+	// ErrDeliveryRefused indicates that an external messaging service refused a call.
+	ErrDeliveryRefused = errors.New("delivery: refused")
+	// ErrMessagingUnreachable indicates that an external messaging service did not answer.
+	ErrMessagingUnreachable = errors.New("delivery: the messaging service is unreachable")
 	// ErrNotificationTopicAlreadyRegistered indicates a notification topic that the
 	// registry already holds for the plugin.
 	ErrNotificationTopicAlreadyRegistered = errors.New("notification topic: already registered")
