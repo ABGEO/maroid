@@ -8,6 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/mymmrac/telego"
 
+	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
@@ -22,12 +23,14 @@ type Host struct {
 	telegramConversationEngine conversation.Engine
 	settings                   pluginapi.SettingsProvider
 	secrets                    pluginapi.SecretProvider
+	pages                      *pageLinker
 }
 
 var _ pluginapi.Host = (*Host)(nil)
 
 // New creates and returns a new Host instance using the given dependency container.
 func New(
+	cfg *config.Config,
 	logger *slog.Logger,
 	database *sqlx.DB,
 	notifier pluginapi.NotificationSender,
@@ -44,6 +47,7 @@ func New(
 		telegramConversationEngine: telegramConversationEngine,
 		settings:                   settings,
 		secrets:                    secrets,
+		pages:                      &pageLinker{deckURL: cfg.Auth.DeckURL},
 	}, nil
 }
 
@@ -82,4 +86,9 @@ func (h *Host) Settings() (pluginapi.SettingsProvider, error) {
 // Secrets returns the plugin secret store from the dependency container.
 func (h *Host) Secrets() (pluginapi.SecretProvider, error) {
 	return h.secrets, nil
+}
+
+// Pages returns the builder of the deck address of a page of a plugin.
+func (h *Host) Pages() (pluginapi.PageLinker, error) {
+	return h.pages, nil
 }

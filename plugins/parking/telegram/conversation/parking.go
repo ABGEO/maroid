@@ -24,7 +24,8 @@ func NewParkingConversation(
 		step.NewAskLocation(telegramBot),
 		step.NewConfirm(telegramBot, apiClientSvc),
 		step.NewEnterLot(telegramBot, apiClientSvc),
-		step.NewSelectType(telegramBot),
+		step.NewSelectType(telegramBot, apiClientSvc),
+		step.NewSelectVehicle(telegramBot),
 	}
 
 	stepMap := make(map[string]conversation.Step, len(steps))

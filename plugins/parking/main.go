@@ -10,6 +10,7 @@ import (
 	telegramconversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/parking/config"
+	"github.com/abgeo/maroid/plugins/parking/handler"
 	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
 	"github.com/abgeo/maroid/plugins/parking/telegram/command"
@@ -27,6 +28,7 @@ type ParkingPlugin struct {
 	telegramBot                pluginapi.TelegramBot
 	telegramConversationEngine telegramconversationapi.Engine
 	apiClientSvc               service.APIClientService
+	connections                service.ConnectionService
 }
 
 var (
@@ -35,6 +37,7 @@ var (
 	_ pluginapi.TelegramCommandPlugin      = (*ParkingPlugin)(nil)
 	_ pluginapi.TelegramConversationPlugin = (*ParkingPlugin)(nil)
 	_ pluginapi.PermissionPlugin           = (*ParkingPlugin)(nil)
+	_ pluginapi.RoutePlugin                = (*ParkingPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -56,13 +59,21 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host settings provider: %w", err)
 	}
 
+	secretProvider, err := host.Secrets()
+	if err != nil {
+		return nil, fmt.Errorf("getting host secret provider: %w", err)
+	}
+
 	settings := pluginapi.NewPluginSettings(settingsProvider, pluginID)
+	secrets := pluginapi.NewPluginSecrets(secretProvider, pluginID)
+	apiClient := service.NewAPIClient(pluginConfig, secrets)
 
 	plg := &ParkingPlugin{
 		config:                     pluginConfig,
 		telegramBot:                telegramBot,
 		telegramConversationEngine: host.TelegramConversationEngine(),
-		apiClientSvc:               service.NewAPIClient(pluginConfig, settings),
+		apiClientSvc:               apiClient,
+		connections:                service.NewConnections(apiClient, settings, secrets),
 	}
 
 	plg.logger = host.Logger().With(
@@ -100,7 +111,17 @@ func (p *ParkingPlugin) Permissions() ([]pluginapi.Permission, error) {
 			Description: "Start and stop a parking session",
 			Lowest:      pluginapi.RoleEditor,
 		},
+		{
+			Name:        permission.AccountConnect,
+			Description: "Read, connect, and disconnect your own parking account",
+			Lowest:      pluginapi.RoleViewer,
+		},
 	}, nil
+}
+
+// Routes returns the HTTP routes of the connection page.
+func (p *ParkingPlugin) Routes() ([]pluginapi.Route, error) {
+	return handler.NewConnectionHandler(p.logger, p.connections).Routes(), nil
 }
 
 func (p *ParkingPlugin) TelegramCommands() ([]pluginapi.TelegramCommand, error) {

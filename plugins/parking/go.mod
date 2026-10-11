@@ -5,7 +5,9 @@ go 1.26.7
 require (
 	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261007201113-f0f51ecfa664
 	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261007201113-f0f51ecfa664
+	github.com/abgeo/maroid/libs/rest v0.0.0-20261007201113-f0f51ecfa664
 	github.com/mymmrac/telego v1.12.1
+	github.com/stretchr/testify v1.12.1
 	resty.dev/v3 v3.0.0-beta.3
 )
 

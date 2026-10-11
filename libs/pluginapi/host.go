@@ -18,4 +18,5 @@ type Host interface {
 	TelegramConversationEngine() conversation.Engine
 	Settings() (SettingsProvider, error)
 	Secrets() (SecretProvider, error)
+	Pages() (PageLinker, error)
 }

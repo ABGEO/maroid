@@ -11,9 +11,9 @@ import (
 	"resty.dev/v3"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
-	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/parking/config"
 	"github.com/abgeo/maroid/plugins/parking/dto"
+	"github.com/abgeo/maroid/plugins/parking/model"
 )
 
 var (
@@ -21,10 +21,42 @@ var (
 	ErrRequestFailed = errors.New("request failed")
 	// ErrParkingPlaceNotFound is returned when a parking place does not exist.
 	ErrParkingPlaceNotFound = errors.New("parking place not found")
+	// ErrNotConnected is returned when Maroid holds no session token for the acting
+	// user, or when the parking service rejected the one it held.
+	ErrNotConnected = errors.New("parking: not connected")
+	// ErrCredentialsRejected is returned when the parking service rejects a sign in.
+	ErrCredentialsRejected = errors.New("parking: credentials rejected")
+	// ErrVerificationUnsupported is returned when a sign in asks for no code by phone.
+	ErrVerificationUnsupported = errors.New("parking: verification unsupported")
+	// ErrCodeRejected is returned when the parking service rejects a code.
+	ErrCodeRejected = errors.New("parking: code rejected")
+)
+
+const (
+	// SecretSession names the plugin secret that holds the session token.
+	SecretSession = "session"
+
+	targetPhone          = "PHONE_VERIFICATION"
+	statusTwoFactor      = "REQUIRES_TWO_FA"
+	statusSuccess        = "SUCCESS"
+	headerSessionToken   = "session-token"
+	pathSignIn           = "/v3/session/mobile"
+	pathCodeRequest      = "/um/v3/user/two-Fa/send"
+	pathCodeSubmit       = "/um/v3/user/two-Fa/submit"
+	pathVehicles         = "/parking/person/vehicles"
+	pathPerson           = "/parking/person/check"
+	pathParking          = "/parking"
+	pathParkingByID      = "/parking/{id}"
+	pathParkingPlace     = "/parking/place/zone/{zone}/place/{number}"
+	pathParkingForScreen = "/business-parking/parking/place/for-screen"
 )
 
 // APIClientService defines the interface for interacting with the Parking API.
 type APIClientService interface {
+	SignIn(ctx context.Context, username, password string) (*dto.SignInResult, error)
+	RequestCode(ctx context.Context, signInID string) (*dto.CodeRequestResult, error)
+	SubmitCode(ctx context.Context, signInID, code string) (string, error)
+	ListVehicles(ctx context.Context) ([]model.Vehicle, error)
 	GetParkingLots(
 		ctx context.Context,
 		left, right, top, bottom float64,
@@ -36,6 +68,7 @@ type APIClientService interface {
 	StartParking(
 		ctx context.Context,
 		placeNo, parkingType string,
+		vehicleID int,
 	) (*dto.ParkingSession, error)
 	GetPerson(ctx context.Context) (*dto.Person, error)
 	GetActiveSession(ctx context.Context) (*dto.ActiveSession, error)
@@ -44,14 +77,15 @@ type APIClientService interface {
 
 // APIClient implements APIClientService.
 type APIClient struct {
-	settings *pluginapi.PluginSettings
-	client   *resty.Client
+	secrets *pluginapi.PluginSecrets
+	client  *resty.Client
 }
 
 var _ APIClientService = (*APIClient)(nil)
 
-// NewAPIClient creates a new APIClient.
-func NewAPIClient(cfg *config.Config, settings *pluginapi.PluginSettings) *APIClient {
+// NewAPIClient creates a new APIClient. It reads the session token of the acting
+// user from the plugin secrets.
+func NewAPIClient(cfg *config.Config, secrets *pluginapi.PluginSecrets) *APIClient {
 	client := resty.New().
 		SetBaseURL(cfg.BaseURL).
 		SetError(map[string]any{}).
@@ -63,9 +97,119 @@ func NewAPIClient(cfg *config.Config, settings *pluginapi.PluginSettings) *APICl
 		})
 
 	return &APIClient{
-		settings: settings,
-		client:   client,
+		secrets: secrets,
+		client:  client,
 	}
+}
+
+// SignIn sends the credentials. It carries no session token.
+func (s *APIClient) SignIn(
+	ctx context.Context,
+	username, password string,
+) (*dto.SignInResult, error) {
+	var response dto.APIResponse[dto.SignInResult]
+
+	resp, err := s.client.R().
+		SetContext(ctx).
+		SetResult(&response).
+		SetBody(dto.APIRequest[dto.SignInData]{
+			Data: dto.SignInData{Username: username, Password: password},
+		}).
+		Post(pathSignIn)
+	if err != nil {
+		return nil, fmt.Errorf("%w: sending the sign in: %w", ErrRequestFailed, err)
+	}
+
+	if isRejection(resp.StatusCode()) {
+		return nil, fmt.Errorf("%w: returned [%d]", ErrCredentialsRejected, resp.StatusCode())
+	}
+
+	if err = requireSuccess(resp); err != nil {
+		return nil, err
+	}
+
+	return &response.Result.Data, nil
+}
+
+// RequestCode asks the parking service to send the code of the sign in by SMS.
+func (s *APIClient) RequestCode(
+	ctx context.Context,
+	signInID string,
+) (*dto.CodeRequestResult, error) {
+	var response dto.APIResponse[dto.CodeRequestResult]
+
+	resp, err := s.client.R().
+		SetContext(ctx).
+		SetResult(&response).
+		SetBody(dto.APIRequest[dto.CodeRequestData]{
+			Data: dto.CodeRequestData{TargetType: targetPhone, UUID: signInID},
+		}).
+		Post(pathCodeRequest)
+	if err != nil {
+		return nil, fmt.Errorf("%w: sending the code request: %w", ErrRequestFailed, err)
+	}
+
+	if err = requireSuccess(resp); err != nil {
+		return nil, err
+	}
+
+	return &response.Result.Data, nil
+}
+
+// SubmitCode sends the code of the sign in, and returns the session token that the
+// parking service gives for it.
+func (s *APIClient) SubmitCode(ctx context.Context, signInID, code string) (string, error) {
+	var response dto.APIResponse[dto.CodeSubmitResult]
+
+	resp, err := s.client.R().
+		SetContext(ctx).
+		SetResult(&response).
+		SetBody(dto.APIRequest[dto.CodeSubmitData]{
+			Data: dto.CodeSubmitData{TargetType: targetPhone, UUID: signInID, Token: code},
+		}).
+		Post(pathCodeSubmit)
+	if err != nil {
+		return "", fmt.Errorf("%w: sending the code: %w", ErrRequestFailed, err)
+	}
+
+	if resp.StatusCode() >= http.StatusBadRequest &&
+		resp.StatusCode() < http.StatusInternalServerError {
+		return "", fmt.Errorf("%w: returned [%d]", ErrCodeRejected, resp.StatusCode())
+	}
+
+	if err = requireSuccess(resp); err != nil {
+		return "", err
+	}
+
+	if response.Result.Data.Status != statusSuccess {
+		return "", fmt.Errorf("%w: the status is %q", ErrCodeRejected, response.Result.Data.Status)
+	}
+
+	token := resp.Header().Get(headerSessionToken)
+	if token == "" {
+		return "", fmt.Errorf("%w: the answer carries no session token", ErrRequestFailed)
+	}
+
+	return token, nil
+}
+
+// ListVehicles retrieves the vehicles of the parking account.
+func (s *APIClient) ListVehicles(ctx context.Context) ([]model.Vehicle, error) {
+	var response dto.APIResponse[[]dto.Vehicle]
+
+	err := s.send(ctx, "reading the vehicles", func(req *resty.Request) (*resty.Response, error) {
+		return req.SetResult(&response).Get(pathVehicles)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	vehicles := make([]model.Vehicle, 0, len(response.Result.Data))
+	for _, vehicle := range response.Result.Data {
+		vehicles = append(vehicles, vehicle.ToModel())
+	}
+
+	return vehicles, nil
 }
 
 // GetParkingLots retrieves parking lots within the given bounding box.
@@ -75,33 +219,23 @@ func (s *APIClient) GetParkingLots(
 ) ([]dto.ParkingLot, error) {
 	var response dto.APIResponse[[]dto.ParkingLot]
 
-	req, _, err := s.authorized(ctx)
+	err := s.send(
+		ctx,
+		"reading the parking lots",
+		func(req *resty.Request) (*resty.Response, error) {
+			return req.
+				SetResult(&response).
+				SetQueryParams(map[string]string{
+					"left":   fmt.Sprintf("%.14f", left),
+					"right":  fmt.Sprintf("%.14f", right),
+					"top":    fmt.Sprintf("%.14f", top),
+					"bottom": fmt.Sprintf("%.14f", bottom),
+				}).
+				Get(pathParkingForScreen)
+		},
+	)
 	if err != nil {
 		return nil, err
-	}
-
-	resp, err := req.
-		SetResult(&response).
-		SetQueryParams(map[string]string{
-			"left":   fmt.Sprintf("%.14f", left),
-			"right":  fmt.Sprintf("%.14f", right),
-			"top":    fmt.Sprintf("%.14f", top),
-			"bottom": fmt.Sprintf("%.14f", bottom),
-		}).
-		Get("/business-parking/parking/place/for-screen")
-	if err != nil {
-		return nil, fmt.Errorf(
-			"sending parking lots request: %w", err,
-		)
-	}
-
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf(
-			"%w: returned [%d] %v",
-			ErrRequestFailed,
-			resp.StatusCode(),
-			resp.Error(),
-		)
 	}
 
 	return response.Result.Data, nil
@@ -114,47 +248,34 @@ func (s *APIClient) GetParkingPlace(
 ) (*dto.ParkingPlace, error) {
 	var response dto.APIResponse[dto.ParkingPlace]
 
-	req, _, err := s.authorized(ctx)
+	err := s.send(
+		ctx,
+		"reading the parking place",
+		func(req *resty.Request) (*resty.Response, error) {
+			return req.
+				SetResult(&response).
+				SetPathParams(map[string]string{"zone": zone, "number": number}).
+				Get(pathParkingPlace)
+		},
+	)
+	if _, isStatus := errors.AsType[*StatusError](err); isStatus {
+		return nil, ErrParkingPlaceNotFound
+	}
+
 	if err != nil {
 		return nil, err
-	}
-
-	resp, err := req.
-		SetResult(&response).
-		SetPathParams(map[string]string{
-			"zone":   zone,
-			"number": number,
-		}).
-		Get("/parking/place/zone/{zone}/place/{number}")
-	if err != nil {
-		return nil, fmt.Errorf(
-			"sending parking place request: %w", err,
-		)
-	}
-
-	if resp.StatusCode() != http.StatusOK {
-		return nil, ErrParkingPlaceNotFound
 	}
 
 	return &response.Result.Data, nil
 }
 
-// StartParking starts a parking session for the configured vehicle.
+// StartParking starts a parking session for the vehicle.
 func (s *APIClient) StartParking(
 	ctx context.Context,
 	placeNo, parkingType string,
+	vehicleID int,
 ) (*dto.ParkingSession, error) {
 	var response dto.APIResponse[dto.ParkingSession]
-
-	req, userSettings, err := s.authorized(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	vehicleID, err := strconv.Atoi(userSettings.VehicleID)
-	if err != nil {
-		return nil, fmt.Errorf("reading the vehicle identifier: %w", err)
-	}
 
 	body := dto.APIRequest[dto.StartParkingData]{
 		Data: dto.StartParkingData{
@@ -164,21 +285,15 @@ func (s *APIClient) StartParking(
 		},
 	}
 
-	resp, err := req.
-		SetResult(&response).
-		SetBody(body).
-		Post("/parking")
+	err := s.send(
+		ctx,
+		"starting the parking session",
+		func(req *resty.Request) (*resty.Response, error) {
+			return req.SetResult(&response).SetBody(body).Post(pathParking)
+		},
+	)
 	if err != nil {
-		return nil, fmt.Errorf("sending start parking request: %w", err)
-	}
-
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf(
-			"%w: returned [%d] %v",
-			ErrRequestFailed,
-			resp.StatusCode(),
-			resp.Error(),
-		)
+		return nil, err
 	}
 
 	return &response.Result.Data, nil
@@ -191,27 +306,15 @@ func (s *APIClient) GetActiveSession(
 ) (*dto.ActiveSession, error) {
 	var response dto.APIResponse[*dto.ActiveSession]
 
-	req, _, err := s.authorized(ctx)
+	err := s.send(
+		ctx,
+		"reading the active session",
+		func(req *resty.Request) (*resty.Response, error) {
+			return req.SetResult(&response).Get(pathParking)
+		},
+	)
 	if err != nil {
 		return nil, err
-	}
-
-	resp, err := req.
-		SetResult(&response).
-		Get("/parking")
-	if err != nil {
-		return nil, fmt.Errorf(
-			"sending active session request: %w", err,
-		)
-	}
-
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf(
-			"%w: returned [%d] %v",
-			ErrRequestFailed,
-			resp.StatusCode(),
-			resp.Error(),
-		)
 	}
 
 	return response.Result.Data, nil
@@ -224,28 +327,18 @@ func (s *APIClient) StopParking(
 ) (*dto.ParkingSession, error) {
 	var response dto.APIResponse[dto.ParkingSession]
 
-	req, _, err := s.authorized(ctx)
+	err := s.send(
+		ctx,
+		"stopping the parking session",
+		func(req *resty.Request) (*resty.Response, error) {
+			return req.
+				SetResult(&response).
+				SetPathParam("id", strconv.Itoa(id)).
+				Delete(pathParkingByID)
+		},
+	)
 	if err != nil {
 		return nil, err
-	}
-
-	resp, err := req.
-		SetResult(&response).
-		SetPathParam("id", strconv.Itoa(id)).
-		Delete("/parking/{id}")
-	if err != nil {
-		return nil, fmt.Errorf(
-			"sending stop parking request: %w", err,
-		)
-	}
-
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf(
-			"%w: returned [%d] %v",
-			ErrRequestFailed,
-			resp.StatusCode(),
-			resp.Error(),
-		)
 	}
 
 	return &response.Result.Data, nil
@@ -257,45 +350,81 @@ func (s *APIClient) GetPerson(
 ) (*dto.Person, error) {
 	var response dto.APIResponse[dto.Person]
 
-	req, _, err := s.authorized(ctx)
+	err := s.send(ctx, "reading the person", func(req *resty.Request) (*resty.Response, error) {
+		return req.SetResult(&response).Get(pathPerson)
+	})
 	if err != nil {
 		return nil, err
-	}
-
-	resp, err := req.
-		SetResult(&response).
-		Get("/parking/person/check")
-	if err != nil {
-		return nil, fmt.Errorf("sending person request: %w", err)
-	}
-
-	if resp.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf(
-			"%w: returned [%d] %v",
-			ErrRequestFailed,
-			resp.StatusCode(),
-			resp.Error(),
-		)
 	}
 
 	return &response.Result.Data, nil
 }
 
-// authorized builds a request that carries the credential of the acting user, and
-// returns the settings that produced it.
-// It fails with pluginapi.ErrSettingsAbsent when the acting user stored no credential.
-func (s *APIClient) authorized(
+// send runs one call with the session token of the acting user. A user with no token
+// gets ErrNotConnected with no call. A 401 is the only sign that the parking service
+// ended the token, so send removes the token and answers ErrNotConnected.
+func (s *APIClient) send(
 	ctx context.Context,
-) (*resty.Request, *config.UserSettings, error) {
-	values, err := s.settings.Get(ctx)
+	action string,
+	call func(*resty.Request) (*resty.Response, error),
+) error {
+	token, err := s.secrets.Get(ctx, pluginapi.SecretScopeUser, SecretSession)
+	if errors.Is(err, pluginapi.ErrSecretAbsent) {
+		return ErrNotConnected
+	}
+
 	if err != nil {
-		return nil, nil, fmt.Errorf("reading the settings of the acting user: %w", err)
+		return fmt.Errorf("reading the session token: %w", err)
 	}
 
-	userSettings := new(config.UserSettings)
-	if err = pluginconfig.DecodeAndValidateSettings(values, userSettings); err != nil {
-		return nil, nil, fmt.Errorf("decoding the settings of the acting user: %w", err)
+	resp, err := call(s.client.R().SetContext(ctx).SetAuthToken(token))
+	if err != nil {
+		return fmt.Errorf("%w: %s: %w", ErrRequestFailed, action, err)
 	}
 
-	return s.client.R().SetContext(ctx).SetAuthToken(userSettings.AuthToken), userSettings, nil
+	if resp.StatusCode() == http.StatusUnauthorized {
+		if err = s.secrets.Delete(ctx, pluginapi.SecretScopeUser, SecretSession); err != nil {
+			return fmt.Errorf("removing the rejected session token: %w", err)
+		}
+
+		return ErrNotConnected
+	}
+
+	if err = requireSuccess(resp); err != nil {
+		return fmt.Errorf("%s: %w", action, err)
+	}
+
+	return nil
+}
+
+func isRejection(status int) bool {
+	switch status {
+	case http.StatusBadRequest, http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound:
+		return true
+	default:
+		return false
+	}
+}
+
+// StatusError reports an answer of the parking service whose status is not 200. It
+// matches ErrRequestFailed.
+type StatusError struct {
+	Status int
+}
+
+func (e *StatusError) Error() string {
+	return fmt.Sprintf("%s: returned [%d]", ErrRequestFailed, e.Status)
+}
+
+// Is reports whether target is ErrRequestFailed.
+func (e *StatusError) Is(target error) bool {
+	return target == ErrRequestFailed
+}
+
+func requireSuccess(resp *resty.Response) error {
+	if resp.StatusCode() != http.StatusOK {
+		return &StatusError{Status: resp.StatusCode()}
+	}
+
+	return nil
 }

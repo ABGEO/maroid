@@ -392,11 +392,11 @@ check it. `PSET-FR-004` returns it to that user alone.
 
 | #   | Step                                                                                         | Realizes                                         | Done |
 | --- | -------------------------------------------------------------------------------------------- | ------------------------------------------------ | ---- |
-| 1   | `pluginapi.PageLinker`, `Host.Pages`, and the hub `pageLinker`. Rebuild every plugin.        | `PARKACC-FR-022`                                 | [ ]  |
-| 2   | `UserSettings`, the permission `account.connect`, and the plugin secrets in `main.go`        | `PARKACC-FR-001` to `PARKACC-FR-003`, `PARKACC-FR-023` | [ ]  |
-| 3   | The DTOs, `model/`, and the API client: the token from `session`, the 401 rule, the sign in calls, the vehicles | `PARKACC-FR-009` to `PARKACC-FR-019` | [ ]  |
-| 4   | `service/connection.go`                                                                      | `PARKACC-FR-004` to `PARKACC-FR-020`             | [ ]  |
-| 5   | `handler/` and `api.yaml`                                                                    | `PARKACC-FR-004` to `PARKACC-FR-018`             | [ ]  |
+| 1   | `pluginapi.PageLinker`, `Host.Pages`, and the hub `pageLinker`. Rebuild every plugin.        | `PARKACC-FR-022`                                 | [x]  |
+| 2   | `UserSettings`, the permission `account.connect`, and the plugin secrets in `main.go`        | `PARKACC-FR-001` to `PARKACC-FR-003`, `PARKACC-FR-023` | [x]  |
+| 3   | The DTOs, `model/`, and the API client: the token from `session`, the 401 rule, the sign in calls, the vehicles | `PARKACC-FR-009` to `PARKACC-FR-019` | [x]  |
+| 4   | `service/connection.go`                                                                      | `PARKACC-FR-004` to `PARKACC-FR-020`             | [x]  |
+| 5   | `handler/` and `api.yaml`                                                                    | `PARKACC-FR-004` to `PARKACC-FR-018`             | [x]  |
 | 6   | The bot: `replyFailure`, `endNotConnected`, the preflight, `select_vehicle`, `confirm`       | `PARKACC-FR-021`, `PARKACC-FR-024` to `PARKACC-FR-028` | [ ]  |
 | 7   | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`).              | `PARKACC-FR-004` to `PARKACC-FR-018`             | [ ]  |
 | 8   | `PARKACC-SC-028` against the parking service. Correct `PARKACC-DD-006` and `PARKACC-DD-007`. | `PARKACC-FR-012`, `PARKACC-FR-015`, `PARKACC-FR-017` | [ ]  |

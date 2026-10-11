@@ -1,6 +1,12 @@
 // Package dto defines data transfer objects used for API requests and responses.
 package dto
 
+import (
+	"encoding/json"
+
+	"github.com/abgeo/maroid/plugins/parking/model"
+)
+
 // APIResponse is a generic API response wrapper.
 type APIResponse[T any] struct {
 	//nolint:tagliatelle
@@ -77,4 +83,72 @@ type ParkingSession struct {
 	EndDate            *string    `json:"endDate"`
 	Status             string     `json:"status"`
 	ParkingPlace       ParkingLot `json:"parkingPlace"`
+}
+
+// SignInData holds the credentials of a sign in.
+//
+//nolint:tagliatelle
+type SignInData struct {
+	PrivateLogin bool   `json:"privateLogin"`
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+}
+
+// SignInResult is the answer of a sign in.
+//
+//nolint:tagliatelle
+type SignInResult struct {
+	UUID   string `json:"UUID"`
+	Status string `json:"status"`
+	TwoFA  struct {
+		PhoneVerification bool `json:"PHONE_VERIFICATION"`
+	} `json:"TWO_FA"`
+}
+
+// CodeRequestData names the sign in whose code the parking service sends.
+//
+//nolint:tagliatelle
+type CodeRequestData struct {
+	TargetType string `json:"targetType"`
+	UUID       string `json:"uuid"`
+}
+
+// CodeRequestResult is the answer of a request of a code. Delay holds the seconds
+// before the next request, which the parking service sends as a string.
+type CodeRequestResult struct {
+	Delay  json.Number `json:"delay"`
+	Phone  string      `json:"phone"`
+	Status string      `json:"status"`
+}
+
+// CodeSubmitData carries the code of a sign in.
+//
+//nolint:tagliatelle
+type CodeSubmitData struct {
+	TargetType string `json:"targetType"`
+	UUID       string `json:"uuid"`
+	Token      string `json:"token"`
+}
+
+// CodeSubmitResult is the answer of a code. The session token travels in a header.
+type CodeSubmitResult struct {
+	Status string `json:"status"`
+}
+
+// Vehicle is one vehicle of the parking account.
+//
+//nolint:tagliatelle
+type Vehicle struct {
+	ID        int    `json:"id"`
+	GovNumber string `json:"govNumber"`
+	Name      string `json:"name"`
+}
+
+// ToModel converts the vehicle to its domain entity.
+func (v Vehicle) ToModel() model.Vehicle {
+	return model.Vehicle{
+		ID:    v.ID,
+		Name:  v.Name,
+		Plate: v.GovNumber,
+	}
 }

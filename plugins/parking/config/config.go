@@ -6,10 +6,11 @@ type Config struct {
 	BaseURL string `default:"https://api.municipal.gov.ge" mapstructure:"base_url"`
 }
 
-// UserSettings represents the fields that one user fills for the plugin.
+// UserSettings represents the fields that one user fills for the plugin: the
+// credentials of their parking account.
 //
-//nolint:tagliatelle,lll // the tags of one field share one line.
+//nolint:lll // the tags of one field share one line.
 type UserSettings struct {
-	AuthToken string `json:"authToken" jsonschema:"title=Auth token,format=password,writeOnly=true,required" jsonschema_extras:"x-maroid-scope=user"`
-	VehicleID string `json:"vehicleId" jsonschema:"title=Vehicle identifier,required"                        jsonschema_extras:"x-maroid-scope=user"`
+	Username string `json:"username" jsonschema:"title=Username,required"                                jsonschema_extras:"x-maroid-scope=user"`
+	Password string `json:"password" jsonschema:"title=Password,format=password,writeOnly=true,required" jsonschema_extras:"x-maroid-scope=user"`
 }

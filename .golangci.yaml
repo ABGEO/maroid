@@ -59,6 +59,7 @@ linters:
         - user.Service
         - pluginapi.SettingsProvider
         - pluginapi.SecretProvider
+        - pluginapi.PageLinker
 
     tagliatelle:
       case:

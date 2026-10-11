@@ -72,6 +72,7 @@ func (c *Container) newPluginHost() (*pluginhost.Host, error) {
 	}
 
 	host, err := pluginhost.New(
+		c.Config(),
 		c.Logger(),
 		db,
 		notifier,

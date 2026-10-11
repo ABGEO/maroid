@@ -10,6 +10,7 @@ import (
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
+	"github.com/abgeo/maroid/plugins/parking/model"
 )
 
 const (
@@ -20,6 +21,19 @@ const (
 	stepEnterLot    = "enter_lot"
 	stepSelectType  = "select_type"
 	stepConfirm     = "confirm"
+
+	stepSelectVehicle = "select_vehicle"
+)
+
+const (
+	dataVehicles     = "vehicles"
+	dataVehicleID    = "vehicle_id"
+	dataVehicleLabel = "vehicle_label"
+
+	callbackVehiclePrefix = "vehicle:"
+
+	noVehicleText = "Your parking account holds no vehicle.\n\n" +
+		"Add one in the mobile application of the parking service, then start again."
 )
 
 const (
@@ -107,4 +121,13 @@ func answerCallback(bot pluginapi.TelegramBot, update telego.Update) error {
 	}
 
 	return nil
+}
+
+func vehicleLabel(vehicle model.Vehicle) string {
+	return fmt.Sprintf("%s (%s)", vehicle.Name, vehicle.Plate)
+}
+
+func selectVehicle(ctx *conversationapi.Context, vehicle model.Vehicle) {
+	ctx.Data[dataVehicleID] = vehicle.ID
+	ctx.Data[dataVehicleLabel] = vehicleLabel(vehicle)
 }

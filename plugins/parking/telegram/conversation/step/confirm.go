@@ -41,6 +41,7 @@ func (s *Confirm) OnEnter(
 ) error {
 	lot, _ := ctx.Data["lot_number"].(string)
 	parkingType, _ := ctx.Data["parking_type"].(string)
+	vehicle, _ := ctx.Data[dataVehicleLabel].(string)
 
 	typeLabel := parkingTypeLabel(parkingType)
 
@@ -55,9 +56,10 @@ func (s *Confirm) OnEnter(
 
 	text := fmt.Sprintf(
 		"You're about to start <b>%s</b> parking "+
-			"at Lot <b>%s</b>.\n\nWould you like to continue?",
+			"at Lot <b>%s</b> for <b>%s</b>.\n\nWould you like to continue?",
 		typeLabel,
 		lot,
+		vehicle,
 	)
 
 	return editCtrlMessageWithKeyboard(
@@ -89,9 +91,10 @@ func (s *Confirm) OnMessage(
 
 	lot, _ := ctx.Data["lot_number"].(string)
 	parkingType, _ := ctx.Data["parking_type"].(string)
+	vehicleID, _ := ctx.Data[dataVehicleID].(int)
 
 	session, err := s.apiClientSvc.StartParking(
-		ctx, lot, parkingType,
+		ctx, lot, parkingType, vehicleID,
 	)
 	if err != nil {
 		_ = editCtrlMessage(

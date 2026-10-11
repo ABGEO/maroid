@@ -11,6 +11,7 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/dto"
+	"github.com/abgeo/maroid/plugins/parking/model"
 	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
 )
@@ -50,12 +51,12 @@ func (c *Parking) Validate(_ telego.Update) error {
 
 // Handle processes the command.
 func (c *Parking) Handle(ctx *th.Context, update telego.Update) error {
-	person, session, err := c.preflight(ctx.Context())
+	state, err := c.preflight(ctx.Context())
 	if err != nil {
 		return err
 	}
 
-	if msg := validateStart(person, session); msg != "" {
+	if msg := validateStart(state); msg != "" {
 		return sendMessage(ctx, update, msg)
 	}
 
@@ -66,59 +67,62 @@ func (c *Parking) Handle(ctx *th.Context, update telego.Update) error {
 	return nil
 }
 
-func (c *Parking) preflight(ctx context.Context) (*dto.Person, *dto.ActiveSession, error) {
-	const actionsCount = 2
+// startState is what the preflight of a start reads from the parking service.
+type startState struct {
+	person   *dto.Person
+	session  *dto.ActiveSession
+	vehicles []model.Vehicle
+}
 
+// preflight reads the person, the active session, and the vehicles in parallel, so a
+// start that cannot succeed ends before the first question.
+func (c *Parking) preflight(ctx context.Context) (*startState, error) {
 	var (
-		person    *dto.Person
-		session   *dto.ActiveSession
-		personErr error
-		sessErr   error
-		wg        sync.WaitGroup
+		state                          startState
+		personErr, sessErr, vehicleErr error
+		wg                             sync.WaitGroup
 	)
 
-	wg.Add(actionsCount)
-
-	go func() {
-		defer wg.Done()
-
-		person, personErr = c.apiClientSvc.GetPerson(ctx)
-	}()
-
-	go func() {
-		defer wg.Done()
-
-		session, sessErr = c.apiClientSvc.GetActiveSession(ctx)
-	}()
-
+	wg.Go(func() { state.person, personErr = c.apiClientSvc.GetPerson(ctx) })
+	wg.Go(func() { state.session, sessErr = c.apiClientSvc.GetActiveSession(ctx) })
+	wg.Go(func() { state.vehicles, vehicleErr = c.apiClientSvc.ListVehicles(ctx) })
 	wg.Wait()
 
 	if personErr != nil {
-		return nil, nil, fmt.Errorf("fetching person: %w", personErr)
+		return nil, fmt.Errorf("fetching person: %w", personErr)
 	}
 
 	if sessErr != nil {
-		return nil, nil, fmt.Errorf("fetching active session: %w", sessErr)
+		return nil, fmt.Errorf("fetching active session: %w", sessErr)
 	}
 
-	return person, session, nil
+	if vehicleErr != nil {
+		return nil, fmt.Errorf("fetching vehicles: %w", vehicleErr)
+	}
+
+	return &state, nil
 }
 
-func validateStart(person *dto.Person, session *dto.ActiveSession) string {
-	if session != nil {
+func validateStart(state *startState) string {
+	if state.session != nil {
 		return fmt.Sprintf(
 			"A parking session is already active at lot <b>%s</b>."+
 				"\n\nPlease stop it before starting a new one.",
-			session.ParkingPlace.UniqueNumber,
+			state.session.ParkingPlace.UniqueNumber,
 		)
 	}
 
-	if person.BalanceAmount < 1 {
+	if state.person.BalanceAmount < 1 {
 		return fmt.Sprintf(
 			"Your balance is <b>%f GEL</b>."+
 				"\n\nPlease top up before starting a parking session.",
-			person.BalanceAmount,
+			state.person.BalanceAmount,
 		)
+	}
+
+	if len(state.vehicles) == 0 {
+		return "Your parking account holds no vehicle." +
+			"\n\nAdd one in the mobile application of the parking service, then start again."
 	}
 
 	return ""
