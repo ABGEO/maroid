@@ -95,9 +95,11 @@ func (h *Notification) Register(router chi.Router) {
 		})
 
 		router.Route(base+"/notification-routes", func(r chi.Router) {
+			r.With(read).Get("/", Wrap(h.logger, h.Routes))
 			r.With(write).Post("/", Wrap(h.logger, h.CreateRoute))
 
 			r.Route("/{"+notificationRouteIDParam+"}", func(r chi.Router) {
+				r.With(read).Get("/", Wrap(h.logger, h.Route))
 				r.With(write).Patch("/", Wrap(h.logger, h.ChangeRoute))
 				r.With(write).Delete("/", Wrap(h.logger, h.RemoveRoute))
 				r.With(write).Post("/test-messages", Wrap(h.logger, h.TestRoute))
@@ -233,7 +235,7 @@ func (h *Notification) CreateProvider(w http.ResponseWriter, r *http.Request) er
 		return h.fail(w, r, err, "creating the notification provider")
 	}
 
-	w.Header().Set("Location", address.BaseFromContext(r.Context())+r.URL.Path+"/"+created.ID)
+	w.Header().Set("Location", locationOf(r, "notification-providers", created.ID))
 	w.Header().Set(precondition.ETagHeader, precondition.ETag(created.UpdatedAt))
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, toNotificationProviderBody(created))
@@ -317,6 +319,41 @@ func (h *Notification) Topics(w http.ResponseWriter, r *http.Request) error {
 	return answerPage(w, r, bodies)
 }
 
+// Routes answers the routes of the acting workspace that the topic list shows.
+func (h *Notification) Routes(w http.ResponseWriter, r *http.Request) error {
+	routes, err := h.service.Routes(r.Context())
+	if err != nil {
+		return h.fail(w, r, err, "listing the notification routes")
+	}
+
+	bodies := make([]notificationRouteBody, 0, len(routes))
+	for index := range routes {
+		bodies = append(bodies, toNotificationRouteBody(&routes[index]))
+	}
+
+	return answerPage(w, r, bodies)
+}
+
+// Route answers one route of the acting workspace.
+func (h *Notification) Route(w http.ResponseWriter, r *http.Request) error {
+	id, found := uuidParam(r, notificationRouteIDParam)
+	if !found {
+		problem.Write(w, r, problem.NewNotFound())
+
+		return nil
+	}
+
+	route, err := h.service.Route(r.Context(), id)
+	if err != nil {
+		return h.fail(w, r, err, "reading the notification route")
+	}
+
+	w.Header().Set(precondition.ETagHeader, precondition.ETag(route.UpdatedAt))
+	render.JSON(w, r, toNotificationRouteBody(route))
+
+	return nil
+}
+
 // CreateRoute routes a topic through a provider of the acting workspace.
 func (h *Notification) CreateRoute(w http.ResponseWriter, r *http.Request) error {
 	var input notificationRouteInput
@@ -335,7 +372,7 @@ func (h *Notification) CreateRoute(w http.ResponseWriter, r *http.Request) error
 		return h.fail(w, r, err, "creating the notification route")
 	}
 
-	w.Header().Set("Location", address.BaseFromContext(r.Context())+r.URL.Path+"/"+created.ID)
+	w.Header().Set("Location", locationOf(r, "notification-routes", created.ID))
 	w.Header().Set(precondition.ETagHeader, precondition.ETag(created.UpdatedAt))
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, toNotificationRouteBody(created))
@@ -443,6 +480,12 @@ func (h *Notification) fail(w http.ResponseWriter, r *http.Request, err error, d
 	}
 
 	return nil
+}
+
+// locationOf answers the address of a new row of the collection in the acting workspace.
+func locationOf(r *http.Request, collection string, id string) string {
+	return address.BaseFromContext(r.Context()) + "/workspaces/" +
+		chi.URLParam(r, workspace.PathParam) + "/" + collection + "/" + id
 }
 
 // uuidParam reads a path parameter that names a row. A value that is not a UUID names

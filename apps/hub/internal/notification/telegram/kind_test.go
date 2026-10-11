@@ -96,7 +96,7 @@ func TestSendDeliversEachShapeOfMessage(t *testing.T) {
 			require.NoError(t, err)
 
 			calls := stub.Calls()
-			require.ElementsMatch(t, tc.methods, methodsOf(calls))
+			require.Equal(t, tc.methods, methodsOf(calls))
 
 			for _, call := range calls {
 				require.Equal(t, "-100", call.Params[chatField])

@@ -58,7 +58,8 @@ paths:
       description: >
         Realizes `NOTIF-FR-004`, `NOTIF-FR-005`, and `NOTIF-FR-034`. The permission is
         `notifications.read`. A held secret reads `******`, and an absent one reads the empty
-        string. `NOTIF-DD-006`. One page holds every provider, ordered by `created_at`.
+        string. `NOTIF-DD-006`. One page holds every provider of the acting workspace alone,
+        sorted by `id`, which is the order of creation.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       responses:
@@ -222,8 +223,9 @@ paths:
       summary: List the notification topics of the enabled plugins, with their routes.
       description: >
         Realizes `NOTIF-FR-014`, `NOTIF-FR-015`, `NOTIF-FR-022`, and `NOTIF-FR-023`. The permission
-        is `notifications.read`. One page holds every topic, ordered by the plugin identifier and
-        then by the declared order. `NOTIF-DD-008`.
+        is `notifications.read`. One page holds every topic of each plugin that the acting
+        workspace enables, sorted by the plugin identifier and then by the declared order. The
+        routes are those of the acting workspace alone. `NOTIF-DD-008`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
       responses:
@@ -251,6 +253,37 @@ paths:
   /workspaces/{workspaceId}/notification-routes:
     parameters:
       - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+    get:
+      operationId: listNotificationRoutes
+      summary: List the notification routes of the acting workspace.
+      description: >
+        Realizes `NOTIF-FR-014`, `NOTIF-FR-022`, and `NOTIF-FR-023`. The permission is
+        `notifications.read`. One page holds the routes of the acting workspace alone, sorted
+        by `id`. A route of a plugin that the workspace does not enable, or of a topic that
+        the plugin no longer declares, stays out. `NOTIF-DD-008`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the notification routes.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/NotificationRoute"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
     post:
       operationId: createNotificationRoute
       summary: Route a notification topic through a notification provider.
@@ -297,6 +330,31 @@ paths:
     parameters:
       - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
       - $ref: "#/components/parameters/RouteId"
+    get:
+      operationId: getNotificationRoute
+      summary: Read one notification route.
+      description: >
+        Realizes `NOTIF-FR-014`. The permission is `notifications.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The notification route.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRoute"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
     patch:
       operationId: changeNotificationRoute
       summary: Change the destination of a notification route, or disable or enable it.

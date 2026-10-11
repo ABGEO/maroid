@@ -116,6 +116,8 @@ type ProviderService interface {
 // RouteService manages the notification routes of the acting workspace.
 type RouteService interface {
 	Topics(ctx context.Context) ([]TopicView, error)
+	Routes(ctx context.Context) ([]model.NotificationRoute, error)
+	Route(ctx context.Context, id string) (*model.NotificationRoute, error)
 	CreateRoute(ctx context.Context, input RouteInput) (*model.NotificationRoute, error)
 	UpdateRoute(
 		ctx context.Context,
@@ -346,6 +348,44 @@ func (m *Manager) Topics(ctx context.Context) ([]TopicView, error) {
 	return views, nil
 }
 
+// Routes answers the routes that Topics shows, in the order of the identifiers: those of
+// an enabled plugin and of a topic that the plugin declares.
+func (m *Manager) Routes(ctx context.Context) ([]model.NotificationRoute, error) {
+	enabled, err := m.enabledPlugins(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var routes []model.NotificationRoute
+
+	err = database.WithScopeTx(ctx, m.db, func(tx *sqlx.Tx) error {
+		var listErr error
+
+		routes, listErr = repository.NewNotificationRoute(tx).List(ctx)
+
+		return listErr //nolint:wrapcheck // the repository named the failure
+	})
+	if err != nil {
+		return nil, fmt.Errorf("listing the notification routes: %w", err)
+	}
+
+	return slices.DeleteFunc(routes, func(route model.NotificationRoute) bool {
+		_, declared := m.topics.Get(route.PluginID, route.TopicID)
+
+		return !declared || !slices.Contains(enabled, route.PluginID)
+	}), nil
+}
+
+// Route answers one route of the acting workspace.
+func (m *Manager) Route(ctx context.Context, id string) (*model.NotificationRoute, error) {
+	route, _, err := m.storedRoute(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return route, nil
+}
+
 // viewOf gathers the routes of one topic. The topic is unrouted when no enabled route
 // passes through an enabled provider.
 func viewOf(
@@ -429,14 +469,8 @@ func (m *Manager) UpdateRoute(
 	input RouteInput,
 	ifMatch *time.Time,
 ) (*model.NotificationRoute, error) {
-	for pointer, named := range map[string]bool{
-		pointerPluginID:   input.PluginID != nil,
-		pointerTopicID:    input.TopicID != nil,
-		pointerProviderID: input.ProviderID != nil,
-	} {
-		if named {
-			return nil, &FieldError{Pointer: pointer, Detail: detailNeverChanges}
-		}
+	if pointer := fixedRouteMember(input); pointer != "" {
+		return nil, &FieldError{Pointer: pointer, Detail: detailNeverChanges}
 	}
 
 	stored, provider, err := m.storedRoute(ctx, id)
@@ -771,7 +805,8 @@ func (m *Manager) protect(
 	return fields, nil
 }
 
-// masked answers the fields that a reader sees: the mask for each held secret.
+// masked answers the fields that a reader sees: the mask for each held secret, and the
+// empty string for each declared secret that holds no value.
 func (m *Manager) masked(provider *model.NotificationProvider) model.Fields {
 	fields := make(model.Fields, len(provider.Fields))
 
@@ -781,6 +816,17 @@ func (m *Manager) masked(provider *model.NotificationProvider) model.Fields {
 		}
 
 		fields[name] = entry
+	}
+
+	entry, found := m.kinds.Get(provider.Kind)
+	if !found {
+		return fields
+	}
+
+	for name, kind := range entry.Provider.Kinds {
+		if _, held := fields[name]; !held && kind == model.FieldKindSecret {
+			fields[name] = model.SettingEntry{Kind: model.FieldKindSecret, Value: ""}
+		}
 	}
 
 	return fields
@@ -894,6 +940,21 @@ func nameOf(given *string) (string, error) {
 		return "", &FieldError{Pointer: pointerName, Detail: "the value is too long"}
 	default:
 		return name, nil
+	}
+}
+
+// fixedRouteMember names the first member of the input that a route never changes, in
+// the order of the body, or answers the empty string.
+func fixedRouteMember(input RouteInput) string {
+	switch {
+	case input.PluginID != nil:
+		return pointerPluginID
+	case input.TopicID != nil:
+		return pointerTopicID
+	case input.ProviderID != nil:
+		return pointerProviderID
+	default:
+		return ""
 	}
 }
 

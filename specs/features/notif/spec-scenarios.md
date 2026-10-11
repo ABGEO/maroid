@@ -4,7 +4,7 @@ title: The scenarios of the notification providers and the notification routes
 type: spec
 status: approved
 created: 2026-10-11
-updated: 2026-10-11
+updated: 2026-10-12
 approved_by: Temuri
 approved_on: 2026-10-11
 constrained_by: [TST, OWN, TRC, NTF]
@@ -342,6 +342,18 @@ at the stub is no more than 50 milliseconds.
 **Given** a configuration file that holds the `notifier` section of the old form.
 **When** the hub loads the configuration.
 **Then** the load succeeds, and `config.Config` holds no field for it.
+
+## `NOTIF-SC-030`
+
+**Verifies:** `NOTIF-FR-014`
+**Layer:** integration
+
+**Given** a route of `reminder` to chat `-100`, and a route of the topic `legacy` written
+by SQL, which the probe plugin does not declare.
+**When** user V reads `GET /notification-routes`, then reads the route of `reminder` by
+its identifier.
+**Then** the list holds the route of `reminder` alone. The read answers that route with an
+`ETag`, and the `Location` of its creation names the same address.
 
 ## Retired identifiers
 

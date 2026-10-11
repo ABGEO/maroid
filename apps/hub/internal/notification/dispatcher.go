@@ -131,7 +131,10 @@ func (d *Dispatcher) deliver(
 			slog.Any("error", err),
 		)
 
-		failures = append(failures, fmt.Errorf("route %s: %w", route.RouteID, err))
+		failures = append(
+			failures,
+			fmt.Errorf("delivering through the route %s: %w", route.RouteID, err),
+		)
 	}
 
 	if len(failures) < len(routes) {

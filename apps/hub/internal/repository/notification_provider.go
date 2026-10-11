@@ -45,12 +45,13 @@ func NewNotificationProvider(tx *sqlx.Tx) *NotificationProvider {
 	return &NotificationProvider{tx: tx}
 }
 
-// List answers every notification provider of the acting workspace, the oldest first.
+// List answers every notification provider of the acting workspace, in the order of the
+// identifiers, which is the order of creation.
 func (r *NotificationProvider) List(ctx context.Context) ([]model.NotificationProvider, error) {
 	providers := []model.NotificationProvider{}
 
 	query := `SELECT ` + notificationProviderColumns + `
-		FROM public.notification_providers ORDER BY created_at, id;`
+		FROM public.notification_providers ORDER BY id;`
 
 	if err := r.tx.SelectContext(ctx, &providers, query); err != nil {
 		return nil, fmt.Errorf("listing NotificationProviders: %w", err)

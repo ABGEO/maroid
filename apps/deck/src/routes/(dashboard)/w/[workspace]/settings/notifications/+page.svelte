@@ -37,7 +37,21 @@
 
 	const workspaceId = $derived(data.workspace.id);
 	const manager = $derived(holds(data.workspace, PERMISSION.notificationsWrite));
-	const plugins = $derived([...new Set(topics.map((topic) => topic.plugin_id))]);
+	const topicsByPlugin = $derived(
+		topics.reduce((groups, topic) => {
+			groups.set(topic.plugin_id, [...(groups.get(topic.plugin_id) ?? []), topic]);
+
+			return groups;
+		}, new Map<string, NotificationTopic[]>())
+	);
+	const routeCounts = $derived(
+		topics
+			.flatMap((topic) => topic.routes)
+			.reduce(
+				(counts, route) => counts.set(route.provider_id, (counts.get(route.provider_id) ?? 0) + 1),
+				new Map<string, number>()
+			)
+	);
 
 	function kindOf(kindId: string): NotificationProviderKind | undefined {
 		return kinds.find((one) => one.id === kindId);
@@ -48,8 +62,7 @@
 	}
 
 	function routeCountOf(providerId: string): number {
-		return topics.flatMap((topic) => topic.routes).filter((r) => r.provider_id === providerId)
-			.length;
+		return routeCounts.get(providerId) ?? 0;
 	}
 
 	function reasonOf(error: unknown, fallback: string): string {
@@ -281,12 +294,12 @@
 				<div class="empty-state">No plugin of this workspace sends a notification.</div>
 			{/if}
 
-			{#each plugins as pluginId (pluginId)}
+			{#each [...topicsByPlugin] as [pluginId, pluginTopics] (pluginId)}
 				<h3 class="mt-4 mb-2 text-sm font-semibold">
 					{displayNameOf(knownPlugin(pluginId), pluginId)}
 				</h3>
 				<ul class="list panel">
-					{#each topics.filter((topic) => topic.plugin_id === pluginId) as topic (topic.topic_id)}
+					{#each pluginTopics as topic (topic.topic_id)}
 						<li class="list-row flex flex-col items-stretch gap-2">
 							<span class="flex flex-wrap items-center justify-between gap-2">
 								<span class="min-w-0">

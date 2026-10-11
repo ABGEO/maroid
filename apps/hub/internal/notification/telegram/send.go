@@ -3,9 +3,7 @@ package telegram
 import (
 	"context"
 	"fmt"
-	"maps"
 	"net/http"
-	"slices"
 	"strings"
 
 	"github.com/mymmrac/telego"
@@ -125,11 +123,12 @@ func (d *delivery) sendMediaGroup(
 }
 
 func (d *delivery) sendMultipleAttachments(ctx context.Context, msg pluginapi.Message) error {
-	grouped := d.groupAttachmentsByType(msg.Attachments)
+	groups := groupByMedia(msg.Attachments)
 	text := formatMessageText(msg)
 
-	// Send text separately if we have mixed attachment types
-	if text != "" && len(slices.Collect(maps.Keys(grouped))) > 1 {
+	// Telegram puts a caption on a media group of one type only, so a message that mixes
+	// photos and documents sends its text on its own first.
+	if text != "" && len(groups) > 1 {
 		if err := d.sendTextMessage(ctx, msg); err != nil {
 			return err
 		}
@@ -137,8 +136,8 @@ func (d *delivery) sendMultipleAttachments(ctx context.Context, msg pluginapi.Me
 		text = ""
 	}
 
-	for _, mediaList := range grouped {
-		if err := d.sendMediaGroup(ctx, mediaList, text); err != nil {
+	for _, media := range groups {
+		if err := d.sendMediaGroup(ctx, media, text); err != nil {
 			return err
 		}
 	}
@@ -146,23 +145,30 @@ func (d *delivery) sendMultipleAttachments(ctx context.Context, msg pluginapi.Me
 	return nil
 }
 
-func (d *delivery) groupAttachmentsByType(
-	attachments []pluginapi.Attachment,
-) map[string][]telego.InputMedia {
-	grouped := make(map[string][]telego.InputMedia)
+// groupByMedia answers the photos, then the documents, and leaves out an empty group.
+func groupByMedia(attachments []pluginapi.Attachment) [][]telego.InputMedia {
+	var photos, documents []telego.InputMedia
 
 	for _, attachment := range attachments {
 		attachment = normalizeAttachment(attachment)
 		file := tu.FileFromBytes(attachment.Content, attachment.Filename)
 
 		if isImage(attachment) {
-			grouped["photos"] = append(grouped["photos"], tu.MediaPhoto(file))
+			photos = append(photos, tu.MediaPhoto(file))
 		} else {
-			grouped["documents"] = append(grouped["documents"], tu.MediaDocument(file))
+			documents = append(documents, tu.MediaDocument(file))
 		}
 	}
 
-	return grouped
+	groups := make([][]telego.InputMedia, 0, 2) //nolint:mnd // one group for each media type
+
+	for _, group := range [][]telego.InputMedia{photos, documents} {
+		if len(group) > 0 {
+			groups = append(groups, group)
+		}
+	}
+
+	return groups
 }
 
 func setMediaCaption(media telego.InputMedia, caption string) {
@@ -174,20 +180,20 @@ func setMediaCaption(media telego.InputMedia, caption string) {
 	}
 }
 
-func normalizeAttachment(attachments pluginapi.Attachment) pluginapi.Attachment {
-	if attachments.MIMEType == "" {
-		attachments.MIMEType = http.DetectContentType(attachments.Content)
+func normalizeAttachment(attachment pluginapi.Attachment) pluginapi.Attachment {
+	if attachment.MIMEType == "" {
+		attachment.MIMEType = http.DetectContentType(attachment.Content)
 	}
 
-	if attachments.Filename == "" {
-		attachments.Filename = "attachment"
+	if attachment.Filename == "" {
+		attachment.Filename = "attachment"
 	}
 
-	return attachments
+	return attachment
 }
 
-func isImage(att pluginapi.Attachment) bool {
-	return strings.HasPrefix(att.MIMEType, "image/")
+func isImage(attachment pluginapi.Attachment) bool {
+	return strings.HasPrefix(attachment.MIMEType, "image/")
 }
 
 func formatMessageText(msg pluginapi.Message) string {

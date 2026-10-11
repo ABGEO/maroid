@@ -16,13 +16,11 @@ CREATE TABLE public.notification_routes
     -- NOTIF-INV-001, NOTIF-FR-009
     CONSTRAINT notification_routes_provider_fkey FOREIGN KEY (workspace_id, provider_id)
         REFERENCES public.notification_providers (workspace_id, id) ON DELETE CASCADE,
-    -- NOTIF-FR-017
+    -- NOTIF-FR-017. The index of the key leads with the columns that the dispatcher
+    -- reads, so the table holds no second index.
     CONSTRAINT notification_routes_unique_key
         UNIQUE (workspace_id, plugin_id, topic_id, provider_id, destination)
 );
-
-CREATE INDEX notification_routes_topic_idx
-    ON public.notification_routes (workspace_id, plugin_id, topic_id);
 
 ALTER TABLE public.notification_routes
     ENABLE ROW LEVEL SECURITY;

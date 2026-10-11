@@ -993,3 +993,51 @@ func (f *workspaceFixture) routeRows(t *testing.T) int {
 
 	return count
 }
+
+// NOTIF-SC-030: The routes read one by one and as a list, and the list leaves out a
+// route of an undeclared topic.
+func TestTheRoutesReadOneByOneAndAsAList(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+	provider := fixture.addProvider(t)
+
+	response := fixture.call(t, fixture.ana, http.MethodPost, fixture.inH("/notification-routes"),
+		map[string]any{
+			memberPluginID: probePluginID, memberTopicID: topicReminder, memberProviderID: provider,
+			memberDestination: map[string]any{fieldChat: "-100"},
+		}, "")
+	require.Equal(t, http.StatusCreated, response.Code, response.Body.String())
+
+	route := stringOf(t, decode(t, response)[memberID])
+	location := response.Header().Get("Location")
+	assert.Equal(t, "https://hub.example.com"+fixture.inH("/notification-routes/"+route), location)
+
+	ctx := pluginapi.ContextWithActingWorkspace(t.Context(), fixture.h)
+	require.NoError(t, hubdatabase.WithScopeTx(ctx, fixture.database, func(tx *sqlx.Tx) error {
+		_, err := tx.ExecContext(ctx, `INSERT INTO public.notification_routes
+			(provider_id, plugin_id, topic_id, destination) VALUES ($1, $2, 'legacy', '{"chat_id": "-100"}');`,
+			provider, probePluginID)
+
+		return err //nolint:wrapcheck // the test reports the error as it is
+	}))
+
+	listed := items(
+		t,
+		fixture.call(t, fixture.gio, http.MethodGet, fixture.inH("/notification-routes"), nil, ""),
+	)
+	require.Len(t, listed, 1)
+	assert.Equal(t, route, listed[0][memberID])
+
+	response = fixture.call(
+		t,
+		fixture.gio,
+		http.MethodGet,
+		fixture.inH("/notification-routes/"+route),
+		nil,
+		"",
+	)
+	require.Equal(t, http.StatusOK, response.Code, response.Body.String())
+	assert.Equal(t, route, decode(t, response)[memberID])
+	assert.NotEmpty(t, response.Header().Get("ETag"))
+}

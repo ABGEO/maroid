@@ -43,7 +43,7 @@ notification provider takes the transit key of its workspace through `secret.Cip
 | `NOTIF-FR-011`  | Section 4.5, `NOTIF-DD-004`, `NOTIF-SC-009`                  |
 | `NOTIF-FR-012`  | Section 4.5, `NOTIF-SC-009`                                  |
 | `NOTIF-FR-013`  | `NOTIF-DD-005`, Section 4.5, `NOTIF-SC-010`                  |
-| `NOTIF-FR-014`  | `NOTIF-DD-008`, `NOTIF-SC-011`                               |
+| `NOTIF-FR-014`  | `NOTIF-DD-008`, `NOTIF-SC-011`, `NOTIF-SC-030`               |
 | `NOTIF-FR-015`  | `NOTIF-DD-008`, `NOTIF-SC-011`                               |
 | `NOTIF-FR-016`  | Section 4.3, `NOTIF-SC-012`                                  |
 | `NOTIF-FR-017`  | Section 4.2, `NOTIF-SC-013`                                  |
@@ -121,6 +121,7 @@ notification provider takes the transit key of its workspace through `secret.Cip
 | `apps/hub/internal/notification/service.go`                              | create | `Service`, `Manager`, `TopicView`, `ProviderInput`, `RouteInput`                        |
 | `apps/hub/internal/notification/dispatcher.go`                           | create | `Dispatcher`, which satisfies `pluginapi.NotificationSender`                            |
 | `apps/hub/internal/notification/telegram/{doc,kind,send}.go`             | create | `telegram.Kind`, `ProviderFields`, `DestinationFields`. The send code moves from `libs/notifier/transport/telegram`. |
+| `apps/hub/internal/notification/telegramtest/server.go`                  | create | `telegramtest.Server`, a stub of the Bot API that the tests of the hub share |
 | `apps/hub/internal/registry/notification_topic.go`                       | create | `NotificationTopicRegistry`, `NotificationTopicEntry`                                   |
 | `apps/hub/internal/registry/capability.go`                               | change | `CapNotificationTopics`                                                                 |
 | `apps/hub/internal/plugin/registrar/notification_topic.go`               | create | `NotificationTopicRegistrar`                                                            |
@@ -198,14 +199,22 @@ func (r *KindRegistry) All() []KindEntry          // in the order of the identif
 
 // apps/hub/internal/notification/service.go
 
-type Service interface {
+// Service embeds two interfaces, so neither passes the method count of interfacebloat.
+type Service interface { ProviderService; RouteService }
+
+type ProviderService interface {
     Kinds() []KindEntry
     Providers(ctx context.Context) ([]model.NotificationProvider, error)        // secrets masked
     Provider(ctx context.Context, id string) (*model.NotificationProvider, error)
     CreateProvider(ctx context.Context, input ProviderInput) (*model.NotificationProvider, error)
     UpdateProvider(ctx context.Context, id string, input ProviderInput, ifMatch *time.Time) (*model.NotificationProvider, error)
     DeleteProvider(ctx context.Context, id string) error
+}
+
+type RouteService interface {
     Topics(ctx context.Context) ([]TopicView, error)
+    Routes(ctx context.Context) ([]model.NotificationRoute, error)   // the routes that Topics shows
+    Route(ctx context.Context, id string) (*model.NotificationRoute, error)
     CreateRoute(ctx context.Context, input RouteInput) (*model.NotificationRoute, error)
     UpdateRoute(ctx context.Context, id string, input RouteInput, ifMatch *time.Time) (*model.NotificationRoute, error)
     DeleteRoute(ctx context.Context, id string) error
@@ -283,8 +292,8 @@ the composite foreign key below.
 - `notification_routes_unique_key UNIQUE (workspace_id, plugin_id, topic_id, provider_id,
   destination)` realizes `NOTIF-FR-017`. Two JSONB values with the same members compare
   equal, whatever the order of the members.
-- Index `notification_routes_topic_idx (workspace_id, plugin_id, topic_id)` serves the
-  dispatcher.
+- The unique key starts with `(workspace_id, plugin_id, topic_id)`, so its index also
+  serves the query of the dispatcher, and the table needs no second index.
 
 Each table enables and forces row level security, with one policy that
 `plugin_workspace_settings_workspace_isolation` gives as the model: `USING` and
@@ -312,7 +321,9 @@ erDiagram
 | `PATCH`  | `/notification-providers/{providerId}`         | Member | `notifications.write` | `NOTIF-FR-007`, `NOTIF-FR-008`, `NOTIF-FR-010` |
 | `DELETE` | `/notification-providers/{providerId}`         | Member | `notifications.write` | `NOTIF-FR-009`                   |
 | `GET`    | `/notification-topics`                         | Member | `notifications.read`  | `NOTIF-FR-014`, `NOTIF-FR-015`   |
+| `GET`    | `/notification-routes`                         | Member | `notifications.read`  | `NOTIF-FR-014`, `NOTIF-FR-022`, `NOTIF-FR-023` |
 | `POST`   | `/notification-routes`                         | Member | `notifications.write` | `NOTIF-FR-016`, `NOTIF-FR-017`   |
+| `GET`    | `/notification-routes/{routeId}`               | Member | `notifications.read`  | `NOTIF-FR-014`                   |
 | `PATCH`  | `/notification-routes/{routeId}`               | Member | `notifications.write` | `NOTIF-FR-018`, `NOTIF-FR-020`   |
 | `DELETE` | `/notification-routes/{routeId}`               | Member | `notifications.write` | `NOTIF-FR-019`                   |
 | `POST`   | `/notification-routes/{routeId}/test-messages` | Member | `notifications.write` | `NOTIF-FR-021`                   |
@@ -506,7 +517,7 @@ about it.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `NOTIF-SC-001` to `NOTIF-SC-029`.
+`spec-scenarios.md` holds `NOTIF-SC-001` to `NOTIF-SC-030`.
 
 ## 7. Build plan
 
