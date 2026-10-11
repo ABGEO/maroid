@@ -1,0 +1,165 @@
+<script lang="ts">
+  import type { PluginHost } from '@maroid/plugin-sdk';
+
+  import type { EnvironmentReference, JasmineApi, Plant, PlantUpdatePayload } from '../../api';
+  import { formatMoment } from '../../lib/format';
+  import { failureMessage } from '../../lib/problem';
+  import CareIntervals from './CareIntervals.svelte';
+  import LogForm from './LogForm.svelte';
+  import PlantEntries from './PlantEntries.svelte';
+  import PlantForm from './PlantForm.svelte';
+
+  interface Props {
+    host: PluginHost;
+    api: JasmineApi;
+    plantId: string;
+    environments: EnvironmentReference[];
+    onclose: () => void;
+    /** Called after a write, so the list reads the plant again. */
+    onchanged: () => void;
+  }
+
+  let { host, api, plantId, environments, onclose, onchanged }: Props = $props();
+
+  const canWritePlants = $derived(host.can('plants.write'));
+  const canLog = $derived(host.can('maintenance.write'));
+
+  let plant = $state<Plant | null>(null);
+  let etag = $state<string | undefined>(undefined);
+  let status = $state<'loading' | 'ready' | 'error'>('loading');
+  let editing = $state(false);
+  let confirming = $state(false);
+  let busy = $state(false);
+  let failure = $state<string | null>(null);
+  let revision = $state(0);
+
+  async function load(): Promise<void> {
+    try {
+      const tagged = await api.plants.get(plantId);
+      if (tagged === null) {
+        return;
+      }
+
+      plant = tagged.value;
+      etag = tagged.etag;
+      status = 'ready';
+    } catch (error) {
+      console.error('Failed to load the plant', error);
+      status = 'error';
+    }
+  }
+
+  async function save(payload: PlantUpdatePayload): Promise<void> {
+    busy = true;
+    failure = null;
+
+    try {
+      const saved = await api.plants.update(plantId, payload, etag);
+      if (saved === null) {
+        return;
+      }
+
+      editing = false;
+      await load();
+      onchanged();
+    } catch (error) {
+      failure = failureMessage(error, 'The plant keeps its values. Try again.');
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function remove(): Promise<void> {
+    busy = true;
+    failure = null;
+
+    try {
+      await api.plants.remove(plantId, etag);
+      onchanged();
+      onclose();
+    } catch (error) {
+      failure = failureMessage(error, 'The plant stays. Try again.');
+      confirming = false;
+    } finally {
+      busy = false;
+    }
+  }
+
+  $effect(() => {
+    void load();
+  });
+</script>
+
+<div>
+  <button class="btn btn-ghost btn-sm mb-4" type="button" onclick={onclose}>← All plants</button>
+
+  {#if status === 'loading'}
+    <span class="skeleton h-32 w-full" aria-hidden="true"></span>
+  {:else if status === 'error' || plant === null}
+    <div role="alert" class="alert alert-error alert-soft">
+      <span>Failed to load the plant.</span>
+      <button type="button" class="btn btn-sm" onclick={() => load()}>Retry</button>
+    </div>
+  {:else}
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">
+          <span class="meta">{plant.display_id}</span>
+          {plant.common_name}
+        </h1>
+        <p class="page-lead">
+          {plant.environment.display_id}
+          {plant.environment.name}
+          {#if plant.status === 'inactive'}
+            <span class="badge badge-ghost ml-2">Inactive</span>
+          {/if}
+        </p>
+      </div>
+      {#if canWritePlants && !editing}
+        <div class="flex gap-2">
+          <button class="btn btn-sm" type="button" onclick={() => (editing = true)}>Edit</button>
+          {#if confirming}
+            <button class="btn btn-error btn-sm" type="button" disabled={busy} onclick={remove}>
+              Delete {plant.display_id} and its history
+            </button>
+            <button class="btn btn-ghost btn-sm" type="button" onclick={() => (confirming = false)}>Keep</button>
+          {:else}
+            <button class="btn btn-ghost btn-sm" type="button" onclick={() => (confirming = true)}>Delete</button>
+          {/if}
+        </div>
+      {/if}
+    </header>
+
+    {#if failure}
+      <div role="alert" class="alert alert-error alert-soft mb-4">
+        <span>{failure}</span>
+      </div>
+    {/if}
+
+    {#if editing}
+      <PlantForm {environments} {plant} {busy} onsave={save} oncancel={() => (editing = false)} />
+    {:else}
+      <dl class="panel grid gap-x-6 gap-y-2 p-5 sm:grid-cols-[auto_1fr]">
+        <dt class="meta">Scientific name</dt>
+        <dd>{plant.scientific_name ?? 'Not set'}</dd>
+        <dt class="meta">Acquired on</dt>
+        <dd>{plant.acquired_on ?? 'Not set'}</dd>
+        <dt class="meta">Added</dt>
+        <dd>{formatMoment(plant.created_at)}</dd>
+        <dt class="meta">Care notes</dt>
+        <dd class="whitespace-pre-line">{plant.care_notes ?? 'Not set'}</dd>
+      </dl>
+    {/if}
+
+    <CareIntervals {api} {plantId} canWrite={canWritePlants} {revision} />
+
+    {#if canLog}
+      <section class="section">
+        <h2 class="section-title">Record care</h2>
+        <LogForm {api} plants={[plant]} onrecorded={() => revision++} />
+      </section>
+    {/if}
+
+    <PlantEntries {api} {plantId} {revision} />
+  {/if}
+</div>

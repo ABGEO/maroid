@@ -44,6 +44,11 @@ export interface PlantUpdatePayload extends PlantPayload {
   status: PlantStatus;
 }
 
+export interface PlantFilter {
+  environment_id?: string;
+  status?: PlantStatus;
+}
+
 export type MaintenanceType =
   | "watering"
   | "fertilizing"

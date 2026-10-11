@@ -7,26 +7,17 @@ import type {
   MaintenanceType,
 } from "./types";
 
-function listPath(filter: CareIntervalFilter): string {
-  const query = new URLSearchParams();
-  if (filter.state?.length) {
-    query.set("state", filter.state.join(","));
-  }
-  if (filter.environment_id) {
-    query.set("environment_id", filter.environment_id);
-  }
-
-  const encoded = query.toString();
-
-  return encoded ? `/care-intervals?${encoded}` : "/care-intervals";
-}
-
 export function createCareIntervalsApi(api: ApiClient) {
   return {
     list: (filter: CareIntervalFilter = {}, link?: string) =>
       link
         ? api.follow<Page<CareInterval>>(link)
-        : api.get<Page<CareInterval>>(listPath(filter)),
+        : api.get<Page<CareInterval>>("/care-intervals", {
+            params: {
+              state: filter.state?.join(","),
+              environment_id: filter.environment_id,
+            },
+          }),
     listForPlant: (plantId: string) =>
       api.get<Page<CareInterval>>(`/plants/${plantId}/care-intervals`),
     put: (

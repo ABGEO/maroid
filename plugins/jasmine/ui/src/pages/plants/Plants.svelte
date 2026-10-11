@@ -1,65 +1,159 @@
 <script lang="ts">
-  import type { PluginHost } from '@maroid/plugin-sdk';
-  import { createPager, Pagination } from '@maroid/ui';
+  import { createWriteIntent, type PluginHost } from '@maroid/plugin-sdk';
+  import { SvelteMap } from 'svelte/reactivity';
 
   import '../../app.css';
-  import { createJasmineApi } from '../../api';
+  import {
+    createJasmineApi,
+    type EnvironmentReference,
+    type Plant,
+    type PlantFilter,
+    type PlantStatus,
+    type PlantUpdatePayload
+  } from '../../api';
+  import { readAll } from '../../lib/pages';
+  import { failureMessage } from '../../lib/problem';
+  import LogForm from './LogForm.svelte';
+  import PlantForm from './PlantForm.svelte';
+  import PlantList from './PlantList.svelte';
+  import PlantView from './PlantView.svelte';
 
   let { host }: { host: PluginHost } = $props();
 
-  const api = createJasmineApi(host);
+  const api = $derived(createJasmineApi(host));
+  const canAdd = $derived(host.can('plants.write'));
+  const canLog = $derived(host.can('maintenance.write'));
+  const intent = createWriteIntent();
 
-  const pager = createPager(api.plants.list);
+  let environments = $state<EnvironmentReference[]>([]);
+  let environmentId = $state('');
+  let status = $state<PlantStatus>('active');
+  let opened = $state<string | null>(null);
+  let adding = $state(false);
+  let busy = $state(false);
+  let failure = $state<string | null>(null);
+  let revision = $state(0);
 
-  function formatDate(value: string): string {
-    return new Date(value).toLocaleDateString();
+  const selected = new SvelteMap<string, Plant>();
+  const filter = $derived<PlantFilter>({
+    environment_id: environmentId === '' ? undefined : environmentId,
+    status
+  });
+
+  function toggle(plant: Plant): void {
+    if (selected.has(plant.id)) {
+      selected.delete(plant.id);
+    } else {
+      selected.set(plant.id, plant);
+    }
+  }
+
+  async function add(payload: PlantUpdatePayload): Promise<void> {
+    busy = true;
+    failure = null;
+
+    const { status: _, ...created } = payload;
+
+    try {
+      const plant = await api.plants.create(created, { idempotencyKey: intent.keyFor(created) });
+      if (plant === null) {
+        return;
+      }
+
+      intent.settle();
+      adding = false;
+      revision++;
+    } catch (error) {
+      failure = failureMessage(error, 'The plant was not added. Try again.');
+    } finally {
+      busy = false;
+    }
+  }
+
+  function recorded(): void {
+    selected.clear();
+    revision++;
   }
 
   $effect(() => {
-    void pager.reload();
+    readAll((link?: string) => api.environments.list(link))
+      .then((items) => (environments = items))
+      .catch((error) => console.error('Failed to load the environments', error));
   });
 </script>
 
-<div class="max-w-4xl">
-  <header class="page-header">
-    <div>
-      <h1 class="page-title">Plants</h1>
-      <p class="page-lead">The plants of this workspace and the environment of each one.</p>
-    </div>
-  </header>
-
-  {#if pager.status === 'loading'}
-    <div class="flex flex-col gap-2" aria-hidden="true">
-      {#each [0, 1, 2] as i (i)}
-        <span class="skeleton h-12 w-full"></span>
-      {/each}
-    </div>
-  {:else if pager.status === 'error'}
-    <div role="alert" class="alert alert-error alert-soft">
-      <span>Failed to load the plants.</span>
-      <button type="button" class="btn btn-sm" onclick={() => pager.reload()}>Retry</button>
-    </div>
-  {:else if pager.page?.items.length === 0}
-    <div class="empty-state">This workspace holds no plant.</div>
+<div class="max-w-5xl">
+  {#if opened}
+    <PlantView
+      {host}
+      {api}
+      plantId={opened}
+      {environments}
+      onclose={() => (opened = null)}
+      onchanged={() => revision++}
+    />
   {:else}
-    <div class="panel overflow-x-auto">
-      <table class="table">
-        <thead>
-          <tr><th>ID</th><th>Name</th><th>Scientific name</th><th>Environment</th><th>Created</th></tr>
-        </thead>
-        <tbody>
-          {#each pager.page?.items ?? [] as plant (plant.id)}
-            <tr>
-              <td class="meta">{plant.display_id}</td>
-              <td class="font-medium">{plant.common_name}</td>
-              <td>{plant.scientific_name ?? ''}</td>
-              <td>{plant.environment.display_id} {plant.environment.name}</td>
-              <td class="meta">{formatDate(plant.created_at)}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">Plants</h1>
+        <p class="page-lead">The plants of this workspace. Open a plant for its care and history.</p>
+      </div>
+      {#if canAdd && !adding}
+        <button
+          class="btn btn-primary btn-sm"
+          type="button"
+          disabled={environments.length === 0}
+          title={environments.length === 0 ? 'Add an environment first.' : undefined}
+          onclick={() => (adding = true)}
+        >
+          Add plant
+        </button>
+      {/if}
+    </header>
+
+    {#if failure}
+      <div role="alert" class="alert alert-error alert-soft mb-4">
+        <span>{failure}</span>
+      </div>
+    {/if}
+
+    {#if adding}
+      <div class="mb-6">
+        <PlantForm {environments} {busy} onsave={add} oncancel={() => (adding = false)} />
+      </div>
+    {/if}
+
+    <div class="mb-4 flex flex-wrap gap-2">
+      <select class="select select-sm w-auto" aria-label="Environment" bind:value={environmentId}>
+        <option value="">Every environment</option>
+        {#each environments as environment (environment.id)}
+          <option value={environment.id}>{environment.display_id} {environment.name}</option>
+        {/each}
+      </select>
+      <select class="select select-sm w-auto" aria-label="Status" bind:value={status}>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
     </div>
-    <Pagination {pager} class="mt-4 ml-auto w-fit" />
+
+    {#if canLog && selected.size > 0}
+      <div class="mb-4">
+        <LogForm {api} plants={[...selected.values()]} onrecorded={recorded} />
+        <button class="btn btn-ghost btn-xs mt-1" type="button" onclick={() => selected.clear()}>
+          Clear the selection
+        </button>
+      </div>
+    {/if}
+
+    {#key `${environmentId}|${status}|${revision}`}
+      <PlantList
+        {api}
+        {filter}
+        {selected}
+        selectable={canLog}
+        onopen={(plant) => (opened = plant.id)}
+        ontoggle={toggle}
+      />
+    {/key}
   {/if}
 </div>

@@ -5,7 +5,4 @@ export const routes = {
   "/environments": defineRoute(
     () => import("./pages/environments/Environments.svelte"),
   ),
-  "/environments/add": defineRoute(
-    () => import("./pages/environments/Add.svelte"),
-  ),
 };

@@ -19,6 +19,7 @@ export type {
   MaintenanceEntryPayload,
   MaintenanceType,
   Plant,
+  PlantFilter,
   PlantPayload,
   PlantReference,
   PlantStatus,
@@ -33,3 +34,5 @@ export function createJasmineApi(host: PluginHost) {
     careIntervals: createCareIntervalsApi(host.api),
   };
 }
+
+export type JasmineApi = ReturnType<typeof createJasmineApi>;
