@@ -122,7 +122,7 @@ func (h *MaintenanceEntryHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // GetByID handles GET /maintenance-entries/{id}.
 func (h *MaintenanceEntryHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
+	id, ok := pathID(w, r, paramID)
 	if !ok {
 		return
 	}
@@ -186,7 +186,7 @@ func (h *MaintenanceEntryHandler) Create(w http.ResponseWriter, r *http.Request)
 
 // Update handles PUT /maintenance-entries/{id}. The plant of the entry stays.
 func (h *MaintenanceEntryHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
+	id, ok := pathID(w, r, paramID)
 	if !ok {
 		return
 	}
@@ -211,7 +211,7 @@ func (h *MaintenanceEntryHandler) Update(w http.ResponseWriter, r *http.Request)
 
 // Delete handles DELETE /maintenance-entries/{id}.
 func (h *MaintenanceEntryHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
+	id, ok := pathID(w, r, paramID)
 	if !ok {
 		return
 	}

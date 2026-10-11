@@ -26,7 +26,8 @@ export function createMaintenanceEntriesApi(api: ApiClient) {
       link
         ? api.follow<Page<MaintenanceEntry>>(link)
         : api.get<Page<MaintenanceEntry>>(listPath(filter)),
-    get: (id: string) => api.get<MaintenanceEntry>(`/maintenance-entries/${id}`),
+    get: (id: string) =>
+      api.get<MaintenanceEntry>(`/maintenance-entries/${id}`),
     create: (payload: MaintenanceEntryBatchPayload, options?: RequestOptions) =>
       api.post<{ items: MaintenanceEntry[] }>(
         "/maintenance-entries",

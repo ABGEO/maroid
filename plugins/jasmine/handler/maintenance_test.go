@@ -306,14 +306,18 @@ func TestASelectionWithAnUnknownPlantLandsNoEntry(t *testing.T) {
 }
 
 // GARDEN-SC-018: An editor changes the type, the time, and the note of an entry,
-// then deletes it.
+// then deletes it. The watering interval then counts from the moment its days
+// changed.
 func TestAnEntryIsChangedAndDeleted(t *testing.T) {
 	t.Parallel()
 
-	router := routerUnderTest(t)
+	fixture := gardenUnderTest(t)
+	router := fixture.router(workspaceH)
 
 	environment := makeEnvironment(t, router, "Office")
 	plant := makePlant(t, router, "Rose", environment.ID)
+	setInterval(t, router, plant.ID, typeWatering, 7)
+	moveSetAt(t, fixture, plant.ID, typeWatering, 3)
 	entry := recordEntry(t, router, typeWatering, time.Now().UTC(), plant.ID)[0]
 
 	nineDaysAgo := time.Now().UTC().AddDate(0, 0, -9).Truncate(time.Second)
@@ -330,6 +334,7 @@ func TestAnEntryIsChangedAndDeleted(t *testing.T) {
 	require.NotNil(t, answer.Note)
 	assert.Equal(t, "Moved to the window", *answer.Note)
 	assert.Equal(t, plant.ID, answer.Plant.ID)
+	assert.Equal(t, 3, careOfType(t, router, plant.ID, typeWatering).DaysSince)
 
 	deleted := send(t, router, http.MethodDelete, pathEntries+"/"+entry.ID, "", "")
 	require.Equal(t, http.StatusNoContent, deleted.Code, deleted.Body.String())

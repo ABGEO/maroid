@@ -5,9 +5,7 @@ import type { Plant, PlantPayload, PlantUpdatePayload } from "./types";
 export function createPlantsApi(api: ApiClient) {
   return {
     list: (link?: string) =>
-      link
-        ? api.follow<Page<Plant>>(link)
-        : api.get<Page<Plant>>("/plants"),
+      link ? api.follow<Page<Plant>>(link) : api.get<Page<Plant>>("/plants"),
     get: (id: string) => api.get<Plant>(`/plants/${id}`),
     create: (payload: PlantPayload, options?: RequestOptions) =>
       api.post<Plant>("/plants", payload, options),

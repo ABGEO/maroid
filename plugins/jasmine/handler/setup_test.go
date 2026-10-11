@@ -77,6 +77,7 @@ func (g *garden) router(workspace string) http.Handler {
 		handler.NewEnvironmentHandler(logger, g.db).Routes(),
 		handler.NewPlantHandler(logger, g.db).Routes(),
 		handler.NewMaintenanceEntryHandler(logger, g.db).Routes(),
+		handler.NewCareIntervalHandler(logger, g.db).Routes(),
 	)
 
 	router := chi.NewRouter()

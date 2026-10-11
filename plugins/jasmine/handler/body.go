@@ -16,6 +16,9 @@ import (
 // the target does not declare.
 const unknownFieldPrefix = "json: unknown field "
 
+// paramID names the identifier segment of a route of one record.
+const paramID = "id"
+
 // validatable is a request body that checks its own rules after it decodes.
 type validatable interface {
 	Validate() error
@@ -56,10 +59,10 @@ func readBody(w http.ResponseWriter, r *http.Request, target validatable) bool {
 	return true
 }
 
-// pathID reads the identifier segment of the route. A value that is no UUID names
-// no record, so it answers 404 before any query runs.
-func pathID(w http.ResponseWriter, r *http.Request) (string, bool) {
-	id := chi.URLParam(r, "id")
+// pathID reads the identifier segment of the route that name names. A value that
+// is no UUID names no record, so it answers 404 before any query runs.
+func pathID(w http.ResponseWriter, r *http.Request, name string) (string, bool) {
+	id := chi.URLParam(r, name)
 	if _, err := uuid.Parse(id); err != nil {
 		problem.Write(w, r, problem.NewNotFound())
 

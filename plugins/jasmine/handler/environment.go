@@ -93,7 +93,7 @@ func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // GetByID handles GET /environments/{id}.
 func (h *EnvironmentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
+	id, ok := pathID(w, r, paramID)
 	if !ok {
 		return
 	}
@@ -147,7 +147,7 @@ func (h *EnvironmentHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // Update handles PUT /environments/{id}.
 func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
+	id, ok := pathID(w, r, paramID)
 	if !ok {
 		return
 	}
@@ -169,7 +169,7 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 // Delete handles DELETE /environments/{id}. An environment that holds a plant,
 // active or inactive, stays.
 func (h *EnvironmentHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
+	id, ok := pathID(w, r, paramID)
 	if !ok {
 		return
 	}

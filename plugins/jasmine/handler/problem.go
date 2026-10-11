@@ -80,9 +80,9 @@ func validationDetail(fieldErr validator.FieldError) string {
 	case "oneof":
 		return "must be one of: " + fieldErr.Param()
 	case "min":
-		return fmt.Sprintf("must be at least %s %s long", fieldErr.Param(), unitOf(fieldErr))
+		return boundDetail("at least", fieldErr)
 	case "max":
-		return fmt.Sprintf("must be at most %s %s long", fieldErr.Param(), unitOf(fieldErr))
+		return boundDetail("at most", fieldErr)
 	case dto.TagMaintenanceType:
 		return "must be one of: " + maintenanceTypeList()
 	default:
@@ -108,14 +108,19 @@ func fixedDetail(tag string) string {
 	}
 }
 
-// unitOf names what a length rule counts: the items of a list, or the
-// characters of a text.
-func unitOf(fieldErr validator.FieldError) string {
-	if fieldErr.Kind() == reflect.Slice {
-		return "items"
+// boundDetail renders a lower or an upper bound in the unit of the field: the
+// items of a list, the characters of a text, or the value of a number.
+func boundDetail(relation string, fieldErr validator.FieldError) string {
+	kind := fieldErr.Kind()
+	if kind == reflect.Slice {
+		return fmt.Sprintf("must hold %s %s items", relation, fieldErr.Param())
 	}
 
-	return "characters"
+	if kind == reflect.String {
+		return fmt.Sprintf("must be %s %s characters long", relation, fieldErr.Param())
+	}
+
+	return fmt.Sprintf("must be %s %s", relation, fieldErr.Param())
 }
 
 func maintenanceTypeList() string {

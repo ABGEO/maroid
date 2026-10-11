@@ -114,10 +114,10 @@ func (r *Plant) List(
 		LIMIT :limit;`
 
 	query, args, err := sqlx.Named(query, map[string]any{
-		paramBoundary:    nullable(seek.Boundary),
-		"environment_id": nullable(filter.EnvironmentID),
-		"status":         string(filter.Status),
-		paramLimit:       seek.Limit,
+		paramBoundary:      nullable(seek.Boundary),
+		paramEnvironmentID: nullable(filter.EnvironmentID),
+		"status":           string(filter.Status),
+		paramLimit:         seek.Limit,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("binding Plant list arguments: %w", err)

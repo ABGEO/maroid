@@ -82,3 +82,27 @@ export interface MaintenanceEntryFilter {
   type?: MaintenanceType;
   sort?: "performed_at" | "-performed_at";
 }
+
+export type CareState = "on_schedule" | "due" | "overdue";
+
+export interface CareInterval {
+  id: string;
+  plant: PlantReference;
+  type: MaintenanceType;
+  days: number;
+  set_at: string;
+  last_performed_at?: string;
+  counted_from: string;
+  days_since: number;
+  state?: CareState;
+  updated_at: string;
+}
+
+export interface CareIntervalPayload {
+  days: number;
+}
+
+export interface CareIntervalFilter {
+  state?: CareState[];
+  environment_id?: string;
+}

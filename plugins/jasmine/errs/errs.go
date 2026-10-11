@@ -22,4 +22,6 @@ var (
 	// ErrUnknownMaintenanceType is returned when a string does not name a
 	// maintenance type.
 	ErrUnknownMaintenanceType = errors.New("maintenance entry: unknown type")
+	// ErrUnknownCareState is returned when a string does not name a care state.
+	ErrUnknownCareState = errors.New("care interval: unknown state")
 )

@@ -94,14 +94,14 @@ Every path is under `plugins/jasmine/`.
 | `main.go`                              | change | Decode `config.Config`. Get `Host.Notifier()`. Add `pluginapi.CronPlugin`. Add two permissions, the new routes, and the UI routes of section 4.6. |
 | `config/config.go`, `config/doc.go`    | create | `Config`, `CronSchedule`, `Notification`. Section 4.3. |
 | `permission/permission.go`             | change | Add `MaintenanceRead = "maintenance.read"`, `MaintenanceWrite = "maintenance.write"`. |
-| `errs/errs.go`                         | change | Add `ErrEnvironmentOccupied`, `ErrEnvironmentUnknown`, `ErrPlantUnknown`, `ErrUnknownMaintenanceType`, `ErrUnknownPlantStatus`. |
+| `errs/errs.go`                         | change | Add `ErrEnvironmentOccupied`, `ErrEnvironmentUnknown`, `ErrPlantUnknown`, `ErrUnknownCareState`, `ErrUnknownMaintenanceType`, `ErrUnknownPlantStatus`. |
 | `model/display_id.go`                  | create | `FormatDisplayID(prefix rune, number int) string`. Constants `PrefixEnvironment = 'E'`, `PrefixPlant = 'P'`. |
 | `model/environment.go`                 | change | `Environment{ID, Number, Name, ActivePlantCount, CreatedAt, UpdatedAt}`. |
 | `model/plant.go`                       | change | `Plant{ID, Number, CommonName, ScientificName, Environment, AcquiredOn, CareNotes, Status, CreatedAt, UpdatedAt}`; `Environment` is an `EnvironmentReference{ID, Number, Name}` that the read joins. |
 | `model/plant_status.go`                | create | `PlantStatus` with `active`, `inactive`, and `ParsePlantStatus`. |
 | `model/maintenance_type.go`            | create | `MaintenanceType` with the eight values of `GARDEN-FR-011` in that order, `MaintenanceTypes()`, and `ParseMaintenanceType`. |
 | `model/maintenance_entry.go`           | create | `MaintenanceEntry{ID, Plant, Type, PerformedAt, Note, CreatedAt, UpdatedAt}`; `Plant` is a `PlantReference{ID, Number, CommonName, Environment}` that the read joins. |
-| `model/care_interval.go`               | create | `CareInterval` with the columns of section 4.2 and the read values `LastPerformedAt`, `CountedFrom`, `DaysSince`, `State`. `CareState` with `on_schedule`, `due`, `overdue`. |
+| `model/care_interval.go`               | create | `CareInterval{ID, Plant, Type, Days, SetAt, LastPerformedAt, CountedFrom, DaysSince, State, UpdatedAt}`; `Plant` is a `PlantReference`. `CareState` with `on_schedule`, `due`, `overdue`. |
 | `repository/counter.go`                | create | `CounterRepository.Next(ctx, kind CounterKind) (int, error)`. |
 | `repository/environment.go`            | change | Insert takes the number. List and `GetByID` read `active_plant_count`. Delete maps `23503` to `errs.ErrEnvironmentOccupied`. `PlantCount` gives the count for the detail. |
 | `repository/plant.go`                  | change | The new columns. `List(ctx, seek, filter PlantFilter)`. Insert and Update map `23503` to `errs.ErrEnvironmentUnknown`. `Lock(ctx, ids []string) ([]string, error)` for `GARDEN-DD-006`. |
@@ -187,9 +187,10 @@ erDiagram
 The pagination and the filters wrap it.
 
 ```sql
-SELECT ci.id, ci.plant_id, ci.type, ci.days, ci.set_at, ci.updated_at,
-       p.number AS plant_number, p.common_name, p.status AS plant_status,
-       e.id AS environment_id, e.number AS environment_number, e.name AS environment_name,
+SELECT ci.id, ci.type, ci.days, ci.set_at, ci.updated_at, p.status AS plant_status,
+       p.id AS "plant.id", p.number AS "plant.number", p.common_name AS "plant.common_name",
+       e.id AS "plant.environment.id", e.number AS "plant.environment.number",
+       e.name AS "plant.environment.name",
        latest.performed_at AS last_performed_at,
        (COALESCE(latest.performed_at, ci.set_at) AT TIME ZONE 'UTC')::date AS counted_from,
        (now() AT TIME ZONE 'UTC')::date

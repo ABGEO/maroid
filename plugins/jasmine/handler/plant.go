@@ -104,7 +104,7 @@ func (h *PlantHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // GetByID handles GET /plants/{id}.
 func (h *PlantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
+	id, ok := pathID(w, r, paramID)
 	if !ok {
 		return
 	}
@@ -159,7 +159,7 @@ func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 // Update handles PUT /plants/{id}. The display identifier and the history stay
 // when the environment changes.
 func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
+	id, ok := pathID(w, r, paramID)
 	if !ok {
 		return
 	}
@@ -181,7 +181,7 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 // Delete handles DELETE /plants/{id}. The care intervals and the maintenance
 // entries of the plant go with it.
 func (h *PlantHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r)
+	id, ok := pathID(w, r, paramID)
 	if !ok {
 		return
 	}

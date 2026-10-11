@@ -14,6 +14,8 @@ const (
 	// paramBoundary and paramLimit name the parameters of every keyset read.
 	paramBoundary = "boundary"
 	paramLimit    = "limit"
+
+	paramEnvironmentID = "environment_id"
 )
 
 // isForeignKeyViolation reports whether err is the foreign key violation of the

@@ -131,5 +131,6 @@ func (p *JasminePlugin) Routes() ([]pluginapi.Route, error) {
 		jasminehandler.NewEnvironmentHandler(p.logger, p.db).Routes(),
 		jasminehandler.NewPlantHandler(p.logger, p.db).Routes(),
 		jasminehandler.NewMaintenanceEntryHandler(p.logger, p.db).Routes(),
+		jasminehandler.NewCareIntervalHandler(p.logger, p.db).Routes(),
 	), nil
 }

@@ -1,10 +1,15 @@
 import type { PluginHost } from "@maroid/plugin-sdk";
 
+import { createCareIntervalsApi } from "./careIntervals";
 import { createEnvironmentsApi } from "./environments";
 import { createMaintenanceEntriesApi } from "./maintenanceEntries";
 import { createPlantsApi } from "./plants";
 
 export type {
+  CareInterval,
+  CareIntervalFilter,
+  CareIntervalPayload,
+  CareState,
   Environment,
   EnvironmentPayload,
   EnvironmentReference,
@@ -25,5 +30,6 @@ export function createJasmineApi(host: PluginHost) {
     environments: createEnvironmentsApi(host.api),
     plants: createPlantsApi(host.api),
     maintenanceEntries: createMaintenanceEntriesApi(host.api),
+    careIntervals: createCareIntervalsApi(host.api),
   };
 }
