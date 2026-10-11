@@ -4,7 +4,7 @@ title: Logging
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-29
+updated: 2026-10-11
 scope: [apps/hub/internal/logger/, apps/, libs/, plugins/]
 related: [ERR, LIF, SEC, LNG]
 ---
@@ -37,7 +37,7 @@ logger.With(
 ```
 
 The values in use are `command`, `handler`, `middleware`, `migrator`, `worker`,
-`notifier-dispatcher`, and `telegram-updates-handler`.
+`notification`, and `telegram-updates-handler`.
 
 ## LOG-004
 

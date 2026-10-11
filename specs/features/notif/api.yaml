@@ -1,0 +1,591 @@
+# The routes that NOTIF adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The notification providers of a workspace and the routes of a notification
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/notification-provider-kinds:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+    get:
+      operationId: listNotificationProviderKinds
+      summary: List the notification provider kinds of the instance.
+      description: >
+        Realizes `NOTIF-FR-006` and `NOTIF-FR-016`. The permission is `notifications.read`.
+        Each kind carries the schema of a notification provider and the schema of a destination.
+        One page holds every kind, in the order of the identifiers.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the kinds.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/NotificationProviderKind"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+
+  /workspaces/{workspaceId}/notification-providers:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+    get:
+      operationId: listNotificationProviders
+      summary: List the notification providers of the acting workspace.
+      description: >
+        Realizes `NOTIF-FR-004`, `NOTIF-FR-005`, and `NOTIF-FR-034`. The permission is
+        `notifications.read`. A held secret reads `******`, and an absent one reads the empty
+        string. `NOTIF-DD-006`. One page holds every provider, ordered by `created_at`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the notification providers.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/NotificationProvider"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+    post:
+      operationId: createNotificationProvider
+      summary: Add a notification provider.
+      description: >
+        Realizes `NOTIF-FR-006`, `NOTIF-FR-011`, `NOTIF-FR-012`, and `NOTIF-FR-013`. The permission
+        is `notifications.write`. The kind checks the credential before the hub stores it.
+        `NOTIF-DD-005`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationProviderInput"
+      responses:
+        "201":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+            Location:
+              description: The address of the new resource.
+              schema:
+                type: string
+                format: uri
+          description: The notification provider.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationProvider"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+        "502":
+          $ref: "#/components/responses/MessagingUnreachable"
+
+  /workspaces/{workspaceId}/notification-providers/{providerId}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "#/components/parameters/ProviderId"
+    get:
+      operationId: getNotificationProvider
+      summary: Read one notification provider.
+      description: >
+        Realizes `NOTIF-FR-004` and `NOTIF-FR-005`. The permission is `notifications.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The notification provider.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationProvider"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    patch:
+      operationId: changeNotificationProvider
+      summary: Rename, change, disable, or enable a notification provider.
+      description: >
+        Realizes `NOTIF-FR-007`, `NOTIF-FR-008`, `NOTIF-FR-010`, `NOTIF-FR-011`, and `NOTIF-FR-013`.
+        The permission is `notifications.write`. A body that names `kind` answers 422 at `/kind`.
+        A secret field that the body omits, or that holds `******`, keeps its value. A changed
+        secret runs the check of the kind again.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/NotificationProviderChange"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The notification provider after the change.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationProvider"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+        "502":
+          $ref: "#/components/responses/MessagingUnreachable"
+    delete:
+      operationId: removeNotificationProvider
+      summary: Remove a notification provider and each of its notification routes.
+      description: >
+        Realizes `NOTIF-FR-009`. The permission is `notifications.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The notification provider and its routes are gone.
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/notification-topics:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+    get:
+      operationId: listNotificationTopics
+      summary: List the notification topics of the enabled plugins, with their routes.
+      description: >
+        Realizes `NOTIF-FR-014`, `NOTIF-FR-015`, `NOTIF-FR-022`, and `NOTIF-FR-023`. The permission
+        is `notifications.read`. One page holds every topic, ordered by the plugin identifier and
+        then by the declared order. `NOTIF-DD-008`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the notification topics.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/NotificationTopic"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+
+  /workspaces/{workspaceId}/notification-routes:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+    post:
+      operationId: createNotificationRoute
+      summary: Route a notification topic through a notification provider.
+      description: >
+        Realizes `NOTIF-FR-016`, `NOTIF-FR-017`, `NOTIF-FR-011`, and `NOTIF-FR-012`. The permission
+        is `notifications.write`. A topic that the plugin does not declare, or of a plugin that the
+        workspace does not enable, answers 422 at `/topic_id` or `/plugin_id`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationRouteInput"
+      responses:
+        "201":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+            Location:
+              description: The address of the new resource.
+              schema:
+                type: string
+                format: uri
+          description: The notification route.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRoute"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+        "409":
+          $ref: "#/components/responses/NotificationRouteExists"
+
+  /workspaces/{workspaceId}/notification-routes/{routeId}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "#/components/parameters/RouteId"
+    patch:
+      operationId: changeNotificationRoute
+      summary: Change the destination of a notification route, or disable or enable it.
+      description: >
+        Realizes `NOTIF-FR-018` and `NOTIF-FR-020`. The permission is `notifications.write`. A body
+        that names `plugin_id`, `topic_id`, or `provider_id` answers 422 at that member.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: "#/components/schemas/NotificationRouteChange"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          description: The notification route after the change.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRoute"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+        "409":
+          $ref: "#/components/responses/NotificationRouteExists"
+    delete:
+      operationId: removeNotificationRoute
+      summary: Remove a notification route.
+      description: >
+        Realizes `NOTIF-FR-019`. The permission is `notifications.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The notification route is gone.
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/notification-routes/{routeId}/test-messages:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "#/components/parameters/RouteId"
+    post:
+      operationId: sendTestMessage
+      summary: Send a test message through a notification route.
+      description: >
+        Realizes `NOTIF-FR-021`. The permission is `notifications.write`. The hub sends even when
+        the route or its provider is disabled. The hub stores nothing. `NOTIF-DD-009`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The external messaging service accepted the message.
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/DeliveryRefused"
+        "502":
+          $ref: "#/components/responses/MessagingUnreachable"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: The access token that Dex issued. `SEC-005`.
+
+  parameters:
+    ProviderId:
+      name: providerId
+      in: path
+      required: true
+      description: The identifier of the notification provider.
+      schema:
+        type: string
+        format: uuid
+    RouteId:
+      name: routeId
+      in: path
+      required: true
+      description: The identifier of the notification route.
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    NotificationProviderKind:
+      type: object
+      required: [id, name, provider_schema, destination_schema]
+      properties:
+        id:
+          type: string
+          examples: [telegram]
+        name:
+          type: string
+          examples: [Telegram]
+        provider_schema:
+          type: object
+          additionalProperties: true
+          description: The JSON Schema of the fields of a notification provider. `NTF-007`.
+        destination_schema:
+          type: object
+          additionalProperties: true
+          description: The JSON Schema of the fields of a destination. It holds no secret. `NOTIF-DD-004`.
+    Fields:
+      type: object
+      additionalProperties: true
+      description: >
+        One member for each field of the schema. A held secret reads `******`. `NOTIF-DD-006`.
+    NotificationProvider:
+      type: object
+      required: [id, kind, name, fields, enabled, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+        name:
+          type: string
+          minLength: 1
+          maxLength: 64
+        fields:
+          $ref: "#/components/schemas/Fields"
+        enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    NotificationProviderInput:
+      type: object
+      required: [kind, name, fields]
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+        name:
+          type: string
+        fields:
+          $ref: "#/components/schemas/Fields"
+        enabled:
+          type: boolean
+          default: true
+    NotificationProviderChange:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        fields:
+          $ref: "#/components/schemas/Fields"
+        enabled:
+          type: boolean
+    NotificationRoute:
+      type: object
+      required: [id, plugin_id, topic_id, provider_id, destination, enabled, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        plugin_id:
+          type: string
+        topic_id:
+          type: string
+        provider_id:
+          type: string
+          format: uuid
+        destination:
+          type: object
+          additionalProperties: true
+          description: The plain values of the destination fields of the kind.
+        enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    NotificationRouteInput:
+      type: object
+      required: [plugin_id, topic_id, provider_id, destination]
+      additionalProperties: false
+      properties:
+        plugin_id:
+          type: string
+        topic_id:
+          type: string
+        provider_id:
+          type: string
+          format: uuid
+        destination:
+          type: object
+          additionalProperties: true
+        enabled:
+          type: boolean
+          default: true
+    NotificationRouteChange:
+      type: object
+      additionalProperties: false
+      properties:
+        destination:
+          type: object
+          additionalProperties: true
+        enabled:
+          type: boolean
+    NotificationTopic:
+      type: object
+      required: [plugin_id, topic_id, name, unrouted, routes]
+      properties:
+        plugin_id:
+          type: string
+        topic_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        unrouted:
+          type: boolean
+          description: True when no enabled route through an enabled provider exists.
+        routes:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationRoute"
+
+  responses:
+    NotificationRouteExists:
+      description: >
+        Another route holds the same topic, provider, and destination. The type is
+        `/problems/hub/notification-route-exists`. `NOTIF-FR-017`.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    DeliveryRefused:
+      description: >
+        The external messaging service refused the message. The type is
+        `/problems/hub/delivery-refused`, and `detail` holds the reason of the service.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    MessagingUnreachable:
+      description: >
+        The external messaging service did not answer within 10 seconds. The type is
+        `/problems/hub/messaging-unreachable`. The hub stored nothing.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"

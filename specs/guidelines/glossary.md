@@ -31,7 +31,13 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-schema`        | schema            | The PostgreSQL schema that one plugin owns. The name comes from the plugin identifier.                            |
 | `GLO-remote`        | remote            | A Module Federation bundle that holds the user interface of one plugin.                                           |
 | `GLO-route-mounter` | route mounter     | A function in a remote. It renders one page of a plugin into an element of the deck.                              |
-| `GLO-notification`  | notification      | A message that Maroid sends to a person, through Telegram or through the deck.                                    |
+| `GLO-notification`  | notification      | A message that a plugin sends to a workspace through the notification routes of one notification topic.           |
+| `GLO-notification-topic` | notification topic | One kind of notification that a plugin declares and sends, with an identifier, a name, and a description. |
+| `GLO-notification-provider` | notification provider | An account at an external messaging service that a workspace stores. Maroid delivers a notification through it. Never write "provider" alone. |
+| `GLO-notification-provider-kind` | notification provider kind | The external messaging service of a notification provider. It fixes the fields of the notification provider and of a destination. |
+| `GLO-destination`   | destination       | The place at the external messaging service that receives a notification. For Telegram: a chat, and a thread of a forum. |
+| `GLO-notification-route` | notification route | The rule of a workspace that sends one notification topic through one notification provider to one destination. |
+| `GLO-unrouted`      | unrouted          | The state of a notification topic in a workspace with no enabled notification route.                              |
 | `GLO-owner`         | owner             | The maintainer of the repository. The owner approves each stage.                                                  |
 | `GLO-user`          | user              | A person that Maroid serves. One row in `public.users`. An identity binds it to an external account.              |
 | `GLO-identity`      | identity          | The binding of one external account to one user record. One row in `public.identities`.                          |

@@ -4,7 +4,7 @@ title: Git conventions
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-10-11
 scope: [.]
 related: [PRC, LNG]
 ---
@@ -58,7 +58,7 @@ The scope is the directory name of the module that the change touches.
 | `hub`        | `apps/hub`                                            |
 | `deck`       | `apps/deck`                                           |
 | `<plugin>`   | `plugins/<plugin>`, for example `jasmine` or `telasi` |
-| `<lib>`      | `libs/<lib>`, for example `pluginapi` or `notifier`   |
+| `<lib>`      | `libs/<lib>`, for example `pluginapi` or `rest`       |
 | `<firmware>` | `firmware/<name>`, for example `jasmine-node`         |
 | `specs`      | `specs/`                                              |
 | `deps`       | A dependency update                                   |

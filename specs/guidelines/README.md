@@ -3,7 +3,7 @@ title: The Maroid guidelines
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-10-01
+updated: 2026-10-11
 ---
 
 # The Maroid guidelines
@@ -38,7 +38,7 @@ The identifier is the prefix of every rule in that file.
 | `TG`  | [telegram.md](./telegram.md)                   | The bot, the commands, the conversations.                   | 7     |
 | `MQT` | [mqtt.md](./mqtt.md)                           | The topics, the namespaces, the delivery.                   | 7     |
 | `JOB` | [jobs.md](./jobs.md)                           | The workers and the cron jobs.                              | 8     |
-| `NTF` | [notifications.md](./notifications.md)         | The channels, the transports, the failover.                 | 6     |
+| `NTF` | [notifications.md](./notifications.md)         | The notification topics, providers, and routes.             | 7     |
 | `PKG` | [package-layout.md](./package-layout.md)       | The directories of a plugin and of the hub.                 | 5     |
 | `DEP` | [dependencies.md](./dependencies.md)           | How the container builds and caches a dependency.           | 8     |
 | `LIF` | [lifecycle.md](./lifecycle.md)                 | The start order and the shutdown order.                     | 6     |
@@ -85,7 +85,7 @@ A guideline identifier is permanent. A retired guideline identifier never repeat
 | A bot command or a conversation                 | `TG`      |
 | An MQTT topic or a subscriber                   | `MQT`     |
 | A cron job or a background worker               | `JOB`     |
-| A notification channel or transport             | `NTF`     |
+| A notification topic, provider, or route        | `NTF`     |
 | A directory or a package name                   | `PKG`     |
 | A shared dependency or a provider               | `DEP`     |
 | The start order or the shutdown                 | `LIF`     |
