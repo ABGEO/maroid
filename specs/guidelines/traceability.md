@@ -289,6 +289,7 @@ Add a row before you create the file or the directory.
 | `GARDEN` | `features/garden/` | The plants of a workspace, their environments, and their care. | Approved |
 | `PLROUTE` | `features/plroute/` | The pages of a plugin, with the parameters of their address. | Approved |
 | `NOTIF` | `features/notif/` | The notification providers of a workspace and the routes of a notification. | Approved |
+| `PSECRET` | `features/psecret/` | The secrets that a plugin writes. | Approved |
 
 ## Retired identifiers
 

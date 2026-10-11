@@ -4,7 +4,7 @@ title: Record ownership
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-09
+updated: 2026-10-12
 scope: [apps/hub/, libs/pluginapi/, plugins/*/db/, plugins/*/repository/]
 related: [DAT, SEC, REP, TG, JOB, PLG]
 ---
@@ -119,12 +119,13 @@ for either. `OWN-006` does both.
 
 ## OWN-009
 
-A cron job declares its scope. A shared job runs one time, with no acting
-workspace and no acting user, and reaches only a shared table. A job for each
-workspace runs one time for each workspace that enables the plugin, and the
-scheduler sets the acting workspace of each run. A job for each user runs one
-time for each active user, and the scheduler sets the acting user of each run.
-A job of a plugin runs for each user only when it writes a table that a user scopes.
+A cron job declares its scope. A shared job runs one time, with no acting workspace
+and no acting user, and reaches only a shared table. A job of a plugin for each
+workspace runs one time for each workspace that enables the plugin. A job of the hub
+for each workspace runs one time for each workspace of the instance. The scheduler
+sets the acting workspace of each run. A job for each user runs one time for each
+active user, and the scheduler sets the acting user of each run. A job of a plugin
+runs for each user only when it writes a table that a user scopes.
 
 ## OWN-010
 

@@ -4,7 +4,7 @@ title: The administrator and the enablement in the command line, the bot, the sc
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-05
+updated: 2026-10-12
 approved_by: Temuri
 approved_on: 2026-10-05
 constrained_by: [SEC, OWN, TG, JOB, CLI, UI, TS, SPC, LNG]
@@ -57,6 +57,9 @@ plugin of the job, so a job runs for those and for no other, which realizes
 A job of the hub names no plugin, so no workspace enables it. A job of the hub that
 declares `CronScopePerWorkspace` fails the preparation of the worker with
 `ErrCronScopeWithoutPlugin`, in place of a job that never runs.
+
+`ADR-0014` replaces the paragraph above. A job of the hub for each workspace runs for
+every workspace of the instance. `features/psecret/spec.md` gives the change.
 
 ## 4. The deck
 
