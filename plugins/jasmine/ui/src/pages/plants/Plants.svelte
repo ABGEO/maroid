@@ -16,7 +16,6 @@
   import LogForm from './LogForm.svelte';
   import PlantForm from './PlantForm.svelte';
   import PlantList from './PlantList.svelte';
-  import PlantView from './PlantView.svelte';
 
   let { host }: { host: PluginHost } = $props();
 
@@ -28,7 +27,6 @@
   let environments = $state<EnvironmentReference[]>([]);
   let environmentId = $state('');
   let status = $state<PlantStatus>('active');
-  let opened = $state<string | null>(null);
   let adding = $state(false);
   let busy = $state(false);
   let failure = $state<string | null>(null);
@@ -83,77 +81,67 @@
 </script>
 
 <div class="max-w-5xl">
-  {#if opened}
-    <PlantView
-      {host}
-      {api}
-      plantId={opened}
-      {environments}
-      onclose={() => (opened = null)}
-      onchanged={() => revision++}
-    />
-  {:else}
-    <header class="page-header">
-      <div>
-        <h1 class="page-title">Plants</h1>
-        <p class="page-lead">The plants of this workspace. Open a plant for its care and history.</p>
-      </div>
-      {#if canAdd && !adding}
-        <button
-          class="btn btn-primary btn-sm"
-          type="button"
-          disabled={environments.length === 0}
-          title={environments.length === 0 ? 'Add an environment first.' : undefined}
-          onclick={() => (adding = true)}
-        >
-          Add plant
-        </button>
-      {/if}
-    </header>
-
-    {#if failure}
-      <div role="alert" class="alert alert-error alert-soft mb-4">
-        <span>{failure}</span>
-      </div>
-    {/if}
-
-    {#if adding}
-      <div class="mb-6">
-        <PlantForm {environments} {busy} onsave={add} oncancel={() => (adding = false)} />
-      </div>
-    {/if}
-
-    <div class="mb-4 flex flex-wrap gap-2">
-      <select class="select select-sm w-auto" aria-label="Environment" bind:value={environmentId}>
-        <option value="">Every environment</option>
-        {#each environments as environment (environment.id)}
-          <option value={environment.id}>{environment.display_id} {environment.name}</option>
-        {/each}
-      </select>
-      <select class="select select-sm w-auto" aria-label="Status" bind:value={status}>
-        <option value="active">Active</option>
-        <option value="inactive">Inactive</option>
-      </select>
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Plants</h1>
+      <p class="page-lead">The plants of this workspace. Open a plant for its care and history.</p>
     </div>
-
-    {#if canLog && selected.size > 0}
-      <div class="mb-4">
-        <LogForm {api} plants={[...selected.values()]} onrecorded={recorded} />
-        <button class="btn btn-ghost btn-xs mt-1" type="button" onclick={() => selected.clear()}>
-          Clear the selection
-        </button>
-      </div>
+    {#if canAdd && !adding}
+      <button
+        class="btn btn-primary btn-sm"
+        type="button"
+        disabled={environments.length === 0}
+        title={environments.length === 0 ? 'Add an environment first.' : undefined}
+        onclick={() => (adding = true)}
+      >
+        Add plant
+      </button>
     {/if}
+  </header>
 
-    {#key `${environmentId}|${status}|${revision}`}
-      <PlantList
-        {api}
-        {filter}
-        {selected}
-        selectable={canLog}
-        onopen={(plant) => (opened = plant.id)}
-        ontoggle={toggle}
-      />
-    {/key}
+  {#if failure}
+    <div role="alert" class="alert alert-error alert-soft mb-4">
+      <span>{failure}</span>
+    </div>
   {/if}
+
+  {#if adding}
+    <div class="mb-6">
+      <PlantForm {environments} {busy} onsave={add} oncancel={() => (adding = false)} />
+    </div>
+  {/if}
+
+  <div class="mb-4 flex flex-wrap gap-2">
+    <select class="select select-sm w-auto" aria-label="Environment" bind:value={environmentId}>
+      <option value="">Every environment</option>
+      {#each environments as environment (environment.id)}
+        <option value={environment.id}>{environment.display_id} {environment.name}</option>
+      {/each}
+    </select>
+    <select class="select select-sm w-auto" aria-label="Status" bind:value={status}>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select>
+  </div>
+
+  {#if canLog && selected.size > 0}
+    <div class="mb-4">
+      <LogForm {api} plants={[...selected.values()]} onrecorded={recorded} />
+      <button class="btn btn-ghost btn-xs mt-1" type="button" onclick={() => selected.clear()}>
+        Clear the selection
+      </button>
+    </div>
+  {/if}
+
+  {#key `${environmentId}|${status}|${revision}`}
+    <PlantList
+      {api}
+      {filter}
+      {selected}
+      selectable={canLog}
+      hrefOf={(plant) => host.href(`/plants/${plant.id}`)}
+      onopen={(plant) => host.navigate(`/plants/${plant.id}`)}
+      ontoggle={toggle}
+    />
+  {/key}
 </div>

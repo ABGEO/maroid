@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PluginHost } from '@maroid/plugin-sdk';
+  import { ApiError, PROBLEM_TYPE, type PluginHost } from '@maroid/plugin-sdk';
   import { ConfirmDialog } from '@maroid/ui';
 
   import type { EnvironmentReference, JasmineApi, Plant, PlantUpdatePayload } from '../../api';
@@ -15,19 +15,16 @@
     api: JasmineApi;
     plantId: string;
     environments: EnvironmentReference[];
-    onclose: () => void;
-    /** Called after a write, so the list reads the plant again. */
-    onchanged: () => void;
   }
 
-  let { host, api, plantId, environments, onclose, onchanged }: Props = $props();
+  let { host, api, plantId, environments }: Props = $props();
 
   const canWritePlants = $derived(host.can('plants.write'));
   const canLog = $derived(host.can('maintenance.write'));
 
   let plant = $state<Plant | null>(null);
   let etag = $state<string | undefined>(undefined);
-  let status = $state<'loading' | 'ready' | 'error'>('loading');
+  let status = $state<'loading' | 'ready' | 'missing' | 'error'>('loading');
   let editing = $state(false);
   let confirmDialog = $state<ReturnType<typeof ConfirmDialog>>();
   let busy = $state(false);
@@ -44,7 +41,15 @@
       plant = tagged.value;
       etag = tagged.etag;
       status = 'ready';
+      host.setTitle(`${plant.display_id} ${plant.common_name}`);
     } catch (error) {
+      if (error instanceof ApiError && error.is(PROBLEM_TYPE.notFound)) {
+        status = 'missing';
+        host.setTitle('Not found');
+
+        return;
+      }
+
       console.error('Failed to load the plant', error);
       status = 'error';
     }
@@ -62,7 +67,6 @@
 
       editing = false;
       await load();
-      onchanged();
     } catch (error) {
       failure = failureMessage(error, 'The plant keeps its values. Try again.');
     } finally {
@@ -84,8 +88,7 @@
 
     try {
       await api.plants.remove(plantId, etag);
-      onchanged();
-      onclose();
+      host.navigate('/plants');
     } catch (error) {
       failure = failureMessage(error, 'The plant stays. Try again.');
     } finally {
@@ -99,10 +102,16 @@
 </script>
 
 <div>
-  <button class="btn btn-ghost btn-sm mb-4" type="button" onclick={onclose}>← All plants</button>
-
   {#if status === 'loading'}
     <span class="skeleton h-32 w-full" aria-hidden="true"></span>
+  {:else if status === 'missing'}
+    <header class="page-header">
+      <div>
+        <h1 class="page-title">Not found</h1>
+        <p class="page-lead">This workspace holds no plant with this address.</p>
+      </div>
+    </header>
+    <a class="btn btn-sm" href={host.href('/plants')}>Plants</a>
   {:else if status === 'error' || plant === null}
     <div role="alert" class="alert alert-error alert-soft">
       <span>Failed to load the plant.</span>

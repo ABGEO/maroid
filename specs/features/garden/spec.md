@@ -322,7 +322,8 @@ send. `GARDEN-FR-028`.
 | Route         | Label            | Shows | Realizes |
 | ------------- | ---------------- | ----- | -------- |
 | `/attention`  | Needs attention  | Every page of `GET /care-intervals?state=due,overdue`, grouped by environment, overdue first. Each line has a "Done" button that posts one entry with no `performed_at`. | `GARDEN-FR-014`, `GARDEN-FR-022`, `GARDEN-FR-023` |
-| `/plants`     | Plants           | The plant list with the two filters and a checkbox on each line. A form for the selection posts one entry for each plant. A form adds a plant. A line opens the plant view in the same page: the values, the form to change them, the care intervals with their state, and the entries of the plant. | `GARDEN-FR-003` to `GARDEN-FR-006`, `GARDEN-FR-013`, `GARDEN-FR-018`, `GARDEN-FR-022` |
+| `/plants`     | Plants           | The plant list with the two filters and a checkbox on each line. A form for the selection posts one entry for each plant. A form adds a plant. A line links to the page of its plant. | `GARDEN-FR-003` to `GARDEN-FR-006`, `GARDEN-FR-013`, `GARDEN-FR-018`, `GARDEN-FR-022` |
+| `/plants/:id` | none, outside the navigation | The page of one plant (`GARDEN-DD-011`): the values, the form to change them, the care intervals with their state, and the entries of the plant. | `GARDEN-FR-004` to `GARDEN-FR-006`, `GARDEN-FR-018`, `GARDEN-FR-022` |
 | `/environments` | Environments   | The list with the count of active plants. A form adds, renames, and deletes. | `GARDEN-FR-001`, `GARDEN-FR-022` |
 | `/maintenance` | Maintenance log | The entries, newest first, with a filter by plant and by type. A line changes or deletes the entry. | `GARDEN-FR-015`, `GARDEN-FR-016`, `GARDEN-FR-022` |
 
@@ -396,12 +397,12 @@ shows a control that writes only when `host.can` holds its permission.
 **Rationale:** An installation with no channel loads the plugin and sends nothing. A run that cannot send never starts.
 **Alternatives:** Make the channel required. Every installation must then name a channel before the plugin loads.
 
-### `GARDEN-DD-010`
+### `GARDEN-DD-011`
 
 **Realizes:** `GARDEN-FR-022`
-**Decision:** The plant view lives in the page `/plants`, and the page holds the selected plant in its state.
-**Rationale:** `loadPluginMount` matches a route by its exact path, so a remote has no route with a parameter. A deep link to one plant needs a change to the deck and to `UI-005`.
-**Alternatives:** A route with a parameter. It needs an ADR and a change to the deck.
+**Decision:** The plant view is the page of the route `/plants/:id`, which `PLROUTE` and `ADR-0012` give a remote. A line of the plant list links to it.
+**Rationale:** The page has its own address, so a reload, a link, and the back button of the browser keep it, and the trail leads back to the list.
+**Alternatives:** The plant view inside the page `/plants`, held in its state. A reload loses the plant, and the page needs a control of its own to go back.
 
 ## 6. Scenarios
 
@@ -426,8 +427,9 @@ shows a control that writes only when `host.can` holds its permission.
   migration, `GetByID` runs with no acting workspace and finds no plant, so the
   subscriber refuses every reading. A later feature gives a device message an
   acting workspace.
-- A link to one plant. `GARDEN-DD-010` gives the reason.
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID              | Retired    | Reason                                                        |
+| --------------- | ---------- | ------------------------------------------------------------- |
+| GARDEN-DD-010   | 2026-10-11 | `PLROUTE` gives the plant view its own route. `GARDEN-DD-011` replaces it. |

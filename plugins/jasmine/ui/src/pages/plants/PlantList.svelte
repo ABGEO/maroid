@@ -9,11 +9,13 @@
     /** The plants that the bulk log takes, by identifier. */
     selected: Map<string, Plant>;
     selectable: boolean;
+    /** The deck address of the page of a plant. */
+    hrefOf: (plant: Plant) => string;
     onopen: (plant: Plant) => void;
     ontoggle: (plant: Plant) => void;
   }
 
-  let { api, filter, selected, selectable, onopen, ontoggle }: Props = $props();
+  let { api, filter, selected, selectable, hrefOf, onopen, ontoggle }: Props = $props();
 
   const pager = createPager((link?: string) => api.plants.list(filter, link));
 
@@ -64,7 +66,11 @@
             {/if}
             <td class="meta">{plant.display_id}</td>
             <td>
-              <span class="font-medium">{plant.common_name}</span>
+              <a
+                class="link link-hover font-medium"
+                href={hrefOf(plant)}
+                onclick={(event) => event.stopPropagation()}>{plant.common_name}</a
+              >
               {#if plant.scientific_name}<span class="meta ml-1 italic">{plant.scientific_name}</span>{/if}
             </td>
             <td>{plant.environment.display_id} {plant.environment.name}</td>
