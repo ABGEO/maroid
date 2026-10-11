@@ -71,7 +71,7 @@ The jasmine plant view moves to `/plants/:id`. `ADR-0012` changes `UI-005` and `
 | `libs/plugin-sdk/src/index.ts` | change | Export `RouteParams`. |
 | `apps/deck/src/lib/plugins/routes.ts` | create | `matchRoute(keys: string[], path: string): RouteMatch \| null`, `activeEntry(paths: string[], path: string): string \| null`. `RouteMatch{key, params, parameterized}`. |
 | `apps/deck/src/lib/plugins/loader.ts` | change | `loadPluginRoute(pluginId, subpath): Promise<PluginRoute \| null>` replaces `loadPluginMount`. `PluginRoute{mount, params, parameterized}`. Null when no key matches. |
-| `apps/deck/src/lib/state/page-title.svelte.ts` | create | `pageTitle` state, `{ value: string \| null }`. |
+| `apps/deck/src/lib/state/title.svelte.ts` | create | `pageTitle` state, `{ value: string \| null }`. |
 | `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]/+page.ts` | change | Returns `{ route, pluginId }`. |
 | `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]/+page.svelte` | change | Mounts with `{ host, params }`. `host.setTitle` sets `pageTitle`. The cleanup of the mount clears it. A null route shows the not-found page of section 4.5. |
 | `apps/deck/src/lib/navigation/breadcrumbs.ts` | change | `Crumb` gains `pending?: boolean`. `crumbsFor` takes `title` and `parameterized`. Section 4.3. |
@@ -309,7 +309,7 @@ against `pnpm hub:serve` and `pnpm deck:dev`, in workspace H with jasmine enable
 | --- | ---- | -------- | ---- |
 | 1   | Accept `ADR-0012`. Change `UI-005` and `UI-008`. Add the row to the index of `specs/adr/`. | `PLROUTE-FR-001`, `PLROUTE-FR-008`, `PLROUTE-FR-011` | [x] |
 | 2   | The hub: `ErrInvalidUIRoute`, the check in `UIRegistrar`, `PLROUTE-SC-007`. `cd apps/hub && golangci-lint run ./...`, `go build ./apps/hub/...`. | `PLROUTE-FR-008` | [x] |
-| 3   | `libs/plugin-sdk`: `RouteParams`, `setTitle`. `pnpm --filter @maroid/plugin-sdk check`. | `PLROUTE-FR-004`, `PLROUTE-FR-011` | [ ] |
+| 3   | `libs/plugin-sdk`: `RouteParams`, `setTitle`. `pnpm --filter @maroid/plugin-sdk check`. | `PLROUTE-FR-004`, `PLROUTE-FR-011` | [x] |
 | 4   | The deck: `routes.ts`, the loader, the plugin page, the title state, the trail, the navigation. `pnpm --filter @maroid/deck lint`, `pnpm --filter @maroid/deck check`. | `PLROUTE-FR-001` to `PLROUTE-FR-012`, `PLROUTE-INV-001` | [ ] |
 | 5   | Jasmine: the plant route and the pages, and the change to the GARDEN spec. The remote build, then the `.so`. `BLD-003`, `BLD-004`. | `PLROUTE-FR-013` to `PLROUTE-FR-016` | [ ] |
 | 6   | The manual scenarios. | Every manual scenario | [ ] |

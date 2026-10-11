@@ -1,4 +1,4 @@
-export type { User, PluginHost, RouteCleanup, RouteMounter } from './types';
+export type { User, PluginHost, RouteCleanup, RouteMounter, RouteParams } from './types';
 export type {
   ApiClient,
   FieldFailure,

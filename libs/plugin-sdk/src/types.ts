@@ -15,7 +15,12 @@ export interface PluginHost {
   href(path: string): string;
   /** Client-side navigation to a plugin-relative path. */
   navigate(path: string): void;
+  /** Name the page in the last link of the trail. The deck clears it when the page unmounts. */
+  setTitle(title: string): void;
 }
+
+/** The value of each parameter segment of the matched page route, by its name. */
+export type RouteParams = Record<string, string>;
 
 export type RouteCleanup = () => void;
 

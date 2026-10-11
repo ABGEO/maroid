@@ -2,9 +2,18 @@ import { browser } from '$app/environment';
 import { env } from '$env/dynamic/public';
 
 import { createInstance, getInstance, type ModuleFederation } from '@module-federation/runtime';
-import type { RouteMounter } from '@maroid/plugin-sdk';
+import type { RouteMounter, RouteParams } from '@maroid/plugin-sdk';
+
+import { matchRoute } from './routes';
 
 export type { RouteCleanup, RouteMounter } from '@maroid/plugin-sdk';
+
+/** The page that an address of a plugin opens, with the values of its parameters. */
+export interface PluginRoute {
+	mount: RouteMounter;
+	params: RouteParams;
+	parameterized: boolean;
+}
 
 const HUB = (env.PUBLIC_HUB_BASE_URL ?? '').replace(/\/+$/, '');
 
@@ -54,7 +63,14 @@ function isRouteManifest(value: unknown): value is RouteManifest {
 	return Object.values(value).every((v) => typeof v === 'function');
 }
 
-export async function loadPluginMount(pluginId: string, subpath: string): Promise<RouteMounter> {
+/**
+ * Loads the remote of the plugin and answers the page that the raw subpath opens,
+ * or null when no page route of the remote matches it.
+ */
+export async function loadPluginRoute(
+	pluginId: string,
+	subpath: string
+): Promise<PluginRoute | null> {
 	if (!browser) {
 		throw new Error('Plugin federation runtime is browser-only');
 	}
@@ -66,13 +82,14 @@ export async function loadPluginMount(pluginId: string, subpath: string): Promis
 		throw new Error(`Plugin "${pluginId}" entry did not export a routes manifest`);
 	}
 
-	const key = '/' + subpath.replace(/^\/+/, '').replace(/\/+$/, '');
-	const mounter = mod.routes[key];
-	if (!mounter) {
-		const available = Object.keys(mod.routes).join(', ') || '(none)';
-
-		throw new Error(`Plugin "${pluginId}" has no route for "${key}". Available: ${available}`);
+	const matched = matchRoute(Object.keys(mod.routes), subpath);
+	if (matched === null) {
+		return null;
 	}
 
-	return mounter;
+	return {
+		mount: mod.routes[matched.key],
+		params: matched.params,
+		parameterized: matched.parameterized
+	};
 }

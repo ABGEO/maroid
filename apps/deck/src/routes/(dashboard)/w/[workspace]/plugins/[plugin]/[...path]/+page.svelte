@@ -7,6 +7,9 @@
 	import type { PageProps } from './$types';
 	import { createPluginClient } from '$lib/api';
 	import { pluginCan } from '$lib/permissions';
+	import { uiOf } from '$lib/plugins/capabilities';
+	import { knownPlugin } from '$lib/state/plugins.svelte';
+	import { pageTitle } from '$lib/state/title.svelte';
 	import { displayName, userState } from '$lib/state/user.svelte';
 
 	let { data }: PageProps = $props();
@@ -21,6 +24,7 @@
 	let target: HTMLElement | undefined = $state();
 
 	const api = $derived(createPluginClient(data.workspace.id, data.pluginId));
+	const firstEntry = $derived(uiOf(knownPlugin(data.pluginId))?.routes[0]);
 
 	const host: PluginHost = {
 		get user() {
@@ -41,16 +45,46 @@
 					path: path.replace(/^\//, '')
 				})
 			);
+		},
+		setTitle: (title) => {
+			pageTitle.value = title;
 		}
 	};
 
 	$effect(() => {
-		if (!target) {
+		const route = data.route;
+		if (!target || route === null) {
 			return;
 		}
 
-		return data.mount(target, { host });
+		const unmount = route.mount(target, { host, params: route.params });
+
+		return () => {
+			unmount();
+			pageTitle.value = null;
+		};
 	});
 </script>
+
+{#if data.route === null}
+	<header class="page-header">
+		<div>
+			<h1 class="page-title">Not found</h1>
+			<p class="page-lead">This plugin has no page at this address.</p>
+		</div>
+	</header>
+	{#if firstEntry}
+		<a
+			class="btn btn-sm"
+			href={resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]', {
+				workspace: data.workspace.id,
+				plugin: data.pluginId,
+				path: firstEntry.path.replace(/^\//, '')
+			})}
+		>
+			{firstEntry.label}
+		</a>
+	{/if}
+{/if}
 
 <div bind:this={target}></div>
