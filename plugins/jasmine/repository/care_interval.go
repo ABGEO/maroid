@@ -87,6 +87,7 @@ type CareIntervalRepository interface {
 		seek page.Seek,
 		filter CareIntervalFilter,
 	) ([]model.CareInterval, error)
+	ListAttention(ctx context.Context) ([]model.CareInterval, error)
 }
 
 // CareInterval is a SQL-based implementation of CareIntervalRepository.
@@ -238,6 +239,25 @@ func (r *CareInterval) List(
 
 	if seek.Direction == page.DirectionBackward {
 		slices.Reverse(entities)
+	}
+
+	return entities, nil
+}
+
+// ListAttention retrieves every care interval that is due or overdue, ordered by
+// the environment number, then overdue before due, then the plant number, then
+// the order of model.MaintenanceTypes.
+func (r *CareInterval) ListAttention(ctx context.Context) ([]model.CareInterval, error) {
+	query := selectCareIntervals + `
+		WHERE standing.state IN ('due', 'overdue')
+		ORDER BY e.number,
+		         standing.state = 'overdue' DESC,
+		         p.number,
+		         array_position(string_to_array($1, ','), ci.type);`
+
+	var entities []model.CareInterval
+	if err := r.tx.SelectContext(ctx, &entities, query, typeOrder()); err != nil {
+		return nil, fmt.Errorf("listing the due CareIntervals: %w", err)
 	}
 
 	return entities, nil

@@ -3,7 +3,9 @@ module github.com/abgeo/maroid/plugins/jasmine
 go 1.26.7
 
 require (
+	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664
 	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261007201113-f0f51ecfa664
+	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261007201113-f0f51ecfa664
 	github.com/abgeo/maroid/libs/rest v0.0.0-20261007201113-f0f51ecfa664
 	github.com/abgeo/maroid/libs/testdb v0.0.0-20261007201113-f0f51ecfa664
 	github.com/go-chi/chi/v5 v5.3.0
@@ -20,7 +22,6 @@ require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20261006220739-8c912ac31dd4 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664 // indirect
 	github.com/ajg/form v1.7.1 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.4 // indirect
@@ -44,6 +45,7 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-playground/locales v0.14.2 // indirect
 	github.com/go-playground/universal-translator v0.18.2 // indirect
+	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/grbit/go-json v0.11.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
@@ -61,6 +63,7 @@ require (
 	github.com/lib/pq v1.12.3 // indirect
 	github.com/lufia/plan9stats v0.0.0-20260802145828-341c2f0c90b5 // indirect
 	github.com/magiconair/properties v1.18.12 // indirect
+	github.com/mcuadros/go-defaults v1.2.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.3.3 // indirect
 	github.com/moby/moby/api v1.56.1 // indirect

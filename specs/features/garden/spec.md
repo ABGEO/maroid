@@ -412,11 +412,11 @@ shows a control that writes only when `host.can` holds its permission.
 | #   | Step | Realizes | Done |
 | --- | ---- | -------- | ---- |
 | 1   | The migration pair, and the integration test of every constraint. | `GARDEN-FR-031`, `GARDEN-INV-001` to `GARDEN-INV-003` | [x] |
-| 2   | `model/`, `errs/`, `permission/`, `config/`. | `GARDEN-FR-011`, `GARDEN-FR-025` | [ ] |
+| 2   | `model/`, `errs/`, `permission/`, `config/`. | `GARDEN-FR-011`, `GARDEN-FR-025` | [x] |
 | 3   | `repository/counter.go`, `environment.go`, `plant.go`, with their tests. | `GARDEN-FR-001` to `GARDEN-FR-009` | [x] |
-| 4   | `repository/care_interval.go`, `maintenance_entry.go`, with the state tests. | `GARDEN-FR-012` to `GARDEN-FR-021` | [ ] |
-| 5   | `handler/body.go`, the DTOs, and the handlers. `api.yaml` matches. | `GARDEN-FR-001` to `GARDEN-FR-023` | [ ] |
-| 6   | `job/`, and the wiring in `main.go`. | `GARDEN-FR-025`, `GARDEN-FR-026`, `GARDEN-FR-028`, `GARDEN-FR-032` | [ ] |
+| 4   | `repository/care_interval.go`, `maintenance_entry.go`, with the state tests. | `GARDEN-FR-012` to `GARDEN-FR-021` | [x] |
+| 5   | `handler/body.go`, the DTOs, and the handlers. `api.yaml` matches. | `GARDEN-FR-001` to `GARDEN-FR-023` | [x] |
+| 6   | `job/`, and the wiring in `main.go`. | `GARDEN-FR-025`, `GARDEN-FR-026`, `GARDEN-FR-028`, `GARDEN-FR-032` | [x] |
 | 7   | The remote: the API clients and the four pages. Build it before the `.so`. `BLD-003`. | `GARDEN-FR-010`, `GARDEN-FR-014`, `GARDEN-FR-022` to `GARDEN-FR-024` | [ ] |
 | 8   | The two measurements of `GARDEN-NFR-001` and `GARDEN-NFR-002`. | `GARDEN-NFR-001`, `GARDEN-NFR-002` | [ ] |
 
