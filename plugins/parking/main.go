@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"log/slog"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -38,6 +39,7 @@ var (
 	_ pluginapi.TelegramConversationPlugin = (*ParkingPlugin)(nil)
 	_ pluginapi.PermissionPlugin           = (*ParkingPlugin)(nil)
 	_ pluginapi.RoutePlugin                = (*ParkingPlugin)(nil)
+	_ pluginapi.UIPlugin                   = (*ParkingPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -116,6 +118,21 @@ func (p *ParkingPlugin) Permissions() ([]pluginapi.Permission, error) {
 			Description: "Read, connect, and disconnect your own parking account",
 			Lowest:      pluginapi.RoleViewer,
 		},
+	}, nil
+}
+
+// UIManifest returns the account page of the remote and its assets.
+func (p *ParkingPlugin) UIManifest() (*pluginapi.UIManifest, error) {
+	assets, err := fs.Sub(uiAssets, "ui/dist")
+	if err != nil {
+		return nil, fmt.Errorf("getting UI manifest FS: %w", err)
+	}
+
+	return &pluginapi.UIManifest{
+		Routes: []pluginapi.UIRoute{
+			{Path: "/account", Label: "Account"},
+		},
+		Assets: assets,
 	}, nil
 }
 

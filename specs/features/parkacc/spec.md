@@ -398,7 +398,7 @@ check it. `PSET-FR-004` returns it to that user alone.
 | 4   | `service/connection.go`                                                                      | `PARKACC-FR-004` to `PARKACC-FR-020`             | [x]  |
 | 5   | `handler/` and `api.yaml`                                                                    | `PARKACC-FR-004` to `PARKACC-FR-018`             | [x]  |
 | 6   | The bot: `replyFailure`, `endNotConnected`, the preflight, `select_vehicle`, `confirm`       | `PARKACC-FR-021`, `PARKACC-FR-024` to `PARKACC-FR-028` | [ ]  |
-| 7   | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`).              | `PARKACC-FR-004` to `PARKACC-FR-018`             | [ ]  |
+| 7   | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`).              | `PARKACC-FR-004` to `PARKACC-FR-018`             | [x]  |
 | 8   | `PARKACC-SC-028` against the parking service. Correct `PARKACC-DD-006` and `PARKACC-DD-007`. | `PARKACC-FR-012`, `PARKACC-FR-015`, `PARKACC-FR-017` | [ ]  |
 | 9   | The tests of `spec-scenarios.md`. Lint and build the plugin and the hub.                     | Every statement                                  | [ ]  |
 
