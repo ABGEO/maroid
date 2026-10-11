@@ -16,6 +16,7 @@ const maxFormMemory = 32 << 20
 
 // Call is one request that the stub received.
 type Call struct {
+	Token  string
 	Method string
 	Params map[string]string
 	Files  []string
@@ -76,7 +77,12 @@ func (s *Server) Calls() []Call {
 
 func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	call := Call{Method: segments[len(segments)-1], Params: map[string]string{}, At: time.Now()}
+	call := Call{
+		Token:  strings.TrimPrefix(segments[0], "bot"),
+		Method: segments[len(segments)-1],
+		Params: map[string]string{},
+		At:     time.Now(),
+	}
 
 	readParams(r, &call)
 

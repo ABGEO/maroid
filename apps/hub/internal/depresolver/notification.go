@@ -87,3 +87,54 @@ func (c *Container) buildNotificationDispatcher() (*notification.Dispatcher, err
 		cipher,
 	), nil
 }
+
+// NotificationService initializes and returns the service of the notification providers
+// and routes.
+func (c *Container) NotificationService() (notification.Service, error) {
+	c.notificationService.mu.Lock()
+	defer c.notificationService.mu.Unlock()
+
+	var err error
+
+	c.notificationService.once.Do(func() {
+		c.notificationService.instance, err = c.buildNotificationService()
+	})
+
+	if err != nil {
+		c.notificationService.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing the notification service: %w", err)
+	}
+
+	return c.notificationService.instance, nil
+}
+
+func (c *Container) buildNotificationService() (*notification.Manager, error) {
+	db, err := c.Database()
+	if err != nil {
+		return nil, err
+	}
+
+	kinds, err := c.NotificationKinds()
+	if err != nil {
+		return nil, err
+	}
+
+	enablements, err := c.EnablementService()
+	if err != nil {
+		return nil, err
+	}
+
+	cipher, err := c.SecretCipher()
+	if err != nil {
+		return nil, err
+	}
+
+	return notification.NewManager(
+		db,
+		kinds,
+		c.NotificationTopicRegistry(),
+		enablements,
+		cipher,
+	), nil
+}

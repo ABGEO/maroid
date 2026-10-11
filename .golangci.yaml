@@ -42,6 +42,7 @@ linters:
         - generic
         - pluginapi.Plugin
         - pluginapi.NotificationSender
+        - notification.Service
         - pluginapi.TelegramBot
         - paho.mqtt.golang.Client
         - repository.UserRepository

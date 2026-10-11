@@ -89,6 +89,9 @@ type workspaceFixture struct {
 	probeRuns *atomic.Int32
 	// probeWrites counts the requests that reached the write route of the probe plugin.
 	probeWrites *atomic.Int32
+	// notifications holds the Telegram stub, the cipher, and the dispatcher that the
+	// routes of the notification providers reach.
+	notifications *notificationParts
 }
 
 func workspaceUnderTest(t *testing.T) *workspaceFixture {
@@ -109,6 +112,7 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 
 	runs, writes := &atomic.Int32{}, &atomic.Int32{}
 	idp := dextest.New(dextest.Connector("mock", "mockCallback", "Mock", `{}`))
+	notifications := newNotificationParts(t, instance.DB)
 	fixture := &workspaceFixture{
 		router: workspaceRouter(
 			t,
@@ -118,12 +122,14 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 			runs,
 			writes,
 			idp,
+			notifications,
 		),
-		idp:         idp,
-		database:    instance.DB,
-		provider:    provider,
-		probeRuns:   runs,
-		probeWrites: writes,
+		notifications: notifications,
+		idp:           idp,
+		database:      instance.DB,
+		provider:      provider,
+		probeRuns:     runs,
+		probeWrites:   writes,
 	}
 
 	signable := func(name string, account string) person {
@@ -190,6 +196,7 @@ func workspaceRouter(
 	probeRuns *atomic.Int32,
 	probeWrites *atomic.Int32,
 	idp *dextest.Memory,
+	notifications *notificationParts,
 ) *chi.Mux {
 	t.Helper()
 
@@ -225,6 +232,11 @@ func workspaceRouter(
 		access.Authorizer,
 		manager,
 		handler.WorkspacePlugins{Enablements: enablements, Catalog: loadedCatalog(t)},
+	).Register(router)
+
+	handler.NewNotification(
+		notifications.logger, verifier, resolver, noIdempotency{}, access,
+		notifications.service(enablements),
 	).Register(router)
 
 	registerAdministration(router, administration{

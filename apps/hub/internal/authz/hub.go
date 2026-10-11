@@ -9,13 +9,15 @@ import (
 
 // The permissions of the hub. They carry no prefix, because no plugin declares them.
 const (
-	PermissionWorkspaceRead   = "workspace.read"
-	PermissionWorkspaceWrite  = "workspace.write"
-	PermissionMembersWrite    = "members.write"
-	PermissionMembershipLeave = "membership.leave"
-	PermissionSettingsRead    = "settings.read"
-	PermissionSettingsWrite   = "settings.write"
-	PermissionPluginsWrite    = "plugins.write"
+	PermissionWorkspaceRead      = "workspace.read"
+	PermissionWorkspaceWrite     = "workspace.write"
+	PermissionMembersWrite       = "members.write"
+	PermissionMembershipLeave    = "membership.leave"
+	PermissionSettingsRead       = "settings.read"
+	PermissionSettingsWrite      = "settings.write"
+	PermissionPluginsWrite       = "plugins.write"
+	PermissionNotificationsRead  = "notifications.read"
+	PermissionNotificationsWrite = "notifications.write"
 )
 
 // NewPermissionRegistry creates the registry of the permissions, with every
@@ -52,6 +54,16 @@ func NewPermissionRegistry() (*registry.PermissionRegistry, error) {
 		registry.PermissionEntry{
 			Name:        PermissionPluginsWrite,
 			Description: "Enable and disable the plugins of the workspace",
+			Lowest:      pluginapi.RoleManager,
+		},
+		registry.PermissionEntry{
+			Name:        PermissionNotificationsRead,
+			Description: "Read the notification providers and the notification routes",
+			Lowest:      pluginapi.RoleViewer,
+		},
+		registry.PermissionEntry{
+			Name:        PermissionNotificationsWrite,
+			Description: "Change the notification providers and the notification routes",
 			Lowest:      pluginapi.RoleManager,
 		},
 		registry.PermissionEntry{

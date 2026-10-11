@@ -10,11 +10,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/openbao/openbao/api/v2"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 
+	"github.com/abgeo/maroid/apps/hub/internal/database"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
 )
 
@@ -72,6 +76,25 @@ func startTransit(t *testing.T) *api.Client {
 	return client
 }
 
+// addTopicRoute stores an enabled route of the topic to the chat, in workspace A.
+func (world *deliveryWorld) addTopicRoute(t *testing.T, provider, topic, chat string) {
+	t.Helper()
+
+	ctx := runIn(world.workspaceA)
+
+	require.NoError(t, database.WithScopeTx(ctx, world.instance.DB, func(tx *sqlx.Tx) error {
+		_, err := repository.NewNotificationRoute(tx).Create(ctx, &model.NotificationRoute{
+			ProviderID:  provider,
+			PluginID:    probeID,
+			TopicID:     topic,
+			Destination: model.Destination{chatField: chat},
+			Enabled:     true,
+		})
+
+		return err //nolint:wrapcheck // the test reports the error as it is
+	}))
+}
+
 // NOTIF-SC-027: With 10 providers and 50 routes, of which 3 serve the topic, the time
 // from the send to the first call at Telegram stays within 50 milliseconds at the
 // 95th percentile.
@@ -100,9 +123,8 @@ func TestTheRoutesOfOneSendResolveWithinFiftyMilliseconds(t *testing.T) {
 			topic = reminderTopic
 		}
 
-		world.addRoute(
+		world.addTopicRoute(
 			t,
-			world.workspaceA,
 			providers[index%len(providers)],
 			topic,
 			fmt.Sprintf("-%d", 100+index),

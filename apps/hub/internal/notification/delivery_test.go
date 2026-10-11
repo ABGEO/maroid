@@ -183,8 +183,8 @@ func (world *deliveryWorld) addProvider(t *testing.T, workspace string, name str
 	return id
 }
 
-// addRoute stores an enabled route of the topic to the chat.
-func (world *deliveryWorld) addRoute(t *testing.T, workspace, provider, topic, chat string) {
+// addRoute stores an enabled route of the reminder to the chat.
+func (world *deliveryWorld) addRoute(t *testing.T, workspace, provider, chat string) {
 	t.Helper()
 
 	ctx := runIn(workspace)
@@ -193,7 +193,7 @@ func (world *deliveryWorld) addRoute(t *testing.T, workspace, provider, topic, c
 		_, err := repository.NewNotificationRoute(tx).Create(ctx, &model.NotificationRoute{
 			ProviderID:  provider,
 			PluginID:    probeID,
-			TopicID:     topic,
+			TopicID:     reminderTopic,
 			Destination: model.Destination{chatField: chat},
 			Enabled:     true,
 		})
@@ -231,9 +231,9 @@ func TestSendDeliversThroughEachRouteOfTheWorkspace(t *testing.T) {
 	work := world.addProvider(t, world.workspaceA, "Work bot")
 	other := world.addProvider(t, world.workspaceB, "Their bot")
 
-	world.addRoute(t, world.workspaceA, family, reminderTopic, "-100")
-	world.addRoute(t, world.workspaceA, work, reminderTopic, "-200")
-	world.addRoute(t, world.workspaceB, other, reminderTopic, "-900")
+	world.addRoute(t, world.workspaceA, family, "-100")
+	world.addRoute(t, world.workspaceA, work, "-200")
+	world.addRoute(t, world.workspaceB, other, "-900")
 
 	require.NoError(t, world.send(world.workspaceA, reminderTopic))
 
@@ -262,8 +262,8 @@ func TestSendFailsOnlyWhenEveryRouteFails(t *testing.T) {
 
 			world := newDeliveryWorld(t)
 			provider := world.addProvider(t, world.workspaceA, "Family bot")
-			world.addRoute(t, world.workspaceA, provider, reminderTopic, "-100")
-			world.addRoute(t, world.workspaceA, provider, reminderTopic, "-200")
+			world.addRoute(t, world.workspaceA, provider, "-100")
+			world.addRoute(t, world.workspaceA, provider, "-200")
 
 			for _, chat := range tc.refused {
 				world.stub.Refuse(chat, "Bad Request: chat not found")
@@ -306,7 +306,7 @@ func TestSendOfAnUnroutedTopicDropsTheNotification(t *testing.T) {
 
 	world := newDeliveryWorld(t)
 	provider := world.addProvider(t, world.workspaceA, "Family bot")
-	world.addRoute(t, world.workspaceA, provider, reminderTopic, "-100")
+	world.addRoute(t, world.workspaceA, provider, "-100")
 
 	require.NoError(t, world.send(world.workspaceA, reportTopic))
 	require.Empty(t, world.stub.Calls())

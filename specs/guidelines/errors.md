@@ -4,7 +4,7 @@ title: Errors
 type: guideline
 status: active
 created: 2026-09-21
-updated: 2026-10-08
+updated: 2026-10-11
 scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, libs/rest/, libs/api-client/, plugins/]
 related: [API, DAT, LOG, OWN, PLG, RES, UI]
 ---
@@ -139,6 +139,9 @@ identity, the secret of the bot.
 | `local-provider-absent`  | 409    | The instance holds no local provider.               |
 | `webhook-secret-invalid` | 401    | The update carries no valid secret of the bot.      |
 | `settings-invalid`       | 422    | The settings do not match the schema.               |
+| `notification-route-exists` | 409 | Another notification route holds the same topic, provider, and destination. |
+| `delivery-refused`       | 422    | The external messaging service refused the call.    |
+| `messaging-unreachable`  | 502    | The external messaging service did not answer.      |
 | `not-ready`              | 503    | The hub cannot serve a request.                     |
 
 A body that carries a member which the schema does not declare answers

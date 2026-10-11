@@ -11,19 +11,22 @@ import (
 
 // The problem types that the hub owns.
 const (
-	TypeNetworkNotAllowed      = "/problems/hub/network-not-allowed"
-	TypeSettingsAbsent         = "/problems/hub/settings-absent"
-	TypeIdentityLast           = "/problems/hub/identity-last"
-	TypeSettingsInvalid        = "/problems/hub/settings-invalid"
-	TypeNotReady               = "/problems/hub/not-ready"
-	TypeMemberExists           = "/problems/hub/member-exists"
-	TypeManagerLast            = "/problems/hub/manager-last"
-	TypeAdministratorLast      = "/problems/hub/administrator-last"
-	TypeAdministratorAllowlist = "/problems/hub/administrator-allowlist"
-	TypeProviderExists         = "/problems/hub/provider-exists"
-	TypeProviderStatic         = "/problems/hub/provider-static"
-	TypeLocalAccountExists     = "/problems/hub/local-account-exists"
-	TypeLocalProviderAbsent    = "/problems/hub/local-provider-absent"
+	TypeNetworkNotAllowed       = "/problems/hub/network-not-allowed"
+	TypeSettingsAbsent          = "/problems/hub/settings-absent"
+	TypeIdentityLast            = "/problems/hub/identity-last"
+	TypeSettingsInvalid         = "/problems/hub/settings-invalid"
+	TypeNotReady                = "/problems/hub/not-ready"
+	TypeMemberExists            = "/problems/hub/member-exists"
+	TypeManagerLast             = "/problems/hub/manager-last"
+	TypeAdministratorLast       = "/problems/hub/administrator-last"
+	TypeAdministratorAllowlist  = "/problems/hub/administrator-allowlist"
+	TypeProviderExists          = "/problems/hub/provider-exists"
+	TypeProviderStatic          = "/problems/hub/provider-static"
+	TypeLocalAccountExists      = "/problems/hub/local-account-exists"
+	TypeLocalProviderAbsent     = "/problems/hub/local-provider-absent"
+	TypeNotificationRouteExists = "/problems/hub/notification-route-exists"
+	TypeDeliveryRefused         = "/problems/hub/delivery-refused"
+	TypeMessagingUnreachable    = "/problems/hub/messaging-unreachable"
 )
 
 // NotReadyProblem reports a hub that cannot serve a request, with the name of each
@@ -161,5 +164,35 @@ func NewNotReady(dependencies ...string) *NotReadyProblem {
 			Status: http.StatusServiceUnavailable,
 		},
 		Dependencies: dependencies,
+	}
+}
+
+// NewNotificationRouteExists reports a route that repeats the topic, the provider, and
+// the destination of another route.
+func NewNotificationRouteExists() *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeNotificationRouteExists,
+		Title:  "Another notification route holds the same topic, provider, and destination.",
+		Status: http.StatusConflict,
+	}
+}
+
+// NewDeliveryRefused reports a call that the external messaging service refused. The
+// detail holds the answer of the service.
+func NewDeliveryRefused(reason string) *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeDeliveryRefused,
+		Title:  "The external messaging service refused the call.",
+		Status: http.StatusUnprocessableEntity,
+		Detail: reason,
+	}
+}
+
+// NewMessagingUnreachable reports an external messaging service that did not answer.
+func NewMessagingUnreachable() *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeMessagingUnreachable,
+		Title:  "The external messaging service did not answer.",
+		Status: http.StatusBadGateway,
 	}
 }

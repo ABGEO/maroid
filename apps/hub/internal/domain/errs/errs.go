@@ -130,6 +130,15 @@ var (
 	// ErrInvalidNotificationKind indicates a kind whose models cannot serve a
 	// notification provider or a destination.
 	ErrInvalidNotificationKind = errors.New("notification kind: invalid")
+	// ErrNotificationProviderNotFound indicates a notification provider that the acting
+	// workspace does not hold.
+	ErrNotificationProviderNotFound = errors.New("notification provider: not found")
+	// ErrNotificationRouteNotFound indicates a notification route that the acting
+	// workspace does not hold.
+	ErrNotificationRouteNotFound = errors.New("notification route: not found")
+	// ErrNotificationRouteExists indicates a route that repeats the topic, the provider,
+	// and the destination of another route.
+	ErrNotificationRouteExists = errors.New("notification route: already exists")
 	// ErrDeliveryRefused indicates that an external messaging service refused a call.
 	ErrDeliveryRefused = errors.New("delivery: refused")
 	// ErrMessagingUnreachable indicates that an external messaging service did not answer.

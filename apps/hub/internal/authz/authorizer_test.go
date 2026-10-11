@@ -70,6 +70,7 @@ func TestARoleHoldsThePermissionsAtOrBelowIt(t *testing.T) {
 
 	assert.Equal(t, []string{
 		authz.PermissionMembershipLeave,
+		authz.PermissionNotificationsRead,
 		authz.PermissionSettingsRead,
 		authz.PermissionWorkspaceRead,
 	}, authorizer.Held(pluginapi.RoleViewer))

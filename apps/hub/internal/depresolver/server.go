@@ -135,34 +135,61 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		}
 	}
 
-	workspaceHandler, err := c.buildWorkspaceHandler()
-	if err != nil {
-		return err
+	builders := []struct {
+		id    string
+		build func() (handler.Handler, error)
+	}{
+		{"workspace", func() (handler.Handler, error) { return c.buildWorkspaceHandler() }},
+		{"user", func() (handler.Handler, error) { return c.buildUserHandler() }},
+		{"provider", func() (handler.Handler, error) { return c.buildProviderHandler() }},
+		{"notification", func() (handler.Handler, error) { return c.buildNotificationHandler() }},
 	}
 
-	if err = reg.Register("workspace", workspaceHandler); err != nil {
-		return fmt.Errorf("register workspace handler: %w", err)
-	}
+	for _, builder := range builders {
+		built, buildErr := builder.build()
+		if buildErr != nil {
+			return buildErr
+		}
 
-	userHandler, err := c.buildUserHandler()
-	if err != nil {
-		return err
-	}
-
-	if err = reg.Register("user", userHandler); err != nil {
-		return fmt.Errorf("register user handler: %w", err)
-	}
-
-	providerHandler, err := c.buildProviderHandler()
-	if err != nil {
-		return err
-	}
-
-	if err = reg.Register("provider", providerHandler); err != nil {
-		return fmt.Errorf("register provider handler: %w", err)
+		if err = reg.Register(builder.id, built); err != nil {
+			return fmt.Errorf("register %s handler: %w", builder.id, err)
+		}
 	}
 
 	return nil
+}
+
+// buildNotificationHandler resolves every dependency of the handler of the
+// notification providers and routes.
+func (c *Container) buildNotificationHandler() (*handler.Notification, error) {
+	verifier, err := c.TokenVerifier()
+	if err != nil {
+		return nil, err
+	}
+
+	identityResolver, err := c.IdentityResolver()
+	if err != nil {
+		return nil, err
+	}
+
+	idempotencyStore, err := c.IdempotencyStore()
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := c.workspaceAccess()
+	if err != nil {
+		return nil, err
+	}
+
+	service, err := c.NotificationService()
+	if err != nil {
+		return nil, err
+	}
+
+	return handler.NewNotification(
+		c.Logger(), verifier, identityResolver, idempotencyStore, access, service,
+	), nil
 }
 
 // buildProviderHandler resolves every dependency of the handler of /providers.

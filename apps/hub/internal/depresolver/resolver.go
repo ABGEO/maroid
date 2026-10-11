@@ -87,6 +87,7 @@ type Resolver interface {
 	NotificationTopicRegistry() *registry.NotificationTopicRegistry
 	NotificationKinds() (*notification.KindRegistry, error)
 	NotificationDispatcher() (*notification.Dispatcher, error)
+	NotificationService() (notification.Service, error)
 	TelegramBot() (*telego.Bot, error)
 	TelegramUpdatesHandler() (*telegram.ChannelHandler, error)
 	Close(ctx context.Context) error
@@ -322,6 +323,12 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *notification.KindRegistry
+	}
+
+	notificationService struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance notification.Service
 	}
 
 	notificationDispatcher struct {

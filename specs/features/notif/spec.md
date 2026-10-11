@@ -515,10 +515,10 @@ about it.
 | 2   | The topic registry, the registrar, the capability, the loader.                            | `NOTIF-FR-001`, `NOTIF-FR-002`          | [x]  |
 | 3   | The two migrations, the model, the two repositories.                                      | `NOTIF-FR-009`, `NOTIF-FR-017`, `NOTIF-INV-001`, `NOTIF-INV-002` | [x]  |
 | 4   | `notification.Kind`, `KindRegistry`, and `telegram.Kind` with `Verify` and `Send`.        | `NOTIF-FR-011`, `NOTIF-FR-013`, `NOTIF-FR-032` | [x]  |
-| 5   | `notification.Manager`: providers, with the protection of the secrets.                    | `NOTIF-FR-004` to `NOTIF-FR-010`, `NOTIF-FR-033` to `NOTIF-FR-035` | [ ]  |
-| 6   | `notification.Manager`: topics, routes, and the test message.                             | `NOTIF-FR-014` to `NOTIF-FR-023`        | [ ]  |
+| 5   | `notification.Manager`: providers, with the protection of the secrets.                    | `NOTIF-FR-004` to `NOTIF-FR-010`, `NOTIF-FR-033` to `NOTIF-FR-035` | [x]  |
+| 6   | `notification.Manager`: topics, routes, and the test message.                             | `NOTIF-FR-014` to `NOTIF-FR-023`        | [x]  |
 | 7   | `notification.Dispatcher`, and `Host.Notifier()` in the hub.                              | `NOTIF-FR-024` to `NOTIF-FR-031`, `NOTIF-NFR-001`, `NOTIF-NFR-002` | [x]  |
-| 8   | The permissions, `handler.Notification`, the problems, `api.yaml`.                        | `NOTIF-FR-004` to `NOTIF-FR-021`        | [ ]  |
+| 8   | The permissions, `handler.Notification`, the problems, `api.yaml`.                        | `NOTIF-FR-004` to `NOTIF-FR-021`        | [x]  |
 | 9   | The depresolver. Delete `libs/notifier`, `libs/notifierapi`, the `notifier` configuration. | `NOTIF-INV-004`                        | [x]  |
 | 10  | Each plugin that sends declares its topics and calls `Notify`. Its notification keys leave its configuration. | `NOTIF-FR-001`, `NOTIF-FR-003` | [x]  |
 | 11  | Rebuild and lint every plugin, as `BLD-004` gives.                                        | `NOTIF-FR-001`                          | [x]  |
