@@ -32,9 +32,6 @@ var (
 	ErrTelegramCommandAlreadyRegistered = errors.New("telegram command: already registered")
 	// ErrCronAlreadyRegistered indicates that a cron job has already been registered.
 	ErrCronAlreadyRegistered = errors.New("cron: already registered")
-	// ErrCronScopeWithoutPlugin indicates a job of the hub that declares the scope
-	// per-workspace. No workspace enables the hub, so the job would never run.
-	ErrCronScopeWithoutPlugin = errors.New("cron: a job of the hub cannot run per workspace")
 	// ErrTelegramConversationNotFound indicates that a telegram conversation was not found.
 	ErrTelegramConversationNotFound = errors.New("telegram conversation: not found")
 	// ErrTelegramConversationStepNotFound indicates that a step within a telegram conversation was not found.
@@ -159,6 +156,9 @@ var (
 	// ErrUnknownSettingScope indicates a scope of a settings field that the hub holds
 	// no table for.
 	ErrUnknownSettingScope = errors.New("plugin settings: unknown scope")
+	// ErrUnknownSecretScope indicates a scope of a plugin secret that the hub holds no
+	// table for.
+	ErrUnknownSecretScope = errors.New("plugin secret: unknown scope")
 	// ErrMCPToolAlreadyRegistered indicates that a Model Context Protocol tool has
 	// already been registered under the same name.
 	ErrMCPToolAlreadyRegistered = errors.New("mcp tool: already registered")

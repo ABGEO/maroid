@@ -359,14 +359,14 @@ in the past" then has no value to reject.
 | #   | Step                                                                                                   | Realizes                                         | Done |
 | --- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------ | ---- |
 | 1   | Accept `ADR-0014`. Write the new text of `OWN-009`. Mark the last paragraph of section 3 of `features/plugacc/spec-clients.md` as replaced. | `PSECRET-FR-010` | [x]  |
-| 2   | `libs/pluginapi/secret.go`, `Host.Secrets`, the comment of `CronScopePerWorkspace`. Lint `libs/pluginapi`. | `PSECRET-FR-001` to `PSECRET-FR-008`, `PSECRET-INV-001` | [ ]  |
-| 3   | The two migrations                                                                                     | `PSECRET-FR-005`, `PSECRET-FR-012`, `PSECRET-INV-002` | [ ]  |
-| 4   | `model.PluginSecret` and `repository.PluginSecret`                                                     | `PSECRET-FR-003` to `PSECRET-FR-009`             | [ ]  |
-| 5   | `pluginsecret.Store` and `validate.go`                                                                 | `PSECRET-FR-001` to `PSECRET-FR-019`             | [ ]  |
-| 6   | `Host.Secrets` in the hub, `Container.PluginSecretStore`, the argument of `pluginhost.New`             | `PSECRET-FR-001`, `PSECRET-FR-020`               | [ ]  |
-| 7   | `Workspace.ListIDs`, `Enablements.AllWorkspaces`, the cron worker, the removal of `ErrCronScopeWithoutPlugin` | `PSECRET-FR-010`                          | [ ]  |
-| 8   | `pluginsecret.Sweep` and the two entries of `coreCronJobs`                                             | `PSECRET-FR-010`                                 | [ ]  |
-| 9   | The tests of `spec-scenarios.md`                                                                       | Every statement                                  | [ ]  |
+| 2   | `libs/pluginapi/secret.go`, `Host.Secrets`, the comment of `CronScopePerWorkspace`. Lint `libs/pluginapi`. | `PSECRET-FR-001` to `PSECRET-FR-008`, `PSECRET-INV-001` | [x]  |
+| 3   | The two migrations                                                                                     | `PSECRET-FR-005`, `PSECRET-FR-012`, `PSECRET-INV-002` | [x]  |
+| 4   | `model.PluginSecret` and `repository.PluginSecret`                                                     | `PSECRET-FR-003` to `PSECRET-FR-009`             | [x]  |
+| 5   | `pluginsecret.Store` and `validate.go`                                                                 | `PSECRET-FR-001` to `PSECRET-FR-019`             | [x]  |
+| 6   | `Host.Secrets` in the hub, `Container.PluginSecretStore`, the argument of `pluginhost.New`             | `PSECRET-FR-001`, `PSECRET-FR-020`               | [x]  |
+| 7   | `Workspace.ListIDs`, `Enablements.AllWorkspaces`, the cron worker, the removal of `ErrCronScopeWithoutPlugin` | `PSECRET-FR-010`                          | [x]  |
+| 8   | `pluginsecret.Sweep` and the two entries of `coreCronJobs`                                             | `PSECRET-FR-010`                                 | [x]  |
+| 9   | The tests of `spec-scenarios.md`                                                                       | Every statement                                  | [x]  |
 | 10  | Lint and build the hub. Build every plugin and load each one (`BLD-004`).                              | `PSECRET-DD-007`                                 | [ ]  |
 
 Step 7 replaces the test that `worker/cron_test.go` holds for `ErrCronScopeWithoutPlugin`.

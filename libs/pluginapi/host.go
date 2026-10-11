@@ -17,4 +17,5 @@ type Host interface {
 	TelegramBot() (TelegramBot, error)
 	TelegramConversationEngine() conversation.Engine
 	Settings() (SettingsProvider, error)
+	Secrets() (SecretProvider, error)
 }

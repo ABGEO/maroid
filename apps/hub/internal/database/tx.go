@@ -76,3 +76,23 @@ func FetchTx[T any](ctx context.Context, db *sqlx.DB, load func(*sqlx.Tx) (T, er
 
 	return result, err
 }
+
+// FetchScopeTx runs load inside a transaction that carries the acting user and the
+// acting workspace of the context, and answers the value that load produced.
+func FetchScopeTx[T any](
+	ctx context.Context,
+	db *sqlx.DB,
+	load func(*sqlx.Tx) (T, error),
+) (T, error) {
+	var result T
+
+	err := WithScopeTx(ctx, db, func(tx *sqlx.Tx) error {
+		var loadErr error
+
+		result, loadErr = load(tx)
+
+		return loadErr
+	})
+
+	return result, err
+}

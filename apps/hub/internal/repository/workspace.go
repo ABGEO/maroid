@@ -152,6 +152,22 @@ func (r *Workspace) Lock(ctx context.Context, id string) error {
 	return nil
 }
 
+// ListIDs retrieves the identifier of every workspace of the instance, in the order
+// of creation.
+func (r *Workspace) ListIDs(ctx context.Context) ([]string, error) {
+	ids := []string{}
+
+	if err := r.tx.SelectContext(
+		ctx,
+		&ids,
+		`SELECT id FROM public.workspaces ORDER BY id;`,
+	); err != nil {
+		return nil, fmt.Errorf("listing the identifier of every Workspace: %w", err)
+	}
+
+	return ids, nil
+}
+
 // ListAll retrieves every workspace of the instance with the count of its members and
 // the plugins that it enables, ordered by the name, then by the identifier.
 func (r *Workspace) ListAll(ctx context.Context) ([]model.InstanceWorkspace, error) {

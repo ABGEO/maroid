@@ -28,49 +28,7 @@ func (c *Container) PluginHost() (*pluginhost.Host, error) {
 	var err error
 
 	c.pluginHost.once.Do(func() {
-		db, dbErr := c.Database()
-		if dbErr != nil {
-			err = dbErr
-
-			return
-		}
-
-		notifier, notifierErr := c.NotificationDispatcher()
-		if notifierErr != nil {
-			err = notifierErr
-
-			return
-		}
-
-		telegramBot, telegramBotErr := c.TelegramBot()
-		if telegramBotErr != nil {
-			err = telegramBotErr
-
-			return
-		}
-
-		telegramConversationEngine, telegramConversationEngineErr := c.TelegramConversationEngine()
-		if telegramConversationEngineErr != nil {
-			err = telegramConversationEngineErr
-
-			return
-		}
-
-		settingsService, settingsServiceErr := c.SettingsService()
-		if settingsServiceErr != nil {
-			err = settingsServiceErr
-
-			return
-		}
-
-		c.pluginHost.instance, err = pluginhost.New(
-			c.Logger(),
-			db,
-			notifier,
-			telegramBot,
-			telegramConversationEngine,
-			settingsService,
-		)
+		c.pluginHost.instance, err = c.newPluginHost()
 	})
 
 	if err != nil {
@@ -80,6 +38,53 @@ func (c *Container) PluginHost() (*pluginhost.Host, error) {
 	}
 
 	return c.pluginHost.instance, nil
+}
+
+func (c *Container) newPluginHost() (*pluginhost.Host, error) {
+	db, err := c.Database()
+	if err != nil {
+		return nil, err
+	}
+
+	notifier, err := c.NotificationDispatcher()
+	if err != nil {
+		return nil, err
+	}
+
+	telegramBot, err := c.TelegramBot()
+	if err != nil {
+		return nil, err
+	}
+
+	telegramConversationEngine, err := c.TelegramConversationEngine()
+	if err != nil {
+		return nil, err
+	}
+
+	settingsService, err := c.SettingsService()
+	if err != nil {
+		return nil, err
+	}
+
+	secretStore, err := c.PluginSecretStore()
+	if err != nil {
+		return nil, err
+	}
+
+	host, err := pluginhost.New(
+		c.Logger(),
+		db,
+		notifier,
+		telegramBot,
+		telegramConversationEngine,
+		settingsService,
+		secretStore,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("building the plugin host: %w", err)
+	}
+
+	return host, nil
 }
 
 // PluginLoader initializes and returns the plugin loader instance.

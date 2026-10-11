@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/abgeo/maroid/apps/hub/internal/openbao"
+	"github.com/abgeo/maroid/apps/hub/internal/pluginsecret"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
 )
 
@@ -61,4 +64,39 @@ func (c *Container) SecretCipher() (secret.Cipher, error) {
 	}
 
 	return c.secretCipher.instance, nil
+}
+
+// PluginSecretStore initializes and returns the store of the plugin secrets.
+func (c *Container) PluginSecretStore() (*pluginsecret.Store, error) {
+	c.pluginSecretStore.mu.Lock()
+	defer c.pluginSecretStore.mu.Unlock()
+
+	var err error
+
+	c.pluginSecretStore.once.Do(func() {
+		var (
+			dbInstance *sqlx.DB
+			cipher     secret.Cipher
+		)
+
+		dbInstance, err = c.Database()
+		if err != nil {
+			return
+		}
+
+		cipher, err = c.SecretCipher()
+		if err != nil {
+			return
+		}
+
+		c.pluginSecretStore.instance = pluginsecret.NewStore(dbInstance, cipher)
+	})
+
+	if err != nil {
+		c.pluginSecretStore.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing the plugin secret store: %w", err)
+	}
+
+	return c.pluginSecretStore.instance, nil
 }

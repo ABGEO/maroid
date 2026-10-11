@@ -11,7 +11,6 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/worker"
@@ -24,6 +23,7 @@ const (
 
 	workspaceH = "01998aa0-2222-7000-8000-0000000000aa"
 	workspaceG = "01998aa0-2222-7000-8000-0000000000bb"
+	workspaceF = "01998aa0-2222-7000-8000-0000000000cc"
 	pluginP    = "dev.maroid.p"
 
 	everyMorning = "0 6 * * *"
@@ -84,6 +84,23 @@ type fakeEnablements map[string][]string
 
 func (f fakeEnablements) WorkspacesEnabling(_ context.Context, pluginID string) ([]string, error) {
 	return f[pluginID], nil
+}
+
+// AllWorkspaces answers no workspace. A test of a job of the hub uses instanceWorkspaces.
+func (f fakeEnablements) AllWorkspaces(context.Context) ([]string, error) {
+	return nil, nil
+}
+
+// instanceWorkspaces answers every workspace of the instance, and no workspace that
+// enables a plugin.
+type instanceWorkspaces []string
+
+func (f instanceWorkspaces) WorkspacesEnabling(context.Context, string) ([]string, error) {
+	return nil, nil
+}
+
+func (f instanceWorkspaces) AllWorkspaces(context.Context) ([]string, error) {
+	return f, nil
 }
 
 // pAndBothWorkspaces holds two workspaces that enable P.
@@ -345,9 +362,9 @@ func TestPerWorkspaceJobContinuesAfterAFailure(t *testing.T) {
 	require.Equal(t, []string{workspaceH, workspaceG}, job.actingWorkspaces())
 }
 
-// A job of the hub names no plugin, so no workspace enables it. A declaration of
-// CronScopePerWorkspace fails the preparation, instead of a job that never runs.
-func TestAPerWorkspaceJobOfTheHubFailsThePreparation(t *testing.T) {
+// PSECRET-SC-013: A job of the hub that declares CronScopePerWorkspace runs one time
+// for each workspace of the instance, with that workspace and no acting user.
+func TestAPerWorkspaceJobOfTheHubRunsForEveryWorkspace(t *testing.T) {
 	t.Parallel()
 
 	job := &recordingJob{
@@ -362,16 +379,22 @@ func TestAPerWorkspaceJobOfTheHubFailsThePreparation(t *testing.T) {
 	registryInstance := registry.NewCronRegistry()
 	require.NoError(t, registryInstance.Register(job))
 
+	scheduler := cron.New()
 	instance := worker.NewCronWorker(
-		slog.New(
-			slog.DiscardHandler,
-		),
-		cron.New(),
+		slog.New(slog.DiscardHandler),
+		scheduler,
 		registryInstance,
 		twoActiveUsers(),
-		pAndBothWorkspaces(),
+		instanceWorkspaces{workspaceH, workspaceG, workspaceF},
 	)
-	require.ErrorIs(t, instance.Prepare(), errs.ErrCronScopeWithoutPlugin)
+	require.NoError(t, instance.Prepare())
+
+	entries := scheduler.Entries()
+	require.Len(t, entries, 1)
+	entries[0].Job.Run()
+
+	require.Equal(t, []string{workspaceH, workspaceG, workspaceF}, job.actingWorkspaces())
+	require.Equal(t, []string{"", "", ""}, job.actingUsers())
 }
 
 // PSET-FR-014: A per-user job that ends because the first user stored no settings

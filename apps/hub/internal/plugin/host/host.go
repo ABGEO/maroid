@@ -21,6 +21,7 @@ type Host struct {
 	telegramBot                *telego.Bot
 	telegramConversationEngine conversation.Engine
 	settings                   pluginapi.SettingsProvider
+	secrets                    pluginapi.SecretProvider
 }
 
 var _ pluginapi.Host = (*Host)(nil)
@@ -33,6 +34,7 @@ func New(
 	telegramBot *telego.Bot,
 	telegramConversationEngine conversation.Engine,
 	settings pluginapi.SettingsProvider,
+	secrets pluginapi.SecretProvider,
 ) (*Host, error) {
 	return &Host{
 		logger:                     logger,
@@ -41,6 +43,7 @@ func New(
 		telegramBot:                telegramBot,
 		telegramConversationEngine: telegramConversationEngine,
 		settings:                   settings,
+		secrets:                    secrets,
 	}, nil
 }
 
@@ -74,4 +77,9 @@ func (h *Host) TelegramConversationEngine() conversation.Engine {
 // Settings returns the settings provider from the dependency container.
 func (h *Host) Settings() (pluginapi.SettingsProvider, error) {
 	return h.settings, nil
+}
+
+// Secrets returns the plugin secret store from the dependency container.
+func (h *Host) Secrets() (pluginapi.SecretProvider, error) {
+	return h.secrets, nil
 }

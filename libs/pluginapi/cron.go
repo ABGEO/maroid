@@ -12,7 +12,8 @@ const (
 	// CronScopePerUser runs the job one time for each active user.
 	CronScopePerUser CronScope = "per-user"
 	// CronScopePerWorkspace runs the job one time for each workspace that enables its
-	// plugin, with no acting user.
+	// plugin, with no acting user. A job of the hub runs one time for each workspace
+	// of the instance.
 	CronScopePerWorkspace CronScope = "per-workspace"
 )
 

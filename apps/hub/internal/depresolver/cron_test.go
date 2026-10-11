@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/idempotency"
+	"github.com/abgeo/maroid/apps/hub/internal/pluginsecret"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -27,6 +28,25 @@ func TestTheHubRunsTheSweepOfTheKeyCache(t *testing.T) {
 	require.True(t, found, "the hub registers the sweep of the key cache")
 	assert.Equal(t, pluginapi.CronScopePerUser, meta.Scope,
 		"the table is scoped, so OWN-009 makes the scheduler name the user")
+}
+
+// PSECRET-SC-011, PSECRET-SC-012: The hub runs the sweep of each table of the plugin
+// secrets. This part covers the registration and the scope of each sweep.
+func TestTheHubRunsTheSweepsOfThePluginSecrets(t *testing.T) {
+	t.Parallel()
+
+	held := map[string]pluginapi.CronJobMeta{}
+	for _, job := range coreCronJobs(slog.New(slog.DiscardHandler), nil) {
+		held[job.Meta().ID] = job.Meta()
+	}
+
+	user, found := held[pluginsecret.UserSweepJobID]
+	require.True(t, found, "the hub registers the sweep of the user secrets")
+	assert.Equal(t, pluginapi.CronScopePerUser, user.Scope)
+
+	workspace, found := held[pluginsecret.WorkspaceSweepJobID]
+	require.True(t, found, "the hub registers the sweep of the workspace secrets")
+	assert.Equal(t, pluginapi.CronScopePerWorkspace, workspace.Scope)
 }
 
 // Every core job carries a schedule that the parser of the hub reads. A schedule

@@ -26,6 +26,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/openbao"
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
+	"github.com/abgeo/maroid/apps/hub/internal/pluginsecret"
 	"github.com/abgeo/maroid/apps/hub/internal/provider"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
@@ -186,6 +187,12 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance secret.Cipher
+	}
+
+	pluginSecretStore struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *pluginsecret.Store
 	}
 
 	settingsRegistry struct {

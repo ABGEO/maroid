@@ -8,16 +8,16 @@ import (
 
 	"github.com/robfig/cron/v3"
 
-	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
-// WorkspaceLister answers the workspaces that enable a plugin.
-// workspace.EnablementService satisfies it.
+// WorkspaceLister answers the workspaces that a job for each workspace runs for.
+// workspace.Enablements satisfies it.
 type WorkspaceLister interface {
 	WorkspacesEnabling(ctx context.Context, pluginID string) ([]string, error)
+	AllWorkspaces(ctx context.Context) ([]string, error)
 }
 
 // ActiveUsers lists the user records that a job of each user runs for.
@@ -64,10 +64,6 @@ func (w *CronWorker) Prepare() error {
 	for _, job := range w.cronRegistry.All() {
 		meta := job.Meta()
 		pluginID := w.cronRegistry.PluginOf(meta.ID)
-
-		if meta.Scope == pluginapi.CronScopePerWorkspace && pluginID == "" {
-			return fmt.Errorf("scheduling cron job %s: %w", meta.ID, errs.ErrCronScopeWithoutPlugin)
-		}
 
 		logger := w.logger.With(slog.String("job_id", meta.ID))
 
@@ -176,21 +172,18 @@ func (w *CronWorker) runForEachUser(
 	}
 }
 
-// runForEachWorkspace runs the job one time for each workspace that enables its
-// plugin, with that workspace in the context of the run and no acting user.
+// runForEachWorkspace runs the job one time for each workspace that it serves, with
+// that workspace in the context of the run and no acting user. A job of a plugin
+// serves the workspaces that enable the plugin, and a job of the hub every workspace.
 func (w *CronWorker) runForEachWorkspace(
 	ctx context.Context,
 	logger *slog.Logger,
 	job pluginapi.CronJob,
 	pluginID string,
 ) {
-	workspaces, err := w.workspaces.WorkspacesEnabling(ctx, pluginID)
+	workspaces, err := w.workspacesOf(ctx, pluginID)
 	if err != nil {
-		logger.ErrorContext(
-			ctx,
-			"listing the workspaces that enable the plugin failed",
-			slog.Any("error", err),
-		)
+		logger.ErrorContext(ctx, "listing the workspaces of the job failed", slog.Any("error", err))
 
 		return
 	}
@@ -202,6 +195,24 @@ func (w *CronWorker) runForEachWorkspace(
 			job,
 		)
 	}
+}
+
+func (w *CronWorker) workspacesOf(ctx context.Context, pluginID string) ([]string, error) {
+	if pluginID == "" {
+		workspaces, err := w.workspaces.AllWorkspaces(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("listing every workspace: %w", err)
+		}
+
+		return workspaces, nil
+	}
+
+	workspaces, err := w.workspaces.WorkspacesEnabling(ctx, pluginID)
+	if err != nil {
+		return nil, fmt.Errorf("listing the workspaces that enable %s: %w", pluginID, err)
+	}
+
+	return workspaces, nil
 }
 
 // runOne runs the job for one user or one workspace. A failure goes to the log, so

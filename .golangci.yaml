@@ -58,6 +58,7 @@ linters:
         - authz.Authorizer
         - user.Service
         - pluginapi.SettingsProvider
+        - pluginapi.SecretProvider
 
     tagliatelle:
       case:

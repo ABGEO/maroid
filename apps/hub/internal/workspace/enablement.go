@@ -156,6 +156,19 @@ func (e *Enablements) Disable(ctx context.Context, pluginID string) error {
 	return nil
 }
 
+// AllWorkspaces lists every workspace of the instance. A job of the hub for each
+// workspace runs for each of them.
+func (e *Enablements) AllWorkspaces(ctx context.Context) ([]string, error) {
+	workspaces, err := database.FetchTx(ctx, e.db, func(tx *sqlx.Tx) ([]string, error) {
+		return repository.NewWorkspace(tx).ListIDs(ctx)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("listing every workspace: %w", err)
+	}
+
+	return workspaces, nil
+}
+
 // WorkspacesEnabling lists every workspace that enables the plugin.
 func (e *Enablements) WorkspacesEnabling(ctx context.Context, pluginID string) ([]string, error) {
 	workspaces, err := database.FetchTx(ctx, e.db, func(tx *sqlx.Tx) ([]string, error) {

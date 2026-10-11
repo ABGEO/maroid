@@ -9,6 +9,7 @@ import (
 	"github.com/robfig/cron/v3"
 
 	"github.com/abgeo/maroid/apps/hub/internal/idempotency"
+	"github.com/abgeo/maroid/apps/hub/internal/pluginsecret"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
@@ -66,5 +67,7 @@ func (c *Container) CronRegistry() (*registry.CronRegistry, error) {
 func coreCronJobs(logger *slog.Logger, db *sqlx.DB) []pluginapi.CronJob {
 	return []pluginapi.CronJob{
 		idempotency.NewSweep(logger, db),
+		pluginsecret.NewSweep(logger, db, pluginapi.SecretScopeUser),
+		pluginsecret.NewSweep(logger, db, pluginapi.SecretScopeWorkspace),
 	}
 }

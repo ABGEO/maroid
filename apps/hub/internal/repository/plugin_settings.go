@@ -15,8 +15,8 @@ import (
 
 const pluginSettingsColumns = `id, plugin_id, fields, created_at, updated_at`
 
-// settingsTable names the table of one scope and the column that holds its owner.
-type settingsTable struct {
+// scopedTable names the table of one scope and the column that holds its owner.
+type scopedTable struct {
 	name  string
 	owner string
 }
@@ -129,13 +129,13 @@ func (r *PluginSettings) get(
 	return &entity, nil
 }
 
-func tableOf(scope model.SettingScope) (settingsTable, error) {
+func tableOf(scope model.SettingScope) (scopedTable, error) {
 	switch scope {
 	case model.SettingScopeWorkspace:
-		return settingsTable{name: "public.plugin_workspace_settings", owner: "workspace_id"}, nil
+		return scopedTable{name: "public.plugin_workspace_settings", owner: "workspace_id"}, nil
 	case model.SettingScopeUser:
-		return settingsTable{name: "public.plugin_user_settings", owner: "user_id"}, nil
+		return scopedTable{name: "public.plugin_user_settings", owner: "user_id"}, nil
 	default:
-		return settingsTable{}, fmt.Errorf("%w: %q", errs.ErrUnknownSettingScope, scope)
+		return scopedTable{}, fmt.Errorf("%w: %q", errs.ErrUnknownSettingScope, scope)
 	}
 }
