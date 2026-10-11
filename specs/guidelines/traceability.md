@@ -287,6 +287,7 @@ Add a row before you create the file or the directory.
 | `IDPROV` | `features/idprov/` | The providers of the instance and the local account. | Approved |
 | `PROFILE` | `features/profile/` | The profile that a person changes on their own record. | Approved |
 | `GARDEN` | `features/garden/` | The plants of a workspace, their environments, and their care. | Approved |
+| `PLROUTE` | `features/plroute/` | The pages of a plugin, with the parameters of their address. | Approved |
 
 ## Retired identifiers
 

@@ -4,7 +4,7 @@ title: The web user interface
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-02
+updated: 2026-10-11
 scope: [apps/deck/, plugins/*/ui/, libs/plugin-sdk/, libs/api-client/]
 related: [ARC, PLG, TS, BLD, API]
 ---
@@ -39,8 +39,11 @@ The manifest of the remote is `/plugins/{id}/ui/mf-manifest.json`.
 ## UI-005
 
 A plugin user interface exports an object with the name `routes`.
-The object maps a path to a `RouteMounter` function.
-The plugin declares the same paths in `UIManifest.Routes` for the navigation.
+The object maps a page route to a `RouteMounter` function.
+A segment of the form `:name` is a parameter segment. It matches one non-empty
+segment of the address, and the page receives the value under `name`.
+`UIManifest.Routes` lists the navigation entries. An entry holds no parameter
+segment, and the hub refuses a plugin whose entry holds one. `ADR-0012`.
 
 ## UI-006
 
@@ -65,6 +68,10 @@ It does not build a request URL itself.
 | `can`      | Whether the role of the person holds a permission of the plugin. `SEC-013`. |
 | `href`     | A deck URL for a plugin-relative path.            |
 | `navigate` | Client-side navigation to a plugin-relative path. |
+| `setTitle` | Names the page in the last link of the trail. The deck clears it when the page unmounts. |
+
+The deck mounts a page with the props `host` and `params`. `params` maps the name of
+each parameter segment of the matched route to its decoded value. `ADR-0012`.
 
 `PluginHost` is to a plugin user interface what `pluginapi.Host` is to a plugin.
 

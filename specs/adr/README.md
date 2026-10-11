@@ -3,7 +3,7 @@ title: Architecture decision records
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-10-09
+updated: 2026-10-11
 ---
 
 # Architecture decision records
@@ -54,3 +54,4 @@ The frontmatter holds the identifier.
 | `ADR-0009` | The name of a plugin lives in its metadata | `the-plugin-name-in-the-metadata.md` | accepted | 2026-10-05 | `PLG-012`, `GLO-plugin-name`, `GLO-plugin-description` |
 | `ADR-0010` | Maroid manages the providers of Dex | `sign-in-providers-managed-in-maroid.md` | accepted | 2026-10-08 | `SEC-001`, `SEC-003`, `SEC-011`, `API-003`, `CLI-001`, `GLO-provider`, `GLO-provider-preset`, `GLO-static-provider`, `GLO-local-provider` |
 | `ADR-0011` | A repository of the hub comes from the transaction | `hub-repositories-from-the-transaction.md` | accepted | 2026-10-09 | `REP-003` |
+| `ADR-0012` | A plugin page route takes parameter segments | `parameter-routes-for-plugin-pages.md` | accepted | 2026-10-11 | `UI-005`, `UI-008` |

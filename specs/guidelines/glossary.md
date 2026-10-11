@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-10-08
+updated: 2026-10-11
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -94,6 +94,11 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-secret-store`  | secret store      | The service that gives each secret its protection. OpenBao is the secret store today.                             |
 | `GLO-drain-period`  | drain period      | The time from the start of a shutdown to the close of the listener.                                               |
 | `GLO-store-access`  | store access      | The permission that the secret store grants to Maroid at a login. The store sets its end.                         |
+| `GLO-page-route`    | page route        | A path that a remote declares, and the page that the deck opens for it.                                           |
+| `GLO-parameter-segment` | parameter segment | A segment of a page route that takes any one value, and gives the page that value by a name.               |
+| `GLO-navigation-entry` | navigation entry | A page route that the deck lists under the plugin in the navigation of the workspace.                          |
+| `GLO-trail`         | trail             | The line of links above a page that names each level from the hub to the page.                                    |
+| `GLO-page-title`    | page title        | The name that a page gives itself for the last link of the trail.                                                 |
 
 ## Retired identifiers
 
