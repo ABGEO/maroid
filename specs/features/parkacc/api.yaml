@@ -1,0 +1,276 @@
+# The routes that PARKACC adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The parking account of a user
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/connections/self:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: getParkingConnection
+      summary: Read the connection of the acting user.
+      description: >
+        Realizes `PARKACC-FR-004` to `PARKACC-FR-007` and `PARKACC-FR-019`. A connected
+        account reads the parking service on each call. A rejection of the token removes
+        it, and the answer is `not_connected`. The permission is `account.connect`.
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      operationId: deleteParkingConnection
+      summary: End the connection of the acting user.
+      description: >
+        Realizes `PARKACC-FR-018`. The settings stay. A user with no connection gets
+        204 too. The permission is `account.connect`.
+      responses:
+        "204":
+          description: No connection exists.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/pending-connections/self:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    put:
+      operationId: startParkingConnection
+      summary: Sign in with the stored credentials and send a code.
+      description: >
+        Realizes `PARKACC-FR-007` to `PARKACC-FR-013`. A call replaces the pending
+        connection that exists. The permission is `account.connect`.
+      responses:
+        "200":
+          description: The parking service sent a code.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingConnection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          description: >
+            The type is `/problems/dev.maroid.parking/credentials-absent`,
+            `/problems/dev.maroid.parking/credentials-rejected`, or
+            `/problems/dev.maroid.parking/verification-unsupported`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/pending-connections/self/code-requests:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    post:
+      operationId: requestParkingCode
+      summary: Ask the parking service for a new code.
+      description: >
+        Realizes `PARKACC-FR-017`. The pending connection gains 5 more minutes. The
+        permission is `account.connect`.
+      responses:
+        "200":
+          description: The parking service sent a new code.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingConnection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "429":
+          description: >
+            The wait of the parking service has not ended. The type is
+            `/problems/dev.maroid.parking/code-wait`, and `detail` names the seconds left.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            Retry-After:
+              description: The seconds left.
+              schema:
+                type: integer
+                format: int32
+                minimum: 1
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/pending-connections/self/verifications:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    post:
+      operationId: verifyParkingCode
+      summary: Send the code, and store the connection that it gives.
+      description: >
+        Realizes `PARKACC-FR-014` to `PARKACC-FR-016`. A rejected code keeps the pending
+        connection. The permission is `account.connect`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Verification"
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          description: >
+            The body failed validation, or the type is
+            `/problems/dev.maroid.parking/code-rejected`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/ValidationProblem"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: The session cookie. `SEC-005`.
+
+  schemas:
+    Connection:
+      type: object
+      required: [state, credentials_stored]
+      properties:
+        state:
+          type: string
+          enum: [not_connected, connected]
+        credentials_stored:
+          type: boolean
+          description: Whether the settings of the acting user hold a username and a password.
+        account:
+          $ref: "#/components/schemas/Account"
+        pending:
+          $ref: "#/components/schemas/PendingConnection"
+    Account:
+      type: object
+      description: Present when `state` is `connected`.
+      required: [first_name, last_name, balance, free_parkings_left]
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        balance:
+          type: number
+          format: decimal
+          description: The balance in GEL.
+        free_parkings_left:
+          type: integer
+          format: int32
+          description: The free parkings left today.
+    PendingConnection:
+      type: object
+      description: Present while a pending connection exists.
+      required: [phone, resend_at, expires_at]
+      properties:
+        phone:
+          type: string
+          description: The masked phone number that the parking service gives.
+          examples: ["5******27"]
+        resend_at:
+          type: string
+          format: date-time
+          description: The first time at which a new code may be requested.
+        expires_at:
+          type: string
+          format: date-time
+    Verification:
+      type: object
+      required: [code]
+      properties:
+        code:
+          type: string
+          pattern: "^[0-9]{4,8}$"
+
+  responses:
+    ServiceUnavailable:
+      description: >
+        The parking service failed or answered nothing. The type is
+        `/problems/dev.maroid.parking/service-unavailable`. A stored connection stays.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"

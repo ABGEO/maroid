@@ -78,6 +78,12 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-protection`    | protection        | The means that makes a secret unreadable to a reader of the database.                                             |
 | `GLO-plugin-secret` | plugin secret | A value that a plugin writes and reads under a name, in the scope of a user or of a workspace. No person reads it. |
 | `GLO-expiry`        | expiry            | The time after which Maroid reports a plugin secret as absent.                                                    |
+| `GLO-parking-service` | parking service | The external service of the Tbilisi municipality that holds the parking accounts. |
+| `GLO-parking-account` | parking account | The account of one person at the parking service. |
+| `GLO-connection` | connection | The session token of the parking service that Maroid holds for the parking account of one user. |
+| `GLO-pending-connection` | pending connection | The state between the request of a code and the acceptance of that code. |
+| `GLO-code` | code | The number that the parking service sends by SMS to the phone of the parking account. |
+| `GLO-connection-page` | connection page | The page of the parking plugin that shows the connection of the acting user, and starts and ends it. |
 | `GLO-problem`       | problem           | The body of an error response. It obeys RFC 9457 and `ERR-001`. A problem type names one failure.                |
 | `GLO-mcp-tool`      | MCP tool          | A function that Maroid exposes over the Model Context Protocol. An MCP client calls it by name and gets a result.  |
 | `GLO-mcp-client`    | MCP client        | The application that connects to the MCP server of the hub and calls an MCP tool.                                  |

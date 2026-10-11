@@ -290,6 +290,7 @@ Add a row before you create the file or the directory.
 | `PLROUTE` | `features/plroute/` | The pages of a plugin, with the parameters of their address. | Approved |
 | `NOTIF` | `features/notif/` | The notification providers of a workspace and the routes of a notification. | Approved |
 | `PSECRET` | `features/psecret/` | The secrets that a plugin writes. | Approved |
+| `PARKACC` | `features/parkacc/` | The parking account of a user: the connection and the vehicle. | Approved |
 
 ## Retired identifiers
 
