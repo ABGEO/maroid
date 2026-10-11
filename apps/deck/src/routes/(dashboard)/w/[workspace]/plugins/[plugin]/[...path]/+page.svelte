@@ -53,7 +53,15 @@
 
 	$effect(() => {
 		const route = data.route;
-		if (!target || route === null) {
+		if (route === null) {
+			pageTitle.value = 'Not found';
+
+			return () => {
+				pageTitle.value = null;
+			};
+		}
+
+		if (!target) {
 			return;
 		}
 

@@ -51,7 +51,7 @@ The jasmine plant view moves to `/plants/:id`. `ADR-0012` changes `UI-005` and `
 | `UI-006`             | Web UI         | A page reads `params` and calls `host.setTitle`. It imports nothing of the deck. |
 | `UI-007`             | Web UI         | A page builds a link with `host.href`, never by hand. |
 | `ARC-008`            | Architecture   | The matcher, the trail, and the refusal treat every plugin alike. |
-| `PLG-007`            | Plugin model   | The hub checks the manifest in its registrar. `libs/pluginapi` does not change. |
+| `PLG-007`            | Plugin model   | The hub checks the manifest in its registrar. `libs/pluginapi` changes the documentation of `UIRoute` alone. |
 | `GO-005`, `GO-008`   | Go style       | `ErrInvalidUIRoute` lives in `apps/hub/internal/domain/errs`. |
 | `TS-002`             | Frontend style | A page takes `params` through `$props`. |
 | `BLD-001`, `BLD-004` | Build          | Section 7 runs the checks of the hub, the deck, `libs/plugin-sdk`, and the jasmine remote. |
@@ -64,6 +64,7 @@ The jasmine plant view moves to `/plants/:id`. `ADR-0012` changes `UI-005` and `
 | Path | Action | Holds |
 | ---- | ------ | ----- |
 | `specs/guidelines/web-ui.md` | change | `UI-005` and `UI-008` as `ADR-0012` gives them. |
+| `libs/pluginapi/ui.go` | change | The documentation of `UIRoute`: one navigation entry, with no parameter segment. |
 | `apps/hub/internal/domain/errs/errs.go` | change | `ErrInvalidUIRoute = errors.New("ui manifest: navigation entry with a parameter segment")`. |
 | `apps/hub/internal/plugin/registrar/ui.go` | change | `Register` refuses a manifest whose route path holds a segment that starts with `:`. |
 | `apps/hub/internal/plugin/registrar/ui_test.go` | create | `PLROUTE-SC-007`. |
@@ -139,7 +140,7 @@ path, because the address holds every value. `PLROUTE-FR-005`, `PLROUTE-FR-006`.
 
 | Condition | Behavior | Realizes |
 | --------- | -------- | -------- |
-| No key of `routes` matches the address. | The deck shows "Not found", the lead "This plugin has no page at this address.", and a link to the first navigation entry. A plugin with no navigation entry shows no link. | `PLROUTE-FR-007` |
+| No key of `routes` matches the address. | The deck shows "Not found", the lead "This plugin has no page at this address.", and a link to the first navigation entry. A plugin with no navigation entry shows no link. The trail ends with "Not found". | `PLROUTE-FR-007` |
 | Two keys match with the same fixed and parameter segments at every position. | `loadPluginRoute` throws an error that names both keys. The remote holds a defect. | `PLROUTE-INV-001` |
 | A navigation entry holds a parameter segment. | `UIRegistrar.Register` answers `fmt.Errorf("checking the route %s of plugin %s: %w", path, id, errs.ErrInvalidUIRoute)`. The hub stops its start, as for every registrar error. | `PLROUTE-FR-008` |
 | The remote does not load. | The error of today stays. | none |
