@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PluginHost } from '@maroid/plugin-sdk';
+  import { ConfirmDialog } from '@maroid/ui';
 
   import type { EnvironmentReference, JasmineApi, Plant, PlantUpdatePayload } from '../../api';
   import { formatMoment } from '../../lib/format';
@@ -28,7 +29,7 @@
   let etag = $state<string | undefined>(undefined);
   let status = $state<'loading' | 'ready' | 'error'>('loading');
   let editing = $state(false);
-  let confirming = $state(false);
+  let confirmDialog = $state<ReturnType<typeof ConfirmDialog>>();
   let busy = $state(false);
   let failure = $state<string | null>(null);
   let revision = $state(0);
@@ -70,6 +71,14 @@
   }
 
   async function remove(): Promise<void> {
+    const proceed = await confirmDialog?.ask(
+      `${plant?.display_id} ${plant?.common_name} goes, with its care intervals and every maintenance entry.`,
+      { title: 'Delete this plant?', confirmLabel: 'Delete' }
+    );
+    if (!proceed) {
+      return;
+    }
+
     busy = true;
     failure = null;
 
@@ -79,7 +88,6 @@
       onclose();
     } catch (error) {
       failure = failureMessage(error, 'The plant stays. Try again.');
-      confirming = false;
     } finally {
       busy = false;
     }
@@ -111,21 +119,16 @@
           {plant.environment.display_id}
           {plant.environment.name}
           {#if plant.status === 'inactive'}
-            <span class="badge badge-ghost ml-2">Inactive</span>
+            <span class="badge badge-sm badge-ghost ml-2">Inactive</span>
           {/if}
         </p>
       </div>
       {#if canWritePlants && !editing}
         <div class="flex gap-2">
           <button class="btn btn-sm" type="button" onclick={() => (editing = true)}>Edit</button>
-          {#if confirming}
-            <button class="btn btn-error btn-sm" type="button" disabled={busy} onclick={remove}>
-              Delete {plant.display_id} and its history
-            </button>
-            <button class="btn btn-ghost btn-sm" type="button" onclick={() => (confirming = false)}>Keep</button>
-          {:else}
-            <button class="btn btn-ghost btn-sm" type="button" onclick={() => (confirming = true)}>Delete</button>
-          {/if}
+          <button class="btn btn-ghost btn-sm text-error" type="button" disabled={busy} onclick={remove}>
+            Delete
+          </button>
         </div>
       {/if}
     </header>
@@ -162,4 +165,6 @@
 
     <PlantEntries {api} {plantId} {revision} />
   {/if}
+
+  <ConfirmDialog bind:this={confirmDialog} />
 </div>

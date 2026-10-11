@@ -141,6 +141,7 @@ func (h *EnvironmentHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set(precondition.ETagHeader, precondition.ETag(env.UpdatedAt))
+	w.Header().Set("Location", location(r, env.ID))
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, dto.NewEnvironmentResponse(env))
 }

@@ -18,7 +18,8 @@ import (
 const (
 	pathCareIntervals = "/care-intervals"
 
-	typeMisting = "misting"
+	typeMisting     = "misting"
+	typeFertilizing = "fertilizing"
 
 	stateOnSchedule = "on_schedule"
 	stateDue        = "due"
@@ -61,7 +62,8 @@ func putInterval(
 	)
 }
 
-// setInterval puts the care interval and requires that the hub took it.
+// setInterval puts the care interval and requires that the hub took it, as a
+// create or as a change.
 func setInterval(
 	t *testing.T,
 	router http.Handler,
@@ -72,7 +74,12 @@ func setInterval(
 	t.Helper()
 
 	recorder := putInterval(t, router, plantID, kind, days)
-	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+	require.Contains(
+		t,
+		[]int{http.StatusOK, http.StatusCreated},
+		recorder.Code,
+		recorder.Body.String(),
+	)
 
 	return decode[careAnswer](t, recorder)
 }
@@ -165,10 +172,14 @@ func TestACareIntervalIsSetChangedAndRemoved(t *testing.T) {
 	environment := makeEnvironment(t, router, "Office")
 	plant := makePlant(t, router, "Rose", environment.ID)
 
-	setInterval(t, router, plant.ID, typeWatering, 7)
-	setInterval(t, router, plant.ID, "fertilizing", 30)
-	changed := setInterval(t, router, plant.ID, typeWatering, 10)
-	assert.Equal(t, 10, changed.Days)
+	for kind, days := range map[string]int{typeWatering: 7, typeFertilizing: 30} {
+		created := putInterval(t, router, plant.ID, kind, days)
+		require.Equal(t, http.StatusCreated, created.Code, created.Body.String())
+	}
+
+	changed := putInterval(t, router, plant.ID, typeWatering, 10)
+	require.Equal(t, http.StatusOK, changed.Code, changed.Body.String())
+	assert.Equal(t, 10, decode[careAnswer](t, changed).Days)
 
 	for _, days := range []int{0, 366} {
 		recorder := putInterval(t, router, plant.ID, "pruning", days)
@@ -210,6 +221,12 @@ func TestACareIntervalOfNoTypeOrNoPlantIsNotFound(t *testing.T) {
 		"a plant of another space": putInterval(t, router, foreign.ID, typeWatering, 7),
 		"a plant identifier that is no UUID": putInterval(
 			t, router, "P001", typeWatering, 7,
+		),
+		"a plant identifier in a form other than the canonical one": putInterval(
+			t, router, "urn:uuid:"+plant.ID, typeWatering, 7,
+		),
+		"a plant read in a form other than the canonical one": send(
+			t, router, http.MethodGet, "/plants/{"+plant.ID+"}", "", "",
 		),
 		"the intervals of a plant of another space": send(
 			t, router, http.MethodGet, "/plants/"+foreign.ID+pathCareIntervals, "", "",

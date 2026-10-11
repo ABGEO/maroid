@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
+	"github.com/abgeo/maroid/libs/rest/address"
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
@@ -16,8 +17,13 @@ import (
 // the target does not declare.
 const unknownFieldPrefix = "json: unknown field "
 
-// paramID names the identifier segment of a route of one record.
-const paramID = "id"
+const (
+	// paramID names the identifier segment of a route of one record.
+	paramID = "id"
+
+	// canonicalUUIDLength is the length of a UUID in the form 8-4-4-4-12.
+	canonicalUUIDLength = 36
+)
 
 // validatable is a request body that checks its own rules after it decodes.
 type validatable interface {
@@ -63,11 +69,26 @@ func readBody(w http.ResponseWriter, r *http.Request, target validatable) bool {
 // is no UUID names no record, so it answers 404 before any query runs.
 func pathID(w http.ResponseWriter, r *http.Request, name string) (string, bool) {
 	id := chi.URLParam(r, name)
-	if _, err := uuid.Parse(id); err != nil {
+	if !isUUID(id) {
 		problem.Write(w, r, problem.NewNotFound())
 
 		return "", false
 	}
 
 	return id, true
+}
+
+// isUUID reports whether value is a UUID in the canonical form 8-4-4-4-12.
+// uuid.Parse also takes the forms with braces and with the urn:uuid: prefix,
+// which PostgreSQL refuses, so the length check keeps them out.
+func isUUID(value string) bool {
+	_, err := uuid.Parse(value)
+
+	return err == nil && len(value) == canonicalUUIDLength
+}
+
+// location answers the address of the record that a create made, below the
+// collection that the request named.
+func location(r *http.Request, id string) string {
+	return address.BaseFromContext(r.Context()) + r.URL.EscapedPath() + "/" + id
 }

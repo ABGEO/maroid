@@ -96,7 +96,10 @@ func makeEnvironment(t *testing.T, router http.Handler, name string) reference {
 	)
 	require.Equal(t, http.StatusCreated, recorder.Code, recorder.Body.String())
 
-	return decode[reference](t, recorder)
+	created := decode[reference](t, recorder)
+	assert.Equal(t, externalURL+"/environments/"+created.ID, recorder.Header().Get("Location"))
+
+	return created
 }
 
 func makePlant(t *testing.T, router http.Handler, name string, environmentID string) plantAnswer {
@@ -108,7 +111,10 @@ func makePlant(t *testing.T, router http.Handler, name string, environmentID str
 	}), "")
 	require.Equal(t, http.StatusCreated, recorder.Code, recorder.Body.String())
 
-	return decode[plantAnswer](t, recorder)
+	created := decode[plantAnswer](t, recorder)
+	assert.Equal(t, externalURL+"/plants/"+created.ID, recorder.Header().Get("Location"))
+
+	return created
 }
 
 // replacePlant puts every value of the plant, with the overrides on top.
@@ -356,7 +362,7 @@ func TestTheDeleteOfAPlantRemovesItsCareAndHistory(t *testing.T) {
 
 	environment := makeEnvironment(t, router, "Office")
 	plant := makePlant(t, router, "Gardenia", environment.ID)
-	insertCare(t, fixture, plant.ID, []string{"watering", "fertilizing"}, 3)
+	insertCare(t, fixture, plant.ID, []string{"watering", typeFertilizing}, 3)
 
 	removed := send(t, router, http.MethodDelete, "/plants/"+plant.ID, "", "")
 	require.Equal(t, http.StatusNoContent, removed.Code, removed.Body.String())

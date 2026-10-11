@@ -144,7 +144,7 @@
                 </span>
               </span>
               {#if care.state}
-                <span class="badge badge-soft {STATE_BADGE[care.state].tone}">
+                <span class="badge badge-sm badge-soft {STATE_BADGE[care.state].tone}">
                   {STATE_BADGE[care.state].label}
                 </span>
               {/if}

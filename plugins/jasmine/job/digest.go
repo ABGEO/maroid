@@ -10,10 +10,10 @@ import (
 
 const digestTitle = "Plant care due"
 
-// Digest renders the care intervals as one message with one block for each
+// digest renders the care intervals as one message with one block for each
 // environment. The intervals arrive grouped by environment, so a new block starts
 // where the environment changes.
-func Digest(intervals []model.CareInterval) notifierapi.Message {
+func digest(intervals []model.CareInterval) notifierapi.Message {
 	var (
 		body strings.Builder
 		last string

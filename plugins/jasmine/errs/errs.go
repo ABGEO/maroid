@@ -7,7 +7,7 @@ import (
 
 var (
 	// ErrUnknownSourceType is returned when a string does not name a known source type.
-	ErrUnknownSourceType = errors.New("unknown source type")
+	ErrUnknownSourceType = errors.New("source type: unknown value")
 	// ErrUnknownPlantStatus is returned when a string does not name a plant status.
 	ErrUnknownPlantStatus = errors.New("plant: unknown status")
 	// ErrEnvironmentOccupied is returned when a delete names an environment that

@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -18,6 +20,7 @@ import (
 // readRecord answers one record with the validator that guards a write to it.
 // A read that finds nothing answers 404, because a caller of this route names a
 // record and a name that resolves to no record is the one failure it can make.
+// Every other failure answers 500, and the log record holds its cause.
 func readRecord[T any, R any](
 	w http.ResponseWriter,
 	r *http.Request,
@@ -29,9 +32,15 @@ func readRecord[T any, R any](
 	present func(T) R,
 ) {
 	row, err := fetchInTx(r.Context(), db, action, read)
-	if err != nil {
-		logger.ErrorContext(r.Context(), action, slog.Any("error", err))
+
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
 		problem.Write(w, r, problem.NewNotFound())
+
+		return
+	case err != nil:
+		logger.ErrorContext(r.Context(), action, slog.Any("error", err))
+		problem.Write(w, r, problem.NewInternal())
 
 		return
 	}

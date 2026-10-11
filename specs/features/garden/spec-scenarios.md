@@ -4,7 +4,7 @@ title: The scenarios of the plants, their environments, and their care
 type: spec
 status: approved
 created: 2026-10-10
-updated: 2026-10-10
+updated: 2026-10-11
 approved_by: Temuri
 approved_on: 2026-10-10
 constrained_by: [TST, OWN, TRC]
@@ -207,7 +207,7 @@ hub is not part of it. "Today" is the UTC date of the database at the run.
 
 **Given** `P001`.
 **When** a client puts `watering` 7 days, `fertilizing` 30 days, `watering` 10 days, `pruning` 0 days, `pruning` 366 days, and deletes `fertilizing`.
-**Then** the puts of 7, 30, and 10 answer 200. The two pruning puts answer 422 with the pointer `#/days`. The plant holds one care interval: `watering`, 10 days.
+**Then** the puts of 7 and 30 create, and answer 201. The put of 10 answers 200. The two pruning puts answer 422 with the pointer `#/days`. The plant holds one care interval: `watering`, 10 days.
 
 ### `GARDEN-SC-021`
 

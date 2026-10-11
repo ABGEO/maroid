@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -152,6 +151,7 @@ func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set(precondition.ETagHeader, precondition.ETag(plant.UpdatedAt))
+	w.Header().Set("Location", location(r, plant.ID))
 	render.Status(r, http.StatusCreated)
 	render.JSON(w, r, dto.NewPlantResponse(plant))
 }
@@ -211,7 +211,7 @@ func checkPlantFilters(r *http.Request) *problem.Problem {
 	query := r.URL.Query()
 
 	if value := query.Get(filterEnvironmentID); value != "" {
-		if _, err := uuid.Parse(value); err != nil {
+		if !isUUID(value) {
 			return problem.NewRequestInvalid().WithDetail(
 				"The parameter environment_id must be a UUID.",
 			)

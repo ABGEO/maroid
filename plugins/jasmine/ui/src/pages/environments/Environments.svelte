@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createWriteIntent, type PluginHost } from '@maroid/plugin-sdk';
-  import { createPager, Pagination } from '@maroid/ui';
+  import { ConfirmDialog, createPager, Pagination } from '@maroid/ui';
 
   import '../../app.css';
   import { createJasmineApi, type Environment } from '../../api';
@@ -18,7 +18,7 @@
   let newName = $state('');
   let editing = $state<string | null>(null);
   let editName = $state('');
-  let confirming = $state<string | null>(null);
+  let confirmDialog = $state<ReturnType<typeof ConfirmDialog>>();
   let busy = $state(false);
   let failure = $state<string | null>(null);
 
@@ -61,7 +61,6 @@
   function startRename(environment: Environment): void {
     editing = environment.id;
     editName = environment.name;
-    confirming = null;
   }
 
   async function rename(event: SubmitEvent, id: string): Promise<void> {
@@ -76,9 +75,14 @@
     }
   }
 
-  async function remove(id: string): Promise<void> {
-    await run(() => api.environments.remove(id), 'The environment stays. Try again.');
-    confirming = null;
+  async function remove(environment: Environment): Promise<void> {
+    const proceed = await confirmDialog?.ask(
+      `${environment.display_id} ${environment.name} goes. An environment that holds a plant stays.`,
+      { title: 'Delete this environment?', confirmLabel: 'Delete' }
+    );
+    if (proceed) {
+      await run(() => api.environments.remove(environment.id), 'The environment stays. Try again.');
+    }
   }
 
   $effect(() => {
@@ -160,21 +164,17 @@
               {environment.active_plant_count === 1 ? 'active plant' : 'active plants'}
             </span>
             {#if canWrite}
-              {#if confirming === environment.id}
-                <button class="btn btn-error btn-sm" type="button" disabled={busy} onclick={() => remove(environment.id)}>
-                  Delete {environment.display_id}
-                </button>
-                <button class="btn btn-ghost btn-sm" type="button" onclick={() => (confirming = null)}>
-                  Keep
-                </button>
-              {:else}
-                <button class="btn btn-ghost btn-sm" type="button" onclick={() => startRename(environment)}>
-                  Rename
-                </button>
-                <button class="btn btn-ghost btn-sm" type="button" onclick={() => (confirming = environment.id)}>
-                  Delete
-                </button>
-              {/if}
+              <button class="btn btn-ghost btn-sm" type="button" disabled={busy} onclick={() => startRename(environment)}>
+                Rename
+              </button>
+              <button
+                class="btn btn-ghost btn-sm text-error"
+                type="button"
+                disabled={busy}
+                onclick={() => remove(environment)}
+              >
+                Delete
+              </button>
             {/if}
           {/if}
         </li>
@@ -182,4 +182,6 @@
     </ul>
     <Pagination {pager} class="mt-4 ml-auto w-fit" />
   {/if}
+
+  <ConfirmDialog bind:this={confirmDialog} />
 </div>

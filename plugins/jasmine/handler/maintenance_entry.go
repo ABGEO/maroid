@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -241,7 +240,7 @@ func checkEntryFilters(r *http.Request) *problem.Problem {
 	query := r.URL.Query()
 
 	if value := query.Get(filterPlantID); value != "" {
-		if _, err := uuid.Parse(value); err != nil {
+		if !isUUID(value) {
 			return problem.NewRequestInvalid().WithDetail("The parameter plant_id must be a UUID.")
 		}
 	}

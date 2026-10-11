@@ -127,7 +127,7 @@ func TestEveryMaintenanceTypeIsAccepted(t *testing.T) {
 	plant := makePlant(t, router, nameFern, environment.ID)
 
 	for _, kind := range []string{
-		typeWatering, "fertilizing", "pruning", "repotting",
+		typeWatering, typeFertilizing, "pruning", "repotting",
 		"pest_treatment", "cleaning", "misting", "other",
 	} {
 		recorder := recordEntries(t, router, map[string]any{

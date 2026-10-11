@@ -70,9 +70,9 @@
             <td>{plant.environment.display_id} {plant.environment.name}</td>
             <td>
               {#if plant.status === 'active'}
-                <span class="badge badge-soft badge-success">Active</span>
+                <span class="badge badge-sm badge-soft badge-success">Active</span>
               {:else}
-                <span class="badge badge-ghost">Inactive</span>
+                <span class="badge badge-sm badge-ghost">Inactive</span>
               {/if}
             </td>
           </tr>

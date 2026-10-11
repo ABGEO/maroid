@@ -74,7 +74,7 @@ type CareIntervalRepository interface {
 		kind model.MaintenanceType,
 		days int,
 		ifMatch *time.Time,
-	) (*model.CareInterval, error)
+	) (*model.CareInterval, bool, error)
 	Delete(
 		ctx context.Context,
 		plantID string,
@@ -103,7 +103,7 @@ func NewCareInterval(tx *sqlx.Tx) *CareInterval {
 }
 
 // Put creates the care interval of the type for the plant, or changes its days,
-// and answers it with its state. The moment that the count starts from moves only
+// and answers it with its state and whether the call created it. The moment that the count starts from moves only
 // when the days change, so a save with the same days keeps the count. A non-nil
 // ifMatch writes only over the care interval that still carries that moment, and
 // any other answers precondition.ErrModified. A plant that the acting workspace
@@ -114,37 +114,43 @@ func (r *CareInterval) Put(
 	kind model.MaintenanceType,
 	days int,
 	ifMatch *time.Time,
-) (*model.CareInterval, error) {
+) (*model.CareInterval, bool, error) {
 	if ifMatch != nil {
 		if err := r.lockUnchanged(ctx, plantID, kind, *ifMatch); err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 
-	_, err := r.tx.ExecContext(ctx, `
+	// xmax is zero on a row that the statement inserted. A save with the same
+	// days updates nothing and returns no row, which is no create either.
+	var created bool
+
+	err := r.tx.GetContext(ctx, &created, `
 		INSERT INTO care_intervals (plant_id, type, days)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (workspace_id, plant_id, type) DO UPDATE
 		SET days = EXCLUDED.days, set_at = now()
-		WHERE care_intervals.days IS DISTINCT FROM EXCLUDED.days;`,
+		WHERE care_intervals.days IS DISTINCT FROM EXCLUDED.days
+		RETURNING xmax = 0;`,
 		plantID, string(kind), days,
 	)
 
 	switch {
+	case errors.Is(err, sql.ErrNoRows):
 	case isForeignKeyViolation(err, careIntervalPlantConstraint):
-		return nil, fmt.Errorf("putting CareInterval: %w", errs.ErrPlantUnknown)
+		return nil, false, fmt.Errorf("putting CareInterval: %w", errs.ErrPlantUnknown)
 	case err != nil:
-		return nil, fmt.Errorf("putting CareInterval: %w", err)
+		return nil, false, fmt.Errorf("putting CareInterval: %w", err)
 	}
 
 	var entity model.CareInterval
 
 	query := selectCareIntervals + ` WHERE ci.plant_id = $1 AND ci.type = $2;`
 	if err = r.tx.GetContext(ctx, &entity, query, plantID, string(kind)); err != nil {
-		return nil, fmt.Errorf("getting the put CareInterval: %w", err)
+		return nil, false, fmt.Errorf("getting the put CareInterval: %w", err)
 	}
 
-	return &entity, nil
+	return &entity, created, nil
 }
 
 // Delete removes the care interval of the type of the plant. A non-nil ifMatch

@@ -69,6 +69,11 @@ paths:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
             ETag:
               $ref: "../../api/components.yaml#/components/headers/ETag"
+            Location:
+              description: The address of the new environment.
+              schema:
+                type: string
+                format: uri
           content:
             application/json:
               schema:
@@ -240,6 +245,11 @@ paths:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
             ETag:
               $ref: "../../api/components.yaml#/components/headers/ETag"
+            Location:
+              description: The address of the new plant.
+              schema:
+                type: string
+                format: uri
           content:
             application/json:
               schema:
@@ -387,8 +397,9 @@ paths:
       summary: Set the care interval of one maintenance type of a plant.
       description: >
         Realizes `GARDEN-FR-018` and `GARDEN-FR-020`. The call creates the care
-        interval or changes its days. `set_at` moves to the current time only when
-        the days change. The permission is `plants.write`.
+        interval, and answers 201, or changes its days, and answers 200. `set_at`
+        moves to the current time only when the days change. The permission is
+        `plants.write`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
       requestBody:
@@ -399,7 +410,18 @@ paths:
               $ref: "#/components/schemas/CareIntervalInput"
       responses:
         "200":
-          description: The care interval, with its state.
+          description: The changed care interval, with its state.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CareInterval"
+        "201":
+          description: The created care interval, with its state.
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"

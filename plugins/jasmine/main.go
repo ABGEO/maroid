@@ -18,6 +18,8 @@ import (
 	"github.com/abgeo/maroid/plugins/jasmine/permission"
 )
 
+// JasminePlugin keeps the plants of each workspace, their environments, and
+// their care.
 type JasminePlugin struct {
 	config     *config.Config
 	logger     *slog.Logger
@@ -67,6 +69,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 	return plg, nil
 }
 
+// Meta returns the identity of the plugin.
 func (p *JasminePlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
 		ID:          pluginapi.ParsePluginID("dev.maroid.jasmine"),
@@ -89,12 +92,14 @@ func (p *JasminePlugin) CronJobs() ([]pluginapi.CronJob, error) {
 	}, nil
 }
 
+// MQTTSubscribers returns the subscriber of the sensor readings.
 func (p *JasminePlugin) MQTTSubscribers() ([]pluginapi.MQTTSubscriber, error) {
 	return []pluginapi.MQTTSubscriber{
 		subscriber.NewMeasurementSubscriber(p.logger, p.db),
 	}, nil
 }
 
+// Migrations returns the migrations of the plugin schema.
 func (p *JasminePlugin) Migrations() (fs.FS, error) {
 	migrationsFS, err := fs.Sub(db.Migrations, "migrations")
 	if err != nil {
@@ -104,6 +109,7 @@ func (p *JasminePlugin) Migrations() (fs.FS, error) {
 	return migrationsFS, nil
 }
 
+// UIManifest returns the pages of the remote and its assets.
 func (p *JasminePlugin) UIManifest() (*pluginapi.UIManifest, error) {
 	assets, err := fs.Sub(uiAssets, "ui/dist")
 	if err != nil {
@@ -121,6 +127,7 @@ func (p *JasminePlugin) UIManifest() (*pluginapi.UIManifest, error) {
 	}, nil
 }
 
+// Permissions returns the permissions that the routes name.
 func (p *JasminePlugin) Permissions() ([]pluginapi.Permission, error) {
 	return []pluginapi.Permission{
 		{
@@ -156,6 +163,7 @@ func (p *JasminePlugin) Permissions() ([]pluginapi.Permission, error) {
 	}, nil
 }
 
+// Routes returns the HTTP routes of the plugin.
 func (p *JasminePlugin) Routes() ([]pluginapi.Route, error) {
 	return slices.Concat(
 		jasminehandler.NewEnvironmentHandler(p.logger, p.db).Routes(),

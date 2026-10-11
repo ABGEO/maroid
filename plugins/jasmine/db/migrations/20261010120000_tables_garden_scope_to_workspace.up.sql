@@ -25,6 +25,7 @@ CREATE TABLE environments
     name         TEXT        NOT NULL CHECK (char_length(name) BETWEEN 1 AND 100),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- GARDEN-INV-001: One display number names one environment of a workspace.
     CONSTRAINT environments_workspace_number_key UNIQUE (workspace_id, number),
     CONSTRAINT environments_workspace_id_key UNIQUE (workspace_id, id)
 );
@@ -44,8 +45,10 @@ CREATE TABLE plants
     status          TEXT        NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- GARDEN-INV-001: One display number names one plant of a workspace.
     CONSTRAINT plants_workspace_number_key UNIQUE (workspace_id, number),
     CONSTRAINT plants_workspace_id_key UNIQUE (workspace_id, id),
+    -- GARDEN-INV-002: A plant and its environment are in one workspace.
     CONSTRAINT plants_environment_fkey FOREIGN KEY (workspace_id, environment_id)
         REFERENCES environments (workspace_id, id) ON DELETE RESTRICT
 );
@@ -65,7 +68,9 @@ CREATE TABLE care_intervals
     set_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- GARDEN-INV-003: One care interval for each maintenance type of a plant.
     CONSTRAINT care_intervals_workspace_plant_type_key UNIQUE (workspace_id, plant_id, type),
+    -- GARDEN-INV-002: A care interval and its plant are in one workspace.
     CONSTRAINT care_intervals_plant_fkey FOREIGN KEY (workspace_id, plant_id)
         REFERENCES plants (workspace_id, id) ON DELETE CASCADE
 );
@@ -83,6 +88,7 @@ CREATE TABLE maintenance_entries
     note         TEXT CHECK (char_length(note) BETWEEN 1 AND 1000),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- GARDEN-INV-002: A maintenance entry and its plant are in one workspace.
     CONSTRAINT maintenance_entries_plant_fkey FOREIGN KEY (workspace_id, plant_id)
         REFERENCES plants (workspace_id, id) ON DELETE CASCADE
 );

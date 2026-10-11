@@ -80,7 +80,7 @@ func (j *CareReminder) Run(ctx context.Context) error {
 	}
 
 	channel := j.config.Notification.CareReminderChannel
-	if err = j.dispatcher.Send(ctx, channel, Digest(intervals)); err != nil {
+	if err = j.dispatcher.Send(ctx, channel, digest(intervals)); err != nil {
 		return fmt.Errorf("sending the care reminder: %w", err)
 	}
 

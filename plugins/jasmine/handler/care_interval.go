@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -155,7 +154,7 @@ func (h *CareIntervalHandler) ListForPlant(w http.ResponseWriter, r *http.Reques
 }
 
 // Put handles PUT /plants/{plantId}/care-intervals/{type}. It creates the care
-// interval or changes its days.
+// interval and answers 201, or changes its days and answers 200.
 func (h *CareIntervalHandler) Put(w http.ResponseWriter, r *http.Request) {
 	plantID, kind, ok := careIntervalPath(w, r)
 	if !ok {
@@ -169,12 +168,23 @@ func (h *CareIntervalHandler) Put(w http.ResponseWriter, r *http.Request) {
 
 	ifMatch := precondition.IfMatchFromContext(r.Context())
 
+	var created bool
+
 	care, err := fetchInTx(
 		r.Context(),
 		h.db,
 		"putting the "+string(kind)+" interval of the plant "+plantID,
 		func(ctx context.Context, tx *sqlx.Tx) (*model.CareInterval, error) {
-			return repository.NewCareInterval(tx).Put(ctx, plantID, kind, *req.Days, ifMatch)
+			stored, made, txErr := repository.NewCareInterval(tx).Put(
+				ctx, plantID, kind, *req.Days, ifMatch,
+			)
+			if txErr != nil {
+				return nil, fmt.Errorf("writing the care interval: %w", txErr)
+			}
+
+			created = made
+
+			return stored, nil
 		},
 	)
 
@@ -184,8 +194,13 @@ func (h *CareIntervalHandler) Put(w http.ResponseWriter, r *http.Request) {
 	case err != nil:
 		failWrite(w, r, h.logger, "failed to put care interval", err)
 	default:
+		status := http.StatusOK
+		if created {
+			status = http.StatusCreated
+		}
+
 		w.Header().Set(precondition.ETagHeader, precondition.ETag(care.UpdatedAt))
-		render.Status(r, http.StatusOK)
+		render.Status(r, status)
 		render.JSON(w, r, dto.NewCareIntervalResponse(care))
 	}
 }
@@ -244,7 +259,7 @@ func checkCareFilters(r *http.Request) *problem.Problem {
 	query := r.URL.Query()
 
 	if value := query.Get(filterEnvironmentID); value != "" {
-		if _, err := uuid.Parse(value); err != nil {
+		if !isUUID(value) {
 			return problem.NewRequestInvalid().WithDetail(
 				"The parameter environment_id must be a UUID.",
 			)

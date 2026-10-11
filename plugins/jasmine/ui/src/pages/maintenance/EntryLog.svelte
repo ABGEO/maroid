@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createPager, Pagination } from '@maroid/ui';
+  import { ConfirmDialog, createPager, Pagination } from '@maroid/ui';
 
   import type {
     JasmineApi,
@@ -25,13 +25,12 @@
   let type = $state<MaintenanceType>('watering');
   let performedAt = $state('');
   let note = $state('');
-  let confirming = $state<string | null>(null);
+  let confirmDialog = $state<ReturnType<typeof ConfirmDialog>>();
   let busy = $state(false);
   let failure = $state<string | null>(null);
 
   async function startEdit(entry: MaintenanceEntry): Promise<void> {
     failure = null;
-    confirming = null;
 
     try {
       const tagged = await api.maintenanceEntries.get(entry.id);
@@ -59,7 +58,6 @@
     try {
       await action();
       editing = null;
-      confirming = null;
       await pager.reload();
     } catch (error) {
       failure = failureMessage(error, fallback);
@@ -90,8 +88,14 @@
     );
   }
 
-  function remove(id: string): Promise<void> {
-    return run(() => api.maintenanceEntries.remove(id), 'The entry stays. Try again.');
+  async function remove(entry: MaintenanceEntry): Promise<void> {
+    const proceed = await confirmDialog?.ask(
+      `The ${typeLabel(entry.type).toLowerCase()} of ${entry.plant.display_id} ${entry.plant.common_name} on ${formatMoment(entry.performed_at)} goes.`,
+      { title: 'Delete this entry?', confirmLabel: 'Delete' }
+    );
+    if (proceed) {
+      await run(() => api.maintenanceEntries.remove(entry.id), 'The entry stays. Try again.');
+    }
   }
 
   $effect(() => {
@@ -163,19 +167,12 @@
           <span class="font-medium">{typeLabel(entry.type)}</span>
           <span class="list-col-grow">{entry.note ?? ''}</span>
           {#if canWrite}
-            {#if confirming === entry.id}
-              <button class="btn btn-error btn-sm" type="button" disabled={busy} onclick={() => remove(entry.id)}>
-                Delete the entry
-              </button>
-              <button class="btn btn-ghost btn-sm" type="button" onclick={() => (confirming = null)}>
-                Keep
-              </button>
-            {:else}
-              <button class="btn btn-ghost btn-sm" type="button" onclick={() => startEdit(entry)}>Edit</button>
-              <button class="btn btn-ghost btn-sm" type="button" onclick={() => (confirming = entry.id)}>
-                Delete
-              </button>
-            {/if}
+            <button class="btn btn-ghost btn-sm" type="button" disabled={busy} onclick={() => startEdit(entry)}>
+              Edit
+            </button>
+            <button class="btn btn-ghost btn-sm text-error" type="button" disabled={busy} onclick={() => remove(entry)}>
+              Delete
+            </button>
           {/if}
         {/if}
       </li>
@@ -183,3 +180,5 @@
   </ul>
   <Pagination {pager} class="mt-4 ml-auto w-fit" />
 {/if}
+
+<ConfirmDialog bind:this={confirmDialog} />
