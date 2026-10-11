@@ -53,7 +53,7 @@ func (s *SelectLot) OnEnter(
 	}
 
 	lots, err := s.apiClientSvc.GetParkingLots(
-		context.Background(),
+		ctx,
 		lng-bboxOffset, lng+bboxOffset,
 		lat+bboxOffset, lat-bboxOffset,
 	)
@@ -102,7 +102,7 @@ func (s *SelectLot) OnMessage(
 	}
 
 	place, err := s.apiClientSvc.GetParkingPlace(
-		context.Background(), string(data[0]), data[1:],
+		ctx, string(data[0]), data[1:],
 	)
 	if err != nil {
 		return "", fmt.Errorf("fetching parking place: %w", err)

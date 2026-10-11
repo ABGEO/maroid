@@ -1,7 +1,6 @@
 package step
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/mymmrac/telego"
@@ -92,7 +91,7 @@ func (s *Confirm) OnMessage(
 	parkingType, _ := ctx.Data["parking_type"].(string)
 
 	session, err := s.apiClientSvc.StartParking(
-		context.Background(), lot, parkingType,
+		ctx, lot, parkingType,
 	)
 	if err != nil {
 		_ = editCtrlMessage(

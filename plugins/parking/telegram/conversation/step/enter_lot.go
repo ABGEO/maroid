@@ -1,7 +1,6 @@
 package step
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"regexp"
@@ -100,7 +99,7 @@ func (s *EnterLot) processLot(ctx *conversationapi.Context, update telego.Update
 	number := lot[1:]
 
 	place, err := s.apiClientSvc.GetParkingPlace(
-		context.Background(), zone, number,
+		ctx, zone, number,
 	)
 	if errors.Is(err, service.ErrParkingPlaceNotFound) {
 		_ = editCtrlMessageWithKeyboard(
