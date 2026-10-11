@@ -3,7 +3,9 @@
 
 	import type { Workspace } from '$lib/api';
 	import { crumbsFor, needsPlugins } from '$lib/navigation/breadcrumbs';
+	import type { PluginRoute } from '$lib/plugins/loader';
 	import { enabledState } from '$lib/state/plugins.svelte';
+	import { pageTitle } from '$lib/state/title.svelte';
 	import { workspaceState } from '$lib/state/workspaces.svelte';
 
 	const loading = $derived(enabledState.status === 'idle' || enabledState.status === 'loading');
@@ -17,7 +19,13 @@
 			? [...workspaceState.workspaces, loaded]
 			: workspaceState.workspaces
 	);
-	const crumbs = $derived(crumbsFor(page.route.id, page.params, enabledState.plugins, workspaces));
+	const route = $derived(page.data.route as PluginRoute | null | undefined);
+	const crumbs = $derived(
+		crumbsFor(page.route.id, page.params, enabledState.plugins, workspaces, {
+			title: pageTitle.value,
+			parameterized: route?.parameterized === true
+		})
+	);
 </script>
 
 {#if pending}
@@ -32,7 +40,9 @@
 		<ul>
 			{#each crumbs as crumb, index (index)}
 				<li>
-					{#if crumb.href && index < crumbs.length - 1}
+					{#if crumb.pending}
+						<span class="skeleton h-3 w-24" aria-hidden="true"></span>
+					{:else if crumb.href && index < crumbs.length - 1}
 						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- crumbsFor resolves every target -->
 						<a class="hover:text-base-content" href={crumb.href}>{crumb.label}</a>
 					{:else if index === crumbs.length - 1}

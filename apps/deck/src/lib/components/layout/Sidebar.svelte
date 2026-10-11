@@ -5,24 +5,25 @@
 	import { userState } from '$lib/state/user.svelte';
 	import { actingWorkspaceId, isMember, workspaceState } from '$lib/state/workspaces.svelte';
 	import { uiOf } from '$lib/plugins/capabilities';
+	import { activeEntry } from '$lib/plugins/routes';
 
 	function isActive(href: string) {
 		return page.url.pathname === href;
 	}
 
-	function groupIsOpen(hrefs: string[]) {
-		return hrefs.some((h) => isActive(h));
+	/**
+	 * Whether the entry of a plugin is the one that the current page sits under. A
+	 * page of one record sits under the entry of its list.
+	 */
+	function isActiveEntry(pluginId: string, entries: string[], entry: string): boolean {
+		return (
+			page.route.id === '/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]' &&
+			page.params.plugin === pluginId &&
+			activeEntry(entries, page.params.path ?? '') === entry
+		);
 	}
 
 	const workspaceId = $derived(actingWorkspaceId(page.params.workspace));
-
-	function routeHref(workspace: string, pluginId: string, path: string) {
-		return resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]', {
-			workspace,
-			plugin: pluginId,
-			path: path.replace(/^\//, '')
-		});
-	}
 
 	$effect(() => {
 		if (workspaceId !== null) {
@@ -158,9 +159,11 @@
 								{#each uiPlugins as plugin (plugin.id)}
 									<li>
 										<details
-											open={groupIsOpen(
-												plugin.manifest!.routes.map((r) =>
-													routeHref(workspaceId, plugin.id, r.path)
+											open={plugin.manifest!.routes.some((r) =>
+												isActiveEntry(
+													plugin.id,
+													plugin.manifest!.routes.map((entry) => entry.path),
+													r.path
 												)
 											)}
 										>
@@ -187,8 +190,10 @@
 																	path: route.path.replace(/^\//, '')
 																}
 															)}
-															class:menu-active={isActive(
-																routeHref(workspaceId, plugin.id, route.path)
+															class:menu-active={isActiveEntry(
+																plugin.id,
+																plugin.manifest!.routes.map((entry) => entry.path),
+																route.path
 															)}
 														>
 															{route.label}

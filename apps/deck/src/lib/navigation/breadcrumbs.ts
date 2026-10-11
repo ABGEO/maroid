@@ -6,12 +6,24 @@ import { displayNameOf, uiOf } from '$lib/plugins/capabilities';
 
 /**
  * One step of the trail. A crumb without a target names a place that carries no
- * page of its own, such as a plugin.
+ * page of its own, such as a plugin. A pending crumb waits for the page to name
+ * itself.
  */
 export interface Crumb {
 	label: string;
 	href?: ResolvedPathname;
+	pending?: boolean;
 }
+
+/** What the mounted plugin page tells the trail about itself. */
+export interface PageState {
+	/** The name that the page gave itself, or null. */
+	title: string | null;
+	/** Whether the matched route of the page holds a parameter segment. */
+	parameterized: boolean;
+}
+
+const NO_PAGE: PageState = { title: null, parameterized: false };
 
 /** The parameters that a dashboard route can carry. */
 export interface CrumbParams {
@@ -49,7 +61,8 @@ export function crumbsFor(
 	routeId: RouteId | null,
 	params: CrumbParams,
 	plugins: Plugin[],
-	workspaces: Workspace[] = []
+	workspaces: Workspace[] = [],
+	pageState: PageState = NO_PAGE
 ): Crumb[] {
 	switch (routeId) {
 		case '/(dashboard)/workspaces/new':
@@ -162,7 +175,7 @@ export function crumbsFor(
 				HUB,
 				workspaceCrumb(workspaceId, workspaces),
 				pluginCrumb(pluginId, plugins),
-				...routeCrumbs(workspaceId, pluginId, params.path ?? '', plugins)
+				...routeCrumbs(workspaceId, pluginId, params.path ?? '', plugins, pageState)
 			];
 		}
 
@@ -187,36 +200,56 @@ function pluginCrumb(pluginId: string, plugins: Plugin[]): Crumb {
 }
 
 /**
- * One crumb for each segment of a plugin path. A segment that the manifest of
- * the plugin declares takes the label and the target of that route. A segment
- * that no route declares reads as a title and carries no target.
+ * The crumbs of a plugin path: one link for each navigation entry that leads the
+ * path, then the page itself. The page reads as the title it gave, as a pending
+ * crumb while a page with a parameter has none, or as the entry or the last segment
+ * of the path. A segment that no entry declares takes no crumb of its own.
  */
 function routeCrumbs(
 	workspaceId: string,
 	pluginId: string,
 	path: string,
-	plugins: Plugin[]
+	plugins: Plugin[],
+	pageState: PageState
 ): Crumb[] {
 	const routes = uiOf(find(plugins, pluginId))?.routes ?? [];
 	const segments = path.split('/').filter(Boolean);
+	if (segments.length === 0) {
+		return [];
+	}
 
-	return segments.map((segment, index) => {
-		const subpath = segments.slice(0, index + 1).join('/');
-		const route = routes.find((candidate) => trim(candidate.path) === subpath);
-
-		if (!route) {
-			return { label: titleOf(segment) };
-		}
-
-		return {
-			label: route.label,
-			href: resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]', {
-				workspace: workspaceId,
-				plugin: pluginId,
-				path: subpath
-			})
-		};
+	const crumbOf = (route: { path: string; label: string }): Crumb => ({
+		label: route.label,
+		href: resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]', {
+			workspace: workspaceId,
+			plugin: pluginId,
+			path: trim(route.path)
+		})
 	});
+
+	const leading = routes
+		.map((route) => ({ route, depth: trim(route.path).split('/').filter(Boolean).length }))
+		.filter(
+			({ route, depth }) =>
+				depth < segments.length && trim(route.path) === segments.slice(0, depth).join('/')
+		)
+		.sort((left, right) => left.depth - right.depth)
+		.map(({ route }) => crumbOf(route));
+
+	const exact = routes.find((route) => trim(route.path) === segments.join('/'));
+
+	let last: Crumb;
+	if (pageState.title !== null) {
+		last = { label: pageState.title };
+	} else if (pageState.parameterized) {
+		last = { label: '', pending: true };
+	} else if (exact) {
+		last = crumbOf(exact);
+	} else {
+		last = { label: titleOf(segments[segments.length - 1]) };
+	}
+
+	return [...leading, last];
 }
 
 function find(plugins: Plugin[], pluginId: string): Plugin | undefined {

@@ -99,3 +99,27 @@ export function matchRoute(keys: string[], path: string): RouteMatch | null {
 
 	return { key: best.key, params: best.params, parameterized: Object.keys(best.params).length > 0 };
 }
+
+/**
+ * The navigation entry that the address sits under: the entry whose segments lead
+ * the address for the most segments, or null when no entry leads it.
+ */
+export function activeEntry(paths: string[], path: string): string | null {
+	const address = segmentsOf(path);
+	let best: string | null = null;
+	let bestLength = -1;
+
+	for (const entry of paths) {
+		const segments = segmentsOf(entry);
+		const leads =
+			segments.length <= address.length &&
+			segments.every((segment, index) => segment === address[index]);
+
+		if (leads && segments.length > bestLength) {
+			best = entry;
+			bestLength = segments.length;
+		}
+	}
+
+	return best;
+}
