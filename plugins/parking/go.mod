@@ -3,18 +3,16 @@ module github.com/abgeo/maroid/plugins/parking
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261007201113-f0f51ecfa664
-	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261007201113-f0f51ecfa664
-	github.com/abgeo/maroid/libs/rest v0.0.0-20261007201113-f0f51ecfa664
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261011233959-7cee61f56cf7
+	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261011233959-7cee61f56cf7
+	github.com/abgeo/maroid/libs/rest v0.0.0-20261011233959-7cee61f56cf7
 	github.com/mymmrac/telego v1.12.1
 	github.com/stretchr/testify v1.12.1
 	resty.dev/v3 v3.0.0-beta.3
 )
 
 require (
-	github.com/Azure/go-ansiterm v0.0.0-20261006220739-8c912ac31dd4 // indirect
-	github.com/abgeo/maroid/libs/notifierapi v0.0.0-20261007201113-f0f51ecfa664 // indirect
-	github.com/abgeo/maroid/libs/testdb v0.0.0-20261007201113-f0f51ecfa664 // indirect
+	github.com/abgeo/maroid/libs/testdb v0.0.0-20261011233959-7cee61f56cf7 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.4 // indirect
 	github.com/bytedance/sonic/loader v0.5.2 // indirect
@@ -25,6 +23,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.2 // indirect
 	github.com/go-playground/validator/v10 v10.30.5 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/grbit/go-json v0.11.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmoiron/sqlx v1.4.0 // indirect
@@ -40,6 +39,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.75.0 // indirect
 	github.com/valyala/fastjson v1.6.10 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/arch v0.31.0 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/net v0.59.0 // indirect
