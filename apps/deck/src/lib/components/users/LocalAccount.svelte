@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
+	import { ConfirmDialog } from '@maroid/ui';
+
 	import { LOCAL_PROVIDER, api, createWriteIntent, type UserIdentity } from '$lib/api';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Alert from '$lib/components/ui/Alert.svelte';
 	import Panel from '$lib/components/ui/Panel.svelte';
 	import PasswordFields from '$lib/components/users/PasswordFields.svelte';

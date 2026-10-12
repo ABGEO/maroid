@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
+	import { ConfirmDialog } from '@maroid/ui';
+
 	import type { UserChange, UserRecord } from '$lib/api';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import UserBadges from '$lib/components/users/UserBadges.svelte';
 	import { personName } from '$lib/users/name';
 

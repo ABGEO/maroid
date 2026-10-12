@@ -28,6 +28,9 @@ importers:
       '@maroid/theme':
         specifier: workspace:*
         version: link:../../libs/theme
+      '@maroid/ui':
+        specifier: workspace:*
+        version: link:../../libs/ui
       '@module-federation/runtime':
         specifier: ^2.4.0
         version: 2.4.0

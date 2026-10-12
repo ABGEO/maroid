@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createWriteIntent, type PluginHost } from '@maroid/plugin-sdk';
+  import { createWriteIntent, failureMessage, type PluginHost } from '@maroid/plugin-sdk';
   import { SvelteMap } from 'svelte/reactivity';
 
   import '../../app.css';
@@ -12,7 +12,6 @@
     type PlantUpdatePayload
   } from '../../api';
   import { readAll } from '../../lib/pages';
-  import { failureMessage } from '../../lib/problem';
   import LogForm from './LogForm.svelte';
   import PlantForm from './PlantForm.svelte';
   import PlantList from './PlantList.svelte';

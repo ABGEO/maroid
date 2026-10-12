@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { ApiError, createWriteIntent } from '@maroid/plugin-sdk';
+  import { ApiError, createWriteIntent, failureMessage } from '@maroid/plugin-sdk';
 
   import type { JasmineApi, MaintenanceType, PlantReference } from '../../api';
   import { localNow, toMoment } from '../../lib/format';
   import { MAINTENANCE_TYPES } from '../../lib/maintenance';
-  import { failureMessage } from '../../lib/problem';
 
   interface Props {
     api: JasmineApi;

@@ -1,7 +1,8 @@
 <script lang="ts">
+	import { ConfirmDialog } from '@maroid/ui';
+
 	import { ApiError, LOCAL_PROVIDER, api, type ProviderIdentity } from '$lib/api';
 	import { startAttach } from '$lib/api/client';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import Alert from '$lib/components/ui/Alert.svelte';
 	import Panel from '$lib/components/ui/Panel.svelte';
 	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';

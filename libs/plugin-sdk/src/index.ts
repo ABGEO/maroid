@@ -17,3 +17,4 @@ export {
   isProblem
 } from '@maroid/api-client';
 export { defineRoute } from './route';
+export { failureMessage } from './problem';

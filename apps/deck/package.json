@@ -20,6 +20,7 @@
 		"@maroid/api-client": "workspace:*",
 		"@maroid/plugin-sdk": "workspace:*",
 		"@maroid/theme": "workspace:*",
+		"@maroid/ui": "workspace:*",
 		"@module-federation/runtime": "^2.4.0",
 		"@module-federation/vite": "^1.15.5",
 		"@sjsf/cfworker-validator": "^3.8.1",

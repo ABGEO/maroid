@@ -1,8 +1,9 @@
 <script lang="ts">
+  import { failureMessage } from '@maroid/plugin-sdk';
+
   import type { CareInterval, JasmineApi, MaintenanceType } from '../../api';
   import { formatDays } from '../../lib/format';
   import { MAINTENANCE_TYPES, STATE_BADGE } from '../../lib/maintenance';
-  import { failureMessage } from '../../lib/problem';
 
   interface Props {
     api: JasmineApi;

@@ -8,6 +8,7 @@
 }
 
 @source '../node_modules/@sjsf/daisyui5-theme/dist';
+@source '../node_modules/@maroid/ui/src';
 
 .drawer:has(> .drawer-toggle:not(:checked)) .drawer-side details[open] > ul {
 	display: none;

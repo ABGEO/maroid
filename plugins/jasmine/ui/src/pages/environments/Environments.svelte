@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { createWriteIntent, type PluginHost } from '@maroid/plugin-sdk';
+  import { createWriteIntent, failureMessage, type PluginHost } from '@maroid/plugin-sdk';
   import { ConfirmDialog, createPager, Pagination } from '@maroid/ui';
 
   import '../../app.css';
   import { createJasmineApi, type Environment } from '../../api';
-  import { failureMessage } from '../../lib/problem';
 
   const MAX_NAME = 100;
 

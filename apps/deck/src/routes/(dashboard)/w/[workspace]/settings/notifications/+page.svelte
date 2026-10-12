@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { ConfirmDialog } from '@maroid/ui';
+
 	import {
 		ApiError,
 		PROBLEM_TYPE,
@@ -8,7 +10,6 @@
 		type NotificationRoute,
 		type NotificationTopic
 	} from '$lib/api';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ProviderDialog from '$lib/components/notifications/ProviderDialog.svelte';
 	import RouteDialog from '$lib/components/notifications/RouteDialog.svelte';
 	import Alert from '$lib/components/ui/Alert.svelte';

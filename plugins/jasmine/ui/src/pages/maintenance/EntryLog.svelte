@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { failureMessage } from '@maroid/plugin-sdk';
   import { ConfirmDialog, createPager, Pagination } from '@maroid/ui';
 
   import type {
@@ -9,7 +10,6 @@
   } from '../../api';
   import { formatMoment, localNow, toLocalInput, toMoment } from '../../lib/format';
   import { MAINTENANCE_TYPES, typeLabel } from '../../lib/maintenance';
-  import { failureMessage } from '../../lib/problem';
 
   interface Props {
     api: JasmineApi;

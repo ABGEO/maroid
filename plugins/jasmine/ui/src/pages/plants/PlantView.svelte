@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { ApiError, PROBLEM_TYPE, type PluginHost } from '@maroid/plugin-sdk';
+  import { ApiError, failureMessage, PROBLEM_TYPE, type PluginHost } from '@maroid/plugin-sdk';
   import { ConfirmDialog } from '@maroid/ui';
 
   import type { EnvironmentReference, JasmineApi, Plant, PlantUpdatePayload } from '../../api';
   import { formatMoment } from '../../lib/format';
-  import { failureMessage } from '../../lib/problem';
   import CareIntervals from './CareIntervals.svelte';
   import LogForm from './LogForm.svelte';
   import PlantEntries from './PlantEntries.svelte';

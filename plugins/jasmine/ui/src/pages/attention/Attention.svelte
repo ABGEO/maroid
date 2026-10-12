@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { createWriteIntent, type PluginHost } from '@maroid/plugin-sdk';
+  import { createWriteIntent, failureMessage, type PluginHost } from '@maroid/plugin-sdk';
 
   import '../../app.css';
   import { createJasmineApi, type CareInterval, type EnvironmentReference } from '../../api';
   import { formatDays } from '../../lib/format';
   import { MAINTENANCE_TYPES, STATE_BADGE, typeLabel } from '../../lib/maintenance';
   import { readAll } from '../../lib/pages';
-  import { failureMessage } from '../../lib/problem';
 
   interface Group {
     environment: EnvironmentReference;

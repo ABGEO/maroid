@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { ConfirmDialog } from '@maroid/ui';
+
 	import type { Member, Role } from '$lib/api';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { ROLES, roleLabel } from '$lib/permissions';
 	import { personName } from '$lib/users/name';
 

@@ -1,8 +1,8 @@
-import { ApiError, PROBLEM_TYPE } from "@maroid/plugin-sdk";
+import { ApiError, PROBLEM_TYPE } from '@maroid/api-client';
 
 /** The member that a JSON Pointer of a field failure names, as a person reads it. */
 function fieldName(pointer: string): string {
-  return pointer.replace(/^#\//, "").replaceAll("_", " ");
+  return pointer.replace(/^#\//, '').replaceAll('_', ' ');
 }
 
 /**
@@ -15,7 +15,7 @@ export function failureMessage(error: unknown, fallback: string): string {
   }
 
   if (error.is(PROBLEM_TYPE.preconditionFailed)) {
-    return "Someone changed this record since you opened it. Reload it and try again.";
+    return 'Someone changed this record since you opened it. Reload it and try again.';
   }
 
   const [field] = error.fields;

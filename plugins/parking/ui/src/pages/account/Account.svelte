@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { ApiError, type PluginHost } from '@maroid/plugin-sdk';
+  import { ApiError, failureMessage, type PluginHost } from '@maroid/plugin-sdk';
   import { ConfirmDialog } from '@maroid/ui';
 
   import '../../app.css';
   import { createParkingApi, type Connection, type PendingConnection } from '../../api';
-  import { failureMessage } from '../../lib/problem';
 
   const SERVICE_UNAVAILABLE = '/problems/dev.maroid.parking/service-unavailable';
   const CODE_PATTERN = '[0-9]{4,8}';
