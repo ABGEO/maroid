@@ -181,8 +181,9 @@ parses, and the customer number of a reading equals the one of the list. Build s
 **Layer:** integration
 
 **Given** workspace W.
-**When** the repository inserts the same reading twice, then a reading of the same meter on a later date.
-**Then** `readings` holds two rows for W.
+**When** the repository inserts the same reading twice, then a reading of the same meter on a
+later date, then the first date again with a corrected value.
+**Then** `readings` holds two rows for W, and the first date holds the corrected value.
 
 ## `GWPACC-SC-018`
 
@@ -198,11 +199,13 @@ parses, and the customer number of a reading equals the one of the list. Build s
 **Verifies:** `GWPACC-FR-022`, `GWPACC-FR-025`
 **Layer:** integration
 
-**Given** `C1` assigned, meter `A` with readings 1190.0 to 1204.0 on 15/08/2026 and 1204.0 to
-1216.5 on 15/09/2026, meter `B` with 80.0 to 78.5 on 15/09/2026, and a reading of `C2`.
+**Given** `C1` assigned, meter `A` with 1204.0 on 15/08/2026 and 1216.5 on 15/09/2026,
+meter `B` with 80.0 on 15/08/2026 and 78.5 on 15/09/2026, meter `C` with 50.0 on
+15/09/2026 alone, and a reading of `C2`.
 **When** V loads the widget `usage`.
-**Then** the answer is a list of two lines: "Meter A: 12.5 m³" with "1204.0 to 1216.5,
-15/09/2026", and "Meter B: -1.5 m³" with "80.0 to 78.5, 15/09/2026". No call reaches the water service.
+**Then** the answer is a list of three lines: "Meter A: 12.5 m³" with "1216.5 m³ on
+15/09/2026", "Meter B: -1.5 m³" with "78.5 m³ on 15/09/2026", and "Meter C" with
+"50.0 m³ on 15/09/2026", and `More` is `/readings`. No call reaches the water service.
 
 ## `GWPACC-SC-020`
 
@@ -250,6 +253,77 @@ the widget. `account.connect` has `editor` and guards the other three routes.
 **When** E sends `PUT /customer-assignments/self` with `C1`.
 **Then** the answer is 409 `/problems/dev.maroid.gwp/not-connected`. No assignment exists,
 and the fake service records no call.
+
+## `GWPACC-SC-025`
+
+**Verifies:** `GWPACC-FR-028`, `GWPACC-FR-029`, `GWPACC-FR-033`
+**Layer:** integration
+
+**Given** `C1` assigned, meters `A` and `B`, and 24 monthly readings of each, 48 in all.
+**When** V reads `GET /readings`, then follows `next` twice.
+**Then** the pages hold 20, 20, and 8 readings, the latest date first, and the two meters
+of one date in the order of their identifiers. The first page carries `next` and no
+`prev`, and the last carries `prev` and no `next`. Each item but the earliest of each
+meter carries its usage.
+
+## `GWPACC-SC-026`
+
+**Verifies:** `GWPACC-FR-028`
+**Layer:** integration
+
+**Given** readings of `C1` and of `C2`, and `C2` assigned.
+**When** V reads `GET /readings`.
+**Then** every item is a reading of `C2`.
+
+## `GWPACC-SC-027`
+
+**Verifies:** `GWPACC-FR-030`
+**Layer:** integration
+
+**Given** `C1` assigned, meter `A` with 100.0 on 15/09/2025, 110.0 on 15/10/2025, and 200.0 on 15/09/2026.
+**When** V reads `GET /readings?from=2025-10-12`, then `GET /readings?from=12-10-2025`.
+**Then** the first answer holds 200.0 with a usage of 90.0, and 110.0 with a usage of 10.0,
+which counts from the reading before `from`. The second answers 400
+`/problems/http/request-invalid`, and its detail names `from`.
+
+## `GWPACC-SC-028`
+
+**Verifies:** `GWPACC-FR-031`
+**Layer:** integration
+
+**Given** no assigned customer.
+**When** V reads `GET /readings`.
+**Then** the answer is 409 `/problems/dev.maroid.gwp/not-assigned`.
+
+## `GWPACC-SC-029`
+
+**Verifies:** `GWPACC-FR-032`
+**Layer:** integration
+
+**Given** `C1` assigned, and no reading of `C1`.
+**When** V reads `GET /readings`.
+**Then** the answer is 200 with an empty `items`, and neither `next` nor `prev`.
+
+## `GWPACC-SC-030`
+
+**Verifies:** `GWPACC-FR-030`, `GWPACC-FR-031`, `GWPACC-FR-032`
+**Layer:** manual
+
+**Given** the deck, and a workspace with 24 months of readings of two meters.
+**When** the owner opens the readings page, switches the theme, pages through the list,
+then removes the assignment and opens the page again.
+**Then** the chart shows a column and a line for each meter over the last 12 months, and
+takes the colors of each theme. The list pages by 20. With no assignment, the page asks
+for the setup with a link to the account page.
+
+## `GWPACC-SC-031`
+
+**Verifies:** `GWPACC-FR-026`
+**Layer:** unit
+
+**Given** the plugin.
+**When** the test reads the routes of the readings handler.
+**Then** `GET /readings` names `account.read`.
 
 ## Retired identifiers
 

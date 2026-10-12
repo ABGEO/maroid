@@ -172,6 +172,59 @@ paths:
         "502":
           $ref: "#/components/responses/ServiceUnavailable"
 
+  /workspaces/{workspaceId}/plugins/dev.maroid.gwp/api/readings:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listWaterReadings
+      summary: List the readings of the assigned customer.
+      description: >
+        Realizes `GWPACC-FR-028` to `GWPACC-FR-033`, `GWPACC-DD-011`, and
+        `GWPACC-DD-012`. The page holds the readings of the customer assigned to the
+        acting workspace, the latest date first, and the identifier breaks a tie. The
+        route reads no water service. The permission is `account.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+        - name: from
+          in: query
+          required: false
+          description: The earliest reading date that the page holds.
+          schema:
+            type: string
+            format: date
+            examples: ["2025-10-12"]
+      responses:
+        "200":
+          description: One page of readings. A customer with no reading answers an empty page.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadingPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          description: >
+            The workspace holds no assigned customer. The type is
+            `/problems/dev.maroid.gwp/not-assigned`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+
 components:
   securitySchemes:
     sessionCookie:
@@ -222,6 +275,41 @@ components:
           type: string
           minLength: 1
           maxLength: 64
+
+    Reading:
+      type: object
+      required: [id, serial_number, reading_date, value]
+      properties:
+        id:
+          type: string
+          format: uuid
+        serial_number:
+          type: string
+          description: The serial number of the meter.
+          examples: ["H24MA082393"]
+        reading_date:
+          type: string
+          format: date
+        value:
+          type: number
+          format: decimal
+          description: The value of the meter on the date, in cubic metres.
+        usage:
+          type: number
+          format: decimal
+          description: >
+            The value minus the value of the reading before it, of the same meter, in
+            cubic metres. Absent for the earliest reading of a meter. A replaced meter
+            can give a negative usage.
+    ReadingPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Reading"
 
   responses:
     ServiceUnavailable:

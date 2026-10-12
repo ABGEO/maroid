@@ -1,11 +1,7 @@
 package dto
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/abgeo/maroid/plugins/gwp/model"
@@ -82,20 +78,6 @@ type ReadingItem struct {
 	SMSCode         string  `json:"smsCode"`
 }
 
-// Hash names the reading of the customer. The water service gives a reading no
-// identifier, so the five values that tell two readings apart stand in for one.
-func (d *ReadingItem) Hash(customerNumber string) string {
-	sum := sha256.Sum256([]byte(strings.Join([]string{
-		customerNumber,
-		d.SerialNumber,
-		d.LastReadingDate,
-		strconv.FormatFloat(d.LastReading, 'f', -1, 64),
-		strconv.FormatFloat(d.PreviousReading, 'f', -1, 64),
-	}, "|")))
-
-	return hex.EncodeToString(sum[:])
-}
-
 // MapToModel converts the reading of the customer into a model.Reading.
 func (d *ReadingItem) MapToModel(customerNumber string) (model.Reading, error) {
 	date, err := time.Parse(readingDateLayout, d.LastReadingDate)
@@ -108,11 +90,9 @@ func (d *ReadingItem) MapToModel(customerNumber string) (model.Reading, error) {
 	}
 
 	return model.Reading{
-		Hash:           d.Hash(customerNumber),
 		CustomerNumber: customerNumber,
 		SerialNumber:   d.SerialNumber,
 		ReadingDate:    date,
 		Value:          d.LastReading,
-		PreviousValue:  d.PreviousReading,
 	}, nil
 }

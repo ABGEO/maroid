@@ -19,9 +19,9 @@ The water plugin gains a connection page. A connect signs in to the water servic
 the workspace settings and stores the token as the workspace plugin secret `token` of
 `PSECRET`. The page lists the customers of the account, and an editor assigns one to the
 workspace in the scoped table `customer_assignments`. The collection reads the readings
-of the assigned customer and inserts each one into the scoped table `readings` under a
-hash. The widget `usage` lists the last reading of each meter. No change reaches the hub
-or `pluginapi`. `spec-scenarios.md` holds the scenarios.
+of the assigned customer and keeps each one in the scoped table `readings`, one for a
+meter on a date. The usage of a reading is computed when it is read. The widget `usage` lists the last reading of each meter. No change reaches the hub
+or `pluginapi`. `spec-readings.md` holds the readings page. `spec-scenarios.md` holds the scenarios.
 
 ## 2. Coverage
 
@@ -52,8 +52,15 @@ or `pluginapi`. `spec-scenarios.md` holds the scenarios.
 | `GWPACC-FR-023`   | Section 4.3, `GWPACC-SC-020` |
 | `GWPACC-FR-024`   | Section 4.3, `GWPACC-SC-020` |
 | `GWPACC-FR-025`   | Section 4.3, `GWPACC-SC-019` |
-| `GWPACC-FR-026`   | Section 4.3, `GWPACC-DD-009`, `GWPACC-SC-021` |
+| `GWPACC-FR-026`   | Section 4.3, `spec-readings.md` 3.3, `GWPACC-DD-009`, `GWPACC-SC-021`, `GWPACC-SC-031` |
 | `GWPACC-FR-027`   | Section 4.3, `GWPACC-DD-009`, `GWPACC-SC-021` |
+| `GWPACC-FR-028`   | `spec-readings.md` 3.3, `GWPACC-DD-011`, `GWPACC-SC-025`, `GWPACC-SC-026` |
+| `GWPACC-FR-029`   | `spec-readings.md` 3.3, `GWPACC-DD-011`, `GWPACC-SC-025` |
+| `GWPACC-FR-030`   | `GWPACC-DD-012` to `GWPACC-DD-014`, `GWPACC-SC-027`, `GWPACC-SC-030` |
+| `GWPACC-FR-031`   | `spec-readings.md` 3.4, `GWPACC-DD-015`, `GWPACC-SC-028`, `GWPACC-SC-030` |
+| `GWPACC-FR-032`   | `spec-readings.md` 3.4, `GWPACC-DD-015`, `GWPACC-SC-029`, `GWPACC-SC-030` |
+| `GWPACC-FR-033`   | `spec-readings.md` 3.1, `GWPACC-DD-012`, `GWPACC-SC-025` |
+| `GWPACC-FR-034`   | `spec-readings.md` 3.3, `GWPACC-SC-019` |
 | `GWPACC-INV-001`  | Section 4.2, `GWPACC-DD-001`, `GWPACC-SC-009` |
 | `GWPACC-INV-002`  | Section 4.2, `GWPACC-SC-022` |
 | `GWPACC-INV-003`  | `api.yaml`, `GWPACC-SC-023` |
@@ -89,9 +96,10 @@ or `pluginapi`. `spec-scenarios.md` holds the scenarios.
 | `plugins/gwp/db/migration_source.go` | create | `Migrations`, the embedded `migrations/*.sql` |
 | `plugins/gwp/db/migrations/<ts>_table_customer_assignments_create.{up,down}.sql` | create | Section 4.2 |
 | `plugins/gwp/db/migrations/<ts>_table_readings_create.{up,down}.sql` | create | Section 4.2 |
+| `plugins/gwp/db/migrations/<ts>_readings_key_by_meter_and_date.{up,down}.sql` | create | Section 4.2 |
 | `plugins/gwp/errs/errs.go` | create | `ErrRequestFailed` (moved from `service`), `ErrNotConnected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrNotAssigned`, `ErrCustomerUnknown`, `ErrCustomerAbsent` |
-| `plugins/gwp/model/{doc,connection,reading}.go` | create | `ConnectionState`, `Connection`, `Customer`, `Reading` with `Usage()` |
-| `plugins/gwp/dto/api-client.go` | change | `ReadingItem.Hash()`, `ReadingItem.MapToModel(customerNumber string)` |
+| `plugins/gwp/model/{doc,connection,reading}.go` | create | `ConnectionState`, `Connection`, `Customer`, `Reading`, whose `Usage` is nil for the earliest reading of a meter |
+| `plugins/gwp/dto/api-client.go` | change | `ReadingItem.MapToModel(customerNumber string)`. `prevReadValue` stays unread |
 | `plugins/gwp/dto/connection.go` | create | `ConnectionResponse`, `CustomerResponse`, `AssignmentRequest` |
 | `plugins/gwp/service/api-client.go` | change | A 401 is `errs.ErrNotConnected`. A sign in with `success: false` is `errs.ErrCredentialsRejected` |
 | `plugins/gwp/service/connection.go` | create | `ConnectionService`, `Connections`, `NewConnections` |
@@ -138,7 +146,7 @@ collection write it with `Put`. `DD-002` deletes it.
 | Table | Schema | Scope | Migration | Realizes |
 | ----- | ------ | ----- | --------- | -------- |
 | `customer_assignments` | `dev_maroid_gwp` | Workspace | `<ts>_table_customer_assignments_create` | `GWPACC-FR-013`, `GWPACC-INV-001` |
-| `readings` | `dev_maroid_gwp` | Workspace | `<ts>_table_readings_create` | `GWPACC-FR-020`, `GWPACC-FR-021`, `GWPACC-FR-022` |
+| `readings` | `dev_maroid_gwp` | Workspace | `<ts>_table_readings_create`, `<ts>_readings_key_by_meter_and_date` | `GWPACC-FR-020`, `GWPACC-FR-021`, `GWPACC-FR-022` |
 
 `customer_assignments`:
 
@@ -155,16 +163,17 @@ collection write it with `Put`. `DD-002` deletes it.
 | ------ | ---- | ---- | ------- | ---- |
 | `id` | `UUID` | no | `uuidv7()` | Primary key |
 | `workspace_id` | `UUID` | no | the acting workspace (`OWN-005`) | |
-| `hash` | `TEXT` | no | | `UNIQUE (workspace_id, hash)`. `DD-007` |
 | `customer_number` | `TEXT` | no | | The customer of the reading. It stays after a new assignment |
 | `serial_number` | `TEXT` | no | | `serialNumber` of the meter |
 | `reading_date` | `DATE` | no | | `lastReadingDate`, which the water service gives as `dd/mm/yyyy` |
 | `value` | `NUMERIC` | no | | `lastReading` |
-| `previous_value` | `NUMERIC` | no | | `prevReadValue` |
 | `collected_at` | `TIMESTAMPTZ` | no | `now()` | |
 
-The index `readings_customer_meter_date_idx` on `(workspace_id, customer_number, serial_number, reading_date DESC)`
-serves `LastOfEachMeter`, because the policy adds the condition on `workspace_id`.
+The constraint `readings_workspace_meter_date_key` is `UNIQUE (workspace_id, customer_number,
+serial_number, reading_date)` (`DD-007`). Its index serves every read, because the policy adds
+the condition on `workspace_id`. The second migration drops `hash`, `previous_value`, and the
+index `readings_customer_meter_date_idx`. It keeps the latest collected row of each key
+before it adds the constraint.
 Both tables take the policy of `OWN-006` on `workspace_id`. No foreign key joins them,
 because a reading outlives its assignment (`GWPACC-FR-021`).
 
@@ -329,18 +338,26 @@ A failure of the collection is logged at warn, and the answer stays 200.
 ### `GWPACC-DD-007`
 
 **Realizes:** `GWPACC-FR-020`
-**Decision:** `hash` is the hex SHA-256 of `customerNo|serialNumber|lastReadingDate|lastReading|prevReadValue`,
-and the insert runs `ON CONFLICT (workspace_id, hash) DO NOTHING`, as the plugin `tbilisi-energy` does.
-**Rationale:** The water service gives a reading no identifier. The five values name one reading of one meter.
-**Alternatives:** A unique key on the five columns. It repeats the hash in a wider index, and differs from the other plugins.
+**Decision:** A reading is unique on `(workspace_id, customer_number, serial_number, reading_date)`.
+The insert runs `ON CONFLICT ... DO UPDATE SET value = EXCLUDED.value, collected_at = now()`,
+with `WHERE readings.value <> EXCLUDED.value`, so a repeat writes nothing and a correction
+replaces the value.
+**Rationale:** A reading is the value of a meter on a date, so the meter and the date name it.
+The water service marks a value as an estimate, and a later answer can correct it.
+**Alternatives:** A hash of the meter, the date, and the value. A corrected value then adds a
+second reading on the same date.
 
 ### `GWPACC-DD-008`
 
 **Realizes:** `GWPACC-FR-022`
-**Decision:** `LastOfEachMeter` runs `SELECT DISTINCT ON (serial_number) ... ORDER BY serial_number, reading_date DESC, collected_at DESC`.
-Each line is `ListItem{Label: "Meter <serial>: <usage> m³", Meta: "<previous> to <value>, <dd/mm/yyyy>"}`, with one decimal, and a negative usage as it is.
-**Rationale:** One query answers every meter. The label leads with the usage, which the household reads first.
-**Alternatives:** A stat widget for each meter. The plugin declares widgets at load, and the count of meters is unknown then.
+**Decision:** `LastOfEachMeter` computes `value - LAG(value) OVER (PARTITION BY serial_number
+ORDER BY reading_date)` over every reading of the customer, and keeps the latest row of each
+meter with `DISTINCT ON (serial_number)`. Each line is `ListItem{Label: "Meter <serial>: <usage> m³",
+Meta: "<value> m³ on <dd/mm/yyyy>"}`, with one decimal. A meter with one reading answers the
+label `Meter <serial>`. A negative usage shows as it is.
+**Rationale:** The usage needs the reading before the latest, so the window runs before the
+filter. One query answers every meter. The label leads with the usage, which the household reads first.
+**Alternatives:** Store the usage. A correction of an earlier value then leaves a stale usage.
 
 ### `GWPACC-DD-009`
 
@@ -361,7 +378,7 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `GWPACC-SC-001` to `GWPACC-SC-024`.
+`spec-scenarios.md` holds `GWPACC-SC-001` to `GWPACC-SC-031`.
 
 ## 7. Build plan
 
@@ -376,6 +393,11 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 | 7 | `GWPACC-SC-015` against the water service. Correct `DD-002` and `DD-007` | `GWPACC-FR-012`, `GWPACC-FR-018`, `GWPACC-FR-019` | [ ] |
 | 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GWPACC-FR-003` to `GWPACC-FR-015` | [x] |
 | 9 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [x] |
+| 10 | The migration `readings_key_by_meter_and_date`, the upsert of `DD-007`, the usage of `DD-008`, the lines of the widget, and the mapping that leaves `prevReadValue` unread | `GWPACC-FR-020`, `GWPACC-FR-022` | [x] |
+| 11 | `Reading.ID`, `Reading.List`, `Store.ReadingsPage` | `GWPACC-FR-028`, `GWPACC-FR-029` | [ ] |
+| 12 | `handler/reading.go`, `dto/reading.go`, `api.yaml`, the `More` of the widget | `GWPACC-FR-028` to `GWPACC-FR-034` | [ ] |
+| 13 | The page `/readings`, the chart, and `UIManifest`. Build the UI, then the `.so` | `GWPACC-FR-028` to `GWPACC-FR-032` | [ ] |
+| 14 | `GWPACC-SC-030` in the deck, in both themes. Lint and build the plugin | `GWPACC-FR-030` to `GWPACC-FR-032` | [ ] |
 
 ## Retired identifiers
 

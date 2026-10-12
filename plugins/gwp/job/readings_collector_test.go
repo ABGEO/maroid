@@ -243,8 +243,7 @@ func TestTheCollectionInsertsTheReadingsOfTheAssignedCustomer(t *testing.T) {
 	require.Equal(t, "A", reading.SerialNumber)
 	require.Equal(t, time.Date(2026, time.September, 15, 0, 0, 0, 0, time.UTC), reading.ReadingDate)
 	require.InDelta(t, 1216.5, reading.Value, 0)
-	require.InDelta(t, 1204.0, reading.PreviousValue, 0)
-	require.Len(t, reading.Hash, 64)
+	require.Nil(t, reading.Usage)
 }
 
 // GWPACC-SC-013: A workspace with no connection or no assigned customer is skipped

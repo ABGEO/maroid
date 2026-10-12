@@ -456,7 +456,7 @@ func TestTheReadingsOutliveTheAssignment(t *testing.T) {
 
 	water := newRig(t, storedCredentials())
 	water.connected(customerC1)
-	water.store.readings = []model.Reading{{Hash: "a"}, {Hash: "b"}}
+	water.store.readings = []model.Reading{{SerialNumber: "A"}, {SerialNumber: "B"}}
 	water.service.on(http.MethodGet, pathCustomers, answer{body: customersAnswer})
 	water.service.on(http.MethodGet, pathReadings, answer{body: readingsOfC2})
 

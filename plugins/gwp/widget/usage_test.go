@@ -52,21 +52,18 @@ func actingInW(t *testing.T) context.Context {
 	return pluginapi.ContextWithActingWorkspace(t.Context(), workspaceW)
 }
 
-func readingOf(customer, serial string, month time.Month, previous, value float64) model.Reading {
-	date := time.Date(2026, month, 15, 0, 0, 0, 0, time.UTC)
-
+func readingOf(customer, serial string, month time.Month, value float64) model.Reading {
 	return model.Reading{
-		Hash:           customer + "|" + serial + "|" + date.Format(time.DateOnly),
 		CustomerNumber: customer,
 		SerialNumber:   serial,
-		ReadingDate:    date,
+		ReadingDate:    time.Date(2026, month, 15, 0, 0, 0, 0, time.UTC),
 		Value:          value,
-		PreviousValue:  previous,
 	}
 }
 
 // GWPACC-SC-019: The widget lists the last reading of each meter of the assigned
-// customer, with its usage, and calls no service.
+// customer, with the usage since the reading before it, links to the readings page,
+// and calls no service.
 func TestTheUsageWidgetListsTheLastReadingOfEachMeter(t *testing.T) {
 	t.Parallel()
 
@@ -75,10 +72,12 @@ func TestTheUsageWidgetListsTheLastReadingOfEachMeter(t *testing.T) {
 
 	require.NoError(t, store.Assign(ctx, customerC1))
 	require.NoError(t, store.InsertReadings(ctx, []model.Reading{
-		readingOf(customerC1, "A", time.August, 1190, 1204),
-		readingOf(customerC1, "A", time.September, 1204, 1216.5),
-		readingOf(customerC1, "B", time.September, 80, 78.5),
-		readingOf(customerC2, "C", time.September, 10, 20),
+		readingOf(customerC1, "A", time.August, 1204),
+		readingOf(customerC1, "A", time.September, 1216.5),
+		readingOf(customerC1, "B", time.August, 80),
+		readingOf(customerC1, "B", time.September, 78.5),
+		readingOf(customerC1, "C", time.September, 50),
+		readingOf(customerC2, "D", time.September, 20),
 	}))
 
 	answer, err := widget.NewUsage(store).Load(ctx)
@@ -86,9 +85,11 @@ func TestTheUsageWidgetListsTheLastReadingOfEachMeter(t *testing.T) {
 
 	require.Equal(t, pluginapi.ListAnswer(pluginapi.ListData{
 		Items: []pluginapi.ListItem{
-			{Label: "Meter A: 12.5 m³", Meta: "1204.0 to 1216.5, 15/09/2026"},
-			{Label: "Meter B: -1.5 m³", Meta: "80.0 to 78.5, 15/09/2026"},
+			{Label: "Meter A: 12.5 m³", Meta: "1216.5 m³ on 15/09/2026"},
+			{Label: "Meter B: -1.5 m³", Meta: "78.5 m³ on 15/09/2026"},
+			{Label: "Meter C", Meta: "50.0 m³ on 15/09/2026"},
 		},
+		More: "/readings",
 	}), answer)
 }
 

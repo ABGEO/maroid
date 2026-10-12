@@ -58,15 +58,19 @@ func actingIn(t *testing.T, workspaceID string) context.Context {
 	return pluginapi.ContextWithActingWorkspace(t.Context(), workspaceID)
 }
 
-func readingOf(customer, serial string, date time.Time, previous, value float64) model.Reading {
+func readingOf(customer, serial string, date time.Time, value float64) model.Reading {
 	return model.Reading{
-		Hash:           customer + "|" + serial + "|" + date.Format(time.DateOnly),
 		CustomerNumber: customer,
 		SerialNumber:   serial,
 		ReadingDate:    date,
 		Value:          value,
-		PreviousValue:  previous,
 	}
+}
+
+func withUsage(reading model.Reading, usage float64) model.Reading {
+	reading.Usage = &usage
+
+	return reading
 }
 
 // fifteenth is the day of the month on which the water service reads a meter.
@@ -74,26 +78,37 @@ func fifteenth(month time.Month) time.Time {
 	return time.Date(2026, month, 15, 0, 0, 0, 0, time.UTC)
 }
 
-// GWPACC-SC-017: The same reading inserted twice is held once, and a reading of the
-// same meter on a later date is held beside it.
-func TestTheStoreKeepsAReadingOnce(t *testing.T) {
+// GWPACC-SC-017: The same reading inserted twice is held once, a reading of the same
+// meter on a later date is held beside it, and a corrected value replaces the value of
+// its date.
+func TestTheStoreKeepsOneReadingOfAMeterOnADate(t *testing.T) {
 	t.Parallel()
 
 	store, database := storeUnderTest(t)
 	ctx := actingIn(t, workspaceW)
 
-	september := readingOf(customerC1, "A", fifteenth(time.September), 1204, 1216.5)
-	october := readingOf(customerC1, "A", fifteenth(time.October), 1216.5, 1230)
+	estimated := readingOf(customerC1, "A", fifteenth(time.September), 1216.5)
+	october := readingOf(customerC1, "A", fifteenth(time.October), 1230)
+	corrected := readingOf(customerC1, "A", fifteenth(time.September), 1220)
 
-	require.NoError(t, store.InsertReadings(ctx, []model.Reading{september}))
-	require.NoError(t, store.InsertReadings(ctx, []model.Reading{september, october}))
+	require.NoError(t, store.InsertReadings(ctx, []model.Reading{estimated}))
+	require.NoError(t, store.InsertReadings(ctx, []model.Reading{estimated, october}))
+	require.NoError(t, store.InsertReadings(ctx, []model.Reading{corrected}))
 	require.NoError(t, store.Assign(ctx, customerC1))
 
 	last, err := store.LastReadingOfEachMeter(ctx)
 	require.NoError(t, err)
-	require.Equal(t, []model.Reading{october}, normalized(last))
+	require.Equal(t, []model.Reading{withUsage(october, 10)}, normalized(last))
 
 	require.Equal(t, 2, countOf(ctx, t, database, "readings"))
+
+	var september float64
+
+	require.NoError(t, database.WithTx(ctx, func(tx *sqlx.Tx) error {
+		return tx.GetContext(ctx, &september,
+			`SELECT value FROM readings WHERE reading_date = '2026-09-15';`)
+	}))
+	require.InDelta(t, 1220.0, september, 0)
 }
 
 // GWPACC-SC-022: A transaction that acts in one workspace sees neither the
@@ -107,12 +122,12 @@ func TestTheStoreServesNoOtherWorkspace(t *testing.T) {
 
 	require.NoError(t, store.Assign(inW, customerC1))
 	require.NoError(t, store.InsertReadings(inW, []model.Reading{
-		readingOf(customerC1, "A", fifteenth(time.September), 1204, 1216.5),
+		readingOf(customerC1, "A", fifteenth(time.September), 1216.5),
 	}))
 
 	require.NoError(t, store.Assign(inX, customerC2))
 	require.NoError(t, store.InsertReadings(inX, []model.Reading{
-		readingOf(customerC2, "B", fifteenth(time.September), 80, 78.5),
+		readingOf(customerC2, "B", fifteenth(time.September), 78.5),
 	}))
 
 	assigned, err := store.AssignedCustomer(inX)
@@ -122,7 +137,7 @@ func TestTheStoreServesNoOtherWorkspace(t *testing.T) {
 	last, err := store.LastReadingOfEachMeter(inX)
 	require.NoError(t, err)
 	require.Equal(t, []model.Reading{
-		readingOf(customerC2, "B", fifteenth(time.September), 80, 78.5),
+		readingOf(customerC2, "B", fifteenth(time.September), 78.5),
 	}, normalized(last))
 
 	require.Equal(t, 1, countOf(inX, t, database, "customer_assignments"))

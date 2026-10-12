@@ -124,8 +124,8 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-communal-number` | communal number | The number of a customer on the communal bill of the water service. |
 | `GLO-assigned-customer` | assigned customer | The customer of the water account that an editor assigns to a workspace. The workspace collects its readings. |
 | `GLO-meter` | meter | One water meter of a customer, named by its serial number. |
-| `GLO-reading` | reading | The value of one meter on one date, in cubic metres, with the previous value that the water service reports for that meter. |
-| `GLO-usage` | usage | The value of a reading minus its previous value. |
+| `GLO-reading` | reading | The value of one meter on one date, in cubic metres. |
+| `GLO-usage` | usage | The value of a reading minus the value of the reading before it, of the same meter. The earliest reading of a meter has none. |
 
 ## Retired identifiers
 

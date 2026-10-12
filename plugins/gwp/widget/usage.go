@@ -14,6 +14,7 @@ import (
 
 const (
 	connectionPage = "/account"
+	readingsPage   = "/readings"
 	dateLayout     = "02/01/2006"
 )
 
@@ -56,17 +57,21 @@ func NewUsage(readings UsageReader) *pluginapi.FuncWidget {
 				items = append(items, itemOf(&last[i]))
 			}
 
-			return pluginapi.ListAnswer(pluginapi.ListData{Items: items}), nil
+			return pluginapi.ListAnswer(pluginapi.ListData{Items: items, More: readingsPage}), nil
 		},
 	)
 }
 
 func itemOf(reading *model.Reading) pluginapi.ListItem {
+	label := "Meter " + reading.SerialNumber
+	if reading.Usage != nil {
+		label += fmt.Sprintf(": %s m³", volume(*reading.Usage))
+	}
+
 	return pluginapi.ListItem{
-		Label: fmt.Sprintf("Meter %s: %s m³", reading.SerialNumber, volume(reading.Usage())),
+		Label: label,
 		Meta: fmt.Sprintf(
-			"%s to %s, %s",
-			volume(reading.PreviousValue),
+			"%s m³ on %s",
 			volume(reading.Value),
 			reading.ReadingDate.Format(dateLayout),
 		),

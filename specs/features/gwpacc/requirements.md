@@ -28,12 +28,14 @@ phone. The sign in can therefore run with no person present.
 
 - An editor of a workspace: connects the water account one time, and assigns the customer
   of the house.
-- A member of the workspace: reads the usage of the last month for each meter on the home page.
+- A member of the workspace: reads the usage of the last month for each meter on the home page,
+  and compares the months of the last year on the readings page.
 
 ## 3. Out of scope
 
 - A price, a bill, a balance, or a payment.
-- A page that lists the history of the readings.
+- The readings of a customer that the workspace assigned before.
+- A chart of a range other than the last 12 months.
 - A reading that a person submits to the water service.
 - A notification about a reading.
 - A water account of one user. The connection belongs to the workspace.
@@ -175,12 +177,13 @@ The collection must fail with an error when the account no longer holds the assi
 
 ### `GWPACC-FR-020`
 
-Maroid must keep a reading once, whatever the count of the collections that read it.
+Maroid must keep one reading for one meter on one date, whatever the count of the collections that read it.
 
 **Examples:**
 
 - Normal case: two collections read the same value of the same meter on the same date. Maroid holds one reading.
 - Limit case: the same meter shows a new value on a new date. Maroid holds two readings.
+- Limit case: the water service corrects the value of a date, for example an estimate that a real reading replaces. Maroid holds one reading of that date, with the corrected value.
 
 ### `GWPACC-FR-021`
 
@@ -193,16 +196,16 @@ Maroid must keep a reading after a change of the assigned customer or the end of
 ### `GWPACC-FR-022`
 
 The plugin must declare a widget that lists the last reading of each meter of the assigned customer.
-Each line shows the serial number of the meter, the date of the reading, the previous value, the value, and the usage.
+Each line shows the serial number of the meter, the date of the reading, the value, and the usage.
 
 **Why:** The usage tells the household how much water the house used in the last month.
 
 **Examples:**
 
-- Normal case: one meter, previous value 1204.0, value 1216.5, on 15/09/2026. The line shows 1204.0, 1216.5, and a usage of 12.5.
-- Limit case: the first collection after the assignment of the customer. The water service reports the previous value, so the widget shows the usage at once.
+- Normal case: one meter, 1204.0 on 15/08/2026 and 1216.5 on 15/09/2026. The line shows 1216.5 on 15/09/2026, and a usage of 12.5.
+- Limit case: the first collection after the assignment of the customer holds one reading of the meter. The line shows the value and the date, and no usage.
 - Limit case: the customer has two meters. The widget shows two lines.
-- Unwanted case: the water service reports a previous value above the value, after a change of the meter. The line shows the negative usage as it is.
+- Unwanted case: a value below the one before it, after a change of the meter. The line shows the negative usage as it is.
 
 ### `GWPACC-FR-023`
 
@@ -222,11 +225,66 @@ The widget must read the readings that Maroid holds, with no call to the water s
 
 **Why:** The home page reads every widget at each visit. A call to the water service would slow it.
 
+### The readings page
+
+### `GWPACC-FR-028`
+
+The readings page must list the readings of the assigned customer, the latest date first.
+Each row shows the serial number of the meter, the date, the value, and the usage.
+
+**Examples:**
+
+- Normal case: two meters and 24 months of readings. The page shows the readings of both meters, the latest first.
+- Limit case: the earliest reading of a meter. The row shows no usage.
+- Limit case: the workspace assigned a different customer. The page lists the readings of the new customer only.
+
+### `GWPACC-FR-029`
+
+The readings page must show at most 20 readings at a time, with a way to the next and the previous readings.
+
+**Why:** Each meter adds one reading a month, so the list grows without end.
+
+**Examples:**
+
+- Normal case: 45 readings. The first view shows the 20 latest. The next view shows the following 20.
+- Limit case: 20 readings. The page shows all 20, and no way to further readings.
+
+### `GWPACC-FR-030`
+
+The readings page must show a chart of the readings dated within the last 12 months: the usage of
+each reading as a column, and the value of the meter as a line, for each meter.
+
+**Why:** The columns compare the months. The line shows a change of the meter, such as a replacement.
+
+**Examples:**
+
+- Normal case: one meter, 12 readings. The chart shows 12 columns and one line.
+- Limit case: two meters. The chart shows the columns and the line of each meter, in two colors.
+- Limit case: a reading dated 13 months ago. The list shows it. The chart does not, and the usage of the next reading still counts from it.
+
+### `GWPACC-FR-031`
+
+The readings page must ask for the setup, with a link to the connection page, when the workspace holds no assigned customer.
+
+### `GWPACC-FR-032`
+
+The readings page must report "no reading" when Maroid holds no reading of the assigned customer.
+
+### `GWPACC-FR-033`
+
+The readings page must read the readings that Maroid holds, with no call to the water service.
+
+### `GWPACC-FR-034`
+
+The widget must link to the readings page.
+
+**Why:** The widget shows the last reading of two meters at most. The page shows the rest.
+
 ### Permissions
 
 ### `GWPACC-FR-026`
 
-A member must hold a permission whose lowest role is viewer to read the connection page and the widget.
+A member must hold a permission whose lowest role is viewer to read the connection page, the widget, and the readings page.
 
 ### `GWPACC-FR-027`
 
