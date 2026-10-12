@@ -170,6 +170,13 @@ var (
 	ErrWidgetAlreadyRegistered = errors.New("widget: already registered")
 	// ErrInvalidWidget indicates a widget whose key, title, kind, or size breaks a rule.
 	ErrInvalidWidget = errors.New("widget: invalid")
+	// ErrWidgetTimeout indicates a plugin that did not answer a widget before the deadline.
+	ErrWidgetTimeout = errors.New("widget: the plugin did not answer in time")
+	// ErrInvalidWidgetAnswer indicates an answer of a widget that breaks the shape of its
+	// state or of its kind, or that carries a link outside its plugin.
+	ErrInvalidWidgetAnswer = errors.New("widget answer: invalid")
+	// ErrWidgetPanicked indicates a Load of a widget that panicked.
+	ErrWidgetPanicked = errors.New("widget: the plugin panicked")
 	// ErrIDPUnavailable indicates that the API of the identity provider refused the
 	// connection or did not answer before the deadline.
 	ErrIDPUnavailable = errors.New("idp: unavailable")

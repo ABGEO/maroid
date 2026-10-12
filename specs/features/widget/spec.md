@@ -93,7 +93,7 @@ on the home page. Parking and jasmine declare the first two. `ADR-0016` changes
 | ---- | ------ | ----- |
 | `libs/pluginapi/widget.go` | create | The contract of section 4.3. |
 | `libs/pluginapi/widget_test.go` | create | `WIDGET-SC-001`. |
-| `apps/hub/internal/domain/errs/errs.go` | change | `ErrWidgetAlreadyRegistered`, `ErrInvalidWidget`, `ErrWidgetAbsent`, `ErrWidgetTimeout`, `ErrInvalidWidgetAnswer`. |
+| `apps/hub/internal/domain/errs/errs.go` | change | `ErrWidgetAlreadyRegistered`, `ErrInvalidWidget`, `ErrWidgetTimeout`, `ErrInvalidWidgetAnswer`, `ErrWidgetPanicked`. |
 | `apps/hub/internal/domain/problems/problems.go` | change | `TypeWidgetTimeout`, `NewWidgetTimeout()`. |
 | `specs/guidelines/errors.md` | change | `widget-timeout`, 504, in the hub table of `ERR-003`. |
 | `apps/hub/internal/registry/widget.go` | create | `Widget{PluginID string; Meta pluginapi.WidgetMeta; Permission string; Load func(context.Context) (pluginapi.WidgetAnswer, error)}`. `WidgetRegistry` with `Register(widgets ...Widget) error`, `Get(pluginID, key string) (Widget, bool)`, `Of(pluginID string) []Widget`. `Of` keeps the order of the declaration. |
@@ -102,11 +102,11 @@ on the home page. Parking and jasmine declare the first two. `ADR-0016` changes
 | `apps/hub/internal/plugin/registrar/widget.go` | create | `WidgetRegistrar`. Section 4.5 gives the checks. It calls `permissionOf`. |
 | `apps/hub/internal/plugin/registrar/widget_test.go` | create | `WIDGET-SC-002` to `WIDGET-SC-004`. |
 | `apps/hub/internal/plugin/loader/loader.go` | change | `New` takes `widgetRegistry *registry.WidgetRegistry`, and appends `registrar.NewWidgetRegistrar(widgetRegistry, capabilityRegistry, permissionRegistry)` after the MCP registrar. |
-| `apps/hub/internal/widget/reader.go` | create | `Deadline = 5 * time.Second`. `NewReader(logger *slog.Logger, deadline time.Duration) *Reader`. Section 4.4. |
+| `apps/hub/internal/widget/reader.go` | create | `Deadline = 5 * time.Second`. `NewReader(deadline time.Duration) *Reader`. The handler logs a failure. Section 4.4. |
 | `apps/hub/internal/widget/reader_test.go` | create | `WIDGET-SC-010` to `WIDGET-SC-013`. |
 | `apps/hub/internal/handler/widget.go` | create | `Widget` handler, and the body types `widgetBody` and `answerBody` with the snake_case tags of `api.yaml`. `Register` adds both paths flat inside one `router.Group`, as `Notification.Register` does, because a mount of `/workspaces/{workspaceId}` shadows the workspace handler. `RequireEnabledOf` runs after `workspace.Middleware`. Section 4.3 and 4.4. |
 | `apps/hub/internal/handler/widget_test.go` | create | `WIDGET-SC-005` to `WIDGET-SC-009`. |
-| `apps/hub/internal/depresolver/widget.go` | create | `WidgetRegistry()`, `WidgetReader()`, `buildWidgetHandler()`. |
+| `apps/hub/internal/depresolver/widget.go` | create | `WidgetRegistry()`, and `buildWidgetHandler()`, which builds the reader with `widget.Deadline`. |
 | `apps/hub/internal/depresolver/plugin.go` | change | Passes the widget registry to `loader.New`. |
 | `apps/hub/internal/depresolver/server.go` | change | `registerHandlers` adds `{"widget", ...buildWidgetHandler}`. |
 | `specs/api/components.yaml` | change | The schema `Widget` that two fragments need. |
@@ -382,8 +382,8 @@ runs `repository.NewCareInterval(tx).ListAttention(ctx)` in `db.WithTx`:
 | --- | ---- | -------- | ---- |
 | 1   | `ADR-0016` accepted. `SEC-012` and `SEC-013` changed. | `WIDGET-FR-008`, `WIDGET-FR-009` | [x] |
 | 2   | `libs/pluginapi/widget.go` and its test. | `WIDGET-FR-001`, `WIDGET-FR-002`, `WIDGET-FR-016` | [x] |
-| 3   | Errors, problem, registry, capability, registrar, loader, and their tests. | `WIDGET-FR-002` to `WIDGET-FR-007` | [ ] |
-| 4   | `widget.Reader`, the handler, the wiring, and their tests. `api.yaml`, `components.yaml`, `pcap/api.yaml`. | `WIDGET-FR-008` to `WIDGET-FR-013`, `WIDGET-FR-016`, `WIDGET-FR-020`, `WIDGET-FR-022`, `WIDGET-NFR-001`, `WIDGET-INV-*` | [ ] |
+| 3   | Errors, problem, registry, capability, registrar, loader, and their tests. | `WIDGET-FR-002` to `WIDGET-FR-007` | [x] |
+| 4   | `widget.Reader`, the handler, the wiring, and their tests. `api.yaml`, `components.yaml`, `pcap/api.yaml`. | `WIDGET-FR-008` to `WIDGET-FR-013`, `WIDGET-FR-016`, `WIDGET-FR-020`, `WIDGET-FR-022`, `WIDGET-NFR-001`, `WIDGET-INV-*` | [x] |
 | 5   | The parking widget and the jasmine widget, and their tests. Build every plugin (`BLD-004`). | `WIDGET-FR-030` to `WIDGET-FR-036` | [ ] |
 | 6   | The deck: the client, the components, the home page, the label. | `WIDGET-FR-011`, `WIDGET-FR-014` to `WIDGET-FR-029` | [ ] |
 | 7   | The manual scenarios. | `WIDGET-SC-018` to `WIDGET-SC-025` | [ ] |

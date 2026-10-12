@@ -27,6 +27,7 @@ const (
 	TypeNotificationRouteExists = "/problems/hub/notification-route-exists"
 	TypeDeliveryRefused         = "/problems/hub/delivery-refused"
 	TypeMessagingUnreachable    = "/problems/hub/messaging-unreachable"
+	TypeWidgetTimeout           = "/problems/hub/widget-timeout"
 )
 
 // NotReadyProblem reports a hub that cannot serve a request, with the name of each
@@ -194,5 +195,14 @@ func NewMessagingUnreachable() *problem.Problem {
 		Type:   TypeMessagingUnreachable,
 		Title:  "The external messaging service did not answer.",
 		Status: http.StatusBadGateway,
+	}
+}
+
+// NewWidgetTimeout reports a plugin that did not answer a widget before the deadline.
+func NewWidgetTimeout() *problem.Problem {
+	return &problem.Problem{
+		Type:   TypeWidgetTimeout,
+		Title:  "The plugin did not answer the widget in time.",
+		Status: http.StatusGatewayTimeout,
 	}
 }

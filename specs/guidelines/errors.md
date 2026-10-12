@@ -4,7 +4,7 @@ title: Errors
 type: guideline
 status: active
 created: 2026-09-21
-updated: 2026-10-11
+updated: 2026-10-12
 scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, libs/rest/, libs/api-client/, plugins/]
 related: [API, DAT, LOG, OWN, PLG, RES, UI]
 ---
@@ -143,6 +143,7 @@ identity, the secret of the bot.
 | `delivery-refused`       | 422    | The external messaging service refused the call.    |
 | `messaging-unreachable`  | 502    | The external messaging service did not answer.      |
 | `not-ready`              | 503    | The hub cannot serve a request.                     |
+| `widget-timeout`         | 504    | The plugin did not answer the widget in time.       |
 
 A body that carries a member which the schema does not declare answers
 `member-unknown`. `Z-109` and `Z-111` ask a document to say how a route handles an

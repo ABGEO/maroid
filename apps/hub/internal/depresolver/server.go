@@ -143,6 +143,7 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		{"user", func() (handler.Handler, error) { return c.buildUserHandler() }},
 		{"provider", func() (handler.Handler, error) { return c.buildProviderHandler() }},
 		{"notification", func() (handler.Handler, error) { return c.buildNotificationHandler() }},
+		{"widget", func() (handler.Handler, error) { return c.buildWidgetHandler() }},
 	}
 
 	for _, builder := range builders {
