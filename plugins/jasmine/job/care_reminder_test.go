@@ -184,17 +184,17 @@ func TestTheReminderGroupsTheDueCareByEnvironment(t *testing.T) {
 
 	require.Len(t, sink.sent, 2)
 	assert.Equal(t, []string{job.CareReminderTopic, job.CareReminderTopic}, sink.topics)
-	assert.Equal(t, "Plant care due", sink.sent[0].Title)
-	assert.Equal(t, `E001 Office
-P003 Gardenia: watering, 11 days, every 7 days, overdue
-P001 Rose: watering, 7 days, every 7 days, due
+	assert.Equal(t, "🌿 Plant care due", sink.sent[0].Title)
+	assert.Equal(t, `📍 <b>E001 Office</b>
+🔴 P003 Gardenia: 💧 watering, 11 days, every 7 days, overdue
+🟡 P001 Rose: 💧 watering, 7 days, every 7 days, due
 
-E002 Kitchen
-P004 Fern: misting, 2 days, every 2 days, due`, sink.sent[0].Body)
+📍 <b>E002 Kitchen</b>
+🟡 P004 Fern: 🌫️ misting, 2 days, every 2 days, due`, sink.sent[0].Body)
 	assert.Empty(t, sink.sent[0].Attachments)
 	assert.Equal(
 		t,
-		"E001 Office\nP001 Rose: watering, 8 days, every 7 days, due",
+		"📍 <b>E001 Office</b>\n🟡 P001 Rose: 💧 watering, 8 days, every 7 days, due",
 		sink.sent[1].Body,
 	)
 }

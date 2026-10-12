@@ -56,7 +56,7 @@ sends one reminder as the notification topic `care_reminder`. The remote gets fo
 | `GARDEN-FR-026`   | Section 4.3, 4.4, `GARDEN-SC-027`, `GARDEN-SC-028`        |
 | `GARDEN-FR-028`   | Section 4.4, `GARDEN-SC-029`                              |
 | `GARDEN-FR-031`   | Section 4.2, `GARDEN-DD-001`                              |
-| `GARDEN-FR-032`   | Section 4.4, `GARDEN-SC-027`                              |
+| `GARDEN-FR-032`   | Section 4.4, `GARDEN-SC-027`, `GARDEN-SC-035`             |
 | `GARDEN-NFR-001`  | Section 4.2, `GARDEN-SC-032`                              |
 | `GARDEN-NFR-002`  | `GARDEN-SC-033`                                           |
 | `GARDEN-INV-001`  | Section 4.2, `GARDEN-DD-002`, `GARDEN-SC-010`             |
@@ -292,10 +292,13 @@ sequenceDiagram
 order is the environment number, then `overdue` before `due`, then the plant number,
 then the order of `MaintenanceTypes()`.
 
-The title of the message is `Plant care due`. The body holds one block for each
-environment. A block starts with `E001 Office`. Each line has the form
-`P003 Gardenia: watering, 9 days, every 7 days, overdue`. The message has no
-attachment.
+The title of the message is `🌿 Plant care due`. The body holds one block for each
+environment. A block starts with `📍 <b>E001 Office</b>`. Each line has the form
+`🔴 P003 Gardenia: 💧 watering, 9 days, every 7 days, overdue`. The first mark gives the
+care state: 🔴 for `overdue`, 🟡 for `due`. The mark before the type names the maintenance
+type: 💧 watering, 🧪 fertilizing, ✂️ pruning, 🪴 repotting, 🐛 pest treatment, 🧽 cleaning,
+🌫️ misting, 🔧 other. The Telegram provider sends the body as HTML, so the job escapes each
+name that a member typed. The message has no attachment.
 
 A failed send returns `fmt.Errorf("sending the care reminder: %w", err)`. `JOB-007`
 logs it, and the next run computes the lines again. The job keeps no record of a

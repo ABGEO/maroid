@@ -274,15 +274,16 @@ hub is not part of it. "Today" is the UTC date of the database at the run.
 
 **Given** a fake notifier. In H: `P003` "Gardenia" in `E001` "Office", watering overdue at 11 of 7 days; `P001` "Rose" in `E001`, watering due at 7 of 7 days; `P004` "Fern" in `E002` "Kitchen", misting due at 2 of 2 days. In G: one plant with a due care interval.
 **When** `CareReminder.Run` runs for H, then for G.
-**Then** the notifier receives two messages of the topic `care_reminder`. The body of the first is:
+**Then** the notifier receives two messages of the topic `care_reminder`. The title of the
+first is `🌿 Plant care due`, and its body is:
 
 ```
-E001 Office
-P003 Gardenia: watering, 11 days, every 7 days, overdue
-P001 Rose: watering, 7 days, every 7 days, due
+📍 <b>E001 Office</b>
+🔴 P003 Gardenia: 💧 watering, 11 days, every 7 days, overdue
+🟡 P001 Rose: 💧 watering, 7 days, every 7 days, due
 
-E002 Kitchen
-P004 Fern: misting, 2 days, every 2 days, due
+📍 <b>E002 Kitchen</b>
+🟡 P004 Fern: 🌫️ misting, 2 days, every 2 days, due
 ```
 
 ### `GARDEN-SC-028`
@@ -350,6 +351,16 @@ P004 Fern: misting, 2 days, every 2 days, due
 
 **When** the plugin answers `NotificationTopics()`.
 **Then** the list holds one topic: `care_reminder`, with the name "Care reminder".
+
+### `GARDEN-SC-035`
+
+**Verifies:** `GARDEN-FR-032`
+**Layer:** unit
+
+**Given** a due care interval of the plant "Rose <Big> & Co" in the environment "Office & Hall".
+**When** the job renders the reminder.
+**Then** the body holds `Office &amp; Hall` and `Rose &lt;Big&gt; &amp; Co`, so Telegram
+reads the names as text.
 
 ## Retired identifiers
 
