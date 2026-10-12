@@ -40,6 +40,7 @@ var (
 	_ pluginapi.CronPlugin         = (*GWPPlugin)(nil)
 	_ pluginapi.RoutePlugin        = (*GWPPlugin)(nil)
 	_ pluginapi.WidgetPlugin       = (*GWPPlugin)(nil)
+	_ pluginapi.UIPlugin           = (*GWPPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -154,4 +155,19 @@ func (p *GWPPlugin) Routes() ([]pluginapi.Route, error) {
 // Widgets returns the usage of the last month, for the home page.
 func (p *GWPPlugin) Widgets() ([]pluginapi.Widget, error) {
 	return []pluginapi.Widget{widget.NewUsage(p.store)}, nil
+}
+
+// UIManifest returns the account page of the remote and its assets.
+func (p *GWPPlugin) UIManifest() (*pluginapi.UIManifest, error) {
+	assets, err := fs.Sub(uiAssets, "ui/dist")
+	if err != nil {
+		return nil, fmt.Errorf("getting UI manifest FS: %w", err)
+	}
+
+	return &pluginapi.UIManifest{
+		Routes: []pluginapi.UIRoute{
+			{Path: "/account", Label: "Account"},
+		},
+		Assets: assets,
+	}, nil
 }

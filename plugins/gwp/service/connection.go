@@ -234,9 +234,10 @@ func connectionOf(
 
 	for _, customer := range customers {
 		connection.Customers = append(connection.Customers, model.Customer{
-			Number:   customer.CustomerNumber,
-			Address:  addressOf(customer),
-			Assigned: customer.CustomerNumber == assigned,
+			Number:         customer.CustomerNumber,
+			CommunalNumber: strings.TrimSpace(customer.CommunalNumber),
+			Address:        addressOf(customer),
+			Assigned:       customer.CustomerNumber == assigned,
 		})
 	}
 

@@ -123,7 +123,7 @@ func TestTheUsageWidgetNamesItsPermission(t *testing.T) {
 		Key:        "usage",
 		Title:      "Water usage",
 		Kind:       pluginapi.WidgetKindList,
-		Size:       pluginapi.WidgetSizeM,
+		Size:       pluginapi.WidgetSizeS,
 		Permission: "account.read",
 	}, widget.NewUsage(nil).Meta())
 }

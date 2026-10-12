@@ -31,7 +31,7 @@ func NewUsage(readings UsageReader) *pluginapi.FuncWidget {
 			Key:        "usage",
 			Title:      "Water usage",
 			Kind:       pluginapi.WidgetKindList,
-			Size:       pluginapi.WidgetSizeM,
+			Size:       pluginapi.WidgetSizeS,
 			Permission: permission.AccountRead,
 		},
 		func(ctx context.Context) (pluginapi.WidgetAnswer, error) {

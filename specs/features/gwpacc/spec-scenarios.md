@@ -43,10 +43,12 @@ otherwise. The account holds customers `C1` and `C2`.
 **Verifies:** `GWPACC-FR-005`, `GWPACC-FR-006`
 **Layer:** unit
 
-**Given** a `token` secret, `C2` assigned, and the fake service lists `C1` and `C2` with their addresses.
+**Given** a `token` secret, `C2` assigned, and the fake service lists `C1` with a communal
+number and `C2` with none, each with its address.
 **When** V reads `GET /connections/self`.
 **Then** the answer is 200 with `state: connected` and two customers, each with its
-number and address. Only `C2` carries `assigned: true`.
+number and address. `C1` carries its communal number, and `C2` carries none. Only `C2`
+carries `assigned: true`.
 
 ## `GWPACC-SC-004`
 

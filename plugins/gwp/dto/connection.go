@@ -12,6 +12,7 @@ type ConnectionResponse struct {
 // CustomerResponse is one customer of the water account.
 type CustomerResponse struct {
 	CustomerNumber string `json:"customer_number"`
+	CommunalNumber string `json:"communal_number,omitempty"`
 	Address        string `json:"address"`
 	Assigned       bool   `json:"assigned"`
 }
@@ -37,6 +38,7 @@ func NewConnectionResponse(connection *model.Connection) ConnectionResponse {
 	for _, customer := range connection.Customers {
 		response.Customers = append(response.Customers, CustomerResponse{
 			CustomerNumber: customer.Number,
+			CommunalNumber: customer.CommunalNumber,
 			Address:        customer.Address,
 			Assigned:       customer.Assigned,
 		})

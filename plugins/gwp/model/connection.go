@@ -21,7 +21,9 @@ type Connection struct {
 
 // Customer is one customer of the water account, as the water service reports it.
 type Customer struct {
-	Number   string
-	Address  string
-	Assigned bool
+	Number string
+	// CommunalNumber is empty when the water service gives none.
+	CommunalNumber string
+	Address        string
+	Assigned       bool
 }

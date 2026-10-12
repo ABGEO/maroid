@@ -30,6 +30,7 @@ const (
 
 	customerC1 = "764795058"
 	customerC2 = "764795059"
+	communalC1 = "0012345678"
 	tokenT1    = "token-of-the-first-sign-in"
 	tokenT2    = "token-of-the-second-sign-in"
 
@@ -38,7 +39,8 @@ const (
 
 const (
 	customersAnswer = `{"success": true, "items": [
-		{"id": 1, "customerNo": "` + customerC1 + `", "city": "Tbilisi", "street": "Tabidze St.", "building": "43"},
+		{"id": 1, "customerNo": "` + customerC1 + `", "commCustomerNo": "` + communalC1 + `",
+			"city": "Tbilisi", "street": "Tabidze St.", "building": "43"},
 		{"id": 2, "customerNo": "` + customerC2 + `", "city": "Tbilisi", "street": "Abashidze St.", "building": "7"}
 	]}`
 	readingsOfC2 = `[{"customerNo": "` + customerC2 + `", "items": [{"serialNumber": "H24MA082393",
@@ -201,7 +203,12 @@ func TestReadOfAConnectedAccount(t *testing.T) {
 	require.Equal(t, "connected", body["state"])
 	require.Equal(t, true, body["credentials_stored"])
 	require.Equal(t, []map[string]any{
-		{"customer_number": customerC1, "address": "Tbilisi, Tabidze St., 43", "assigned": false},
+		{
+			"customer_number": customerC1,
+			"communal_number": communalC1,
+			"address":         "Tbilisi, Tabidze St., 43",
+			"assigned":        false,
+		},
 		{"customer_number": customerC2, "address": "Tbilisi, Abashidze St., 7", "assigned": true},
 	}, customersOf(t, body))
 	require.Equal(t, "Bearer "+tokenT1, water.service.recorded()[0].authorization)

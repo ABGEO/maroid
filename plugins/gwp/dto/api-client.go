@@ -46,14 +46,14 @@ type AuthResponse struct {
 //
 //nolint:tagliatelle
 type Customer struct {
-	ID                    int64   `json:"id"`
-	CustomerNumber        string  `json:"customerNo"`
-	UtilityCustomerNumber string  `json:"commCustomerNo"`
-	City                  string  `json:"city"`
-	District              string  `json:"district"`
-	Street                string  `json:"street"`
-	Building              string  `json:"building"`
-	Balance               float64 `json:"balance"`
+	ID             int64   `json:"id"`
+	CustomerNumber string  `json:"customerNo"`
+	CommunalNumber string  `json:"commCustomerNo"`
+	City           string  `json:"city"`
+	District       string  `json:"district"`
+	Street         string  `json:"street"`
+	Building       string  `json:"building"`
+	Balance        float64 `json:"balance"`
 }
 
 // ReadingResponse represents the response containing reading information.

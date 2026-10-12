@@ -121,6 +121,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-widget-state` | widget state | What one answer of a widget says: `ready`, `empty`, or `not set up`. |
 | `GLO-water-service` | water service | The external service of Georgian Water and Power that holds the water accounts. |
 | `GLO-customer` | customer | One supply point of the water service, at one address. One water account holds one or more customers. |
+| `GLO-communal-number` | communal number | The number of a customer on the communal bill of the water service. |
 | `GLO-assigned-customer` | assigned customer | The customer of the water account that an editor assigns to a workspace. The workspace collects its readings. |
 | `GLO-meter` | meter | One water meter of a customer, named by its serial number. |
 | `GLO-reading` | reading | The value of one meter on one date, in cubic metres, with the previous value that the water service reports for that meter. |

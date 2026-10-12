@@ -213,11 +213,12 @@ customers is a radio group with one "Assign" button. "Disconnect" asks through `
 
 | Key | Title | Kind | Size | Permission | Realizes |
 | --- | ----- | ---- | ---- | ---------- | -------- |
-| `usage` | Water usage | `list` | `m` | `account.read` | `GWPACC-FR-022` to `GWPACC-FR-025` |
+| `usage` | Water usage | `list` | `s` | `account.read` | `GWPACC-FR-022` to `GWPACC-FR-025` |
 
 `Load` reads `customer_assignments` and `readings` in one `PluginDB.WithTx`, and calls
 no service. No assignment answers `NotSetUpAnswer("Connect the water account and assign a customer.", "/account")`.
-No reading answers `EmptyAnswer("No reading yet.")`. `DD-008` gives each line.
+No reading answers `EmptyAnswer("No reading yet.")`. `DD-008` gives each line. The size `s`
+shows two lines, because a house holds one or two meters. A third meter stays off the card.
 
 ### 4.4 Flow
 
@@ -302,8 +303,9 @@ workspace connected, which `Z-148` and `Z-149` give to `PUT`.
 
 **Realizes:** `GWPACC-FR-005`
 **Decision:** `Status` calls `GetCustomers` on each read of a connected workspace, and
-answers each customer with `customer_number`, the address joined from `city`, `street`,
-and `building`, and `assigned`.
+answers each customer with `customer_number`, `communal_number` from `commCustomerNo`, the
+address joined from `city`, `street`, and `building`, and `assigned`. An empty
+`commCustomerNo` leaves `communal_number` out.
 **Rationale:** The read proves the token, and `DD-002` removes a rejected one in the same call.
 **Alternatives:** Store the list at the connect. A new customer of the account then stays hidden.
 
@@ -372,8 +374,8 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 | 5 | `handler/`, `dto/connection.go`, and `api.yaml` | `GWPACC-FR-003` to `GWPACC-FR-015` | [x] |
 | 6 | `widget/usage.go` and `Widgets` | `GWPACC-FR-022` to `GWPACC-FR-025` | [x] |
 | 7 | `GWPACC-SC-015` against the water service. Correct `DD-002` and `DD-007` | `GWPACC-FR-012`, `GWPACC-FR-018`, `GWPACC-FR-019` | [ ] |
-| 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GWPACC-FR-003` to `GWPACC-FR-015` | [ ] |
-| 9 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [ ] |
+| 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GWPACC-FR-003` to `GWPACC-FR-015` | [x] |
+| 9 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [x] |
 
 ## Retired identifiers
 

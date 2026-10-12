@@ -44,7 +44,7 @@ phone. The sign in can therefore run with no person present.
 ## 4. Definitions
 
 The glossary holds each term of this feature: `GLO-water-service`, `GLO-customer`,
-`GLO-assigned-customer`, `GLO-meter`, `GLO-reading`, `GLO-usage`.
+`GLO-communal-number`, `GLO-assigned-customer`, `GLO-meter`, `GLO-reading`, `GLO-usage`.
 
 ## 5. Functional requirements
 
@@ -71,7 +71,7 @@ The connection page must name the settings that an editor must fill, when the se
 ### `GWPACC-FR-005`
 
 The connection page must list the customers of the account when Maroid holds a connection.
-Each customer shows its customer number and its address.
+Each customer shows its customer number, its communal number, and its address.
 
 **Why:** A read of the customers proves that the connection still works. Maroid holds no
 copy of the list, so a new customer at the water service appears with no further step.
