@@ -131,10 +131,6 @@ The home page must order the widgets by the order of their plugins in the naviga
 
 **Why:** Every person of a workspace sees the same order, and it does not change between two loads.
 
-### `WIDGET-FR-011`
-
-The home page must show no widget area when no widget applies, and keep the links that it shows today.
-
 ### `WIDGET-FR-037`
 
 The Overview entry of the navigation must open the home page of the acting workspace, and show as active on it.
@@ -316,6 +312,43 @@ The jasmine widget must link to the attention list to see all its items.
 
 The jasmine widget must answer `empty` when no care interval is due or overdue.
 
+### The navigation of a workspace
+
+### `WIDGET-FR-038`
+
+The home page must show no link to a page that manages the workspace.
+
+**Why:** A person opens the home page for the widgets. The navigation holds the pages that manage the workspace.
+
+### `WIDGET-FR-039`
+
+The home page must show an empty state with a link to the plugins page of the workspace when no widget applies.
+
+**Examples:**
+
+- Normal case: the workspace enables no plugin with a widget. The page shows "No plugin of this workspace shows a widget yet." and a link to the plugins page.
+- Unwanted case: the role of the person holds no permission of any widget. The page shows the same empty state, not an empty grid.
+
+### `WIDGET-FR-040`
+
+The navigation must hold a Workspace group with the entries Members, Plugins, Notifications, and Settings, each opening its page of the acting workspace.
+
+### `WIDGET-FR-041`
+
+The Workspace group must be closed unless one of its pages is open, and the entry of the open page must show as active.
+
+**Examples:**
+
+- Normal case: the person opens Members. The group opens, and Members shows as active.
+- Limit case: the person opens the notification settings. The group opens, and Notifications shows as active, not Settings.
+- Unwanted case: the person opens the home page. The group is closed.
+
+### `WIDGET-FR-042`
+
+The Plugins group of the navigation must list only the navigation entries of the enabled plugins, and must be absent when no enabled plugin holds one.
+
+**Why:** Workspace > Plugins enables and disables a plugin. A second entry to the same page repeats it.
+
 ## 6. Non-functional requirements
 
 ### `WIDGET-NFR-001`
@@ -360,4 +393,6 @@ Maroid keeps no answer of a widget after it sends it.
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID              | Retired    | Reason |
+| --------------- | ---------- | ------ |
+| WIDGET-FR-011   | 2026-10-12 | The links of the home page move to the Workspace group of the navigation. `WIDGET-FR-038` to `WIDGET-FR-040` replace it. |

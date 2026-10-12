@@ -36,7 +36,6 @@ on the home page. Parking and jasmine declare the first two. `ADR-0016` changes
 | `WIDGET-FR-008`   | Section 4.3, 4.4, `WIDGET-SC-005`, `WIDGET-SC-019` |
 | `WIDGET-FR-009`   | Section 4.3, 4.4, `WIDGET-SC-006` |
 | `WIDGET-FR-010`   | Section 4.4, `WIDGET-DD-002`, `WIDGET-SC-007` |
-| `WIDGET-FR-011`   | Section 4.6, `WIDGET-SC-020` |
 | `WIDGET-FR-012`   | Section 4.4, `WIDGET-SC-008` |
 | `WIDGET-FR-013`   | Section 4.4, `WIDGET-SC-009` |
 | `WIDGET-FR-014`   | Section 4.6, `WIDGET-DD-003`, `WIDGET-SC-021` |
@@ -63,6 +62,11 @@ on the home page. Parking and jasmine declare the first two. `ADR-0016` changes
 | `WIDGET-FR-035`   | Section 4.7, `WIDGET-SC-016` |
 | `WIDGET-FR-036`   | Section 4.7, `WIDGET-SC-017` |
 | `WIDGET-FR-037`   | Section 4.6, `WIDGET-SC-026` |
+| `WIDGET-FR-038`   | Section 4.6, `WIDGET-SC-027` |
+| `WIDGET-FR-039`   | Section 4.6, `WIDGET-SC-027` |
+| `WIDGET-FR-040`   | Section 4.6, `WIDGET-SC-028` |
+| `WIDGET-FR-041`   | Section 4.6, `WIDGET-SC-028` |
+| `WIDGET-FR-042`   | Section 4.6, `WIDGET-SC-029` |
 | `WIDGET-NFR-001`  | Section 4.4, `WIDGET-DD-003`, `WIDGET-SC-013` |
 | `WIDGET-INV-001`  | Section 4.4, `WIDGET-SC-009` |
 | `WIDGET-INV-002`  | Section 4.4, `WIDGET-SC-008` |
@@ -121,8 +125,8 @@ on the home page. Parking and jasmine declare the first two. `ADR-0016` changes
 | `apps/deck/src/lib/components/widgets/StatWidget.svelte` | create | The `stat` kind. |
 | `apps/deck/src/lib/components/widgets/ListWidget.svelte` | create | The `list` kind. |
 | `apps/deck/src/lib/components/widgets/layout.ts` | create | `spanOf(size)`, `itemsOf(size)`, `linkOf(workspaceId, pluginId, path)`. |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/+page.svelte` | change | `WidgetGrid` above the list of links. |
-| `apps/deck/src/lib/components/layout/Sidebar.svelte` | change | Overview links to the home page of the acting workspace. Section 4.6. |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/+page.svelte` | change | The title of the workspace and `WidgetGrid`. The list of links goes. |
+| `apps/deck/src/lib/components/layout/Sidebar.svelte` | change | Overview links to the home page of the acting workspace. The Workspace group. The Plugins group loses "All plugins". Section 4.6. |
 | `plugins/parking/widget/balance.go` | create | The balance widget. Section 4.7. |
 | `plugins/parking/widget/balance_test.go` | create | `WIDGET-SC-014`, `WIDGET-SC-015`. |
 | `plugins/parking/main.go` | change | `pluginapi.WidgetPlugin`. `Widgets()` answers the balance widget. |
@@ -291,7 +295,7 @@ connection for example, answers a state instead.
 
 | Element | Behavior | Realizes |
 | ------- | -------- | -------- |
-| The home page | `WidgetGrid` above the `list panel` of links. No widget: `WidgetGrid` draws nothing. A failed list: an `Alert` "The widgets did not load." above the links. | `WIDGET-FR-011` |
+| The home page | The title of the workspace and `WidgetGrid`, and no link to a page that manages the workspace. No widget: the `empty-state` "No plugin of this workspace shows a widget yet." with a link "Open the plugins" to `/w/{workspace}/plugins`. A failed list: an `Alert` "The widgets did not load." | `WIDGET-FR-038`, `WIDGET-FR-039` |
 | The grid | `grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 auto-rows-[10rem]`. A row of 10rem holds two rows of a list, so 5 items fit in two rows. | `WIDGET-FR-028` |
 | `spanOf(size)` | `xs`: `col-span-1 row-span-1`. `s`: `sm:col-span-2 row-span-1`. `m`: `sm:col-span-2 row-span-2`. `l`: `sm:col-span-2 lg:col-span-4 row-span-2`. One column below `sm`, so every widget takes the full width and keeps its rows. | `WIDGET-FR-028`, `WIDGET-FR-029` |
 | `WidgetCard` | Calls `widgets.read` on mount, on its own. Each card holds its own state, so one card waits or fails alone. | `WIDGET-FR-014` |
@@ -306,6 +310,8 @@ connection for example, answers a state instead.
 | `linkOf` | `resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]')` with the path without its leading `/`. | `WIDGET-FR-022` |
 | Text | Every text goes through `{value}`. No widget component uses `{@html}`. | `WIDGET-FR-021` |
 | Overview | Links to `resolve('/(dashboard)/w/[workspace]', ...)` of the acting workspace, else to `/`. Active when the address is that link. | `WIDGET-FR-037` |
+| The Workspace group | A `details` group after the Plugins group, with Members, Plugins, Notifications, and Settings, each to its route of the acting workspace. Each entry names its route identifiers: Members `w/[workspace]/members`, Plugins `w/[workspace]/plugins` and `w/[workspace]/plugins/[plugin]/settings`, Notifications `w/[workspace]/settings/notifications`, Settings `w/[workspace]/settings`. The entry whose identifiers hold the current route is active, and the group is open while one is. A page of a plugin opens neither. Absent with no acting workspace. | `WIDGET-FR-040`, `WIDGET-FR-041` |
+| The Plugins group | The navigation entries of the enabled plugins alone. Absent when no enabled plugin holds a navigation entry. | `WIDGET-FR-042` |
 
 ### 4.7 The first widgets
 
@@ -388,8 +394,9 @@ runs `repository.NewCareInterval(tx).ListAttention(ctx)` in `db.WithTx`:
 | 3   | Errors, problem, registry, capability, registrar, loader, and their tests. | `WIDGET-FR-002` to `WIDGET-FR-007` | [x] |
 | 4   | `widget.Reader`, the handler, the wiring, and their tests. `api.yaml`, `components.yaml`, `pcap/api.yaml`. | `WIDGET-FR-008` to `WIDGET-FR-013`, `WIDGET-FR-016`, `WIDGET-FR-020`, `WIDGET-FR-022`, `WIDGET-NFR-001`, `WIDGET-INV-*` | [x] |
 | 5   | The parking widget and the jasmine widget, and their tests. Build every plugin (`BLD-004`). | `WIDGET-FR-030` to `WIDGET-FR-036` | [x] |
-| 6   | The deck: the client, the components, the home page, the label, the Overview entry. | `WIDGET-FR-011`, `WIDGET-FR-014` to `WIDGET-FR-029`, `WIDGET-FR-037` | [x] |
-| 7   | The manual scenarios. | `WIDGET-SC-018` to `WIDGET-SC-026` | [ ] |
+| 6   | The deck: the client, the components, the home page, the label, the Overview entry. | `WIDGET-FR-014` to `WIDGET-FR-029`, `WIDGET-FR-037` | [x] |
+| 8   | The deck: the home page without the links, the Workspace group, the Plugins group. | `WIDGET-FR-038` to `WIDGET-FR-042` | [x] |
+| 7   | The manual scenarios. | `WIDGET-SC-018` to `WIDGET-SC-029` | [ ] |
 
 ## 8. Out of scope for this specification
 

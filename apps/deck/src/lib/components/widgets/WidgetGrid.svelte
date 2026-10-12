@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+
 	import { api } from '$lib/api';
 	import Alert from '$lib/components/ui/Alert.svelte';
 
@@ -15,7 +17,17 @@
 </script>
 
 {#await widgets then listed}
-	{#if listed && listed.length > 0}
+	{#if !listed || listed.length === 0}
+		<div class="empty-state">
+			<p>No plugin of this workspace shows a widget yet.</p>
+			<a
+				class="link link-primary mt-2 inline-block"
+				href={resolve('/(dashboard)/w/[workspace]/plugins', { workspace: workspaceId })}
+			>
+				Open the plugins
+			</a>
+		</div>
+	{:else}
 		<section class={['mb-8 grid auto-rows-[10rem] gap-4', GRID_COLUMNS]} aria-label="Widgets">
 			{#each listed as widget (`${widget.plugin_id}/${widget.key}`)}
 				<WidgetCard {workspaceId} {widget} />

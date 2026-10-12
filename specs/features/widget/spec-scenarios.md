@@ -227,15 +227,6 @@ days, overdue", `/plants/<P001 id>`, then "P002 Gardenia" with `due`. `More` is 
 **When** a manager disables parking and opens the home page again.
 **Then** the home page shows the jasmine widget alone.
 
-## `WIDGET-SC-020`
-
-**Verifies:** `WIDGET-FR-011`
-**Layer:** manual
-
-**Given** a workspace that enables no plugin with a widget.
-**When** the person opens the home page.
-**Then** the page shows the links of today and no empty area above them.
-
 ## `WIDGET-SC-021`
 
 **Verifies:** `WIDGET-FR-014`, `WIDGET-FR-015`
@@ -295,6 +286,38 @@ columns and two rows. At 375 each takes the full width, the balance one row and 
 **Then** Overview shows as active on the home page, and not on the plugin page. A
 click on Overview from the plugin page opens the home page of H.
 
+## `WIDGET-SC-027`
+
+**Verifies:** `WIDGET-FR-038`, `WIDGET-FR-039`
+**Layer:** manual
+
+**Given** workspace H with jasmine enabled, then with no plugin enabled.
+**When** the person opens the home page of H each time.
+**Then** first the page shows the title and the widget, and no link to Members, Plugins,
+Notifications, or Settings. Then the page shows "No plugin of this workspace shows a
+widget yet." and "Open the plugins", which opens the plugins page of H.
+
+## `WIDGET-SC-028`
+
+**Verifies:** `WIDGET-FR-040`, `WIDGET-FR-041`
+**Layer:** manual
+
+**Given** a member of workspace H.
+**When** the person opens the home page, then Members, then the notification settings.
+**Then** on the home page the Workspace group is closed. On Members it is open and
+Members is active. On the notification settings Notifications is active, and Settings is not.
+
+## `WIDGET-SC-029`
+
+**Verifies:** `WIDGET-FR-042`
+**Layer:** manual
+
+**Given** H enables jasmine, then enables no plugin with a page.
+**When** the person looks at the navigation each time.
+**Then** first the Plugins group lists the entries of jasmine and no "All plugins". Then the Plugins group is absent.
+
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID              | Retired    | Reason |
+| --------------- | ---------- | ------ |
+| WIDGET-SC-020   | 2026-10-12 | `WIDGET-FR-011` is retired. `WIDGET-SC-027` verifies the home page with no widget. |

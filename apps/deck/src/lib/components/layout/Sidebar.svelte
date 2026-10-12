@@ -57,7 +57,45 @@
 	);
 
 	const pluginsGroupIsOpen = $derived(
-		page.route.id?.startsWith('/(dashboard)/w/[workspace]/plugins') === true
+		page.route.id === '/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]'
+	);
+
+	const showsPluginsGroup = $derived(pluginsLoading || uiPlugins.length > 0);
+
+	const workspaceEntries = $derived(
+		workspaceId === null
+			? []
+			: [
+					{
+						label: 'Members',
+						href: resolve('/(dashboard)/w/[workspace]/members', { workspace: workspaceId }),
+						routes: ['/(dashboard)/w/[workspace]/members']
+					},
+					{
+						label: 'Plugins',
+						href: resolve('/(dashboard)/w/[workspace]/plugins', { workspace: workspaceId }),
+						routes: [
+							'/(dashboard)/w/[workspace]/plugins',
+							'/(dashboard)/w/[workspace]/plugins/[plugin]/settings'
+						]
+					},
+					{
+						label: 'Notifications',
+						href: resolve('/(dashboard)/w/[workspace]/settings/notifications', {
+							workspace: workspaceId
+						}),
+						routes: ['/(dashboard)/w/[workspace]/settings/notifications']
+					},
+					{
+						label: 'Settings',
+						href: resolve('/(dashboard)/w/[workspace]/settings', { workspace: workspaceId }),
+						routes: ['/(dashboard)/w/[workspace]/settings']
+					}
+				]
+	);
+
+	const workspaceGroupIsOpen = $derived(
+		workspaceEntries.some((entry) => entry.routes.includes(page.route.id ?? ''))
 	);
 
 	function letterFromName(name: string) {
@@ -122,7 +160,7 @@
 				</a>
 			</li>
 			<!-- @todo: move to a dedicated component -->
-			{#if !hasNoWorkspace}
+			{#if !hasNoWorkspace && showsPluginsGroup}
 				<li>
 					<details open={pluginsGroupIsOpen}>
 						<summary>
@@ -141,17 +179,6 @@
 							<span class="is-drawer-close:hidden">Plugins</span>
 						</summary>
 						<ul>
-							{#if workspaceId !== null}
-								<li>
-									<a
-										href={resolve('/(dashboard)/w/[workspace]/plugins', { workspace: workspaceId })}
-										class:menu-active={page.route.id === '/(dashboard)/w/[workspace]/plugins'}
-									>
-										All plugins
-									</a>
-								</li>
-							{/if}
-
 							{#if pluginsLoading}
 								{#each [0, 1, 2] as i (i)}
 									<li>
@@ -211,6 +238,41 @@
 									</li>
 								{/each}
 							{/if}
+						</ul>
+					</details>
+				</li>
+			{/if}
+			{#if workspaceEntries.length > 0}
+				<li>
+					<details open={workspaceGroupIsOpen}>
+						<summary>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.75"
+								class="shrink-0"
+							>
+								<path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" />
+							</svg>
+							<span class="is-drawer-close:hidden">Workspace</span>
+						</summary>
+						<ul>
+							{#each workspaceEntries as entry (entry.label)}
+								<li>
+									<!-- eslint-disable svelte/no-navigation-without-resolve -- workspaceEntries resolves every target -->
+									<a
+										href={entry.href}
+										class:menu-active={entry.routes.includes(page.route.id ?? '')}
+									>
+										{entry.label}
+									</a>
+									<!-- eslint-enable svelte/no-navigation-without-resolve -->
+								</li>
+							{/each}
 						</ul>
 					</details>
 				</li>
