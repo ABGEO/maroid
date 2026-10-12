@@ -15,6 +15,7 @@ import (
 	"github.com/abgeo/maroid/plugins/gwp/permission"
 	"github.com/abgeo/maroid/plugins/gwp/repository"
 	"github.com/abgeo/maroid/plugins/gwp/service"
+	"github.com/abgeo/maroid/plugins/gwp/widget"
 )
 
 // pluginID names the plugin. The constructor needs it before Meta exists.
@@ -26,6 +27,7 @@ var pluginID = pluginapi.ParsePluginID("dev.maroid.gwp")
 type GWPPlugin struct {
 	config      *config.Config
 	logger      *slog.Logger
+	store       *repository.Store
 	collector   *service.Collector
 	connections *service.Connections
 }
@@ -37,6 +39,7 @@ var (
 	_ pluginapi.PermissionPlugin   = (*GWPPlugin)(nil)
 	_ pluginapi.CronPlugin         = (*GWPPlugin)(nil)
 	_ pluginapi.RoutePlugin        = (*GWPPlugin)(nil)
+	_ pluginapi.WidgetPlugin       = (*GWPPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -72,6 +75,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 	plg := &GWPPlugin{
 		config:    pluginConfig,
+		store:     store,
 		collector: service.NewCollector(client, settings, secrets, store),
 	}
 
@@ -145,4 +149,9 @@ func (p *GWPPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 // Routes returns the HTTP routes of the connection page.
 func (p *GWPPlugin) Routes() ([]pluginapi.Route, error) {
 	return handler.NewConnectionHandler(p.logger, p.connections).Routes(), nil
+}
+
+// Widgets returns the usage of the last month, for the home page.
+func (p *GWPPlugin) Widgets() ([]pluginapi.Widget, error) {
+	return []pluginapi.Widget{widget.NewUsage(p.store)}, nil
 }

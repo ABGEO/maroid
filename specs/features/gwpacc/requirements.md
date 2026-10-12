@@ -206,7 +206,11 @@ Each line shows the serial number of the meter, the date of the reading, the pre
 
 ### `GWPACC-FR-023`
 
-The widget must answer "not set up", with a link to the connection page, when the workspace holds no connection or no assigned customer.
+The widget must answer "not set up", with a link to the connection page, when the workspace holds no assigned customer.
+
+**Why:** The end of a connection removes the assigned customer, so a workspace that an
+editor disconnected answers "not set up". A token that the water service rejects leaves the
+assigned customer, and the readings that Maroid holds stay correct, so the widget still shows them.
 
 ### `GWPACC-FR-024`
 

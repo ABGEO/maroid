@@ -370,7 +370,7 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 | 3 | `service/collector.go`, `ReadingItem.Hash`, and the job | `GWPACC-FR-016` to `GWPACC-FR-020` | [x] |
 | 4 | `service/connection.go` | `GWPACC-FR-003` to `GWPACC-FR-015` | [x] |
 | 5 | `handler/`, `dto/connection.go`, and `api.yaml` | `GWPACC-FR-003` to `GWPACC-FR-015` | [x] |
-| 6 | `widget/usage.go` and `Widgets` | `GWPACC-FR-022` to `GWPACC-FR-025` | [ ] |
+| 6 | `widget/usage.go` and `Widgets` | `GWPACC-FR-022` to `GWPACC-FR-025` | [x] |
 | 7 | `GWPACC-SC-015` against the water service. Correct `DD-002` and `DD-007` | `GWPACC-FR-012`, `GWPACC-FR-018`, `GWPACC-FR-019` | [ ] |
 | 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GWPACC-FR-003` to `GWPACC-FR-015` | [ ] |
 | 9 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [ ] |
