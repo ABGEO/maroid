@@ -15,3 +15,14 @@ export interface Connection {
   /** Present when the workspace is connected. */
   customers?: Customer[];
 }
+
+export interface Reading {
+  id: string;
+  serial_number: string;
+  /** The date of the reading, YYYY-MM-DD. */
+  reading_date: string;
+  /** The value of the meter, in cubic metres. */
+  value: number;
+  /** The usage since the reading before it. Absent for the earliest reading of a meter. */
+  usage?: number;
+}

@@ -161,7 +161,7 @@ func (p *GWPPlugin) Widgets() ([]pluginapi.Widget, error) {
 	return []pluginapi.Widget{widget.NewUsage(p.store)}, nil
 }
 
-// UIManifest returns the account page of the remote and its assets.
+// UIManifest returns the readings page and the account page of the remote, and its assets.
 func (p *GWPPlugin) UIManifest() (*pluginapi.UIManifest, error) {
 	assets, err := fs.Sub(uiAssets, "ui/dist")
 	if err != nil {
@@ -170,6 +170,7 @@ func (p *GWPPlugin) UIManifest() (*pluginapi.UIManifest, error) {
 
 	return &pluginapi.UIManifest{
 		Routes: []pluginapi.UIRoute{
+			{Path: "/readings", Label: "Readings"},
 			{Path: "/account", Label: "Account"},
 		},
 		Assets: assets,

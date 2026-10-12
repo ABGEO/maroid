@@ -396,7 +396,7 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 | 10 | The migration `readings_key_by_meter_and_date`, the upsert of `DD-007`, the usage of `DD-008`, the lines of the widget, and the mapping that leaves `prevReadValue` unread | `GWPACC-FR-020`, `GWPACC-FR-022` | [x] |
 | 11 | `Reading.ID`, `Reading.List`, `Store.ReadingsPage` | `GWPACC-FR-028`, `GWPACC-FR-029` | [x] |
 | 12 | `handler/reading.go`, `dto/reading.go`, `api.yaml`, the `More` of the widget | `GWPACC-FR-028` to `GWPACC-FR-034` | [x] |
-| 13 | The page `/readings`, the chart, and `UIManifest`. Build the UI, then the `.so` | `GWPACC-FR-028` to `GWPACC-FR-032` | [ ] |
+| 13 | The page `/readings`, the chart, and `UIManifest`. Build the UI, then the `.so` | `GWPACC-FR-028` to `GWPACC-FR-032` | [x] |
 | 14 | `GWPACC-SC-030` in the deck, in both themes. Lint and build the plugin | `GWPACC-FR-030` to `GWPACC-FR-032` | [ ] |
 
 ## Retired identifiers

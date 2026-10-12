@@ -17,9 +17,9 @@ requirements: features/gwpacc/requirements.md
 
 The plugin gains the route `GET /readings`, a keyset page of the readings of the assigned
 customer, the latest date first, with the filter `from`. The remote gains the page
-`/readings`: a daisyUI table with the shared `Pagination`, and a mixed ApexCharts chart of
-the last 12 months that takes its colors from the daisyUI theme. The widget links to the
-page. The page and the route read only the database.
+`/readings`: a daisyUI table with the shared `Pagination`, and a chart of the last 12 months
+that Svelte draws as SVG over the scales of D3, with the classes of the daisyUI theme. The
+widget links to the page. The page and the route read only the database.
 
 ## 2. Guideline compliance
 
@@ -46,9 +46,9 @@ page. The page and the route read only the database.
 | `plugins/gwp/handler/problem.go` | change | `typeNotAssigned` |
 | `plugins/gwp/widget/usage.go` | change | `ListData.More` is `/readings` |
 | `plugins/gwp/main.go` | change | `Routes` adds the readings route. `UIManifest` adds `/readings` |
-| `plugins/gwp/ui/package.json` | change | `apexcharts` at exactly `7.6.1` |
+| `plugins/gwp/ui/package.json` | change | `d3-scale` at exactly `4.0.2` and `d3-shape` at exactly `3.2.0`. `@types/d3-scale` `4.0.9` and `@types/d3-shape` `3.2.0` as development dependencies |
 | `plugins/gwp/ui/src/api/{reading,types,index}.ts` | create, change | `Reading`, `ReadingPage`, `createReadingApi` with `page(cursorLink?)` and `since(from)` |
-| `plugins/gwp/ui/src/lib/chart.ts` | create | `usageChartOptions(readings, palette)`, `themePalette()` |
+| `plugins/gwp/ui/src/lib/chart.ts` | create | `chartSeries(readings)`: the dates, the meters, and the usage and the value of each meter on each date. `meterTone(index)`: the daisyUI classes of a meter |
 | `plugins/gwp/ui/src/pages/readings/{Readings,UsageChart}.svelte` | create | The page and the chart |
 | `plugins/gwp/ui/src/entry.ts` | change | `/readings` |
 
@@ -120,27 +120,33 @@ person, so the page sets the bound. One meter fills 12 rows of one page.
 ### `GWPACC-DD-013`
 
 **Realizes:** `GWPACC-FR-030`
-**Decision:** The chart is an ApexCharts `line` chart with mixed series: for each meter, a
-`column` series of the usage on the left axis and a `line` series of the value on the
-right axis. The x axis is the reading date. ApexCharts is pinned at `7.6.1`, and the page
-imports it in a dynamic `import()`.
-**Rationale:** daisyUI Charts builds on ApexCharts, so the chart reads as the gallery
-does. Its example code is a paid product, so the plugin writes its own options. The
-dynamic import keeps the chart out of the bundle of the account page.
-**Alternatives:** A chart in CSS alone. It cannot draw two axes. Chart.js. It is not what daisyUI Charts uses.
+**Decision:** `UsageChart.svelte` draws the chart as SVG markup. `d3-scale` gives the scales
+and `d3-shape` the path of each line, and D3 touches no element. The x axis is a band for
+each reading date, with an inner band for each meter. Each meter shows its usage as a
+column on the left axis, which starts at zero and reaches below it for a negative usage,
+and its value as a line on the right axis. A reading with no usage draws no column. The
+width follows the container. A pointer over a date shows a daisyUI tooltip with the
+usage and the value of each meter on that date. The SVG carries `role="img"` and a
+label, and the table below it is the accessible form of the same readings. The chart
+stays in the plugin until a second plugin needs one.
+**Rationale:** The owner chose D3 over a library of charts. The two modules are small, and
+the releases are stable: `d3-scale` 4.0.2 dates from 2021 and `d3-shape` 3.2.0 from 2022.
+The chart is plain markup, so it takes the components and the classes of daisyUI.
+**Alternatives:** ApexCharts. It is not free for a company above 2 million US dollars of
+revenue, its core is 146 KB gzipped, and its colors need a conversion. LayerChart. Four
+releases in one week. Chart.js. It draws on a canvas, which reads no CSS variable.
 
 ### `GWPACC-DD-014`
 
 **Realizes:** `GWPACC-FR-030`
-**Decision:** `themePalette` reads `--color-primary`, `--color-secondary`, `--color-accent`,
-`--color-info`, `--color-base-content`, and `--color-base-300` with `getComputedStyle`,
-converts each to `rgb()` through a canvas, and the chart takes them as its colors, its
-text, and its grid. A `MutationObserver` on the `data-theme` attribute of the root
-rebuilds the chart when the theme changes.
-**Rationale:** ApexCharts writes a color into an SVG attribute, where `var()` does not
-resolve, and its color code reads no `oklch()`, which daisyUI 5 gives. A theme switch of
-the deck changes the variables, so the chart follows it.
-**Alternatives:** Fixed colors. The chart then breaks the dark theme.
+**Decision:** Each meter takes the classes of one daisyUI color, in the order `primary`,
+`secondary`, `accent`, `info`: `fill-<color>` for its columns and `stroke-<color>` for its
+line. The axes take `fill-base-content`, and the grid `stroke-base-300`. The source names
+each class in full, so Tailwind finds it.
+**Rationale:** A class resolves the variable of the theme in the browser, so a change of
+the theme, by the deck or by the scheme of the system, recolors the chart with no code.
+**Alternatives:** Colors that a script reads from the theme. It needs a listener for each
+way the theme changes.
 
 ### `GWPACC-DD-015`
 
