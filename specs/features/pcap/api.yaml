@@ -133,6 +133,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MCPTool"
+        widgets:
+          type: array
+          description: The widgets of the plugin, in the order of the declaration. `WIDGET-FR-007`.
+          items:
+            $ref: "../../api/components.yaml#/components/schemas/Widget"
         permissions:
           type: array
           items:

@@ -1,0 +1,192 @@
+# The routes that WIDGET adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The widgets of the home page
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/widgets:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+    get:
+      operationId: listWidgets
+      summary: List the widgets that the acting user sees on the home page.
+      description: >
+        Realizes `WIDGET-FR-008`, `WIDGET-FR-009`, and `WIDGET-FR-010`. The permission
+        is `workspace.read`. One page holds every widget of every plugin that the acting
+        workspace enables, whose permission the role holds, ordered by the plugin
+        identifier, then by the order of the declaration. The page carries no data of a widget.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the widgets.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "../../api/components.yaml#/components/schemas/Widget"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        default:
+          $ref: "../../api/components.yaml#/components/responses/Default"
+
+  /workspaces/{workspaceId}/plugins/{pluginId}/widgets/{key}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "#/components/parameters/PluginId"
+      - name: key
+        in: path
+        required: true
+        description: The widget key. `WIDGET-FR-003`.
+        schema:
+          type: string
+          pattern: "^[a-z0-9-]{1,64}$"
+          examples: [attention]
+    get:
+      operationId: getWidgetAnswer
+      summary: Read the data of one widget for the acting user.
+      description: >
+        Realizes `WIDGET-FR-012`, `WIDGET-FR-013`, `WIDGET-FR-016`, `WIDGET-FR-020`,
+        `WIDGET-FR-022`, and `WIDGET-NFR-001`. The permission is the one that the widget
+        declares. Each read asks the plugin. The hub keeps no answer.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The answer of the widget.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WidgetAnswer"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "504":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: >
+            The plugin did not answer within 5 seconds. The type is
+            `/problems/hub/widget-timeout`. `WIDGET-NFR-001`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        default:
+          $ref: "../../api/components.yaml#/components/responses/Default"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: The access token that Dex issued. `SEC-005`.
+
+  parameters:
+    PluginId:
+      name: pluginId
+      in: path
+      required: true
+      description: The plugin identifier. See `PLG-003`.
+      schema:
+        type: string
+        examples: [dev.maroid.telasi]
+
+  schemas:
+    WidgetAnswer:
+      type: object
+      description: >
+        One answer of a widget. `ready` carries `stat` or `list` by the kind. `empty`
+        carries `message`. `not_set_up` carries `message` and `link`. A link is a path
+        relative to the plugin. `WIDGET-FR-016`, `WIDGET-FR-022`.
+      required: [state]
+      properties:
+        state:
+          type: string
+          enum: [ready, empty, not_set_up]
+        message:
+          type: string
+        link:
+          type: string
+          examples: [/account]
+        stat:
+          $ref: "#/components/schemas/StatData"
+        list:
+          $ref: "#/components/schemas/ListData"
+
+    StatData:
+      type: object
+      description: The data of a `stat` widget. `WIDGET-FR-023`.
+      required: [value]
+      properties:
+        value:
+          type: string
+          examples: ["4.50"]
+        unit:
+          type: string
+          examples: [GEL]
+        caption:
+          type: string
+          examples: [4 free parkings left today]
+        link:
+          type: string
+          examples: [/account]
+
+    ListData:
+      type: object
+      description: The data of a `list` widget. `WIDGET-FR-024`, `WIDGET-FR-027`.
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListItem"
+        more:
+          type: string
+          description: The link to see all the items.
+          examples: [/attention]
+
+    ListItem:
+      type: object
+      required: [label]
+      properties:
+        label:
+          type: string
+          examples: [P001 Fern]
+        meta:
+          type: string
+          examples: ["watering, 11 days, every 7 days, overdue"]
+        link:
+          type: string
+          examples: [/plants/0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77]

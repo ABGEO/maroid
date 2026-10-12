@@ -113,6 +113,12 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-navigation-entry` | navigation entry | A page route that the deck lists under the plugin in the navigation of the workspace.                          |
 | `GLO-trail`         | trail             | The line of links above a page that names each level from the hub to the page.                                    |
 | `GLO-page-title`    | page title        | The name that a page gives itself for the last link of the trail.                                                 |
+| `GLO-home-page` | home page | The page of a workspace that the deck opens first for that workspace. |
+| `GLO-widget` | widget | One card on the home page. A plugin declares it and answers its data. |
+| `GLO-widget-key` | widget key | The name of a widget, unique within its plugin. |
+| `GLO-widget-kind` | widget kind | The shape of the data of a widget: `stat` or `list`. |
+| `GLO-widget-size` | widget size | The space of a widget on the home page: `xs`, `s`, `m`, or `l`. |
+| `GLO-widget-state` | widget state | What one answer of a widget says: `ready`, `empty`, or `not set up`. |
 
 ## Retired identifiers
 

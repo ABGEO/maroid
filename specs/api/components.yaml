@@ -1,4 +1,4 @@
-# Shared components. `SPC-002` requires a component that more than one fragment
+sh# Shared components. `SPC-002` requires a component that more than one fragment
 # needs to live here, and a fragment to reference it rather than redefine it.
 openapi: 3.1.0
 
@@ -151,6 +151,35 @@ components:
       description: >
         At most 72 bytes in UTF-8. A longer one answers 422 at the pointer of the field.
         `IDPROV-FR-023`.
+
+    Widget:
+      type: object
+      description: >
+        One widget that a plugin declares. `WIDGET-FR-002`. The list of the home
+        page and the capabilities of a plugin both carry it.
+      required: [plugin_id, key, title, kind, size, permission]
+      properties:
+        plugin_id:
+          type: string
+          examples: [dev.maroid.jasmine]
+        key:
+          type: string
+          pattern: "^[a-z0-9-]{1,64}$"
+          examples: [attention]
+        title:
+          type: string
+          minLength: 1
+          maxLength: 64
+        kind:
+          type: string
+          enum: [stat, list]
+        size:
+          type: string
+          enum: [xs, s, m, l]
+        permission:
+          type: string
+          description: The full name of the permission that a read needs. `SEC-013`.
+          examples: ["dev.maroid.jasmine:plants.read"]
 
   responses:
     PreconditionFailed:

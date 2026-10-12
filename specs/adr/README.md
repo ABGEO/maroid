@@ -58,3 +58,4 @@ The frontmatter holds the identifier.
 | `ADR-0013` | A workspace owns its notification providers | `a-workspace-owns-its-notification-providers.md` | accepted | 2026-10-11 | `NTF-001`, `NTF-002`, `NTF-004` to `NTF-008`, `SPC-003`, `LOG-003`, `GIT-004`, `GLO-notification`, `GLO-notification-topic`, `GLO-notification-provider`, `GLO-notification-provider-kind`, `GLO-destination`, `GLO-notification-route`, `GLO-unrouted` |
 | `ADR-0014` | A job of the hub runs for each workspace | `a-hub-job-runs-for-each-workspace.md` | accepted | 2026-10-12 | `OWN-009` |
 | `ADR-0015` | A self resource needs no collection read | `a-self-resource-needs-no-collection-read.md` | accepted | 2026-10-12 | `RES-002` |
+| `ADR-0016` | A widget declares a permission and follows the enablement | `a-widget-declares-a-permission.md` | accepted | 2026-10-12 | `SEC-012`, `SEC-013` |

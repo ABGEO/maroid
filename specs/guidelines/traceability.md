@@ -291,6 +291,7 @@ Add a row before you create the file or the directory.
 | `NOTIF` | `features/notif/` | The notification providers of a workspace and the routes of a notification. | Approved |
 | `PSECRET` | `features/psecret/` | The secrets that a plugin writes. | Approved |
 | `PARKACC` | `features/parkacc/` | The parking account of a user: the connection and the vehicle. | Approved |
+| `WIDGET` | `features/widget/` | The widgets that the plugins show on the home page of a workspace. | Approved |
 
 ## Retired identifiers
 
