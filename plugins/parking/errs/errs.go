@@ -24,4 +24,6 @@ var (
 	ErrPendingAbsent = errors.New("parking: no pending connection")
 	// ErrCodeWait reports a request of a new code before the wait ends.
 	ErrCodeWait = errors.New("parking: the wait for a new code has not ended")
+	// ErrNoAccount reports a connection that the parking service answered with no account.
+	ErrNoAccount = errors.New("parking: connection with no account")
 )

@@ -46,12 +46,10 @@
 	<div class="mt-2 flex items-center justify-between gap-2 text-sm">
 		{#if hidden > 0}
 			<span class="meta">{hidden} more</span>
-		{:else}
-			<span></span>
 		{/if}
 		{#if list.more}
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- linkOf resolves every target -->
-			<a class="link link-primary" href={href(list.more)}>See all</a>
+			<a class="link link-primary ms-auto" href={href(list.more)}>See all</a>
 		{/if}
 	</div>
 {/if}

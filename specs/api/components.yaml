@@ -1,4 +1,4 @@
-sh# Shared components. `SPC-002` requires a component that more than one fragment
+# Shared components. `SPC-002` requires a component that more than one fragment
 # needs to live here, and a fragment to reference it rather than redefine it.
 openapi: 3.1.0
 
@@ -295,6 +295,15 @@ components:
         type: string
         format: uuid
         examples: [01927f4e-3c2a-7b1d-9e8f-0a1b2c3d4e5f]
+
+    PluginId:
+      name: pluginId
+      in: path
+      required: true
+      description: The plugin identifier. See `PLG-003`.
+      schema:
+        type: string
+        examples: [dev.maroid.jasmine]
 
     FlowId:
       name: X-Flow-ID

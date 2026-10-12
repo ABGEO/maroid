@@ -59,7 +59,7 @@ func read(t *testing.T, target registry.Widget) (pluginapi.WidgetAnswer, error) 
 	t.Helper()
 
 	//nolint:wrapcheck // the test reads the error that the reader answered.
-	return widget.NewReader(widget.Deadline).Read(t.Context(), target)
+	return widget.New(widget.Deadline).Read(t.Context(), target)
 }
 
 // WIDGET-SC-008: Each read calls Load again, so the reader keeps no answer.
@@ -110,6 +110,14 @@ func TestTheReaderRefusesAnAnswerThatBreaksItsShape(t *testing.T) {
 		"ready with no list": {
 			pluginapi.WidgetKindList,
 			pluginapi.WidgetAnswer{State: pluginapi.WidgetStateReady},
+		},
+		"a stat that also carries a list": {
+			pluginapi.WidgetKindStat,
+			pluginapi.WidgetAnswer{State: pluginapi.WidgetStateReady, Stat: &stat, List: &list},
+		},
+		"a list that also carries a stat": {
+			pluginapi.WidgetKindList,
+			pluginapi.WidgetAnswer{State: pluginapi.WidgetStateReady, Stat: &stat, List: &list},
 		},
 		"an item with no label": {
 			pluginapi.WidgetKindList,
@@ -292,10 +300,53 @@ func TestTheReaderStopsWaitingAtTheDeadline(t *testing.T) {
 	)
 
 	started := time.Now()
-	_, err := widget.NewReader(shortWait).Read(t.Context(), target)
+	_, err := widget.New(shortWait).Read(t.Context(), target)
 
 	require.ErrorIs(t, err, errs.ErrWidgetTimeout)
 	require.Less(t, time.Since(started), acceptable)
+}
+
+// WIDGET-NFR-001, WIDGET-SC-013: A Load that honours its context and returns at the
+// deadline answers the timeout too, not a failure of the plugin.
+func TestTheReaderTimesOutALoadThatHonoursItsContext(t *testing.T) {
+	t.Parallel()
+
+	target := widgetOf(
+		pluginapi.WidgetKindStat,
+		func(ctx context.Context) (pluginapi.WidgetAnswer, error) {
+			<-ctx.Done()
+
+			return pluginapi.WidgetAnswer{}, ctx.Err()
+		},
+	)
+
+	for range 20 {
+		_, err := widget.New(shortWait).Read(t.Context(), target)
+
+		require.ErrorIs(t, err, errs.ErrWidgetTimeout)
+	}
+}
+
+// WIDGET-SC-013: A request that the client gives up is no timeout of the plugin.
+func TestTheReaderTellsACancelledRequestFromATimeout(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+
+	target := widgetOf(
+		pluginapi.WidgetKindStat,
+		func(ctx context.Context) (pluginapi.WidgetAnswer, error) {
+			<-ctx.Done()
+
+			return pluginapi.WidgetAnswer{}, ctx.Err()
+		},
+	)
+
+	_, err := widget.New(widget.Deadline).Read(ctx, target)
+
+	require.ErrorIs(t, err, context.Canceled)
+	require.NotErrorIs(t, err, errs.ErrWidgetTimeout)
 }
 
 // WIDGET-SC-011: A Load that panics answers an error, and the process keeps running.
@@ -333,7 +384,7 @@ func TestTheReaderKeepsTheActorsOfTheRequest(t *testing.T) {
 		"workspace-w",
 	)
 
-	answer, err := widget.NewReader(widget.Deadline).Read(ctx, target)
+	answer, err := widget.New(widget.Deadline).Read(ctx, target)
 
 	require.NoError(t, err)
 	require.Equal(t, "user-a", answer.Stat.Value)

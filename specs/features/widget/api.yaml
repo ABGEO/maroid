@@ -54,10 +54,50 @@ paths:
         default:
           $ref: "../../api/components.yaml#/components/responses/Default"
 
+  /workspaces/{workspaceId}/plugins/{pluginId}/widgets:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/PluginId"
+    get:
+      operationId: listPluginWidgets
+      summary: List the widgets of one plugin that the acting user sees.
+      description: >
+        Realizes `WIDGET-FR-008` and `WIDGET-FR-009` for one plugin. The permission is
+        `workspace.read`. One page holds every widget of the plugin whose permission the
+        role holds, in the order of the declaration. A plugin that the acting workspace
+        does not enable answers `not-found`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: One page of the widgets of the plugin.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/Page"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "../../api/components.yaml#/components/schemas/Widget"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        default:
+          $ref: "../../api/components.yaml#/components/responses/Default"
+
   /workspaces/{workspaceId}/plugins/{pluginId}/widgets/{key}:
     parameters:
       - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
-      - $ref: "#/components/parameters/PluginId"
+      - $ref: "../../api/components.yaml#/components/parameters/PluginId"
       - name: key
         in: path
         required: true
@@ -111,17 +151,9 @@ components:
       type: apiKey
       in: cookie
       name: __Host-maroid_session
-      description: The access token that Dex issued. `SEC-005`.
-
-  parameters:
-    PluginId:
-      name: pluginId
-      in: path
-      required: true
-      description: The plugin identifier. See `PLG-003`.
-      schema:
-        type: string
-        examples: [dev.maroid.telasi]
+      description: >
+        The access token that Dex issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.
 
   schemas:
     WidgetAnswer:
@@ -139,6 +171,7 @@ components:
           type: string
         link:
           type: string
+          format: uri-reference
           examples: [/account]
         stat:
           $ref: "#/components/schemas/StatData"
@@ -161,6 +194,7 @@ components:
           examples: [4 free parkings left today]
         link:
           type: string
+          format: uri-reference
           examples: [/account]
 
     ListData:
@@ -174,6 +208,7 @@ components:
             $ref: "#/components/schemas/ListItem"
         more:
           type: string
+          format: uri-reference
           description: The link to see all the items.
           examples: [/attention]
 
@@ -189,4 +224,5 @@ components:
           examples: ["watering, 11 days, every 7 days, overdue"]
         link:
           type: string
+          format: uri-reference
           examples: [/plants/0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77]

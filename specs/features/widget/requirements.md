@@ -316,9 +316,9 @@ The jasmine widget must answer `empty` when no care interval is due or overdue.
 
 ### `WIDGET-FR-038`
 
-The home page must show no link to a page that manages the workspace.
+The home page must show no link to Members, Plugins, Notifications, or Settings of the workspace.
 
-**Why:** A person opens the home page for the widgets. The navigation holds the pages that manage the workspace.
+**Why:** A person opens the home page for the widgets. The navigation holds Members, Plugins, Notifications, and Settings.
 
 ### `WIDGET-FR-039`
 

@@ -33,8 +33,8 @@ on the home page. Parking and jasmine declare the first two. `ADR-0016` changes
 | `WIDGET-FR-005`   | Section 4.5, `WIDGET-DD-001`, `WIDGET-SC-002`, `WIDGET-SC-003` |
 | `WIDGET-FR-006`   | Section 4.3, `WIDGET-SC-003` |
 | `WIDGET-FR-007`   | Section 4.3, `WIDGET-SC-004`, `WIDGET-SC-018` |
-| `WIDGET-FR-008`   | Section 4.3, 4.4, `WIDGET-SC-005`, `WIDGET-SC-019` |
-| `WIDGET-FR-009`   | Section 4.3, 4.4, `WIDGET-SC-006` |
+| `WIDGET-FR-008`   | Section 4.3, 4.4, `WIDGET-SC-005`, `WIDGET-SC-019`, `WIDGET-SC-030` |
+| `WIDGET-FR-009`   | Section 4.3, 4.4, `WIDGET-SC-006`, `WIDGET-SC-030` |
 | `WIDGET-FR-010`   | Section 4.4, `WIDGET-DD-002`, `WIDGET-SC-007` |
 | `WIDGET-FR-012`   | Section 4.4, `WIDGET-SC-008` |
 | `WIDGET-FR-013`   | Section 4.4, `WIDGET-SC-009` |
@@ -107,10 +107,10 @@ on the home page. Parking and jasmine declare the first two. `ADR-0016` changes
 | `apps/hub/internal/plugin/registrar/widget.go` | create | `WidgetRegistrar`. Section 4.5 gives the checks. It calls `permissionOf`. |
 | `apps/hub/internal/plugin/registrar/widget_test.go` | create | `WIDGET-SC-002` to `WIDGET-SC-004`. |
 | `apps/hub/internal/plugin/loader/loader.go` | change | `New` takes `widgetRegistry *registry.WidgetRegistry`, and appends `registrar.NewWidgetRegistrar(widgetRegistry, capabilityRegistry, permissionRegistry)` after the MCP registrar. |
-| `apps/hub/internal/widget/reader.go` | create | `Deadline = 5 * time.Second`. `NewReader(deadline time.Duration) *Reader`. The handler logs a failure. Section 4.4. |
-| `apps/hub/internal/widget/reader_test.go` | create | `WIDGET-SC-010` to `WIDGET-SC-013`. |
-| `apps/hub/internal/handler/widget.go` | create | `Widget` handler, and the body types `widgetBody` and `answerBody` with the snake_case tags of `api.yaml`. `Register` adds both paths flat inside one `router.Group`, as `Notification.Register` does, because a mount of `/workspaces/{workspaceId}` shadows the workspace handler. `RequireEnabledOf` runs after `workspace.Middleware`. Section 4.3 and 4.4. |
-| `apps/hub/internal/handler/widget_test.go` | create | `WIDGET-SC-005` to `WIDGET-SC-009`. |
+| `apps/hub/internal/widget/reader.go` | create | `Deadline = 5 * time.Second`. `New(deadline time.Duration) *Reader`. The handler logs a failure. Section 4.4. |
+| `apps/hub/internal/widget/reader_test.go` | create | `WIDGET-SC-008` to `WIDGET-SC-013`. |
+| `apps/hub/internal/handler/widget.go` | create | `Widget` handler. A list answers `registry.WidgetItem`, and a read answers `widgetAnswerBody`, `widgetStatBody`, `widgetListBody`, and `widgetListItemBody`, with the snake_case tags of `api.yaml`. `Register` adds the three paths flat inside one `router.Group`, as `Notification.Register` does, because a mount of `/workspaces/{workspaceId}` shadows the workspace handler. `RequireEnabledOf` runs after `workspace.Middleware`. Section 4.3 and 4.4. |
+| `apps/hub/internal/handler/widget_test.go` | create | `WIDGET-SC-005` to `WIDGET-SC-007`, `WIDGET-SC-009`, `WIDGET-SC-011`, `WIDGET-SC-013`, `WIDGET-SC-030`. |
 | `apps/hub/internal/depresolver/widget.go` | create | `WidgetRegistry()`, and `buildWidgetHandler()`, which builds the reader with `widget.Deadline`. |
 | `apps/hub/internal/depresolver/plugin.go` | change | Passes the widget registry to `loader.New`. |
 | `apps/hub/internal/depresolver/server.go` | change | `registerHandlers` adds `{"widget", ...buildWidgetHandler}`. |
@@ -124,7 +124,7 @@ on the home page. Parking and jasmine declare the first two. `ADR-0016` changes
 | `apps/deck/src/lib/components/widgets/WidgetCard.svelte` | create | Reads one widget, draws the placeholder, the error, the states, and the kind. |
 | `apps/deck/src/lib/components/widgets/StatWidget.svelte` | create | The `stat` kind. |
 | `apps/deck/src/lib/components/widgets/ListWidget.svelte` | create | The `list` kind. |
-| `apps/deck/src/lib/components/widgets/layout.ts` | create | `spanOf(size)`, `itemsOf(size)`, `linkOf(workspaceId, pluginId, path)`. |
+| `apps/deck/src/lib/components/widgets/layout.ts` | create | `spanOf(size)`, `itemsOf(size)`, `linkOf(workspaceId, pluginId, path)`, `GRID_COLUMNS`. |
 | `apps/deck/src/routes/(dashboard)/w/[workspace]/+page.svelte` | change | The title of the workspace and `WidgetGrid`. The list of links goes. |
 | `apps/deck/src/lib/components/layout/Sidebar.svelte` | change | Overview links to the home page of the acting workspace. The Workspace group. The Plugins group loses "All plugins". Section 4.6. |
 | `plugins/parking/widget/balance.go` | create | The balance widget. Section 4.7. |
@@ -206,6 +206,7 @@ member reads no widget.
 | Method | Path | Access | Realizes |
 | ------ | ---- | ------ | -------- |
 | `GET` | `/workspaces/{workspaceId}/widgets` | Member. Permission `workspace.read`. | `WIDGET-FR-008`, `WIDGET-FR-009`, `WIDGET-FR-010` |
+| `GET` | `/workspaces/{workspaceId}/plugins/{pluginId}/widgets` | Member, enabled. Permission `workspace.read`. `Z-143` asks the path to answer. | `WIDGET-FR-008`, `WIDGET-FR-009` |
 | `GET` | `/workspaces/{workspaceId}/plugins/{pluginId}/widgets/{key}` | Member, enabled. The permission of the widget. | `WIDGET-FR-012`, `WIDGET-FR-013`, `WIDGET-FR-016`, `WIDGET-FR-020`, `WIDGET-FR-022`, `WIDGET-NFR-001` |
 
 ### 4.4 Flow
@@ -245,10 +246,12 @@ sequenceDiagram
 1. Derives `context.WithTimeout(ctx, deadline)`. The container passes `widget.Deadline`. The context keeps the acting
    user and the acting workspace, so `PluginDB.WithTx` sets both for the policy.
    `WIDGET-FR-013`, `WIDGET-INV-001`.
-2. Runs `Load` in a goroutine that recovers a panic into an error, and sends the
-   result into a channel with a buffer of one.
-3. Waits for the result or for the end of the context. The end answers
-   `ErrWidgetTimeout`, and the goroutine ends alone when `Load` returns. `WIDGET-NFR-001`.
+2. Runs `Load` in a goroutine that recovers a panic into `ErrWidgetPanicked` with the
+   stack, and sends the result into a channel with a buffer of one.
+3. Waits for the result or for the end of the context. A deadline answers
+   `ErrWidgetTimeout`, also when `Load` honours the context and returns its error at
+   the same moment. A request that the client cancels answers `context.Canceled`. The
+   goroutine ends alone when `Load` returns. `WIDGET-NFR-001`.
 4. Checks the answer with section 4.5.
 5. Keeps nothing. The next request calls `Load` again. `WIDGET-FR-012`, `WIDGET-INV-002`.
 
@@ -295,12 +298,12 @@ connection for example, answers a state instead.
 
 | Element | Behavior | Realizes |
 | ------- | -------- | -------- |
-| The home page | The title of the workspace and `WidgetGrid`, and no link to a page that manages the workspace. No widget: the `empty-state` "No plugin of this workspace shows a widget yet." with a link "Open the plugins" to `/w/{workspace}/plugins`. A failed list: an `Alert` "The widgets did not load." | `WIDGET-FR-038`, `WIDGET-FR-039` |
-| The grid | `grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 auto-rows-[10rem]`. A row of 10rem holds two rows of a list, so 5 items fit in two rows. | `WIDGET-FR-028` |
-| `spanOf(size)` | `xs`: `col-span-1 row-span-1`. `s`: `sm:col-span-2 row-span-1`. `m`: `sm:col-span-2 row-span-2`. `l`: `sm:col-span-2 lg:col-span-4 row-span-2`. One column below `sm`, so every widget takes the full width and keeps its rows. | `WIDGET-FR-028`, `WIDGET-FR-029` |
+| The home page | The title of the workspace and `WidgetGrid`, and no link to Members, Plugins, Notifications, or Settings. No widget: the `empty-state` "No plugin of this workspace shows a widget yet." with a link "Open the plugins" to `/w/{workspace}/plugins`. A failed list: an `Alert` "The widgets did not load." While the list loads, and when the client answers no body, as it does on a 401 before the redirect to the sign in, a placeholder grid of two skeleton cards. An administrator who is no member sees no grid, as the layout tells them that they read no record. | `WIDGET-FR-038`, `WIDGET-FR-039` |
+| The grid | `grid gap-4 auto-rows-[10rem]` and `GRID_COLUMNS`, `grid-cols-1! sm:grid-cols-2! lg:grid-cols-4!`. The important flag of every column and span class keeps the order of the deck: the stylesheet of a remote stays in the page after its first page opens, and its later `sm:` rule would beat an `lg:` rule of the deck. A row of 10rem holds two rows of a list, so 5 items fit in two rows. | `WIDGET-FR-028` |
+| `spanOf(size)` | `xs`: `col-span-1! row-span-1!`. `s`: `sm:col-span-2! row-span-1!`. `m`: `sm:col-span-2! row-span-2!`. `l`: `sm:col-span-2! lg:col-span-4! row-span-2!`. One column below `sm`, so every widget takes the full width and keeps its rows. | `WIDGET-FR-028`, `WIDGET-FR-029` |
 | `WidgetCard` | Calls `widgets.read` on mount, on its own. Each card holds its own state, so one card waits or fails alone. | `WIDGET-FR-014` |
-| The placeholder | A `card` of the span of the size with the title and a `skeleton` body. | `WIDGET-FR-015` |
-| `ready` | `StatWidget` or `ListWidget` by the kind. | `WIDGET-FR-017` |
+| The placeholder | The card of the span of the size, with the title and `SkeletonList`, and `aria-busy`. A read that answers no body keeps it. The card names itself by its title with `aria-labelledby`. | `WIDGET-FR-015` |
+| `ready` | `StatWidget` or `ListWidget` by the kind that the widget declares. | `WIDGET-FR-017` |
 | `empty` | The title and the message, muted. | `WIDGET-FR-018` |
 | `not_set_up` | The title, the message, and a link "Set up" to `linkOf(link)`. | `WIDGET-FR-019` |
 | An error | The title, and "This widget did not load." in `text-error`. | `WIDGET-FR-020` |
@@ -327,6 +330,7 @@ connection for example, answers a state instead.
 | ------ | ------ | -------- |
 | `connected` with an account | `StatAnswer{Value: "%.2f" of the balance, Unit: "GEL", Caption: "<n> free parkings left today", Link: "/account"}`. One free parking reads "1 free parking left today". | `WIDGET-FR-030` |
 | `not_connected` | `NotSetUpAnswer("Connect your parking account.", "/account")` | `WIDGET-FR-031` |
+| `connected` with no account | `errs.ErrNoAccount`. The card shows the error. | `WIDGET-FR-020` |
 | An error | The error, wrapped. The card shows the error. | `WIDGET-FR-020` |
 
 **Jasmine.** `widget.NewAttention(db *pluginapi.PluginDB) *pluginapi.FuncWidget`. `Load`
@@ -334,7 +338,7 @@ runs `repository.NewCareInterval(tx).ListAttention(ctx)` in `db.WithTx`:
 
 | Result | Answer | Realizes |
 | ------ | ------ | -------- |
-| One or more intervals | `ListAnswer` with one item for each interval, in the order of the list. Label: `<display id> <common name>`. Meta: `<type, "_" as " ">, <days since> days, every <days> days, <state>`. Link: `/plants/<plant id>`. `More`: `/attention`. | `WIDGET-FR-032` to `WIDGET-FR-035` |
+| One or more intervals | `ListAnswer` with one item for each interval, in the order of the list. Label: `<display id> <common name>`. Meta: `<type>, <days since>, every <days>, <state>`, where a count of days reads "1 day" or "<n> days", and a `_` of the type and of the state reads as a space. Link: `/plants/<plant id>`. `More`: `/attention`. | `WIDGET-FR-032` to `WIDGET-FR-035` |
 | No interval | `EmptyAnswer("No plant needs care.")` | `WIDGET-FR-036` |
 
 ## 5. Design decisions
@@ -392,11 +396,11 @@ runs `repository.NewCareInterval(tx).ListAttention(ctx)` in `db.WithTx`:
 | 1   | `ADR-0016` accepted. `SEC-012` and `SEC-013` changed. | `WIDGET-FR-008`, `WIDGET-FR-009` | [x] |
 | 2   | `libs/pluginapi/widget.go` and its test. | `WIDGET-FR-001`, `WIDGET-FR-002`, `WIDGET-FR-016` | [x] |
 | 3   | Errors, problem, registry, capability, registrar, loader, and their tests. | `WIDGET-FR-002` to `WIDGET-FR-007` | [x] |
-| 4   | `widget.Reader`, the handler, the wiring, and their tests. `api.yaml`, `components.yaml`, `pcap/api.yaml`. | `WIDGET-FR-008` to `WIDGET-FR-013`, `WIDGET-FR-016`, `WIDGET-FR-020`, `WIDGET-FR-022`, `WIDGET-NFR-001`, `WIDGET-INV-*` | [x] |
+| 4   | `widget.Reader`, the handler, the wiring, and their tests. `api.yaml`, `components.yaml`, `pcap/api.yaml`. | `WIDGET-FR-008` to `WIDGET-FR-013`, `WIDGET-FR-016`, `WIDGET-FR-020`, `WIDGET-FR-022`, `WIDGET-NFR-001`, `WIDGET-INV-001`, `WIDGET-INV-002` | [x] |
 | 5   | The parking widget and the jasmine widget, and their tests. Build every plugin (`BLD-004`). | `WIDGET-FR-030` to `WIDGET-FR-036` | [x] |
 | 6   | The deck: the client, the components, the home page, the label, the Overview entry. | `WIDGET-FR-014` to `WIDGET-FR-029`, `WIDGET-FR-037` | [x] |
-| 8   | The deck: the home page without the links, the Workspace group, the Plugins group. | `WIDGET-FR-038` to `WIDGET-FR-042` | [x] |
-| 7   | The manual scenarios. | `WIDGET-SC-018` to `WIDGET-SC-029` | [ ] |
+| 7   | The deck: the home page without the links, the Workspace group, the Plugins group. | `WIDGET-FR-038` to `WIDGET-FR-042` | [x] |
+| 8   | The manual scenarios. | `WIDGET-SC-018` to `WIDGET-SC-029` | [ ] |
 
 ## 8. Out of scope for this specification
 

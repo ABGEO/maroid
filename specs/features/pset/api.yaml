@@ -18,7 +18,7 @@ paths:
   /workspaces/{workspaceId}/plugins/{pluginId}/settings/schema:
     parameters:
       - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
-      - $ref: "#/components/parameters/PluginId"
+      - $ref: "../../api/components.yaml#/components/parameters/PluginId"
     get:
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
@@ -48,7 +48,7 @@ paths:
   /workspaces/{workspaceId}/plugins/{pluginId}/settings:
     parameters:
       - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
-      - $ref: "#/components/parameters/PluginId"
+      - $ref: "../../api/components.yaml#/components/parameters/PluginId"
     get:
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
@@ -130,16 +130,6 @@ paths:
           $ref: "#/components/responses/ProtectionFailed"
 
 components:
-  parameters:
-    PluginId:
-      name: pluginId
-      in: path
-      required: true
-      description: The plugin identifier. See `PLG-003`.
-      schema:
-        type: string
-        examples: [dev.maroid.telasi]
-
   securitySchemes:
     sessionCookie:
       type: apiKey

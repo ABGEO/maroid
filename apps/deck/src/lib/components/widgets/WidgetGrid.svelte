@@ -5,7 +5,7 @@
 	import Alert from '$lib/components/ui/Alert.svelte';
 
 	import WidgetCard from './WidgetCard.svelte';
-	import { GRID_COLUMNS } from './layout';
+	import { GRID_COLUMNS, spanOf } from './layout';
 
 	interface Props {
 		workspaceId: string;
@@ -16,8 +16,19 @@
 	const widgets = $derived(api.widgets.list(workspaceId));
 </script>
 
-{#await widgets then listed}
-	{#if !listed || listed.length === 0}
+{#snippet placeholder()}
+	<div class={['grid auto-rows-[10rem] gap-4', GRID_COLUMNS]} aria-hidden="true">
+		<span class={['skeleton', spanOf('s')]}></span>
+		<span class={['skeleton', spanOf('m')]}></span>
+	</div>
+{/snippet}
+
+{#await widgets}
+	{@render placeholder()}
+{:then listed}
+	{#if listed === null}
+		{@render placeholder()}
+	{:else if listed.length === 0}
 		<div class="empty-state">
 			<p>No plugin of this workspace shows a widget yet.</p>
 			<a
@@ -28,14 +39,14 @@
 			</a>
 		</div>
 	{:else}
-		<section class={['mb-8 grid auto-rows-[10rem] gap-4', GRID_COLUMNS]} aria-label="Widgets">
+		<section class={['grid auto-rows-[10rem] gap-4', GRID_COLUMNS]} aria-label="Widgets">
 			{#each listed as widget (`${widget.plugin_id}/${widget.key}`)}
 				<WidgetCard {workspaceId} {widget} />
 			{/each}
 		</section>
 	{/if}
 {:catch}
-	<Alert kind="error" class="mb-8">
+	<Alert kind="error">
 		<span>The widgets did not load.</span>
 	</Alert>
 {/await}

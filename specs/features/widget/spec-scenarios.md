@@ -316,6 +316,16 @@ Members is active. On the notification settings Notifications is active, and Set
 **When** the person looks at the navigation each time.
 **Then** first the Plugins group lists the entries of jasmine and no "All plugins". Then the Plugins group is absent.
 
+## `WIDGET-SC-030`
+
+**Verifies:** `WIDGET-FR-008`, `WIDGET-FR-009`
+**Layer:** integration
+
+**Given** P declares `open` under `things.read` and `closed` under `things.write`, Q
+declares `of-q`, and W enables both.
+**When** A, a viewer, reads `GET /workspaces/W/plugins/P/widgets`, then a manager disables every plugin and A reads it again.
+**Then** the first page holds `open` alone. The second read answers 404 `not-found`.
+
 ## Retired identifiers
 
 | ID              | Retired    | Reason |

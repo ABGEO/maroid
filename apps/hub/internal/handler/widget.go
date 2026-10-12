@@ -92,9 +92,13 @@ func (h *Widget) Register(router chi.Router) {
 		router.Use(auth.Middleware(h.logger, h.verifier, h.resolver))
 		router.Use(workspace.Middleware(h.logger, h.access.DB))
 
-		router.
-			With(workspace.Require(h.logger, h.access.Authorizer, authz.PermissionWorkspaceRead)).
-			Get(base+"/widgets", Wrap(h.logger, h.List))
+		read := workspace.Require(h.logger, h.access.Authorizer, authz.PermissionWorkspaceRead)
+
+		router.With(read).Get(base+"/widgets", Wrap(h.logger, h.List))
+		router.With(enabled, read).Get(
+			base+"/plugins/{"+widgetPluginParam+"}/widgets",
+			Wrap(h.logger, h.ListOfPlugin),
+		)
 		router.With(enabled).Get(
 			base+"/plugins/{"+widgetPluginParam+"}/widgets/{"+widgetKeyParam+"}",
 			Wrap(h.logger, h.Read),
@@ -114,22 +118,30 @@ func (h *Widget) List(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("listing the widgets: %w", err)
 	}
 
-	role := workspace.RoleFromContext(ctx)
 	bodies := make([]registry.WidgetItem, 0, len(enabled))
 
 	for _, enablement := range enabled {
-		for _, held := range h.widgets.Of(enablement.PluginID) {
-			allowed, _, allowErr := h.access.Authorizer.Allowed(role, held.Permission)
-			if allowErr != nil {
-				problem.Write(w, r, problem.NewInternal())
+		items, allowErr := h.allowedOf(r, enablement.PluginID)
+		if allowErr != nil {
+			problem.Write(w, r, problem.NewInternal())
 
-				return fmt.Errorf("checking the permission of a widget: %w", allowErr)
-			}
-
-			if allowed {
-				bodies = append(bodies, itemOf(held))
-			}
+			return allowErr
 		}
+
+		bodies = append(bodies, items...)
+	}
+
+	return answerPage(w, r, bodies)
+}
+
+// ListOfPlugin answers the widgets of one enabled plugin whose permission the role of
+// the acting user holds.
+func (h *Widget) ListOfPlugin(w http.ResponseWriter, r *http.Request) error {
+	bodies, err := h.allowedOf(r, chi.URLParam(r, widgetPluginParam))
+	if err != nil {
+		problem.Write(w, r, problem.NewInternal())
+
+		return err
 	}
 
 	return answerPage(w, r, bodies)
@@ -154,7 +166,7 @@ func (h *Widget) Read(w http.ResponseWriter, r *http.Request) error {
 	if err != nil {
 		problem.Write(w, r, problem.NewInternal())
 
-		return fmt.Errorf("checking the permission of a widget: %w", err)
+		return fmt.Errorf("checking the permission %s of a widget: %w", held.Permission, err)
 	}
 
 	if !allowed {
@@ -179,6 +191,29 @@ func (h *Widget) Read(w http.ResponseWriter, r *http.Request) error {
 	render.JSON(w, r, answerBodyOf(answer))
 
 	return nil
+}
+
+func (h *Widget) allowedOf(r *http.Request, pluginID string) ([]registry.WidgetItem, error) {
+	role := workspace.RoleFromContext(r.Context())
+	held := h.widgets.Of(pluginID)
+	items := make([]registry.WidgetItem, 0, len(held))
+
+	for _, one := range held {
+		allowed, _, err := h.access.Authorizer.Allowed(role, one.Permission)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"checking the permission %s of a widget: %w",
+				one.Permission,
+				err,
+			)
+		}
+
+		if allowed {
+			items = append(items, itemOf(one))
+		}
+	}
+
+	return items, nil
 }
 
 func itemOf(held registry.Widget) registry.WidgetItem {

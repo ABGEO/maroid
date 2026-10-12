@@ -205,6 +205,7 @@ export interface StatData {
 	link?: string;
 }
 
+/** One line of a list widget. A link is a path of the plugin. */
 export interface ListItem {
 	label: string;
 	meta?: string;

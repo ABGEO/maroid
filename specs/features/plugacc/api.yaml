@@ -269,7 +269,7 @@ paths:
   /users/{userId}/allowed-plugins/{pluginId}:
     parameters:
       - $ref: "#/components/parameters/UserId"
-      - $ref: "#/components/parameters/PluginId"
+      - $ref: "../../api/components.yaml#/components/parameters/PluginId"
     delete:
       operationId: disallowPlugin
       summary: Take a plugin off the allowlist of a user.
@@ -333,7 +333,7 @@ paths:
   /workspaces/{workspaceId}/plugins/{pluginId}:
     parameters:
       - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
-      - $ref: "#/components/parameters/PluginId"
+      - $ref: "../../api/components.yaml#/components/parameters/PluginId"
     get:
       operationId: getEnabledPlugin
       summary: Read one enablement.
@@ -435,14 +435,6 @@ components:
       schema:
         type: string
         format: uuid
-    PluginId:
-      name: pluginId
-      in: path
-      required: true
-      description: The plugin identifier. See `PLG-003`.
-      schema:
-        type: string
-        examples: [dev.maroid.jasmine]
 
   schemas:
     UserInput:

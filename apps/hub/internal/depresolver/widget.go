@@ -44,6 +44,6 @@ func (c *Container) buildWidgetHandler() (*handler.Widget, error) {
 		access,
 		enablements,
 		c.WidgetRegistry(),
-		widget.NewReader(widget.Deadline),
+		widget.New(widget.Deadline),
 	), nil
 }

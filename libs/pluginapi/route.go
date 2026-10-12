@@ -10,8 +10,8 @@ type RoutePlugin interface {
 
 // Route defines an HTTP route provided by a plugin.
 type Route struct {
-	Method  string
-	Pattern string
-	Handler http.HandlerFunc
+	Method     string
+	Pattern    string
+	Handler    http.HandlerFunc
 	Permission string
 }

@@ -32,6 +32,7 @@ const (
 	widgetOpen   = "open"
 	widgetClosed = "closed"
 	stateReady   = "ready"
+	typeNotFound = "/problems/http/not-found"
 )
 
 var errParkingDown = errors.New("the parking service answered 503")
@@ -125,7 +126,7 @@ func widgetsUnderTest(
 		},
 		enablements,
 		held,
-		widget.NewReader(deadline),
+		widget.New(deadline),
 	).Register(router)
 
 	mounted := *fixture
@@ -212,9 +213,55 @@ func TestTheListHoldsTheWidgetsOfTheEnabledPlugins(t *testing.T) {
 
 	response := bench.readRaw(t, bench.ana, bench.h, pluginQ, "of-q")
 	require.Equal(t, http.StatusNotFound, response.Code, response.Body.String())
+	require.Equal(t, typeNotFound, decode(t, response)[memberType])
 
 	response = bench.readRaw(t, bench.ana, bench.h, pluginP, "absent")
 	require.Equal(t, http.StatusNotFound, response.Code, response.Body.String())
+	require.Equal(t, typeNotFound, decode(t, response)[memberType])
+}
+
+// WIDGET-SC-030: The widgets of one plugin answer a page of that plugin alone, with
+// the permission filter of the list, and a disabled plugin reads as absent.
+func TestTheWidgetsOfOnePluginAnswerAPage(t *testing.T) {
+	t.Parallel()
+
+	bench := widgetsUnderTest(t, widget.Deadline,
+		staticWidget(pluginP, widgetOpen, thingsRead, widgetOpen),
+		staticWidget(pluginP, widgetClosed, thingsWrite, widgetClosed),
+		staticWidget(pluginQ, "of-q", thingsRead, "q"),
+	)
+	bench.enable(t, bench.h, pluginP)
+	bench.enable(t, bench.h, pluginQ)
+
+	response := bench.call(
+		t,
+		bench.gio,
+		http.MethodGet,
+		bench.inH("/plugins/"+pluginP+"/widgets"),
+		nil,
+		"",
+	)
+	require.Equal(t, http.StatusOK, response.Code, response.Body.String())
+
+	keys := make([]string, 0, 1)
+	for _, item := range items(t, response) {
+		keys = append(keys, stringOf(t, item[memberKey]))
+	}
+
+	require.Equal(t, []string{widgetOpen}, keys)
+
+	bench.disableAll(t)
+
+	response = bench.call(
+		t,
+		bench.gio,
+		http.MethodGet,
+		bench.inH("/plugins/"+pluginP+"/widgets"),
+		nil,
+		"",
+	)
+	require.Equal(t, http.StatusNotFound, response.Code, response.Body.String())
+	require.Equal(t, typeNotFound, decode(t, response)[memberType])
 }
 
 // WIDGET-SC-006: A viewer sees and reads the widget of things.read alone, and an
@@ -287,6 +334,7 @@ func TestAWidgetReadsAsTheActingUserInTheActingWorkspace(t *testing.T) {
 
 	response := bench.readRaw(t, bench.nino, bench.h, pluginP, "who")
 	require.Equal(t, http.StatusNotFound, response.Code, response.Body.String())
+	require.Equal(t, typeNotFound, decode(t, response)[memberType])
 }
 
 // WIDGET-SC-011: A Load that fails or panics answers 500, the hub keeps serving, and
@@ -318,6 +366,7 @@ func TestAFailedWidgetAnswersInternal(t *testing.T) {
 	logged := bench.lines.String()
 	assert.Contains(t, logged, pluginP)
 	assert.Contains(t, logged, "failing")
+	assert.Contains(t, logged, "panicking")
 	assert.Contains(t, logged, errParkingDown.Error())
 	assert.Contains(t, logged, "the plugin broke")
 }

@@ -2,18 +2,16 @@ package widget
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/plugins/parking/errs"
 	"github.com/abgeo/maroid/plugins/parking/model"
 	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
 )
 
 const connectionPage = "/account"
-
-var errNoAccount = errors.New("the parking service answered a connection with no account")
 
 // NewBalance builds the widget of the balance of the parking account of the acting
 // user, which also reads the free parkings left today.
@@ -43,7 +41,7 @@ func NewBalance(connections service.ConnectionService) *pluginapi.FuncWidget {
 			}
 
 			if connection.Account == nil {
-				return pluginapi.WidgetAnswer{}, errNoAccount
+				return pluginapi.WidgetAnswer{}, errs.ErrNoAccount
 			}
 
 			return pluginapi.StatAnswer(pluginapi.StatData{

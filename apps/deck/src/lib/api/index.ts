@@ -53,7 +53,9 @@ export type {
 	NotificationTopic,
 	Widget,
 	WidgetAnswer,
+	WidgetKind,
 	WidgetSize,
+	WidgetState,
 	StatData,
 	ListData,
 	ListItem
