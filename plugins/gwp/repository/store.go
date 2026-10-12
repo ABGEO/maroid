@@ -3,10 +3,12 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/plugins/gwp/model"
 )
 
@@ -106,4 +108,45 @@ func (s *Store) LastReadingOfEachMeter(ctx context.Context) ([]model.Reading, er
 	}
 
 	return readings, nil
+}
+
+// ReadingsPage answers one page of the readings of the assigned customer, the latest
+// date first. It reads the assignment and the page in one transaction, so the page
+// and its links see one state, and answers errs.ErrNotAssigned when the workspace
+// holds no assignment.
+func (s *Store) ReadingsPage(
+	ctx context.Context,
+	asked page.Request,
+	from *time.Time,
+) (page.Window[model.Reading], error) {
+	var window page.Window[model.Reading]
+
+	err := s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
+		customerNumber, err := NewCustomerAssignment(tx).Get(ctx)
+		if err != nil {
+			return err
+		}
+
+		readings := NewReading(tx)
+		fetch := func(ctx context.Context, seek page.Seek) ([]model.Reading, error) {
+			return readings.List(ctx, seek, customerNumber, from)
+		}
+
+		window, err = page.Read(
+			ctx,
+			asked,
+			fetch,
+			func(reading model.Reading) string { return reading.ID },
+		)
+		if err != nil {
+			return fmt.Errorf("reading the keyset: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return page.Window[model.Reading]{}, fmt.Errorf("reading a page of the readings: %w", err)
+	}
+
+	return window, nil
 }

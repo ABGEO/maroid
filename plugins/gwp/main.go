@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"slices"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginconfig"
@@ -147,9 +148,12 @@ func (p *GWPPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 	}, nil
 }
 
-// Routes returns the HTTP routes of the connection page.
+// Routes returns the HTTP routes of the connection page and of the readings page.
 func (p *GWPPlugin) Routes() ([]pluginapi.Route, error) {
-	return handler.NewConnectionHandler(p.logger, p.connections).Routes(), nil
+	return slices.Concat(
+		handler.NewConnectionHandler(p.logger, p.connections).Routes(),
+		handler.NewReadingHandler(p.logger, p.store).Routes(),
+	), nil
 }
 
 // Widgets returns the usage of the last month, for the home page.

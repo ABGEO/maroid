@@ -80,7 +80,7 @@ func (h *ConnectionHandler) Read(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, r, http.StatusOK, dto.NewConnectionResponse(connection))
+	writeOK(w, r, h.logger, dto.NewConnectionResponse(connection))
 }
 
 // Connect handles PUT /connections/self. A repeat signs in again and leaves the
@@ -93,7 +93,7 @@ func (h *ConnectionHandler) Connect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, r, http.StatusOK, dto.NewConnectionResponse(connection))
+	writeOK(w, r, h.logger, dto.NewConnectionResponse(connection))
 }
 
 // Disconnect handles DELETE /connections/self.
@@ -121,7 +121,7 @@ func (h *ConnectionHandler) Assign(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, r, http.StatusOK, dto.NewConnectionResponse(connection))
+	writeOK(w, r, h.logger, dto.NewConnectionResponse(connection))
 }
 
 // readAssignment decodes the body and checks the customer number. It writes the
@@ -169,18 +169,13 @@ func readAssignment(w http.ResponseWriter, r *http.Request, target *dto.Assignme
 	return true
 }
 
-// writeJSON answers the status with the body. The status line is gone when the encode
-// fails, so the failure goes to the log alone.
-func (h *ConnectionHandler) writeJSON(
-	w http.ResponseWriter,
-	r *http.Request,
-	status int,
-	body any,
-) {
+// writeOK answers 200 with the body. The status line is gone when the encode fails,
+// so the failure goes to the log alone.
+func writeOK(w http.ResponseWriter, r *http.Request, logger *slog.Logger, body any) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+	w.WriteHeader(http.StatusOK)
 
 	if err := json.NewEncoder(w).Encode(body); err != nil {
-		h.logger.ErrorContext(r.Context(), "failed to encode the answer", slog.Any("error", err))
+		logger.ErrorContext(r.Context(), "failed to encode the answer", slog.Any("error", err))
 	}
 }

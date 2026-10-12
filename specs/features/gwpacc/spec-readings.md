@@ -41,7 +41,7 @@ page. The page and the route read only the database.
 | `plugins/gwp/model/reading.go` | change | `Reading.ID` |
 | `plugins/gwp/repository/reading.go` | change | `List(ctx, seek page.Seek, customerNumber string, from *time.Time) ([]model.Reading, error)` |
 | `plugins/gwp/repository/store.go` | change | `ReadingsPage(ctx, asked page.Request, from *time.Time) (page.Window[model.Reading], error)`. It reads the assignment and the page in one transaction, and answers `errs.ErrNotAssigned` |
-| `plugins/gwp/dto/reading.go` | create | `ReadingResponse`, `NewReadingResponseList` |
+| `plugins/gwp/dto/reading.go` | create | `MeterReadingResponse`, `NewMeterReadingResponseList`. `ReadingResponse` already names the answer of the water service |
 | `plugins/gwp/handler/reading.go` | create | `ReadingHandler`, `NewReadingHandler`, `ReadingLister` |
 | `plugins/gwp/handler/problem.go` | change | `typeNotAssigned` |
 | `plugins/gwp/widget/usage.go` | change | `ListData.More` is `/readings` |

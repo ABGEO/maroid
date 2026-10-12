@@ -16,6 +16,7 @@ const (
 	typeNotConnected        = "/problems/dev.maroid.gwp/not-connected"
 	typeCustomerUnknown     = "/problems/dev.maroid.gwp/customer-unknown"
 	typeServiceUnavailable  = "/problems/dev.maroid.gwp/service-unavailable"
+	typeNotAssigned         = "/problems/dev.maroid.gwp/not-assigned"
 )
 
 // writeFailure answers the failure of a call to the connection service. Each answer
@@ -55,6 +56,14 @@ func writeFailure(
 			slog.String("action", action), slog.Any("error", err))
 		problem.Write(w, r, problem.NewInternal())
 	}
+}
+
+// writeNotAssigned answers a read that needs the assigned customer of a workspace
+// that holds none.
+func writeNotAssigned(w http.ResponseWriter, r *http.Request) {
+	writeProblem(w, r, typeNotAssigned, http.StatusConflict,
+		"The workspace holds no assigned customer.",
+		"Connect the water account and assign a customer on the account page.")
 }
 
 func writeProblem(

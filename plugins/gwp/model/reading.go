@@ -4,6 +4,8 @@ import "time"
 
 // Reading is the value of one meter on one date.
 type Reading struct {
+	// ID is empty until the reading is stored.
+	ID             string    `db:"id"`
 	CustomerNumber string    `db:"customer_number"`
 	SerialNumber   string    `db:"serial_number"`
 	ReadingDate    time.Time `db:"reading_date"`

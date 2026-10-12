@@ -169,10 +169,12 @@ func TestTheStoreHoldsOneAssignment(t *testing.T) {
 	require.ErrorIs(t, err, errs.ErrNotAssigned)
 }
 
-// normalized drops the location that the driver gives a DATE, so a reading compares
-// by its calendar day.
+// normalized drops the identifier that the database gives and the location that the
+// driver gives a DATE, so a reading compares by its meter, its day, and its values.
 func normalized(readings []model.Reading) []model.Reading {
 	for i := range readings {
+		readings[i].ID = ""
+
 		date := readings[i].ReadingDate
 		readings[i].ReadingDate = time.Date(
 			date.Year(),
