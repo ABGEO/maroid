@@ -135,6 +135,16 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "413":
+          description: >
+            The body passes 4 KiB. The type is `/problems/http/content-too-large`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
         "409":
           description: >
             The workspace holds no connection. The type is
@@ -206,6 +216,7 @@ components:
         customer_number:
           type: string
           minLength: 1
+          maxLength: 64
 
   responses:
     ServiceUnavailable:

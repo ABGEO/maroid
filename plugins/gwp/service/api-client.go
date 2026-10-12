@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,15 +9,13 @@ import (
 
 	"github.com/abgeo/maroid/plugins/gwp/config"
 	"github.com/abgeo/maroid/plugins/gwp/dto"
+	"github.com/abgeo/maroid/plugins/gwp/errs"
 )
 
-// ErrRequestFailed is returned when an HTTP or API request fails.
-var ErrRequestFailed = errors.New("request failed")
-
-// APIClientService defines the interface for interacting with the GWP API.
+// APIClientService defines the interface for interacting with the water service.
 type APIClientService interface {
 	Authenticate(ctx context.Context, username string, password string) (string, error)
-	GetCustomers(ctx context.Context, token string) (*dto.ListResponse[dto.Customer], error)
+	GetCustomers(ctx context.Context, token string) ([]dto.Customer, error)
 	GetReadings(ctx context.Context, token string) ([]dto.ReadingResponse, error)
 }
 
@@ -34,7 +31,6 @@ var _ APIClientService = (*APIClient)(nil)
 func NewAPIClient(cfg *config.Config) *APIClient {
 	client := resty.New().
 		SetBaseURL(cfg.BaseURL).
-		SetError(map[string]any{}).
 		SetHeader("Accept", "application/json")
 
 	return &APIClient{
@@ -42,7 +38,8 @@ func NewAPIClient(cfg *config.Config) *APIClient {
 	}
 }
 
-// Authenticate authenticates the account and returns an authentication token.
+// Authenticate signs in to the water account and answers its token. A sign in that
+// the water service refuses is errs.ErrCredentialsRejected.
 func (s *APIClient) Authenticate(
 	ctx context.Context,
 	username string,
@@ -50,8 +47,7 @@ func (s *APIClient) Authenticate(
 ) (string, error) {
 	var response dto.AuthResponse
 
-	resp, err := s.client.R().
-		SetContext(ctx).
+	resp, err := s.request(ctx).
 		SetResult(&response).
 		SetBody(map[string]string{
 			"username": username,
@@ -59,68 +55,87 @@ func (s *APIClient) Authenticate(
 		}).
 		Put("/customer")
 	if err != nil {
-		return "", fmt.Errorf("sending authentication request: %w", err)
+		return "", fmt.Errorf("%w: sending the sign in: %w", errs.ErrRequestFailed, err)
 	}
 
-	if err = statusFailure(resp); err != nil {
-		return "", err
+	switch resp.StatusCode() {
+	case http.StatusOK:
+	case http.StatusBadRequest, http.StatusUnauthorized:
+		return "", fmt.Errorf(
+			"%w: the sign in returned %d",
+			errs.ErrCredentialsRejected,
+			resp.StatusCode(),
+		)
+	default:
+		return "", statusFailure(resp)
 	}
 
 	if !response.Success {
-		return "", fmt.Errorf("%w: %s", ErrRequestFailed, response.Message)
+		return "", errs.ErrCredentialsRejected
+	}
+
+	if response.Token == "" {
+		return "", fmt.Errorf("%w: the sign in answered no token", errs.ErrRequestFailed)
 	}
 
 	return response.Token, nil
 }
 
 // GetCustomers retrieves the customers of the account that the token names.
-func (s *APIClient) GetCustomers(
-	ctx context.Context,
-	token string,
-) (*dto.ListResponse[dto.Customer], error) {
-	var response *dto.ListResponse[dto.Customer]
+func (s *APIClient) GetCustomers(ctx context.Context, token string) ([]dto.Customer, error) {
+	var response dto.ListResponse[dto.Customer]
 
-	resp, err := s.client.R().
-		SetContext(ctx).
-		SetAuthToken(token).
-		SetResult(&response).
-		Get("/customer/ListCustomers")
-	if err != nil {
-		return nil, fmt.Errorf("sending customers request: %w", err)
-	}
-
-	if err = statusFailure(resp); err != nil {
-		return nil, err
+	if err := s.getWithToken(ctx, token, "/customer/ListCustomers", &response); err != nil {
+		return nil, fmt.Errorf("requesting the customers: %w", err)
 	}
 
 	if !response.Success {
-		return nil, fmt.Errorf("%w: %s", ErrRequestFailed, response.Message)
+		return nil, fmt.Errorf(
+			"%w: reading the customers: %s",
+			errs.ErrRequestFailed,
+			response.Message,
+		)
+	}
+
+	return response.Items, nil
+}
+
+// GetReadings retrieves the readings of every customer of the account that the token names.
+func (s *APIClient) GetReadings(ctx context.Context, token string) ([]dto.ReadingResponse, error) {
+	var response []dto.ReadingResponse
+
+	if err := s.getWithToken(ctx, token, "/RecordDisplay", &response); err != nil {
+		return nil, fmt.Errorf("requesting the readings: %w", err)
 	}
 
 	return response, nil
 }
 
-// GetReadings retrieves the readings of the account that the token names.
-func (s *APIClient) GetReadings(
-	ctx context.Context,
-	token string,
-) ([]dto.ReadingResponse, error) {
-	var response []dto.ReadingResponse
-
-	resp, err := s.client.R().
-		SetContext(ctx).
+// getWithToken sends a GET that carries the token. A 401 is the only answer that
+// names a token the water service no longer accepts, so it alone is
+// errs.ErrNotConnected.
+func (s *APIClient) getWithToken(ctx context.Context, token string, path string, result any) error {
+	resp, err := s.request(ctx).
 		SetAuthToken(token).
-		SetResult(&response).
-		Get("/RecordDisplay")
+		SetResult(result).
+		Get(path)
 	if err != nil {
-		return nil, fmt.Errorf("sending readings request: %w", err)
+		return fmt.Errorf("%w: %w", errs.ErrRequestFailed, err)
 	}
 
-	if err = statusFailure(resp); err != nil {
-		return nil, err
+	if resp.StatusCode() == http.StatusUnauthorized {
+		return errs.ErrNotConnected
 	}
 
-	return response, nil
+	return statusFailure(resp)
+}
+
+// request starts a request that decodes the answer as JSON, so the decode does not
+// depend on the content type that the water service names.
+func (s *APIClient) request(ctx context.Context) *resty.Request {
+	return s.client.R().
+		SetContext(ctx).
+		SetForceResponseContentType("application/json")
 }
 
 func statusFailure(resp *resty.Response) error {
@@ -128,5 +143,10 @@ func statusFailure(resp *resty.Response) error {
 		return nil
 	}
 
-	return fmt.Errorf("%w: returned [%d] %v", ErrRequestFailed, resp.StatusCode(), resp.Error())
+	return fmt.Errorf(
+		"%w: returned [%d] %s",
+		errs.ErrRequestFailed,
+		resp.StatusCode(),
+		resp.Status(),
+	)
 }

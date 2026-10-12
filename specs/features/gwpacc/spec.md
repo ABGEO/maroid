@@ -39,7 +39,7 @@ or `pluginapi`. `spec-scenarios.md` holds the scenarios.
 | `GWPACC-FR-010`   | `api.yaml`, `GWPACC-SC-007` |
 | `GWPACC-FR-011`   | `GWPACC-DD-005`, `GWPACC-SC-007` |
 | `GWPACC-FR-012`   | `GWPACC-DD-002`, `GWPACC-DD-005`, `GWPACC-SC-008` |
-| `GWPACC-FR-013`   | `api.yaml`, `GWPACC-DD-001`, `GWPACC-SC-009` |
+| `GWPACC-FR-013`   | `api.yaml`, `GWPACC-DD-001`, `GWPACC-SC-009`, `GWPACC-SC-024` |
 | `GWPACC-FR-014`   | Section 4.5, `GWPACC-SC-010` |
 | `GWPACC-FR-015`   | Section 4.4, `GWPACC-DD-006`, `GWPACC-SC-009`, `GWPACC-SC-011` |
 | `GWPACC-FR-016`   | Section 4.3, `GWPACC-SC-012` |
@@ -89,14 +89,14 @@ or `pluginapi`. `spec-scenarios.md` holds the scenarios.
 | `plugins/gwp/db/migration_source.go` | create | `Migrations`, the embedded `migrations/*.sql` |
 | `plugins/gwp/db/migrations/<ts>_table_customer_assignments_create.{up,down}.sql` | create | Section 4.2 |
 | `plugins/gwp/db/migrations/<ts>_table_readings_create.{up,down}.sql` | create | Section 4.2 |
-| `plugins/gwp/errs/errs.go` | create | `ErrRequestFailed` (moved from `service`), `ErrNotConnected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrCustomerUnknown`, `ErrCustomerAbsent` |
-| `plugins/gwp/model/{doc,connection,reading}.go` | create | `ConnectionState`, `Connection`, `Customer`, `Reading`, `MeterUsage` |
+| `plugins/gwp/errs/errs.go` | create | `ErrRequestFailed` (moved from `service`), `ErrNotConnected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrNotAssigned`, `ErrCustomerUnknown`, `ErrCustomerAbsent` |
+| `plugins/gwp/model/{doc,connection,reading}.go` | create | `ConnectionState`, `Connection`, `Customer`, `Reading` with `Usage()` |
 | `plugins/gwp/dto/api-client.go` | change | `ReadingItem.Hash()`, `ReadingItem.MapToModel(customerNumber string)` |
 | `plugins/gwp/dto/connection.go` | create | `ConnectionResponse`, `CustomerResponse`, `AssignmentRequest` |
 | `plugins/gwp/service/api-client.go` | change | A 401 is `errs.ErrNotConnected`. A sign in with `success: false` is `errs.ErrCredentialsRejected` |
 | `plugins/gwp/service/connection.go` | create | `ConnectionService`, `Connections`, `NewConnections` |
 | `plugins/gwp/service/collector.go` | create | `Collector`, `NewCollector` |
-| `plugins/gwp/repository/{assignment,reading}.go` | create | `CustomerAssignment`, `Reading` |
+| `plugins/gwp/repository/{doc,assignment,reading,store}.go` | create | `CustomerAssignment` and `Reading` over one transaction. `Store` over `PluginDB`, one transaction for each call |
 | `plugins/gwp/job/readings_collector.go` | change | `Run` calls `Collector.Collect`. The log of every customer goes |
 | `plugins/gwp/handler/{doc,connection,problem}.go` | create | `ConnectionHandler`, `NewConnectionHandler`, the problem types of section 4.5 |
 | `plugins/gwp/permission/permission.go` | create | `AccountRead`, `AccountConnect` |
@@ -118,13 +118,16 @@ Assign(ctx context.Context, customerNumber string) (*model.Connection, error)
 
 ```go
 // Collect reads the readings of the assigned customer of the acting workspace and
-// inserts each new one. It answers errs.ErrNotConnected with no connection or no
-// assigned customer, which the job treats as a skip.
+// inserts each new one. It answers errs.ErrNotAssigned with no assigned customer and
+// errs.ErrNotConnected with no connection. The job treats both as a skip.
 Collect(ctx context.Context) error
 ```
 
-`repository.CustomerAssignment`: `Get(ctx) (string, error)` answers `sql.ErrNoRows`
+`repository.CustomerAssignment`: `Get(ctx) (string, error)` answers `errs.ErrNotAssigned`
 when the workspace holds none, `Put(ctx, customerNumber string) error`, `Delete(ctx) error`.
+`repository.Store` gives `AssignedCustomer`, `Assign`, `Unassign`, `InsertReadings`, and
+`LastReadingOfEachMeter`, each in one `PluginDB.WithTx`. The services and the widget
+depend on interfaces that each one declares, and `Store` meets them.
 `repository.Reading`: `Insert(ctx, *model.Reading) error`, `LastOfEachMeter(ctx, customerNumber string) ([]model.Reading, error)`.
 
 ### 4.2 Data model
@@ -155,12 +158,13 @@ collection write it with `Put`. `DD-002` deletes it.
 | `hash` | `TEXT` | no | | `UNIQUE (workspace_id, hash)`. `DD-007` |
 | `customer_number` | `TEXT` | no | | The customer of the reading. It stays after a new assignment |
 | `serial_number` | `TEXT` | no | | `serialNumber` of the meter |
-| `reading_date` | `DATE` | no | | `lastReadingDate` |
+| `reading_date` | `DATE` | no | | `lastReadingDate`, which the water service gives as `dd/mm/yyyy` |
 | `value` | `NUMERIC` | no | | `lastReading` |
 | `previous_value` | `NUMERIC` | no | | `prevReadValue` |
 | `collected_at` | `TIMESTAMPTZ` | no | `now()` | |
 
-The index `readings_customer_meter_date_idx` on `(customer_number, serial_number, reading_date DESC)` serves `LastOfEachMeter`.
+The index `readings_customer_meter_date_idx` on `(workspace_id, customer_number, serial_number, reading_date DESC)`
+serves `LastOfEachMeter`, because the policy adds the condition on `workspace_id`.
 Both tables take the policy of `OWN-006` on `workspace_id`. No foreign key joins them,
 because a reading outlives its assignment (`GWPACC-FR-021`).
 
@@ -194,7 +198,7 @@ because a reading outlives its assignment (`GWPACC-FR-021`).
 
 | Identifier | Schedule | Runs in | Behavior | Realizes |
 | ---------- | -------- | ------- | -------- | -------- |
-| `readings_collector` | `cron_schedule.readings_collector`, default `0 0 15 * *` | Each workspace that enabled the plugin | `Collector.Collect`. `errs.ErrNotConnected` logs a skip at info and answers nil | `GWPACC-FR-016` to `GWPACC-FR-019` |
+| `readings_collector` | `cron_schedule.readings_collector`, default `0 0 15 * *` | Each workspace that enabled the plugin | `Collector.Collect`. `errs.ErrNotConnected` and `errs.ErrNotAssigned` log a skip at info and answer nil | `GWPACC-FR-016` to `GWPACC-FR-019` |
 
 **UI routes.**
 
@@ -259,6 +263,7 @@ The 401 branch is the one of `GWPACC-FR-018`. A read of the page takes no such b
 | The settings are absent | `PUT` connection: 422 `credentials-absent`. `GET` reports `credentials_stored: false` | Error `ErrCredentialsAbsent` |
 | The sign in answers `success: false`, 400, or 401 | 422 `credentials-rejected` | Error `ErrCredentialsRejected` |
 | The customer is not in the list of the account | 422 `customer-unknown` | Not reached |
+| The body of the assignment passes 4 KiB | 413 `/problems/http/content-too-large` | Not reached |
 | The answer of `/RecordDisplay` holds no entry for the assigned customer | Not reached | Error `ErrCustomerAbsent`, nothing stored (`GWPACC-FR-019`) |
 | The water service answers 5xx, or fails to answer | 502 `service-unavailable`. The token stays | Error `ErrRequestFailed` |
 
@@ -345,27 +350,28 @@ Each line is `ListItem{Label: "Meter <serial>: <usage> m³", Meta: "<previous> t
 ### `GWPACC-DD-010`
 
 **Realizes:** `GWPACC-FR-012`, `GWPACC-FR-018`, `GWPACC-FR-019`
-**Decision:** Build step 7 runs the flow against the water service and corrects `DD-002`,
-`DD-007`, and the date layout of `lastReadingDate`.
-**Rationale:** No capture holds the answer to an expired token or a wrong password, the
-format of the date, or whether `customerNo` of a reading equals `customerNo` of a customer.
+**Decision:** Build step 7 runs the flow against the water service and corrects `DD-002`
+and `DD-007`. An answer of `/RecordDisplay` of 2026-10-12 gives `lastReadingDate` as
+`dd/mm/yyyy`, for example `10/09/2026`.
+**Rationale:** No capture holds the answer to an expired token or a wrong password, or
+whether `customerNo` of a reading equals `customerNo` of a customer.
 **Alternatives:** Ship on the assumption. A wrong assumption fails each collection in silence.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `GWPACC-SC-001` to `GWPACC-SC-023`.
+`spec-scenarios.md` holds `GWPACC-SC-001` to `GWPACC-SC-024`.
 
 ## 7. Build plan
 
 | #   | Step | Realizes | Done |
 | --- | ---- | -------- | ---- |
-| 1 | `errs/`, `model/`, `permission/`, and the API client: the 401 rule and the rejected sign in | `GWPACC-FR-012`, `GWPACC-FR-018`, `GWPACC-FR-026`, `GWPACC-FR-027` | [ ] |
-| 2 | `db/`, both migrations, `repository/`, and `Migrations` in `main.go` | `GWPACC-FR-013`, `GWPACC-FR-020`, `GWPACC-FR-021` | [ ] |
-| 3 | `service/collector.go`, `ReadingItem.Hash`, and the job | `GWPACC-FR-016` to `GWPACC-FR-020` | [ ] |
-| 4 | `service/connection.go` | `GWPACC-FR-003` to `GWPACC-FR-015` | [ ] |
-| 5 | `handler/`, `dto/connection.go`, and `api.yaml` | `GWPACC-FR-003` to `GWPACC-FR-015` | [ ] |
+| 1 | `errs/`, `model/`, `permission/`, and the API client: the 401 rule and the rejected sign in | `GWPACC-FR-012`, `GWPACC-FR-018`, `GWPACC-FR-026`, `GWPACC-FR-027` | [x] |
+| 2 | `db/`, both migrations, `repository/`, and `Migrations` in `main.go` | `GWPACC-FR-013`, `GWPACC-FR-020`, `GWPACC-FR-021` | [x] |
+| 3 | `service/collector.go`, `ReadingItem.Hash`, and the job | `GWPACC-FR-016` to `GWPACC-FR-020` | [x] |
+| 4 | `service/connection.go` | `GWPACC-FR-003` to `GWPACC-FR-015` | [x] |
+| 5 | `handler/`, `dto/connection.go`, and `api.yaml` | `GWPACC-FR-003` to `GWPACC-FR-015` | [x] |
 | 6 | `widget/usage.go` and `Widgets` | `GWPACC-FR-022` to `GWPACC-FR-025` | [ ] |
-| 7 | `GWPACC-SC-015` against the water service. Correct `DD-002`, `DD-007`, and the date layout | `GWPACC-FR-012`, `GWPACC-FR-018`, `GWPACC-FR-019` | [ ] |
+| 7 | `GWPACC-SC-015` against the water service. Correct `DD-002` and `DD-007` | `GWPACC-FR-012`, `GWPACC-FR-018`, `GWPACC-FR-019` | [ ] |
 | 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GWPACC-FR-003` to `GWPACC-FR-015` | [ ] |
 | 9 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [ ] |
 

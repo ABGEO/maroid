@@ -111,9 +111,10 @@ number and address. Only `C2` carries `assigned: true`.
 
 **Given** a `token` secret.
 **When** E sends `PUT /customer-assignments/self` with (a) `C9`, which the account does not hold;
-(b) an empty `customer_number`.
+(b) an empty `customer_number`; (c) a body of 5 KiB.
 **Then** (a) 422 `customer-unknown`; (b) 422 `/problems/http/validation-failed` with the
-pointer `#/customer_number`. No assignment exists in either case.
+pointer `#/customer_number`; (c) 413 `/problems/http/content-too-large`. No assignment
+exists in any case.
 
 ## `GWPACC-SC-011`
 
@@ -237,6 +238,16 @@ the widget. `account.connect` has `editor` and guards the other three routes.
 **Given** a `token` secret `T1`, and the settings with the password `P1`.
 **When** E calls each route, and the fake service fails each call in turn.
 **Then** no answer body and no log line holds `T1` or `P1`.
+
+## `GWPACC-SC-024`
+
+**Verifies:** `GWPACC-FR-013`
+**Layer:** unit
+
+**Given** no `token` secret.
+**When** E sends `PUT /customer-assignments/self` with `C1`.
+**Then** the answer is 409 `/problems/dev.maroid.gwp/not-connected`. No assignment exists,
+and the fake service records no call.
 
 ## Retired identifiers
 
