@@ -387,8 +387,8 @@ runs `repository.NewCareInterval(tx).ListAttention(ctx)` in `db.WithTx`:
 | 2   | `libs/pluginapi/widget.go` and its test. | `WIDGET-FR-001`, `WIDGET-FR-002`, `WIDGET-FR-016` | [x] |
 | 3   | Errors, problem, registry, capability, registrar, loader, and their tests. | `WIDGET-FR-002` to `WIDGET-FR-007` | [x] |
 | 4   | `widget.Reader`, the handler, the wiring, and their tests. `api.yaml`, `components.yaml`, `pcap/api.yaml`. | `WIDGET-FR-008` to `WIDGET-FR-013`, `WIDGET-FR-016`, `WIDGET-FR-020`, `WIDGET-FR-022`, `WIDGET-NFR-001`, `WIDGET-INV-*` | [x] |
-| 5   | The parking widget and the jasmine widget, and their tests. Build every plugin (`BLD-004`). | `WIDGET-FR-030` to `WIDGET-FR-036` | [ ] |
-| 6   | The deck: the client, the components, the home page, the label, the Overview entry. | `WIDGET-FR-011`, `WIDGET-FR-014` to `WIDGET-FR-029`, `WIDGET-FR-037` | [ ] |
+| 5   | The parking widget and the jasmine widget, and their tests. Build every plugin (`BLD-004`). | `WIDGET-FR-030` to `WIDGET-FR-036` | [x] |
+| 6   | The deck: the client, the components, the home page, the label, the Overview entry. | `WIDGET-FR-011`, `WIDGET-FR-014` to `WIDGET-FR-029`, `WIDGET-FR-037` | [x] |
 | 7   | The manual scenarios. | `WIDGET-SC-018` to `WIDGET-SC-026` | [ ] |
 
 ## 8. Out of scope for this specification

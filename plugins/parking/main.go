@@ -16,6 +16,7 @@ import (
 	"github.com/abgeo/maroid/plugins/parking/service"
 	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 	"github.com/abgeo/maroid/plugins/parking/telegram/conversation"
+	"github.com/abgeo/maroid/plugins/parking/widget"
 )
 
 // pluginID names the plugin. The constructor needs it before Meta exists.
@@ -41,6 +42,7 @@ var (
 	_ pluginapi.PermissionPlugin           = (*ParkingPlugin)(nil)
 	_ pluginapi.RoutePlugin                = (*ParkingPlugin)(nil)
 	_ pluginapi.UIPlugin                   = (*ParkingPlugin)(nil)
+	_ pluginapi.WidgetPlugin               = (*ParkingPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -141,6 +143,11 @@ func (p *ParkingPlugin) UIManifest() (*pluginapi.UIManifest, error) {
 		},
 		Assets: assets,
 	}, nil
+}
+
+// Widgets returns the balance of the parking account, for the home page.
+func (p *ParkingPlugin) Widgets() ([]pluginapi.Widget, error) {
+	return []pluginapi.Widget{widget.NewBalance(p.connections)}, nil
 }
 
 // Routes returns the HTTP routes of the connection page.

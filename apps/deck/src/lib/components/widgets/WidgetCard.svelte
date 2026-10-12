@@ -3,6 +3,7 @@
 	import type { Widget } from '$lib/api/types';
 
 	import ListWidget from './ListWidget.svelte';
+	import StatWidget from './StatWidget.svelte';
 	import { linkOf, spanOf } from './layout';
 
 	interface Props {
@@ -28,7 +29,9 @@
 			<span class="skeleton h-4 w-1/2"></span>
 		</div>
 	{:then result}
-		{#if result.state === 'ready' && result.list}
+		{#if result.state === 'ready' && result.stat}
+			<StatWidget stat={result.stat} {href} />
+		{:else if result.state === 'ready' && result.list}
 			<ListWidget list={result.list} size={widget.size} {href} />
 		{:else if result.state === 'empty'}
 			<p class="meta">{result.message}</p>
