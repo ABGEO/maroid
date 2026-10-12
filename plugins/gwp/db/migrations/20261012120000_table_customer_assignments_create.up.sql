@@ -8,6 +8,7 @@ CREATE TABLE customer_assignments
         REFERENCES public.workspaces (id),
     customer_number TEXT        NOT NULL CHECK (char_length(customer_number) BETWEEN 1 AND 64),
     assigned_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- GWPACC-INV-001: One workspace holds at most one assigned customer.
     CONSTRAINT customer_assignments_workspace_key UNIQUE (workspace_id)
 );
 

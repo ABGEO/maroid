@@ -1,16 +1,20 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/problem"
 	"github.com/abgeo/maroid/plugins/gwp/dto"
+	"github.com/abgeo/maroid/plugins/gwp/model"
 	"github.com/abgeo/maroid/plugins/gwp/permission"
 	"github.com/abgeo/maroid/plugins/gwp/service"
 )
@@ -19,21 +23,33 @@ const (
 	pathConnection = "/connections/self"
 	pathAssignment = "/customer-assignments/self"
 
+	memberCustomerNumber = "customer_number"
 	maxAssignmentBody    = 4 << 10
 	maxCustomerNumberLen = 64
 )
+
+// ConnectionService connects the water account of the acting workspace, and assigns
+// one of its customers to the workspace.
+type ConnectionService interface {
+	Status(ctx context.Context) (*model.Connection, error)
+	Connect(ctx context.Context) (*model.Connection, error)
+	Disconnect(ctx context.Context) error
+	Assign(ctx context.Context, customerNumber string) (*model.Connection, error)
+}
+
+var _ ConnectionService = (*service.Connections)(nil)
 
 // ConnectionHandler serves the connection page: it reads, starts, and ends the
 // connection of the water account of the acting workspace, and assigns a customer.
 type ConnectionHandler struct {
 	logger      *slog.Logger
-	connections service.ConnectionService
+	connections ConnectionService
 }
 
 // NewConnectionHandler creates a new ConnectionHandler.
 func NewConnectionHandler(
 	logger *slog.Logger,
-	connections service.ConnectionService,
+	connections ConnectionService,
 ) *ConnectionHandler {
 	return &ConnectionHandler{
 		logger:      logger,
@@ -127,15 +143,13 @@ func (h *ConnectionHandler) Assign(w http.ResponseWriter, r *http.Request) {
 // readAssignment decodes the body and checks the customer number. It writes the
 // problem and answers false when the body is refused.
 func readAssignment(w http.ResponseWriter, r *http.Request, target *dto.AssignmentRequest) bool {
-	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxAssignmentBody))
-	decoder.DisallowUnknownFields()
+	var members map[string]json.RawMessage
 
-	err := decoder.Decode(target)
+	err := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxAssignmentBody)).Decode(&members)
 
 	var tooLarge *http.MaxBytesError
 
 	switch {
-	case err == nil:
 	case errors.As(err, &tooLarge):
 		problem.Write(
 			w,
@@ -144,13 +158,22 @@ func readAssignment(w http.ResponseWriter, r *http.Request, target *dto.Assignme
 		)
 
 		return false
-	case strings.HasPrefix(err.Error(), "json: unknown field "):
+	case err != nil || members == nil:
+		problem.Write(w, r, problem.NewBodyInvalid())
+
+		return false
+	}
+
+	if unknown := unknownMembers(members, memberCustomerNumber); len(unknown) > 0 {
 		problem.Write(w, r, problem.NewMemberUnknown().WithDetail(
-			"The body carries "+strings.TrimPrefix(err.Error(), "json: unknown field ")+".",
+			"The body carries "+strings.Join(unknown, ", ")+".",
 		))
 
 		return false
-	default:
+	}
+
+	raw, present := members[memberCustomerNumber]
+	if present && json.Unmarshal(raw, &target.CustomerNumber) != nil {
 		problem.Write(w, r, problem.NewBodyInvalid())
 
 		return false
@@ -160,13 +183,29 @@ func readAssignment(w http.ResponseWriter, r *http.Request, target *dto.Assignme
 	if strings.TrimSpace(target.CustomerNumber) == "" || length > maxCustomerNumberLen {
 		problem.Write(w, r, problem.NewValidationFailed(problem.FieldFailure{
 			Detail:  "must hold 1 to 64 characters",
-			Pointer: "#/customer_number",
+			Pointer: "#/" + memberCustomerNumber,
 		}))
 
 		return false
 	}
 
 	return true
+}
+
+// unknownMembers answers the members of the body that the schema does not declare,
+// each quoted, in a stable order.
+func unknownMembers(members map[string]json.RawMessage, declared ...string) []string {
+	var unknown []string
+
+	for name := range members {
+		if !slices.Contains(declared, name) {
+			unknown = append(unknown, strconv.Quote(name))
+		}
+	}
+
+	slices.Sort(unknown)
+
+	return unknown
 }
 
 // writeOK answers 200 with the body. The status line is gone when the encode fails,

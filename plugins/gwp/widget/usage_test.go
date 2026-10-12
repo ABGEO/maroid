@@ -12,7 +12,7 @@ import (
 	"github.com/abgeo/maroid/libs/testdb"
 	"github.com/abgeo/maroid/plugins/gwp/db"
 	"github.com/abgeo/maroid/plugins/gwp/model"
-	"github.com/abgeo/maroid/plugins/gwp/repository"
+	"github.com/abgeo/maroid/plugins/gwp/service"
 	"github.com/abgeo/maroid/plugins/gwp/widget"
 )
 
@@ -29,7 +29,7 @@ const hubFixtures = `
 CREATE TABLE public.workspaces (id UUID NOT NULL PRIMARY KEY);
 INSERT INTO public.workspaces (id) VALUES ('` + workspaceW + `');`
 
-func storeUnderTest(t *testing.T) *repository.Store {
+func storeUnderTest(t *testing.T) *service.Store {
 	t.Helper()
 
 	instance := testdb.Start(t)
@@ -43,7 +43,7 @@ func storeUnderTest(t *testing.T) *repository.Store {
 	identifier := pluginapi.ParsePluginID(pluginID)
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	return repository.NewStore(pluginapi.NewPluginDB(instance.DB, identifier))
+	return service.NewStore(pluginapi.NewPluginDB(instance.DB, identifier))
 }
 
 func actingInW(t *testing.T) context.Context {

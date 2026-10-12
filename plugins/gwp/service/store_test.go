@@ -1,4 +1,4 @@
-package repository_test
+package service_test
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"github.com/abgeo/maroid/plugins/gwp/db"
 	"github.com/abgeo/maroid/plugins/gwp/errs"
 	"github.com/abgeo/maroid/plugins/gwp/model"
-	"github.com/abgeo/maroid/plugins/gwp/repository"
+	"github.com/abgeo/maroid/plugins/gwp/service"
 )
 
 const (
@@ -33,7 +33,7 @@ INSERT INTO public.workspaces (id) VALUES ('` + workspaceW + `'), ('` + workspac
 
 // storeUnderTest starts a database, applies the migrations of the plugin, and
 // returns the store and the handle that reads behind it.
-func storeUnderTest(t *testing.T) (*repository.Store, *pluginapi.PluginDB) {
+func storeUnderTest(t *testing.T) (*service.Store, *pluginapi.PluginDB) {
 	t.Helper()
 
 	instance := testdb.Start(t)
@@ -49,7 +49,7 @@ func storeUnderTest(t *testing.T) (*repository.Store, *pluginapi.PluginDB) {
 
 	database := pluginapi.NewPluginDB(instance.DB, identifier)
 
-	return repository.NewStore(database), database
+	return service.NewStore(database), database
 }
 
 func actingIn(t *testing.T, workspaceID string) context.Context {

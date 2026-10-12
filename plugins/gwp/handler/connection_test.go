@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -59,13 +60,23 @@ type rig struct {
 func newRig(t *testing.T, settings *fakeSettings) *rig {
 	t.Helper()
 
+	return newRigWithTimeout(t, settings, 0)
+}
+
+// newRigWithTimeout runs the routes against a client that ends each call after the
+// timeout. A zero timeout ends none.
+func newRigWithTimeout(t *testing.T, settings *fakeSettings, timeout time.Duration) *rig {
+	t.Helper()
+
 	water := newFakeService(t)
 	secrets := newFakeSecrets()
 	store := &fakeStore{}
 	identifier := pluginapi.ParsePluginID("dev.maroid.gwp")
 	pluginSettings := pluginapi.NewPluginSettings(settings, identifier)
 	pluginSecrets := pluginapi.NewPluginSecrets(secrets, identifier)
-	client := service.NewAPIClient(&config.Config{BaseURL: water.server.URL})
+	client := service.NewAPIClient(
+		&config.Config{BaseURL: water.server.URL, RequestTimeout: timeout},
+	)
 
 	logs := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
@@ -471,7 +482,7 @@ func TestTheReadingsOutliveTheAssignment(t *testing.T) {
 }
 
 // GWPACC-SC-023: No answer and no log line holds the token or the password, whichever
-// call of the water service fails.
+// call of the water service fails with a body that names the failure.
 func TestNoAnswerHoldsACredential(t *testing.T) {
 	t.Parallel()
 
@@ -480,12 +491,18 @@ func TestNoAnswerHoldsACredential(t *testing.T) {
 	water.service.on(
 		http.MethodGet,
 		pathCustomers,
-		answer{status: http.StatusInternalServerError, body: password},
+		answer{
+			status: http.StatusInternalServerError,
+			body:   `{"success": false, "message": "internal error"}`,
+		},
 	)
 	water.service.on(
 		http.MethodPut,
 		pathSignIn,
-		answer{status: http.StatusInternalServerError, body: tokenT1},
+		answer{
+			status: http.StatusInternalServerError,
+			body:   `{"success": false, "message": "internal error"}`,
+		},
 	)
 
 	answers := []*httptest.ResponseRecorder{
@@ -532,4 +549,49 @@ func TestTheRoutesNameTheirPermissions(t *testing.T) {
 		http.MethodDelete + " " + pathConnection: permission.AccountConnect,
 		http.MethodPut + " " + pathAssignment:    permission.AccountConnect,
 	}, permissions)
+}
+
+// GWPACC-SC-032: A water service that answers after the timeout answers 502 in time,
+// and the token stays.
+func TestReadWhileTheServiceHangs(t *testing.T) {
+	t.Parallel()
+
+	water := newRigWithTimeout(t, storedCredentials(), 100*time.Millisecond)
+	water.connected(customerC1)
+	water.service.on(
+		http.MethodGet,
+		pathCustomers,
+		answer{body: customersAnswer, delay: time.Second},
+	)
+
+	started := time.Now()
+	recorder := water.do(t, http.MethodGet, pathConnection, "")
+
+	require.Less(t, time.Since(started), time.Second)
+	requireProblem(t, recorder, http.StatusBadGateway, problemPrefix+"service-unavailable")
+
+	token, found := water.secrets.token()
+	require.True(t, found)
+	require.Equal(t, tokenT1, token)
+}
+
+// GWPACC-SC-010: An assignment refuses a member that the schema does not declare, and
+// names it, before any call.
+func TestAssignRefusesAnUnknownMember(t *testing.T) {
+	t.Parallel()
+
+	water := newRig(t, storedCredentials())
+	water.secrets.signedIn()
+
+	recorder := water.do(
+		t,
+		http.MethodPut,
+		pathAssignment,
+		`{"customer_number": "`+customerC1+`", "note": "the house"}`,
+	)
+
+	requireProblem(t, recorder, http.StatusBadRequest, "/problems/http/member-unknown")
+	require.Contains(t, decode(t, recorder)["detail"], `"note"`)
+	require.Empty(t, water.store.assignment())
+	require.Empty(t, water.service.recorded())
 }

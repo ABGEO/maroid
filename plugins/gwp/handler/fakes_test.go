@@ -189,6 +189,8 @@ type call struct {
 type answer struct {
 	status int
 	body   string
+	// delay holds the reply back, as a water service that hangs does.
+	delay time.Duration
 }
 
 // fakeService plays the water service. It answers each path with the reply that the
@@ -249,6 +251,10 @@ func (s *fakeService) serve(w http.ResponseWriter, r *http.Request) {
 	if len(replies) > 1 {
 		s.answers[key] = replies[1:]
 	}
+
+	s.mu.Unlock()
+	time.Sleep(reply.delay)
+	s.mu.Lock()
 
 	status := reply.status
 	if status == 0 {

@@ -13,15 +13,6 @@ import (
 	"github.com/abgeo/maroid/plugins/gwp/model"
 )
 
-// ConnectionService connects the water account of the acting workspace, and assigns
-// one of its customers to the workspace.
-type ConnectionService interface {
-	Status(ctx context.Context) (*model.Connection, error)
-	Connect(ctx context.Context) (*model.Connection, error)
-	Disconnect(ctx context.Context) error
-	Assign(ctx context.Context, customerNumber string) (*model.Connection, error)
-}
-
 // AssignmentStore holds the assigned customer of the acting workspace.
 type AssignmentStore interface {
 	AssignedCustomer(ctx context.Context) (string, error)
@@ -31,11 +22,12 @@ type AssignmentStore interface {
 
 // ReadingCollector collects the readings of the assigned customer of the acting workspace.
 type ReadingCollector interface {
-	Collect(ctx context.Context) error
+	Collect(ctx context.Context) (int, error)
 }
 
-// Connections implements ConnectionService over the API client, the settings, the
-// plugin secrets, and the store of the assignment.
+// Connections connects the water account of the acting workspace, and assigns one of
+// its customers to the workspace, over the API client, the settings, the plugin
+// secrets, and the store of the assignment.
 type Connections struct {
 	logger    *slog.Logger
 	account   *account
@@ -43,8 +35,6 @@ type Connections struct {
 	store     AssignmentStore
 	collector ReadingCollector
 }
-
-var _ ConnectionService = (*Connections)(nil)
 
 // NewConnections creates a new Connections instance.
 func NewConnections(
@@ -164,7 +154,7 @@ func (c *Connections) Assign(
 		return nil, fmt.Errorf("storing the assignment: %w", err)
 	}
 
-	if err = c.collector.Collect(ctx); err != nil {
+	if _, err = c.collector.Collect(ctx); err != nil {
 		c.logger.WarnContext(
 			ctx,
 			"the collection after an assignment failed, the scheduled collection retries it",

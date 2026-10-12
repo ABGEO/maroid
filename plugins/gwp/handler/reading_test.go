@@ -20,7 +20,7 @@ import (
 	"github.com/abgeo/maroid/plugins/gwp/handler"
 	"github.com/abgeo/maroid/plugins/gwp/model"
 	"github.com/abgeo/maroid/plugins/gwp/permission"
-	"github.com/abgeo/maroid/plugins/gwp/repository"
+	"github.com/abgeo/maroid/plugins/gwp/service"
 )
 
 const (
@@ -45,7 +45,7 @@ type readingItem struct {
 
 // readingsUnderTest migrates a database, and answers the store of workspace W and
 // the route of the readings over it, as the hub mounts the route.
-func readingsUnderTest(t *testing.T) (*repository.Store, http.Handler) {
+func readingsUnderTest(t *testing.T) (*service.Store, http.Handler) {
 	t.Helper()
 
 	instance := testdb.Start(t)
@@ -60,7 +60,7 @@ func readingsUnderTest(t *testing.T) (*repository.Store, http.Handler) {
 	identifier := pluginapi.ParsePluginID("dev.maroid.gwp")
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	store := repository.NewStore(pluginapi.NewPluginDB(instance.DB, identifier))
+	store := service.NewStore(pluginapi.NewPluginDB(instance.DB, identifier))
 	routes := handler.NewReadingHandler(slog.New(slog.DiscardHandler), store).Routes()
 	require.Len(t, routes, 1)
 
@@ -139,7 +139,7 @@ func follow(t *testing.T, link *string) string {
 // twoMetersOverTwoYears assigns C1, and stores a reading of meter A, then one of
 // meter B, on the 15th of each month from October 2024 to September 2026. A grows by
 // 10 a month, and B by 2.
-func twoMetersOverTwoYears(t *testing.T, store *repository.Store) {
+func twoMetersOverTwoYears(t *testing.T, store *service.Store) {
 	t.Helper()
 
 	ctx := actingInW()

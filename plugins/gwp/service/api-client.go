@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
+	"unicode/utf8"
 
 	"resty.dev/v3"
 
@@ -11,6 +13,9 @@ import (
 	"github.com/abgeo/maroid/plugins/gwp/dto"
 	"github.com/abgeo/maroid/plugins/gwp/errs"
 )
+
+// maxFailureBody bounds the part of the body of a failed answer that an error names.
+const maxFailureBody = 512
 
 // APIClientService defines the interface for interacting with the water service.
 type APIClientService interface {
@@ -31,7 +36,8 @@ var _ APIClientService = (*APIClient)(nil)
 func NewAPIClient(cfg *config.Config) *APIClient {
 	client := resty.New().
 		SetBaseURL(cfg.BaseURL).
-		SetHeader("Accept", "application/json")
+		SetHeader("Accept", "application/json").
+		SetTimeout(cfg.RequestTimeout)
 
 	return &APIClient{
 		client: client,
@@ -62,9 +68,10 @@ func (s *APIClient) Authenticate(
 	case http.StatusOK:
 	case http.StatusBadRequest, http.StatusUnauthorized:
 		return "", fmt.Errorf(
-			"%w: the sign in returned %d",
+			"%w: the sign in returned [%d] %s",
 			errs.ErrCredentialsRejected,
 			resp.StatusCode(),
+			failureBody(resp),
 		)
 	default:
 		return "", statusFailure(resp)
@@ -147,6 +154,22 @@ func statusFailure(resp *resty.Response) error {
 		"%w: returned [%d] %s",
 		errs.ErrRequestFailed,
 		resp.StatusCode(),
-		resp.Status(),
+		failureBody(resp),
 	)
+}
+
+// failureBody answers the start of the body of a failed answer, so an error names
+// what the water service said. The answer of a failure carries no token.
+func failureBody(resp *resty.Response) string {
+	body := strings.TrimSpace(resp.String())
+	if len(body) <= maxFailureBody {
+		return body
+	}
+
+	cut := maxFailureBody
+	for cut > 0 && !utf8.RuneStart(body[cut]) {
+		cut--
+	}
+
+	return body[:cut]
 }

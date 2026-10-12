@@ -1,4 +1,4 @@
-package repository
+package service
 
 import (
 	"context"
@@ -10,10 +10,11 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/plugins/gwp/model"
+	"github.com/abgeo/maroid/plugins/gwp/repository"
 )
 
 // Store runs each operation on the assignment and the readings of the acting
-// workspace in a transaction of its own.
+// workspace in a transaction of its own, and creates each repository inside it.
 type Store struct {
 	db *pluginapi.PluginDB
 }
@@ -31,9 +32,12 @@ func (s *Store) AssignedCustomer(ctx context.Context) (string, error) {
 	err := s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
 		var getErr error
 
-		customerNumber, getErr = NewCustomerAssignment(tx).Get(ctx)
+		customerNumber, getErr = repository.NewCustomerAssignment(tx).Get(ctx)
+		if getErr != nil {
+			return fmt.Errorf("selecting the assignment: %w", getErr)
+		}
 
-		return getErr
+		return nil
 	})
 	if err != nil {
 		return "", fmt.Errorf("reading the assigned customer: %w", err)
@@ -45,7 +49,7 @@ func (s *Store) AssignedCustomer(ctx context.Context) (string, error) {
 // Assign assigns the customer to the workspace, and replaces the assignment that exists.
 func (s *Store) Assign(ctx context.Context, customerNumber string) error {
 	err := s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
-		return NewCustomerAssignment(tx).Put(ctx, customerNumber)
+		return repository.NewCustomerAssignment(tx).Put(ctx, customerNumber)
 	})
 	if err != nil {
 		return fmt.Errorf("assigning the customer: %w", err)
@@ -57,7 +61,7 @@ func (s *Store) Assign(ctx context.Context, customerNumber string) error {
 // Unassign removes the assignment of the workspace. The readings stay.
 func (s *Store) Unassign(ctx context.Context) error {
 	err := s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
-		return NewCustomerAssignment(tx).Delete(ctx)
+		return repository.NewCustomerAssignment(tx).Delete(ctx)
 	})
 	if err != nil {
 		return fmt.Errorf("removing the assignment: %w", err)
@@ -66,15 +70,15 @@ func (s *Store) Unassign(ctx context.Context) error {
 	return nil
 }
 
-// InsertReadings stores every reading that the workspace does not hold yet, all in
-// one transaction.
+// InsertReadings stores each reading in one transaction. A reading of a meter on a
+// date that the workspace holds replaces the stored value when the value changed.
 func (s *Store) InsertReadings(ctx context.Context, readings []model.Reading) error {
 	err := s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
-		repository := NewReading(tx)
+		stored := repository.NewReading(tx)
 
 		for i := range readings {
-			if err := repository.Insert(ctx, &readings[i]); err != nil {
-				return err
+			if err := stored.Insert(ctx, &readings[i]); err != nil {
+				return fmt.Errorf("inserting reading %d of %d: %w", i+1, len(readings), err)
 			}
 		}
 
@@ -94,14 +98,17 @@ func (s *Store) LastReadingOfEachMeter(ctx context.Context) ([]model.Reading, er
 	var readings []model.Reading
 
 	err := s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
-		customerNumber, err := NewCustomerAssignment(tx).Get(ctx)
+		customerNumber, err := repository.NewCustomerAssignment(tx).Get(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("selecting the assignment: %w", err)
 		}
 
-		readings, err = NewReading(tx).LastOfEachMeter(ctx, customerNumber)
+		readings, err = repository.NewReading(tx).LastOfEachMeter(ctx, customerNumber)
+		if err != nil {
+			return fmt.Errorf("selecting the readings: %w", err)
+		}
 
-		return err
+		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("reading the last reading of each meter: %w", err)
@@ -122,12 +129,12 @@ func (s *Store) ReadingsPage(
 	var window page.Window[model.Reading]
 
 	err := s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
-		customerNumber, err := NewCustomerAssignment(tx).Get(ctx)
+		customerNumber, err := repository.NewCustomerAssignment(tx).Get(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("selecting the assignment: %w", err)
 		}
 
-		readings := NewReading(tx)
+		readings := repository.NewReading(tx)
 		fetch := func(ctx context.Context, seek page.Seek) ([]model.Reading, error) {
 			return readings.List(ctx, seek, customerNumber, from)
 		}

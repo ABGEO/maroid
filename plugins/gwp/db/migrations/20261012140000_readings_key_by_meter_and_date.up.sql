@@ -21,6 +21,7 @@ ALTER TABLE readings
 
 DROP INDEX readings_customer_meter_date_idx;
 
+-- GWPACC-FR-020: Maroid keeps one reading for one meter on one date.
 ALTER TABLE readings
     ADD CONSTRAINT readings_workspace_meter_date_key
         UNIQUE (workspace_id, customer_number, serial_number, reading_date);

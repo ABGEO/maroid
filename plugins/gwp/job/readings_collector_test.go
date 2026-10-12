@@ -127,7 +127,14 @@ type fakeWaterService struct {
 	signIn   string
 	accepted map[string]bool
 	readings string
-	calls    []string
+	// failure, when set, answers every call of the readings.
+	failure *failedAnswer
+	calls   []string
+}
+
+type failedAnswer struct {
+	status int
+	body   string
 }
 
 func (f *fakeWaterService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -148,6 +155,13 @@ func (f *fakeWaterService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		_, _ = w.Write([]byte(`{"success": true, "token": "` + f.signIn + `"}`))
 	case pathReadings:
+		if f.failure != nil {
+			w.WriteHeader(f.failure.status)
+			_, _ = w.Write([]byte(f.failure.body))
+
+			return
+		}
+
 		token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 		if !f.accepted[token] {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -227,7 +241,8 @@ func actingInW(t *testing.T) context.Context {
 	return pluginapi.ContextWithActingWorkspace(t.Context(), workspaceW)
 }
 
-// GWPACC-SC-012: The collection inserts the readings of the assigned customer only.
+// GWPACC-SC-012: The collection inserts the readings of the assigned customer only,
+// and logs their count.
 func TestTheCollectionInsertsTheReadingsOfTheAssignedCustomer(t *testing.T) {
 	t.Parallel()
 
@@ -237,6 +252,8 @@ func TestTheCollectionInsertsTheReadingsOfTheAssignedCustomer(t *testing.T) {
 	require.NoError(t, rig.job.Run(actingInW(t)))
 
 	require.Len(t, rig.store.inserted, 1)
+	require.Contains(t, rig.logs.String(), "level=INFO")
+	require.Contains(t, rig.logs.String(), "readings=1")
 
 	reading := rig.store.inserted[0]
 	require.Equal(t, customerC1, reading.CustomerNumber)
@@ -337,3 +354,24 @@ func TestTheCollectionFailsWhenTheNewTokenIsRejected(t *testing.T) {
 }
 
 var _ service.ReadingStore = (*fakeStore)(nil)
+
+// GWPACC-SC-033: A failure of the water service names the status and the start of
+// the body, cut at 512 bytes.
+func TestTheCollectionNamesTheAnswerOfAFailure(t *testing.T) {
+	t.Parallel()
+
+	body := "maintenance " + strings.Repeat("x", 588)
+	water := &fakeWaterService{
+		accepted: map[string]bool{tokenT1: true},
+		failure:  &failedAnswer{status: http.StatusServiceUnavailable, body: body},
+	}
+	rig := newRig(t, water, &fakeStore{assigned: customerC1}, tokenT1)
+
+	err := rig.job.Run(actingInW(t))
+
+	require.ErrorIs(t, err, errs.ErrRequestFailed)
+	require.Contains(t, err.Error(), "503")
+	require.Contains(t, err.Error(), "maintenance")
+	require.NotContains(t, err.Error(), body[:513])
+	require.Empty(t, rig.store.inserted)
+}

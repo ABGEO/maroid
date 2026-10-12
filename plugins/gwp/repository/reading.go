@@ -12,6 +12,9 @@ import (
 	"github.com/abgeo/maroid/plugins/gwp/model"
 )
 
+// paramCustomerNumber names the parameter of the customer in every query of the plugin.
+const paramCustomerNumber = "customer_number"
+
 // withUsage selects every reading of the customer that the parameter
 // :customer_number names, each with the value minus the value of the reading before
 // it, of the same meter.
@@ -21,10 +24,25 @@ const withUsage = `
 	FROM readings
 	WHERE customer_number = :customer_number`
 
+// ReadingRepository defines the data access contract for the readings of the acting
+// workspace.
+type ReadingRepository interface {
+	Insert(ctx context.Context, reading *model.Reading) error
+	LastOfEachMeter(ctx context.Context, customerNumber string) ([]model.Reading, error)
+	List(
+		ctx context.Context,
+		seek page.Seek,
+		customerNumber string,
+		from *time.Time,
+	) ([]model.Reading, error)
+}
+
 // Reading reads and writes the readings of the acting workspace within one transaction.
 type Reading struct {
 	tx *sqlx.Tx
 }
+
+var _ ReadingRepository = (*Reading)(nil)
 
 // NewReading creates a new Reading over the transaction.
 func NewReading(tx *sqlx.Tx) *Reading {
@@ -62,7 +80,7 @@ func (r *Reading) LastOfEachMeter(
 		FROM (` + withUsage + `) AS r
 		ORDER BY serial_number, reading_date DESC;`
 
-	readings, err := r.selectNamed(ctx, query, map[string]any{"customer_number": customerNumber})
+	readings, err := r.selectNamed(ctx, query, map[string]any{paramCustomerNumber: customerNumber})
 	if err != nil {
 		return nil, fmt.Errorf("selecting the last reading of each meter: %w", err)
 	}
@@ -100,10 +118,10 @@ func (r *Reading) List(
 	}
 
 	readings, err := r.selectNamed(ctx, query, map[string]any{
-		"customer_number": customerNumber,
-		"from":            bound,
-		"boundary":        boundary,
-		"limit":           seek.Limit,
+		paramCustomerNumber: customerNumber,
+		"from":              bound,
+		"boundary":          boundary,
+		"limit":             seek.Limit,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("listing the readings: %w", err)

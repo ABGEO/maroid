@@ -14,7 +14,6 @@ import (
 	"github.com/abgeo/maroid/plugins/gwp/handler"
 	"github.com/abgeo/maroid/plugins/gwp/job"
 	"github.com/abgeo/maroid/plugins/gwp/permission"
-	"github.com/abgeo/maroid/plugins/gwp/repository"
 	"github.com/abgeo/maroid/plugins/gwp/service"
 	"github.com/abgeo/maroid/plugins/gwp/widget"
 )
@@ -28,7 +27,7 @@ var pluginID = pluginapi.ParsePluginID("dev.maroid.gwp")
 type GWPPlugin struct {
 	config      *config.Config
 	logger      *slog.Logger
-	store       *repository.Store
+	store       *service.Store
 	collector   *service.Collector
 	connections *service.Connections
 }
@@ -69,7 +68,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 	}
 
 	var (
-		store    = repository.NewStore(pluginapi.NewPluginDB(database, pluginID))
+		store    = service.NewStore(pluginapi.NewPluginDB(database, pluginID))
 		client   = service.NewAPIClient(pluginConfig)
 		settings = pluginapi.NewPluginSettings(settingsProvider, pluginID)
 		secrets  = pluginapi.NewPluginSecrets(secretProvider, pluginID)

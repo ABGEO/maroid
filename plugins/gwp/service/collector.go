@@ -40,33 +40,34 @@ func NewCollector(
 
 // Collect reads the readings of the assigned customer of the acting workspace and
 // inserts each new one. It answers errs.ErrNotAssigned with no assigned customer and
-// errs.ErrNotConnected with no connection. The job treats both as a skip.
-func (c *Collector) Collect(ctx context.Context) error {
+// errs.ErrNotConnected with no connection. The job treats both as a skip. It answers
+// the count of the readings that the water service reported for the customer.
+func (c *Collector) Collect(ctx context.Context) (int, error) {
 	customerNumber, err := c.store.AssignedCustomer(ctx)
 	if err != nil {
-		return fmt.Errorf("reading the assigned customer: %w", err)
+		return 0, fmt.Errorf("reading the assigned customer: %w", err)
 	}
 
 	token, err := c.account.token(ctx)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	responses, err := c.readings(ctx, token)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	readings, err := readingsOf(responses, customerNumber)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	if err = c.store.InsertReadings(ctx, readings); err != nil {
-		return fmt.Errorf("storing the readings: %w", err)
+		return 0, fmt.Errorf("storing the readings: %w", err)
 	}
 
-	return nil
+	return len(readings), nil
 }
 
 // readings reads the readings with the token. A rejected token gives way to one new

@@ -1,6 +1,8 @@
 // Package config defines the configuration schema for the plugin.
 package config
 
+import "time"
+
 // CronSchedule defines the cron schedule configuration for different jobs.
 type CronSchedule struct {
 	ReadingsCollector string `default:"0 0 15 * *" mapstructure:"readings_collector" validate:"cron"`
@@ -8,8 +10,9 @@ type CronSchedule struct {
 
 // Config represents the root plugin configuration.
 type Config struct {
-	BaseURL      string       `default:"https://www.gwp.ge/api" mapstructure:"base_url"`
-	CronSchedule CronSchedule `mapstructure:"cron_schedule"`
+	BaseURL        string        `default:"https://www.gwp.ge/api" mapstructure:"base_url"`
+	RequestTimeout time.Duration `default:"15s"                    mapstructure:"request_timeout"`
+	CronSchedule   CronSchedule  `mapstructure:"cron_schedule"`
 }
 
 // WorkspaceSettings holds the GWP account that every member of a workspace shares.
