@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
+	import WidgetGrid from '$lib/components/widgets/WidgetGrid.svelte';
+
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 </script>
 
-<div class="max-w-2xl">
+<div class="max-w-5xl">
 	<header class="page-header">
 		<div>
 			<h1 class="page-title">{data.workspace.name}</h1>
@@ -14,7 +16,9 @@
 		</div>
 	</header>
 
-	<ul class="list panel">
+	<WidgetGrid workspaceId={data.workspace.id} />
+
+	<ul class="list panel max-w-2xl">
 		<li>
 			<a
 				class="list-row hover:bg-base-200"

@@ -6,6 +6,7 @@ import { plugins } from './plugins';
 import { providers } from './providers';
 import { settings } from './settings';
 import { users } from './users';
+import { widgets } from './widgets';
 import { workspaces } from './workspaces';
 
 export {
@@ -49,7 +50,13 @@ export type {
 	NotificationProviderKind,
 	NotificationProvider,
 	NotificationRoute,
-	NotificationTopic
+	NotificationTopic,
+	Widget,
+	WidgetAnswer,
+	WidgetSize,
+	StatData,
+	ListData,
+	ListItem
 } from './types';
 export type { NewUser, SelfChange, UserChange } from './users';
 export { LOCAL_PROVIDER } from './users';
@@ -71,5 +78,6 @@ export const api = {
 	providers,
 	settings,
 	users,
+	widgets,
 	workspaces
 };

@@ -15,6 +15,7 @@ import (
 	"github.com/abgeo/maroid/plugins/jasmine/job"
 	"github.com/abgeo/maroid/plugins/jasmine/mqtt/subscriber"
 	"github.com/abgeo/maroid/plugins/jasmine/permission"
+	"github.com/abgeo/maroid/plugins/jasmine/widget"
 )
 
 // JasminePlugin keeps the plants of each workspace, their environments, and
@@ -35,6 +36,7 @@ var (
 	_ pluginapi.PermissionPlugin     = (*JasminePlugin)(nil)
 	_ pluginapi.CronPlugin           = (*JasminePlugin)(nil)
 	_ pluginapi.NotifyingPlugin      = (*JasminePlugin)(nil)
+	_ pluginapi.WidgetPlugin         = (*JasminePlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -97,6 +99,11 @@ func (p *JasminePlugin) NotificationTopics() ([]pluginapi.NotificationTopic, err
 			Description: "The due and the overdue care of the plants, grouped by environment.",
 		},
 	}, nil
+}
+
+// Widgets returns the plants that need care, for the home page.
+func (p *JasminePlugin) Widgets() ([]pluginapi.Widget, error) {
+	return []pluginapi.Widget{widget.NewAttention(p.db)}, nil
 }
 
 // MQTTSubscribers returns the subscriber of the sensor readings.

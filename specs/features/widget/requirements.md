@@ -135,6 +135,18 @@ The home page must order the widgets by the order of their plugins in the naviga
 
 The home page must show no widget area when no widget applies, and keep the links that it shows today.
 
+### `WIDGET-FR-037`
+
+The Overview entry of the navigation must open the home page of the acting workspace, and show as active on it.
+
+**Why:** The widgets make the home page the overview of a workspace. The entry pointed at the root of the deck, which redirects, so it never showed as active.
+
+**Examples:**
+
+- Normal case: the person opens the home page of workspace H. Overview shows as active.
+- Limit case: the person belongs to no workspace. Overview opens the root of the deck.
+- Unwanted case: the person opens a plugin page of H. Overview does not show as active.
+
 ### Reading a widget
 
 ### `WIDGET-FR-012`

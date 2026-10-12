@@ -180,6 +180,50 @@ export interface Capabilities {
 	telegram_commands?: TelegramCommand[];
 	telegram_conversations?: TelegramConversation[];
 	mcp_tools?: MCPTool[];
+	widgets?: Widget[];
+}
+
+export type WidgetKind = 'stat' | 'list';
+export type WidgetSize = 'xs' | 's' | 'm' | 'l';
+export type WidgetState = 'ready' | 'empty' | 'not_set_up';
+
+/** One widget that a plugin shows on the home page. */
+export interface Widget {
+	plugin_id: string;
+	key: string;
+	title: string;
+	kind: WidgetKind;
+	size: WidgetSize;
+	permission: string;
+}
+
+/** The data of a stat widget. A link is a path of the plugin. */
+export interface StatData {
+	value: string;
+	unit?: string;
+	caption?: string;
+	link?: string;
+}
+
+export interface ListItem {
+	label: string;
+	meta?: string;
+	link?: string;
+}
+
+/** The data of a list widget. `more` links to the page that shows every item. */
+export interface ListData {
+	items: ListItem[];
+	more?: string;
+}
+
+/** One answer of a widget. `ready` carries the data of its kind. */
+export interface WidgetAnswer {
+	state: WidgetState;
+	message?: string;
+	link?: string;
+	stat?: StatData;
+	list?: ListData;
 }
 
 export interface Plugin {

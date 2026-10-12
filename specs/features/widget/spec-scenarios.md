@@ -285,6 +285,16 @@ connection page, and jasmine shows "No plant needs care."
 **Then** at 1280 the balance takes two of four columns and one row, and the list two
 columns and two rows. At 375 each takes the full width, the balance one row and the list two.
 
+## `WIDGET-SC-026`
+
+**Verifies:** `WIDGET-FR-037`
+**Layer:** manual
+
+**Given** a person who is a member of workspace H.
+**When** the person opens the home page of H, then a plugin page of H.
+**Then** Overview shows as active on the home page, and not on the plugin page. A
+click on Overview from the plugin page opens the home page of H.
+
 ## Retired identifiers
 
 This file has no retired identifier.

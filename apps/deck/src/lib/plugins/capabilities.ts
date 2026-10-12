@@ -8,6 +8,7 @@ export type CapabilityName = keyof Capabilities;
  */
 const LABELS: Record<CapabilityName, string> = {
 	ui: 'UI',
+	widgets: 'Widgets',
 	settings: 'Settings',
 	api: 'API',
 	telegram_commands: 'Bot commands',

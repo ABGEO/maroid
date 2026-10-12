@@ -62,6 +62,7 @@ on the home page. Parking and jasmine declare the first two. `ADR-0016` changes
 | `WIDGET-FR-034`   | Section 4.7, `WIDGET-SC-016` |
 | `WIDGET-FR-035`   | Section 4.7, `WIDGET-SC-016` |
 | `WIDGET-FR-036`   | Section 4.7, `WIDGET-SC-017` |
+| `WIDGET-FR-037`   | Section 4.6, `WIDGET-SC-026` |
 | `WIDGET-NFR-001`  | Section 4.4, `WIDGET-DD-003`, `WIDGET-SC-013` |
 | `WIDGET-INV-001`  | Section 4.4, `WIDGET-SC-009` |
 | `WIDGET-INV-002`  | Section 4.4, `WIDGET-SC-008` |
@@ -121,6 +122,7 @@ on the home page. Parking and jasmine declare the first two. `ADR-0016` changes
 | `apps/deck/src/lib/components/widgets/ListWidget.svelte` | create | The `list` kind. |
 | `apps/deck/src/lib/components/widgets/layout.ts` | create | `spanOf(size)`, `itemsOf(size)`, `linkOf(workspaceId, pluginId, path)`. |
 | `apps/deck/src/routes/(dashboard)/w/[workspace]/+page.svelte` | change | `WidgetGrid` above the list of links. |
+| `apps/deck/src/lib/components/layout/Sidebar.svelte` | change | Overview links to the home page of the acting workspace. Section 4.6. |
 | `plugins/parking/widget/balance.go` | create | The balance widget. Section 4.7. |
 | `plugins/parking/widget/balance_test.go` | create | `WIDGET-SC-014`, `WIDGET-SC-015`. |
 | `plugins/parking/main.go` | change | `pluginapi.WidgetPlugin`. `Widgets()` answers the balance widget. |
@@ -290,7 +292,7 @@ connection for example, answers a state instead.
 | Element | Behavior | Realizes |
 | ------- | -------- | -------- |
 | The home page | `WidgetGrid` above the `list panel` of links. No widget: `WidgetGrid` draws nothing. A failed list: an `Alert` "The widgets did not load." above the links. | `WIDGET-FR-011` |
-| The grid | `grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 auto-rows-[8rem]`. | `WIDGET-FR-028` |
+| The grid | `grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 auto-rows-[10rem]`. A row of 10rem holds two rows of a list, so 5 items fit in two rows. | `WIDGET-FR-028` |
 | `spanOf(size)` | `xs`: `col-span-1 row-span-1`. `s`: `sm:col-span-2 row-span-1`. `m`: `sm:col-span-2 row-span-2`. `l`: `sm:col-span-2 lg:col-span-4 row-span-2`. One column below `sm`, so every widget takes the full width and keeps its rows. | `WIDGET-FR-028`, `WIDGET-FR-029` |
 | `WidgetCard` | Calls `widgets.read` on mount, on its own. Each card holds its own state, so one card waits or fails alone. | `WIDGET-FR-014` |
 | The placeholder | A `card` of the span of the size with the title and a `skeleton` body. | `WIDGET-FR-015` |
@@ -299,10 +301,11 @@ connection for example, answers a state instead.
 | `not_set_up` | The title, the message, and a link "Set up" to `linkOf(link)`. | `WIDGET-FR-019` |
 | An error | The title, and "This widget did not load." in `text-error`. | `WIDGET-FR-020` |
 | `StatWidget` | The value large, the unit beside it, the caption below. The card links to the link, when present. | `WIDGET-FR-023` |
-| `ListWidget` | The first `itemsOf(size)` items: the label, the meta line below, each a link when present. Then "N more" when items remain. Then "See all" when `more` is present. | `WIDGET-FR-024` to `WIDGET-FR-027` |
+| `ListWidget` | The first `itemsOf(size)` items, as the rows of the link list of the home page: `list-row` with a hover background and an arrow when the item links. The label, the meta line below. Then "N more" when items remain. Then "See all" when `more` is present. | `WIDGET-FR-024` to `WIDGET-FR-027` |
 | `itemsOf(size)` | 2 for `xs` and `s`, 5 for `m` and `l`. | `WIDGET-FR-025` |
 | `linkOf` | `resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]')` with the path without its leading `/`. | `WIDGET-FR-022` |
 | Text | Every text goes through `{value}`. No widget component uses `{@html}`. | `WIDGET-FR-021` |
+| Overview | Links to `resolve('/(dashboard)/w/[workspace]', ...)` of the acting workspace, else to `/`. Active when the address is that link. | `WIDGET-FR-037` |
 
 ### 4.7 The first widgets
 
@@ -385,8 +388,8 @@ runs `repository.NewCareInterval(tx).ListAttention(ctx)` in `db.WithTx`:
 | 3   | Errors, problem, registry, capability, registrar, loader, and their tests. | `WIDGET-FR-002` to `WIDGET-FR-007` | [x] |
 | 4   | `widget.Reader`, the handler, the wiring, and their tests. `api.yaml`, `components.yaml`, `pcap/api.yaml`. | `WIDGET-FR-008` to `WIDGET-FR-013`, `WIDGET-FR-016`, `WIDGET-FR-020`, `WIDGET-FR-022`, `WIDGET-NFR-001`, `WIDGET-INV-*` | [x] |
 | 5   | The parking widget and the jasmine widget, and their tests. Build every plugin (`BLD-004`). | `WIDGET-FR-030` to `WIDGET-FR-036` | [ ] |
-| 6   | The deck: the client, the components, the home page, the label. | `WIDGET-FR-011`, `WIDGET-FR-014` to `WIDGET-FR-029` | [ ] |
-| 7   | The manual scenarios. | `WIDGET-SC-018` to `WIDGET-SC-025` | [ ] |
+| 6   | The deck: the client, the components, the home page, the label, the Overview entry. | `WIDGET-FR-011`, `WIDGET-FR-014` to `WIDGET-FR-029`, `WIDGET-FR-037` | [ ] |
+| 7   | The manual scenarios. | `WIDGET-SC-018` to `WIDGET-SC-026` | [ ] |
 
 ## 8. Out of scope for this specification
 

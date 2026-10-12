@@ -24,6 +24,11 @@
 	}
 
 	const workspaceId = $derived(actingWorkspaceId(page.params.workspace));
+	const overviewHref = $derived(
+		workspaceId === null
+			? resolve('/')
+			: resolve('/(dashboard)/w/[workspace]', { workspace: workspaceId })
+	);
 
 	$effect(() => {
 		if (workspaceId !== null) {
@@ -77,7 +82,8 @@
 	<div class="is-drawer-close:overflow-visible flex-1 overflow-y-auto">
 		<ul class="menu w-full">
 			<li>
-				<a href={resolve('/')} class:menu-active={isActive(resolve('/'))}>
+				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- overviewHref resolves its target -->
+				<a href={overviewHref} class:menu-active={isActive(overviewHref)}>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						width="16"
