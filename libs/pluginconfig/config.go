@@ -43,8 +43,9 @@ func decodeAndValidate(tag string, subject string, source any, target any) error
 	defaults.SetDefaults(target)
 
 	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		TagName: tag,
-		Result:  target,
+		TagName:    tag,
+		Result:     target,
+		DecodeHook: mapstructure.StringToTimeDurationHookFunc(),
 	})
 	if err != nil {
 		return fmt.Errorf("building the %s decoder: %w", subject, err)

@@ -2,6 +2,7 @@ package pluginconfig_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -90,4 +91,25 @@ func TestDecodeAndValidateConfigAppliesANestedDefault(t *testing.T) {
 		map[string]any{keyEmail: valueEmail}, target,
 	))
 	require.Equal(t, "0 10 1 * *", target.Schedule.Collector)
+}
+
+type clientConfig struct {
+	Timeout time.Duration `default:"15s" mapstructure:"timeout"`
+}
+
+// GWPACC-SC-032: A duration of the configuration decodes from its text, and the
+// default applies when the configuration names none.
+func TestDecodeAndValidateConfigReadsADuration(t *testing.T) {
+	t.Parallel()
+
+	configured := new(clientConfig)
+	require.NoError(
+		t,
+		pluginconfig.DecodeAndValidateConfig(map[string]any{"timeout": "100ms"}, configured),
+	)
+	require.Equal(t, 100*time.Millisecond, configured.Timeout)
+
+	defaulted := new(clientConfig)
+	require.NoError(t, pluginconfig.DecodeAndValidateConfig(map[string]any{}, defaulted))
+	require.Equal(t, 15*time.Second, defaulted.Timeout)
 }
