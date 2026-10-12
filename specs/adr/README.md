@@ -3,7 +3,7 @@ title: Architecture decision records
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-10-11
+updated: 2026-10-13
 ---
 
 # Architecture decision records
@@ -59,3 +59,5 @@ The frontmatter holds the identifier.
 | `ADR-0014` | A job of the hub runs for each workspace | `a-hub-job-runs-for-each-workspace.md` | accepted | 2026-10-12 | `OWN-009` |
 | `ADR-0015` | A self resource needs no collection read | `a-self-resource-needs-no-collection-read.md` | accepted | 2026-10-12 | `RES-002` |
 | `ADR-0016` | A widget declares a permission and follows the enablement | `a-widget-declares-a-permission.md` | accepted | 2026-10-12 | `SEC-012`, `SEC-013` |
+| `ADR-0017` | The service package of a plugin holds its domain services | `a-plugin-service-holds-its-domain-services.md` | accepted | 2026-10-13 | `PKG-001` |
+| `ADR-0018` | A put of a self resource may carry no body | `a-put-may-carry-no-body.md` | accepted | 2026-10-13 | `RES-002` |

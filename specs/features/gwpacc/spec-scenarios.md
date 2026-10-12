@@ -113,10 +113,10 @@ carries `assigned: true`.
 
 **Given** a `token` secret.
 **When** E sends `PUT /customer-assignments/self` with (a) `C9`, which the account does not hold;
-(b) an empty `customer_number`; (c) a body of 5 KiB.
+(b) an empty `customer_number`; (c) a body of 5 KiB; (d) a body with the member `note`.
 **Then** (a) 422 `customer-unknown`; (b) 422 `/problems/http/validation-failed` with the
-pointer `#/customer_number`; (c) 413 `/problems/http/content-too-large`. No assignment
-exists in any case.
+pointer `#/customer_number`; (c) 413 `/problems/http/content-too-large`; (d) 400
+`/problems/http/member-unknown`, whose detail names `note`. No assignment exists in any case.
 
 ## `GWPACC-SC-011`
 
@@ -134,7 +134,8 @@ exists in any case.
 
 **Given** a `token` secret, `C1` assigned, and the fake service reports one meter of `C1` and one of `C2`.
 **When** the job runs in W.
-**Then** the reading repository receives one insert, for the meter of `C1`.
+**Then** the reading repository receives one insert, for the meter of `C1`, and the log
+holds the count `readings=1` at info.
 
 ## `GWPACC-SC-013`
 
@@ -241,7 +242,8 @@ the widget. `account.connect` has `editor` and guards the other three routes.
 **Layer:** unit
 
 **Given** a `token` secret `T1`, and the settings with the password `P1`.
-**When** E calls each route, and the fake service fails each call in turn.
+**When** E calls each route, and the fake service fails each call in turn, with a body
+that names the failure and no credential, as the water service does.
 **Then** no answer body and no log line holds `T1` or `P1`.
 
 ## `GWPACC-SC-024`
@@ -324,6 +326,28 @@ for the setup with a link to the account page.
 **Given** the plugin.
 **When** the test reads the routes of the readings handler.
 **Then** `GET /readings` names `account.read`.
+
+## `GWPACC-SC-032`
+
+**Verifies:** `GWPACC-FR-007`
+**Layer:** unit
+
+**Given** a `token` secret, `request_timeout` of 100 milliseconds, and the fake service
+answers the list of the customers after one second.
+**When** V reads `GET /connections/self`.
+**Then** the answer is 502 `/problems/dev.maroid.gwp/service-unavailable` within one
+second. The `token` secret stays.
+
+## `GWPACC-SC-033`
+
+**Verifies:** `GWPACC-FR-016`
+**Layer:** unit
+
+**Given** a `token` secret, `C1` assigned, and the fake service answers `/RecordDisplay`
+with 503 and a body of 600 bytes that starts with `maintenance`.
+**When** the job runs in W.
+**Then** the job answers an error that matches `errs.ErrRequestFailed`, names the status
+503 and `maintenance`, and holds at most 512 bytes of the body.
 
 ## Retired identifiers
 

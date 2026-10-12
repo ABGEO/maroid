@@ -4,7 +4,7 @@ title: The water account of a workspace
 type: spec
 status: approved
 created: 2026-10-12
-updated: 2026-10-12
+updated: 2026-10-13
 approved_by: Temuri
 approved_on: 2026-10-12
 constrained_by: [PLG, ARC, OWN, DAT, CFG, EXT, LOG, SEC, UI, JOB, API, ERR, RES, PKG, BLD, TST]
@@ -33,7 +33,7 @@ or `pluginapi`. `spec-readings.md` holds the readings page. `spec-scenarios.md` 
 | `GWPACC-FR-004`   | `api.yaml`, `GWPACC-SC-002` |
 | `GWPACC-FR-005`   | `api.yaml`, `GWPACC-DD-004`, `GWPACC-SC-003` |
 | `GWPACC-FR-006`   | `api.yaml`, `GWPACC-SC-003` |
-| `GWPACC-FR-007`   | Section 4.5, `GWPACC-SC-004` |
+| `GWPACC-FR-007`   | Section 4.5, `GWPACC-SC-004`, `GWPACC-SC-032` |
 | `GWPACC-FR-008`   | `api.yaml`, `GWPACC-DD-003`, `GWPACC-SC-005` |
 | `GWPACC-FR-009`   | Section 4.4, `GWPACC-DD-003`, `GWPACC-SC-005`, `GWPACC-SC-006` |
 | `GWPACC-FR-010`   | `api.yaml`, `GWPACC-SC-007` |
@@ -42,7 +42,7 @@ or `pluginapi`. `spec-readings.md` holds the readings page. `spec-scenarios.md` 
 | `GWPACC-FR-013`   | `api.yaml`, `GWPACC-DD-001`, `GWPACC-SC-009`, `GWPACC-SC-024` |
 | `GWPACC-FR-014`   | Section 4.5, `GWPACC-SC-010` |
 | `GWPACC-FR-015`   | Section 4.4, `GWPACC-DD-006`, `GWPACC-SC-009`, `GWPACC-SC-011` |
-| `GWPACC-FR-016`   | Section 4.3, `GWPACC-SC-012` |
+| `GWPACC-FR-016`   | Section 4.3, `GWPACC-SC-012`, `GWPACC-SC-033` |
 | `GWPACC-FR-017`   | Section 4.3, `GWPACC-SC-013` |
 | `GWPACC-FR-018`   | Section 4.4, `GWPACC-DD-002`, `GWPACC-SC-014`, `GWPACC-SC-015` |
 | `GWPACC-FR-019`   | Section 4.5, `GWPACC-SC-016` |
@@ -84,7 +84,8 @@ or `pluginapi`. `spec-readings.md` holds the readings page. `spec-scenarios.md` 
 | `RES-001`, `RES-002` | REST   | `/connections/self` and `/customer-assignments/self` keep the plural of `Z-134`. Both collections answer no `GET`, as `ADR-0015` permits. |
 | `GO-005`  | Go style          | Every sentinel error lives in `errs/`. |
 | `UI-005` to `UI-009` | Web UI | The remote exports `routes` with `/account`, and reaches the API through `host.api`. |
-| `PKG-001` | Package layout    | The plugin gains `db/`, `errs/`, `handler/`, `model/`, `permission/`, `repository/`, `widget/`, and `ui/`. |
+| `PKG-001` | Package layout    | The plugin gains `db/`, `errs/`, `handler/`, `model/`, `permission/`, `repository/`, `widget/`, and `ui/`. `service/` holds the domain services and the store (`ADR-0017`). |
+| `RES-002` | REST              | `PUT /connections/self` carries no body (`ADR-0018`). |
 | `BLD-003` | Build             | The build plan builds the UI before the `.so`. |
 
 ## 4. Design
@@ -101,19 +102,22 @@ or `pluginapi`. `spec-readings.md` holds the readings page. `spec-scenarios.md` 
 | `plugins/gwp/model/{doc,connection,reading}.go` | create | `ConnectionState`, `Connection`, `Customer`, `Reading`, whose `Usage` is nil for the earliest reading of a meter |
 | `plugins/gwp/dto/api-client.go` | change | `ReadingItem.MapToModel(customerNumber string)`. `prevReadValue` stays unread |
 | `plugins/gwp/dto/connection.go` | create | `ConnectionResponse`, `CustomerResponse`, `AssignmentRequest` |
-| `plugins/gwp/service/api-client.go` | change | A 401 is `errs.ErrNotConnected`. A sign in with `success: false` is `errs.ErrCredentialsRejected` |
-| `plugins/gwp/service/connection.go` | create | `ConnectionService`, `Connections`, `NewConnections` |
+| `plugins/gwp/config/config.go` | change | `Config.RequestTimeout` |
+| `libs/pluginconfig/config.go` | change | The decoder takes `mapstructure.StringToTimeDurationHookFunc`, so a configuration value `15s` decodes into a `time.Duration`. The hub and every plugin build again, because they share the package |
+| `plugins/gwp/service/api-client.go` | change | A 401 is `errs.ErrNotConnected`. A sign in with `success: false` is `errs.ErrCredentialsRejected`. A failure wraps the status and at most 512 bytes of the body (`EXT-007`). Every call ends after `request_timeout` |
+| `plugins/gwp/service/connection.go` | create | `Connections`, `NewConnections` |
 | `plugins/gwp/service/collector.go` | create | `Collector`, `NewCollector` |
-| `plugins/gwp/repository/{doc,assignment,reading,store}.go` | create | `CustomerAssignment` and `Reading` over one transaction. `Store` over `PluginDB`, one transaction for each call |
+| `plugins/gwp/repository/{doc,assignment,reading}.go` | create | `CustomerAssignmentRepository` and `CustomerAssignment`, `ReadingRepository` and `Reading`, each over one transaction (`REP-002`, `REP-003`) |
+| `plugins/gwp/service/store.go` | create | `Store` over `PluginDB`, one transaction for each call (`ADR-0017`) |
 | `plugins/gwp/job/readings_collector.go` | change | `Run` calls `Collector.Collect`. The log of every customer goes |
-| `plugins/gwp/handler/{doc,connection,problem}.go` | create | `ConnectionHandler`, `NewConnectionHandler`, the problem types of section 4.5 |
+| `plugins/gwp/handler/{doc,connection,problem}.go` | create | `ConnectionService`, which the handler declares, `ConnectionHandler`, `NewConnectionHandler`, the problem types of section 4.5 |
 | `plugins/gwp/permission/permission.go` | create | `AccountRead`, `AccountConnect` |
 | `plugins/gwp/widget/{doc,usage}.go` | create | `NewUsage` |
 | `plugins/gwp/embed.go` | create | `uiAssets`, the embedded `ui/dist` |
 | `plugins/gwp/main.go` | change | `Migrations`, `Permissions`, `Routes`, `UIManifest`, `Widgets`, `host.Database`, `host.Secrets` |
 | `plugins/gwp/ui/` | create | `package.json`, `vite.config.ts`, `svelte.config.js`, `tsconfig.json`, `src/entry.ts`, `src/app.css`, `src/api/{index,connection,types}.ts`, `src/pages/account/Account.svelte` |
 
-`ConnectionService`:
+`handler.ConnectionService`, which the handler declares as its consumer:
 
 ```go
 Status(ctx context.Context) (*model.Connection, error)
@@ -127,15 +131,17 @@ Assign(ctx context.Context, customerNumber string) (*model.Connection, error)
 ```go
 // Collect reads the readings of the assigned customer of the acting workspace and
 // inserts each new one. It answers errs.ErrNotAssigned with no assigned customer and
-// errs.ErrNotConnected with no connection. The job treats both as a skip.
-Collect(ctx context.Context) error
+// errs.ErrNotConnected with no connection. The job treats both as a skip. It answers
+// the count of the readings that the water service reported for the customer.
+Collect(ctx context.Context) (int, error)
 ```
 
 `repository.CustomerAssignment`: `Get(ctx) (string, error)` answers `errs.ErrNotAssigned`
 when the workspace holds none, `Put(ctx, customerNumber string) error`, `Delete(ctx) error`.
-`repository.Store` gives `AssignedCustomer`, `Assign`, `Unassign`, `InsertReadings`, and
-`LastReadingOfEachMeter`, each in one `PluginDB.WithTx`. The services and the widget
-depend on interfaces that each one declares, and `Store` meets them.
+`service.Store` gives `AssignedCustomer`, `Assign`, `Unassign`, `InsertReadings`, and
+`LastReadingOfEachMeter`, each in one `PluginDB.WithTx`, where it creates each repository.
+The services, the handlers, and the widget depend on interfaces that each one declares,
+and `Store` meets them.
 `repository.Reading`: `Insert(ctx, *model.Reading) error`, `LastOfEachMeter(ctx, customerNumber string) ([]model.Reading, error)`.
 
 ### 4.2 Data model
@@ -203,11 +209,19 @@ because a reading outlives its assignment (`GWPACC-FR-021`).
 | `username` | free text | Username | `GWPACC-FR-001` |
 | `password` | secret | Password | `GWPACC-FR-001`, `GWPACC-FR-002` |
 
+**Configuration.**
+
+| Key | Type | Default | Secret | Realizes |
+| --- | ---- | ------- | ------ | -------- |
+| `base_url` | string | `https://www.gwp.ge/api` | no | `GWPACC-FR-009` |
+| `request_timeout` | duration | `15s` | no | `GWPACC-FR-007`, `GWPACC-FR-018` |
+| `cron_schedule.readings_collector` | cron | `0 0 15 * *` | no | `GWPACC-FR-016` |
+
 **Cron job.** The identifier and the schedule stay.
 
 | Identifier | Schedule | Runs in | Behavior | Realizes |
 | ---------- | -------- | ------- | -------- | -------- |
-| `readings_collector` | `cron_schedule.readings_collector`, default `0 0 15 * *` | Each workspace that enabled the plugin | `Collector.Collect`. `errs.ErrNotConnected` and `errs.ErrNotAssigned` log a skip at info and answer nil | `GWPACC-FR-016` to `GWPACC-FR-019` |
+| `readings_collector` | `cron_schedule.readings_collector`, default `0 0 15 * *` | Each workspace that enabled the plugin | `Collector.Collect`, and log the count of the readings at info. `errs.ErrNotConnected` and `errs.ErrNotAssigned` log a skip at info and answer nil | `GWPACC-FR-016` to `GWPACC-FR-019` |
 
 **UI routes.**
 
@@ -277,7 +291,10 @@ The 401 branch is the one of `GWPACC-FR-018`. A read of the page takes no such b
 | The answer of `/RecordDisplay` holds no entry for the assigned customer | Not reached | Error `ErrCustomerAbsent`, nothing stored (`GWPACC-FR-019`) |
 | The water service answers 5xx, or fails to answer | 502 `service-unavailable`. The token stays | Error `ErrRequestFailed` |
 
-No detail names the password or the token (`GWPACC-INV-003`, `LOG-008`).
+No detail names the password or the token (`GWPACC-INV-003`, `LOG-008`). An error of the water
+service wraps the status and at most 512 bytes of the body (`EXT-007`). The water service
+echoes no credential in the body of a failure, so the body names none. A call that passes
+`request_timeout` fails as `errs.ErrRequestFailed`, so a route answers 502.
 
 ## 5. Design decisions
 
@@ -378,7 +395,7 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `GWPACC-SC-001` to `GWPACC-SC-031`.
+`spec-scenarios.md` holds `GWPACC-SC-001` to `GWPACC-SC-033`.
 
 ## 7. Build plan
 
@@ -386,7 +403,7 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 | --- | ---- | -------- | ---- |
 | 1 | `errs/`, `model/`, `permission/`, and the API client: the 401 rule and the rejected sign in | `GWPACC-FR-012`, `GWPACC-FR-018`, `GWPACC-FR-026`, `GWPACC-FR-027` | [x] |
 | 2 | `db/`, both migrations, `repository/`, and `Migrations` in `main.go` | `GWPACC-FR-013`, `GWPACC-FR-020`, `GWPACC-FR-021` | [x] |
-| 3 | `service/collector.go`, `ReadingItem.Hash`, and the job | `GWPACC-FR-016` to `GWPACC-FR-020` | [x] |
+| 3 | `service/collector.go`, the mapping of `ReadingItem`, and the job | `GWPACC-FR-016` to `GWPACC-FR-020` | [x] |
 | 4 | `service/connection.go` | `GWPACC-FR-003` to `GWPACC-FR-015` | [x] |
 | 5 | `handler/`, `dto/connection.go`, and `api.yaml` | `GWPACC-FR-003` to `GWPACC-FR-015` | [x] |
 | 6 | `widget/usage.go` and `Widgets` | `GWPACC-FR-022` to `GWPACC-FR-025` | [x] |
@@ -394,10 +411,11 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 | 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GWPACC-FR-003` to `GWPACC-FR-015` | [x] |
 | 9 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [x] |
 | 10 | The migration `readings_key_by_meter_and_date`, the upsert of `DD-007`, the usage of `DD-008`, the lines of the widget, and the mapping that leaves `prevReadValue` unread | `GWPACC-FR-020`, `GWPACC-FR-022` | [x] |
-| 11 | `Reading.ID`, `Reading.List`, `Store.ReadingsPage` | `GWPACC-FR-028`, `GWPACC-FR-029` | [x] |
+| 11 | `Reading.ID`, `Reading.List`, and `ReadingsPage` of the store | `GWPACC-FR-028`, `GWPACC-FR-029` | [x] |
 | 12 | `handler/reading.go`, `dto/reading.go`, `api.yaml`, the `More` of the widget | `GWPACC-FR-028` to `GWPACC-FR-034` | [x] |
 | 13 | The page `/readings`, the chart, and `UIManifest`. Build the UI, then the `.so` | `GWPACC-FR-028` to `GWPACC-FR-032` | [x] |
 | 14 | `GWPACC-SC-030` in the deck, in both themes. Lint and build the plugin | `GWPACC-FR-030` to `GWPACC-FR-032` | [ ] |
+| 15 | The corrections of the review of 2026-10-13: `service.Store` (`ADR-0017`), the repository interfaces, the timeout, the body of `EXT-007`, the count of a collection, the fragment of the assignment | `GWPACC-FR-007`, `GWPACC-FR-013`, `GWPACC-FR-016`, `GWPACC-FR-018` | [x] |
 
 ## Retired identifiers
 

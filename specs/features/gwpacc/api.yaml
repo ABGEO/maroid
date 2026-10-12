@@ -128,7 +128,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Connection"
         "400":
-          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+          $ref: "#/components/responses/MalformedBody"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
@@ -269,6 +269,7 @@ components:
           description: Whether the customer is assigned to the acting workspace.
     Assignment:
       type: object
+      additionalProperties: false
       required: [customer_number]
       properties:
         customer_number:
@@ -312,6 +313,18 @@ components:
                 $ref: "#/components/schemas/Reading"
 
   responses:
+    MalformedBody:
+      description: >
+        The body is not a JSON object, with the type `/problems/http/body-invalid`,
+        or it names a member that the schema does not declare, with the type
+        `/problems/http/member-unknown`.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
     ServiceUnavailable:
       description: >
         The water service failed or answered nothing. The type is

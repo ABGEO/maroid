@@ -4,7 +4,7 @@ title: The readings page of the water account
 type: spec
 status: approved
 created: 2026-10-12
-updated: 2026-10-12
+updated: 2026-10-13
 approved_by: Temuri
 approved_on: 2026-10-12
 constrained_by: [PLG, OWN, RES, API, ERR, UI, TS, GO, BLD, TST]
@@ -40,7 +40,7 @@ widget links to the page. The page and the route read only the database.
 | ---- | ------ | ----- |
 | `plugins/gwp/model/reading.go` | change | `Reading.ID` |
 | `plugins/gwp/repository/reading.go` | change | `List(ctx, seek page.Seek, customerNumber string, from *time.Time) ([]model.Reading, error)` |
-| `plugins/gwp/repository/store.go` | change | `ReadingsPage(ctx, asked page.Request, from *time.Time) (page.Window[model.Reading], error)`. It reads the assignment and the page in one transaction, and answers `errs.ErrNotAssigned` |
+| `plugins/gwp/service/store.go` | change | `ReadingsPage(ctx, asked page.Request, from *time.Time) (page.Window[model.Reading], error)`. It reads the assignment and the page in one transaction, and answers `errs.ErrNotAssigned` |
 | `plugins/gwp/dto/reading.go` | create | `MeterReadingResponse`, `NewMeterReadingResponseList`. `ReadingResponse` already names the answer of the water service |
 | `plugins/gwp/handler/reading.go` | create | `ReadingHandler`, `NewReadingHandler`, `ReadingLister` |
 | `plugins/gwp/handler/problem.go` | change | `typeNotAssigned` |

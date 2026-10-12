@@ -4,7 +4,7 @@ title: The REST conventions
 type: guideline
 status: active
 created: 2026-09-22
-updated: 2026-10-12
+updated: 2026-10-13
 scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, plugins/, libs/api-client/, libs/plugin-sdk/, apps/deck/, specs/features/*/api.yaml, specs/templates/api.yaml, specs/api/, build/openapi/]
 related: [API, ERR, SPC, DAT, EXT, SEC, OWN, UI, TG, MQT, CFG, BLD, CLI]
 ---
@@ -47,6 +47,7 @@ registers. Every rule that neither table names binds in full.
 | `Z-129`, `Z-134` | `RES-004` exempts the one address that a client derives from a standard. `.well-known` opens with a stop, which `Z-129` forbids, and `oauth-protected-resource` is singular, which `Z-134` forbids. |
 | `Z-134`        | `callback`, `schema`, `api`, `ui`, `auth`, `telegram`, `webhook`, `livez`, and `readyz` are singular, and Maroid picks each name. Each one names one thing, and none is a collection. An orchestrator reads `livez` and `readyz` by the names that Kubernetes gives its own probes. |
 | `Z-148`, `Z-149` | `GET /auth/callback` writes, and a `GET` reads. RFC 6749 section 4.1.2 makes the redirection endpoint a `GET` that carries `code` and `state` as query parameters, and the browser arrives there by redirect. Maroid picks the address of that route, and it does not pick the method. |
+| `Z-148`        | A `PUT` of a `self` resource whose state the hub derives from stored data carries no body, `PUT /connections/self` of a plugin for example. The repeat leaves the same state, as `Z-149` asks. `ADR-0018`. |
 | `Z-150`        | `ERR-003` answers 422 for a body that fails validation and for settings that fail their schema. `Z-150` marks 422 do-not-use and prefers 400. A client of Maroid branches on the problem type, and the two conditions differ from a body that does not parse, which already answers 400. |
 | `Z-150`, `Z-251` | `GET /auth/callback` answers 302. `Z-150` marks 302 do-not-use and `Z-251` advises against a redirection code. The browser arrives at that route by redirect and leaves by one, which RFC 6749 section 4.1.2 fixes. |
 | `Z-217`        | The first sentence of `Z-217` is a must, and `RES-005` meets it with an absolute address. The deviation is from the second, a should: it asks for the scheme, the host, and the port of the request. A proxy sets the `Host` header, and a caller sets it behind a proxy that passes it, so a link built from it points where the caller chose. |

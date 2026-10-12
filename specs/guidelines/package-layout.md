@@ -4,7 +4,7 @@ title: Package layout
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-20
+updated: 2026-10-13
 scope: [apps/hub/internal/, libs/, plugins/]
 related: [PLG, GO, REP, EXT]
 ---
@@ -21,7 +21,7 @@ A plugin uses this layout. Create a directory only when the plugin needs it.
 | `dto/`                        | The shapes of an external API. See `EXT-006`.         |
 | `model/`                      | The domain entities. See `REP-005`.                   |
 | `repository/`                 | The data access. See `REP-001`.                       |
-| `service/`                    | The clients of an external system. See `EXT-001`.     |
+| `service/`                    | The clients of an external system (`EXT-001`), and the domain services that use them. `ADR-0017`. |
 | `job/`                        | The cron jobs. See `JOB-005`.                         |
 | `handler/`                    | The HTTP handlers. See `API-004`.                     |
 | `telegram/command/`           | The bot commands. See `TG-003`.                       |
