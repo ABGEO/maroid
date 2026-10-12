@@ -171,7 +171,8 @@ type ListData struct {
 }
 type ListItem struct{ Label, Meta, Link string }
 
-func NewWidget(meta WidgetMeta, load func(ctx context.Context) (WidgetAnswer, error)) Widget
+// FuncWidget implements Widget, as TypedTool implements MCPTool.
+func NewWidget(meta WidgetMeta, load func(ctx context.Context) (WidgetAnswer, error)) *FuncWidget
 func StatAnswer(data StatData) WidgetAnswer
 func ListAnswer(data ListData) WidgetAnswer
 func EmptyAnswer(message string) WidgetAnswer
@@ -310,7 +311,7 @@ connection for example, answers a state instead.
 | parking | `balance` | Parking balance | `stat` | `s` | `sessions.read` |
 | jasmine | `attention` | Plants that need care | `list` | `m` | `plants.read` |
 
-**Parking.** `widget.NewBalance(connections service.ConnectionService) pluginapi.Widget`.
+**Parking.** `widget.NewBalance(connections service.ConnectionService) *pluginapi.FuncWidget`.
 `Load` calls `connections.Status(ctx)`:
 
 | Result | Answer | Realizes |
@@ -319,7 +320,7 @@ connection for example, answers a state instead.
 | `not_connected` | `NotSetUpAnswer("Connect your parking account.", "/account")` | `WIDGET-FR-031` |
 | An error | The error, wrapped. The card shows the error. | `WIDGET-FR-020` |
 
-**Jasmine.** `widget.NewAttention(db *pluginapi.PluginDB) pluginapi.Widget`. `Load`
+**Jasmine.** `widget.NewAttention(db *pluginapi.PluginDB) *pluginapi.FuncWidget`. `Load`
 runs `repository.NewCareInterval(tx).ListAttention(ctx)` in `db.WithTx`:
 
 | Result | Answer | Realizes |
@@ -379,8 +380,8 @@ runs `repository.NewCareInterval(tx).ListAttention(ctx)` in `db.WithTx`:
 
 | #   | Step | Realizes | Done |
 | --- | ---- | -------- | ---- |
-| 1   | `ADR-0016` accepted. `SEC-012` and `SEC-013` changed. | `WIDGET-FR-008`, `WIDGET-FR-009` | [ ] |
-| 2   | `libs/pluginapi/widget.go` and its test. | `WIDGET-FR-001`, `WIDGET-FR-002`, `WIDGET-FR-016` | [ ] |
+| 1   | `ADR-0016` accepted. `SEC-012` and `SEC-013` changed. | `WIDGET-FR-008`, `WIDGET-FR-009` | [x] |
+| 2   | `libs/pluginapi/widget.go` and its test. | `WIDGET-FR-001`, `WIDGET-FR-002`, `WIDGET-FR-016` | [x] |
 | 3   | Errors, problem, registry, capability, registrar, loader, and their tests. | `WIDGET-FR-002` to `WIDGET-FR-007` | [ ] |
 | 4   | `widget.Reader`, the handler, the wiring, and their tests. `api.yaml`, `components.yaml`, `pcap/api.yaml`. | `WIDGET-FR-008` to `WIDGET-FR-013`, `WIDGET-FR-016`, `WIDGET-FR-020`, `WIDGET-FR-022`, `WIDGET-NFR-001`, `WIDGET-INV-*` | [ ] |
 | 5   | The parking widget and the jasmine widget, and their tests. Build every plugin (`BLD-004`). | `WIDGET-FR-030` to `WIDGET-FR-036` | [ ] |

@@ -165,6 +165,11 @@ var (
 	// ErrInvalidMCPToolModel indicates that a plugin declared an input or an output
 	// model that the hub cannot reflect into a JSON schema.
 	ErrInvalidMCPToolModel = errors.New("mcp tool model: invalid")
+	// ErrWidgetAlreadyRegistered indicates a widget key that the registry already holds
+	// for the plugin.
+	ErrWidgetAlreadyRegistered = errors.New("widget: already registered")
+	// ErrInvalidWidget indicates a widget whose key, title, kind, or size breaks a rule.
+	ErrInvalidWidget = errors.New("widget: invalid")
 	// ErrIDPUnavailable indicates that the API of the identity provider refused the
 	// connection or did not answer before the deadline.
 	ErrIDPUnavailable = errors.New("idp: unavailable")

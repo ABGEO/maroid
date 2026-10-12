@@ -46,6 +46,16 @@ type MCPToolItem struct {
 	Permission  string `json:"permission"`
 }
 
+// WidgetItem is one widget that a plugin shows on the home page.
+type WidgetItem struct {
+	PluginID   string `json:"plugin_id"`
+	Key        string `json:"key"`
+	Title      string `json:"title"`
+	Kind       string `json:"kind"`
+	Size       string `json:"size"`
+	Permission string `json:"permission"`
+}
+
 // PermissionItem is one permission that a plugin declares, with the lowest role that
 // holds it.
 type PermissionItem struct {

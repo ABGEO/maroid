@@ -86,6 +86,7 @@ type Resolver interface {
 	Authorizer() (authz.Authorizer, error)
 	Cron() *cron.Cron
 	NotificationTopicRegistry() *registry.NotificationTopicRegistry
+	WidgetRegistry() *registry.WidgetRegistry
 	NotificationKinds() (*notification.KindRegistry, error)
 	NotificationDispatcher() (*notification.Dispatcher, error)
 	NotificationService() (notification.Service, error)
@@ -324,6 +325,11 @@ type Container struct {
 	notificationTopicRegistry struct {
 		once     sync.Once
 		instance *registry.NotificationTopicRegistry
+	}
+
+	widgetRegistry struct {
+		once     sync.Once
+		instance *registry.WidgetRegistry
 	}
 
 	notificationKinds struct {

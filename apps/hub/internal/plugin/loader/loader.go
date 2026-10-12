@@ -51,9 +51,8 @@ func New(
 	capabilityRegistry *registry.CapabilityRegistry,
 	permissionRegistry *registry.PermissionRegistry,
 	notificationTopicRegistry *registry.NotificationTopicRegistry,
+	widgetRegistry *registry.WidgetRegistry,
 ) *Loader {
-	logger := host.Logger()
-
 	return &Loader{
 		host: host,
 
@@ -63,7 +62,7 @@ func New(
 			registrar.NewCommandRegistrar(commandRegistry, capabilityRegistry),
 			registrar.NewCronRegistrar(cronRegistry, capabilityRegistry),
 			registrar.NewHandlerRegistrar(
-				logger,
+				host.Logger(),
 				verifier,
 				resolver,
 				handlerRegistry,
@@ -78,7 +77,7 @@ func New(
 				telegramCommandRegistry,
 				capabilityRegistry,
 				permissionRegistry,
-				telegramChecks(logger, workspacePrompter, access),
+				telegramChecks(host.Logger(), workspacePrompter, access),
 			),
 			registrar.NewTelegramConversationRegistrar(
 				telegramConversationRegistry,
@@ -87,6 +86,7 @@ func New(
 			registrar.NewUIRegistrar(uiRegistry, capabilityRegistry),
 			registrar.NewSettingsRegistrar(settingsRegistry, capabilityRegistry),
 			registrar.NewMCPToolRegistrar(mcpToolRegistry, capabilityRegistry, permissionRegistry),
+			registrar.NewWidgetRegistrar(widgetRegistry, capabilityRegistry, permissionRegistry),
 			registrar.NewNotificationTopicRegistrar(notificationTopicRegistry, capabilityRegistry),
 		},
 	}
