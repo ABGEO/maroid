@@ -80,10 +80,10 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-expiry`        | expiry            | The time after which Maroid reports a plugin secret as absent.                                                    |
 | `GLO-parking-service` | parking service | The external service of the Tbilisi municipality that holds the parking accounts. |
 | `GLO-parking-account` | parking account | The account of one person at the parking service. |
-| `GLO-connection` | connection | The session token of the parking service that Maroid holds for the parking account of one user. |
+| `GLO-connection` | connection | The session token of an external service that Maroid holds for the account of one user or of one workspace. |
 | `GLO-pending-connection` | pending connection | The state between the request of a code and the acceptance of that code. |
 | `GLO-code` | code | The number that the parking service sends by SMS to the phone of the parking account. |
-| `GLO-connection-page` | connection page | The page of the parking plugin that shows the connection of the acting user, and starts and ends it. |
+| `GLO-connection-page` | connection page | The page of a plugin that shows a connection, and starts and ends it. |
 | `GLO-problem`       | problem           | The body of an error response. It obeys RFC 9457 and `ERR-001`. A problem type names one failure.                |
 | `GLO-mcp-tool`      | MCP tool          | A function that Maroid exposes over the Model Context Protocol. An MCP client calls it by name and gets a result.  |
 | `GLO-mcp-client`    | MCP client        | The application that connects to the MCP server of the hub and calls an MCP tool.                                  |
@@ -119,6 +119,12 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-widget-kind` | widget kind | The shape of the data of a widget: `stat` or `list`. |
 | `GLO-widget-size` | widget size | The space of a widget on the home page: `xs`, `s`, `m`, or `l`. |
 | `GLO-widget-state` | widget state | What one answer of a widget says: `ready`, `empty`, or `not set up`. |
+| `GLO-water-service` | water service | The external service of Georgian Water and Power that holds the water accounts. |
+| `GLO-customer` | customer | One supply point of the water service, at one address. One water account holds one or more customers. |
+| `GLO-assigned-customer` | assigned customer | The customer of the water account that an editor assigns to a workspace. The workspace collects its readings. |
+| `GLO-meter` | meter | One water meter of a customer, named by its serial number. |
+| `GLO-reading` | reading | The value of one meter on one date, in cubic metres, with the previous value that the water service reports for that meter. |
+| `GLO-usage` | usage | The value of a reading minus its previous value. |
 
 ## Retired identifiers
 

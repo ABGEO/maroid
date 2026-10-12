@@ -1,0 +1,221 @@
+# The routes that GWPACC adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The water account of a workspace
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/plugins/dev.maroid.gwp/api/connections/self:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: getWaterConnection
+      summary: Read the connection of the acting workspace.
+      description: >
+        Realizes `GWPACC-FR-003` to `GWPACC-FR-007` and `GWPACC-FR-012`. A connected
+        workspace reads the customers from the water service on each call. A rejection of
+        the token removes it, and the answer is `not_connected`. The permission is `account.read`.
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+    put:
+      operationId: connectWaterAccount
+      summary: Sign in with the workspace settings, and store the connection.
+      description: >
+        Realizes `GWPACC-FR-008`, `GWPACC-FR-009`, and `GWPACC-DD-003`. A repeat replaces
+        the token and keeps the assigned customer. The permission is `account.connect`.
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          description: >
+            The type is `/problems/dev.maroid.gwp/credentials-absent` or
+            `/problems/dev.maroid.gwp/credentials-rejected`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      operationId: deleteWaterConnection
+      summary: End the connection of the acting workspace.
+      description: >
+        Realizes `GWPACC-FR-010` and `GWPACC-FR-011`. The assigned customer goes. The
+        settings and the readings stay. A workspace with no connection gets 204 too. The
+        permission is `account.connect`.
+      responses:
+        "204":
+          description: No connection exists.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.gwp/api/customer-assignments/self:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    put:
+      operationId: assignWaterCustomer
+      summary: Assign a customer of the account to the acting workspace.
+      description: >
+        Realizes `GWPACC-FR-013` to `GWPACC-FR-015` and `GWPACC-DD-006`. The assignment
+        replaces the one that exists, then collects the readings of the customer. A failed
+        collection keeps the assignment and answers 200. The collection answers no `GET`,
+        as `ADR-0015` permits. The permission is `account.connect`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Assignment"
+      responses:
+        "200":
+          description: The connection, with the new assigned customer.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          description: >
+            The workspace holds no connection. The type is
+            `/problems/dev.maroid.gwp/not-connected`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "422":
+          description: >
+            The body failed validation, with the type `/problems/http/validation-failed`,
+            or the type is `/problems/dev.maroid.gwp/customer-unknown`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/ValidationProblem"
+                  - $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: The session cookie. `SEC-005`.
+
+  schemas:
+    Connection:
+      type: object
+      required: [state, credentials_stored]
+      properties:
+        state:
+          type: string
+          enum: [not_connected, connected]
+        credentials_stored:
+          type: boolean
+          description: Whether the workspace settings hold a username and a password.
+        customers:
+          type: array
+          description: Present when `state` is `connected`. Every customer of the account.
+          items:
+            $ref: "#/components/schemas/Customer"
+    Customer:
+      type: object
+      required: [customer_number, address, assigned]
+      properties:
+        customer_number:
+          type: string
+          examples: ["1234567"]
+        address:
+          type: string
+          description: The city, the street, and the building, as the water service gives them.
+        assigned:
+          type: boolean
+          description: Whether the customer is assigned to the acting workspace.
+    Assignment:
+      type: object
+      required: [customer_number]
+      properties:
+        customer_number:
+          type: string
+          minLength: 1
+
+  responses:
+    ServiceUnavailable:
+      description: >
+        The water service failed or answered nothing. The type is
+        `/problems/dev.maroid.gwp/service-unavailable`. A stored connection stays.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
