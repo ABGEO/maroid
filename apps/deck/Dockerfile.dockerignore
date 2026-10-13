@@ -8,6 +8,7 @@
 !libs/api-client
 !libs/plugin-sdk
 !libs/theme
+!libs/ui
 
 # A frozen install checks the manifest of every workspace member.
 !apps/*/package.json
