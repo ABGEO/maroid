@@ -22,7 +22,7 @@ table `customer_assignments`. The assignment and the scheduled collection each r
 previous calendar month, keep each transaction in the scoped table `transactions`, and send
 the bill of the newest reading stored for the first time. The command `backfill` collects an
 earlier period for one workspace, and sends no bill.
-The widget `last_reading` shows that reading. The page `/transactions` lists the transactions
+The widget `last-reading` shows that reading. The page `/transactions` lists the transactions
 with links to the files at the gas service, and draws a chart of 12 months. No change reaches
 the hub, `pluginapi`, or another plugin. `spec-scenarios.md` holds the scenarios.
 
@@ -268,9 +268,9 @@ marks the assigned customer. "Connect" and "Disconnect" start and end the connec
 
 | Key | Title | Kind | Size | Permission | Realizes |
 | --- | ----- | ---- | ---- | ---------- | -------- |
-| `last_reading` | Gas usage | `stat` | `s` | `account.read` | `GASACC-FR-029` to `GASACC-FR-033` |
+| `last-reading` | Gas usage | `stat` | `s` | `account.read` | `GASACC-FR-029` to `GASACC-FR-033` |
 
-`Load` calls `Store.LatestReading` and no service. No assignment answers
+The key obeys `WIDGET-FR-005`: lowercase letters, digits, and the hyphen. `Load` calls `Store.LatestReading` and no service. No assignment answers
 `NotSetUpAnswer("Connect the gas account and assign a customer.", "/account")`. No reading
 answers `EmptyAnswer("No reading yet.")`. `GASACC-DD-011` gives the data.
 
@@ -492,7 +492,7 @@ on a canvas. A canvas reads no CSS variable.
 | 5 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `GASACC-FR-004` to `GASACC-FR-016` | [x] |
 | 6 | `handler/transaction.go`, `dto/transaction.go`, and `api.yaml` | `GASACC-FR-034` to `GASACC-FR-036`, `GASACC-FR-038` to `GASACC-FR-040` | [x] |
 | 7 | `widget/last_reading.go` and `main.go` | `GASACC-FR-029` to `GASACC-FR-033`, `GASACC-FR-041`, `GASACC-FR-042` | [x] |
-| 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-034` to `GASACC-FR-039` | [ ] |
+| 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-034` to `GASACC-FR-039` | [x] |
 | 9 | Run the flow against the gas service: an expired token, a link to a bill with no session, `backfill` of 12 months. Correct `GASACC-DD-013` and `GASACC-DD-004` | `GASACC-FR-019`, `GASACC-FR-023`, `GASACC-FR-036` | [ ] |
 | 10 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [ ] |
 

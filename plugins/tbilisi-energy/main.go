@@ -47,6 +47,7 @@ var (
 	_ pluginapi.NotifyingPlugin    = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.PermissionPlugin   = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.RoutePlugin        = (*TbilisiEnergyPlugin)(nil)
+	_ pluginapi.UIPlugin           = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.WidgetPlugin       = (*TbilisiEnergyPlugin)(nil)
 )
 
@@ -191,4 +192,21 @@ func (p *TbilisiEnergyPlugin) Routes() ([]pluginapi.Route, error) {
 // Widgets returns the latest reading, for the home page.
 func (p *TbilisiEnergyPlugin) Widgets() ([]pluginapi.Widget, error) {
 	return []pluginapi.Widget{widget.NewLastReading(p.store)}, nil
+}
+
+// UIManifest returns the transactions page and the account page of the remote, and
+// its assets.
+func (p *TbilisiEnergyPlugin) UIManifest() (*pluginapi.UIManifest, error) {
+	assets, err := fs.Sub(uiAssets, "ui/dist")
+	if err != nil {
+		return nil, fmt.Errorf("getting UI manifest FS: %w", err)
+	}
+
+	return &pluginapi.UIManifest{
+		Routes: []pluginapi.UIRoute{
+			{Path: "/transactions", Label: "Transactions"},
+			{Path: "/account", Label: "Account"},
+		},
+		Assets: assets,
+	}, nil
 }

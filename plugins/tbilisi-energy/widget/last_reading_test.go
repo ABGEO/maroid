@@ -2,6 +2,7 @@ package widget_test
 
 import (
 	"context"
+	"regexp"
 	"testing"
 	"time"
 
@@ -13,6 +14,10 @@ import (
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/permission"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/widget"
 )
+
+// widgetKeyPattern is the pattern of a widget key that the hub enforces at load
+// (WIDGET-FR-005).
+var widgetKeyPattern = regexp.MustCompile(`^[a-z0-9-]{1,64}$`)
 
 // fakeReader answers the latest reading, or the error.
 type fakeReader struct {
@@ -48,7 +53,8 @@ func TestTheWidgetShowsTheLatestReading(t *testing.T) {
 	}), answer)
 
 	meta := lastReading.Meta()
-	require.Equal(t, "last_reading", meta.Key)
+	require.Equal(t, "last-reading", meta.Key)
+	require.Regexp(t, widgetKeyPattern, meta.Key)
 	require.Equal(t, pluginapi.WidgetKindStat, meta.Kind)
 	require.Equal(t, pluginapi.WidgetSizeS, meta.Size)
 	require.Equal(t, permission.AccountRead, meta.Permission)

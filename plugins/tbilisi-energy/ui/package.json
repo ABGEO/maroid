@@ -1,0 +1,31 @@
+{
+  "name": "tbilisi-energy-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch"
+  },
+  "dependencies": {
+    "@maroid/plugin-sdk": "workspace:*",
+    "@maroid/ui": "workspace:*",
+    "d3-scale": "4.0.2",
+    "d3-shape": "3.2.0"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  },
+  "devDependencies": {
+    "@module-federation/vite": "^1.15.4",
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/d3-scale": "4.0.9",
+    "@types/d3-shape": "3.2.0",
+    "daisyui": "^5.5.19",
+    "svelte": "^5.54.0",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}

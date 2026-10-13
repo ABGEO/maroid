@@ -29,7 +29,7 @@ type LatestReadingReader interface {
 func NewLastReading(readings LatestReadingReader) *pluginapi.FuncWidget {
 	return pluginapi.NewWidget(
 		pluginapi.WidgetMeta{
-			Key:        "last_reading",
+			Key:        "last-reading",
 			Title:      "Gas usage",
 			Kind:       pluginapi.WidgetKindStat,
 			Size:       pluginapi.WidgetSizeS,
