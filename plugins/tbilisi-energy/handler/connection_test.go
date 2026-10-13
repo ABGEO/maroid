@@ -1,0 +1,488 @@
+package handler_test
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"log/slog"
+	"net/http"
+	"net/http/httptest"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/config"
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/handler"
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/service"
+)
+
+const (
+	pathConnection = "/connections/self"
+	pathAssignment = "/customer-assignments/self"
+
+	pathSignIn       = "/api/Users/Authenticate"
+	pathHome         = "/api/Home"
+	pathTransactions = "/api/Customer/GetTransactions"
+	pathBill         = "/api/Customer/GetCustomerBillPdf/sep.pdf"
+	pathPhoto        = "/api/Customer/images/sep.jpg"
+
+	customerC1     = "757235-992"
+	customerC2     = "340309-649"
+	personalNumber = "62909012413"
+	tokenT1        = "token-of-the-first-sign-in"
+	tokenT2        = "token-of-the-second-sign-in"
+
+	problemPrefix = "/problems/dev.maroid.tbilisi-energy/"
+)
+
+const (
+	homeAnswer = `{"user":{"userName":"ABGEO","personalId":"` + personalNumber + `"},"customers":[
+		{"custNumber":"757235","controlNumber":992,"customerName":"თაკალანძე თემურ",
+		 "address":"ნუცუბიძის 4 მ/რ","personalN":"` + personalNumber + `"},
+		{"custNumber":"340309","controlNumber":649,"customerName":"შამათავა სვეტლანა",
+		 "address":"გლდანის 3ა მ/რ","personalN":"62006017284"}
+	],"success":true,"code":0}`
+	septemberAnswer = `{"transactions":[
+		{"operId":196,"operationName":"გაზის საფასურის ელ-გადახდა","operDate":"2026-09-01T00:00:00",
+		 "amount":6.48,"meterReading":0,"consumption":0,"balance":0,"billDocPath":"","meterPhotoPath":""},
+		{"operId":125,"operationName":"რეალური ჩვენება","operDate":"2026-09-28T00:00:00",
+		 "amount":11.33,"meterReading":1532,"consumption":21,"balance":11.33,
+		 "billDocPath":"api/Customer/GetCustomerBillPdf/sep.pdf","meterPhotoPath":"api/Customer/images/sep.jpg"}
+	],"success":true,"code":0}`
+)
+
+// connectionAnswer is the body of a read of the connection.
+type connectionAnswer struct {
+	State             string           `json:"state"`
+	CredentialsStored bool             `json:"credentials_stored"`
+	Customers         []customerAnswer `json:"customers"`
+}
+
+type customerAnswer struct {
+	CustomerNumber string `json:"customer_number"`
+	Name           string `json:"name"`
+	Address        string `json:"address"`
+	Assigned       bool   `json:"assigned"`
+}
+
+// rig runs the routes of the connection against the fake service and the fake stores.
+type rig struct {
+	service *fakeService
+	secrets *fakeSecrets
+	store   *fakeStore
+	sender  *fakeSender
+	logs    *bytes.Buffer
+	routes  []pluginapi.Route
+}
+
+// assignedOn is 2026-10-13 at noon in Tbilisi.
+func assignedOn() time.Time {
+	return time.Date(2026, time.October, 13, 8, 0, 0, 0, time.UTC)
+}
+
+func newRig(t *testing.T, settings *fakeSettings) *rig {
+	t.Helper()
+
+	gas := newFakeService(t)
+	secrets := newFakeSecrets()
+	store := &fakeStore{}
+	sender := &fakeSender{}
+	identifier := pluginapi.ParsePluginID("dev.maroid.tbilisi-energy")
+	pluginSettings := pluginapi.NewPluginSettings(settings, identifier)
+	pluginSecrets := pluginapi.NewPluginSecrets(secrets, identifier)
+	client := service.NewAPIClient(
+		&config.Config{BaseURL: gas.server.URL, RequestTimeout: time.Second},
+	)
+
+	logs := &bytes.Buffer{}
+	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
+
+	connections := service.NewConnections(
+		logger,
+		client,
+		pluginSettings,
+		pluginSecrets,
+		store,
+		service.NewCollector(client, pluginSettings, pluginSecrets, store),
+		service.NewBills(
+			logger, client, pluginSettings, pluginSecrets,
+			pluginapi.NewPluginNotifier(sender, identifier),
+		),
+		assignedOn,
+	)
+
+	return &rig{
+		service: gas,
+		secrets: secrets,
+		store:   store,
+		sender:  sender,
+		logs:    logs,
+		routes:  handler.NewConnectionHandler(logger, connections).Routes(),
+	}
+}
+
+func (r *rig) do(
+	t *testing.T,
+	method string,
+	pattern string,
+	body string,
+) *httptest.ResponseRecorder {
+	t.Helper()
+
+	for _, route := range r.routes {
+		if route.Method != method || route.Pattern != pattern {
+			continue
+		}
+
+		request := httptest.NewRequestWithContext(
+			pluginapi.ContextWithActingWorkspace(context.Background(), workspaceW),
+			method,
+			pattern,
+			strings.NewReader(body),
+		)
+		recorder := httptest.NewRecorder()
+		route.Handler(recorder, request)
+
+		return recorder
+	}
+
+	t.Fatalf("no route %s %s", method, pattern)
+
+	return nil
+}
+
+func connectionOf(t *testing.T, recorder *httptest.ResponseRecorder) connectionAnswer {
+	t.Helper()
+
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+
+	var answer connectionAnswer
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &answer))
+
+	return answer
+}
+
+func problemTypeOf(t *testing.T, recorder *httptest.ResponseRecorder) string {
+	t.Helper()
+
+	var problem struct {
+		Type string `json:"type"`
+	}
+
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &problem))
+
+	return problem.Type
+}
+
+// GASACC-SC-002: With no token and no settings, the page reads "not connected" and
+// names the settings to fill, with no call to the gas service.
+func TestTheConnectionReadsNotConnected(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, &fakeSettings{})
+
+	answer := connectionOf(t, rig.do(t, http.MethodGet, pathConnection, ""))
+
+	require.Equal(t, connectionAnswer{State: "not_connected"}, answer)
+	require.Empty(t, rig.service.recorded())
+}
+
+// GASACC-SC-003: A connected workspace reads every customer with its number, its name,
+// and its address, and the assigned one is marked.
+func TestTheConnectionListsTheCustomers(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.secrets.signedIn()
+	rig.store.assigned = customerC2
+	rig.service.on(pathHome, answer{body: homeAnswer})
+
+	answer := connectionOf(t, rig.do(t, http.MethodGet, pathConnection, ""))
+
+	require.Equal(t, connectionAnswer{
+		State:             "connected",
+		CredentialsStored: true,
+		Customers: []customerAnswer{
+			{CustomerNumber: customerC1, Name: "თაკალანძე თემურ", Address: "ნუცუბიძის 4 მ/რ"},
+			{
+				CustomerNumber: customerC2,
+				Name:           "შამათავა სვეტლანა",
+				Address:        "გლდანის 3ა მ/რ",
+				Assigned:       true,
+			},
+		},
+	}, answer)
+	require.Equal(t, tokenT1, rig.service.recorded()[0].token)
+}
+
+// GASACC-SC-004: A failure of the gas service answers 502, and the token stays.
+func TestTheConnectionReportsTheServiceUnavailable(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.secrets.signedIn()
+	rig.service.on(pathHome, answer{status: http.StatusServiceUnavailable})
+
+	recorder := rig.do(t, http.MethodGet, pathConnection, "")
+
+	require.Equal(t, http.StatusBadGateway, recorder.Code)
+	require.Equal(t, problemPrefix+"service-unavailable", problemTypeOf(t, recorder))
+
+	token, found := rig.secrets.token()
+	require.True(t, found)
+	require.Equal(t, tokenT1, token)
+}
+
+// GASACC-SC-005: A connect signs in, replaces the token, and keeps the assignment.
+func TestTheConnectReplacesTheToken(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.secrets.signedIn()
+	rig.store.assigned = customerC1
+	rig.service.on(pathSignIn, answer{body: `{"token":"` + tokenT2 + `","success":true,"code":0}`})
+	rig.service.on(pathHome, answer{body: homeAnswer})
+
+	answer := connectionOf(t, rig.do(t, http.MethodPut, pathConnection, ""))
+
+	require.Equal(t, "connected", answer.State)
+
+	token, _ := rig.secrets.token()
+	require.Equal(t, tokenT2, token)
+	require.Equal(t, customerC1, rig.store.assignment())
+
+	signIn := rig.service.recorded()[0]
+	require.Equal(t, username, signIn.body["userName"])
+}
+
+// GASACC-SC-006: A rejected sign in answers credentials-rejected, and a sign in held
+// for a human check answers sign-in-blocked. Neither stores a token.
+func TestTheConnectReportsARefusedSignIn(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.service.on(
+		pathSignIn,
+		answer{body: `{"token":null,"recaptchaRequested":false,"success":false,"code":1}`},
+	)
+	rig.service.on(
+		pathSignIn,
+		answer{body: `{"token":null,"recaptchaRequested":true,"success":false,"code":0}`},
+	)
+
+	rejected := rig.do(t, http.MethodPut, pathConnection, "")
+	require.Equal(t, http.StatusUnprocessableEntity, rejected.Code)
+	require.Equal(t, problemPrefix+"credentials-rejected", problemTypeOf(t, rejected))
+
+	blocked := rig.do(t, http.MethodPut, pathConnection, "")
+	require.Equal(t, http.StatusUnprocessableEntity, blocked.Code)
+	require.Equal(t, problemPrefix+"sign-in-blocked", problemTypeOf(t, blocked))
+
+	_, found := rig.secrets.token()
+	require.False(t, found)
+}
+
+// GASACC-SC-006: A connect with no stored credentials answers credentials-absent.
+func TestTheConnectNeedsTheCredentials(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, &fakeSettings{})
+
+	recorder := rig.do(t, http.MethodPut, pathConnection, "")
+
+	require.Equal(t, http.StatusUnprocessableEntity, recorder.Code)
+	require.Equal(t, problemPrefix+"credentials-absent", problemTypeOf(t, recorder))
+	require.Empty(t, rig.service.recorded())
+}
+
+// GASACC-SC-007: The end of the connection removes the token and the assignment, and
+// keeps the transactions.
+func TestTheDisconnectRemovesTheTokenAndTheAssignment(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.secrets.signedIn()
+	rig.store.assigned = customerC1
+	rig.service.on(pathHome, answer{body: homeAnswer})
+	rig.service.on(pathTransactions, answer{body: septemberAnswer})
+
+	recorder := rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`)
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+	require.Equal(t, 2, rig.store.transactionCount())
+
+	recorder = rig.do(t, http.MethodDelete, pathConnection, "")
+
+	require.Equal(t, http.StatusNoContent, recorder.Code)
+
+	_, found := rig.secrets.token()
+	require.False(t, found)
+	require.Empty(t, rig.store.assignment())
+	require.Equal(t, 2, rig.store.transactionCount())
+}
+
+// GASACC-SC-008: A rejected token reads as not connected, and goes. The assignment stays.
+func TestARejectedTokenReadsAsNotConnected(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.secrets.signedIn()
+	rig.store.assigned = customerC1
+	rig.service.on(pathHome, answer{status: http.StatusUnauthorized})
+
+	answer := connectionOf(t, rig.do(t, http.MethodGet, pathConnection, ""))
+
+	require.Equal(t, connectionAnswer{State: "not_connected", CredentialsStored: true}, answer)
+
+	_, found := rig.secrets.token()
+	require.False(t, found)
+	require.Equal(t, customerC1, rig.store.assignment())
+}
+
+// GASACC-SC-010: A customer that the account does not hold is refused, and nothing
+// is assigned.
+func TestTheAssignmentRefusesAnUnknownCustomer(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.secrets.signedIn()
+	rig.service.on(pathHome, answer{body: homeAnswer})
+
+	recorder := rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"999999-111"}`)
+
+	require.Equal(t, http.StatusUnprocessableEntity, recorder.Code)
+	require.Equal(t, problemPrefix+"customer-unknown", problemTypeOf(t, recorder))
+	require.Empty(t, rig.store.assignment())
+	require.Zero(t, rig.service.countOf(pathTransactions))
+}
+
+// GASACC-SC-010: An assignment with no connection answers not-connected.
+func TestTheAssignmentNeedsAConnection(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+
+	recorder := rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`)
+
+	require.Equal(t, http.StatusConflict, recorder.Code)
+	require.Equal(t, problemPrefix+"not-connected", problemTypeOf(t, recorder))
+}
+
+// GASACC-SC-010: A body that is not the assignment is refused before any call.
+func TestTheAssignmentRefusesABadBody(t *testing.T) {
+	t.Parallel()
+
+	cases := map[string]struct {
+		body   string
+		status int
+	}{
+		"not JSON": {body: `customer`, status: http.StatusBadRequest},
+		"unknown member": {
+			body:   `{"customer_number":"1","name":"x"}`,
+			status: http.StatusBadRequest,
+		},
+		"empty number": {body: `{"customer_number":" "}`, status: http.StatusUnprocessableEntity},
+		"too large": {
+			body:   `{"customer_number":"` + strings.Repeat("1", 5000) + `"}`,
+			status: http.StatusRequestEntityTooLarge,
+		},
+	}
+
+	for name, setup := range cases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			rig := newRig(t, storedCredentials())
+			rig.secrets.signedIn()
+
+			recorder := rig.do(t, http.MethodPut, pathAssignment, setup.body)
+
+			require.Equal(t, setup.status, recorder.Code, recorder.Body.String())
+			require.Empty(t, rig.service.recorded())
+		})
+	}
+}
+
+// GASACC-SC-011: An assignment collects the previous month and sends the bill of its
+// reading. A second assignment of the same customer stores nothing new and sends none.
+func TestTheAssignmentCollectsThePreviousMonth(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.secrets.signedIn()
+	rig.service.on(pathHome, answer{body: homeAnswer})
+	rig.service.on(pathTransactions, answer{body: septemberAnswer})
+	rig.service.on(pathBill, answer{body: "%PDF-1.4"})
+	rig.service.on(pathPhoto, answer{body: "JPEG"})
+
+	answer := connectionOf(
+		t,
+		rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`),
+	)
+
+	require.Equal(t, customerC1, rig.store.assignment())
+	require.True(t, answer.Customers[0].Assigned)
+	require.Equal(t, 2, rig.store.transactionCount())
+
+	var request map[string]any
+
+	for _, recorded := range rig.service.recorded() {
+		if recorded.path == pathTransactions {
+			request = recorded.body
+		}
+	}
+
+	require.Equal(t, map[string]any{
+		"customerNumber": customerC1,
+		"dateFrom":       "2026-09-01",
+		"dateTo":         "2026-09-30",
+	}, request)
+
+	sent := rig.sender.sent()
+	require.Len(t, sent, 1)
+	require.Contains(t, sent[0].Body, "2026.09.28")
+	require.Len(t, sent[0].Attachments, 2)
+
+	connectionOf(
+		t,
+		rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`),
+	)
+	require.Len(t, rig.sender.sent(), 1)
+}
+
+// GASACC-SC-011: A failed collection keeps the assignment and answers 200.
+func TestAFailedCollectionKeepsTheAssignment(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.secrets.signedIn()
+	rig.service.on(pathHome, answer{body: homeAnswer})
+	rig.service.on(pathTransactions, answer{status: http.StatusServiceUnavailable})
+
+	recorder := rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Equal(t, customerC1, rig.store.assignment())
+	require.Contains(t, rig.logs.String(), "level=WARN")
+}
+
+// GASACC-SC-033: No answer and no log line holds the token, the password, or the
+// personal number.
+func TestNoAnswerHoldsASecretOrAPersonalNumber(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.service.on(pathSignIn, answer{body: `{"token":"` + tokenT2 + `","success":true,"code":0}`})
+	rig.service.on(pathHome, answer{body: homeAnswer})
+
+	connected := rig.do(t, http.MethodPut, pathConnection, "")
+	read := rig.do(t, http.MethodGet, pathConnection, "")
+
+	for _, text := range []string{connected.Body.String(), read.Body.String(), rig.logs.String()} {
+		require.NotContains(t, text, tokenT2)
+		require.NotContains(t, text, password)
+		require.NotContains(t, text, personalNumber)
+	}
+}

@@ -19,7 +19,6 @@ const (
 	maxFailureBody = 512
 
 	headerToken = "token"
-	pathPrefix  = "api/"
 )
 
 // APIClientService defines the interface for interacting with the gas service.
@@ -73,7 +72,7 @@ func (s *APIClient) Authenticate(
 			"platform":      "web",
 			"app":           "0.1.0",
 		}).
-		Post("/Users/Authenticate")
+		Post("/api/Users/Authenticate")
 	if err != nil {
 		return "", fmt.Errorf("%w: sending the sign in: %w", errs.ErrRequestFailed, err)
 	}
@@ -111,7 +110,7 @@ func (s *APIClient) Authenticate(
 func (s *APIClient) GetCustomers(ctx context.Context, token string) ([]dto.Customer, error) {
 	var response dto.HomeResponse
 
-	if err := s.postWithToken(ctx, token, "/Home", struct{}{}, &response); err != nil {
+	if err := s.postWithToken(ctx, token, "/api/Home", struct{}{}, &response); err != nil {
 		return nil, fmt.Errorf("requesting the customers: %w", err)
 	}
 
@@ -131,7 +130,7 @@ func (s *APIClient) GetTransactions(
 ) ([]dto.Transaction, error) {
 	var response dto.TransactionsResponse
 
-	err := s.postWithToken(ctx, token, "/Customer/GetTransactions", request, &response)
+	err := s.postWithToken(ctx, token, "/api/Customer/GetTransactions", request, &response)
 	if err != nil {
 		return nil, fmt.Errorf("requesting the transactions: %w", err)
 	}
@@ -144,12 +143,13 @@ func (s *APIClient) GetTransactions(
 }
 
 // DownloadFile downloads a bill or a meter photo of the account that the token names.
-// The path is the one that a transaction carries.
+// The path is the one that a transaction carries, relative to the origin of the gas
+// service.
 func (s *APIClient) DownloadFile(ctx context.Context, token string, path string) ([]byte, error) {
 	resp, err := s.client.R().
 		SetContext(ctx).
 		SetHeader(headerToken, token).
-		Get("/" + strings.TrimPrefix(path, pathPrefix))
+		Get("/" + path)
 	if err != nil {
 		return nil, fmt.Errorf("%w: downloading a file: %w", errs.ErrRequestFailed, err)
 	}

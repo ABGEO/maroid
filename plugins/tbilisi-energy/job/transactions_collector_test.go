@@ -315,7 +315,7 @@ func newRig(t *testing.T, gas *fakeGasService, store *fakeStore, token string) *
 	}
 
 	identifier := pluginapi.ParsePluginID(pluginID)
-	cfg := &config.Config{BaseURL: server.URL + "/api", RequestTimeout: time.Second}
+	cfg := &config.Config{BaseURL: server.URL, RequestTimeout: time.Second}
 	logs := new(bytes.Buffer)
 	logger := slog.New(slog.NewTextHandler(logs, nil))
 	sender := new(fakeSender)

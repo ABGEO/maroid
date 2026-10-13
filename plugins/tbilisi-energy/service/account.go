@@ -78,6 +78,14 @@ func (a *account) signIn(ctx context.Context) (string, error) {
 	return token, nil
 }
 
+func (a *account) forgetToken(ctx context.Context) error {
+	if err := a.secrets.Delete(ctx, pluginapi.SecretScopeWorkspace, SecretToken); err != nil {
+		return fmt.Errorf("removing the token: %w", err)
+	}
+
+	return nil
+}
+
 // call runs the call with the token. A rejected token gives way to one new sign in,
 // because the stored credentials need no person to send a code. It answers the token
 // that the next call of the same run takes.

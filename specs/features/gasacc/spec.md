@@ -227,7 +227,7 @@ date `YYYY-MM-DD`. The order is `transaction_date DESC, id DESC`, fixed.
 
 | Key | Type | Default | Secret | Realizes |
 | --- | ---- | ------- | ------ | -------- |
-| `base_url` | string | `https://my.te.ge/api` | no | `GASACC-FR-010`, `GASACC-DD-013` |
+| `base_url` | string | `https://my.te.ge` | no | `GASACC-FR-010`, `GASACC-DD-013` |
 | `request_timeout` | duration | `15s` | no | `GASACC-FR-008`, `GASACC-FR-019` |
 | `cron_schedule.transactions_collector` | cron | `0 10 1 * *` | no | `GASACC-FR-017` |
 
@@ -450,11 +450,13 @@ that row. `page.Read` keys the cursor on the identifier. A reading answers `usag
 ### `GASACC-DD-013`
 
 **Realizes:** `GASACC-FR-036`
-**Decision:** The route answers `bill_url` and `meter_photo_url`: the scheme and the host of
-`base_url`, a slash, and the stored path. A null path answers no member. The page renders each
-as a link with `target="_blank"` and `rel="noopener noreferrer"`.
+**Decision:** `base_url` is the origin of the gas service. The client calls the API under
+`base_url` and `/api`. The route answers `bill_url` and `meter_photo_url`: `base_url`, a slash,
+and the stored path, which starts with `api/`. A null path answers no member. The page renders
+each as a link with `target="_blank"` and `rel="noopener noreferrer"`.
 **Rationale:** The owner chose a link to the gas service. The gas service serves the file with
-no session. Maroid stores no file.
+no session. Maroid stores no file. A stored path is relative to the origin, so a link, a
+download, and a call of the API share one base, and no code takes a URL apart.
 **Alternatives:** A route of Maroid that downloads the file. It holds the file in memory and
 needs a token for each click.
 
@@ -487,9 +489,9 @@ on a canvas. A canvas reads no CSS variable.
 | 2 | Both migrations and `repository/` | `GASACC-FR-014`, `GASACC-FR-021`, `GASACC-FR-022` | [x] |
 | 3 | `service/store.go`, `service/account.go`, `service/collector.go` | `GASACC-FR-017` to `GASACC-FR-021` | [x] |
 | 4 | `service/bill.go`, the job, and `cli/backfill.go` | `GASACC-FR-017`, `GASACC-FR-023` to `GASACC-FR-028` | [x] |
-| 5 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `GASACC-FR-004` to `GASACC-FR-016` | [ ] |
-| 6 | `handler/transaction.go`, `dto/transaction.go`, and `api.yaml` | `GASACC-FR-034` to `GASACC-FR-036`, `GASACC-FR-038` to `GASACC-FR-040` | [ ] |
-| 7 | `widget/last_reading.go` and `main.go` | `GASACC-FR-029` to `GASACC-FR-033`, `GASACC-FR-041`, `GASACC-FR-042` | [ ] |
+| 5 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `GASACC-FR-004` to `GASACC-FR-016` | [x] |
+| 6 | `handler/transaction.go`, `dto/transaction.go`, and `api.yaml` | `GASACC-FR-034` to `GASACC-FR-036`, `GASACC-FR-038` to `GASACC-FR-040` | [x] |
+| 7 | `widget/last_reading.go` and `main.go` | `GASACC-FR-029` to `GASACC-FR-033`, `GASACC-FR-041`, `GASACC-FR-042` | [x] |
 | 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-034` to `GASACC-FR-039` | [ ] |
 | 9 | Run the flow against the gas service: an expired token, a link to a bill with no session, `backfill` of 12 months. Correct `GASACC-DD-013` and `GASACC-DD-004` | `GASACC-FR-019`, `GASACC-FR-023`, `GASACC-FR-036` | [ ] |
 | 10 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [ ] |

@@ -109,7 +109,7 @@ func newClient(
 	t.Cleanup(server.Close)
 
 	client := service.NewAPIClient(&config.Config{
-		BaseURL:        server.URL + "/api",
+		BaseURL:        server.URL,
 		RequestTimeout: timeout,
 	})
 

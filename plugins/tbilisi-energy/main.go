@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -14,8 +15,11 @@ import (
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/cli"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/config"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/db"
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/handler"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/job"
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/permission"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/service"
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/widget"
 )
 
 // pluginID names the plugin. The constructor needs it before Meta exists.
@@ -26,11 +30,12 @@ var pluginID = pluginapi.ParsePluginID("dev.maroid.tbilisi-energy")
 // TbilisiEnergyPlugin connects the gas account of a workspace, collects its
 // transactions, and sends the bill.
 type TbilisiEnergyPlugin struct {
-	config    *config.Config
-	logger    *slog.Logger
-	store     *service.Store
-	collector *service.Collector
-	bills     *service.Bills
+	config      *config.Config
+	logger      *slog.Logger
+	store       *service.Store
+	collector   *service.Collector
+	bills       *service.Bills
+	connections *service.Connections
 }
 
 var (
@@ -40,6 +45,9 @@ var (
 	_ pluginapi.CronPlugin         = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.MigrationPlugin    = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.NotifyingPlugin    = (*TbilisiEnergyPlugin)(nil)
+	_ pluginapi.PermissionPlugin   = (*TbilisiEnergyPlugin)(nil)
+	_ pluginapi.RoutePlugin        = (*TbilisiEnergyPlugin)(nil)
+	_ pluginapi.WidgetPlugin       = (*TbilisiEnergyPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -92,6 +100,16 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 	)
 
 	plg.bills = service.NewBills(plg.logger, client, settings, secrets, notifier)
+	plg.connections = service.NewConnections(
+		plg.logger,
+		client,
+		settings,
+		secrets,
+		store,
+		plg.collector,
+		plg.bills,
+		time.Now,
+	)
 
 	return plg, nil
 }
@@ -102,7 +120,7 @@ func (p *TbilisiEnergyPlugin) Meta() pluginapi.Metadata {
 		ID:          pluginID,
 		Name:        "Tbilisi Energy",
 		Description: "Gas bills and usage from Tbilisi Energy.",
-		Version:     "0.1.0",
+		Version:     "0.2.0",
 		APIVersion:  pluginapi.APIVersion,
 	}
 }
@@ -144,4 +162,33 @@ func (p *TbilisiEnergyPlugin) Migrations() (fs.FS, error) {
 	}
 
 	return migrationsFS, nil
+}
+
+// Permissions returns the permissions that the routes and the widget name.
+func (p *TbilisiEnergyPlugin) Permissions() ([]pluginapi.Permission, error) {
+	return []pluginapi.Permission{
+		{
+			Name:        permission.AccountRead,
+			Description: "Read the gas account and the transactions of the workspace",
+			Lowest:      pluginapi.RoleViewer,
+		},
+		{
+			Name:        permission.AccountConnect,
+			Description: "Connect the gas account and assign its customer",
+			Lowest:      pluginapi.RoleEditor,
+		},
+	}, nil
+}
+
+// Routes returns the HTTP routes of the connection page and of the transactions page.
+func (p *TbilisiEnergyPlugin) Routes() ([]pluginapi.Route, error) {
+	return slices.Concat(
+		handler.NewConnectionHandler(p.logger, p.connections).Routes(),
+		handler.NewTransactionHandler(p.logger, p.store, p.config.BaseURL+"/").Routes(),
+	), nil
+}
+
+// Widgets returns the latest reading, for the home page.
+func (p *TbilisiEnergyPlugin) Widgets() ([]pluginapi.Widget, error) {
+	return []pluginapi.Widget{widget.NewLastReading(p.store)}, nil
 }
