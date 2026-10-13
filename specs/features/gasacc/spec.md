@@ -472,13 +472,14 @@ needs a token for each click.
 and `d3-shape` the path of the line, and D3 touches no element. The x axis is a band for each
 reading date. The consumption of each reading is a column on the left axis, in cubic metres,
 from zero. The amount is a line on the right axis, in lari. The columns take `fill-primary`,
-the line `stroke-secondary`, the axes `fill-base-content`, and the grid `stroke-base-300`. The
+the line `stroke-accent`, the axes `fill-base-content`, and the grid `stroke-base-300`. The
 width follows the container. A pointer over a date shows a daisyUI tooltip with the usage and
 the amount. The SVG carries `role="img"` and a label, and the table is the accessible form of
 the same transactions. The page reads `from` 12 months before today with `limit=100`, follows
 `next` to the last page, and keeps the readings. The chart lives in the plugin.
 **Rationale:** The chart is plain markup, so it takes the classes of the daisyUI theme, and a
-change of the theme recolors it with no code. Both D3 modules are small and stable releases.
+change of the theme recolors it with no code. The secondary color shares the hue of the primary in both themes,
+so a line of it fades over the columns in the dark theme. The accent is green in both. Both D3 modules are small and stable releases.
 **Alternatives:** A chart in `@maroid/ui`. The owner keeps it in the plugin. A library of charts
 on a canvas. A canvas reads no CSS variable.
 
@@ -499,7 +500,7 @@ on a canvas. A canvas reads no CSS variable.
 | 7 | `widget/last_reading.go` and `main.go` | `GASACC-FR-029` to `GASACC-FR-033`, `GASACC-FR-041`, `GASACC-FR-042` | [x] |
 | 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-034` to `GASACC-FR-039` | [x] |
 | 9 | Run the flow against the gas service: an expired token, a link to a bill with no session, `backfill` of 12 months. Correct `GASACC-DD-013` and `GASACC-DD-004` | `GASACC-FR-019`, `GASACC-FR-023`, `GASACC-FR-036` | [x] |
-| 10 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [ ] |
+| 10 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [x] |
 
 ## Retired identifiers
 

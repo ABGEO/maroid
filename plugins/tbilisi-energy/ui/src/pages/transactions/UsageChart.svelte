@@ -72,7 +72,7 @@
       <span>Usage, m³ (left)</span>
     </li>
     <li class="flex items-center gap-1.5">
-      <span class="bg-secondary inline-block h-0.5 w-3"></span>
+      <span class="bg-accent inline-block h-0.5 w-3"></span>
       <span>Amount, ₾ (right)</span>
     </li>
   </ul>
@@ -141,13 +141,13 @@
           />
         {/each}
 
-        <path d={amountPath} class="stroke-secondary fill-none" stroke-width="2.5" />
+        <path d={amountPath} class="stroke-accent fill-none" stroke-width="2.5" />
         {#each points as point (point.date)}
           <circle
             cx={center(point.date)}
             cy={yAmount(point.amount)}
             r={active === point.date ? 4.5 : 3}
-            class="fill-base-100 stroke-secondary"
+            class="fill-base-100 stroke-accent"
             stroke-width="2"
           />
         {/each}
@@ -180,7 +180,7 @@
         <span class="ml-auto tabular-nums">{activePoint.usage.toFixed(0)} m³</span>
       </div>
       <div class="flex items-center gap-1.5">
-        <span class="bg-secondary inline-block size-2 rounded-sm"></span>
+        <span class="bg-accent inline-block size-2 rounded-sm"></span>
         <span>Amount</span>
         <span class="ml-auto tabular-nums">{activePoint.amount.toFixed(2)} ₾</span>
       </div>
