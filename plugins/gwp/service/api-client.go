@@ -3,7 +3,10 @@ package service
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 
@@ -38,6 +41,10 @@ func NewAPIClient(cfg *config.Config) *APIClient {
 		SetBaseURL(cfg.BaseURL).
 		SetHeader("Accept", "application/json").
 		SetTimeout(cfg.RequestTimeout)
+
+	if cfg.Proxy.Enabled {
+		client.SetProxy(proxyURL(cfg.Proxy))
+	}
 
 	return &APIClient{
 		client: client,
@@ -116,6 +123,21 @@ func (s *APIClient) GetReadings(ctx context.Context, token string) ([]dto.Readin
 	}
 
 	return response, nil
+}
+
+// proxyURL answers the address of the proxy. url.URL escapes the credentials, so a
+// password that holds a reserved character such as @ or / keeps its meaning.
+func proxyURL(proxy config.Proxy) string {
+	address := url.URL{
+		Scheme: proxy.Scheme,
+		Host:   net.JoinHostPort(proxy.Host, strconv.Itoa(proxy.Port)),
+	}
+
+	if proxy.Username != "" {
+		address.User = url.UserPassword(proxy.Username, proxy.Password)
+	}
+
+	return address.String()
 }
 
 // getWithToken sends a GET that carries the token. A 401 is the only answer that
