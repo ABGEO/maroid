@@ -120,11 +120,15 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-widget-size` | widget size | The space of a widget on the home page: `xs`, `s`, `m`, or `l`. |
 | `GLO-widget-state` | widget state | What one answer of a widget says: `ready`, `empty`, or `not set up`. |
 | `GLO-water-service` | water service | The external service of Georgian Water and Power that holds the water accounts. |
-| `GLO-customer` | customer | One supply point of the water service, at one address. One water account holds one or more customers. |
+| `GLO-customer` | customer | One supply point of a utility service, at one address. One account of the service holds one or more customers. |
 | `GLO-communal-number` | communal number | The number of a customer on the communal bill of the water service. |
-| `GLO-assigned-customer` | assigned customer | The customer of the water account that an editor assigns to a workspace. The workspace collects its readings. |
-| `GLO-meter` | meter | One water meter of a customer, named by its serial number. |
+| `GLO-assigned-customer` | assigned customer | The customer of an account that an editor assigns to a workspace. The workspace collects its readings. |
+| `GLO-meter` | meter | One meter of a customer. A water meter carries a serial number. A gas customer holds one meter. |
 | `GLO-reading` | reading | The value of one meter on one date, in cubic metres. |
+| `GLO-gas-service` | gas service | The external service of Tbilisi Energy that holds the gas accounts. |
+| `GLO-transaction` | transaction | One entry of a customer at the gas service, on one date: a reading with its charge, or a payment. |
+| `GLO-bill` | bill | The document of the gas service for the charge of one reading. |
+| `GLO-meter-photo` | meter photo | The photo of the meter that the gas service took for one reading. |
 | `GLO-usage` | usage | The value of a reading minus the value of the reading before it, of the same meter. The earliest reading of a meter has none. |
 
 ## Retired identifiers

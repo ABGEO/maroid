@@ -293,6 +293,7 @@ Add a row before you create the file or the directory.
 | `PARKACC` | `features/parkacc/` | The parking account of a user: the connection and the vehicle. | Approved |
 | `WIDGET` | `features/widget/` | The widgets that the plugins show on the home page of a workspace. | Approved |
 | `GWPACC` | `features/gwpacc/` | The water account of a workspace: the connection, the customer, and the readings. | Approved |
+| `GASACC` | `features/gasacc/` | The gas account of a workspace: the connection, the customer, and the transactions. | Approved |
 
 ## Retired identifiers
 

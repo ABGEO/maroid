@@ -1,0 +1,356 @@
+# The routes that GASACC adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The gas account of a workspace
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/plugins/dev.maroid.tbilisi-energy/api/connections/self:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: getGasConnection
+      summary: Read the connection of the acting workspace.
+      description: >
+        Realizes `GASACC-FR-004` to `GASACC-FR-008` and `GASACC-FR-013`. A connected
+        workspace reads the customers from the gas service on each call. A rejection of
+        the token removes it, and the answer is `not_connected`. The permission is `account.read`.
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+    put:
+      operationId: connectGasAccount
+      summary: Sign in with the workspace settings, and store the connection.
+      description: >
+        Realizes `GASACC-FR-009`, `GASACC-FR-010`, and `GASACC-DD-002`. A repeat replaces
+        the token and keeps the assigned customer. The permission is `account.connect`.
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          description: >
+            The type is `/problems/dev.maroid.tbilisi-energy/credentials-absent`,
+            `/problems/dev.maroid.tbilisi-energy/credentials-rejected`, or
+            `/problems/dev.maroid.tbilisi-energy/sign-in-blocked`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      operationId: deleteGasConnection
+      summary: End the connection of the acting workspace.
+      description: >
+        Realizes `GASACC-FR-011` and `GASACC-FR-012`. The assigned customer goes. The
+        settings and the transactions stay. A workspace with no connection gets 204 too. The
+        permission is `account.connect`.
+      responses:
+        "204":
+          description: No connection exists.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.tbilisi-energy/api/customer-assignments/self:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    put:
+      operationId: assignGasCustomer
+      summary: Assign a customer of the account to the acting workspace.
+      description: >
+        Realizes `GASACC-FR-014`, `GASACC-FR-015`, `GASACC-FR-016`, and `GASACC-DD-006`.
+        The assignment replaces the one that exists, then collects the previous month of the
+        customer and sends its bill. A failed collection keeps the assignment and answers 200. The collection answers no `GET`,
+        as `ADR-0015` permits. The permission is `account.connect`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Assignment"
+      responses:
+        "200":
+          description: The connection, with the new assigned customer.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "413":
+          description: >
+            The body passes 4 KiB. The type is `/problems/http/content-too-large`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "409":
+          description: >
+            The workspace holds no connection. The type is
+            `/problems/dev.maroid.tbilisi-energy/not-connected`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "422":
+          description: >
+            The body failed validation, with the type `/problems/http/validation-failed`,
+            or the type is `/problems/dev.maroid.tbilisi-energy/customer-unknown`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/ValidationProblem"
+                  - $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.tbilisi-energy/api/transactions:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listGasTransactions
+      summary: List the transactions of the assigned customer.
+      description: >
+        Realizes `GASACC-FR-034` to `GASACC-FR-040`, `GASACC-DD-012`, and
+        `GASACC-DD-013`. The page holds the transactions of the customer assigned to the
+        acting workspace, the latest date first, and the identifier breaks a tie. The
+        route reads no gas service. The permission is `account.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+        - name: from
+          in: query
+          required: false
+          description: The earliest transaction date that the page holds.
+          schema:
+            type: string
+            format: date
+            examples: ["2025-10-13"]
+      responses:
+        "200":
+          description: One page of transactions. A customer with no transaction answers an empty page.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          description: >
+            The workspace holds no assigned customer. The type is
+            `/problems/dev.maroid.tbilisi-energy/not-assigned`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: The session cookie. `SEC-005`.
+
+  schemas:
+    Connection:
+      type: object
+      required: [state, credentials_stored]
+      properties:
+        state:
+          type: string
+          enum: [not_connected, connected]
+        credentials_stored:
+          type: boolean
+          description: Whether the workspace settings hold a username and a password.
+        customers:
+          type: array
+          description: Present when `state` is `connected`. Every customer of the account.
+          items:
+            $ref: "#/components/schemas/Customer"
+    Customer:
+      type: object
+      description: The personal number of the customer never appears. `GASACC-INV-004`.
+      required: [customer_number, name, address, assigned]
+      properties:
+        customer_number:
+          type: string
+          description: The number and the control number, joined by a hyphen. `GASACC-DD-001`.
+          examples: ["757235-992"]
+        name:
+          type: string
+          description: The name of the customer, as the gas service gives it.
+        address:
+          type: string
+          description: The address, as the gas service gives it.
+        assigned:
+          type: boolean
+          description: Whether the customer is assigned to the acting workspace.
+    Assignment:
+      type: object
+      additionalProperties: false
+      required: [customer_number]
+      properties:
+        customer_number:
+          type: string
+          minLength: 1
+          maxLength: 64
+
+
+    Transaction:
+      type: object
+      required: [id, transaction_date, operation, amount, balance]
+      properties:
+        id:
+          type: string
+          format: uuid
+        transaction_date:
+          type: string
+          format: date
+        operation:
+          type: string
+          description: The name of the operation, as the gas service gives it.
+          examples: ["რეალური ჩვენება"]
+        amount:
+          type: number
+          format: decimal
+          description: The amount, in lari.
+        balance:
+          type: number
+          format: decimal
+          description: The balance after the transaction, in lari.
+        usage:
+          type: number
+          format: decimal
+          description: The usage of a reading, in cubic metres. Absent for a payment.
+        meter_value:
+          type: number
+          format: decimal
+          description: The value of the meter, in cubic metres. Absent for a payment.
+        bill_url:
+          type: string
+          format: uri
+          description: >
+            The bill at the gas service, which serves it with no session. Absent when
+            the gas service holds none. `GASACC-DD-013`.
+        meter_photo_url:
+          type: string
+          format: uri
+          description: The meter photo at the gas service. Absent when the gas service holds none.
+    TransactionPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Transaction"
+
+  responses:
+    MalformedBody:
+      description: >
+        The body is not a JSON object, with the type `/problems/http/body-invalid`,
+        or it names a member that the schema does not declare, with the type
+        `/problems/http/member-unknown`.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    ServiceUnavailable:
+      description: >
+        The gas service failed or answered nothing. The type is
+        `/problems/dev.maroid.tbilisi-energy/service-unavailable`. A stored connection stays.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"

@@ -4,7 +4,7 @@ title: Record ownership
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-12
+updated: 2026-10-13
 scope: [apps/hub/, libs/pluginapi/, plugins/*/db/, plugins/*/repository/]
 related: [DAT, SEC, REP, TG, JOB, PLG]
 ---
@@ -42,6 +42,7 @@ an acting user reaches no table that a user scopes.
 | A Telegram update | The identity of the Telegram connector for the sender.     | The workspace that the chat selected.    |
 | An MCP tool call  | The identity that `federated_claims` names. See `SEC-002`. | The `workspace` argument of the call.    |
 | A cron job        | The user of the run, for a job for each user. See `OWN-009`. | The workspace of the run, for a job for each workspace. See `OWN-009`. |
+| A command of a plugin | None. | The `--workspace` flag of the command, when the command reaches a table that a workspace scopes. |
 
 When a unit of work carries both, the hub checks that the acting user is a member
 of the acting workspace before it sets the workspace. A user who is not a member

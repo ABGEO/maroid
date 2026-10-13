@@ -24,6 +24,7 @@ A plugin uses this layout. Create a directory only when the plugin needs it.
 | `service/`                    | The clients of an external system (`EXT-001`), and the domain services that use them. `ADR-0017`. |
 | `job/`                        | The cron jobs. See `JOB-005`.                         |
 | `handler/`                    | The HTTP handlers. See `API-004`.                     |
+| `cli/`                        | The commands of the command line. See `CLI-005`.      |
 | `telegram/command/`           | The bot commands. See `TG-003`.                       |
 | `telegram/conversation/step/` | The conversation steps. See `TG-005`.                 |
 | `mcp/tool/`                   | The Model Context Protocol tools. See `PLG-006`.      |
