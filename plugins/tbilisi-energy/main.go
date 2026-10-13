@@ -94,9 +94,7 @@ func (p *TbilisiEnergyPlugin) SettingsModel() (any, error) {
 
 func (p *TbilisiEnergyPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 	return []pluginapi.CronJob{
-		job.NewTransactionsCollector(
-			p.config, p.logger, p.db, p.settings, p.notifier, p.apiClientSvc,
-		),
+		job.NewTransactionsCollector(p.config, p.logger),
 	}, nil
 }
 

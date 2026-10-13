@@ -1,40 +1,23 @@
 package dto
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/model"
 )
 
-// TransactionsRequest represents a request to fetch transactions for a customer.
-//
-//nolint:tagliatelle
-type TransactionsRequest struct {
-	CustomerNumber string `json:"customerNumber"`
-	DateFrom       string `json:"dateFrom,omitempty"`
-	DateTo         string `json:"dateTo,omitempty"`
-}
+// operationDateLayout reads operDate, which the gas service gives in the time of
+// Tbilisi with no offset.
+const operationDateLayout = "2006-01-02T15:04:05"
 
-// BaseResponse represents the common fields returned in most API responses.
+// BaseResponse represents the common fields returned in most API responses. A code
+// other than 0 is a failure.
 type BaseResponse struct {
-	ID      int    `json:"id"      mapstructure:"id"`
-	Success bool   `json:"success" mapstructure:"success"`
-	Message string `json:"message" mapstructure:"message"`
-	Code    int    `json:"code"    mapstructure:"code"`
-}
-
-// ErrorResponse represents an error returned by the API.
-//
-//nolint:tagliatelle
-type ErrorResponse struct {
-	Type    string         `json:"type"    mapstructure:"type"`
-	Title   string         `json:"title"   mapstructure:"title"`
-	Status  int            `json:"status"  mapstructure:"status"`
-	TraceID string         `json:"traceId" mapstructure:"traceId"`
-	Errors  map[string]any `json:"errors"  mapstructure:"errors"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Code    int    `json:"code"`
 }
 
 // AuthResponse represents the response returned after authentication.
@@ -47,60 +30,73 @@ type AuthResponse struct {
 	Token              string `json:"token"`
 }
 
-// TransactionsResponse represents the response returned when fetching transactions.
+// HomeResponse represents the response of the home page of the account. It decodes
+// the customers alone, so no personal number of the account holder reaches Maroid.
+type HomeResponse struct {
+	BaseResponse
+
+	Customers []Customer `json:"customers"`
+}
+
+// Customer represents one customer of the account. It decodes no personal number.
 //
 //nolint:tagliatelle
+type Customer struct {
+	CustomerNumber string `json:"custNumber"`
+	ControlNumber  int    `json:"controlNumber"`
+	Name           string `json:"customerName"`
+	Address        string `json:"address"`
+}
+
+// Number answers the customer number that the gas service takes in a request: the
+// number and the control number, joined by a hyphen.
+func (c *Customer) Number() string {
+	return c.CustomerNumber + "-" + strconv.Itoa(c.ControlNumber)
+}
+
+// TransactionsRequest represents a request to fetch the transactions of a customer.
+//
+//nolint:tagliatelle
+type TransactionsRequest struct {
+	CustomerNumber string `json:"customerNumber"`
+	DateFrom       string `json:"dateFrom"`
+	DateTo         string `json:"dateTo"`
+}
+
+// NewTransactionsRequest builds the request of the transactions of the customer in the period.
+func NewTransactionsRequest(customerNumber string, period model.Period) TransactionsRequest {
+	return TransactionsRequest{
+		CustomerNumber: customerNumber,
+		DateFrom:       period.From.Format(time.DateOnly),
+		DateTo:         period.To.Format(time.DateOnly),
+	}
+}
+
+// TransactionsResponse represents the response returned when fetching transactions.
 type TransactionsResponse struct {
 	BaseResponse
 
 	Transactions []Transaction `json:"transactions"`
-	PdfURL       string        `json:"pdfUrl"`
 }
 
 // Transaction represents a single transaction record.
 //
 //nolint:tagliatelle
 type Transaction struct {
-	Consumption            float64 `json:"consumption"`
-	Amount                 float64 `json:"amount"`
-	MeterReading           float64 `json:"meterReading"`
-	Balance                float64 `json:"balance"`
-	OperationID            int     `json:"operId"`
-	OperationName          string  `json:"operationName"`
-	OperationDate          string  `json:"operDate"`
-	OperationDateTimestamp int     `json:"operDateTimeStump"`
-	OperationDateString    string  `json:"operDateString"`
-	BillingDocumentURL     string  `json:"billDocPath"`
-	MeterPhotoURL          string  `json:"meterPhotoPath"`
+	Consumption        float64 `json:"consumption"`
+	Amount             float64 `json:"amount"`
+	MeterReading       float64 `json:"meterReading"`
+	Balance            float64 `json:"balance"`
+	OperationID        int     `json:"operId"`
+	OperationName      string  `json:"operationName"`
+	OperationDate      string  `json:"operDate"`
+	BillingDocumentURL string  `json:"billDocPath"`
+	MeterPhotoURL      string  `json:"meterPhotoPath"`
 }
 
-// Hash computes a unique SHA-256 hash for the Transaction instance.
-func (d *Transaction) Hash() string {
-	data := fmt.Sprintf(
-		"%f|%f|%f|%f|%d|%s|%s|%d|%s",
-		d.Consumption,
-		d.Amount,
-		d.MeterReading,
-		d.Balance,
-		d.OperationID,
-		d.OperationName,
-		d.OperationDate,
-		d.OperationDateTimestamp,
-		d.OperationDateString,
-	)
-	hash := sha256.Sum256([]byte(data))
-
-	return hex.EncodeToString(hash[:])
-}
-
-// operationDateLayout reads the operation date, which the API gives in the time of
-// Tbilisi with no offset.
-const operationDateLayout = "2006-01-02T15:04:05-07:00"
-
-// MapToModel converts the external Transaction representation into a
-// model.Transaction entity suitable for persistence.
-func (d *Transaction) MapToModel() (model.Transaction, error) {
-	date, err := time.Parse(operationDateLayout, d.OperationDate+"+04:00")
+// MapToModel converts the transaction of the customer into a model.Transaction.
+func (d *Transaction) MapToModel(customerNumber string) (model.Transaction, error) {
+	date, err := time.ParseInLocation(operationDateLayout, d.OperationDate, model.Tbilisi())
 	if err != nil {
 		return model.Transaction{}, fmt.Errorf(
 			"parsing the operation date %q: %w",
@@ -110,18 +106,23 @@ func (d *Transaction) MapToModel() (model.Transaction, error) {
 	}
 
 	return model.Transaction{
-		Hash:               d.Hash(),
-		Consumption:        d.Consumption,
-		Amount:             d.Amount,
-		MeterReading:       d.MeterReading,
-		Balance:            d.Balance,
-		Date:               date,
-		BillingDocumentURL: d.BillingDocumentURL,
-		MeterPhotoURL:      d.MeterPhotoURL,
-		TransactionTypeID:  d.OperationID,
-		Type: &model.TransactionType{
-			ID:   d.OperationID,
-			Name: d.OperationName,
-		},
+		CustomerNumber: customerNumber,
+		TypeID:         d.OperationID,
+		Operation:      d.OperationName,
+		Date:           date,
+		Consumption:    d.Consumption,
+		MeterValue:     d.MeterReading,
+		Amount:         d.Amount,
+		Balance:        d.Balance,
+		BillPath:       optionalPath(d.BillingDocumentURL),
+		MeterPhotoPath: optionalPath(d.MeterPhotoURL),
 	}, nil
+}
+
+func optionalPath(path string) *string {
+	if path == "" {
+		return nil
+	}
+
+	return &path
 }

@@ -6,7 +6,7 @@ require (
 	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261011233959-7cee61f56cf7
 	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261011233959-7cee61f56cf7
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/mitchellh/mapstructure v1.5.0
+	github.com/stretchr/testify v1.12.1
 	resty.dev/v3 v3.0.0-beta.3
 )
 
@@ -37,6 +37,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.75.0 // indirect
 	github.com/valyala/fastjson v1.6.10 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/arch v0.31.0 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/net v0.59.0 // indirect
