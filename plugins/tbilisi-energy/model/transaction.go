@@ -42,6 +42,26 @@ type Period struct {
 	To   time.Time
 }
 
+// Months answers the calendar months of the period, the first and the last cut to the
+// period.
+func (p Period) Months() []Period {
+	var months []Period
+
+	for from := p.From; !from.After(p.To); {
+		nextMonth := time.Date(from.Year(), from.Month()+1, 1, 0, 0, 0, 0, from.Location())
+
+		to := nextMonth.AddDate(0, 0, -1)
+		if to.After(p.To) {
+			to = p.To
+		}
+
+		months = append(months, Period{From: from, To: to})
+		from = nextMonth
+	}
+
+	return months
+}
+
 // PreviousMonth answers the calendar month of Tbilisi before the one of now.
 func PreviousMonth(now time.Time) Period {
 	local := now.In(Tbilisi())

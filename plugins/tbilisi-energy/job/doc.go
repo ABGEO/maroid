@@ -1,2 +1,2 @@
-// Package job contains scheduled cron jobs for the plugin.
+// Package job holds the cron jobs of the plugin.
 package job

@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"time"
+
+	"github.com/spf13/cobra"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginconfig"
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/cli"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/config"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/db"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/job"
@@ -19,18 +23,20 @@ import (
 //nolint:gochecknoglobals
 var pluginID = pluginapi.ParsePluginID("dev.maroid.tbilisi-energy")
 
+// TbilisiEnergyPlugin connects the gas account of a workspace, collects its
+// transactions, and sends the bill.
 type TbilisiEnergyPlugin struct {
-	config       *config.Config
-	logger       *slog.Logger
-	db           *pluginapi.PluginDB
-	settings     *pluginapi.PluginSettings
-	notifier     *pluginapi.PluginNotifier
-	apiClientSvc service.APIClientService
+	config    *config.Config
+	logger    *slog.Logger
+	store     *service.Store
+	collector *service.Collector
+	bills     *service.Bills
 }
 
 var (
 	_ pluginapi.Plugin             = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.ConfigurablePlugin = (*TbilisiEnergyPlugin)(nil)
+	_ pluginapi.CommandPlugin      = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.CronPlugin         = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.MigrationPlugin    = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.NotifyingPlugin    = (*TbilisiEnergyPlugin)(nil)
@@ -60,12 +66,23 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host settings provider: %w", err)
 	}
 
+	secretProvider, err := host.Secrets()
+	if err != nil {
+		return nil, fmt.Errorf("getting host secret provider: %w", err)
+	}
+
+	var (
+		store    = service.NewStore(pluginapi.NewPluginDB(database, pluginID))
+		client   = service.NewAPIClient(pluginConfig)
+		settings = pluginapi.NewPluginSettings(settingsProvider, pluginID)
+		secrets  = pluginapi.NewPluginSecrets(secretProvider, pluginID)
+		notifier = pluginapi.NewPluginNotifier(sender, pluginID)
+	)
+
 	plg := &TbilisiEnergyPlugin{
-		config:       pluginConfig,
-		db:           pluginapi.NewPluginDB(database, pluginID),
-		settings:     pluginapi.NewPluginSettings(settingsProvider, pluginID),
-		notifier:     pluginapi.NewPluginNotifier(sender, pluginID),
-		apiClientSvc: service.NewAPIClient(pluginConfig),
+		config:    pluginConfig,
+		store:     store,
+		collector: service.NewCollector(client, settings, secrets, store),
 	}
 
 	plg.logger = host.Logger().With(
@@ -74,9 +91,12 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		slog.String("plugin_api_version", plg.Meta().APIVersion),
 	)
 
+	plg.bills = service.NewBills(plg.logger, client, settings, secrets, notifier)
+
 	return plg, nil
 }
 
+// Meta returns the plugin metadata.
 func (p *TbilisiEnergyPlugin) Meta() pluginapi.Metadata {
 	return pluginapi.Metadata{
 		ID:          pluginID,
@@ -92,9 +112,10 @@ func (p *TbilisiEnergyPlugin) SettingsModel() (any, error) {
 	return config.WorkspaceSettings{}, nil
 }
 
+// CronJobs returns the collection of the transactions of the previous month.
 func (p *TbilisiEnergyPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 	return []pluginapi.CronJob{
-		job.NewTransactionsCollector(p.config, p.logger),
+		job.NewTransactionsCollector(p.config, p.logger, p.collector, p.bills, time.Now),
 	}, nil
 }
 
@@ -103,13 +124,19 @@ func (p *TbilisiEnergyPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 func (p *TbilisiEnergyPlugin) NotificationTopics() ([]pluginapi.NotificationTopic, error) {
 	return []pluginapi.NotificationTopic{
 		{
-			ID:          job.MonthlyBillTopic,
+			ID:          service.MonthlyBillTopic,
 			Name:        "Monthly bill",
 			Description: "The gas bill of the last month, with its receipt.",
 		},
 	}, nil
 }
 
+// Commands returns the collection of an earlier period for one workspace.
+func (p *TbilisiEnergyPlugin) Commands() []*cobra.Command {
+	return []*cobra.Command{cli.NewBackfill(p.logger, p.collector).Command()}
+}
+
+// Migrations returns the migrations of the schema of the plugin.
 func (p *TbilisiEnergyPlugin) Migrations() (fs.FS, error) {
 	migrationsFS, err := fs.Sub(db.Migrations, "migrations")
 	if err != nil {

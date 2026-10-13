@@ -44,3 +44,41 @@ func TestAReadingCarriesAMeterValue(t *testing.T) {
 	require.True(t, reading.IsReading())
 	require.False(t, payment.IsReading())
 }
+
+// GASACC-SC-019: A period splits into its calendar months, the first and the last cut
+// to the period.
+func TestAPeriodSplitsIntoItsMonths(t *testing.T) {
+	t.Parallel()
+
+	period := model.Period{
+		From: time.Date(2025, time.October, 15, 0, 0, 0, 0, model.Tbilisi()),
+		To:   time.Date(2026, time.January, 10, 0, 0, 0, 0, model.Tbilisi()),
+	}
+
+	split := period.Months()
+
+	months := make([]string, 0, len(split))
+	for _, month := range split {
+		months = append(
+			months,
+			month.From.Format(time.DateOnly)+".."+month.To.Format(time.DateOnly),
+		)
+	}
+
+	require.Equal(t, []string{
+		"2025-10-15..2025-10-31",
+		"2025-11-01..2025-11-30",
+		"2025-12-01..2025-12-31",
+		"2026-01-01..2026-01-10",
+	}, months)
+}
+
+// GASACC-SC-019: A period within one month stays one period.
+func TestAPeriodWithinAMonthStaysWhole(t *testing.T) {
+	t.Parallel()
+
+	day := time.Date(2026, time.September, 5, 0, 0, 0, 0, model.Tbilisi())
+	period := model.Period{From: day, To: day}
+
+	require.Equal(t, []model.Period{period}, period.Months())
+}

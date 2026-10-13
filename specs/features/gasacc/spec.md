@@ -484,9 +484,9 @@ on a canvas. A canvas reads no CSS variable.
 | # | Step | Realizes | Done |
 | - | ---- | -------- | ---- |
 | 1 | `errs/`, `model/`, `permission/`, `config/`, and the API client: `GetCustomers`, the rejected token, the blocked sign in, the timeout | `GASACC-FR-003`, `GASACC-FR-010`, `GASACC-FR-019` | [ ] |
-| 2 | Both migrations and `repository/` | `GASACC-FR-014`, `GASACC-FR-021`, `GASACC-FR-022` | [ ] |
-| 3 | `service/store.go`, `service/account.go`, `service/collector.go` | `GASACC-FR-017` to `GASACC-FR-021` | [ ] |
-| 4 | `service/bill.go`, the job, and `cli/backfill.go` | `GASACC-FR-017`, `GASACC-FR-023` to `GASACC-FR-028` | [ ] |
+| 2 | Both migrations and `repository/` | `GASACC-FR-014`, `GASACC-FR-021`, `GASACC-FR-022` | [x] |
+| 3 | `service/store.go`, `service/account.go`, `service/collector.go` | `GASACC-FR-017` to `GASACC-FR-021` | [x] |
+| 4 | `service/bill.go`, the job, and `cli/backfill.go` | `GASACC-FR-017`, `GASACC-FR-023` to `GASACC-FR-028` | [x] |
 | 5 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `GASACC-FR-004` to `GASACC-FR-016` | [ ] |
 | 6 | `handler/transaction.go`, `dto/transaction.go`, and `api.yaml` | `GASACC-FR-034` to `GASACC-FR-036`, `GASACC-FR-038` to `GASACC-FR-040` | [ ] |
 | 7 | `widget/last_reading.go` and `main.go` | `GASACC-FR-029` to `GASACC-FR-033`, `GASACC-FR-041`, `GASACC-FR-042` | [ ] |
