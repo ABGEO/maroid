@@ -5,6 +5,11 @@ import "time"
 // tbilisiOffset is the offset of Georgia from UTC. Georgia keeps no daylight time.
 const tbilisiOffset = 4 * 60 * 60
 
+// OperationReading is the operation of the gas service for a reading of the meter with
+// its charge, "რეალური ჩვენება". A control reading, "საკონტროლო ჩვენება", carries a meter
+// value too, with no usage and no charge, so the meter value cannot tell the two apart.
+const OperationReading = 125
+
 // Tbilisi answers the time zone of the gas service. A fixed zone needs no zone data
 // in the image.
 func Tbilisi() *time.Location {
@@ -30,10 +35,9 @@ type Transaction struct {
 	MeterPhotoPath *string `db:"meter_photo_path"`
 }
 
-// IsReading reports whether the transaction carries a reading of the meter. A payment
-// carries the meter value 0.
+// IsReading reports whether the transaction is a reading of the meter with its charge.
 func (t *Transaction) IsReading() bool {
-	return t.MeterValue > 0
+	return t.TypeID == OperationReading
 }
 
 // Period is a range of dates of Tbilisi, from the first date to the last, both included.

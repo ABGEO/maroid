@@ -126,7 +126,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-meter` | meter | One meter of a customer. A water meter carries a serial number. A gas customer holds one meter. |
 | `GLO-reading` | reading | The value of one meter on one date, in cubic metres. |
 | `GLO-gas-service` | gas service | The external service of Tbilisi Energy that holds the gas accounts. |
-| `GLO-transaction` | transaction | One entry of a customer at the gas service, on one date: a reading with its charge, or a payment. |
+| `GLO-transaction` | transaction | One entry of a customer at the gas service, on one date: a reading with its charge, a payment, or a control reading. A control reading holds a meter value with no usage and no charge. |
 | `GLO-bill` | bill | The document of the gas service for the charge of one reading. |
 | `GLO-meter-photo` | meter photo | The photo of the meter that the gas service took for one reading. |
 | `GLO-usage` | usage | The value of a reading minus the value of the reading before it, of the same meter. The earliest reading of a meter has none. |

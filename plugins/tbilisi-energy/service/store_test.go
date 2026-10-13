@@ -26,6 +26,7 @@ const (
 	customerC2 = "340309-649"
 
 	operationReading = 125
+	operationControl = 172
 	operationPayment = 196
 )
 
@@ -239,8 +240,8 @@ func TestTheStoreServesNoOtherWorkspace(t *testing.T) {
 	require.Equal(t, 0, countOf(inX, t, database, "transactions"))
 }
 
-// GASACC-SC-025: The latest reading of the assigned customer skips a later payment and
-// the transactions of another customer.
+// GASACC-SC-025: The latest reading of the assigned customer skips a later payment, a
+// later control reading, and the transactions of another customer (GASACC-DD-007).
 func TestTheLatestReadingIsAReadingOfTheAssignedCustomer(t *testing.T) {
 	t.Parallel()
 
@@ -257,6 +258,13 @@ func TestTheLatestReadingIsAReadingOfTheAssignedCustomer(t *testing.T) {
 		readingOf(customerC1, dateOf(time.August, 27), 1511, 6.48),
 		readingOf(customerC1, dateOf(time.September, 28), 1532, 11.33),
 		paymentOf(dateOf(time.October, 1), 11.33),
+		{
+			CustomerNumber: customerC1,
+			TypeID:         operationControl,
+			Operation:      "საკონტროლო ჩვენება",
+			Date:           dateOf(time.October, 3),
+			MeterValue:     1540,
+		},
 		readingOf(customerC2, dateOf(time.October, 5), 900, 3.10),
 	})
 	require.NoError(t, err)

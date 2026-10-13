@@ -34,15 +34,18 @@ func TestThePreviousMonthCrossesTheYear(t *testing.T) {
 	require.Equal(t, "2026-12-31", period.To.Format(time.DateOnly))
 }
 
-// GASACC-SC-023: A payment carries the meter value 0, so it is no reading.
-func TestAReadingCarriesAMeterValue(t *testing.T) {
+// GASACC-SC-023: A reading is the operation 125. A payment and a control reading,
+// which carries a meter value, are no reading.
+func TestAReadingIsTheOperationOfARealReading(t *testing.T) {
 	t.Parallel()
 
-	reading := model.Transaction{MeterValue: 1532}
-	payment := model.Transaction{MeterValue: 0}
+	reading := model.Transaction{TypeID: 125, MeterValue: 1532, Consumption: 21}
+	payment := model.Transaction{TypeID: 196}
+	control := model.Transaction{TypeID: 172, MeterValue: 982}
 
 	require.True(t, reading.IsReading())
 	require.False(t, payment.IsReading())
+	require.False(t, control.IsReading())
 }
 
 // GASACC-SC-019: A period splits into its calendar months, the first and the last cut

@@ -116,19 +116,21 @@ func (r *Transaction) Insert(ctx context.Context, transaction *model.Transaction
 	return inserted, nil
 }
 
-// LatestReading answers the latest transaction of the customer that carries a reading
-// of the meter, or nil when the customer has none.
+// LatestReading answers the latest reading of the customer, or nil when the customer
+// has none.
 func (r *Transaction) LatestReading(
 	ctx context.Context,
 	customerNumber string,
 ) (*model.Transaction, error) {
 	const query = selectTransactions + `
-		WHERE t.customer_number = :customer_number AND t.meter_value > 0
+		WHERE t.customer_number = :customer_number
+		  AND t.transaction_type_id = :reading_operation
 		ORDER BY t.transaction_date DESC, t.id DESC
 		LIMIT 1;`
 
 	transactions, err := r.selectNamed(ctx, query, map[string]any{
 		paramCustomerNumber: customerNumber,
+		"reading_operation": model.OperationReading,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("selecting the latest reading: %w", err)

@@ -232,6 +232,32 @@ func TestATransactionLinksToItsFiles(t *testing.T) {
 	require.Nil(t, payment.MeterPhotoURL)
 }
 
+// GASACC-SC-027: A control reading answers its meter value and no usage
+// (GASACC-DD-012).
+func TestAControlReadingAnswersItsMeterValue(t *testing.T) {
+	t.Parallel()
+
+	store, route := transactionsUnderTest(t)
+	ctx := actingInW()
+
+	require.NoError(t, store.Assign(ctx, customerC1))
+
+	_, err := store.InsertTransactions(ctx, []model.Transaction{{
+		CustomerNumber: customerC1,
+		TypeID:         172,
+		Operation:      "საკონტროლო ჩვენება",
+		Date:           firstOf(2026, time.September).AddDate(0, 0, 16),
+		MeterValue:     982,
+	}})
+	require.NoError(t, err)
+
+	answer := pageOf(t, get(t, route, pathTransactionList))
+	require.Len(t, answer.Items, 1)
+	require.Nil(t, answer.Items[0].Usage)
+	require.NotNil(t, answer.Items[0].MeterValue)
+	require.InDelta(t, 982.0, *answer.Items[0].MeterValue, 0)
+}
+
 // GASACC-SC-030: A workspace with no assigned customer answers not-assigned, and one
 // with no transaction answers an empty page.
 func TestTheTransactionsNeedTheAssignment(t *testing.T) {

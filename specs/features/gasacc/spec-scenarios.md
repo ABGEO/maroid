@@ -230,7 +230,7 @@ holds `2026.09.28`, `1532 მ³`, `21 მ³`, and `11.33 ₾`.
 **Verifies:** `GASACC-FR-027`, `GASACC-DD-007`
 **Layer:** unit
 
-**Given** `C1` assigned, and the fake service answers two new readings, 2026-09-28 and 2026-08-27, and a payment, each with a bill and a meter photo.
+**Given** `C1` assigned, and the fake service answers two new readings, 2026-09-28 and 2026-08-27, each with a bill and a meter photo, a payment, and a control reading of 2026-09-30 with a meter value and no charge.
 **When** the job runs.
 **Then** the fake notifier records one message on `monthly_bill`, with the figures of 2026-09-28, a PDF, and a JPEG.
 A second run with the same answer records no message.

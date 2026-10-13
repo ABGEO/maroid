@@ -39,8 +39,12 @@ func NewTransactionResponseList(
 		}
 
 		if transaction.IsReading() {
-			usage, meterValue := transaction.Consumption, transaction.MeterValue
+			usage := transaction.Consumption
 			response.Usage = &usage
+		}
+
+		if transaction.MeterValue > 0 {
+			meterValue := transaction.MeterValue
 			response.MeterValue = &meterValue
 		}
 

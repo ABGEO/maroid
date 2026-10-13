@@ -309,7 +309,9 @@ components:
         meter_value:
           type: number
           format: decimal
-          description: The value of the meter, in cubic metres. Absent for a payment.
+          description: >
+            The value of the meter, in cubic metres, of a reading or of a control reading.
+            Absent for a payment.
         bill_url:
           type: string
           format: uri

@@ -391,10 +391,14 @@ day reads the wrong month.
 **Realizes:** `GASACC-FR-016`, `GASACC-FR-024`, `GASACC-FR-027`
 **Decision:** `Collect` sends no bill. It answers `Collection.NewestReading`, and the job and
 `Connections.Assign` pass it to `Bills.Send`. `backfill` sends none. A transaction is a reading
-when `meter_value` is above zero (`Transaction.IsReading`).
+when its operation is `operId` 125, "რეალური ჩვენება" (`Transaction.IsReading`). The chart, the
+widget, and the bill take readings alone.
 **Rationale:** One `Collect` serves every caller, and the caller decides the period and the bill.
-A repeated assignment stores no new reading, so it sends no second bill. A payment carries
-`meterReading` 0. The old code matched `operId` 125, which misses another kind of reading.
+A repeated assignment stores no new reading, so it sends no second bill. The gas service also
+records a control reading, "საკონტროლო ჩვენება": a meter value and a photo, with no usage, no
+charge, and no bill. A rule on the meter value counts it as a reading, so the chart draws a zero
+and the widget or the bill can show it. The owner chose the operation over a rule on the bill or
+on the charge.
 **Alternatives:** A second method that collects the previous month and sends the bill. It fixes
 the period inside the collector. A flag on `Collect`. The flag names the caller.
 
@@ -442,8 +446,9 @@ The consumption and the meter value take no decimal. The amount takes two.
 **Realizes:** `GASACC-FR-034`, `GASACC-FR-035`
 **Decision:** The order is `transaction_date DESC, id DESC`, fixed. The boundary of a cursor is
 the identifier of a row, and the condition compares `(transaction_date, id)` with the one of
-that row. `page.Read` keys the cursor on the identifier. A reading answers `usage` and
-`meter_value`. A payment answers neither.
+that row. `page.Read` keys the cursor on the identifier. A reading answers `usage`. A
+transaction with a meter value above zero, a reading or a control reading, answers `meter_value`.
+A payment answers neither.
 **Rationale:** A reading and a payment share a date, so the date alone cannot order the page.
 **Alternatives:** A filter of the kind. The chart reads 12 months, at most 30 rows.
 
@@ -485,7 +490,7 @@ on a canvas. A canvas reads no CSS variable.
 
 | # | Step | Realizes | Done |
 | - | ---- | -------- | ---- |
-| 1 | `errs/`, `model/`, `permission/`, `config/`, and the API client: `GetCustomers`, the rejected token, the blocked sign in, the timeout | `GASACC-FR-003`, `GASACC-FR-010`, `GASACC-FR-019` | [ ] |
+| 1 | `errs/`, `model/`, `permission/`, `config/`, and the API client: `GetCustomers`, the rejected token, the blocked sign in, the timeout | `GASACC-FR-003`, `GASACC-FR-010`, `GASACC-FR-019` | [x] |
 | 2 | Both migrations and `repository/` | `GASACC-FR-014`, `GASACC-FR-021`, `GASACC-FR-022` | [x] |
 | 3 | `service/store.go`, `service/account.go`, `service/collector.go` | `GASACC-FR-017` to `GASACC-FR-021` | [x] |
 | 4 | `service/bill.go`, the job, and `cli/backfill.go` | `GASACC-FR-017`, `GASACC-FR-023` to `GASACC-FR-028` | [x] |
@@ -493,7 +498,7 @@ on a canvas. A canvas reads no CSS variable.
 | 6 | `handler/transaction.go`, `dto/transaction.go`, and `api.yaml` | `GASACC-FR-034` to `GASACC-FR-036`, `GASACC-FR-038` to `GASACC-FR-040` | [x] |
 | 7 | `widget/last_reading.go` and `main.go` | `GASACC-FR-029` to `GASACC-FR-033`, `GASACC-FR-041`, `GASACC-FR-042` | [x] |
 | 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-034` to `GASACC-FR-039` | [x] |
-| 9 | Run the flow against the gas service: an expired token, a link to a bill with no session, `backfill` of 12 months. Correct `GASACC-DD-013` and `GASACC-DD-004` | `GASACC-FR-019`, `GASACC-FR-023`, `GASACC-FR-036` | [ ] |
+| 9 | Run the flow against the gas service: an expired token, a link to a bill with no session, `backfill` of 12 months. Correct `GASACC-DD-013` and `GASACC-DD-004` | `GASACC-FR-019`, `GASACC-FR-023`, `GASACC-FR-036` | [x] |
 | 10 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [ ] |
 
 ## Retired identifiers

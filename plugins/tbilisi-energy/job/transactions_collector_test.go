@@ -52,7 +52,8 @@ const (
 )
 
 // twoReadingsAndAPayment holds the readings of 2026-08-27 and 2026-09-28, each with a
-// bill and a meter photo, and the payment of 2026-09-01.
+// bill and a meter photo, the payment of 2026-09-01, and the control reading of
+// 2026-09-30, which carries a meter value and a photo and no charge.
 const twoReadingsAndAPayment = `{"transactions":[
 	{"operId":196,"operationName":"გაზის საფასურის ელ-გადახდა","operDate":"2026-09-01T00:00:00",
 	 "amount":6.48,"meterReading":0,"consumption":0,"balance":0,"billDocPath":"","meterPhotoPath":""},
@@ -61,7 +62,10 @@ const twoReadingsAndAPayment = `{"transactions":[
 	 "billDocPath":"api/Customer/GetCustomerBillPdf/sep.pdf","meterPhotoPath":"api/Customer/images/sep.jpg"},
 	{"operId":125,"operationName":"რეალური ჩვენება","operDate":"2026-08-27T00:00:00",
 	 "amount":6.48,"meterReading":1511,"consumption":12,"balance":6.48,
-	 "billDocPath":"api/Customer/GetCustomerBillPdf/aug.pdf","meterPhotoPath":"api/Customer/images/aug.jpg"}
+	 "billDocPath":"api/Customer/GetCustomerBillPdf/aug.pdf","meterPhotoPath":"api/Customer/images/aug.jpg"},
+	{"operId":172,"operationName":"საკონტროლო ჩვენება","operDate":"2026-09-30T00:00:00",
+	 "amount":0,"meterReading":1540,"consumption":0,"balance":0,
+	 "billDocPath":"","meterPhotoPath":"api/Customer/images/control.jpg"}
 ],"success":true,"code":0}`
 
 // memorySecrets keeps the plugin secrets of each workspace in memory.
@@ -367,8 +371,8 @@ func TestTheJobReadsThePreviousMonthOfTbilisi(t *testing.T) {
 		DateFrom:       "2026-10-01",
 		DateTo:         "2026-10-31",
 	}}, rig.service.requested())
-	require.Equal(t, 3, rig.store.count())
-	require.Contains(t, rig.logs.String(), "transactions=3")
+	require.Equal(t, 4, rig.store.count())
+	require.Contains(t, rig.logs.String(), "transactions=4")
 }
 
 // GASACC-SC-013: A workspace with no connection or no assigned customer is skipped
@@ -416,7 +420,7 @@ func TestTheJobSignsInAgainWhenTheTokenIsRejected(t *testing.T) {
 	require.NoError(t, rig.job.Run(actingInW(t)))
 
 	require.Equal(t, tokenT2, rig.secrets.token())
-	require.Equal(t, 3, rig.store.count())
+	require.Equal(t, 4, rig.store.count())
 	require.Equal(t, []string{pathHome, pathSignIn, pathHome, pathTransactions},
 		rig.service.recorded()[:4])
 	require.NotContains(t, rig.logs.String(), tokenT2)
@@ -458,7 +462,7 @@ func TestTheJobFailsWhenTheAssignedCustomerIsAbsent(t *testing.T) {
 
 // GASACC-SC-022: The bill shows the date, the meter value, the usage, and the amount.
 // GASACC-SC-023: The run sends one bill, of the latest new reading, with a PDF and a
-// JPEG. A second run with the same answer sends none.
+// JPEG. A later control reading sends none. A second run with the same answer sends none.
 func TestTheJobSendsTheBillOfTheLatestNewReading(t *testing.T) {
 	t.Parallel()
 
