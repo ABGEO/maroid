@@ -10,7 +10,7 @@ type CronSchedule struct {
 
 // Config represents the root plugin configuration.
 type Config struct {
-	BaseURL        string        `default:"https://my.te.ge"   mapstructure:"base_url"`
+	BaseURL        string        `default:"https://my.te.ge"   mapstructure:"base_url"        validate:"url,endsnotwith=/"`
 	RequestTimeout time.Duration `default:"15s"                mapstructure:"request_timeout"`
 	CronSchedule   CronSchedule  `mapstructure:"cron_schedule"`
 }

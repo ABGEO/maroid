@@ -46,7 +46,10 @@ func NewTransactionHandler(
 	fileBase string,
 ) *TransactionHandler {
 	return &TransactionHandler{
-		logger:       logger,
+		logger: logger.With(
+			slog.String("component", "handler"),
+			slog.String("handler", "transaction"),
+		),
 		transactions: transactions,
 		fileBase:     fileBase,
 	}

@@ -333,6 +333,15 @@ importers:
       daisyui:
         specifier: ^5.5.19
         version: 5.5.19
+      prettier:
+        specifier: ^3.8.1
+        version: 3.8.1
+      prettier-plugin-svelte:
+        specifier: ^3.4.1
+        version: 3.5.1(prettier@3.8.1)(svelte@5.55.1)
+      prettier-plugin-tailwindcss:
+        specifier: ^0.7.2
+        version: 0.7.2(prettier-plugin-svelte@3.5.1(prettier@3.8.1)(svelte@5.55.1))(prettier@3.8.1)
       svelte:
         specifier: ^5.54.0
         version: 5.55.1

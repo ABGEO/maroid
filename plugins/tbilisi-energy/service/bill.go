@@ -34,7 +34,7 @@ func NewBills(
 	notifier *pluginapi.PluginNotifier,
 ) *Bills {
 	return &Bills{
-		logger:   logger,
+		logger:   logger.With(slog.String("component", "service"), slog.String("service", "bills")),
 		account:  &account{client: client, settings: settings, secrets: secrets},
 		client:   client,
 		notifier: notifier,
@@ -95,7 +95,7 @@ func (b *Bills) attachments(ctx context.Context, reading model.Transaction) []pl
 			return nil
 		})
 		if err != nil {
-			b.warn(ctx, "sending the bill without "+file.filename, err)
+			b.warn(ctx, "sending the bill without a file", err, slog.String("file", file.filename))
 
 			continue
 		}
@@ -112,12 +112,14 @@ func (b *Bills) attachments(ctx context.Context, reading model.Transaction) []pl
 	return attachments
 }
 
-func (b *Bills) warn(ctx context.Context, message string, err error) {
+func (b *Bills) warn(ctx context.Context, message string, err error, attributes ...any) {
 	b.logger.WarnContext(
 		ctx,
 		message,
-		slog.String("workspace_id", pluginapi.ActingWorkspaceFromContext(ctx)),
-		slog.Any("error", err),
+		append([]any{
+			slog.String("workspace_id", pluginapi.ActingWorkspaceFromContext(ctx)),
+			slog.Any("error", err),
+		}, attributes...)...,
 	)
 }
 

@@ -303,3 +303,20 @@ func TestAFilePathKeepsItsEncoding(t *testing.T) {
 		fake.only(t).requestURI,
 	)
 }
+
+// GASACC-SC-024: A file over 10 MiB fails to download, so the bill goes without it.
+func TestAFileOverTheLimitFails(t *testing.T) {
+	t.Parallel()
+
+	client, _ := newClient(t, time.Second, map[string]answer{
+		"/api/Customer/GetCustomerBillPdf/x.pdf": ok(strings.Repeat("x", 11<<20)),
+	})
+
+	_, err := client.DownloadFile(
+		context.Background(),
+		tokenT1,
+		"api/Customer/GetCustomerBillPdf/x.pdf",
+	)
+
+	require.ErrorIs(t, err, errs.ErrRequestFailed)
+}

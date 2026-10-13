@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"unicode/utf8"
@@ -17,6 +18,9 @@ import (
 const (
 	// maxFailureBody bounds the part of the body of a failed answer that an error names.
 	maxFailureBody = 512
+
+	// maxResponseBody bounds an answer of the gas service. A bill is about 600 KiB.
+	maxResponseBody = 10 << 20
 
 	headerToken = "token"
 )
@@ -46,7 +50,8 @@ func NewAPIClient(cfg *config.Config) *APIClient {
 	client := resty.New().
 		SetBaseURL(cfg.BaseURL).
 		SetHeader("Accept", "application/json").
-		SetTimeout(cfg.RequestTimeout)
+		SetTimeout(cfg.RequestTimeout).
+		SetResponseBodyLimit(maxResponseBody)
 
 	return &APIClient{
 		client: client,
@@ -149,20 +154,50 @@ func (s *APIClient) DownloadFile(ctx context.Context, token string, path string)
 	resp, err := s.client.R().
 		SetContext(ctx).
 		SetHeader(headerToken, token).
+		SetDoNotParseResponse(true).
 		Get("/" + path)
 	if err != nil {
 		return nil, fmt.Errorf("%w: downloading a file: %w", errs.ErrRequestFailed, err)
+	}
+
+	content, err := readBounded(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("downloading a file: %w", err)
 	}
 
 	if isRejectedToken(resp) {
 		return nil, errs.ErrNotConnected
 	}
 
-	if err = statusFailure(resp); err != nil {
-		return nil, fmt.Errorf("downloading a file: %w", err)
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf(
+			"%w: downloading a file returned [%d] %s",
+			errs.ErrRequestFailed,
+			resp.StatusCode(),
+			cutFailure(string(content)),
+		)
 	}
 
-	return resp.Bytes(), nil
+	return content, nil
+}
+
+// readBounded reads the body and closes it. A body over maxResponseBody fails, so a
+// broken answer cannot fill the memory of the hub.
+func readBounded(body io.ReadCloser) ([]byte, error) {
+	defer func() {
+		_ = body.Close()
+	}()
+
+	content, err := io.ReadAll(io.LimitReader(body, maxResponseBody+1))
+	if err != nil {
+		return nil, fmt.Errorf("%w: reading the body: %w", errs.ErrRequestFailed, err)
+	}
+
+	if len(content) > maxResponseBody {
+		return nil, fmt.Errorf("%w: the body passes 10 MiB", errs.ErrRequestFailed)
+	}
+
+	return content, nil
 }
 
 // postWithToken sends a POST that carries the token in the header of the gas service.
@@ -233,7 +268,12 @@ func statusFailure(resp *resty.Response) error {
 // failureBody answers the start of the body of a failed answer, so an error names
 // what the gas service said. The answer of a failure carries no token.
 func failureBody(resp *resty.Response) string {
-	body := strings.TrimSpace(resp.String())
+	return cutFailure(resp.String())
+}
+
+// cutFailure answers at most maxFailureBody bytes of the body, cut at a rune.
+func cutFailure(raw string) string {
+	body := strings.TrimSpace(raw)
 	if len(body) <= maxFailureBody {
 		return body
 	}

@@ -295,13 +295,11 @@ components:
           description: The name of the operation, as the gas service gives it.
           examples: ["რეალური ჩვენება"]
         amount:
-          type: number
-          format: decimal
-          description: The amount, in lari.
+          $ref: "#/components/schemas/Money"
         balance:
-          type: number
-          format: decimal
-          description: The balance after the transaction, in lari.
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: The balance after the transaction.
         usage:
           type: number
           format: decimal
@@ -322,6 +320,20 @@ components:
           type: string
           format: uri
           description: The meter photo at the gas service. Absent when the gas service holds none.
+    Money:
+      type: object
+      description: An amount of money, the money object of `Z-173`. `GASACC-DD-015`.
+      required: [amount, currency]
+      properties:
+        amount:
+          type: number
+          format: decimal
+          examples: [11.33]
+        currency:
+          type: string
+          format: iso-4217
+          description: The currency. The gas service bills in lari alone.
+          examples: [GEL]
     TransactionPage:
       allOf:
         - $ref: "../../api/components.yaml#/components/schemas/Page"

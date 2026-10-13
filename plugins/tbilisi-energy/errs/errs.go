@@ -20,6 +20,8 @@ var (
 	ErrNotAssigned = errors.New("tbilisi-energy: no assigned customer")
 	// ErrCustomerUnknown reports a customer that the gas account does not hold.
 	ErrCustomerUnknown = errors.New("tbilisi-energy: customer unknown")
+	// ErrReversedPeriod reports a period whose first date is after its last date.
+	ErrReversedPeriod = errors.New("tbilisi-energy: the first date is after the last date")
 	// ErrCustomerAbsent reports an assigned customer that the gas account no longer holds.
 	ErrCustomerAbsent = errors.New("tbilisi-energy: assigned customer absent from the account")
 )

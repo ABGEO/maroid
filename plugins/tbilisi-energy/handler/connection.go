@@ -52,7 +52,10 @@ func NewConnectionHandler(
 	connections ConnectionService,
 ) *ConnectionHandler {
 	return &ConnectionHandler{
-		logger:      logger,
+		logger: logger.With(
+			slog.String("component", "handler"),
+			slog.String("handler", "connection"),
+		),
 		connections: connections,
 	}
 }

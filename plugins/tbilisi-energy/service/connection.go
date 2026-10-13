@@ -56,7 +56,10 @@ func NewConnections(
 	now func() time.Time,
 ) *Connections {
 	return &Connections{
-		logger:    logger,
+		logger: logger.With(
+			slog.String("component", "service"),
+			slog.String("service", "connections"),
+		),
 		account:   &account{client: client, settings: settings, secrets: secrets},
 		client:    client,
 		store:     store,

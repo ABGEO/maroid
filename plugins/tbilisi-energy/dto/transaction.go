@@ -6,17 +6,26 @@ import (
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/model"
 )
 
+// currencyLari is the ISO 4217 code of the lari. The gas service bills in lari alone.
+const currencyLari = "GEL"
+
+// MoneyResponse is an amount of money, the money object of Zalando rule 173.
+type MoneyResponse struct {
+	Amount   float64 `json:"amount"`
+	Currency string  `json:"currency"`
+}
+
 // TransactionResponse is one transaction of the transactions page.
 type TransactionResponse struct {
-	ID              string   `json:"id"`
-	TransactionDate string   `json:"transaction_date"`
-	Operation       string   `json:"operation"`
-	Amount          float64  `json:"amount"`
-	Balance         float64  `json:"balance"`
-	Usage           *float64 `json:"usage,omitempty"`
-	MeterValue      *float64 `json:"meter_value,omitempty"`
-	BillURL         string   `json:"bill_url,omitempty"`
-	MeterPhotoURL   string   `json:"meter_photo_url,omitempty"`
+	ID              string        `json:"id"`
+	TransactionDate string        `json:"transaction_date"`
+	Operation       string        `json:"operation"`
+	Amount          MoneyResponse `json:"amount"`
+	Balance         MoneyResponse `json:"balance"`
+	Usage           *float64      `json:"usage,omitempty"`
+	MeterValue      *float64      `json:"meter_value,omitempty"`
+	BillURL         string        `json:"bill_url,omitempty"`
+	MeterPhotoURL   string        `json:"meter_photo_url,omitempty"`
 }
 
 // NewTransactionResponseList converts the transactions to their answers. fileBase is
@@ -32,8 +41,8 @@ func NewTransactionResponseList(
 			ID:              transaction.ID,
 			TransactionDate: transaction.Date.Format(time.DateOnly),
 			Operation:       transaction.Operation,
-			Amount:          transaction.Amount,
-			Balance:         transaction.Balance,
+			Amount:          lari(transaction.Amount),
+			Balance:         lari(transaction.Balance),
 			BillURL:         fileURL(fileBase, transaction.BillPath),
 			MeterPhotoURL:   fileURL(fileBase, transaction.MeterPhotoPath),
 		}
@@ -52,6 +61,10 @@ func NewTransactionResponseList(
 	}
 
 	return responses
+}
+
+func lari(amount float64) MoneyResponse {
+	return MoneyResponse{Amount: amount, Currency: currencyLari}
 }
 
 func fileURL(fileBase string, path *string) string {

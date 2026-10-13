@@ -43,12 +43,18 @@ type transactionItem struct {
 	ID              string   `json:"id"`
 	TransactionDate string   `json:"transaction_date"`
 	Operation       string   `json:"operation"`
-	Amount          float64  `json:"amount"`
-	Balance         float64  `json:"balance"`
+	Amount          money    `json:"amount"`
+	Balance         money    `json:"balance"`
 	Usage           *float64 `json:"usage"`
 	MeterValue      *float64 `json:"meter_value"`
 	BillURL         *string  `json:"bill_url"`
 	MeterPhotoURL   *string  `json:"meter_photo_url"`
+}
+
+// money is the money object of Z-173.
+type money struct {
+	Amount   float64 `json:"amount"`
+	Currency string  `json:"currency"`
 }
 
 // transactionsUnderTest migrates a database, and answers the store of workspace W and
@@ -159,7 +165,8 @@ func pathOf(t *testing.T, link string) string {
 
 // GASACC-SC-027: The first page holds the 20 latest transactions of the assigned
 // customer, the next page the 20 after them, and no transaction of another customer.
-// A reading carries its usage and its meter value, and a payment carries neither.
+// A reading carries its usage and its meter value, and a payment carries neither. An
+// amount is the money object (GASACC-DD-015).
 func TestTheTransactionsPageTheLatestFirst(t *testing.T) {
 	t.Parallel()
 
@@ -186,6 +193,9 @@ func TestTheTransactionsPageTheLatestFirst(t *testing.T) {
 	require.Nil(t, latest.Usage)
 	require.Nil(t, latest.MeterValue)
 	require.Nil(t, latest.BillURL)
+
+	require.Equal(t, money{Amount: 10, Currency: "GEL"}, latest.Amount)
+	require.Equal(t, money{Amount: 0, Currency: "GEL"}, latest.Balance)
 
 	reading := first.Items[1]
 	require.Equal(t, "2026-07-28", reading.TransactionDate)

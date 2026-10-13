@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log/slog"
 	"net/http"
 	"reflect"
 	"testing"
@@ -62,7 +63,10 @@ func TestTheBillIsANotificationTopic(t *testing.T) {
 func TestThePermissionsNameTheirLowestRoleAndTheirEntries(t *testing.T) {
 	t.Parallel()
 
-	plugin := &TbilisiEnergyPlugin{config: &config.Config{BaseURL: "https://my.te.ge"}}
+	plugin := &TbilisiEnergyPlugin{
+		config: &config.Config{BaseURL: "https://my.te.ge"},
+		logger: slog.New(slog.DiscardHandler),
+	}
 
 	permissions, err := plugin.Permissions()
 	require.NoError(t, err)

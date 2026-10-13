@@ -31,6 +31,7 @@ ALTER TABLE transactions
 ALTER TABLE transactions
     FORCE ROW LEVEL SECURITY;
 
+-- GASACC-INV-002: A transaction of one workspace serves no other workspace.
 CREATE POLICY transactions_workspace_isolation ON transactions
     USING (workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::uuid)
     WITH CHECK (workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::uuid);

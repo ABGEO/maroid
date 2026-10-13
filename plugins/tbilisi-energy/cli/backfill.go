@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -11,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/errs"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/model"
 )
 
@@ -19,8 +19,6 @@ const (
 	flagFrom      = "from"
 	flagTo        = "to"
 )
-
-var errReversedPeriod = errors.New("the first date is after the last date")
 
 // Collector collects the transactions of the acting workspace in a period.
 type Collector interface {
@@ -90,7 +88,7 @@ func (b *Backfill) prepare(*cobra.Command, []string) error {
 	}
 
 	if from.After(to) {
-		return errReversedPeriod
+		return errs.ErrReversedPeriod
 	}
 
 	b.period = model.Period{From: from, To: to}

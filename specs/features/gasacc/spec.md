@@ -4,7 +4,7 @@ title: The gas account of a workspace
 type: spec
 status: approved
 created: 2026-10-13
-updated: 2026-10-13
+updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-13
 constrained_by: [PLG, ARC, OWN, DAT, CFG, EXT, LOG, SEC, UI, JOB, NTF, CLI, API, ERR, RES, PKG, BLD, TST]
@@ -24,7 +24,7 @@ the bill of the newest reading stored for the first time. The command `backfill`
 earlier period for one workspace, and sends no bill.
 The widget `last-reading` shows that reading. The page `/transactions` lists the transactions
 with links to the files at the gas service, and draws a chart of 12 months. No change reaches
-the hub, `pluginapi`, or another plugin. `spec-scenarios.md` holds the scenarios.
+the hub, `pluginapi`, or another plugin. `spec-pages.md` holds the decisions of the pages. `spec-scenarios.md` holds the scenarios.
 
 ## 2. Coverage
 
@@ -52,7 +52,7 @@ the hub, `pluginapi`, or another plugin. `spec-scenarios.md` holds the scenarios
 | `GASACC-FR-027` | `GASACC-DD-007`, `GASACC-DD-010`, `GASACC-SC-023`, `GASACC-SC-024` |
 | `GASACC-FR-028` | `GASACC-DD-010`, `GASACC-SC-023`, `GASACC-SC-022` |
 | `GASACC-FR-029` to `GASACC-FR-033` | Section 4.3, `GASACC-DD-011`, `GASACC-SC-025`, `GASACC-SC-026` |
-| `GASACC-FR-034`, `GASACC-FR-035` | `api.yaml`, `GASACC-DD-012`, `GASACC-SC-027` |
+| `GASACC-FR-034`, `GASACC-FR-035` | `api.yaml`, `GASACC-DD-012`, `GASACC-DD-015`, `GASACC-SC-027` |
 | `GASACC-FR-036` | `api.yaml`, `GASACC-DD-013`, `GASACC-SC-028` |
 | `GASACC-FR-037` | `GASACC-DD-014`, `GASACC-SC-029` |
 | `GASACC-FR-038`, `GASACC-FR-039` | Section 4.5, `GASACC-SC-030` |
@@ -75,6 +75,7 @@ the hub, `pluginapi`, or another plugin. `spec-scenarios.md` holds the scenarios
 | `OWN-009` | Ownership | The collection keeps `CronScopePerWorkspace`. |
 | `CFG-007` | Configuration | The credentials stay workspace settings. |
 | `EXT-005`, `EXT-007` | External services | A status that is not a success, or `code` other than 0, is an error that wraps the status and at most 512 bytes of the body. |
+| `LOG-003`, `LOG-007` | Logging | Each service and handler adds `component` and its name. A message names the event, and a value goes in an attribute. |
 | `LOG-008` | Logging | No log line holds the password, the token, or a personal number. |
 | `SEC-013` | Security | Each route and the widget name a permission. |
 | `NTF-002` | Notifications | The bill keeps the topic `monthly_bill`. |
@@ -82,6 +83,7 @@ the hub, `pluginapi`, or another plugin. `spec-scenarios.md` holds the scenarios
 | `API-004` | HTTP API | The routes mount under `/workspaces/{workspaceId}/plugins/dev.maroid.tbilisi-energy/api`. |
 | `ERR-002` | Errors | Each problem type has the form `/problems/dev.maroid.tbilisi-energy/<slug>`. |
 | `RES-002`, `RES-005`, `RES-006` | REST | `/connections/self` and `/customer-assignments/self` keep the plural of `Z-134`, and the collections answer no `GET`, as `ADR-0015` permits. `PUT /connections/self` carries no body (`ADR-0018`). `GET /transactions` answers the `Page` of `libs/rest/page`. |
+| `RES-001` (`Z-173`) | REST | An amount travels as the money object, with `amount` and `currency` (`GASACC-DD-015`). |
 | `GO-005` | Go style | Every sentinel error lives in `errs/`. |
 | `UI-005` to `UI-009` | Web UI | The remote exports `/transactions` and `/account`, and reaches the API through `host.api`. |
 | `PKG-001` | Package layout | The plugin gains `cli/`, `handler/`, `permission/`, `widget/`, and `ui/`. `service/` holds the domain services and the store (`ADR-0017`). |
@@ -97,20 +99,20 @@ Every path is under `plugins/tbilisi-energy/`.
 | ---- | ------ | ----- |
 | `db/migrations/<ts>_table_customer_assignments_create.{up,down}.sql` | create | Section 4.2 |
 | `db/migrations/<ts>_transactions_key_by_customer_and_operation.{up,down}.sql` | create | Section 4.2, `GASACC-DD-008` |
-| `errs/errs.go` | change | `ErrRequestFailed` stays. `ErrNotConnected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrSignInBlocked`, `ErrNotAssigned`, `ErrCustomerUnknown`, `ErrCustomerAbsent` |
+| `errs/errs.go` | change | `ErrRequestFailed` stays. `ErrNotConnected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrSignInBlocked`, `ErrNotAssigned`, `ErrCustomerUnknown`, `ErrCustomerAbsent`, `ErrReversedPeriod` |
 | `model/connection.go` | create | `ConnectionState`, `Connection`, `Customer` with `Number`, `Name`, `Address`, `Assigned` |
-| `model/transaction.go` | change | `Transaction` (section 4.2), `IsReading()`, `Period`, `PreviousMonth(now time.Time) Period`, `Collection` |
+| `model/transaction.go` | change | `Transaction` (section 4.2), `OperationReading`, `IsReading()`, `Tbilisi()`, `Period`, `Period.Months()`, `PreviousMonth(now time.Time) Period`, `Collection` |
 | `dto/api-client.go` | change | `HomeResponse`, `Customer` with `custNumber`, `controlNumber`, `customerName`, `address`, and no other member (`GASACC-INV-004`). `Transaction.MapToModel(customerNumber string)`. `Hash` goes |
-| `dto/connection.go`, `dto/transaction.go` | create | `ConnectionResponse`, `CustomerResponse`, `AssignmentRequest`, `TransactionResponse`, `NewTransactionResponseList(transactions, fileBase)` |
-| `config/config.go` | change | `Config.RequestTimeout`. `WorkspaceSettings.CustomerNumber` goes |
-| `service/api-client.go` | change | `GetCustomers(ctx, token) ([]dto.Customer, error)`. A rejected token is `errs.ErrNotConnected` (`GASACC-DD-004`). A sign in with `recaptchaRequested` is `errs.ErrSignInBlocked`, one with a `code` other than 0 is `errs.ErrCredentialsRejected`. Every call ends after `request_timeout` |
+| `dto/connection.go`, `dto/transaction.go` | create | `ConnectionResponse`, `CustomerResponse`, `AssignmentRequest`, `TransactionResponse`, `MoneyResponse`, `NewTransactionResponseList(transactions, fileBase)` |
+| `config/config.go` | change | `Config.RequestTimeout`. `base_url` is a URL with no trailing slash. `WorkspaceSettings.CustomerNumber` goes |
+| `service/api-client.go` | change | `GetCustomers(ctx, token) ([]dto.Customer, error)`. A rejected token is `errs.ErrNotConnected` (`GASACC-DD-004`). A sign in with `recaptchaRequested` is `errs.ErrSignInBlocked`, one with a `code` other than 0 is `errs.ErrCredentialsRejected`. Every call ends after `request_timeout`, and a body passes no 10 MiB |
 | `service/account.go` | create | `account`, which `Connections`, `Collector`, and `Bills` share: `credentials` reads the settings, `token` reads the secret, `signIn` signs in and writes the secret, `forgetToken` deletes it, and `call` repeats a call once after a new sign in when the gas service rejects the token |
 | `service/connection.go` | create | `Connections`, `NewConnections`. It holds `Collector` and `Bills` |
 | `service/collector.go` | create | `Collector`, `NewCollector` |
 | `service/bill.go` | create | `Bills`, `NewBills`. The message and the attachments of the bill, moved from the job |
 | `service/store.go` | create | `Store` over `PluginDB`, one transaction for each call |
 | `repository/assignment.go` | create | `CustomerAssignment`: `Get`, `Put`, `Delete` |
-| `repository/transaction.go` | change | `Insert(ctx, *model.Transaction) (bool, error)`, `Latest(ctx, customerNumber)`, `List(ctx, seek, customerNumber, from)` |
+| `repository/transaction.go` | change | `Insert(ctx, *model.Transaction) (bool, error)`, `LatestReading(ctx, customerNumber)`, `List(ctx, seek, customerNumber, from)` |
 | `job/transactions_collector.go` | change | `Run` calls `Collect` with `PreviousMonth`, then `Bills.Send` |
 | `cli/{doc,backfill}.go` | create | `Backfill`, `NewBackfill`, `Command() *cobra.Command` |
 | `handler/{doc,connection,transaction,problem}.go` | create | `ConnectionHandler`, `TransactionHandler`, the problem types of section 4.5 |
@@ -433,55 +435,8 @@ download logs a warning, and the message goes without that file. A failed `Notif
 the message matter more than the files.
 **Alternatives:** Fail the run on a failed download. The bill of that month is then lost.
 
-### `GASACC-DD-011`
-
-**Realizes:** `GASACC-FR-029`
-**Decision:** `StatData{Value: "<consumption>", Unit: "m³", Caption: "<amount> ₾, meter <value> m³, <dd/mm/yyyy>", Link: "/transactions"}`.
-The consumption and the meter value take no decimal. The amount takes two.
-**Rationale:** One reading fits one stat. The household reads the usage first.
-**Alternatives:** A list of one line. A list shows several things.
-
-### `GASACC-DD-012`
-
-**Realizes:** `GASACC-FR-034`, `GASACC-FR-035`
-**Decision:** The order is `transaction_date DESC, id DESC`, fixed. The boundary of a cursor is
-the identifier of a row, and the condition compares `(transaction_date, id)` with the one of
-that row. `page.Read` keys the cursor on the identifier. A reading answers `usage`. A
-transaction with a meter value above zero, a reading or a control reading, answers `meter_value`.
-A payment answers neither.
-**Rationale:** A reading and a payment share a date, so the date alone cannot order the page.
-**Alternatives:** A filter of the kind. The chart reads 12 months, at most 30 rows.
-
-### `GASACC-DD-013`
-
-**Realizes:** `GASACC-FR-036`
-**Decision:** `base_url` is the origin of the gas service. The client calls the API under
-`base_url` and `/api`. The route answers `bill_url` and `meter_photo_url`: `base_url`, a slash,
-and the stored path, which starts with `api/`. A null path answers no member. The page renders
-each as a link with `target="_blank"` and `rel="noopener noreferrer"`.
-**Rationale:** The owner chose a link to the gas service. The gas service serves the file with
-no session. Maroid stores no file. A stored path is relative to the origin, so a link, a
-download, and a call of the API share one base, and no code takes a URL apart.
-**Alternatives:** A route of Maroid that downloads the file. It holds the file in memory and
-needs a token for each click.
-
-### `GASACC-DD-014`
-
-**Realizes:** `GASACC-FR-037`
-**Decision:** `UsageChart.svelte` draws the chart as SVG markup. `d3-scale` gives the scales
-and `d3-shape` the path of the line, and D3 touches no element. The x axis is a band for each
-reading date. The consumption of each reading is a column on the left axis, in cubic metres,
-from zero. The amount is a line on the right axis, in lari. The columns take `fill-primary`,
-the line `stroke-accent`, the axes `fill-base-content`, and the grid `stroke-base-300`. The
-width follows the container. A pointer over a date shows a daisyUI tooltip with the usage and
-the amount. The SVG carries `role="img"` and a label, and the table is the accessible form of
-the same transactions. The page reads `from` 12 months before today with `limit=100`, follows
-`next` to the last page, and keeps the readings. The chart lives in the plugin.
-**Rationale:** The chart is plain markup, so it takes the classes of the daisyUI theme, and a
-change of the theme recolors it with no code. The secondary color shares the hue of the primary in both themes,
-so a line of it fades over the columns in the dark theme. The accent is green in both. Both D3 modules are small and stable releases.
-**Alternatives:** A chart in `@maroid/ui`. The owner keeps it in the plugin. A library of charts
-on a canvas. A canvas reads no CSS variable.
+`spec-pages.md` holds `GASACC-DD-011` to `GASACC-DD-015`: the widget, the transactions page, the
+chart, and the money object.
 
 ## 6. Scenarios
 
