@@ -4,7 +4,7 @@ title: The administrator and the enablement in the command line, the bot, the sc
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-12
+updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-05
 constrained_by: [SEC, OWN, TG, JOB, CLI, UI, TS, SPC, LNG]
@@ -51,7 +51,7 @@ plugin of the job, so a job runs for those and for no other, which realizes
 | Path                                  | Action | Holds                                                     |
 | ------------------------------------- | ------ | --------------------------------------------------------- |
 | `libs/pluginapi/cron.go`              | change | `CronScopePerWorkspace`                                   |
-| `apps/hub/internal/registry/cron.go`  | change | `RegisterOf` keeps the plugin of each job. `PluginOf` names it |
+| `apps/hub/internal/registry/cron.go`  | change | `RegisterOf` keeps the plugin of each job. `Entries` answers each job with its plugin. A job identifier is unique within its plugin |
 | `apps/hub/internal/worker/cron.go`    | change | `runForEachWorkspace`, from `WorkspacesEnabling`          |
 
 A job of the hub names no plugin, so no workspace enables it. A job of the hub that

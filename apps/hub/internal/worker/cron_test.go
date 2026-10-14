@@ -25,6 +25,7 @@ const (
 	workspaceG = "01998aa0-2222-7000-8000-0000000000bb"
 	workspaceF = "01998aa0-2222-7000-8000-0000000000cc"
 	pluginP    = "dev.maroid.p"
+	pluginQ    = "dev.maroid.q"
 
 	everyMorning = "0 6 * * *"
 )
@@ -342,6 +343,44 @@ func TestPerWorkspaceJobSkipsAWorkspaceThatDoesNotEnableThePlugin(t *testing.T) 
 		fakeEnablements{pluginP: {workspaceH}, "dev.maroid.q": {workspaceG}})
 
 	require.Equal(t, []string{workspaceH}, job.actingWorkspaces())
+}
+
+// PLUGACC-SC-016: Two plugins that name a job alike each run their own job, for the
+// workspaces that enable that plugin alone.
+func TestJobsOfTwoPluginsWithOneNameRunForTheirOwnWorkspaces(t *testing.T) {
+	t.Parallel()
+
+	meta := pluginapi.CronJobMeta{
+		ID:       "transactions_collector",
+		Schedule: everyMorning,
+		Scope:    pluginapi.CronScopePerWorkspace,
+	}
+	ofP := &recordingJob{meta: meta}
+	ofQ := &recordingJob{meta: meta}
+
+	registryInstance := registry.NewCronRegistry()
+	require.NoError(t, registryInstance.RegisterOf(pluginP, ofP))
+	require.NoError(t, registryInstance.RegisterOf(pluginQ, ofQ))
+
+	scheduler := cron.New()
+	instance := worker.NewCronWorker(
+		slog.New(slog.DiscardHandler),
+		scheduler,
+		registryInstance,
+		twoActiveUsers(),
+		fakeEnablements{pluginP: {workspaceH}, pluginQ: {workspaceG}},
+	)
+	require.NoError(t, instance.Prepare())
+
+	entries := scheduler.Entries()
+	require.Len(t, entries, 2)
+
+	for _, entry := range entries {
+		entry.Job.Run()
+	}
+
+	require.Equal(t, []string{workspaceH}, ofP.actingWorkspaces())
+	require.Equal(t, []string{workspaceG}, ofQ.actingWorkspaces())
 }
 
 // JOB-007: The run for one workspace that fails does not stop the run for the next.

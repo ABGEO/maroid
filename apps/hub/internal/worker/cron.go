@@ -61,18 +61,21 @@ func (w *CronWorker) Name() string { return "cron" }
 
 // Prepare schedules all registered cron jobs.
 func (w *CronWorker) Prepare() error {
-	for _, job := range w.cronRegistry.All() {
+	for _, entry := range w.cronRegistry.Entries() {
+		job, pluginID := entry.Job, entry.PluginID
 		meta := job.Meta()
-		pluginID := w.cronRegistry.PluginOf(meta.ID)
 
 		logger := w.logger.With(slog.String("job_id", meta.ID))
+		if pluginID != "" {
+			logger = logger.With(slog.String("plugin_id", pluginID))
+		}
 
 		baseJob := cron.FuncJob(w.wrapCronJob(logger, job, pluginID))
 		skippingJob := cron.NewChain(cron.SkipIfStillRunning(cron.DiscardLogger)).Then(baseJob)
 
 		entryID, err := w.scheduler.AddJob(meta.Schedule, skippingJob)
 		if err != nil {
-			return fmt.Errorf("scheduling cron job %s: %w", meta.ID, err)
+			return fmt.Errorf("scheduling cron job %s of %q: %w", meta.ID, pluginID, err)
 		}
 
 		logger.Info(
@@ -87,7 +90,7 @@ func (w *CronWorker) Prepare() error {
 
 // Start runs the cron scheduler and blocks until the context is cancelled.
 func (w *CronWorker) Start(ctx context.Context) error {
-	if len(w.cronRegistry.All()) == 0 {
+	if len(w.cronRegistry.Entries()) == 0 {
 		w.logger.InfoContext(ctx, "no cron jobs registered, skipping")
 
 		return nil
