@@ -7,7 +7,7 @@ created: 2026-10-12
 updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-12
-constrained_by: [PLG, ARC, OWN, DAT, CFG, EXT, LOG, SEC, UI, JOB]
+constrained_by: [PLG, ARC, OWN, DAT, CFG, EXT, LOG, SEC, UI, JOB, NTF]
 ---
 
 # Requirements: The water account of a workspace
@@ -29,15 +29,15 @@ phone. The sign in can therefore run with no person present.
 - An editor of a workspace: connects the water account one time, and assigns the customer
   of the house.
 - A member of the workspace: reads the usage of the last month for each meter on the home page,
-  and compares the months of the last year on the readings page.
+  compares the months of the last year on the readings page, and receives each new reading
+  in the chat that a manager routes.
 
 ## 3. Out of scope
 
-- A price, a bill, a balance, or a payment.
+- A price, a bill, or a payment. The notification shows the balance, and nothing else holds it.
 - The readings of a customer that the workspace assigned before.
 - A chart of a range other than the last 12 months.
 - A reading that a person submits to the water service.
-- A notification about a reading.
 - A water account of one user. The connection belongs to the workspace.
 - Two or more customers in one workspace.
 - A bot command or a tool of the plugin.
@@ -46,7 +46,8 @@ phone. The sign in can therefore run with no person present.
 ## 4. Definitions
 
 The glossary holds each term of this feature: `GLO-water-service`, `GLO-customer`,
-`GLO-communal-number`, `GLO-assigned-customer`, `GLO-meter`, `GLO-reading`, `GLO-usage`.
+`GLO-communal-number`, `GLO-assigned-customer`, `GLO-meter`, `GLO-reading`, `GLO-usage`,
+`GLO-balance`, `GLO-notification-topic`.
 
 ## 5. Functional requirements
 
@@ -193,6 +194,42 @@ Maroid must keep a reading after a change of the assigned customer or the end of
 
 **Why:** A mistaken click must not lose the history. Each reading names its customer.
 
+### The notification
+
+### `GWPACC-FR-035`
+
+The plugin must declare the new reading as a notification topic, which a manager routes in each workspace.
+
+**Why:** A workspace chooses the chat that receives it. A workspace with no route receives nothing.
+
+### `GWPACC-FR-036`
+
+The scheduled collection must send one notification when it stores a reading for the first time.
+
+**Examples:**
+
+- Normal case: the run stores the reading of one meter on 15/09/2026. The workspace receives one notification.
+- Limit case: the run stores a reading of each of two meters on 15/09/2026. The workspace receives one notification that names both meters.
+- Limit case: the run stores no new reading. The workspace receives nothing.
+- Limit case: the run only corrects the value of a reading that Maroid holds (`GWPACC-FR-020`). The workspace receives nothing.
+- Limit case: the run stores new readings of 15/08/2026 and 15/09/2026. The workspace receives one notification, of 15/09/2026.
+
+### `GWPACC-FR-037`
+
+The collection after an assignment must send no notification.
+
+**Why:** It reads the history of the customer. A notification of an old reading tells the household nothing new.
+
+### `GWPACC-FR-038`
+
+The notification must show the date of the latest new reading, the serial number, the value, and the usage of each meter read on that date, and the balance of the assigned customer.
+
+**Examples:**
+
+- Normal case: one meter, 1216.5 on 15/09/2026 after 1204.0, and a balance of 12.40 ₾. The notification shows 15/09/2026, the serial number, 1216.5 m³, 12.5 m³, and 12.40 ₾.
+- Limit case: the first reading of a meter. The line of that meter shows the value and no usage.
+- Unwanted case: the water service fails to answer the balance. The notification goes with the readings, and says that the balance is unavailable.
+
 ### The widget
 
 ### `GWPACC-FR-022`
@@ -320,6 +357,7 @@ No answer of Maroid to a client holds a session token or a password of a water a
 | `SEC-013` | Security          | Each route and the widget of the plugin name a permission. |
 | `UI-006`  | Web UI            | The connection page imports no module of the deck. |
 | `JOB-007` | Jobs              | A failed collection of one workspace does not stop the collection of another. |
+| `NTF-002` | Notifications     | The plugin names the notification topic, never a destination. |
 
 ## 8. Open questions
 
@@ -331,6 +369,7 @@ No answer of Maroid to a client holds a session token or a password of a water a
 | 4   | Does the plugin assign the customer when the account holds one? | Temuri | No. The editor assigns it. `GWPACC-FR-013`. |
 | 5   | Which role connects and assigns the customer? | Temuri | Editor. `GWPACC-FR-027`. |
 | 6   | How long does Maroid keep a reading? | Temuri | As long as the workspace exists. |
+| 7   | The water service gives no bill. What does the notification show, and which collection sends it? | Temuri | The new readings and the balance, from the scheduled collection only. Added on 2026-10-14. `GWPACC-FR-035` to `GWPACC-FR-038`. |
 
 ## Retired identifiers
 

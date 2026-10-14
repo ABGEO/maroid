@@ -131,6 +131,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-electricity-service` | electricity service | The external service of Telmico that holds the electricity accounts. |
 | `GLO-meter-photo` | meter photo | The photo of the meter that the gas service took for one reading. |
 | `GLO-usage` | usage | The value of a reading minus the value of the reading before it, of the same meter. The earliest reading of a meter has none. |
+| `GLO-balance` | balance | The amount of a customer at a utility service on one day, in lari, as the service reports it. |
 
 ## Retired identifiers
 

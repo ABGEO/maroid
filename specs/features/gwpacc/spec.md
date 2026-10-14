@@ -21,7 +21,8 @@ the workspace settings and stores the token as the workspace plugin secret `toke
 workspace in the scoped table `customer_assignments`. The collection reads the readings
 of the assigned customer and keeps each one in the scoped table `readings`, one for a
 meter on a date. The usage of a reading is computed when it is read. The widget `usage` lists the last reading of each meter. No change reaches the hub
-or `pluginapi`. `spec-readings.md` holds the readings page. `spec-scenarios.md` holds the scenarios.
+or `pluginapi`. `spec-readings.md` holds the readings page. `spec-notification.md` holds the
+notification of a new reading. `spec-scenarios.md` holds the scenarios.
 
 ## 2. Coverage
 
@@ -61,6 +62,10 @@ or `pluginapi`. `spec-readings.md` holds the readings page. `spec-scenarios.md` 
 | `GWPACC-FR-032`   | `spec-readings.md` 3.4, `GWPACC-DD-015`, `GWPACC-SC-029`, `GWPACC-SC-030` |
 | `GWPACC-FR-033`   | `spec-readings.md` 3.1, `GWPACC-DD-012`, `GWPACC-SC-025` |
 | `GWPACC-FR-034`   | `spec-readings.md` 3.3, `GWPACC-SC-019` |
+| `GWPACC-FR-035`   | `spec-notification.md` 3.2, `GWPACC-SC-038` |
+| `GWPACC-FR-036`   | `spec-notification.md` 3.3, `GWPACC-DD-016`, `GWPACC-DD-017`, `GWPACC-SC-039` to `GWPACC-SC-042` |
+| `GWPACC-FR-037`   | `spec-notification.md` 3.3, `GWPACC-DD-017`, `GWPACC-SC-043` |
+| `GWPACC-FR-038`   | `spec-notification.md` 3.2, `GWPACC-DD-018`, `GWPACC-SC-039`, `GWPACC-SC-040`, `GWPACC-SC-044` |
 | `GWPACC-INV-001`  | Section 4.2, `GWPACC-DD-001`, `GWPACC-SC-009` |
 | `GWPACC-INV-002`  | Section 4.2, `GWPACC-SC-022` |
 | `GWPACC-INV-003`  | `api.yaml`, `GWPACC-SC-023` |
@@ -404,9 +409,12 @@ and `DD-007`. An answer of `/RecordDisplay` of 2026-10-12 gives `lastReadingDate
 whether `customerNo` of a reading equals `customerNo` of a customer.
 **Alternatives:** Ship on the assumption. A wrong assumption fails each collection in silence.
 
+`spec-readings.md` holds `GWPACC-DD-011` to `GWPACC-DD-015`. `spec-notification.md` holds
+`GWPACC-DD-016` to `GWPACC-DD-018`.
+
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `GWPACC-SC-001` to `GWPACC-SC-037`.
+`spec-scenarios.md` holds `GWPACC-SC-001` to `GWPACC-SC-044`.
 
 ## 7. Build plan
 
@@ -428,6 +436,7 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 | 14 | `GWPACC-SC-030` in the deck, in both themes. Lint and build the plugin | `GWPACC-FR-030` to `GWPACC-FR-032` | [ ] |
 | 15 | The corrections of the review of 2026-10-13: `service.Store` (`ADR-0017`), the repository interfaces, the timeout, the body of `EXT-007`, the count of a collection, the fragment of the assignment | `GWPACC-FR-007`, `GWPACC-FR-013`, `GWPACC-FR-016`, `GWPACC-FR-018` | [x] |
 | 16 | The change of 2026-10-14: `ErrTokenRejected`, `account.call`, and `Connections` and `Collector` over it (`DD-002`). The tests of `GWPACC-SC-008`, `GWPACC-SC-014`, `GWPACC-SC-034` to `GWPACC-SC-037`. Lint and build the plugin | `GWPACC-FR-012`, `GWPACC-FR-018` | [x] |
+| 17 | The notification of `spec-notification.md`: `Insert` that answers a new row, `OnDate`, `Collection`, `Notices`, the job, and `NotificationTopics`. The tests of `GWPACC-SC-038` to `GWPACC-SC-044`. Lint and build the plugin | `GWPACC-FR-035` to `GWPACC-FR-038` | [ ] |
 
 ## Retired identifiers
 

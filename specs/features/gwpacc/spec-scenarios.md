@@ -396,3 +396,79 @@ records one sign in and two lists. The `token` secret holds `T2`.
 **When** the job runs in W.
 **Then** the run answers an error that wraps `ErrCredentialsRejected`. The `token` secret is
 gone. `C1` stays assigned. No reading is stored.
+
+## `GWPACC-SC-038`
+
+**Verifies:** `GWPACC-FR-035`
+**Layer:** unit
+
+**Given** the plugin.
+**When** the test reads `NotificationTopics`.
+**Then** it answers one topic, `new_reading`, named "New water reading", with a description.
+
+## `GWPACC-SC-039`
+
+**Verifies:** `GWPACC-FR-036`, `GWPACC-FR-038`
+**Layer:** unit
+
+**Given** `C1` assigned, a `token` secret, and a stored reading of meter `M1` of 1204.0 on
+15/08/2026. The fake service answers `/RecordDisplay` with 1216.5 on 15/09/2026, and lists `C1`
+with a balance of 12.40.
+**When** the job runs in W.
+**Then** the fake notifier records one message of `new_reading`, whose title is
+`GWP | წყლის ჩვენება`, and whose body holds `15/09/2026`, `M1`, `1216.5 მ³`, `12.5 მ³`, and
+`12.40 ₾`.
+
+## `GWPACC-SC-040`
+
+**Verifies:** `GWPACC-FR-036`, `GWPACC-FR-038`
+**Layer:** unit
+
+**Given** `C1` assigned, a `token` secret, and no stored reading. The fake service answers
+`/RecordDisplay` with meters `M1` and `M2`, each read on 15/09/2026.
+**When** the job runs in W.
+**Then** the fake notifier records one message. Its body names `M1` and `M2`, each with its
+value and no usage.
+
+## `GWPACC-SC-041`
+
+**Verifies:** `GWPACC-FR-036`
+**Layer:** integration
+
+**Given** workspace W holds a reading of `M1` on 15/09/2026.
+**When** `InsertReadings` stores (a) the same reading; (b) the same date with a corrected value;
+(c) a reading of 15/10/2026.
+**Then** (a) and (b) answer no reading; (c) answers the reading of 15/10/2026.
+
+## `GWPACC-SC-042`
+
+**Verifies:** `GWPACC-FR-036`
+**Layer:** unit
+
+**Given** `C1` assigned, a `token` secret, and no stored reading. The fake service answers
+`/RecordDisplay` with readings of `M1` on 15/08/2026 and 15/09/2026. A second run reads the
+same answer.
+**When** the job runs in W twice.
+**Then** the fake notifier records one message, after the first run. Its body holds
+`15/09/2026` and no `15/08/2026`.
+
+## `GWPACC-SC-043`
+
+**Verifies:** `GWPACC-FR-037`
+**Layer:** unit
+
+**Given** a `token` secret, and the fake service lists `C1` and answers `/RecordDisplay` with a
+reading of `C1`.
+**When** E assigns `C1`.
+**Then** the answer is 200, the reading is stored, and the fake notifier records nothing.
+
+## `GWPACC-SC-044`
+
+**Verifies:** `GWPACC-FR-038`
+**Layer:** unit
+
+**Given** the setup of `GWPACC-SC-039`, and the fake service answers the list of the customers
+with 503.
+**When** the job runs in W.
+**Then** the run answers nil. The fake notifier records one message whose body holds the
+readings and `მიუწვდომელია`. The log holds a warning, and no token.
