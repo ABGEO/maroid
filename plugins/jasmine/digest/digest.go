@@ -1,54 +1,73 @@
-package job
+package digest
 
 import (
 	"fmt"
 	"html"
 	"strings"
 
-	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 )
 
+// Title is the title of the attention list, in the reminder and in the bot.
+const Title = "🌿 Plant care due"
+
 const (
-	digestTitle      = "🌿 Plant care due"
 	environmentMark  = "📍"
 	unknownStateMark = "•"
 	otherTypeMark    = "🔧"
 )
 
-// digest renders the care intervals as one message with one block for each
-// environment. The intervals arrive grouped by environment, so a new block starts
-// where the environment changes. The Telegram provider reads the body as HTML, so a
-// name that a member typed is escaped, and a "<" or a "&" in it cannot break the message.
-func digest(intervals []model.CareInterval) pluginapi.Message {
+// Block is the heading of one environment and the line of each of its care intervals.
+type Block struct {
+	Heading string
+	Lines   []string
+}
+
+// Blocks renders the care intervals as one block for each environment. The intervals
+// arrive grouped by environment, so a new block starts where the environment changes.
+// Telegram reads the text as HTML, so a name that a member typed is escaped, and a "<"
+// or a "&" in it cannot break the message.
+func Blocks(intervals []model.CareInterval) []Block {
 	var (
-		body strings.Builder
-		last string
+		blocks []Block
+		last   string
 	)
 
 	for i := range intervals {
 		care := &intervals[i]
 		environment := care.Plant.Environment
 
-		if environment.ID != last {
-			if last != "" {
-				body.WriteString("\n\n")
-			}
-
-			fmt.Fprintf(
-				&body,
+		if environment.ID != last || len(blocks) == 0 {
+			blocks = append(blocks, Block{Heading: fmt.Sprintf(
 				"%s <b>%s %s</b>",
 				environmentMark,
 				environment.DisplayID(),
 				html.EscapeString(environment.Name),
-			)
+			)})
 			last = environment.ID
 		}
 
-		body.WriteString("\n" + line(care))
+		current := &blocks[len(blocks)-1]
+		current.Lines = append(current.Lines, line(care))
 	}
 
-	return pluginapi.Message{Title: digestTitle, Body: body.String()}
+	return blocks
+}
+
+// Body joins the blocks into one text: the lines of a block on their own lines, and a
+// blank line between two blocks.
+func Body(blocks []Block) string {
+	texts := make([]string, 0, len(blocks))
+	for _, block := range blocks {
+		texts = append(texts, block.String())
+	}
+
+	return strings.Join(texts, "\n\n")
+}
+
+// String renders the heading and the lines of the block, one on each line.
+func (b Block) String() string {
+	return b.Heading + "\n" + strings.Join(b.Lines, "\n")
 }
 
 // line renders one care interval: the mark of the state, the plant, the type, the

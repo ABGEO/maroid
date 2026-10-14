@@ -4,7 +4,7 @@ title: The scenarios of the plants, their environments, and their care
 type: spec
 status: approved
 created: 2026-10-10
-updated: 2026-10-11
+updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-10
 constrained_by: [TST, OWN, TRC]
@@ -361,6 +361,73 @@ first is `🌿 Plant care due`, and its body is:
 **When** the job renders the reminder.
 **Then** the body holds `Office &amp; Hall` and `Rose &lt;Big&gt; &amp; Co`, so Telegram
 reads the names as text.
+
+## The bot command
+
+A command scenario calls `Care.Reply` with a fake `pluginapi.TelegramBot`
+that records each text. The wrapper of the hub is not part of it.
+
+### `GARDEN-SC-036`
+
+**Verifies:** `GARDEN-FR-034`, `GARDEN-FR-035`
+**Layer:** integration
+
+**Given** the care intervals of `GARDEN-SC-027` in H, a due care interval of an inactive plant in H, and a due care interval in G.
+**When** the command runs in H.
+**Then** the bot receives one message: `<b>🌿 Plant care due</b>`, a blank line, then the body of `GARDEN-SC-027`. It holds no line of the inactive plant and no line of G.
+
+### `GARDEN-SC-037`
+
+**Verifies:** `GARDEN-FR-034`
+**Layer:** unit
+
+**When** the plugin answers `TelegramCommands()`.
+**Then** the list holds one command: `care`, with the permission `plants.read` and the description "Plants that need care".
+
+### `GARDEN-SC-038`
+
+**Verifies:** `GARDEN-FR-036`
+**Layer:** integration
+
+**Given** H with every care interval `on_schedule`.
+**When** the command runs in H.
+**Then** the bot receives one message: "No plant needs care."
+
+### `GARDEN-SC-039`
+
+**Verifies:** `GARDEN-FR-037`
+**Layer:** unit
+
+**Given** two blocks of 40 lines each, every line of 80 UTF-16 code units.
+**When** `pack` runs with the limit 4096, then with the limit 100000.
+**Then** the first run answers two messages. Each holds at most 4096 units and ends at the end of a line. The second message starts with the heading of the block that it continues. Every line is present once. The second run answers one message.
+
+### `GARDEN-SC-040`
+
+**Verifies:** `GARDEN-NFR-003`
+**Layer:** integration
+
+**Given** H with the data of `GARDEN-SC-032`, and a fake bot that waits 100 ms for each send.
+**When** the command runs 5 times, and the test keeps the slowest run.
+**Then** the slowest run returns from its last send in less than 2 seconds after the call.
+
+### `GARDEN-SC-041`
+
+**Verifies:** `GARDEN-FR-034`
+**Layer:** manual
+
+**Given** a workspace that enables jasmine, with a due plant.
+**When** the owner sends `/dev_maroid_jasmine_care` in Telegram with no workspace picked, then picks the workspace and sends it again.
+**Then** the first answer asks to pick a workspace. The second shows the list in the form of the reminder.
+
+### `GARDEN-SC-042`
+
+**Verifies:** `GARDEN-FR-038`
+**Layer:** unit
+
+**Given** the blocks of `GARDEN-SC-039`, and a `more` that answers `And <left> more lines.`
+**When** `pack` runs with the limit 1000 and at most 3 messages, then with the limit 4096 and at most 2 messages.
+**Then** the first run answers 3 messages, each of at most 1000 units. The third ends with `And <left> more lines.`, and `left` plus the lines of the 3 messages is 80. The second run answers the 2 messages of `GARDEN-SC-039`, with no count.
 
 ## Retired identifiers
 

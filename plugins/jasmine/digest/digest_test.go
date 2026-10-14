@@ -1,10 +1,11 @@
-package job
+package digest_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/abgeo/maroid/plugins/jasmine/digest"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 )
 
@@ -13,7 +14,7 @@ func TestTheDigestEscapesTheNames(t *testing.T) {
 	t.Parallel()
 
 	due := model.CareStateDue
-	body := digest([]model.CareInterval{{
+	body := digest.Body(digest.Blocks([]model.CareInterval{{
 		Plant: model.PlantReference{
 			ID:          "p1",
 			Number:      1,
@@ -24,7 +25,7 @@ func TestTheDigestEscapesTheNames(t *testing.T) {
 		Days:      7,
 		DaysSince: 7,
 		State:     &due,
-	}}).Body
+	}}))
 
 	assert.Contains(t, body, "Office &amp; Hall")
 	assert.Contains(t, body, "Rose &lt;Big&gt; &amp; Co")

@@ -4,10 +4,10 @@ title: The plants of a workspace, their environments, and their care
 type: requirements
 status: approved
 created: 2026-10-10
-updated: 2026-10-11
+updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-10
-constrained_by: [OWN, DAT, SEC, NTF, JOB, CFG, RES]
+constrained_by: [OWN, DAT, SEC, NTF, JOB, CFG, RES, TG]
 ---
 
 # Requirements: The plants of a workspace, their environments, and their care
@@ -23,7 +23,7 @@ every plant. It holds no care history and no schedule.
 ## 2. Users
 
 - An editor: adds the plants, sets their schedules, and records each care action.
-- A viewer: reads the plants, their history, and what is due.
+- A viewer: reads the plants, their history, and what is due, in the shell or through the bot.
 
 ## 3. Out of scope
 
@@ -255,6 +255,51 @@ A reminder must hold each line of `GARDEN-FR-023`, grouped by environment.
 
 When every notification route fails, Maroid must record the failure and send the reminder at the next run only.
 
+### Bot command
+
+### `GARDEN-FR-034`
+
+The bot must answer the command `care` of the plugin with the attention list of the acting workspace.
+
+**Why:** The hub names each command of a plugin with the plugin identifier, so a person sends `/dev_maroid_jasmine_care`.
+
+**Examples:**
+
+- Normal case: a viewer sends the command. Three care intervals are due. The bot answers with the three lines.
+- Limit case: the plant of a due care interval is inactive. The answer holds no line for it.
+- Unwanted case: a person who cannot read the plants of the workspace sends the command. The bot refuses, and the answer holds no plant.
+
+### `GARDEN-FR-035`
+
+The answer to the command `care` must hold each line of `GARDEN-FR-023`, grouped by environment, overdue first.
+
+**Why:** The bot, the widget, and the reminder show one list.
+
+### `GARDEN-FR-036`
+
+When no care interval is due or overdue, the bot must answer the command `care` with "No plant needs care."
+
+### `GARDEN-FR-037`
+
+When the answer exceeds the size of one chat message, the bot must send it in several messages. No line spans two messages.
+
+**Examples:**
+
+- Normal case: the answer fits one message. The bot sends one message.
+- Limit case: the answer needs two messages. The second message starts at the start of a line, and every line is present once.
+
+### `GARDEN-FR-038`
+
+The bot must send at most 3 messages for one command `care`. When the attention list needs more, the last message must end with the count of the lines that it leaves out and a link to the attention list.
+
+**Why:** Telegram accepts about one message each second in one chat. A long answer floods the chat, and the attention list in the shell shows every line.
+
+**Examples:**
+
+- Normal case: the answer needs 2 messages. The bot sends both, with no count.
+- Limit case: the answer needs exactly 3 messages. The bot sends the 3, with no count.
+- Limit case: the answer needs 49 messages. The bot sends 3. The third ends with "And 2300 more lines." and the link.
+
 ### Change
 
 ### `GARDEN-FR-031`
@@ -272,6 +317,10 @@ The attention list must answer in less than 1 second, for a workspace with 500 p
 ### `GARDEN-NFR-002`
 
 The reminder must reach the notifier in less than 60 seconds after the scheduled time, for 50 workspaces of 500 plants each. Measure from the scheduled time to the call to the notifier.
+
+### `GARDEN-NFR-003`
+
+The bot must send the last message of the answer to the command `care` in less than 2 seconds, for a workspace with 500 plants and 100000 maintenance entries. Measure at the hub, from the receipt of the update to the return of the last send.
 
 ## 7. Invariants
 
@@ -299,6 +348,7 @@ A plant holds at most one care interval for each maintenance type.
 | `CFG-007` | Configuration | The configuration holds the schedule only. `NOTIF` holds the routing of each workspace. |
 | `JOB-006` | Jobs          | A slow reminder run does not start a second run. |
 | `RES-005` | REST          | Each list answers a page. |
+| `TG-003`  | Telegram      | The command `care` declares its permission in its metadata. Read is viewer. |
 
 ## 9. Open questions
 

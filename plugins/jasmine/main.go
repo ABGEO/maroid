@@ -15,28 +15,32 @@ import (
 	"github.com/abgeo/maroid/plugins/jasmine/job"
 	"github.com/abgeo/maroid/plugins/jasmine/mqtt/subscriber"
 	"github.com/abgeo/maroid/plugins/jasmine/permission"
+	"github.com/abgeo/maroid/plugins/jasmine/telegram/command"
 	"github.com/abgeo/maroid/plugins/jasmine/widget"
 )
 
 // JasminePlugin keeps the plants of each workspace, their environments, and
 // their care.
 type JasminePlugin struct {
-	config   *config.Config
-	logger   *slog.Logger
-	db       *pluginapi.PluginDB
-	notifier *pluginapi.PluginNotifier
+	config      *config.Config
+	logger      *slog.Logger
+	db          *pluginapi.PluginDB
+	notifier    *pluginapi.PluginNotifier
+	telegramBot pluginapi.TelegramBot
+	pages       pluginapi.PageLinker
 }
 
 var (
-	_ pluginapi.Plugin               = (*JasminePlugin)(nil)
-	_ pluginapi.MQTTSubscriberPlugin = (*JasminePlugin)(nil)
-	_ pluginapi.MigrationPlugin      = (*JasminePlugin)(nil)
-	_ pluginapi.UIPlugin             = (*JasminePlugin)(nil)
-	_ pluginapi.RoutePlugin          = (*JasminePlugin)(nil)
-	_ pluginapi.PermissionPlugin     = (*JasminePlugin)(nil)
-	_ pluginapi.CronPlugin           = (*JasminePlugin)(nil)
-	_ pluginapi.NotifyingPlugin      = (*JasminePlugin)(nil)
-	_ pluginapi.WidgetPlugin         = (*JasminePlugin)(nil)
+	_ pluginapi.Plugin                = (*JasminePlugin)(nil)
+	_ pluginapi.MQTTSubscriberPlugin  = (*JasminePlugin)(nil)
+	_ pluginapi.MigrationPlugin       = (*JasminePlugin)(nil)
+	_ pluginapi.UIPlugin              = (*JasminePlugin)(nil)
+	_ pluginapi.RoutePlugin           = (*JasminePlugin)(nil)
+	_ pluginapi.PermissionPlugin      = (*JasminePlugin)(nil)
+	_ pluginapi.CronPlugin            = (*JasminePlugin)(nil)
+	_ pluginapi.NotifyingPlugin       = (*JasminePlugin)(nil)
+	_ pluginapi.WidgetPlugin          = (*JasminePlugin)(nil)
+	_ pluginapi.TelegramCommandPlugin = (*JasminePlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -58,7 +62,17 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host notifier instance: %w", err)
 	}
 
-	plg := &JasminePlugin{config: pluginConfig}
+	telegramBot, err := host.TelegramBot()
+	if err != nil {
+		return nil, fmt.Errorf("getting host telegram bot instance: %w", err)
+	}
+
+	pages, err := host.Pages()
+	if err != nil {
+		return nil, fmt.Errorf("getting host page linker: %w", err)
+	}
+
+	plg := &JasminePlugin{config: pluginConfig, telegramBot: telegramBot, pages: pages}
 
 	plg.db = pluginapi.NewPluginDB(database, plg.Meta().ID)
 	plg.notifier = pluginapi.NewPluginNotifier(sender, plg.Meta().ID)
@@ -104,6 +118,13 @@ func (p *JasminePlugin) NotificationTopics() ([]pluginapi.NotificationTopic, err
 // Widgets returns the plants that need care, for the home page.
 func (p *JasminePlugin) Widgets() ([]pluginapi.Widget, error) {
 	return []pluginapi.Widget{widget.NewAttention(p.db)}, nil
+}
+
+// TelegramCommands returns the command that answers the plants that need care.
+func (p *JasminePlugin) TelegramCommands() ([]pluginapi.TelegramCommand, error) {
+	return []pluginapi.TelegramCommand{
+		command.NewCare(p.db, p.telegramBot, p.pages, p.Meta().ID),
+	}, nil
 }
 
 // MQTTSubscribers returns the subscriber of the sensor readings.

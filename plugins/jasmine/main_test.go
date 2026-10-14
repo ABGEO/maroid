@@ -34,3 +34,16 @@ func TestThePluginDeclaresTheReminderTopic(t *testing.T) {
 	assert.Equal(t, "care_reminder", topics[0].ID)
 	assert.Equal(t, "Care reminder", topics[0].Name)
 }
+
+// GARDEN-SC-037: The plugin declares the command care, which needs the permission to
+// read the plants.
+func TestThePluginDeclaresTheCareCommand(t *testing.T) {
+	t.Parallel()
+
+	commands, err := (&JasminePlugin{}).TelegramCommands()
+	require.NoError(t, err)
+	require.Len(t, commands, 1)
+	assert.Equal(t, "care", commands[0].Meta().Command)
+	assert.Equal(t, "Plants that need care", commands[0].Meta().Description)
+	assert.Equal(t, "plants.read", commands[0].Meta().Permission)
+}

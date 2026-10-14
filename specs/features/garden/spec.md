@@ -4,24 +4,25 @@ title: The plants of a workspace, their environments, and their care
 type: spec
 status: approved
 created: 2026-10-10
-updated: 2026-10-11
+updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-10
-constrained_by: [OWN, DAT, REP, SEC, RES, API, ERR, NTF, JOB, CFG, PKG, UI, TS, TST]
+constrained_by: [OWN, DAT, REP, SEC, RES, API, ERR, NTF, JOB, CFG, PKG, UI, TS, TST, TG]
 requirements: features/garden/requirements.md
 ---
 
 # Specification: The plants of a workspace, their environments, and their care
 
 `spec-scenarios.md` holds the scenarios. `api.yaml` holds the bodies and the status
-codes of every route.
+codes of every route. `spec-command.md` holds the bot command.
 
 ## 1. Summary
 
 The jasmine plugin drops its two tables and creates four scoped tables: the
 environments, the plants, the care intervals, and the maintenance entries. A fifth
 table holds the counter of the display identifiers. A cron job for each workspace
-sends one reminder as the notification topic `care_reminder`. The remote gets four pages.
+sends one reminder as the notification topic `care_reminder`. The bot command `care`
+answers the same list. The remote gets four pages.
 
 ## 2. Coverage
 
@@ -56,9 +57,15 @@ sends one reminder as the notification topic `care_reminder`. The remote gets fo
 | `GARDEN-FR-026`   | Section 4.3, 4.4, `GARDEN-SC-027`, `GARDEN-SC-028`        |
 | `GARDEN-FR-028`   | Section 4.4, `GARDEN-SC-029`                              |
 | `GARDEN-FR-031`   | Section 4.2, `GARDEN-DD-001`                              |
+| `GARDEN-FR-034`   | `spec-command.md` 3.2, 3.3, `GARDEN-SC-036`, `GARDEN-SC-037`, `GARDEN-SC-041` |
+| `GARDEN-FR-035`   | `spec-command.md` 3.3, `GARDEN-DD-012`, `GARDEN-SC-036`   |
+| `GARDEN-FR-036`   | `spec-command.md` 3.3, `GARDEN-SC-038`                    |
+| `GARDEN-FR-037`   | `spec-command.md` 3.3, `GARDEN-DD-013`, `GARDEN-SC-039`   |
+| `GARDEN-FR-038`   | `spec-command.md` 3.3, `GARDEN-DD-014`, `GARDEN-SC-042`   |
 | `GARDEN-FR-032`   | Section 4.4, `GARDEN-SC-027`, `GARDEN-SC-035`             |
 | `GARDEN-NFR-001`  | Section 4.2, `GARDEN-SC-032`                              |
 | `GARDEN-NFR-002`  | `GARDEN-SC-033`                                           |
+| `GARDEN-NFR-003`  | `GARDEN-SC-040`                                           |
 | `GARDEN-INV-001`  | Section 4.2, `GARDEN-DD-002`, `GARDEN-SC-010`             |
 | `GARDEN-INV-002`  | Section 4.2, `GARDEN-DD-004`, `GARDEN-SC-030`             |
 | `GARDEN-INV-003`  | Section 4.2, `GARDEN-SC-020`                              |
@@ -416,6 +423,9 @@ shows a control that writes only when `host.can` holds its permission.
 | 6   | `job/`, and the wiring in `main.go`. | `GARDEN-FR-025`, `GARDEN-FR-026`, `GARDEN-FR-028`, `GARDEN-FR-032` | [x] |
 | 7   | The remote: the API clients and the four pages. Build it before the `.so`. `BLD-003`. | `GARDEN-FR-010`, `GARDEN-FR-014`, `GARDEN-FR-022` to `GARDEN-FR-024` | [x] |
 | 8   | The two measurements of `GARDEN-NFR-001` and `GARDEN-NFR-002`. | `GARDEN-NFR-001`, `GARDEN-NFR-002` | [x] |
+| 9   | `digest/`, the move of `job/digest.go`, and the row of `PKG-001`. `GARDEN-SC-027` and `GARDEN-SC-035` still pass. | `GARDEN-FR-032`, `GARDEN-FR-035` | [x] |
+| 10  | `telegram/command/`, with `pack`, and the wiring in `main.go`. | `GARDEN-FR-034` to `GARDEN-FR-037` | [x] |
+| 11  | The cap of 3 messages, the measurement of `GARDEN-NFR-003`, and the manual check `GARDEN-SC-041`. | `GARDEN-FR-038`, `GARDEN-NFR-003`, `GARDEN-FR-034` | [x] |
 
 ## 8. Out of scope for this specification
 

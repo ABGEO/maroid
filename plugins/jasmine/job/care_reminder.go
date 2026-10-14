@@ -9,6 +9,7 @@ import (
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/jasmine/config"
+	"github.com/abgeo/maroid/plugins/jasmine/digest"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 	"github.com/abgeo/maroid/plugins/jasmine/repository"
 )
@@ -81,7 +82,7 @@ func (j *CareReminder) Run(ctx context.Context) error {
 		return nil
 	}
 
-	if err = j.notifier.Notify(ctx, CareReminderTopic, digest(intervals)); err != nil {
+	if err = j.notifier.Notify(ctx, CareReminderTopic, reminder(intervals)); err != nil {
 		return fmt.Errorf("sending the care reminder: %w", err)
 	}
 
@@ -93,4 +94,8 @@ func (j *CareReminder) Run(ctx context.Context) error {
 	)
 
 	return nil
+}
+
+func reminder(intervals []model.CareInterval) pluginapi.Message {
+	return pluginapi.Message{Title: digest.Title, Body: digest.Body(digest.Blocks(intervals))}
 }
