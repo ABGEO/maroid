@@ -120,15 +120,15 @@ person, so the page sets the bound. One meter fills 12 rows of one page.
 ### `GWPACC-DD-013`
 
 **Realizes:** `GWPACC-FR-030`
-**Decision:** `UsageChart.svelte` draws the chart as SVG markup. `d3-scale` gives the scales
+**Decision:** `ColumnLineChart` of `@maroid/ui` draws the chart as SVG markup. `d3-scale` gives the scales
 and `d3-shape` the path of each line, and D3 touches no element. The x axis is a band for
 each reading date, with an inner band for each meter. Each meter shows its usage as a
 column on the left axis, which starts at zero and reaches below it for a negative usage,
 and its value as a line on the right axis. A reading with no usage draws no column. The
 width follows the container. A pointer over a date shows a daisyUI tooltip with the
 usage and the value of each meter on that date. The SVG carries `role="img"` and a
-label, and the table below it is the accessible form of the same readings. The chart
-stays in the plugin until a second plugin needs one.
+label, and the table below it is the accessible form of the same readings.
+`UsageChart.svelte` gives one series for each meter, the legend, and the tooltip.
 **Rationale:** The owner chose D3 over a library of charts. The two modules are small, and
 the releases are stable: `d3-scale` 4.0.2 dates from 2021 and `d3-shape` 3.2.0 from 2022.
 The chart is plain markup, so it takes the components and the classes of daisyUI.

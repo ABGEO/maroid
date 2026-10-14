@@ -67,7 +67,7 @@ the hub, `pluginapi`, or another plugin. `spec-pages.md` holds the decisions of 
 | Rule | Guideline | How this specification obeys it |
 | ---- | --------- | ------------------------------- |
 | `PLG-006`, `PLG-007` | Plugin model | The plugin adds the permission, route, UI, and widget capabilities through the existing interfaces, and reaches every resource through the host. |
-| `PLG-008` | Plugin model | The plugin imports no other plugin. The chart lives in the plugin (`GASACC-DD-014`). |
+| `PLG-008` | Plugin model | The plugin imports no other plugin. The chart comes from `@maroid/ui` (`GASACC-DD-014`). |
 | `ARC-008` | Architecture | No file of the hub changes. |
 | `DAT-001`, `DAT-006`, `DAT-009` | Data | Both tables live in `dev_maroid_tbilisi_energy`. Each `id` is `uuidv7()`. |
 | `OWN-004` to `OWN-008` | Ownership | Both tables carry `workspace_id` and forced row level security. No repository filters by workspace. `transaction_types` stays a shared table. |

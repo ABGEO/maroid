@@ -43,12 +43,13 @@ default 20), `cursor`, and `from`, a date `YYYY-MM-DD`.
 ### `ELECACC-DD-013`
 
 **Realizes:** `ELECACC-FR-039`
-**Decision:** `UsageChart.svelte` repeats the chart of the gas plugin: SVG markup, `d3-scale`
-`4.0.2` and `d3-shape` `3.2.0`, the usage of each reading as a column in kWh on the left axis,
+**Decision:** `UsageChart.svelte` draws the chart of the gas plugin with `ColumnLineChart` of
+`@maroid/ui`: the usage of each reading as a column in kWh on the left axis,
 and the charge as a line in lari on the right axis. The page reads `from` 12 months before
 today with `limit=100`, follows `next` to the last page, and groups the charges of each date
 into one reading, as `ReadingsOf` does.
-**Rationale:** The two pages read alike. The plugin cannot import the gas plugin (`PLG-008`).
+**Rationale:** The two pages read alike. The plugin cannot import the gas plugin (`PLG-008`), so the
+chart lives in the shared library.
 **Alternatives:** A route of readings. The client groups at most 24 rows.
 
 ### `ELECACC-DD-014`

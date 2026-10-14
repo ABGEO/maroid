@@ -53,7 +53,7 @@ needs a token for each click.
 ### `GASACC-DD-014`
 
 **Realizes:** `GASACC-FR-037`
-**Decision:** `UsageChart.svelte` draws the chart as SVG markup. `d3-scale` gives the scales
+**Decision:** `ColumnLineChart` of `@maroid/ui` draws the chart as SVG markup. `d3-scale` gives the scales
 and `d3-shape` the path of the line, and D3 touches no element. The x axis is a band for each
 reading date. The consumption of each reading is a column on the left axis, in cubic metres,
 from zero. The amount is a line on the right axis, in lari. The columns take `fill-primary`,
@@ -61,11 +61,12 @@ the line `stroke-accent`, the axes `fill-base-content`, and the grid `stroke-bas
 width follows the container. A pointer over a date shows a daisyUI tooltip with the usage and
 the amount. The SVG carries `role="img"` and a label, and the table is the accessible form of
 the same transactions. The page reads `from` 12 months before today with `limit=100`, follows
-`next` to the last page, and keeps the readings. The chart lives in the plugin.
+`next` to the last page, and keeps the readings. `UsageChart.svelte` gives the series, the legend, and the
+tooltip.
 **Rationale:** The chart is plain markup, so it takes the classes of the daisyUI theme, and a
 change of the theme recolors it with no code. The secondary color shares the hue of the primary in both themes,
 so a line of it fades over the columns in the dark theme. The accent is green in both. Both D3 modules are small and stable releases.
-**Alternatives:** A chart in `@maroid/ui`. The owner keeps it in the plugin. A library of charts
+**Alternatives:** A chart in each plugin. Three plugins repeated it. A library of charts
 on a canvas. A canvas reads no CSS variable.
 
 ### `GASACC-DD-015`

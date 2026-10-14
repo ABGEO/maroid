@@ -70,7 +70,7 @@ the scenarios.
 | Rule | Guideline | How this specification obeys it |
 | ---- | --------- | ------------------------------- |
 | `PLG-006`, `PLG-007` | Plugin model | The plugin adds each capability through the existing interfaces, and reaches every resource through the host. |
-| `PLG-008` | Plugin model | The plugin imports no other plugin. The chart and the Tbilisi date repeat in the plugin. |
+| `PLG-008` | Plugin model | The plugin imports no other plugin. The chart comes from `@maroid/ui`. The Tbilisi date repeats in the plugin. |
 | `ARC-008` | Architecture | No file of the hub changes. |
 | `DAT-001`, `DAT-006`, `DAT-009` | Data | Every table lives in `dev_maroid_telmico`. Each `id` is `uuidv7()`. |
 | `OWN-004` to `OWN-008` | Ownership | Every table carries `workspace_id` and forced row level security. No repository filters by workspace. |

@@ -160,10 +160,22 @@ importers:
       '@maroid/theme':
         specifier: workspace:*
         version: link:../theme
+      d3-scale:
+        specifier: 4.0.2
+        version: 4.0.2
+      d3-shape:
+        specifier: 3.2.0
+        version: 3.2.0
       daisyui:
         specifier: ^5.5.19
         version: 5.5.19
     devDependencies:
+      '@types/d3-scale':
+        specifier: 4.0.9
+        version: 4.0.9
+      '@types/d3-shape':
+        specifier: 3.2.0
+        version: 3.2.0
       prettier:
         specifier: ^3.8.1
         version: 3.8.1
@@ -194,12 +206,6 @@ importers:
       '@maroid/ui':
         specifier: workspace:*
         version: link:../../../libs/ui
-      d3-scale:
-        specifier: 4.0.2
-        version: 4.0.2
-      d3-shape:
-        specifier: 3.2.0
-        version: 3.2.0
     devDependencies:
       '@module-federation/vite':
         specifier: ^1.15.4
@@ -210,12 +216,6 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.1.18
         version: 4.2.2(vite@7.3.1(@types/node@24.12.2)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.9.1))
-      '@types/d3-scale':
-        specifier: 4.0.9
-        version: 4.0.9
-      '@types/d3-shape':
-        specifier: 3.2.0
-        version: 3.2.0
       daisyui:
         specifier: ^5.5.19
         version: 5.5.19
@@ -308,12 +308,6 @@ importers:
       '@maroid/ui':
         specifier: workspace:*
         version: link:../../../libs/ui
-      d3-scale:
-        specifier: 4.0.2
-        version: 4.0.2
-      d3-shape:
-        specifier: 3.2.0
-        version: 3.2.0
     devDependencies:
       '@module-federation/vite':
         specifier: ^1.15.4
@@ -324,12 +318,6 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.1.18
         version: 4.2.2(vite@7.3.1(@types/node@24.12.2)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.9.1))
-      '@types/d3-scale':
-        specifier: 4.0.9
-        version: 4.0.9
-      '@types/d3-shape':
-        specifier: 3.2.0
-        version: 3.2.0
       daisyui:
         specifier: ^5.5.19
         version: 5.5.19
@@ -363,12 +351,6 @@ importers:
       '@maroid/ui':
         specifier: workspace:*
         version: link:../../../libs/ui
-      d3-scale:
-        specifier: 4.0.2
-        version: 4.0.2
-      d3-shape:
-        specifier: 3.2.0
-        version: 3.2.0
     devDependencies:
       '@module-federation/vite':
         specifier: ^1.15.4
@@ -379,12 +361,6 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.1.18
         version: 4.2.2(vite@7.3.1(@types/node@24.12.2)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.9.1))
-      '@types/d3-scale':
-        specifier: 4.0.9
-        version: 4.0.9
-      '@types/d3-shape':
-        specifier: 3.2.0
-        version: 3.2.0
       daisyui:
         specifier: ^5.5.19
         version: 5.5.19
