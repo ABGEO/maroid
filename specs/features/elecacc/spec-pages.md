@@ -70,9 +70,9 @@ security and the assigned customer limit it, and answers 404 for any other ident
 `Documents.Open` downloads `service_bill_id` through `account.call`, and the route answers 200
 with `Content-Type: application/pdf`, `Content-Disposition: attachment; filename="<bill_number>.pdf"`,
 and `Cache-Control: private, no-store`. A failure answers the problem of section 4.5 of `spec.md`.
-`Bills.svelte` renders `document` as `<a href download>`, so the browser sends the session
-cookie of the hub. Build step 10 confirms that the deck and the hub share the cookie for that
-link, and corrects this decision when they do not.
+`Bills.svelte` renders `document` as `<a href download>`. The link names the origin of the hub,
+and the session cookie of the hub is `SameSite=Lax`, so the browser sends it on that navigation
+from the deck.
 **Rationale:** The portal serves the document only inside a session. `ApiClient` of the SDK
 reads JSON alone, and a link needs no change to it.
 **Alternatives:** A method of `ApiClient` that answers a blob. It changes a shared library for one page.

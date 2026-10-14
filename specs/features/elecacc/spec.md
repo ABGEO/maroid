@@ -351,8 +351,9 @@ adds a runtime of hundreds of megabytes to the image of the hub.
 ### `ELECACC-DD-003`
 
 **Realizes:** `ELECACC-FR-012`, `ELECACC-FR-013`, `ELECACC-FR-020`
-**Decision:** A 401 or a 403 from the API, or a 302 from `GET /private`, is
-`ErrSessionRejected`. `account.call` then signs in with the stored credentials, writes the new
+**Decision:** A 401, a 403, or a redirect from a call of the API is `ErrSessionRejected`. The
+portal answers 401 to a session it no longer holds, and a redirect to a call whose CSRF token
+belongs to an ended session, because it checks the token first. `account.call` then signs in with the stored credentials, writes the new
 `session`, and repeats the call once. `ErrCredentialsRejected` from that sign in deletes
 `session`, keeps the assignment, and reaches the caller. A second `ErrSessionRejected` is
 `ErrRequestFailed`.
@@ -462,8 +463,8 @@ more than the document. The household knows the message of the plugin of the dis
 | 7 | `handler/transaction.go`, `handler/bill.go`, `service/document.go`, their DTOs, and `api.yaml` | `ELECACC-FR-037` to `ELECACC-FR-045` | [x] |
 | 8 | `widget/last_reading.go` and `main.go` | `ELECACC-FR-032` to `ELECACC-FR-036`, `ELECACC-FR-046`, `ELECACC-FR-047` | [x] |
 | 9 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `ELECACC-FR-003` to `ELECACC-FR-015`, `ELECACC-FR-037` to `ELECACC-FR-044` | [x] |
-| 10 | Run the flow against the portal: an ended session, the download from the deck, `backfill` of 12 months. Correct `ELECACC-DD-003` and `ELECACC-DD-015` | `ELECACC-FR-012`, `ELECACC-FR-025`, `ELECACC-FR-042` | [ ] |
-| 11 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [ ] |
+| 10 | Run the flow against the portal: an ended session, the download from the deck, `backfill` of 12 months. Correct `ELECACC-DD-003` and `ELECACC-DD-015` | `ELECACC-FR-012`, `ELECACC-FR-025`, `ELECACC-FR-042` | [x] |
+| 11 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [x] |
 
 ## Retired identifiers
 
