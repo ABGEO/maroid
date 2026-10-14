@@ -154,13 +154,16 @@ func (f *fakeStore) Unassign(context.Context) error {
 	return nil
 }
 
-func (f *fakeStore) InsertReadings(_ context.Context, readings []model.Reading) error {
+func (f *fakeStore) InsertReadings(
+	_ context.Context,
+	readings []model.Reading,
+) ([]model.Reading, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
 	f.readings = append(f.readings, readings...)
 
-	return nil
+	return readings, nil
 }
 
 func (f *fakeStore) assignment() string {

@@ -29,6 +29,7 @@ type GWPPlugin struct {
 	logger      *slog.Logger
 	store       *service.Store
 	collector   *service.Collector
+	notices     *service.Notices
 	connections *service.Connections
 }
 
@@ -41,6 +42,7 @@ var (
 	_ pluginapi.RoutePlugin        = (*GWPPlugin)(nil)
 	_ pluginapi.WidgetPlugin       = (*GWPPlugin)(nil)
 	_ pluginapi.UIPlugin           = (*GWPPlugin)(nil)
+	_ pluginapi.NotifyingPlugin    = (*GWPPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -67,6 +69,11 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host secret provider: %w", err)
 	}
 
+	sender, err := host.Notifier()
+	if err != nil {
+		return nil, fmt.Errorf("getting host notifier: %w", err)
+	}
+
 	var (
 		store    = service.NewStore(pluginapi.NewPluginDB(database, pluginID))
 		client   = service.NewAPIClient(pluginConfig)
@@ -84,6 +91,15 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		slog.String("plugin", plg.Meta().ID.String()),
 		slog.String("plugin_version", plg.Meta().Version),
 		slog.String("plugin_api_version", plg.Meta().APIVersion),
+	)
+
+	plg.notices = service.NewNotices(
+		plg.logger,
+		client,
+		settings,
+		secrets,
+		pluginapi.NewPluginNotifier(sender, pluginID),
+		store,
 	)
 
 	plg.connections = service.NewConnections(
@@ -143,7 +159,18 @@ func (p *GWPPlugin) Permissions() ([]pluginapi.Permission, error) {
 // CronJobs returns the collection of the readings.
 func (p *GWPPlugin) CronJobs() ([]pluginapi.CronJob, error) {
 	return []pluginapi.CronJob{
-		job.NewReadingsCollector(p.config, p.logger, p.collector),
+		job.NewReadingsCollector(p.config, p.logger, p.collector, p.notices),
+	}, nil
+}
+
+// NotificationTopics returns the new reading, which a manager routes in each workspace.
+func (p *GWPPlugin) NotificationTopics() ([]pluginapi.NotificationTopic, error) {
+	return []pluginapi.NotificationTopic{
+		{
+			ID:          service.NewReadingTopic,
+			Name:        "New water reading",
+			Description: "The new readings of the water meters, with the balance of the customer.",
+		},
 	}, nil
 }
 

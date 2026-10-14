@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"slices"
 	"time"
@@ -27,8 +29,9 @@ const withUsage = `
 // ReadingRepository defines the data access contract for the readings of the acting
 // workspace.
 type ReadingRepository interface {
-	Insert(ctx context.Context, reading *model.Reading) error
+	Insert(ctx context.Context, reading *model.Reading) (bool, error)
 	LastOfEachMeter(ctx context.Context, customerNumber string) ([]model.Reading, error)
+	OnDate(ctx context.Context, customerNumber string, date time.Time) ([]model.Reading, error)
 	List(
 		ctx context.Context,
 		seek page.Seek,
@@ -49,22 +52,37 @@ func NewReading(tx *sqlx.Tx) *Reading {
 	return &Reading{tx: tx}
 }
 
-// Insert stores the reading. A meter holds one reading on a date, so a reading of a
-// date that the workspace holds replaces the value only when the value changed.
-func (r *Reading) Insert(ctx context.Context, reading *model.Reading) error {
+// Insert stores the reading, and reports whether the workspace held no reading of the
+// meter on that date before. A meter holds one reading on a date, so a reading of a
+// date that the workspace holds replaces the value only when the value changed. An
+// unchanged value skips the update and returns no row.
+func (r *Reading) Insert(ctx context.Context, reading *model.Reading) (bool, error) {
 	const query = `
 		INSERT INTO readings (customer_number, serial_number, reading_date, value)
 		VALUES (:customer_number, :serial_number, :reading_date, :value)
 		ON CONFLICT (workspace_id, customer_number, serial_number, reading_date) DO UPDATE
 		SET value        = EXCLUDED.value,
 		    collected_at = now()
-		WHERE readings.value <> EXCLUDED.value;`
+		WHERE readings.value <> EXCLUDED.value
+		RETURNING (xmax = 0) AS inserted;`
 
-	if _, err := r.tx.NamedExecContext(ctx, query, reading); err != nil {
-		return fmt.Errorf("inserting the reading: %w", err)
+	bound, values, err := sqlx.Named(query, reading)
+	if err != nil {
+		return false, fmt.Errorf("binding the reading: %w", err)
 	}
 
-	return nil
+	var inserted bool
+
+	err = r.tx.QueryRowxContext(ctx, r.tx.Rebind(bound), values...).Scan(&inserted)
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, fmt.Errorf("inserting the reading: %w", err)
+	}
+
+	return inserted, nil
 }
 
 // LastOfEachMeter answers the latest reading of each meter of the customer, with its
@@ -83,6 +101,30 @@ func (r *Reading) LastOfEachMeter(
 	readings, err := r.selectNamed(ctx, query, map[string]any{paramCustomerNumber: customerNumber})
 	if err != nil {
 		return nil, fmt.Errorf("selecting the last reading of each meter: %w", err)
+	}
+
+	return readings, nil
+}
+
+// OnDate answers the readings of the customer on the date, each with its usage,
+// ordered by the serial number of the meter.
+func (r *Reading) OnDate(
+	ctx context.Context,
+	customerNumber string,
+	date time.Time,
+) ([]model.Reading, error) {
+	const query = `
+		SELECT id, customer_number, serial_number, reading_date, value, usage
+		FROM (` + withUsage + `) AS r
+		WHERE r.reading_date = CAST(:reading_date AS date)
+		ORDER BY serial_number;`
+
+	readings, err := r.selectNamed(ctx, query, map[string]any{
+		paramCustomerNumber: customerNumber,
+		"reading_date":      date.Format(time.DateOnly),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("selecting the readings of a date: %w", err)
 	}
 
 	return readings, nil

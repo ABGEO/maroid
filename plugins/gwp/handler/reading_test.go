@@ -147,7 +147,7 @@ func twoMetersOverTwoYears(t *testing.T, store *service.Store) {
 
 	for month := range 24 {
 		date := day(2024, time.October).AddDate(0, month, 0)
-		require.NoError(t, store.InsertReadings(ctx, []model.Reading{
+		insertReadings(ctx, t, store, []model.Reading{
 			{
 				CustomerNumber: customerC1,
 				SerialNumber:   "A",
@@ -160,7 +160,7 @@ func twoMetersOverTwoYears(t *testing.T, store *service.Store) {
 				ReadingDate:    date,
 				Value:          50 + 2*float64(month),
 			},
-		}))
+		})
 	}
 }
 
@@ -218,14 +218,8 @@ func TestTheReadingsOfAnEarlierCustomerStayHidden(t *testing.T) {
 	store, route := readingsUnderTest(t)
 	ctx := actingInW()
 
-	require.NoError(
-		t,
-		store.InsertReadings(ctx, monthly(customerC1, "A", day(2026, time.July), 3, 100, 5)),
-	)
-	require.NoError(
-		t,
-		store.InsertReadings(ctx, monthly(customerC2, "B", day(2026, time.July), 3, 10, 1)),
-	)
+	insertReadings(ctx, t, store, monthly(customerC1, "A", day(2026, time.July), 3, 100, 5))
+	insertReadings(ctx, t, store, monthly(customerC2, "B", day(2026, time.July), 3, 10, 1))
 	require.NoError(t, store.Assign(ctx, customerC2))
 
 	answered := pageOf(t, get(t, route, pathReadingList))
@@ -246,7 +240,7 @@ func TestTheReadingsFilterFromADate(t *testing.T) {
 	ctx := actingInW()
 
 	require.NoError(t, store.Assign(ctx, customerC1))
-	require.NoError(t, store.InsertReadings(ctx, []model.Reading{
+	insertReadings(ctx, t, store, []model.Reading{
 		{
 			CustomerNumber: customerC1,
 			SerialNumber:   "A",
@@ -265,7 +259,7 @@ func TestTheReadingsFilterFromADate(t *testing.T) {
 			ReadingDate:    day(2026, time.September),
 			Value:          200,
 		},
-	}))
+	})
 
 	answered := pageOf(t, get(t, route, pathReadingList+"?from=2025-10-12"))
 
@@ -320,4 +314,17 @@ func TestTheReadingsRouteNamesItsPermission(t *testing.T) {
 	require.Equal(t, http.MethodGet, routes[0].Method)
 	require.Equal(t, pathReadingList, routes[0].Pattern)
 	require.Equal(t, permission.AccountRead, routes[0].Permission)
+}
+
+// insertReadings stores the readings, and fails the test on an error.
+func insertReadings(
+	ctx context.Context,
+	t *testing.T,
+	store *service.Store,
+	readings []model.Reading,
+) {
+	t.Helper()
+
+	_, err := store.InsertReadings(ctx, readings)
+	require.NoError(t, err)
 }

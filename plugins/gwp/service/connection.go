@@ -22,7 +22,7 @@ type AssignmentStore interface {
 
 // ReadingCollector collects the readings of the assigned customer of the acting workspace.
 type ReadingCollector interface {
-	Collect(ctx context.Context) (int, error)
+	Collect(ctx context.Context) (model.Collection, error)
 }
 
 // Connections connects the water account of the acting workspace, and assigns one of

@@ -10,6 +10,7 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/gwp/config"
 	"github.com/abgeo/maroid/plugins/gwp/permission"
+	"github.com/abgeo/maroid/plugins/gwp/service"
 )
 
 // GWPACC-SC-001: The settings hold the username as free text and the password as a
@@ -57,4 +58,19 @@ func TestThePermissionsNameTheirLowestRole(t *testing.T) {
 		permission.AccountRead:    pluginapi.RoleViewer,
 		permission.AccountConnect: pluginapi.RoleEditor,
 	}, lowest)
+}
+
+// GWPACC-SC-038: The plugin declares the new reading as the notification topic
+// new_reading.
+func TestTheNewReadingIsANotificationTopic(t *testing.T) {
+	t.Parallel()
+
+	topics, err := (&GWPPlugin{}).NotificationTopics()
+
+	require.NoError(t, err)
+	require.Equal(t, []pluginapi.NotificationTopic{{
+		ID:          service.NewReadingTopic,
+		Name:        "New water reading",
+		Description: "The new readings of the water meters, with the balance of the customer.",
+	}}, topics)
 }

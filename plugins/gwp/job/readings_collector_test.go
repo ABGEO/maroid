@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -32,8 +33,9 @@ const (
 	username   = "nino@example.ge"
 	password   = "secret-password"
 
-	pathSignIn   = "/customer"
-	pathReadings = "/RecordDisplay"
+	pathSignIn    = "/customer"
+	pathReadings  = "/RecordDisplay"
+	pathCustomers = "/customer/ListCustomers"
 )
 
 // memorySecrets keeps the plugin secrets of each workspace in memory.
@@ -96,11 +98,13 @@ func (storedCredentials) Settings(context.Context, *pluginapi.PluginID) (map[str
 	return map[string]any{"username": username, "password": password}, nil
 }
 
-// fakeStore records the readings that the collector inserts.
+// fakeStore records the readings that the collector inserts, and holds one reading of
+// a meter on a date, as the table does.
 type fakeStore struct {
 	mu       sync.Mutex
 	assigned string
 	inserted []model.Reading
+	held     []model.Reading
 }
 
 func (f *fakeStore) AssignedCustomer(context.Context) (string, error) {
@@ -111,13 +115,104 @@ func (f *fakeStore) AssignedCustomer(context.Context) (string, error) {
 	return f.assigned, nil
 }
 
-func (f *fakeStore) InsertReadings(_ context.Context, readings []model.Reading) error {
+func (f *fakeStore) InsertReadings(
+	_ context.Context,
+	readings []model.Reading,
+) ([]model.Reading, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
 	f.inserted = append(f.inserted, readings...)
 
+	var stored []model.Reading
+
+	for _, reading := range readings {
+		index := slices.IndexFunc(f.held, func(held model.Reading) bool {
+			return held.SerialNumber == reading.SerialNumber &&
+				held.ReadingDate.Equal(reading.ReadingDate)
+		})
+		if index >= 0 {
+			f.held[index].Value = reading.Value
+
+			continue
+		}
+
+		f.held = append(f.held, reading)
+		stored = append(stored, reading)
+	}
+
+	return stored, nil
+}
+
+// ReadingsOn answers the readings of the customer on the date, each with the usage
+// since the reading of its meter before it, ordered by the serial number.
+func (f *fakeStore) ReadingsOn(
+	_ context.Context,
+	customerNumber string,
+	date time.Time,
+) ([]model.Reading, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	var readings []model.Reading
+
+	for _, held := range f.held {
+		if held.CustomerNumber != customerNumber || !held.ReadingDate.Equal(date) {
+			continue
+		}
+
+		var before *model.Reading
+
+		for i := range f.held {
+			earlier := f.held[i]
+			if earlier.SerialNumber == held.SerialNumber && earlier.ReadingDate.Before(date) &&
+				(before == nil || earlier.ReadingDate.After(before.ReadingDate)) {
+				before = &f.held[i]
+			}
+		}
+
+		if before != nil {
+			usage := held.Value - before.Value
+			held.Usage = &usage
+		}
+
+		readings = append(readings, held)
+	}
+
+	slices.SortFunc(readings, func(a, b model.Reading) int {
+		return strings.Compare(a.SerialNumber, b.SerialNumber)
+	})
+
+	return readings, nil
+}
+
+// fakeSender records each notification that the plugin sends.
+type fakeSender struct {
+	mu       sync.Mutex
+	topics   []string
+	messages []pluginapi.Message
+}
+
+func (f *fakeSender) Send(
+	_ context.Context,
+	_ *pluginapi.PluginID,
+	topicID string,
+	msg pluginapi.Message,
+) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.topics = append(f.topics, topicID)
+	f.messages = append(f.messages, msg)
+
 	return nil
+}
+
+func (f *fakeSender) sent() []pluginapi.Message {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return append([]pluginapi.Message(nil), f.messages...)
 }
 
 // fakeWaterService plays the water service. It accepts the stored credentials with
@@ -131,7 +226,10 @@ type fakeWaterService struct {
 	readings     string
 	// failure, when set, answers every call of the readings.
 	failure *failedAnswer
-	calls   []string
+	// customers answers the list of the customers. listFailure, when set, fails it.
+	customers   string
+	listFailure *failedAnswer
+	calls       []string
 }
 
 type failedAnswer struct {
@@ -147,34 +245,51 @@ func (f *fakeWaterService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch r.URL.Path {
 	case pathSignIn:
-		var body map[string]string
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || f.rejectSignIn ||
-			body["username"] != username || body["password"] != password {
-			_, _ = w.Write([]byte(`{"success": false, "message": "wrong credentials"}`))
-
-			return
-		}
-
-		_, _ = w.Write([]byte(`{"success": true, "token": "` + f.signIn + `"}`))
+		f.serveSignIn(w, r)
 	case pathReadings:
-		if f.failure != nil {
-			w.WriteHeader(f.failure.status)
-			_, _ = w.Write([]byte(f.failure.body))
-
-			return
-		}
-
-		token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-		if !f.accepted[token] {
-			w.WriteHeader(http.StatusUnauthorized)
-
-			return
-		}
-
-		_, _ = w.Write([]byte(f.readings))
+		f.serveWithToken(w, r, f.failure, f.readings)
+	case pathCustomers:
+		f.serveWithToken(w, r, f.listFailure, f.customers)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 	}
+}
+
+func (f *fakeWaterService) serveSignIn(w http.ResponseWriter, r *http.Request) {
+	var body map[string]string
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || f.rejectSignIn ||
+		body["username"] != username || body["password"] != password {
+		_, _ = w.Write([]byte(`{"success": false, "message": "wrong credentials"}`))
+
+		return
+	}
+
+	_, _ = w.Write([]byte(`{"success": true, "token": "` + f.signIn + `"}`))
+}
+
+// serveWithToken answers the failure when one is set, 401 to a token that is not
+// accepted, and the body otherwise.
+func (f *fakeWaterService) serveWithToken(
+	w http.ResponseWriter,
+	r *http.Request,
+	failure *failedAnswer,
+	body string,
+) {
+	if failure != nil {
+		w.WriteHeader(failure.status)
+		_, _ = w.Write([]byte(failure.body))
+
+		return
+	}
+
+	token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+	if !f.accepted[token] {
+		w.WriteHeader(http.StatusUnauthorized)
+
+		return
+	}
+
+	_, _ = w.Write([]byte(body))
 }
 
 func (f *fakeWaterService) recorded() []string {
@@ -203,6 +318,7 @@ type rig struct {
 	service *fakeWaterService
 	secrets *memorySecrets
 	store   *fakeStore
+	sender  *fakeSender
 	logs    *bytes.Buffer
 }
 
@@ -221,18 +337,28 @@ func newRig(t *testing.T, water *fakeWaterService, store *fakeStore, token strin
 	cfg := &config.Config{BaseURL: server.URL}
 	logs := new(bytes.Buffer)
 
-	collector := service.NewCollector(
-		service.NewAPIClient(cfg),
-		pluginapi.NewPluginSettings(storedCredentials{}, identifier),
-		pluginapi.NewPluginSecrets(secrets, identifier),
+	client := service.NewAPIClient(cfg)
+	settings := pluginapi.NewPluginSettings(storedCredentials{}, identifier)
+	pluginSecrets := pluginapi.NewPluginSecrets(secrets, identifier)
+	logger := slog.New(slog.NewTextHandler(logs, nil))
+	sender := &fakeSender{}
+
+	collector := service.NewCollector(client, settings, pluginSecrets, store)
+	notices := service.NewNotices(
+		logger,
+		client,
+		settings,
+		pluginSecrets,
+		pluginapi.NewPluginNotifier(sender, identifier),
 		store,
 	)
 
 	return &rig{
-		job:     job.NewReadingsCollector(cfg, slog.New(slog.NewTextHandler(logs, nil)), collector),
+		job:     job.NewReadingsCollector(cfg, logger, collector, notices),
 		service: water,
 		secrets: secrets,
 		store:   store,
+		sender:  sender,
 		logs:    logs,
 	}
 }
@@ -317,7 +443,7 @@ func TestTheCollectionSignsInAgainWhenTheTokenIsRejected(t *testing.T) {
 		http.MethodGet + " " + pathReadings,
 		http.MethodPut + " " + pathSignIn,
 		http.MethodGet + " " + pathReadings,
-	}, rig.service.recorded())
+	}, rig.service.recorded()[:3])
 	require.NotContains(t, rig.logs.String(), tokenT2)
 	require.NotContains(t, rig.logs.String(), password)
 }
@@ -393,4 +519,126 @@ func TestTheCollectionNamesTheAnswerOfAFailure(t *testing.T) {
 	require.Contains(t, err.Error(), "maintenance")
 	require.NotContains(t, err.Error(), body[:513])
 	require.Empty(t, rig.store.inserted)
+}
+
+// readingOfM1 holds one meter of C1, read on 15/09/2026.
+const readingOfM1 = `[{"customerNo": "` + customerC1 + `", "items": [{"serialNumber": "M1",
+	"customerNo": "` + customerC1 + `", "lastReadingDate": "15/09/2026", "lastReading": 1216.5}]}]`
+
+// balanceOfC1 lists C1 with a balance of 12.40.
+const balanceOfC1 = `{"success": true, "items": [{"id": 1, "customerNo": "` + customerC1 + `",
+	"balance": 12.40}]}`
+
+func august15() time.Time {
+	return time.Date(2026, time.August, 15, 0, 0, 0, 0, time.UTC)
+}
+
+// GWPACC-SC-039: A new reading sends one notification with the date, the meter, the
+// value, the usage, and the balance.
+func TestANewReadingSendsANotification(t *testing.T) {
+	t.Parallel()
+
+	water := &fakeWaterService{
+		accepted:  map[string]bool{tokenT1: true},
+		readings:  readingOfM1,
+		customers: balanceOfC1,
+	}
+	store := &fakeStore{
+		assigned: customerC1,
+		held: []model.Reading{{
+			CustomerNumber: customerC1, SerialNumber: "M1", ReadingDate: august15(), Value: 1204,
+		}},
+	}
+	rig := newRig(t, water, store, tokenT1)
+
+	require.NoError(t, rig.job.Run(actingInW(t)))
+
+	require.Equal(t, []string{service.NewReadingTopic}, rig.sender.topics)
+
+	sent := rig.sender.sent()
+	require.Len(t, sent, 1)
+	require.Equal(t, "GWP | წყლის ჩვენება", sent[0].Title)
+
+	for _, part := range []string{"15/09/2026", "M1", "1216.5 მ³", "12.5 მ³", "12.40 ₾"} {
+		require.Contains(t, sent[0].Body, part)
+	}
+}
+
+// GWPACC-SC-040: Two meters read on one date send one notification that names both,
+// each with its value and no usage.
+func TestTwoMetersOnOneDateSendOneNotification(t *testing.T) {
+	t.Parallel()
+
+	water := &fakeWaterService{
+		accepted: map[string]bool{tokenT1: true},
+		readings: `[{"customerNo": "` + customerC1 + `", "items": [
+			{"serialNumber": "M1", "customerNo": "` + customerC1 + `", "lastReadingDate": "15/09/2026", "lastReading": 1216.5},
+			{"serialNumber": "M2", "customerNo": "` + customerC1 + `", "lastReadingDate": "15/09/2026", "lastReading": 80}]}]`,
+		customers: balanceOfC1,
+	}
+	rig := newRig(t, water, &fakeStore{assigned: customerC1}, tokenT1)
+
+	require.NoError(t, rig.job.Run(actingInW(t)))
+
+	sent := rig.sender.sent()
+	require.Len(t, sent, 1)
+
+	for _, part := range []string{"M1", "1216.5 მ³", "M2", "80.0 მ³"} {
+		require.Contains(t, sent[0].Body, part)
+	}
+
+	require.NotContains(t, sent[0].Body, "მოხმარება")
+}
+
+// GWPACC-SC-042: New readings of two dates send one notification, of the latest date,
+// and a second run of the same answer sends nothing.
+func TestNewReadingsOfTwoDatesSendOneNotificationOfTheLatest(t *testing.T) {
+	t.Parallel()
+
+	water := &fakeWaterService{
+		accepted: map[string]bool{tokenT1: true},
+		readings: `[{"customerNo": "` + customerC1 + `", "items": [
+			{"serialNumber": "M1", "customerNo": "` + customerC1 + `",
+				"lastReadingDate": "15/08/2026", "lastReading": 1204},
+			{"serialNumber": "M1", "customerNo": "` + customerC1 + `",
+				"lastReadingDate": "15/09/2026", "lastReading": 1216.5}]}]`,
+		customers: balanceOfC1,
+	}
+	rig := newRig(t, water, &fakeStore{assigned: customerC1}, tokenT1)
+
+	require.NoError(t, rig.job.Run(actingInW(t)))
+	require.NoError(t, rig.job.Run(actingInW(t)))
+
+	sent := rig.sender.sent()
+	require.Len(t, sent, 1)
+	require.Contains(t, sent[0].Body, "15/09/2026")
+	require.NotContains(t, sent[0].Body, "15/08/2026")
+}
+
+// GWPACC-SC-044: A failed list of the customers sends the readings, marks the balance
+// unavailable, and logs a warning that holds no token.
+func TestAFailedBalanceStillSendsTheReadings(t *testing.T) {
+	t.Parallel()
+
+	water := &fakeWaterService{
+		accepted:    map[string]bool{tokenT1: true},
+		readings:    readingOfM1,
+		listFailure: &failedAnswer{status: http.StatusServiceUnavailable},
+	}
+	store := &fakeStore{
+		assigned: customerC1,
+		held: []model.Reading{{
+			CustomerNumber: customerC1, SerialNumber: "M1", ReadingDate: august15(), Value: 1204,
+		}},
+	}
+	rig := newRig(t, water, store, tokenT1)
+
+	require.NoError(t, rig.job.Run(actingInW(t)))
+
+	sent := rig.sender.sent()
+	require.Len(t, sent, 1)
+	require.Contains(t, sent[0].Body, "1216.5 მ³")
+	require.Contains(t, sent[0].Body, "მიუწვდომელია")
+	require.Contains(t, rig.logs.String(), "level=WARN")
+	require.NotContains(t, rig.logs.String(), tokenT1)
 }

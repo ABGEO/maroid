@@ -70,25 +70,61 @@ func (s *Store) Unassign(ctx context.Context) error {
 	return nil
 }
 
-// InsertReadings stores each reading in one transaction. A reading of a meter on a
-// date that the workspace holds replaces the stored value when the value changed.
-func (s *Store) InsertReadings(ctx context.Context, readings []model.Reading) error {
+// InsertReadings stores each reading in one transaction, and answers the readings that
+// the workspace did not hold before. A reading of a meter on a date that the workspace
+// holds replaces the stored value when the value changed.
+func (s *Store) InsertReadings(
+	ctx context.Context,
+	readings []model.Reading,
+) ([]model.Reading, error) {
+	var stored []model.Reading
+
 	err := s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
-		stored := repository.NewReading(tx)
+		rows := repository.NewReading(tx)
 
 		for i := range readings {
-			if err := stored.Insert(ctx, &readings[i]); err != nil {
+			inserted, err := rows.Insert(ctx, &readings[i])
+			if err != nil {
 				return fmt.Errorf("inserting reading %d of %d: %w", i+1, len(readings), err)
+			}
+
+			if inserted {
+				stored = append(stored, readings[i])
 			}
 		}
 
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("storing the readings: %w", err)
+		return nil, fmt.Errorf("storing the readings: %w", err)
 	}
 
-	return nil
+	return stored, nil
+}
+
+// ReadingsOn answers the readings of the customer on the date, each with its usage.
+func (s *Store) ReadingsOn(
+	ctx context.Context,
+	customerNumber string,
+	date time.Time,
+) ([]model.Reading, error) {
+	var readings []model.Reading
+
+	err := s.db.WithTx(ctx, func(tx *sqlx.Tx) error {
+		var err error
+
+		readings, err = repository.NewReading(tx).OnDate(ctx, customerNumber, date)
+		if err != nil {
+			return fmt.Errorf("selecting the readings of a date: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("reading the readings of a date: %w", err)
+	}
+
+	return readings, nil
 }
 
 // LastReadingOfEachMeter answers the latest reading of each meter of the assigned

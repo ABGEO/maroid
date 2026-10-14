@@ -683,3 +683,20 @@ func TestReadWhenTheNewTokenIsRejectedToo(t *testing.T) {
 	token, _ := water.secrets.token()
 	require.Equal(t, tokenT2, token)
 }
+
+// GWPACC-SC-043: The collection after an assignment stores the reading and sends no
+// notification, so it lists the customers once, for the assignment alone.
+func TestTheAssignmentSendsNoNotification(t *testing.T) {
+	t.Parallel()
+
+	water := newRig(t, storedCredentials())
+	water.secrets.signedIn()
+	water.service.on(http.MethodGet, pathCustomers, answer{body: customersAnswer})
+	water.service.on(http.MethodGet, pathReadings, answer{body: readingsOfC2})
+
+	recorder := water.do(t, http.MethodPut, pathAssignment, `{"customer_number": "`+customerC2+`"}`)
+
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+	require.Equal(t, 1, water.store.readingCount())
+	require.Equal(t, 1, water.service.countOf(http.MethodGet, pathCustomers))
+}

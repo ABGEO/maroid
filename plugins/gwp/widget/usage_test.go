@@ -71,14 +71,14 @@ func TestTheUsageWidgetListsTheLastReadingOfEachMeter(t *testing.T) {
 	ctx := actingInW(t)
 
 	require.NoError(t, store.Assign(ctx, customerC1))
-	require.NoError(t, store.InsertReadings(ctx, []model.Reading{
+	insertReadings(ctx, t, store, []model.Reading{
 		readingOf(customerC1, "A", time.August, 1204),
 		readingOf(customerC1, "A", time.September, 1216.5),
 		readingOf(customerC1, "B", time.August, 80),
 		readingOf(customerC1, "B", time.September, 78.5),
 		readingOf(customerC1, "C", time.September, 50),
 		readingOf(customerC2, "D", time.September, 20),
-	}))
+	})
 
 	answer, err := widget.NewUsage(store).Load(ctx)
 	require.NoError(t, err)
@@ -127,4 +127,17 @@ func TestTheUsageWidgetNamesItsPermission(t *testing.T) {
 		Size:       pluginapi.WidgetSizeS,
 		Permission: "account.read",
 	}, widget.NewUsage(nil).Meta())
+}
+
+// insertReadings stores the readings, and fails the test on an error.
+func insertReadings(
+	ctx context.Context,
+	t *testing.T,
+	store *service.Store,
+	readings []model.Reading,
+) {
+	t.Helper()
+
+	_, err := store.InsertReadings(ctx, readings)
+	require.NoError(t, err)
 }

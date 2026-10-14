@@ -91,9 +91,9 @@ func TestTheStoreKeepsOneReadingOfAMeterOnADate(t *testing.T) {
 	october := readingOf(customerC1, "A", fifteenth(time.October), 1230)
 	corrected := readingOf(customerC1, "A", fifteenth(time.September), 1220)
 
-	require.NoError(t, store.InsertReadings(ctx, []model.Reading{estimated}))
-	require.NoError(t, store.InsertReadings(ctx, []model.Reading{estimated, october}))
-	require.NoError(t, store.InsertReadings(ctx, []model.Reading{corrected}))
+	insertReadings(ctx, t, store, []model.Reading{estimated})
+	insertReadings(ctx, t, store, []model.Reading{estimated, october})
+	insertReadings(ctx, t, store, []model.Reading{corrected})
 	require.NoError(t, store.Assign(ctx, customerC1))
 
 	last, err := store.LastReadingOfEachMeter(ctx)
@@ -111,6 +111,38 @@ func TestTheStoreKeepsOneReadingOfAMeterOnADate(t *testing.T) {
 	require.InDelta(t, 1220.0, september, 0)
 }
 
+// GWPACC-SC-041: InsertReadings answers a reading only when it stores it for the first
+// time. A repeat and a corrected value answer none.
+func TestTheStoreAnswersTheReadingsItStoresForTheFirstTime(t *testing.T) {
+	t.Parallel()
+
+	store, _ := storeUnderTest(t)
+	ctx := actingIn(t, workspaceW)
+
+	september := readingOf(customerC1, "A", fifteenth(time.September), 1216.5)
+	insertReadings(ctx, t, store, []model.Reading{september})
+
+	repeated, err := store.InsertReadings(ctx, []model.Reading{september})
+	require.NoError(t, err)
+	require.Empty(t, repeated)
+
+	corrected, err := store.InsertReadings(
+		ctx,
+		[]model.Reading{readingOf(customerC1, "A", fifteenth(time.September), 1220)},
+	)
+	require.NoError(t, err)
+	require.Empty(t, corrected)
+
+	october := readingOf(customerC1, "A", fifteenth(time.October), 1230)
+
+	stored, err := store.InsertReadings(ctx, []model.Reading{october})
+	require.NoError(t, err)
+	require.Len(t, stored, 1)
+	require.Equal(t, october.SerialNumber, stored[0].SerialNumber)
+	require.True(t, october.ReadingDate.Equal(stored[0].ReadingDate))
+	require.InDelta(t, october.Value, stored[0].Value, 0)
+}
+
 // GWPACC-SC-022: A transaction that acts in one workspace sees neither the
 // assignment nor the readings of another workspace.
 func TestTheStoreServesNoOtherWorkspace(t *testing.T) {
@@ -121,14 +153,14 @@ func TestTheStoreServesNoOtherWorkspace(t *testing.T) {
 	inX := actingIn(t, workspaceX)
 
 	require.NoError(t, store.Assign(inW, customerC1))
-	require.NoError(t, store.InsertReadings(inW, []model.Reading{
+	insertReadings(inW, t, store, []model.Reading{
 		readingOf(customerC1, "A", fifteenth(time.September), 1216.5),
-	}))
+	})
 
 	require.NoError(t, store.Assign(inX, customerC2))
-	require.NoError(t, store.InsertReadings(inX, []model.Reading{
+	insertReadings(inX, t, store, []model.Reading{
 		readingOf(customerC2, "B", fifteenth(time.September), 78.5),
-	}))
+	})
 
 	assigned, err := store.AssignedCustomer(inX)
 	require.NoError(t, err)
@@ -201,4 +233,17 @@ func countOf(ctx context.Context, t *testing.T, database *pluginapi.PluginDB, ta
 	}))
 
 	return count
+}
+
+// insertReadings stores the readings, and fails the test on an error.
+func insertReadings(
+	ctx context.Context,
+	t *testing.T,
+	store *service.Store,
+	readings []model.Reading,
+) {
+	t.Helper()
+
+	_, err := store.InsertReadings(ctx, readings)
+	require.NoError(t, err)
 }

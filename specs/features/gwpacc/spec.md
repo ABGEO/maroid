@@ -436,7 +436,7 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 | 14 | `GWPACC-SC-030` in the deck, in both themes. Lint and build the plugin | `GWPACC-FR-030` to `GWPACC-FR-032` | [ ] |
 | 15 | The corrections of the review of 2026-10-13: `service.Store` (`ADR-0017`), the repository interfaces, the timeout, the body of `EXT-007`, the count of a collection, the fragment of the assignment | `GWPACC-FR-007`, `GWPACC-FR-013`, `GWPACC-FR-016`, `GWPACC-FR-018` | [x] |
 | 16 | The change of 2026-10-14: `ErrTokenRejected`, `account.call`, and `Connections` and `Collector` over it (`DD-002`). The tests of `GWPACC-SC-008`, `GWPACC-SC-014`, `GWPACC-SC-034` to `GWPACC-SC-037`. Lint and build the plugin | `GWPACC-FR-012`, `GWPACC-FR-018` | [x] |
-| 17 | The notification of `spec-notification.md`: `Insert` that answers a new row, `OnDate`, `Collection`, `Notices`, the job, and `NotificationTopics`. The tests of `GWPACC-SC-038` to `GWPACC-SC-044`. Lint and build the plugin | `GWPACC-FR-035` to `GWPACC-FR-038` | [ ] |
+| 17 | The notification of `spec-notification.md`: `Insert` that answers a new row, `OnDate`, `Collection`, `Notices`, the job, and `NotificationTopics`. The tests of `GWPACC-SC-038` to `GWPACC-SC-044`. Lint and build the plugin | `GWPACC-FR-035` to `GWPACC-FR-038` | [x] |
 
 ## Retired identifiers
 

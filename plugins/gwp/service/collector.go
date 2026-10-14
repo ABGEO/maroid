@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/gwp/dto"
@@ -13,7 +14,7 @@ import (
 // ReadingStore holds the assignment and the readings of the acting workspace.
 type ReadingStore interface {
 	AssignedCustomer(ctx context.Context) (string, error)
-	InsertReadings(ctx context.Context, readings []model.Reading) error
+	InsertReadings(ctx context.Context, readings []model.Reading) ([]model.Reading, error)
 }
 
 // Collector collects the readings of the assigned customer of the acting workspace.
@@ -39,34 +40,51 @@ func NewCollector(
 
 // Collect reads the readings of the assigned customer of the acting workspace and
 // inserts each new one. It answers errs.ErrNotAssigned with no assigned customer and
-// errs.ErrNotConnected with no connection. The job treats both as a skip. It answers
-// the count of the readings that the water service reported for the customer.
-func (c *Collector) Collect(ctx context.Context) (int, error) {
+// errs.ErrNotConnected with no connection. The job treats both as a skip. It sends
+// nothing, so each caller decides whether a new reading is news.
+func (c *Collector) Collect(ctx context.Context) (model.Collection, error) {
 	customerNumber, err := c.store.AssignedCustomer(ctx)
 	if err != nil {
-		return 0, fmt.Errorf("reading the assigned customer: %w", err)
+		return model.Collection{}, fmt.Errorf("reading the assigned customer: %w", err)
 	}
 
 	token, err := c.account.token(ctx)
 	if err != nil {
-		return 0, err
+		return model.Collection{}, err
 	}
 
 	responses, err := c.readings(ctx, token)
 	if err != nil {
-		return 0, err
+		return model.Collection{}, err
 	}
 
 	readings, err := readingsOf(responses, customerNumber)
 	if err != nil {
-		return 0, err
+		return model.Collection{}, err
 	}
 
-	if err = c.store.InsertReadings(ctx, readings); err != nil {
-		return 0, fmt.Errorf("storing the readings: %w", err)
+	stored, err := c.store.InsertReadings(ctx, readings)
+	if err != nil {
+		return model.Collection{}, fmt.Errorf("storing the readings: %w", err)
 	}
 
-	return len(readings), nil
+	return model.Collection{
+		Count:          len(readings),
+		CustomerNumber: customerNumber,
+		NewestDate:     newestDate(stored),
+	}, nil
+}
+
+func newestDate(readings []model.Reading) *time.Time {
+	var newest *time.Time
+
+	for i := range readings {
+		if newest == nil || readings[i].ReadingDate.After(*newest) {
+			newest = &readings[i].ReadingDate
+		}
+	}
+
+	return newest
 }
 
 // readings reads the readings, and signs in again once when the water service rejects
