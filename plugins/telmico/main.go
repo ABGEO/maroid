@@ -24,7 +24,7 @@ import (
 
 // pluginID names the plugin. The constructor needs it before Meta exists.
 //
-//nolint:gochecknoglobals
+//nolint:gochecknoglobals // the constructor reads it before the plugin exists.
 var pluginID = pluginapi.ParsePluginID("dev.maroid.telmico")
 
 // TelmicoPlugin connects the electricity account of a workspace, collects its
@@ -54,7 +54,7 @@ var (
 
 // New creates a plugin instance.
 //
-//nolint:gochecknoglobals
+//nolint:gochecknoglobals // the loader of the hub looks up the symbol New.
 var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (pluginapi.Plugin, error) {
 	pluginConfig := new(config.Config)
 	if err := pluginconfig.DecodeAndValidateConfig(cfg, pluginConfig); err != nil {
@@ -103,16 +103,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 	)
 
 	plg.bills = service.NewBills(plg.logger, client, settings, secrets, store, notifier)
-	plg.connections = service.NewConnections(
-		plg.logger,
-		client,
-		settings,
-		secrets,
-		store,
-		plg.collector,
-		plg.bills,
-		time.Now,
-	)
+	plg.connections = service.NewConnections(client, settings, secrets, store)
 
 	return plg, nil
 }

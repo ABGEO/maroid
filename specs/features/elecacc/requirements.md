@@ -161,16 +161,18 @@ An editor must assign one customer of the account to the workspace.
 
 The plugin must refuse a customer that the account does not hold.
 
-### `ELECACC-FR-016`
+### `ELECACC-FR-048`
 
-The plugin must collect the previous calendar month of the assigned customer, as the scheduled collection does, when an editor assigns it.
+The plugin must store the assignment of a customer, and call no collection, when an editor assigns it.
 
-**Why:** The widget and the pages show the last month at once. The scheduled collection runs once a month.
+**Why:** An assignment answers at once. An administrator collects the history of the
+customer from the command line after the assignment (`ELECACC-FR-025`), and the schedule
+collects each month after that.
 
 **Examples:**
 
-- Normal case: the editor assigns the customer on 2026-10-14. The plugin stores the reading of 2026-09-28, the payment of 2026-09-01, and the bill of September 2026. The workspace receives the bill of 2026-09-28.
-- Limit case: the editor assigns the same customer again. The plugin stores nothing new, and the workspace receives no bill.
+- Normal case: the editor assigns the customer on 2026-10-14. The page marks it. The plugin reads no transaction and no bill, and the workspace receives no bill.
+- Limit case: the editor assigns a different customer. It replaces the first one, and the plugin reads nothing of it.
 
 ### The collection
 
@@ -228,7 +230,9 @@ Maroid must keep a transaction and a bill after a change of the assigned custome
 
 An administrator must collect the transactions and the bills of one workspace for a period from the command line, with the first and the last month of the period.
 
-**Why:** The scheduled collection reads one month. The chart shows 12. An administrator fills the history once, for each workspace.
+**Why:** The scheduled collection reads one month, and an assignment reads none
+(`ELECACC-FR-048`). The chart shows 12. An administrator fills the history once, for each
+workspace, after the assignment.
 
 **Examples:**
 
@@ -334,7 +338,7 @@ A member downloads only a bill that Maroid holds for the assigned customer of th
 
 | #   | Question | Owner | Answer |
 | --- | -------- | ----- | ------ |
-| 1   | What does an assignment collect? | Temuri | The previous calendar month, with its bill. The command line collects an earlier period (`ELECACC-FR-016`, `ELECACC-FR-025`). |
+| 1   | What does an assignment collect? | Temuri | Nothing, changed on 2026-10-14. An administrator collects the history from the command line, and the schedule collects each month (`ELECACC-FR-048`, `ELECACC-FR-025`, `ELECACC-FR-017`). |
 | 2   | How does a member reach the document of a bill? | Temuri | Through Maroid, which signs in and fetches it (`ELECACC-FR-042`). |
 | 3   | Can one customer hold two payments on one date? `ELECACC-FR-022` merges them, because a payment holds no meter value. | Temuri | No. The rule stays. `ELECACC-FR-022`. |
 | 4   | Does the electricity service ever issue two bills for one month? The bill number names the month. | Temuri | No. One bill for each month. `ELECACC-FR-023`, `ELECACC-DD-010`. |
@@ -342,4 +346,6 @@ A member downloads only a bill that Maroid holds for the assigned customer of th
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID               | Retired    | Reason                                                                 |
+| ---------------- | ---------- | ---------------------------------------------------------------------- |
+| `ELECACC-FR-016` | 2026-10-14 | An assignment collects nothing. `ELECACC-FR-048` replaces the statement. |

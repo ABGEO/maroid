@@ -19,10 +19,11 @@ The new plugin `dev.maroid.telmico` reads the portal of the electricity service 
 `https://my.telmico.ge`. A connect signs in through the form of the portal and stores the
 session cookie and its CSRF token as the workspace plugin secret `session` of `PSECRET`.
 Every call signs in again once when the portal rejects the session. An editor assigns one
-customer in the scoped table `customer_assignments`. The assignment and the scheduled
-collection read the previous calendar month, keep each transaction in `transactions` and
-each bill in `bills`, and send the bill of the newest reading stored for the first time, with
-its document. The command `backfill` collects earlier months, and sends no bill. The widget
+customer in the scoped table `customer_assignments`, and the assignment collects nothing. The
+scheduled collection reads the previous calendar month, keeps each transaction in
+`transactions` and each bill in `bills`, and sends the bill of the newest reading stored for
+the first time, with its document. The command `backfill` collects earlier months, and sends
+no bill. The widget
 `last-reading`, the page `/transactions` with a chart of 12 months, and the page `/bills`
 with a download through Maroid read the stored rows. No change reaches the hub, `pluginapi`,
 or another plugin. `spec-pages.md` holds the decisions of the pages. `spec-scenarios.md` holds
@@ -41,7 +42,7 @@ the scenarios.
 | `ELECACC-FR-012` | `ELECACC-DD-003`, `ELECACC-SC-008` |
 | `ELECACC-FR-013` | `ELECACC-DD-003`, `ELECACC-SC-009` |
 | `ELECACC-FR-014`, `ELECACC-FR-015` | `api.yaml`, `ELECACC-SC-010`, `ELECACC-SC-011` |
-| `ELECACC-FR-016` | Section 4.4, `ELECACC-DD-006`, `ELECACC-SC-012` |
+| `ELECACC-FR-048` | `ELECACC-DD-006`, `ELECACC-SC-034` |
 | `ELECACC-FR-017`, `ELECACC-FR-018` | Section 4.3, `ELECACC-DD-005`, `ELECACC-SC-013` |
 | `ELECACC-FR-019` | Section 4.3, `ELECACC-SC-014` |
 | `ELECACC-FR-020` | Section 4.5, `ELECACC-SC-009` |
@@ -77,7 +78,7 @@ the scenarios.
 | `OWN-009` | Ownership | The collection runs with `CronScopePerWorkspace`. |
 | `CFG-007` | Configuration | The credentials are workspace settings. |
 | `EXT-001`, `EXT-002` | External services | `service/api-client.go` holds a resty client with `base_url`. The calls of the API keep `Accept: application/json`. The three calls of the sign in and the bill download override it. |
-| `EXT-005`, `EXT-007` | External services | A status that is not a success is an error that wraps the status and at most 512 bytes of the body. A redirect of the sign in is read, never followed (`ELECACC-DD-002`). |
+| `EXT-005`, `EXT-007` | External services | A status that is not a success is an error that wraps the status and at most 512 bytes of a body that is not HTML. `LOG-008` keeps an HTML body out, because a page of the portal carries a CSRF token. A redirect of the sign in is read, never followed (`ELECACC-DD-002`). |
 | `LOG-003`, `LOG-007`, `LOG-008` | Logging | Each service and handler adds `component`. No log line holds the password, the cookie, the CSRF token, or the username. |
 | `SEC-013` | Security | Each route and the widget name a permission. |
 | `NTF-002` | Notifications | The bill goes to the topic `monthly_bill`. |
@@ -86,6 +87,7 @@ the scenarios.
 | `ERR-002` | Errors | Each problem type has the form `/problems/dev.maroid.telmico/<slug>`. |
 | `RES-002`, `RES-005`, `RES-006` | REST | `/connections/self` and `/customer-assignments/self` follow the gas plugin (`ADR-0015`, `ADR-0018`). The lists answer the `Page` of `libs/rest/page`. |
 | `RES-001` (`Z-173`) | REST | An amount travels as the money object. |
+| `RES-002` (`Z-167`), `API-006` | REST, HTTP API | The download of a bill answers `application/pdf`, as the row of `Z-167` in `RES-002` permits (`ELECACC-DD-015`). |
 | `GO-005` | Go style | Every sentinel error lives in `errs/`. |
 | `UI-005` to `UI-009` | Web UI | The remote exports `/account`, `/transactions`, and `/bills`, and reaches the API through `host.api`. |
 | `PKG-001` | Package layout | The layout of the gas plugin: `cli/`, `config/`, `db/`, `dto/`, `errs/`, `handler/`, `job/`, `model/`, `permission/`, `repository/`, `service/`, `widget/`, `ui/`. |
@@ -114,13 +116,14 @@ Every path is under `plugins/telmico/`. A file not named here follows the gas pl
 | `dto/connection.go`, `dto/transaction.go`, `dto/bill.go` | `ConnectionResponse`, `CustomerResponse`, `AssignmentRequest`, `TransactionResponse`, `BillResponse`, `MoneyResponse` |
 | `service/api-client.go` | `APIClient`: `SignIn`, `Accounts`, `AccountDetail`, `Payments`, `Receipts`, `ReceiptDocument` (section 4.4) |
 | `service/account.go` | `account`, shared by `Connections`, `Collector`, `Bills`, and `Documents`: `credentials`, `session`, `signIn`, `forgetSession`, and `call`, which repeats a call once after a new sign in on `ErrSessionRejected` (`ELECACC-DD-003`) |
-| `service/connection.go` | `Connections`: `Status`, `Connect`, `Disconnect`, `Assign`. It holds `Collector` and `Bills` |
+| `service/connection.go` | `Connections`: `Status`, `Connect`, `Disconnect`, `Assign` |
 | `service/collector.go` | `Collector.Collect(ctx, month model.Month) (model.Collection, error)` |
 | `service/bill.go` | `Bills.Send(ctx, reading model.Reading) error`. The message and the document |
-| `service/document.go` | `Documents.Open(ctx, billID uuid.UUID) (model.Document, error)` |
+| `service/document.go` | `Documents.Open(ctx, id string) (model.Document, error)`. The handler checks that `id` is a UUID |
 | `service/store.go` | `Store` over `PluginDB`, one transaction for each call |
-| `repository/{assignment,transaction,bill}.go` | `CustomerAssignment`: `Get`, `Put`, `Delete`. `Transaction`: `Insert(ctx, *model.Transaction) (bool, error)`, `LatestReading`, `List`. `Bill`: `Insert`, `Get`, `ByMonth`, `List` |
-| `job/transactions_collector.go` | `TransactionsCollector`, `MonthlyBillTopic` |
+| `repository/{assignment,transaction,bill}.go` | `CustomerAssignment`: `Get`, `Put`, `Delete`. `Transaction`: `Insert(ctx, *model.Transaction) (bool, error)`, `LatestCharges`, `ChargesOn`, `List`. `Bill`: `Insert`, `Get`, `ByMonth`, `List` |
+| `repository/keyset.go` | The keyset condition, the order, and the named select that both lists share |
+| `job/transactions_collector.go` | `TransactionsCollector`. `service/bill.go` holds `MonthlyBillTopic` |
 | `cli/{doc,backfill}.go` | `Backfill`, `NewBackfill`, `Command() *cobra.Command` |
 | `handler/{doc,connection,transaction,bill,problem}.go` | `ConnectionHandler`, `TransactionHandler`, `BillHandler`, the problem types of section 4.5 |
 | `permission/permission.go` | `AccountRead`, `AccountConnect` |
@@ -137,7 +140,6 @@ the call stored for the first time, or nil. The callers:
 | Caller | Month | Bill |
 | ------ | ----- | ---- |
 | The job | `PreviousMonth(now)` | `Bills.Send` with `NewestReading` when it is not nil |
-| `Connections.Assign` | `PreviousMonth(now)` | `Bills.Send` with `NewestReading` when it is not nil |
 | `backfill` | Each month of `--from` to `--to` | None |
 
 Each service, handler, and widget depends on an interface that it declares, and `Store` meets it.
@@ -208,7 +210,7 @@ and a bill outlive their assignment.
 | `GET` | `/connections/self` | `account.read` | `ELECACC-FR-003` to `ELECACC-FR-007`, `ELECACC-FR-012`, `ELECACC-FR-013` |
 | `PUT` | `/connections/self` | `account.connect` | `ELECACC-FR-008`, `ELECACC-FR-009` |
 | `DELETE` | `/connections/self` | `account.connect` | `ELECACC-FR-010`, `ELECACC-FR-011` |
-| `PUT` | `/customer-assignments/self` | `account.connect` | `ELECACC-FR-014` to `ELECACC-FR-016` |
+| `PUT` | `/customer-assignments/self` | `account.connect` | `ELECACC-FR-014`, `ELECACC-FR-015`, `ELECACC-FR-048` |
 | `GET` | `/transactions` | `account.read` | `ELECACC-FR-037` to `ELECACC-FR-039`, `ELECACC-FR-043` to `ELECACC-FR-045` |
 | `GET` | `/bills` | `account.read` | `ELECACC-FR-040`, `ELECACC-FR-041`, `ELECACC-FR-043` to `ELECACC-FR-045` |
 | `GET` | `/bills/{billId}/document` | `account.read` | `ELECACC-FR-042`, `ELECACC-INV-005` |
@@ -299,7 +301,9 @@ multipart form with `page` and `size` 100, and follow `totalPages`. `Payments` s
 both `from_month` and `to_month`. `Receipts` sends the month as `from_month` and the next month as
 `to_month`, because the receipts endpoint takes `to_month` as an exclusive bound.
 `ReceiptDocument` answers the bytes of `GET /private/receipt/{billId}`, at most 10 MiB, and
-refuses a body whose first bytes are not `%PDF`. Every call ends after
+refuses a body whose first bytes are not `%PDF`. A list that names more than 50 pages is
+`ErrRequestFailed`. A failure wraps the status, and at most 512 bytes of a body that is not HTML:
+a page of the portal carries a CSRF token. Every call ends after
 `request_timeout`. Each request sends a browser `User-Agent`.
 
 ### 4.5 Errors
@@ -335,14 +339,15 @@ answers 200 with the connection, as the gas plugin does.
 ### `ELECACC-DD-002`
 
 **Realizes:** `ELECACC-FR-009`, `ELECACC-FR-013`
-**Decision:** `SignIn` runs three requests with a fresh cookie jar and no redirect follow:
-`GET /` for the first cookie and the `_csrf` of the form, `POST /login` as a form, and
-`GET /private` for the `_csrf` of the new session. `golang.org/x/net/html` reads the content
+**Decision:** `SignIn` runs three requests with no cookie jar and no redirect follow, and reads
+the session cookie from each answer by hand: `GET /` for the first cookie and the `_csrf` of the
+form, `POST /login` as a form, and `GET /private` for the `_csrf` of the new session. `golang.org/x/net/html` reads the content
 of `<meta name="_csrf">`. The answer of `POST /login` decides: a 302 whose `Location` path is
 `/private` is a success. A 302 whose query holds `error=error.bad_credentials` is
 `ErrCredentialsRejected`. Any other answer is `ErrRequestFailed`.
-**Rationale:** The portal is a form application with a CSRF token bound to the session. It
-changes the cookie at the sign in, so the token of the first page fails after it. The portal
+**Rationale:** One client serves every workspace, so a cookie jar would carry the session of one
+workspace into the call of another. The portal is a form application with a CSRF token bound to
+the session. It changes the cookie at the sign in, so the token of the first page fails after it. The portal
 redirects to `http://`, so a follow leaves TLS. One function of the standard extension reads
 one tag. The portal masks the token on each page, and any masked form of it passes.
 **Alternatives:** `goquery`. It adds a module for one selector. A browser in the process. It
@@ -388,13 +393,15 @@ the plugin sends `<year>-<month>` with no leading zero, the form that the portal
 
 ### `ELECACC-DD-006`
 
-**Realizes:** `ELECACC-FR-016`, `ELECACC-FR-026`, `ELECACC-FR-029`
-**Decision:** `Collect` sends no bill. It answers `NewestReading`, and the job and `Assign` pass
-it to `Bills.Send`. A failed collection after an assignment keeps the assignment and answers
-200, as in the gas plugin.
-**Rationale:** One `Collect` serves every caller. A repeated assignment stores no new charge,
-so it sends no second bill.
-**Alternatives:** A flag on `Collect`. The flag names the caller.
+**Realizes:** `ELECACC-FR-048`, `ELECACC-FR-026`, `ELECACC-FR-029`
+**Decision:** `Collect` sends no bill. It answers `NewestReading`, and the job passes it to
+`Bills.Send`. `Connections` holds no collector: `Assign` checks the customer against the
+account, stores the assignment, and answers.
+**Rationale:** One `Collect` serves every caller. A collection inside the assignment held the
+request for up to eight calls of the portal. The owner fills the history with `backfill`
+after the assignment.
+**Alternatives:** A collection after the answer, outside the request. It needs a worker that the
+plugin does not own.
 
 ### `ELECACC-DD-007`
 
@@ -448,7 +455,7 @@ more than the document. The household knows the message of the plugin of the dis
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `ELECACC-SC-001` to `ELECACC-SC-033`.
+`spec-scenarios.md` holds `ELECACC-SC-001` to `ELECACC-SC-034`, with `ELECACC-SC-012` retired.
 
 ## 7. Build plan
 
@@ -459,7 +466,7 @@ more than the document. The household knows the message of the plugin of the dis
 | 3 | The three migrations and `repository/` | `ELECACC-FR-014`, `ELECACC-FR-022` to `ELECACC-FR-024` | [x] |
 | 4 | `service/store.go`, `service/account.go`, `service/collector.go` | `ELECACC-FR-017` to `ELECACC-FR-024` | [x] |
 | 5 | `service/bill.go`, the job, and `cli/backfill.go` | `ELECACC-FR-025` to `ELECACC-FR-031` | [x] |
-| 6 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `ELECACC-FR-003` to `ELECACC-FR-016` | [x] |
+| 6 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `ELECACC-FR-003` to `ELECACC-FR-015`, `ELECACC-FR-048` | [x] |
 | 7 | `handler/transaction.go`, `handler/bill.go`, `service/document.go`, their DTOs, and `api.yaml` | `ELECACC-FR-037` to `ELECACC-FR-045` | [x] |
 | 8 | `widget/last_reading.go` and `main.go` | `ELECACC-FR-032` to `ELECACC-FR-036`, `ELECACC-FR-046`, `ELECACC-FR-047` | [x] |
 | 9 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `ELECACC-FR-003` to `ELECACC-FR-015`, `ELECACC-FR-037` to `ELECACC-FR-044` | [x] |

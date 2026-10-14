@@ -358,7 +358,7 @@ func TestTheAccountsCarryTheSession(t *testing.T) {
 	}
 }
 
-// ELECACC-SC-012: The payments and the receipts of one month go out with the month in
+// ELECACC-SC-013: The payments and the receipts of one month go out with the month in
 // the form of the portal, and every page is read.
 func TestTheMonthIsReadPageByPage(t *testing.T) {
 	t.Parallel()
@@ -495,4 +495,54 @@ func TestTheClientKeepsNoCookieBetweenCalls(t *testing.T) {
 
 	calls := fake.recorded()
 	assert.Equal(t, "OTHER", calls[len(calls)-1].cookie)
+}
+
+// ELECACC-SC-033: A failed answer that is a page of the portal stays out of the error,
+// because the page carries a CSRF token. A failed JSON answer keeps its body.
+func TestAFailureNamesNoTokenOfAPage(t *testing.T) {
+	t.Parallel()
+
+	client, _ := newClient(t, map[string]http.HandlerFunc{
+		pathStart: html(anonymousCookie, htmlPage(csrfOfForm)),
+		pathLogin: html("", htmlPage("csrf-of-a-page-that-answers-200")),
+	})
+
+	_, err := client.SignIn(t.Context(), username, password)
+
+	require.ErrorIs(t, err, errs.ErrRequestFailed)
+	assert.NotContains(t, err.Error(), "csrf-of-a-page-that-answers-200")
+	assert.Contains(t, err.Error(), "[200]")
+
+	client, _ = newClient(t, map[string]http.HandlerFunc{
+		pathAccounts: func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			_, _ = io.WriteString(w, `{"error":"the database is down"}`)
+		},
+	})
+
+	_, err = client.Accounts(t.Context(), session())
+
+	require.ErrorIs(t, err, errs.ErrRequestFailed)
+	assert.Contains(t, err.Error(), "the database is down")
+}
+
+// ELECACC-SC-004: A list that names more pages than the client reads is a failed
+// request, so a broken answer cannot send requests without end.
+func TestARunawayListFails(t *testing.T) {
+	t.Parallel()
+
+	client, fake := newClient(t, map[string]http.HandlerFunc{
+		"/private/account/8370764/allpaymentsapi": jsonBody(`{"items":[],"totalPages":1000000}`),
+	})
+
+	_, err := client.Payments(
+		t.Context(),
+		session(),
+		customerC1,
+		model.Month{Year: 2026, Month: time.September},
+	)
+
+	require.ErrorIs(t, err, errs.ErrRequestFailed)
+	assert.LessOrEqual(t, len(fake.recorded()), 50)
 }

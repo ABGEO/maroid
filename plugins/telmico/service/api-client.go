@@ -31,6 +31,10 @@ const (
 	// pageSize is the count of items that one request of a list asks for.
 	pageSize = 100
 
+	// maxPages bounds the pages of one list. A month holds a few items, so a count above it
+	// is a broken answer.
+	maxPages = 50
+
 	cookieName = "_tpcabinet_app_u_"
 	csrfHeader = "X-CSRF-TOKEN"
 	csrfMeta   = "_csrf"
@@ -51,10 +55,10 @@ const (
 
 	mediaHTML = "text/html"
 	mediaPDF  = "application/pdf"
-)
 
-// pdfSignature starts every PDF document.
-var pdfSignature = []byte("%PDF") //nolint:gochecknoglobals
+	// pdfSignature starts every PDF document.
+	pdfSignature = "%PDF"
+)
 
 // APIClientService defines the interface for interacting with the portal of the
 // electricity service.
@@ -249,7 +253,7 @@ func (s *APIClient) ReceiptDocument(
 	}
 
 	document := resp.Bytes()
-	if !bytes.HasPrefix(document, pdfSignature) {
+	if !bytes.HasPrefix(document, []byte(pdfSignature)) {
 		return nil, fmt.Errorf("%w: the bill is no PDF document", errs.ErrRequestFailed)
 	}
 
@@ -395,6 +399,15 @@ func readPages[T any](read func(page int) ([]T, int, error)) ([]T, error) {
 		if page+1 >= totalPages {
 			return items, nil
 		}
+
+		if page+1 >= maxPages {
+			return nil, fmt.Errorf(
+				"%w: the list names %d pages, more than %d",
+				errs.ErrRequestFailed,
+				totalPages,
+				maxPages,
+			)
+		}
 	}
 }
 
@@ -458,7 +471,13 @@ func attribute(node *html.Node, key string) string {
 	return ""
 }
 
+// statusFailure names the status and the start of the body of a failed answer. A page of
+// the portal carries the CSRF token of a session, so the body of an HTML answer stays out.
 func statusFailure(resp *resty.Response) error {
+	if strings.HasPrefix(resp.Header().Get("Content-Type"), mediaHTML) {
+		return fmt.Errorf("%w: returned [%d] a page", errs.ErrRequestFailed, resp.StatusCode())
+	}
+
 	return fmt.Errorf(
 		"%w: returned [%d] %s",
 		errs.ErrRequestFailed,

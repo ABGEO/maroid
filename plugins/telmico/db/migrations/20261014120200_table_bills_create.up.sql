@@ -24,6 +24,7 @@ ALTER TABLE bills
 ALTER TABLE bills
     FORCE ROW LEVEL SECURITY;
 
+-- ELECACC-INV-002: A bill of one workspace serves no other workspace.
 CREATE POLICY bills_workspace_isolation ON bills
     USING (workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::uuid)
     WITH CHECK (workspace_id = NULLIF(current_setting('app.workspace_id', true), '')::uuid);

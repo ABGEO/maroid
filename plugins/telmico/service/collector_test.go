@@ -23,7 +23,7 @@ const (
 	cookieK0      = "COOKIE-K0"
 )
 
-//nolint:gochecknoglobals
+//nolint:gochecknoglobals // a fixed month that every test of the file reads, never writes.
 var september = model.Month{Year: 2026, Month: time.September}
 
 // memorySecrets is a SecretProvider in memory, keyed by the acting workspace and the name.
@@ -399,7 +399,7 @@ func actingInW(t *testing.T) context.Context {
 	return pluginapi.ContextWithActingWorkspace(t.Context(), workspaceW)
 }
 
-// ELECACC-SC-012: A collection of September reads the month in the form of the portal,
+// ELECACC-SC-021: A collection of September reads the month in the form of the portal,
 // stores the transactions and the bill, and names the new reading. A repeat names none.
 func TestTheCollectionStoresTheMonthAndNamesTheNewReading(t *testing.T) {
 	t.Parallel()

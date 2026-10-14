@@ -80,7 +80,8 @@ No member holds the `owner` or the `idNumber`.
 a 302 to `/?tabId=password&error=error.bad_credentials`, then with a 302 to `/`, then with a
 first page that holds no `_csrf`.
 **Then** the first answer is 422 `credentials-rejected`, the second and the third 502
-`service-unavailable`. No `session` secret exists after any.
+`service-unavailable`. No `session` secret exists after any. A connect whose new session the
+portal rejects, and whose second sign in it rejects, answers 422 `credentials-rejected` too.
 
 ## `ELECACC-SC-007`
 
@@ -128,18 +129,6 @@ wraps `ErrCredentialsRejected`. No `session` secret remains. `C1` stays assigned
 **Given** a `session` secret, and the fake portal lists `C1` and `C2`.
 **When** E sends `PUT /customer-assignments/self` with `1111111`.
 **Then** the answer is 422 `customer-unknown`. No assignment is stored.
-
-## `ELECACC-SC-012`
-
-**Verifies:** `ELECACC-FR-016`, `ELECACC-DD-006`
-**Layer:** unit
-
-**Given** a `session` secret, the date 2026-10-14 in Tbilisi, and the fake portal answers the
-charge of 2026-09-28, the payment of 2026-09-01, and the bill `8370764-2026-9`.
-**When** E assigns `C1`, then assigns `C1` again.
-**Then** the fake portal records the payments request with `from_month` and `to_month` `2026-9`,
-and the receipts request with `from_month` `2026-9` and `to_month` `2026-10`. The store holds two transactions and one bill. The fake notifier records
-one message on `monthly_bill` after the first assignment and none after the second.
 
 ## `ELECACC-SC-013`
 
@@ -191,7 +180,7 @@ third false. The table holds three rows. The charge of 1317 holds 36.90.
 ## `ELECACC-SC-018`
 
 **Verifies:** `ELECACC-FR-024`
-**Layer:** unit
+**Layer:** integration
 
 **Given** `C1` assigned, with stored transactions and bills.
 **When** E assigns `C2`, then sends `DELETE /connections/self`.
@@ -232,9 +221,9 @@ attachment `8370764-2026-4.pdf` of type `application/pdf`.
 **Verifies:** `ELECACC-FR-031`, `ELECACC-DD-010`
 **Layer:** unit
 
-**Given** a new charge of 2026-09-28, and the fake portal answers the document with 500.
-**When** the job runs.
-**Then** the run answers nil. The fake notifier records one message with no attachment. The log holds a warning.
+**Given** the reading of 2026-09-28, and the fake portal answers the document with 500, then a month that holds no stored bill.
+**When** the bill of the reading goes out.
+**Then** the send answers nil each time. The fake notifier records one message with no attachment each time. The log holds a warning.
 
 ## `ELECACC-SC-023`
 
@@ -257,7 +246,7 @@ attachment `8370764-2026-4.pdf` of type `application/pdf`.
 ## `ELECACC-SC-025`
 
 **Verifies:** `ELECACC-FR-037`, `ELECACC-FR-038`, `ELECACC-FR-045`, `ELECACC-DD-012`, `ELECACC-DD-016`
-**Layer:** unit
+**Layer:** integration
 
 **Given** 45 stored transactions of `C1`: charges, payments, and the first reading of a new meter.
 **When** V reads `GET /transactions`, then follows `next`.
@@ -278,7 +267,7 @@ carries `amount` `{"amount": 39.11, "currency": "GEL"}`, `balance`, `usage`, `me
 ## `ELECACC-SC-027`
 
 **Verifies:** `ELECACC-FR-040`, `ELECACC-FR-041`, `ELECACC-FR-045`, `ELECACC-DD-014`
-**Layer:** unit
+**Layer:** integration
 
 **Given** 24 stored bills of `C1`.
 **When** V reads `GET /bills`.
@@ -343,6 +332,19 @@ detail of `C1` with the `owner` `Holder Name` and the `idNumber` `62909012413`.
 **When** E connects, V reads `GET /connections/self`, and the job runs.
 **Then** no body and no log line holds K, T, the password, `01001010101`, `Holder Name`, or `62909012413`.
 
+## `ELECACC-SC-034`
+
+**Verifies:** `ELECACC-FR-048`, `ELECACC-DD-006`
+**Layer:** unit
+
+**Given** a `session` secret, and the fake portal lists `C1` and `C2`.
+**When** E assigns `C1`, then assigns `C2`.
+**Then** each answer is 200 and marks the customer that E assigned. The fake portal records the
+list of the customers and their details, and no request of the transactions or the bills. The
+store holds no transaction and no bill. The fake notifier records nothing.
+
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID               | Retired    | Reason                                                                   |
+| ---------------- | ---------- | ------------------------------------------------------------------------ |
+| `ELECACC-SC-012` | 2026-10-14 | `ELECACC-FR-016` is retired. `ELECACC-SC-034` verifies `ELECACC-FR-048`. |

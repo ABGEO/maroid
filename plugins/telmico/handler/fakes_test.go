@@ -302,9 +302,11 @@ func (f *fakeSender) sent() []pluginapi.Message {
 // fakePortal plays the portal at the level of the client. It accepts the cookies that
 // it holds, answers each call with what the test sets, and records each call.
 type fakePortal struct {
-	mu        sync.Mutex
-	accepted  []string
-	signIn    error
+	mu       sync.Mutex
+	accepted []string
+	signIn   error
+	// signIns answers the sign ins one at a time, a nil entry a success. signIn answers the rest.
+	signIns   []error
 	failure   error
 	accounts  []dto.Account
 	details   map[string]dto.AccountDetail
@@ -337,6 +339,17 @@ func (f *fakePortal) SignIn(_ context.Context, user string, secret string) (mode
 	defer f.mu.Unlock()
 
 	f.calls = append(f.calls, "sign in")
+
+	if len(f.signIns) > 0 {
+		answer := f.signIns[0]
+		f.signIns = f.signIns[1:]
+
+		if answer != nil {
+			return model.Session{}, answer
+		}
+
+		return model.Session{Cookie: cookieK, CSRFToken: csrfT}, nil
+	}
 
 	if f.signIn != nil {
 		return model.Session{}, f.signIn

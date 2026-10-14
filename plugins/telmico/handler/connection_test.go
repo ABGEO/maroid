@@ -15,9 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/plugins/telmico/config"
 	"github.com/abgeo/maroid/plugins/telmico/dto"
 	"github.com/abgeo/maroid/plugins/telmico/errs"
 	"github.com/abgeo/maroid/plugins/telmico/handler"
+	"github.com/abgeo/maroid/plugins/telmico/job"
 	"github.com/abgeo/maroid/plugins/telmico/service"
 )
 
@@ -42,7 +44,8 @@ type customerAnswer struct {
 	Assigned       bool   `json:"assigned"`
 }
 
-// rig runs the routes of the connection against the fake portal and the fake stores.
+// rig runs the routes of the connection and the job of the collection against the fake
+// portal and the fake stores.
 type rig struct {
 	portal  *fakePortal
 	secrets *fakeSecrets
@@ -50,10 +53,11 @@ type rig struct {
 	sender  *fakeSender
 	logs    *bytes.Buffer
 	routes  []pluginapi.Route
+	job     *job.TransactionsCollector
 }
 
-// assignedOn is 2026-10-14 at noon in Tbilisi.
-func assignedOn() time.Time {
+// runAt is 2026-10-14 at noon in Tbilisi.
+func runAt() time.Time {
 	return time.Date(2026, time.October, 14, 8, 0, 0, 0, time.UTC)
 }
 
@@ -71,18 +75,11 @@ func newRig(
 	logs := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	connections := service.NewConnections(
-		logger,
-		portal,
-		pluginSettings,
-		pluginSecrets,
-		store,
-		service.NewCollector(portal, pluginSettings, pluginSecrets, store),
-		service.NewBills(
-			logger, portal, pluginSettings, pluginSecrets, store,
-			pluginapi.NewPluginNotifier(sender, identifier),
-		),
-		assignedOn,
+	connections := service.NewConnections(portal, pluginSettings, pluginSecrets, store)
+	collector := service.NewCollector(portal, pluginSettings, pluginSecrets, store)
+	bills := service.NewBills(
+		logger, portal, pluginSettings, pluginSecrets, store,
+		pluginapi.NewPluginNotifier(sender, identifier),
 	)
 
 	return &rig{
@@ -92,6 +89,9 @@ func newRig(
 		sender:  sender,
 		logs:    logs,
 		routes:  handler.NewConnectionHandler(logger, connections).Routes(),
+		job: job.NewTransactionsCollector(
+			&config.Config{}, logger, collector, bills, runAt,
+		),
 	}
 }
 
@@ -389,76 +389,58 @@ func TestTheAssignmentRefusesABadBody(t *testing.T) {
 	}
 }
 
-// ELECACC-SC-012: An assignment collects September 2026, stores its transactions and
-// its bill, and sends one bill. A second assignment of the same customer sends none.
-func TestTheAssignmentCollectsThePreviousMonth(t *testing.T) {
+// ELECACC-SC-034: An assignment stores the customer and answers at once. It reads no
+// transaction and no bill, and sends no bill.
+func TestTheAssignmentCollectsNothing(t *testing.T) {
 	t.Parallel()
 
 	portal := portalWithTwoCustomers()
-	portal.payments = []dto.Payment{
-		{
-			OperationDate: "2026-09-28", TransactionType: "დარიცხვა ჩვენების მიხედვით",
-			CounterValue: new(1989.0), KiloValue: new(162.6), Amount: new(39.11), Debt: new(39.11),
-		},
-		{
-			OperationDate:   "2026-09-01",
-			TransactionType: "გადახდა",
-			Amount:          new(-18.92),
-			Debt:            new(0.0),
-		},
-	}
-	portal.receipts = []dto.Receipt{{
-		BillID:         "f9ca32a7-ec95-4145-97af-cbef330af8dc",
-		BillNumber:     "8370764-2026-9",
-		BillCreateDate: "2026-09-30T09:29:45.299",
-	}}
-
+	portal.payments = []dto.Payment{{OperationDate: "2026-09-28", TransactionType: "გადახდა"}}
 	store := newFakeStore("")
 	rig := newRig(portal, storedCredentials(), newFakeSecrets(cookieK), store)
-	body := `{"customer_number":"` + customerC1 + `"}`
 
-	answer := connectionOf(t, rig.do(t, http.MethodPut, pathAssignment, body))
+	for _, customer := range []string{customerC1, customerC2} {
+		answer := connectionOf(
+			t,
+			rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customer+`"}`),
+		)
 
-	assert.True(t, answer.Customers[0].Assigned)
+		for _, listed := range answer.Customers {
+			assert.Equal(t, listed.CustomerNumber == customer, listed.Assigned)
+		}
 
-	_, months := portal.recorded()
-	assert.Equal(t, []string{"2026-9", "2026-9"}, months)
+		assigned, transactions, bills := store.state()
+		assert.Equal(t, customer, assigned)
+		assert.Zero(t, transactions)
+		assert.Zero(t, bills)
+	}
 
-	assigned, transactions, bills := store.state()
-	assert.Equal(t, customerC1, assigned)
-	assert.Equal(t, 2, transactions)
-	assert.Equal(t, 1, bills)
-
-	messages := rig.sender.sent()
-	require.Len(t, messages, 1)
-	assert.Contains(t, messages[0].Body, "2026-09-28")
-	assert.Len(t, messages[0].Attachments, 1)
-
-	connectionOf(t, rig.do(t, http.MethodPut, pathAssignment, body))
-	assert.Len(t, rig.sender.sent(), 1)
+	calls, months := portal.recorded()
+	assert.Empty(t, months)
+	assert.NotContains(t, calls, "payments")
+	assert.NotContains(t, calls, "receipts")
+	assert.Empty(t, rig.sender.sent())
 }
 
-// ELECACC-SC-012: A failed collection keeps the assignment and answers 200.
-func TestAFailedCollectionKeepsTheAssignment(t *testing.T) {
+// ELECACC-SC-006: A connect whose new session the portal rejects, and whose second sign in
+// it rejects, answers credentials-rejected and stores no session.
+func TestTheConnectReportsARejectionAfterTheSignIn(t *testing.T) {
 	t.Parallel()
 
 	portal := portalWithTwoCustomers()
-	portal.payments = []dto.Payment{{OperationDate: "28.09.2026"}}
-	store := newFakeStore("")
-	rig := newRig(portal, storedCredentials(), newFakeSecrets(cookieK), store)
+	portal.accepted = nil
+	portal.signIns = []error{nil, errs.ErrCredentialsRejected}
+	rig := newRig(portal, storedCredentials(), newFakeSecrets(""), newFakeStore(""))
 
-	connectionOf(
-		t,
-		rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`),
-	)
+	recorder := rig.do(t, http.MethodPut, pathConnection, "")
 
-	assigned, _, _ := store.state()
-	assert.Equal(t, customerC1, assigned)
-	assert.Contains(t, rig.logs.String(), "level=WARN")
+	assert.Equal(t, http.StatusUnprocessableEntity, recorder.Code)
+	assert.Equal(t, problemPrefix+"credentials-rejected", problemTypeOf(t, recorder))
+	assert.Empty(t, rig.secrets.cookie())
 }
 
 // ELECACC-SC-033: No answer and no log line holds the cookie, the CSRF token, the
-// password, or the username.
+// password, or the username, through a connect, a read, an assignment, and a run of the job.
 func TestNoAnswerHoldsASecret(t *testing.T) {
 	t.Parallel()
 
@@ -474,6 +456,12 @@ func TestNoAnswerHoldsASecret(t *testing.T) {
 		rig.do(t, http.MethodGet, pathConnection, ""),
 		rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`),
 	}
+
+	require.NoError(
+		t,
+		rig.job.Run(pluginapi.ContextWithActingWorkspace(context.Background(), workspaceW)),
+	)
+	assert.Contains(t, rig.logs.String(), "collected the transactions")
 
 	for _, recorder := range answers {
 		for _, secret := range []string{cookieK, cookieK0, csrfT, password, username} {

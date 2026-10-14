@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/plugins/telmico/errs"
 	"github.com/abgeo/maroid/plugins/telmico/model"
 )
 
@@ -56,10 +57,16 @@ func (d *Documents) Open(ctx context.Context, id string) (model.Document, error)
 			return d.client.ReceiptDocument(ctx, session, bill.ServiceBillID)
 		},
 	)
-	if err != nil {
-		return model.Document{}, notConnectedOnRejection(
-			fmt.Errorf("downloading the bill: %w", err),
+	if isRejection(err) {
+		return model.Document{}, fmt.Errorf(
+			"%w: downloading the bill: %w",
+			errs.ErrNotConnected,
+			err,
 		)
+	}
+
+	if err != nil {
+		return model.Document{}, fmt.Errorf("downloading the bill: %w", err)
 	}
 
 	return model.Document{Filename: bill.BillNumber + ".pdf", Content: content}, nil

@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/telmico/dto"
@@ -22,51 +20,26 @@ type AssignmentStore interface {
 	Unassign(ctx context.Context) error
 }
 
-// MonthCollector collects the transactions and the bills of the acting workspace in a month.
-type MonthCollector interface {
-	Collect(ctx context.Context, month model.Month) (model.Collection, error)
-}
-
-// BillSender sends the bill of a reading to the acting workspace.
-type BillSender interface {
-	Send(ctx context.Context, reading model.Reading) error
-}
-
 // Connections connects the electricity account of the acting workspace, and assigns
-// one of its customers to the workspace.
+// one of its customers to the workspace. It collects nothing: an administrator collects
+// the history from the command line, and the schedule collects each month.
 type Connections struct {
-	logger    *slog.Logger
-	account   *account
-	client    APIClientService
-	store     AssignmentStore
-	collector MonthCollector
-	bills     BillSender
-	now       func() time.Time
+	account *account
+	client  APIClientService
+	store   AssignmentStore
 }
 
-// NewConnections creates a new Connections instance. now gives the time of an
-// assignment, which picks the month that the assignment collects.
+// NewConnections creates a new Connections instance.
 func NewConnections(
-	logger *slog.Logger,
 	client APIClientService,
 	settings *pluginapi.PluginSettings,
 	secrets *pluginapi.PluginSecrets,
 	store AssignmentStore,
-	collector MonthCollector,
-	bills BillSender,
-	now func() time.Time,
 ) *Connections {
 	return &Connections{
-		logger: logger.With(
-			slog.String("component", "service"),
-			slog.String("service", "connections"),
-		),
-		account:   &account{client: client, settings: settings, secrets: secrets},
-		client:    client,
-		store:     store,
-		collector: collector,
-		bills:     bills,
-		now:       now,
+		account: &account{client: client, settings: settings, secrets: secrets},
+		client:  client,
+		store:   store,
 	}
 }
 
@@ -94,7 +67,7 @@ func (c *Connections) Status(ctx context.Context) (*model.Connection, error) {
 	}
 
 	customers, err := c.customers(ctx, session)
-	if errors.Is(err, errs.ErrNotConnected) {
+	if isRejection(err) {
 		return notConnected, nil
 	}
 
@@ -106,7 +79,8 @@ func (c *Connections) Status(ctx context.Context) (*model.Connection, error) {
 }
 
 // Connect signs in with the stored credentials and stores the session. The new session
-// replaces the old one, and the assigned customer stays.
+// replaces the old one, and the assigned customer stays. A rejection answers as the
+// credentials it names, because the editor asked for a sign in.
 func (c *Connections) Connect(ctx context.Context) (*model.Connection, error) {
 	session, err := c.account.signIn(ctx)
 	if err != nil {
@@ -135,9 +109,7 @@ func (c *Connections) Disconnect(ctx context.Context) error {
 	return nil
 }
 
-// Assign assigns a customer of the account to the acting workspace, then collects the
-// previous month and sends the bill of its new reading. A failed collection or bill
-// keeps the assignment, because the scheduled collection retries it.
+// Assign assigns a customer of the account to the acting workspace, and collects nothing.
 func (c *Connections) Assign(
 	ctx context.Context,
 	customerNumber string,
@@ -148,6 +120,10 @@ func (c *Connections) Assign(
 	}
 
 	customers, err := c.customers(ctx, session)
+	if isRejection(err) {
+		return nil, fmt.Errorf("%w: %w", errs.ErrNotConnected, err)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -168,30 +144,11 @@ func (c *Connections) Assign(
 		return nil, fmt.Errorf("storing the assignment: %w", err)
 	}
 
-	c.collectPreviousMonth(ctx)
-
 	return connectionOf(customers, customerNumber, credentialsStored), nil
 }
 
-func (c *Connections) collectPreviousMonth(ctx context.Context) {
-	collection, err := c.collector.Collect(ctx, model.PreviousMonth(c.now()))
-	if err == nil && collection.NewestReading != nil {
-		err = c.bills.Send(ctx, *collection.NewestReading)
-	}
-
-	if err != nil {
-		c.logger.WarnContext(
-			ctx,
-			"the collection after an assignment failed, the scheduled collection retries it",
-			slog.String("workspace_id", pluginapi.ActingWorkspaceFromContext(ctx)),
-			slog.Any("error", err),
-		)
-	}
-}
-
 // customers lists the customers of the account with the address of each. Credentials
-// that the portal rejects at a new sign in remove the session, and the answer is
-// errs.ErrNotConnected.
+// that the portal rejects at a new sign in remove the session.
 func (c *Connections) customers(
 	ctx context.Context,
 	session model.Session,
@@ -201,7 +158,7 @@ func (c *Connections) customers(
 			return c.client.Accounts(ctx, session)
 		})
 	if err != nil {
-		return nil, notConnectedOnRejection(fmt.Errorf("listing the customers: %w", err))
+		return nil, fmt.Errorf("listing the customers: %w", err)
 	}
 
 	customers := make([]model.Customer, 0, len(accounts))
@@ -214,9 +171,7 @@ func (c *Connections) customers(
 				return c.client.AccountDetail(ctx, session, held.Number)
 			})
 		if err != nil {
-			return nil, notConnectedOnRejection(
-				fmt.Errorf("reading the address of a customer: %w", err),
-			)
+			return nil, fmt.Errorf("reading the address of a customer: %w", err)
 		}
 
 		customers = append(customers, model.Customer{
@@ -255,14 +210,10 @@ func (c *Connections) credentialsStored(ctx context.Context) (bool, error) {
 	}
 }
 
-// notConnectedOnRejection names a call whose session no sign in renews as no
-// connection. The rejection removed the session already.
-func notConnectedOnRejection(err error) error {
-	if errors.Is(err, errs.ErrCredentialsRejected) || errors.Is(err, errs.ErrCredentialsAbsent) {
-		return fmt.Errorf("%w: %w", errs.ErrNotConnected, err)
-	}
-
-	return err
+// isRejection reports a call whose session no sign in renews: the portal rejected the
+// stored credentials, or the workspace stores none. The rejection removed the session.
+func isRejection(err error) bool {
+	return errors.Is(err, errs.ErrCredentialsRejected) || errors.Is(err, errs.ErrCredentialsAbsent)
 }
 
 func connectionOf(

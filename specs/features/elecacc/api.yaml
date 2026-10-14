@@ -109,10 +109,9 @@ paths:
       operationId: assignElectricityCustomer
       summary: Assign a customer of the account to the acting workspace.
       description: >
-        Realizes `ELECACC-FR-014` to `ELECACC-FR-016` and `ELECACC-DD-006`.
-        The assignment replaces the one that exists, then collects the previous month of the
-        customer and sends its bill. A failed collection keeps the assignment and answers 200. The collection answers no `GET`,
-        as `ADR-0015` permits. The permission is `account.connect`.
+        Realizes `ELECACC-FR-014`, `ELECACC-FR-015`, `ELECACC-FR-048`, and `ELECACC-DD-006`.
+        The assignment replaces the one that exists, and collects nothing. The collection
+        answers no `GET`, as `ADR-0015` permits. The permission is `account.connect`.
       requestBody:
         required: true
         content:
