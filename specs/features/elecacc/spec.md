@@ -295,9 +295,11 @@ sequenceDiagram
 
 `APIClient` signs a request with the header `Cookie: _tpcabinet_app_u_=<cookie>` and the
 header `X-CSRF-TOKEN`. Every call of the API is a `POST`. `Payments` and `Receipts` send a
-multipart form with `page`, `size` 100, and the month as both `from_month` and `to_month`, and
-follow `totalPages`. `ReceiptDocument` answers the bytes of `GET /private/receipt/{billId}`, at
-most 10 MiB, and refuses a body whose first bytes are not `%PDF`. Every call ends after
+multipart form with `page` and `size` 100, and follow `totalPages`. `Payments` sends the month as
+both `from_month` and `to_month`. `Receipts` sends the month as `from_month` and the next month as
+`to_month`, because the receipts endpoint takes `to_month` as an exclusive bound.
+`ReceiptDocument` answers the bytes of `GET /private/receipt/{billId}`, at most 10 MiB, and
+refuses a body whose first bytes are not `%PDF`. Every call ends after
 `request_timeout`. Each request sends a browser `User-Agent`.
 
 ### 4.5 Errors
@@ -458,8 +460,8 @@ more than the document. The household knows the message of the plugin of the dis
 | 5 | `service/bill.go`, the job, and `cli/backfill.go` | `ELECACC-FR-025` to `ELECACC-FR-031` | [x] |
 | 6 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `ELECACC-FR-003` to `ELECACC-FR-016` | [x] |
 | 7 | `handler/transaction.go`, `handler/bill.go`, `service/document.go`, their DTOs, and `api.yaml` | `ELECACC-FR-037` to `ELECACC-FR-045` | [x] |
-| 8 | `widget/last_reading.go` and `main.go` | `ELECACC-FR-032` to `ELECACC-FR-036`, `ELECACC-FR-046`, `ELECACC-FR-047` | [ ] |
-| 9 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `ELECACC-FR-003` to `ELECACC-FR-015`, `ELECACC-FR-037` to `ELECACC-FR-044` | [ ] |
+| 8 | `widget/last_reading.go` and `main.go` | `ELECACC-FR-032` to `ELECACC-FR-036`, `ELECACC-FR-046`, `ELECACC-FR-047` | [x] |
+| 9 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `ELECACC-FR-003` to `ELECACC-FR-015`, `ELECACC-FR-037` to `ELECACC-FR-044` | [x] |
 | 10 | Run the flow against the portal: an ended session, the download from the deck, `backfill` of 12 months. Correct `ELECACC-DD-003` and `ELECACC-DD-015` | `ELECACC-FR-012`, `ELECACC-FR-025`, `ELECACC-FR-042` | [ ] |
 | 11 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [ ] |
 

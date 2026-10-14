@@ -184,7 +184,7 @@ func (s *APIClient) Payments(
 	month model.Month,
 ) ([]dto.Payment, error) {
 	payments, err := readPages(func(page int) ([]dto.Payment, int, error) {
-		form := monthForm(page, month)
+		form := monthForm(page, month, month)
 		form["sort"] = "operDate,desc"
 
 		var answer dto.PaymentsPage
@@ -200,7 +200,8 @@ func (s *APIClient) Payments(
 	return payments, nil
 }
 
-// Receipts answers the bills of one customer in one month, every page of them.
+// Receipts answers the bills of one customer in one month, every page of them. The
+// receipts endpoint takes to_month as an exclusive bound, unlike the payments endpoint.
 func (s *APIClient) Receipts(
 	ctx context.Context,
 	session model.Session,
@@ -214,7 +215,7 @@ func (s *APIClient) Receipts(
 			ctx,
 			session,
 			accountPath(account)+pathReceipts,
-			monthForm(page, month),
+			monthForm(page, month, month.Next()),
 			&answer,
 		)
 
@@ -397,12 +398,12 @@ func readPages[T any](read func(page int) ([]T, int, error)) ([]T, error) {
 	}
 }
 
-func monthForm(page int, month model.Month) map[string]string {
+func monthForm(page int, from model.Month, to model.Month) map[string]string {
 	return map[string]string{
 		"page":       strconv.Itoa(page),
 		"size":       strconv.Itoa(pageSize),
-		"from_month": month.PortalForm(),
-		"to_month":   month.PortalForm(),
+		"from_month": from.PortalForm(),
+		"to_month":   to.PortalForm(),
 	}
 }
 

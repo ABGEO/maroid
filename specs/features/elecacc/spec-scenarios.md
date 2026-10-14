@@ -137,8 +137,8 @@ wraps `ErrCredentialsRejected`. No `session` secret remains. `C1` stays assigned
 **Given** a `session` secret, the date 2026-10-14 in Tbilisi, and the fake portal answers the
 charge of 2026-09-28, the payment of 2026-09-01, and the bill `8370764-2026-9`.
 **When** E assigns `C1`, then assigns `C1` again.
-**Then** the fake portal records the payments and the receipts requests with `from_month` and
-`to_month` `2026-9`. The store holds two transactions and one bill. The fake notifier records
+**Then** the fake portal records the payments request with `from_month` and `to_month` `2026-9`,
+and the receipts request with `from_month` `2026-9` and `to_month` `2026-10`. The store holds two transactions and one bill. The fake notifier records
 one message on `monthly_bill` after the first assignment and none after the second.
 
 ## `ELECACC-SC-013`

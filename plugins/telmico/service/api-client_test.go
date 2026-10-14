@@ -403,19 +403,45 @@ func TestTheMonthIsReadPageByPage(t *testing.T) {
 	calls := fake.recorded()
 	require.Len(t, calls, 3)
 
-	for index, recorded := range calls {
-		assert.Equal(t, []string{septemberForm}, recorded.form["from_month"])
-		assert.Equal(t, []string{septemberForm}, recorded.form["to_month"])
+	for _, recorded := range calls {
 		assert.Equal(t, []string{"100"}, recorded.form["size"])
 		assert.Equal(t, csrfT, recorded.csrf)
+	}
 
-		if index < 2 {
-			assert.Equal(t, []string{"operDate,desc"}, recorded.form["sort"])
-		}
+	for _, payments := range calls[:2] {
+		assert.Equal(t, []string{septemberForm}, payments.form["from_month"])
+		assert.Equal(t, []string{septemberForm}, payments.form["to_month"])
+		assert.Equal(t, []string{"operDate,desc"}, payments.form["sort"])
 	}
 
 	assert.Equal(t, []string{"0"}, calls[0].form["page"])
 	assert.Equal(t, []string{"1"}, calls[1].form["page"])
+
+	assert.Equal(t, []string{septemberForm}, calls[2].form["from_month"])
+	assert.Equal(t, []string{"2026-10"}, calls[2].form["to_month"])
+}
+
+// ELECACC-SC-019: The receipts endpoint takes to_month as an exclusive bound, so the
+// receipts of December end at January of the next year.
+func TestTheReceiptsOfAMonthEndAtTheNextMonth(t *testing.T) {
+	t.Parallel()
+
+	client, fake := newClient(t, map[string]http.HandlerFunc{
+		"/private/account/8370764/receiptsapi": jsonBody(`{"items":[],"totalPages":1}`),
+	})
+
+	_, err := client.Receipts(
+		t.Context(),
+		session(),
+		customerC1,
+		model.Month{Year: 2025, Month: time.December},
+	)
+	require.NoError(t, err)
+
+	calls := fake.recorded()
+	require.Len(t, calls, 1)
+	assert.Equal(t, []string{"2025-12"}, calls[0].form["from_month"])
+	assert.Equal(t, []string{"2026-1"}, calls[0].form["to_month"])
 }
 
 // ELECACC-SC-028: The document of a bill is the PDF that the portal answers. A body
