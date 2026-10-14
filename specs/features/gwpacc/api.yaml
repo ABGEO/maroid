@@ -23,9 +23,10 @@ paths:
       operationId: getWaterConnection
       summary: Read the connection of the acting workspace.
       description: >
-        Realizes `GWPACC-FR-003` to `GWPACC-FR-007` and `GWPACC-FR-012`. A connected
+        Realizes `GWPACC-FR-003` to `GWPACC-FR-007`, `GWPACC-FR-012`, and `GWPACC-FR-018`. A connected
         workspace reads the customers from the water service on each call. A rejection of
-        the token removes it, and the answer is `not_connected`. The permission is `account.read`.
+        the token signs in again once. A rejection of the credentials removes the token, and
+        the answer is `not_connected`. The permission is `account.read`.
       responses:
         "200":
           description: The connection.

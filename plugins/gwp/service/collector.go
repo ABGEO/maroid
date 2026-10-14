@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -70,30 +69,23 @@ func (c *Collector) Collect(ctx context.Context) (int, error) {
 	return len(readings), nil
 }
 
-// readings reads the readings with the token. A rejected token gives way to one new
-// sign in, because the stored credentials need no person to send a code.
+// readings reads the readings, and signs in again once when the water service rejects
+// the token.
 func (c *Collector) readings(ctx context.Context, token string) ([]dto.ReadingResponse, error) {
-	responses, err := c.client.GetReadings(ctx, token)
+	var responses []dto.ReadingResponse
 
-	switch {
-	case err == nil:
-		return responses, nil
-	case !errors.Is(err, errs.ErrNotConnected):
-		return nil, fmt.Errorf("collecting with the stored token: %w", err)
-	}
+	err := c.account.call(ctx, token, func(token string) error {
+		var readErr error
 
-	token, err = c.account.signIn(ctx)
+		responses, readErr = c.client.GetReadings(ctx, token)
+		if readErr != nil {
+			return fmt.Errorf("requesting the readings: %w", readErr)
+		}
+
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("replacing a rejected token: %w", err)
-	}
-
-	responses, err = c.client.GetReadings(ctx, token)
-
-	switch {
-	case errors.Is(err, errs.ErrNotConnected):
-		return nil, fmt.Errorf("%w: the water service rejected a new token", errs.ErrRequestFailed)
-	case err != nil:
-		return nil, fmt.Errorf("collecting with a new token: %w", err)
+		return nil, fmt.Errorf("collecting the readings: %w", err)
 	}
 
 	return responses, nil

@@ -347,14 +347,19 @@ func TestDisconnect(t *testing.T) {
 	require.Equal(t, http.StatusNoContent, water.do(t, http.MethodDelete, pathConnection, "").Code)
 }
 
-// GWPACC-SC-008: A token that the water service rejects during a read goes, and the
-// assignment stays.
-func TestReadWithARejectedToken(t *testing.T) {
+// GWPACC-SC-008: A read whose new sign in the water service rejects removes the token,
+// and the assignment stays.
+func TestReadWithRejectedCredentials(t *testing.T) {
 	t.Parallel()
 
 	water := newRig(t, storedCredentials())
 	water.connected(customerC1)
 	water.service.on(http.MethodGet, pathCustomers, answer{status: http.StatusUnauthorized})
+	water.service.on(
+		http.MethodPut,
+		pathSignIn,
+		answer{body: `{"success": false, "message": "wrong password"}`},
+	)
 
 	recorder := water.do(t, http.MethodGet, pathConnection, "")
 
@@ -594,4 +599,87 @@ func TestAssignRefusesAnUnknownMember(t *testing.T) {
 	require.Contains(t, decode(t, recorder)["detail"], `"note"`)
 	require.Empty(t, water.store.assignment())
 	require.Empty(t, water.service.recorded())
+}
+
+// GWPACC-SC-034: A rejected token makes a read and an assignment sign in again, and
+// the new token serves both.
+func TestReadAndAssignSignInAgainWhenTheTokenIsRejected(t *testing.T) {
+	t.Parallel()
+
+	water := newRig(t, storedCredentials())
+	water.connected(customerC1)
+	water.service.on(http.MethodGet, pathCustomers, answer{status: http.StatusUnauthorized})
+	water.service.on(http.MethodGet, pathCustomers, answer{body: customersAnswer})
+	water.service.on(
+		http.MethodPut,
+		pathSignIn,
+		answer{body: `{"success": true, "token": "` + tokenT2 + `"}`},
+	)
+	water.service.on(http.MethodGet, pathReadings, answer{body: readingsOfC2})
+
+	read := water.do(t, http.MethodGet, pathConnection, "")
+
+	require.Equal(t, http.StatusOK, read.Code, read.Body.String())
+
+	body := decode(t, read)
+	require.Equal(t, "connected", body["state"])
+	require.Len(t, customersOf(t, body), 2)
+	require.Equal(t, true, customersOf(t, body)[0]["assigned"])
+
+	assign := water.do(t, http.MethodPut, pathAssignment, `{"customer_number": "`+customerC2+`"}`)
+
+	require.Equal(t, http.StatusOK, assign.Code, assign.Body.String())
+	require.Equal(t, customerC2, water.store.assignment())
+
+	token, _ := water.secrets.token()
+	require.Equal(t, tokenT2, token)
+	require.Equal(t, 1, water.service.countOf(http.MethodPut, pathSignIn))
+
+	for _, recorded := range water.service.recorded()[2:] {
+		require.Equal(t, "Bearer "+tokenT2, recorded.authorization, recorded.path)
+	}
+}
+
+// GWPACC-SC-035: With no stored token, neither a read nor an assignment signs in.
+func TestNoTokenSignsInToNothing(t *testing.T) {
+	t.Parallel()
+
+	water := newRig(t, storedCredentials())
+
+	read := water.do(t, http.MethodGet, pathConnection, "")
+
+	require.Equal(t, http.StatusOK, read.Code)
+	require.Equal(t, "not_connected", decode(t, read)["state"])
+
+	assign := water.do(t, http.MethodPut, pathAssignment, `{"customer_number": "`+customerC1+`"}`)
+
+	requireProblem(t, assign, http.StatusConflict, problemPrefix+"not-connected")
+	require.Empty(t, water.service.recorded())
+
+	_, found := water.secrets.token()
+	require.False(t, found)
+}
+
+// GWPACC-SC-036: A new token that the water service rejects too answers 502 after one
+// sign in.
+func TestReadWhenTheNewTokenIsRejectedToo(t *testing.T) {
+	t.Parallel()
+
+	water := newRig(t, storedCredentials())
+	water.secrets.signedIn()
+	water.service.on(http.MethodGet, pathCustomers, answer{status: http.StatusUnauthorized})
+	water.service.on(
+		http.MethodPut,
+		pathSignIn,
+		answer{body: `{"success": true, "token": "` + tokenT2 + `"}`},
+	)
+
+	recorder := water.do(t, http.MethodGet, pathConnection, "")
+
+	requireProblem(t, recorder, http.StatusBadGateway, problemPrefix+"service-unavailable")
+	require.Equal(t, 1, water.service.countOf(http.MethodPut, pathSignIn))
+	require.Equal(t, 2, water.service.countOf(http.MethodGet, pathCustomers))
+
+	token, _ := water.secrets.token()
+	require.Equal(t, tokenT2, token)
 }

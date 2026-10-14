@@ -166,7 +166,7 @@ func (s *APIClient) DownloadFile(ctx context.Context, token string, path string)
 	}
 
 	if isRejectedToken(resp) {
-		return nil, errs.ErrNotConnected
+		return nil, errs.ErrTokenRejected
 	}
 
 	if resp.StatusCode() != http.StatusOK {
@@ -218,7 +218,7 @@ func (s *APIClient) postWithToken(
 	}
 
 	if isRejectedToken(resp) {
-		return errs.ErrNotConnected
+		return errs.ErrTokenRejected
 	}
 
 	return statusFailure(resp)

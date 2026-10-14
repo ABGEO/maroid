@@ -59,7 +59,8 @@ func (a *account) token(ctx context.Context) (string, error) {
 }
 
 // signIn signs in with the stored credentials, and replaces the stored token with
-// the one that the water service gives.
+// the one that the water service gives. Credentials that the water service rejects
+// remove the stored token, because no later call can renew it.
 func (a *account) signIn(ctx context.Context) (string, error) {
 	credentials, err := a.credentials(ctx)
 	if err != nil {
@@ -67,6 +68,10 @@ func (a *account) signIn(ctx context.Context) (string, error) {
 	}
 
 	token, err := a.client.Authenticate(ctx, credentials.Username, credentials.Password)
+	if errors.Is(err, errs.ErrCredentialsRejected) {
+		return "", errors.Join(err, a.forgetToken(ctx))
+	}
+
 	if err != nil {
 		return "", fmt.Errorf("signing in: %w", err)
 	}
@@ -84,4 +89,25 @@ func (a *account) forgetToken(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// call runs the call with the token. A rejected token gives way to one new sign in,
+// because the stored credentials need no person to send a code.
+func (a *account) call(ctx context.Context, token string, run func(token string) error) error {
+	err := run(token)
+	if !errors.Is(err, errs.ErrTokenRejected) {
+		return err
+	}
+
+	token, err = a.signIn(ctx)
+	if err != nil {
+		return fmt.Errorf("replacing a rejected token: %w", err)
+	}
+
+	err = run(token)
+	if errors.Is(err, errs.ErrTokenRejected) {
+		return fmt.Errorf("%w: the water service rejected a new token", errs.ErrRequestFailed)
+	}
+
+	return err
 }

@@ -4,7 +4,7 @@ title: The water account of a workspace
 type: spec
 status: approved
 created: 2026-10-12
-updated: 2026-10-13
+updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-12
 constrained_by: [PLG, ARC, OWN, DAT, CFG, EXT, LOG, SEC, UI, JOB, API, ERR, RES, PKG, BLD, TST]
@@ -38,13 +38,13 @@ or `pluginapi`. `spec-readings.md` holds the readings page. `spec-scenarios.md` 
 | `GWPACC-FR-009`   | Section 4.4, `GWPACC-DD-003`, `GWPACC-SC-005`, `GWPACC-SC-006` |
 | `GWPACC-FR-010`   | `api.yaml`, `GWPACC-SC-007` |
 | `GWPACC-FR-011`   | `GWPACC-DD-005`, `GWPACC-SC-007` |
-| `GWPACC-FR-012`   | `GWPACC-DD-002`, `GWPACC-DD-005`, `GWPACC-SC-008` |
+| `GWPACC-FR-012`   | `GWPACC-DD-002`, `GWPACC-DD-005`, `GWPACC-SC-008`, `GWPACC-SC-037` |
 | `GWPACC-FR-013`   | `api.yaml`, `GWPACC-DD-001`, `GWPACC-SC-009`, `GWPACC-SC-024` |
 | `GWPACC-FR-014`   | Section 4.5, `GWPACC-SC-010` |
 | `GWPACC-FR-015`   | Section 4.4, `GWPACC-DD-006`, `GWPACC-SC-009`, `GWPACC-SC-011` |
 | `GWPACC-FR-016`   | Section 4.3, `GWPACC-SC-012`, `GWPACC-SC-033` |
 | `GWPACC-FR-017`   | Section 4.3, `GWPACC-SC-013` |
-| `GWPACC-FR-018`   | Section 4.4, `GWPACC-DD-002`, `GWPACC-SC-014`, `GWPACC-SC-015` |
+| `GWPACC-FR-018`   | Section 4.4, `GWPACC-DD-002`, `GWPACC-SC-014`, `GWPACC-SC-015`, `GWPACC-SC-034` to `GWPACC-SC-036` |
 | `GWPACC-FR-019`   | Section 4.5, `GWPACC-SC-016` |
 | `GWPACC-FR-020`   | Section 4.2, `GWPACC-DD-007`, `GWPACC-SC-017` |
 | `GWPACC-FR-021`   | Section 4.2, `GWPACC-DD-005`, `GWPACC-SC-018` |
@@ -98,13 +98,14 @@ or `pluginapi`. `spec-readings.md` holds the readings page. `spec-scenarios.md` 
 | `plugins/gwp/db/migrations/<ts>_table_customer_assignments_create.{up,down}.sql` | create | Section 4.2 |
 | `plugins/gwp/db/migrations/<ts>_table_readings_create.{up,down}.sql` | create | Section 4.2 |
 | `plugins/gwp/db/migrations/<ts>_readings_key_by_meter_and_date.{up,down}.sql` | create | Section 4.2 |
-| `plugins/gwp/errs/errs.go` | create | `ErrRequestFailed` (moved from `service`), `ErrNotConnected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrNotAssigned`, `ErrCustomerUnknown`, `ErrCustomerAbsent` |
+| `plugins/gwp/errs/errs.go` | create | `ErrRequestFailed` (moved from `service`), `ErrNotConnected`, `ErrTokenRejected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrNotAssigned`, `ErrCustomerUnknown`, `ErrCustomerAbsent` |
 | `plugins/gwp/model/{doc,connection,reading}.go` | create | `ConnectionState`, `Connection`, `Customer`, `Reading`, whose `Usage` is nil for the earliest reading of a meter |
 | `plugins/gwp/dto/api-client.go` | change | `ReadingItem.MapToModel(customerNumber string)`. `prevReadValue` stays unread |
 | `plugins/gwp/dto/connection.go` | create | `ConnectionResponse`, `CustomerResponse`, `AssignmentRequest` |
 | `plugins/gwp/config/config.go` | change | `Config.RequestTimeout` |
 | `libs/pluginconfig/config.go` | change | The decoder takes `mapstructure.StringToTimeDurationHookFunc`, so a configuration value `15s` decodes into a `time.Duration`. The hub and every plugin build again, because they share the package |
-| `plugins/gwp/service/api-client.go` | change | A 401 is `errs.ErrNotConnected`. A sign in with `success: false` is `errs.ErrCredentialsRejected`. A failure wraps the status and at most 512 bytes of the body (`EXT-007`). Every call ends after `request_timeout` |
+| `plugins/gwp/service/api-client.go` | change | A 401 is `errs.ErrTokenRejected` (`DD-002`). A sign in with `success: false` is `errs.ErrCredentialsRejected`. A failure wraps the status and at most 512 bytes of the body (`EXT-007`). Every call ends after `request_timeout` |
+| `plugins/gwp/service/account.go` | change | `call`, which repeats a call once after a new sign in on `errs.ErrTokenRejected`. `signIn` deletes `token` on `errs.ErrCredentialsRejected` (`DD-002`) |
 | `plugins/gwp/service/connection.go` | create | `Connections`, `NewConnections` |
 | `plugins/gwp/service/collector.go` | create | `Collector`, `NewCollector` |
 | `plugins/gwp/repository/{doc,assignment,reading}.go` | create | `CustomerAssignmentRepository` and `CustomerAssignment`, `ReadingRepository` and `Reading`, each over one transaction (`REP-002`, `REP-003`) |
@@ -276,14 +277,17 @@ sequenceDiagram
     H-->>U: 200 connected, customers, assigned
 ```
 
-The 401 branch is the one of `GWPACC-FR-018`. A read of the page takes no such branch (`DD-002`).
+The 401 branch is the one of `GWPACC-FR-018`. Every call that carries the token takes it, a read of
+the page too (`DD-002`). No stored token takes no branch: no action but `Connect` signs in.
 
 ### 4.5 Errors
 
 | Condition | Route answer | Collection |
 | --------- | ------------ | ---------- |
 | No `token` secret | `GET`: 200 `state: not_connected`. `PUT` assignment: 409 `not-connected` | Skip (`GWPACC-FR-017`) |
-| A route call answers 401 | `GET`: 200 `state: not_connected`, and the token goes. `PUT` assignment: 409 `not-connected` | Sign in again, once |
+| A call answers 401 | Sign in again, once, and repeat the call. A second 401: 502 `service-unavailable` | Sign in again, once. A second 401: error `ErrRequestFailed` |
+| The new sign in of a 401 is rejected | `GET`: 200 `state: not_connected`, and the token goes. `PUT` assignment: 409 `not-connected`, and the token goes | Error `ErrCredentialsRejected`, and the token goes |
+| The settings are absent at the new sign in of a 401 | `GET`: 200 `state: not_connected`. `PUT` assignment: 409 `not-connected` | Error `ErrCredentialsAbsent` |
 | The settings are absent | `PUT` connection: 422 `credentials-absent`. `GET` reports `credentials_stored: false` | Error `ErrCredentialsAbsent` |
 | The sign in answers `success: false`, 400, or 401 | 422 `credentials-rejected` | Error `ErrCredentialsRejected` |
 | The customer is not in the list of the account | 422 `customer-unknown` | Not reached |
@@ -311,11 +315,18 @@ no call to the secret store. The unique key holds the invariant in the database.
 
 **Realizes:** `GWPACC-FR-012`, `GWPACC-FR-018`
 **Decision:** `APIClient` answers a 401 on a call that carries the token with
-`errs.ErrNotConnected`. `Connections` deletes `token` on it. `Collector` signs in with the
-settings, writes the new token with `Put`, and repeats the call once.
-**Rationale:** The owner wants a person to reconnect from the page, and the collection to
-recover alone. One sentinel serves both, and each caller picks its reaction.
-**Alternatives:** A sign in on each page read. A wrong password then shows as a failure of the page, not as "not connected".
+`errs.ErrTokenRejected`. `account.call` runs each such call of `Connections` and `Collector`. On
+`ErrTokenRejected` it signs in with the settings, writes the new token with `Put`, and repeats
+the call once. A second `ErrTokenRejected` is `errs.ErrRequestFailed`. `account.signIn` deletes
+`token` when the water service rejects the credentials. With no stored token, an action answers
+`errs.ErrNotConnected` and signs in to nothing. `Status` reads `ErrCredentialsRejected` and
+`ErrCredentialsAbsent` as `not_connected`, and `Assign` as `ErrNotConnected`, so neither route
+answer changes. Changed on 2026-10-14.
+**Rationale:** The settings hold all that a new sign in needs, so "not connected" on an expired
+token only makes an editor press Connect. A sentinel for each meaning keeps a 401 from reading as
+"not connected". The electricity plugin does the same (`ELECACC-DD-003`).
+**Alternatives:** `ErrNotConnected` for a 401 too, as before 2026-10-14. One sentinel then means
+two things. A new sign in before each page read. It costs a call to the water service on every read.
 
 ### `GWPACC-DD-003`
 
@@ -338,11 +349,11 @@ address joined from `city`, `street`, and `building`, and `assigned`. An empty
 ### `GWPACC-DD-005`
 
 **Realizes:** `GWPACC-FR-011`, `GWPACC-FR-012`, `GWPACC-FR-021`
-**Decision:** `Disconnect` deletes `token` and the row of `customer_assignments`. A 401
-deletes `token` alone. Neither touches `readings`.
-**Rationale:** An editor who reconnects after an expired token keeps the assignment.
+**Decision:** `Disconnect` deletes `token` and the row of `customer_assignments`. Rejected
+credentials delete `token` alone. Neither touches `readings`.
+**Rationale:** An editor who reconnects after a changed password keeps the assignment.
 An explicit end can precede a different account.
-**Alternatives:** Delete the assignment on a 401 too. The editor then assigns again for a token that only expired.
+**Alternatives:** Delete the assignment on rejected credentials too. The editor then assigns again for the same account.
 
 ### `GWPACC-DD-006`
 
@@ -395,7 +406,7 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `GWPACC-SC-001` to `GWPACC-SC-033`.
+`spec-scenarios.md` holds `GWPACC-SC-001` to `GWPACC-SC-037`.
 
 ## 7. Build plan
 
@@ -416,6 +427,7 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 | 13 | The page `/readings`, the chart, and `UIManifest`. Build the UI, then the `.so` | `GWPACC-FR-028` to `GWPACC-FR-032` | [x] |
 | 14 | `GWPACC-SC-030` in the deck, in both themes. Lint and build the plugin | `GWPACC-FR-030` to `GWPACC-FR-032` | [ ] |
 | 15 | The corrections of the review of 2026-10-13: `service.Store` (`ADR-0017`), the repository interfaces, the timeout, the body of `EXT-007`, the count of a collection, the fragment of the assignment | `GWPACC-FR-007`, `GWPACC-FR-013`, `GWPACC-FR-016`, `GWPACC-FR-018` | [x] |
+| 16 | The change of 2026-10-14: `ErrTokenRejected`, `account.call`, and `Connections` and `Collector` over it (`DD-002`). The tests of `GWPACC-SC-008`, `GWPACC-SC-014`, `GWPACC-SC-034` to `GWPACC-SC-037`. Lint and build the plugin | `GWPACC-FR-012`, `GWPACC-FR-018` | [x] |
 
 ## Retired identifiers
 

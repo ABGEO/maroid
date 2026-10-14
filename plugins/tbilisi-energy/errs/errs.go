@@ -7,9 +7,10 @@ var (
 	// ErrRequestFailed reports a call to the gas service that failed or got an answer
 	// that is not a success.
 	ErrRequestFailed = errors.New("tbilisi-energy: request failed")
-	// ErrNotConnected reports that Maroid holds no token for the acting workspace, or
-	// that the gas service rejected the one it held.
+	// ErrNotConnected reports that Maroid holds no token for the acting workspace.
 	ErrNotConnected = errors.New("tbilisi-energy: not connected")
+	// ErrTokenRejected reports a token that the gas service no longer accepts.
+	ErrTokenRejected = errors.New("tbilisi-energy: token rejected")
 	// ErrCredentialsAbsent reports a workspace that stored no username or no password.
 	ErrCredentialsAbsent = errors.New("tbilisi-energy: credentials absent")
 	// ErrCredentialsRejected reports a sign in that the gas service rejected.

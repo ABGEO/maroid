@@ -29,6 +29,10 @@ func writeFailure(
 	err error,
 ) {
 	switch {
+	case errors.Is(err, errs.ErrNotConnected):
+		writeProblem(w, r, typeNotConnected, http.StatusConflict,
+			"The workspace holds no connection to the water service.",
+			"Connect the water account first.")
 	case errors.Is(err, errs.ErrCredentialsAbsent):
 		writeProblem(w, r, typeCredentialsAbsent, http.StatusUnprocessableEntity,
 			"The settings hold no username or no password.",
@@ -37,10 +41,6 @@ func writeFailure(
 		writeProblem(w, r, typeCredentialsRejected, http.StatusUnprocessableEntity,
 			"The water service rejected the credentials.",
 			"Check the username and the password in the settings.")
-	case errors.Is(err, errs.ErrNotConnected):
-		writeProblem(w, r, typeNotConnected, http.StatusConflict,
-			"The workspace holds no connection to the water service.",
-			"Connect the water account first.")
 	case errors.Is(err, errs.ErrCustomerUnknown):
 		writeProblem(w, r, typeCustomerUnknown, http.StatusUnprocessableEntity,
 			"The water account holds no such customer.",

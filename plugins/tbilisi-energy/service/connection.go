@@ -43,8 +43,8 @@ func NewConnections(
 }
 
 // Status reads the connection of the acting workspace. A connected workspace reads the
-// customers of the account, which also proves that the token still works. A token that
-// the gas service rejects is removed, and the workspace reads as not connected.
+// customers of the account, which also proves that the token still works. Credentials
+// that cannot renew a rejected token read as not connected.
 func (c *Connections) Status(ctx context.Context) (*model.Connection, error) {
 	credentialsStored, err := c.credentialsStored(ctx)
 	if err != nil {
@@ -66,7 +66,7 @@ func (c *Connections) Status(ctx context.Context) (*model.Connection, error) {
 	}
 
 	customers, err := c.customers(ctx, token)
-	if errors.Is(err, errs.ErrNotConnected) {
+	if isRejection(err) {
 		return notConnected, nil
 	}
 
@@ -86,7 +86,7 @@ func (c *Connections) Connect(ctx context.Context) (*model.Connection, error) {
 	}
 
 	customers, err := c.client.GetCustomers(ctx, token)
-	if errors.Is(err, errs.ErrNotConnected) {
+	if errors.Is(err, errs.ErrTokenRejected) {
 		return nil, fmt.Errorf("%w: the gas service rejected a new token", errs.ErrRequestFailed)
 	}
 
@@ -122,6 +122,10 @@ func (c *Connections) Assign(
 	}
 
 	customers, err := c.customers(ctx, token)
+	if isRejection(err) {
+		return nil, fmt.Errorf("%w: %w", errs.ErrNotConnected, err)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -142,23 +146,31 @@ func (c *Connections) Assign(
 	return connectionOf(customers, customerNumber, credentialsStored), nil
 }
 
-// customers lists the customers of the account. A token that the gas service rejects
-// is removed, and the answer is errs.ErrNotConnected.
+// customers lists the customers of the account, and signs in again once when the gas
+// service rejects the token.
 func (c *Connections) customers(ctx context.Context, token string) ([]dto.Customer, error) {
-	customers, err := c.client.GetCustomers(ctx, token)
-	if errors.Is(err, errs.ErrNotConnected) {
-		if forgetErr := c.account.forgetToken(ctx); forgetErr != nil {
-			return nil, forgetErr
+	var customers []dto.Customer
+
+	_, err := c.account.call(ctx, token, func(token string) error {
+		var listErr error
+
+		customers, listErr = c.client.GetCustomers(ctx, token)
+		if listErr != nil {
+			return fmt.Errorf("requesting the customers: %w", listErr)
 		}
 
-		return nil, errs.ErrNotConnected
-	}
-
+		return nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("listing the customers: %w", err)
 	}
 
 	return customers, nil
+}
+
+// isRejection reports credentials that cannot renew a rejected token.
+func isRejection(err error) bool {
+	return errors.Is(err, errs.ErrCredentialsRejected) || errors.Is(err, errs.ErrCredentialsAbsent)
 }
 
 func (c *Connections) connection(

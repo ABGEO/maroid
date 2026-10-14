@@ -129,7 +129,11 @@ The end of a connection must remove the assigned customer.
 
 ### `GASACC-FR-013`
 
-The plugin must remove the connection when the gas service rejects it during an action on the connection page.
+The plugin must remove the connection when the gas service rejects the stored credentials.
+
+**Examples:**
+
+- Normal case: the password changed at the gas service. The token ends, and the new sign in of `GASACC-FR-019` fails. The page shows "not connected", and an editor connects again.
 
 ### The customer
 
@@ -176,12 +180,16 @@ The collection must skip a workspace that holds no connection or no assigned cus
 
 ### `GASACC-FR-019`
 
-The collection must sign in again with the stored credentials, and replace the connection, when the gas service rejects the connection.
+The plugin must sign in again with the stored credentials, once, and replace the connection, when the gas service rejects the connection during any action.
+
+**Why:** No code by phone is needed, so every action recovers with no person present.
 
 **Examples:**
 
+- Normal case: the token ended. A member opens the connection page. The plugin signs in, and the page lists the customers.
 - Normal case: the token ended. The collection signs in, stores the new token, and collects the transactions.
-- Unwanted case: the gas service rejects the credentials. The run fails with an error that names the rejection.
+- Limit case: Maroid holds no connection. The page shows "not connected" (`GASACC-FR-004`), and the plugin does not sign in.
+- Unwanted case: the new sign in fails too. The action fails with the reason of `GASACC-FR-013` or `GASACC-FR-008`.
 
 ### `GASACC-FR-020`
 

@@ -4,7 +4,7 @@ title: The water account of a workspace
 type: requirements
 status: approved
 created: 2026-10-12
-updated: 2026-10-12
+updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-12
 constrained_by: [PLG, ARC, OWN, DAT, CFG, EXT, LOG, SEC, UI, JOB]
@@ -118,11 +118,11 @@ The end of a connection must remove the assigned customer.
 
 ### `GWPACC-FR-012`
 
-The plugin must remove the connection when the water service rejects it during an action on the connection page.
+The plugin must remove the connection when the water service rejects the stored credentials.
 
 **Examples:**
 
-- Normal case: the token ended. The page shows "not connected", and an editor connects again.
+- Normal case: the password changed at the water service. The token ends, and the new sign in of `GWPACC-FR-018` fails. The page shows "not connected", and an editor connects again.
 
 ### The customer
 
@@ -158,14 +158,16 @@ The collection must skip a workspace that holds no connection or no assigned cus
 
 ### `GWPACC-FR-018`
 
-The collection must sign in again with the stored credentials, and replace the connection, when the water service rejects the connection.
+The plugin must sign in again with the stored credentials, once, and replace the connection, when the water service rejects the connection during any action.
 
-**Why:** No code by phone is needed, so the collection recovers with no person present.
+**Why:** No code by phone is needed, so every action recovers with no person present.
 
 **Examples:**
 
+- Normal case: the token ended. A member opens the connection page. The plugin signs in, and the page lists the customers.
 - Normal case: the token ended. The collection signs in, stores the new token, and collects the readings.
-- Unwanted case: the water service rejects the credentials. The run fails with an error that names the rejection. The connection page shows "not connected" at its next read.
+- Limit case: Maroid holds no connection. The page shows "not connected" (`GWPACC-FR-003`), and the plugin does not sign in.
+- Unwanted case: the new sign in fails too. The action fails with the reason of `GWPACC-FR-012` or `GWPACC-FR-007`.
 
 ### `GWPACC-FR-019`
 
@@ -323,7 +325,7 @@ No answer of Maroid to a client holds a session token or a password of a water a
 
 | #   | Question | Owner | Answer |
 | --- | -------- | ----- | ------ |
-| 1   | What happens when the water service rejects the token? | Temuri | The page shows "not connected". The collection signs in again. `GWPACC-FR-012`, `GWPACC-FR-018`. |
+| 1   | What happens when the water service rejects the token? | Temuri | Every action signs in again once, changed on 2026-10-14 (`GWPACC-FR-018`). A rejected password removes the connection (`GWPACC-FR-012`). |
 | 2   | What does the widget show for two meters? | Temuri | One line for each meter. `GWPACC-FR-022`. |
 | 3   | Does a change of customer, or the end of a connection, remove the readings? | Temuri | No. `GWPACC-FR-021`. |
 | 4   | Does the plugin assign the customer when the account holds one? | Temuri | No. The editor assigns it. `GWPACC-FR-013`. |

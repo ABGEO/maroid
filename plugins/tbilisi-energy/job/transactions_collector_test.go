@@ -427,7 +427,8 @@ func TestTheJobSignsInAgainWhenTheTokenIsRejected(t *testing.T) {
 	require.NotContains(t, rig.logs.String(), password)
 }
 
-// GASACC-SC-015: A rejected token and a wrong password fail the run, and nothing is stored.
+// GASACC-SC-015: A rejected token and a wrong password fail the run, nothing is stored,
+// and the token goes. The assignment stays.
 func TestTheJobFailsWhenTheCredentialsAreRejected(t *testing.T) {
 	t.Parallel()
 
@@ -442,6 +443,8 @@ func TestTheJobFailsWhenTheCredentialsAreRejected(t *testing.T) {
 
 	require.ErrorIs(t, err, errs.ErrCredentialsRejected)
 	require.Zero(t, rig.store.count())
+	require.Empty(t, rig.secrets.token())
+	require.Equal(t, customerC1, rig.store.assigned)
 }
 
 // GASACC-SC-016: An account that no longer holds the assigned customer fails the run

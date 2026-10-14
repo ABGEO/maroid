@@ -4,7 +4,7 @@ title: The scenarios of the water account of a workspace
 type: spec
 status: approved
 created: 2026-10-12
-updated: 2026-10-12
+updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-12
 constrained_by: [TST, TRC]
@@ -93,7 +93,8 @@ carries `assigned: true`.
 **Verifies:** `GWPACC-FR-012`
 **Layer:** unit
 
-**Given** a `token` secret, `C1` assigned, and the fake service answers the list with 401.
+**Given** a `token` secret `T1`, `C1` assigned, and stored settings. The fake service answers
+the list with 401 for `T1`, and the sign in with `success: false`.
 **When** V reads `GET /connections/self`.
 **Then** the answer is 200 with `state: not_connected`. The `token` secret is gone. `C1` stays assigned.
 
@@ -352,3 +353,46 @@ with 503 and a body of 600 bytes that starts with `maintenance`.
 ## Retired identifiers
 
 This file has no retired identifier.
+
+## `GWPACC-SC-034`
+
+**Verifies:** `GWPACC-FR-018`
+**Layer:** unit
+
+**Given** a `token` secret `T1`, `C1` assigned, and stored settings. The fake service answers
+the list with 401 for `T1`, gives `T2` at the sign in, and lists `C1` and `C2` for `T2`.
+**When** (a) V reads `GET /connections/self`; (b) E assigns `C2`.
+**Then** (a) the answer is 200 with `state: connected`, both customers, and `C1` assigned; (b)
+the answer is 200 with `C2` assigned. The `token` secret holds `T2`.
+
+## `GWPACC-SC-035`
+
+**Verifies:** `GWPACC-FR-018`, `GWPACC-FR-003`
+**Layer:** unit
+
+**Given** stored settings and no `token` secret.
+**When** (a) V reads `GET /connections/self`; (b) E assigns `C1`.
+**Then** (a) the answer is 200 with `state: not_connected`; (b) the answer is 409
+`not-connected`. The fake service records no call. No `token` secret exists.
+
+## `GWPACC-SC-036`
+
+**Verifies:** `GWPACC-FR-018`, `GWPACC-FR-007`
+**Layer:** unit
+
+**Given** a `token` secret `T1` and stored settings. The fake service gives `T2` at the sign
+in, and answers the list with 401 for both tokens.
+**When** V reads `GET /connections/self`.
+**Then** the answer is 502 `/problems/dev.maroid.gwp/service-unavailable`. The fake service
+records one sign in and two lists. The `token` secret holds `T2`.
+
+## `GWPACC-SC-037`
+
+**Verifies:** `GWPACC-FR-012`
+**Layer:** unit
+
+**Given** a `token` secret `T1`, `C1` assigned, and stored settings. The fake service answers
+`/RecordDisplay` with 401 for `T1`, and the sign in with `success: false`.
+**When** the job runs in W.
+**Then** the run answers an error that wraps `ErrCredentialsRejected`. The `token` secret is
+gone. `C1` stays assigned. No reading is stored.

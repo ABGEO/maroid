@@ -36,12 +36,12 @@ the hub, `pluginapi`, or another plugin. `spec-pages.md` holds the decisions of 
 | `GASACC-FR-008` | Section 4.5, `GASACC-SC-004` |
 | `GASACC-FR-009`, `GASACC-FR-010` | Section 4.4, `GASACC-DD-002`, `GASACC-SC-005`, `GASACC-SC-006` |
 | `GASACC-FR-011`, `GASACC-FR-012` | `api.yaml`, `GASACC-SC-007` |
-| `GASACC-FR-013` | Section 4.5, `GASACC-SC-008` |
+| `GASACC-FR-013` | Section 4.5, `GASACC-DD-016`, `GASACC-SC-008`, `GASACC-SC-015` |
 | `GASACC-FR-014`, `GASACC-FR-015` | `api.yaml`, `GASACC-SC-009`, `GASACC-SC-010` |
 | `GASACC-FR-043` | Section 4.4, `GASACC-DD-007`, `GASACC-SC-034` |
 | `GASACC-FR-017` | Section 4.3, `GASACC-DD-006`, `GASACC-SC-012` |
 | `GASACC-FR-018` | Section 4.3, `GASACC-SC-013` |
-| `GASACC-FR-019` | Section 4.4, `GASACC-SC-014`, `GASACC-SC-015` |
+| `GASACC-FR-019` | Section 4.4, `GASACC-DD-016`, `GASACC-SC-014`, `GASACC-SC-015`, `GASACC-SC-035` to `GASACC-SC-037` |
 | `GASACC-FR-020` | `GASACC-DD-005`, `GASACC-SC-016` |
 | `GASACC-FR-021` | Section 4.2, `GASACC-DD-008`, `GASACC-SC-017` |
 | `GASACC-FR-022` | Section 4.2, `GASACC-SC-018` |
@@ -99,14 +99,14 @@ Every path is under `plugins/tbilisi-energy/`.
 | ---- | ------ | ----- |
 | `db/migrations/<ts>_table_customer_assignments_create.{up,down}.sql` | create | Section 4.2 |
 | `db/migrations/<ts>_transactions_key_by_customer_and_operation.{up,down}.sql` | create | Section 4.2, `GASACC-DD-008` |
-| `errs/errs.go` | change | `ErrRequestFailed` stays. `ErrNotConnected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrSignInBlocked`, `ErrNotAssigned`, `ErrCustomerUnknown`, `ErrCustomerAbsent`, `ErrReversedPeriod` |
+| `errs/errs.go` | change | `ErrRequestFailed` stays. `ErrNotConnected`, `ErrTokenRejected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrSignInBlocked`, `ErrNotAssigned`, `ErrCustomerUnknown`, `ErrCustomerAbsent`, `ErrReversedPeriod` |
 | `model/connection.go` | create | `ConnectionState`, `Connection`, `Customer` with `Number`, `Name`, `Address`, `Assigned` |
 | `model/transaction.go` | change | `Transaction` (section 4.2), `OperationReading`, `IsReading()`, `Tbilisi()`, `Period`, `Period.Months()`, `PreviousMonth(now time.Time) Period`, `Collection` |
 | `dto/api-client.go` | change | `HomeResponse`, `Customer` with `custNumber`, `controlNumber`, `customerName`, `address`, and no other member (`GASACC-INV-004`). `Transaction.MapToModel(customerNumber string)`. `Hash` goes |
 | `dto/connection.go`, `dto/transaction.go` | create | `ConnectionResponse`, `CustomerResponse`, `AssignmentRequest`, `TransactionResponse`, `MoneyResponse`, `NewTransactionResponseList(transactions, fileBase)` |
 | `config/config.go` | change | `Config.RequestTimeout`. `base_url` is a URL with no trailing slash. `WorkspaceSettings.CustomerNumber` goes |
-| `service/api-client.go` | change | `GetCustomers(ctx, token) ([]dto.Customer, error)`. A rejected token is `errs.ErrNotConnected` (`GASACC-DD-004`). A sign in with `recaptchaRequested` is `errs.ErrSignInBlocked`, one with a `code` other than 0 is `errs.ErrCredentialsRejected`. Every call ends after `request_timeout`, and a body passes no 10 MiB |
-| `service/account.go` | create | `account`, which `Connections`, `Collector`, and `Bills` share: `credentials` reads the settings, `token` reads the secret, `signIn` signs in and writes the secret, `forgetToken` deletes it, and `call` repeats a call once after a new sign in when the gas service rejects the token |
+| `service/api-client.go` | change | `GetCustomers(ctx, token) ([]dto.Customer, error)`. A rejected token is `errs.ErrTokenRejected` (`GASACC-DD-004`, `GASACC-DD-016`). A sign in with `recaptchaRequested` is `errs.ErrSignInBlocked`, one with a `code` other than 0 is `errs.ErrCredentialsRejected`. Every call ends after `request_timeout`, and a body passes no 10 MiB |
+| `service/account.go` | create | `account`, which `Connections`, `Collector`, and `Bills` share: `credentials` reads the settings, `token` reads the secret, `signIn` signs in and writes the secret, `forgetToken` deletes it, and `call` repeats a call once after a new sign in on `errs.ErrTokenRejected`. `signIn` deletes `token` on `errs.ErrCredentialsRejected` (`GASACC-DD-016`) |
 | `service/connection.go` | create | `Connections`, `NewConnections`. It collects nothing |
 | `service/collector.go` | create | `Collector`, `NewCollector` |
 | `service/bill.go` | create | `Bills`, `NewBills`. The message and the attachments of the bill, moved from the job |
@@ -309,12 +309,17 @@ sequenceDiagram
     B->>B: Notify monthly_bill
 ```
 
+Every call that carries the token takes the branch of the rejected token, a read of the page
+too (`GASACC-DD-016`). No stored token takes no branch: no action but `Connect` signs in.
+
 ### 4.5 Errors
 
 | Condition | Route answer | Collection |
 | --------- | ------------ | ---------- |
 | No `token` secret | `GET` connection: 200 `not_connected`. `PUT` assignment: 409 `not-connected` | Skip (`GASACC-FR-018`) |
-| The gas service rejects the token | `GET` connection: 200 `not_connected`, and the token goes. `PUT` assignment: 409 `not-connected` | Sign in again, once |
+| The gas service rejects the token | Sign in again, once, and repeat the call. A second rejection: 502 `service-unavailable` | Sign in again, once. A second rejection: error `ErrRequestFailed` |
+| The new sign in of a rejected token is rejected | `GET` connection: 200 `not_connected`, and the token goes. `PUT` assignment: 409 `not-connected`, and the token goes | Error `ErrCredentialsRejected`, and the token goes |
+| The settings are absent at the new sign in of a rejected token | `GET` connection: 200 `not_connected`. `PUT` assignment: 409 `not-connected` | Error `ErrCredentialsAbsent` |
 | The settings are absent | `PUT` connection: 422 `credentials-absent` | Error `ErrCredentialsAbsent` |
 | The sign in answers a `code` other than 0 | 422 `credentials-rejected` | Error `ErrCredentialsRejected` |
 | The sign in answers `recaptchaRequested: true` | 422 `sign-in-blocked` | Error `ErrSignInBlocked` |
@@ -353,10 +358,10 @@ workspace connected, which `Z-148` and `Z-149` give to `PUT`.
 ### `GASACC-DD-003`
 
 **Realizes:** `GASACC-FR-012`, `GASACC-FR-013`, `GASACC-FR-022`
-**Decision:** `Disconnect` deletes `token` and the assignment. A rejected token deletes `token`
-alone. Neither touches `transactions`.
-**Rationale:** An editor who reconnects after an expired token keeps the assignment.
-**Alternatives:** Delete the assignment on a rejected token too. The editor then assigns again.
+**Decision:** `Disconnect` deletes `token` and the assignment. Rejected credentials delete
+`token` alone. Neither touches `transactions`.
+**Rationale:** An editor who reconnects after a changed password keeps the assignment.
+**Alternatives:** Delete the assignment on rejected credentials too. The editor then assigns again.
 
 ### `GASACC-DD-004`
 
@@ -436,12 +441,27 @@ download logs a warning, and the message goes without that file. A failed `Notif
 the message matter more than the files.
 **Alternatives:** Fail the run on a failed download. The bill of that month is then lost.
 
+### `GASACC-DD-016`
+
+**Realizes:** `GASACC-FR-013`, `GASACC-FR-019`
+**Decision:** `APIClient` answers a rejected token with `errs.ErrTokenRejected`. `account.call`
+runs each call of `Connections`, `Collector`, and `Bills` that carries the token. A second
+`ErrTokenRejected` is `errs.ErrRequestFailed`. `account.signIn` deletes `token` when the gas
+service rejects the credentials. With no stored token, an action answers `errs.ErrNotConnected`
+and signs in to nothing. `Status` reads `ErrCredentialsRejected` and `ErrCredentialsAbsent` as
+`not_connected`, and `Assign` as `ErrNotConnected`, so neither route answer changes.
+**Rationale:** The settings hold all that a new sign in needs, so "not connected" on an expired
+token only makes an editor press Connect. A sentinel for each meaning keeps a rejected token from
+reading as "not connected". The electricity plugin does the same (`ELECACC-DD-003`).
+**Alternatives:** `ErrNotConnected` for a rejected token too, as before 2026-10-14. One sentinel
+then means two things. A new sign in before each page read. It costs a call to the gas service on every read.
+
 `spec-pages.md` holds `GASACC-DD-011` to `GASACC-DD-015`: the widget, the transactions page, the
 chart, and the money object.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `GASACC-SC-001` to `GASACC-SC-034`, with `GASACC-SC-011` retired.
+`spec-scenarios.md` holds `GASACC-SC-001` to `GASACC-SC-037`, with `GASACC-SC-011` retired.
 
 ## 7. Build plan
 
@@ -457,6 +477,7 @@ chart, and the money object.
 | 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-034` to `GASACC-FR-039` | [x] |
 | 9 | Run the flow against the gas service: an expired token, a link to a bill with no session, `backfill` of 12 months. Correct `GASACC-DD-013` and `GASACC-DD-004` | `GASACC-FR-019`, `GASACC-FR-023`, `GASACC-FR-036` | [x] |
 | 10 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [x] |
+| 11 | The change of 2026-10-14: `ErrTokenRejected`, `signIn` that deletes `token`, and `Connections` over `account.call` (`GASACC-DD-016`). The tests of `GASACC-SC-008`, `GASACC-SC-015`, `GASACC-SC-035` to `GASACC-SC-037`. Lint and build the plugin | `GASACC-FR-013`, `GASACC-FR-019` | [x] |
 
 ## Retired identifiers
 

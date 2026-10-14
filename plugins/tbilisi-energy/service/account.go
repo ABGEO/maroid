@@ -59,7 +59,8 @@ func (a *account) token(ctx context.Context) (string, error) {
 }
 
 // signIn signs in with the stored credentials, and replaces the stored token with the
-// one that the gas service gives.
+// one that the gas service gives. Credentials that the gas service rejects remove the
+// stored token, because no later call can renew it.
 func (a *account) signIn(ctx context.Context) (string, error) {
 	credentials, err := a.credentials(ctx)
 	if err != nil {
@@ -67,6 +68,10 @@ func (a *account) signIn(ctx context.Context) (string, error) {
 	}
 
 	token, err := a.client.Authenticate(ctx, credentials.Username, credentials.Password)
+	if errors.Is(err, errs.ErrCredentialsRejected) {
+		return "", errors.Join(err, a.forgetToken(ctx))
+	}
+
 	if err != nil {
 		return "", fmt.Errorf("signing in: %w", err)
 	}
@@ -95,7 +100,7 @@ func (a *account) call(
 	run func(token string) error,
 ) (string, error) {
 	err := run(token)
-	if !errors.Is(err, errs.ErrNotConnected) {
+	if !errors.Is(err, errs.ErrTokenRejected) {
 		return token, err
 	}
 
@@ -105,7 +110,7 @@ func (a *account) call(
 	}
 
 	err = run(token)
-	if errors.Is(err, errs.ErrNotConnected) {
+	if errors.Is(err, errs.ErrTokenRejected) {
 		return "", fmt.Errorf("%w: the gas service rejected a new token", errs.ErrRequestFailed)
 	}
 

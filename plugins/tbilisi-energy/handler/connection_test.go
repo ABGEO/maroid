@@ -69,6 +69,17 @@ type customerAnswer struct {
 	Assigned       bool   `json:"assigned"`
 }
 
+// assignedOf answers the number of the assigned customer, or "" when none is assigned.
+func assignedOf(answer connectionAnswer) string {
+	for _, customer := range answer.Customers {
+		if customer.Assigned {
+			return customer.CustomerNumber
+		}
+	}
+
+	return ""
+}
+
 // rig runs the routes of the connection against the fake service and the fake stores.
 type rig struct {
 	service *fakeService
@@ -315,14 +326,19 @@ func TestTheDisconnectRemovesTheTokenAndTheAssignment(t *testing.T) {
 	require.Equal(t, 2, rig.store.transactionCount())
 }
 
-// GASACC-SC-008: A rejected token reads as not connected, and goes. The assignment stays.
-func TestARejectedTokenReadsAsNotConnected(t *testing.T) {
+// GASACC-SC-008: A read whose new sign in the gas service rejects reads as not
+// connected, and the token goes. The assignment stays.
+func TestRejectedCredentialsReadAsNotConnected(t *testing.T) {
 	t.Parallel()
 
 	rig := newRig(t, storedCredentials())
 	rig.secrets.signedIn()
 	rig.store.assigned = customerC1
 	rig.service.on(pathHome, answer{status: http.StatusUnauthorized})
+	rig.service.on(
+		pathSignIn,
+		answer{body: `{"token":null,"recaptchaRequested":false,"success":false,"code":1}`},
+	)
 
 	answer := connectionOf(t, rig.do(t, http.MethodGet, pathConnection, ""))
 
@@ -442,4 +458,80 @@ func TestNoAnswerHoldsASecretOrAPersonalNumber(t *testing.T) {
 		require.NotContains(t, text, password)
 		require.NotContains(t, text, personalNumber)
 	}
+}
+
+// GASACC-SC-035: A rejected token makes a read and an assignment sign in again, and the
+// new token serves both.
+func TestReadAndAssignSignInAgainWhenTheTokenIsRejected(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.secrets.signedIn()
+	rig.store.assigned = customerC1
+	rig.service.on(pathHome, answer{status: http.StatusUnauthorized})
+	rig.service.on(pathHome, answer{body: homeAnswer})
+	rig.service.on(pathSignIn, answer{body: `{"token":"` + tokenT2 + `","success":true,"code":0}`})
+
+	read := connectionOf(t, rig.do(t, http.MethodGet, pathConnection, ""))
+
+	require.Equal(t, "connected", read.State)
+	require.Len(t, read.Customers, 2)
+	require.Equal(t, customerC1, assignedOf(read))
+
+	assign := connectionOf(
+		t,
+		rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC2+`"}`),
+	)
+
+	require.Equal(t, customerC2, assignedOf(assign))
+	require.Equal(t, customerC2, rig.store.assignment())
+
+	token, _ := rig.secrets.token()
+	require.Equal(t, tokenT2, token)
+	require.Equal(t, 1, rig.service.countOf(pathSignIn))
+
+	for _, recorded := range rig.service.recorded()[2:] {
+		require.Equal(t, tokenT2, recorded.token, recorded.path)
+	}
+}
+
+// GASACC-SC-036: With no stored token, neither a read nor an assignment signs in.
+func TestNoTokenSignsInToNothing(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+
+	read := connectionOf(t, rig.do(t, http.MethodGet, pathConnection, ""))
+
+	require.Equal(t, "not_connected", read.State)
+
+	assign := rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`)
+
+	require.Equal(t, http.StatusConflict, assign.Code)
+	require.Equal(t, problemPrefix+"not-connected", problemTypeOf(t, assign))
+	require.Empty(t, rig.service.recorded())
+
+	_, found := rig.secrets.token()
+	require.False(t, found)
+}
+
+// GASACC-SC-037: A new token that the gas service rejects too answers 502 after one
+// sign in.
+func TestReadWhenTheNewTokenIsRejectedToo(t *testing.T) {
+	t.Parallel()
+
+	rig := newRig(t, storedCredentials())
+	rig.secrets.signedIn()
+	rig.service.on(pathHome, answer{status: http.StatusUnauthorized})
+	rig.service.on(pathSignIn, answer{body: `{"token":"` + tokenT2 + `","success":true,"code":0}`})
+
+	recorder := rig.do(t, http.MethodGet, pathConnection, "")
+
+	require.Equal(t, http.StatusBadGateway, recorder.Code)
+	require.Equal(t, problemPrefix+"service-unavailable", problemTypeOf(t, recorder))
+	require.Equal(t, 1, rig.service.countOf(pathSignIn))
+	require.Equal(t, 2, rig.service.countOf(pathHome))
+
+	token, _ := rig.secrets.token()
+	require.Equal(t, tokenT2, token)
 }

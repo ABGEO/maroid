@@ -142,7 +142,7 @@ func proxyURL(proxy config.Proxy) string {
 
 // getWithToken sends a GET that carries the token. A 401 is the only answer that
 // names a token the water service no longer accepts, so it alone is
-// errs.ErrNotConnected.
+// errs.ErrTokenRejected.
 func (s *APIClient) getWithToken(ctx context.Context, token string, path string, result any) error {
 	resp, err := s.request(ctx).
 		SetAuthToken(token).
@@ -153,7 +153,7 @@ func (s *APIClient) getWithToken(ctx context.Context, token string, path string,
 	}
 
 	if resp.StatusCode() == http.StatusUnauthorized {
-		return errs.ErrNotConnected
+		return errs.ErrTokenRejected
 	}
 
 	return statusFailure(resp)

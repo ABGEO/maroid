@@ -195,8 +195,8 @@ func TestTheCustomersCarryTheTokenInTheHeader(t *testing.T) {
 	require.Equal(t, tokenT1, received.token)
 }
 
-// GASACC-SC-008: A rejected token is ErrNotConnected.
-func TestARejectedTokenIsNotConnected(t *testing.T) {
+// GASACC-SC-008: A rejected token is ErrTokenRejected.
+func TestARejectedTokenIsTokenRejected(t *testing.T) {
 	t.Parallel()
 
 	client, _ := newClient(t, time.Second, map[string]answer{
@@ -205,7 +205,7 @@ func TestARejectedTokenIsNotConnected(t *testing.T) {
 
 	_, err := client.GetCustomers(context.Background(), tokenT1)
 
-	require.ErrorIs(t, err, errs.ErrNotConnected)
+	require.ErrorIs(t, err, errs.ErrTokenRejected)
 }
 
 // GASACC-SC-004: A failure of the gas service names its status and at most 512 bytes

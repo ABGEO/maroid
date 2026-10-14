@@ -123,10 +123,12 @@ func (f *fakeStore) InsertReadings(_ context.Context, readings []model.Reading) 
 // fakeWaterService plays the water service. It accepts the stored credentials with
 // the token that signIn names, and answers the readings to each token in accepted.
 type fakeWaterService struct {
-	mu       sync.Mutex
-	signIn   string
-	accepted map[string]bool
-	readings string
+	mu     sync.Mutex
+	signIn string
+	// rejectSignIn answers every sign in as a wrong password.
+	rejectSignIn bool
+	accepted     map[string]bool
+	readings     string
 	// failure, when set, answers every call of the readings.
 	failure *failedAnswer
 	calls   []string
@@ -146,7 +148,7 @@ func (f *fakeWaterService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case pathSignIn:
 		var body map[string]string
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil ||
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil || f.rejectSignIn ||
 			body["username"] != username || body["password"] != password {
 			_, _ = w.Write([]byte(`{"success": false, "message": "wrong credentials"}`))
 
@@ -350,6 +352,23 @@ func TestTheCollectionFailsWhenTheNewTokenIsRejected(t *testing.T) {
 
 	require.ErrorIs(t, err, errs.ErrRequestFailed)
 	require.NotErrorIs(t, err, errs.ErrNotConnected)
+	require.Empty(t, rig.store.inserted)
+}
+
+// GWPACC-SC-037: A collection whose new sign in the water service rejects removes the
+// token, keeps the assignment, and stores nothing.
+func TestTheCollectionRemovesTheTokenWhenTheCredentialsAreRejected(t *testing.T) {
+	t.Parallel()
+
+	water := &fakeWaterService{rejectSignIn: true, accepted: map[string]bool{}}
+	store := &fakeStore{assigned: customerC1}
+	rig := newRig(t, water, store, tokenT1)
+
+	err := rig.job.Run(actingInW(t))
+
+	require.ErrorIs(t, err, errs.ErrCredentialsRejected)
+	require.Empty(t, rig.secrets.token())
+	require.Equal(t, customerC1, store.assigned)
 	require.Empty(t, rig.store.inserted)
 }
 

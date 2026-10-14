@@ -30,6 +30,10 @@ func writeFailure(
 	err error,
 ) {
 	switch {
+	case errors.Is(err, errs.ErrNotConnected):
+		writeProblem(w, r, typeNotConnected, http.StatusConflict,
+			"The workspace holds no connection to the gas service.",
+			"Connect the gas account first.")
 	case errors.Is(err, errs.ErrCredentialsAbsent):
 		writeProblem(w, r, typeCredentialsAbsent, http.StatusUnprocessableEntity,
 			"The settings hold no username or no password.",
@@ -42,10 +46,6 @@ func writeFailure(
 		writeProblem(w, r, typeSignInBlocked, http.StatusUnprocessableEntity,
 			"The gas service holds the sign in for a human check.",
 			"Sign in once at my.te.ge, then connect again.")
-	case errors.Is(err, errs.ErrNotConnected):
-		writeProblem(w, r, typeNotConnected, http.StatusConflict,
-			"The workspace holds no connection to the gas service.",
-			"Connect the gas account first.")
 	case errors.Is(err, errs.ErrCustomerUnknown):
 		writeProblem(w, r, typeCustomerUnknown, http.StatusUnprocessableEntity,
 			"The gas account holds no such customer.",
