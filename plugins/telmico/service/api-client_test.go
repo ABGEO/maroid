@@ -38,6 +38,8 @@ const (
 	pathAccounts = "/private/accounts"
 
 	formLimit = 1 << 20
+
+	septemberForm = "2026-9"
 )
 
 // call is one request that the fake portal received.
@@ -119,7 +121,7 @@ func newClient(
 	}), fake
 }
 
-func page(csrf string) string {
+func htmlPage(csrf string) string {
 	return `<!DOCTYPE html><html><head>
 <meta name="_csrf" content="` + csrf + `"/>
 <meta name="_csrf_header" content="X-CSRF-TOKEN"/>
@@ -178,9 +180,9 @@ func jsonBody(body string) http.HandlerFunc {
 // that does not resolve, as the portal does, so a followed redirect fails the test.
 func signInHandlers() map[string]http.HandlerFunc {
 	return map[string]http.HandlerFunc{
-		pathStart:   html(anonymousCookie, page(csrfOfForm)),
+		pathStart:   html(anonymousCookie, htmlPage(csrfOfForm)),
 		pathLogin:   redirect(cookieK, "http://portal.invalid/private"),
-		pathPrivate: html("", page(csrfT)),
+		pathPrivate: html("", htmlPage(csrfT)),
 	}
 }
 
@@ -245,7 +247,7 @@ func signInFailures() map[string]signInFailure {
 	return map[string]signInFailure{
 		"bad credentials": {
 			handlers: map[string]http.HandlerFunc{
-				pathStart: html(anonymousCookie, page(csrfOfForm)),
+				pathStart: html(anonymousCookie, htmlPage(csrfOfForm)),
 				pathLogin: redirect(
 					"",
 					"http://portal.invalid/?tabId=password&error=error.bad_credentials",
@@ -255,7 +257,7 @@ func signInFailures() map[string]signInFailure {
 		},
 		"redirect to the start page": {
 			handlers: map[string]http.HandlerFunc{
-				pathStart: html(anonymousCookie, page(csrfOfForm)),
+				pathStart: html(anonymousCookie, htmlPage(csrfOfForm)),
 				pathLogin: redirect("", "http://portal.invalid/"),
 			},
 			want: errs.ErrRequestFailed,
@@ -268,13 +270,13 @@ func signInFailures() map[string]signInFailure {
 		},
 		"no cookie on the first page": {
 			handlers: map[string]http.HandlerFunc{
-				pathStart: html("", page(csrfOfForm)),
+				pathStart: html("", htmlPage(csrfOfForm)),
 			},
 			want: errs.ErrRequestFailed,
 		},
 		"no CSRF token in the new session": {
 			handlers: map[string]http.HandlerFunc{
-				pathStart:   html(anonymousCookie, page(csrfOfForm)),
+				pathStart:   html(anonymousCookie, htmlPage(csrfOfForm)),
 				pathLogin:   redirect(cookieK, "http://portal.invalid/private"),
 				pathPrivate: html("", "<html></html>"),
 			},
@@ -402,8 +404,8 @@ func TestTheMonthIsReadPageByPage(t *testing.T) {
 	require.Len(t, calls, 3)
 
 	for index, recorded := range calls {
-		assert.Equal(t, []string{"2026-9"}, recorded.form["from_month"])
-		assert.Equal(t, []string{"2026-9"}, recorded.form["to_month"])
+		assert.Equal(t, []string{septemberForm}, recorded.form["from_month"])
+		assert.Equal(t, []string{septemberForm}, recorded.form["to_month"])
 		assert.Equal(t, []string{"100"}, recorded.form["size"])
 		assert.Equal(t, csrfT, recorded.csrf)
 
