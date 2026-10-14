@@ -294,6 +294,7 @@ Add a row before you create the file or the directory.
 | `WIDGET` | `features/widget/` | The widgets that the plugins show on the home page of a workspace. | Approved |
 | `GWPACC` | `features/gwpacc/` | The water account of a workspace: the connection, the customer, and the readings. | Approved |
 | `GASACC` | `features/gasacc/` | The gas account of a workspace: the connection, the customer, and the transactions. | Approved |
+| `ELECACC` | `features/elecacc/` | The electricity account of a workspace: the connection, the customer, the transactions, and the bills. | Approved |
 
 ## Retired identifiers
 

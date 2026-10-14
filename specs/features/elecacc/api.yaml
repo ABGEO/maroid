@@ -1,0 +1,507 @@
+# The routes that ELECACC adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The electricity account of a workspace
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/plugins/dev.maroid.telmico/api/connections/self:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: getElectricityConnection
+      summary: Read the connection of the acting workspace.
+      description: >
+        Realizes `ELECACC-FR-003` to `ELECACC-FR-007`, `ELECACC-FR-012`, and `ELECACC-FR-013`.
+        A connected workspace reads the customers from the portal on each call. A rejected
+        session signs in again once. A rejection of the credentials removes the session, and
+        the answer is `not_connected`. The permission is `account.read`.
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+    put:
+      operationId: connectElectricityAccount
+      summary: Sign in with the workspace settings, and store the connection.
+      description: >
+        Realizes `ELECACC-FR-008`, `ELECACC-FR-009`, `ELECACC-DD-001`, and `ELECACC-DD-002`.
+        A repeat replaces the session and keeps the assigned customer. The permission is
+        `account.connect`.
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          description: >
+            The type is `/problems/dev.maroid.telmico/credentials-absent` or
+            `/problems/dev.maroid.telmico/credentials-rejected`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      operationId: deleteElectricityConnection
+      summary: End the connection of the acting workspace.
+      description: >
+        Realizes `ELECACC-FR-010` and `ELECACC-FR-011`. The assigned customer goes. The
+        settings, the transactions, and the bills stay. A workspace with no connection gets 204 too. The
+        permission is `account.connect`.
+      responses:
+        "204":
+          description: No connection exists.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.telmico/api/customer-assignments/self:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    put:
+      operationId: assignElectricityCustomer
+      summary: Assign a customer of the account to the acting workspace.
+      description: >
+        Realizes `ELECACC-FR-014` to `ELECACC-FR-016` and `ELECACC-DD-006`.
+        The assignment replaces the one that exists, then collects the previous month of the
+        customer and sends its bill. A failed collection keeps the assignment and answers 200. The collection answers no `GET`,
+        as `ADR-0015` permits. The permission is `account.connect`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Assignment"
+      responses:
+        "200":
+          description: The connection, with the new assigned customer.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "413":
+          description: >
+            The body passes 4 KiB. The type is `/problems/http/content-too-large`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "409":
+          description: >
+            The workspace holds no connection. The type is
+            `/problems/dev.maroid.telmico/not-connected`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "422":
+          description: >
+            The body failed validation, with the type `/problems/http/validation-failed`,
+            or the type is `/problems/dev.maroid.telmico/customer-unknown`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                oneOf:
+                  - $ref: "../../api/components.yaml#/components/schemas/ValidationProblem"
+                  - $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.telmico/api/transactions:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listElectricityTransactions
+      summary: List the transactions of the assigned customer.
+      description: >
+        Realizes `ELECACC-FR-037` to `ELECACC-FR-039`, `ELECACC-FR-043` to `ELECACC-FR-045`,
+        and `ELECACC-DD-012`. The page holds the transactions of the customer assigned to the
+        acting workspace, the latest date first, and the identifier breaks a tie. The
+        route reads no portal. The permission is `account.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+        - name: from
+          in: query
+          required: false
+          description: The earliest transaction date that the page holds.
+          schema:
+            type: string
+            format: date
+            examples: ["2025-10-14"]
+      responses:
+        "200":
+          description: One page of transactions. A customer with no transaction answers an empty page.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          description: >
+            The workspace holds no assigned customer. The type is
+            `/problems/dev.maroid.telmico/not-assigned`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.telmico/api/bills:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listElectricityBills
+      summary: List the bills of the assigned customer.
+      description: >
+        Realizes `ELECACC-FR-040`, `ELECACC-FR-041`, `ELECACC-FR-043` to `ELECACC-FR-045`,
+        and `ELECACC-DD-014`. The page holds the bills of the customer assigned to the acting
+        workspace, the latest month first. The route reads no portal. The permission is
+        `account.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: One page of bills. A customer with no bill answers an empty page.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/NotAssigned"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.telmico/api/bills/{billId}/document:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - name: billId
+        in: path
+        required: true
+        description: The identifier of a stored bill.
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getElectricityBillDocument
+      summary: Download the document of a bill from the portal.
+      description: >
+        Realizes `ELECACC-FR-042`, `ELECACC-INV-005`, and `ELECACC-DD-015`. The bill must
+        belong to the customer assigned to the acting workspace. The route signs in to the
+        portal when the session ended, and keeps no copy. The permission is `account.read`.
+      responses:
+        "200":
+          description: The document of the bill.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            Content-Disposition:
+              description: '`attachment; filename="<bill_number>.pdf"`.'
+              schema:
+                type: string
+            Cache-Control:
+              description: "`private, no-store`."
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          description: >
+            The workspace holds no connection, with the type
+            `/problems/dev.maroid.telmico/not-connected`, or no assigned customer, with the type
+            `/problems/dev.maroid.telmico/not-assigned`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: The session cookie. `SEC-005`.
+
+  schemas:
+    Connection:
+      type: object
+      required: [state, credentials_stored]
+      properties:
+        state:
+          type: string
+          enum: [not_connected, connected]
+        credentials_stored:
+          type: boolean
+          description: Whether the workspace settings hold a username and a password.
+        customers:
+          type: array
+          description: Present when `state` is `connected`. Every customer of the account.
+          items:
+            $ref: "#/components/schemas/Customer"
+    Customer:
+      type: object
+      description: >
+        The name and the personal number of the account holder never appear. `ELECACC-INV-004`.
+      required: [customer_number, name, address, assigned]
+      properties:
+        customer_number:
+          type: string
+          description: The number of the customer at the portal. `ELECACC-DD-004`.
+          examples: ["8370764"]
+        name:
+          type: string
+          description: The label that the holder gave the customer at the portal.
+        address:
+          type: string
+          description: The address, as the portal gives it.
+        assigned:
+          type: boolean
+          description: Whether the customer is assigned to the acting workspace.
+    Assignment:
+      type: object
+      additionalProperties: false
+      required: [customer_number]
+      properties:
+        customer_number:
+          type: string
+          minLength: 1
+          maxLength: 64
+    Transaction:
+      type: object
+      description: >
+        A member that the kind of the transaction does not hold is absent. `ELECACC-DD-012`.
+      required: [id, transaction_date, operation]
+      properties:
+        id:
+          type: string
+          format: uuid
+        transaction_date:
+          type: string
+          format: date
+        operation:
+          type: string
+          description: The name of the operation, as the portal gives it.
+          examples: ["დარიცხვა ჩვენების მიხედვით"]
+        amount:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: The amount. A payment is below zero.
+        balance:
+          allOf:
+            - $ref: "#/components/schemas/Money"
+          description: The balance after the transaction.
+        usage:
+          type: number
+          format: decimal
+          description: The usage of a charge, in kilowatt hours.
+          examples: [162.6]
+        meter_value:
+          type: number
+          format: decimal
+          description: The value of the meter, in kilowatt hours.
+          examples: [1989]
+        tariff:
+          type: number
+          format: decimal
+          description: The tariff of a charge, in lari for each kilowatt hour. `ELECACC-DD-016`.
+          examples: [0.2405312]
+    Bill:
+      type: object
+      required: [id, month, bill_number, issued_on, document]
+      properties:
+        id:
+          type: string
+          format: uuid
+        month:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}$"
+          description: The month that the bill covers.
+          examples: ["2026-09"]
+        bill_number:
+          type: string
+          examples: ["8370764-2026-9"]
+        issued_on:
+          type: string
+          format: date
+          description: The date of issue, in Tbilisi.
+        document:
+          type: string
+          format: uri
+          description: The absolute address of the download of the document. `ELECACC-DD-014`.
+    Money:
+      type: object
+      description: An amount of money, the money object of `Z-173`. `ELECACC-DD-016`.
+      required: [amount, currency]
+      properties:
+        amount:
+          type: number
+          format: decimal
+          examples: [39.11]
+        currency:
+          type: string
+          format: iso-4217
+          description: The currency. The portal bills in lari alone.
+          examples: [GEL]
+    TransactionPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Transaction"
+    BillPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Bill"
+
+  responses:
+    NotAssigned:
+      description: >
+        The workspace holds no assigned customer. The type is
+        `/problems/dev.maroid.telmico/not-assigned`.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    MalformedBody:
+      description: >
+        The body is not a JSON object, with the type `/problems/http/body-invalid`,
+        or it names a member that the schema does not declare, with the type
+        `/problems/http/member-unknown`.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    ServiceUnavailable:
+      description: >
+        The portal failed or answered nothing. The type is
+        `/problems/dev.maroid.telmico/service-unavailable`. A stored connection stays.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"

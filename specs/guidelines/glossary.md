@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-10-12
+updated: 2026-10-14
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -123,11 +123,12 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-customer` | customer | One supply point of a utility service, at one address. One account of the service holds one or more customers. |
 | `GLO-communal-number` | communal number | The number of a customer on the communal bill of the water service. |
 | `GLO-assigned-customer` | assigned customer | The customer of an account that an editor assigns to a workspace. The workspace collects its readings. |
-| `GLO-meter` | meter | One meter of a customer. A water meter carries a serial number. A gas customer holds one meter. |
-| `GLO-reading` | reading | The value of one meter on one date, in cubic metres. |
+| `GLO-meter` | meter | One meter of a customer. A water meter and an electricity meter carry a serial number. A gas customer holds one meter. |
+| `GLO-reading` | reading | The value of one meter on one date, in the unit of the meter: cubic metres for water and gas, kilowatt hours for electricity. |
 | `GLO-gas-service` | gas service | The external service of Tbilisi Energy that holds the gas accounts. |
-| `GLO-transaction` | transaction | One entry of a customer at the gas service, on one date: a reading with its charge, a payment, or a control reading. A control reading holds a meter value with no usage and no charge. |
-| `GLO-bill` | bill | The document of the gas service for the charge of one reading. |
+| `GLO-transaction` | transaction | One entry of a customer at a utility service, on one date: a reading with its charge, a payment, or a reading with no charge. A control reading of the gas service and the first reading of a new electricity meter hold a meter value with no charge. |
+| `GLO-bill` | bill | The document of a utility service for a charge. The gas service issues one for each reading. The electricity service issues one for each month. |
+| `GLO-electricity-service` | electricity service | The external service of Telmico that holds the electricity accounts. |
 | `GLO-meter-photo` | meter photo | The photo of the meter that the gas service took for one reading. |
 | `GLO-usage` | usage | The value of a reading minus the value of the reading before it, of the same meter. The earliest reading of a meter has none. |
 
