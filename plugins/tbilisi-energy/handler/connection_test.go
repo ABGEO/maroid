@@ -16,6 +16,7 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/config"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/handler"
+	"github.com/abgeo/maroid/plugins/tbilisi-energy/model"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/service"
 )
 
@@ -78,11 +79,6 @@ type rig struct {
 	routes  []pluginapi.Route
 }
 
-// assignedOn is 2026-10-13 at noon in Tbilisi.
-func assignedOn() time.Time {
-	return time.Date(2026, time.October, 13, 8, 0, 0, 0, time.UTC)
-}
-
 func newRig(t *testing.T, settings *fakeSettings) *rig {
 	t.Helper()
 
@@ -100,19 +96,7 @@ func newRig(t *testing.T, settings *fakeSettings) *rig {
 	logs := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	connections := service.NewConnections(
-		logger,
-		client,
-		pluginSettings,
-		pluginSecrets,
-		store,
-		service.NewCollector(client, pluginSettings, pluginSecrets, store),
-		service.NewBills(
-			logger, client, pluginSettings, pluginSecrets,
-			pluginapi.NewPluginNotifier(sender, identifier),
-		),
-		assignedOn,
-	)
+	connections := service.NewConnections(client, pluginSettings, pluginSecrets, store)
 
 	return &rig{
 		service: gas,
@@ -306,14 +290,22 @@ func TestTheDisconnectRemovesTheTokenAndTheAssignment(t *testing.T) {
 	rig := newRig(t, storedCredentials())
 	rig.secrets.signedIn()
 	rig.store.assigned = customerC1
-	rig.service.on(pathHome, answer{body: homeAnswer})
-	rig.service.on(pathTransactions, answer{body: septemberAnswer})
 
-	recorder := rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`)
-	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
-	require.Equal(t, 2, rig.store.transactionCount())
+	_, err := rig.store.InsertTransactions(context.Background(), []model.Transaction{
+		{
+			CustomerNumber: customerC1,
+			Operation:      "რეალური ჩვენება",
+			Date:           time.Date(2026, time.September, 28, 0, 0, 0, 0, model.Tbilisi()),
+		},
+		{
+			CustomerNumber: customerC1,
+			Operation:      "გაზის საფასურის ელ-გადახდა",
+			Date:           time.Date(2026, time.September, 1, 0, 0, 0, 0, model.Tbilisi()),
+		},
+	})
+	require.NoError(t, err)
 
-	recorder = rig.do(t, http.MethodDelete, pathConnection, "")
+	recorder := rig.do(t, http.MethodDelete, pathConnection, "")
 
 	require.Equal(t, http.StatusNoContent, recorder.Code)
 
@@ -405,67 +397,32 @@ func TestTheAssignmentRefusesABadBody(t *testing.T) {
 	}
 }
 
-// GASACC-SC-011: An assignment collects the previous month and sends the bill of its
-// reading. A second assignment of the same customer stores nothing new and sends none.
-func TestTheAssignmentCollectsThePreviousMonth(t *testing.T) {
+// GASACC-SC-034: An assignment stores the customer and answers at once. It reads no
+// transaction, so it stores none and sends no bill.
+func TestTheAssignmentCollectsNothing(t *testing.T) {
 	t.Parallel()
 
 	rig := newRig(t, storedCredentials())
 	rig.secrets.signedIn()
 	rig.service.on(pathHome, answer{body: homeAnswer})
 	rig.service.on(pathTransactions, answer{body: septemberAnswer})
-	rig.service.on(pathBill, answer{body: "%PDF-1.4"})
-	rig.service.on(pathPhoto, answer{body: "JPEG"})
 
-	answer := connectionOf(
-		t,
-		rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`),
-	)
+	for _, customer := range []string{customerC1, customerC2} {
+		answer := connectionOf(
+			t,
+			rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customer+`"}`),
+		)
 
-	require.Equal(t, customerC1, rig.store.assignment())
-	require.True(t, answer.Customers[0].Assigned)
-	require.Equal(t, 2, rig.store.transactionCount())
-
-	var request map[string]any
-
-	for _, recorded := range rig.service.recorded() {
-		if recorded.path == pathTransactions {
-			request = recorded.body
+		for _, listed := range answer.Customers {
+			require.Equal(t, listed.CustomerNumber == customer, listed.Assigned)
 		}
+
+		require.Equal(t, customer, rig.store.assignment())
 	}
 
-	require.Equal(t, map[string]any{
-		"customerNumber": customerC1,
-		"dateFrom":       "2026-09-01",
-		"dateTo":         "2026-09-30",
-	}, request)
-
-	sent := rig.sender.sent()
-	require.Len(t, sent, 1)
-	require.Contains(t, sent[0].Body, "2026.09.28")
-	require.Len(t, sent[0].Attachments, 2)
-
-	connectionOf(
-		t,
-		rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`),
-	)
-	require.Len(t, rig.sender.sent(), 1)
-}
-
-// GASACC-SC-011: A failed collection keeps the assignment and answers 200.
-func TestAFailedCollectionKeepsTheAssignment(t *testing.T) {
-	t.Parallel()
-
-	rig := newRig(t, storedCredentials())
-	rig.secrets.signedIn()
-	rig.service.on(pathHome, answer{body: homeAnswer})
-	rig.service.on(pathTransactions, answer{status: http.StatusServiceUnavailable})
-
-	recorder := rig.do(t, http.MethodPut, pathAssignment, `{"customer_number":"`+customerC1+`"}`)
-
-	require.Equal(t, http.StatusOK, recorder.Code)
-	require.Equal(t, customerC1, rig.store.assignment())
-	require.Contains(t, rig.logs.String(), "level=WARN")
+	require.Zero(t, rig.store.transactionCount())
+	require.Zero(t, rig.service.countOf(pathTransactions))
+	require.Empty(t, rig.sender.sent())
 }
 
 // GASACC-SC-033: No answer and no log line holds the token, the password, or the

@@ -18,9 +18,9 @@ requirements: features/gasacc/requirements.md
 The gas plugin `dev.maroid.tbilisi-energy` gains a connection page. A connect signs in
 with the workspace settings and stores the token as the workspace plugin secret `token` of
 `PSECRET`. The page lists the customers of the account, and an editor assigns one in the scoped
-table `customer_assignments`. The assignment and the scheduled collection each read the
-previous calendar month, keep each transaction in the scoped table `transactions`, and send
-the bill of the newest reading stored for the first time. The command `backfill` collects an
+table `customer_assignments`, and the assignment collects nothing. The scheduled collection
+reads the previous calendar month, keeps each transaction in the scoped table `transactions`,
+and sends the bill of the newest reading stored for the first time. The command `backfill` collects an
 earlier period for one workspace, and sends no bill.
 The widget `last-reading` shows that reading. The page `/transactions` lists the transactions
 with links to the files at the gas service, and draws a chart of 12 months. No change reaches
@@ -38,7 +38,7 @@ the hub, `pluginapi`, or another plugin. `spec-pages.md` holds the decisions of 
 | `GASACC-FR-011`, `GASACC-FR-012` | `api.yaml`, `GASACC-SC-007` |
 | `GASACC-FR-013` | Section 4.5, `GASACC-SC-008` |
 | `GASACC-FR-014`, `GASACC-FR-015` | `api.yaml`, `GASACC-SC-009`, `GASACC-SC-010` |
-| `GASACC-FR-016` | Section 4.4, `GASACC-DD-006`, `GASACC-DD-007`, `GASACC-SC-011` |
+| `GASACC-FR-043` | Section 4.4, `GASACC-DD-007`, `GASACC-SC-034` |
 | `GASACC-FR-017` | Section 4.3, `GASACC-DD-006`, `GASACC-SC-012` |
 | `GASACC-FR-018` | Section 4.3, `GASACC-SC-013` |
 | `GASACC-FR-019` | Section 4.4, `GASACC-SC-014`, `GASACC-SC-015` |
@@ -107,7 +107,7 @@ Every path is under `plugins/tbilisi-energy/`.
 | `config/config.go` | change | `Config.RequestTimeout`. `base_url` is a URL with no trailing slash. `WorkspaceSettings.CustomerNumber` goes |
 | `service/api-client.go` | change | `GetCustomers(ctx, token) ([]dto.Customer, error)`. A rejected token is `errs.ErrNotConnected` (`GASACC-DD-004`). A sign in with `recaptchaRequested` is `errs.ErrSignInBlocked`, one with a `code` other than 0 is `errs.ErrCredentialsRejected`. Every call ends after `request_timeout`, and a body passes no 10 MiB |
 | `service/account.go` | create | `account`, which `Connections`, `Collector`, and `Bills` share: `credentials` reads the settings, `token` reads the secret, `signIn` signs in and writes the secret, `forgetToken` deletes it, and `call` repeats a call once after a new sign in when the gas service rejects the token |
-| `service/connection.go` | create | `Connections`, `NewConnections`. It holds `Collector` and `Bills` |
+| `service/connection.go` | create | `Connections`, `NewConnections`. It collects nothing |
 | `service/collector.go` | create | `Collector`, `NewCollector` |
 | `service/bill.go` | create | `Bills`, `NewBills`. The message and the attachments of the bill, moved from the job |
 | `service/store.go` | create | `Store` over `PluginDB`, one transaction for each call |
@@ -136,7 +136,6 @@ The caller gives the period, and decides on the bill, which `Bills.Send(ctx cont
 | Caller | Period | Bill |
 | ------ | ------ | ---- |
 | The job | `PreviousMonth(now)` | `Bills.Send` with `NewestReading` when it is not nil |
-| `Connections.Assign` | `PreviousMonth(now)` | `Bills.Send` with `NewestReading` when it is not nil |
 | `backfill` | Each calendar month of `--from` to `--to` | None |
 
 `model.Collection` holds `Count`, the count of the transactions that the gas service answered, and `NewestReading`, the latest reading that the call stored for the first time, or nil.
@@ -204,7 +203,7 @@ them, because a transaction outlives its assignment.
 | `GET` | `/connections/self` | Authenticated | `account.read` | `GASACC-FR-004` to `GASACC-FR-008`, `GASACC-FR-013` |
 | `PUT` | `/connections/self` | Authenticated | `account.connect` | `GASACC-FR-009`, `GASACC-FR-010` |
 | `DELETE` | `/connections/self` | Authenticated | `account.connect` | `GASACC-FR-011`, `GASACC-FR-012` |
-| `PUT` | `/customer-assignments/self` | Authenticated | `account.connect` | `GASACC-FR-014` to `GASACC-FR-016` |
+| `PUT` | `/customer-assignments/self` | Authenticated | `account.connect` | `GASACC-FR-014`, `GASACC-FR-015`, `GASACC-FR-043` |
 | `GET` | `/transactions` | Authenticated | `account.read` | `GASACC-FR-034` to `GASACC-FR-040` |
 
 `GET /transactions` takes `limit` (1 to 100, default 20), `cursor`, and the filter `from`, a
@@ -298,16 +297,16 @@ sequenceDiagram
     H->>C: Assign
     C->>G: list the customers
     C->>D: upsert customer_assignments
-    C->>K: Collect (previous month)
+    H-->>U: 200 connected, customers, assigned
+    Note over K: The job, each month
     K->>G: list the customers
     K->>G: transactions of the previous month
     G-->>K: rejected token
     K->>G: sign in, Put token, repeat
     K->>D: upsert transactions
-    C->>B: Send (newest reading)
+    K->>B: Send (newest reading)
     B->>G: download the bill and the meter photo
     B->>B: Notify monthly_bill
-    H-->>U: 200 connected, customers, assigned
 ```
 
 ### 4.5 Errors
@@ -379,24 +378,26 @@ each month gives a defined failure.
 
 ### `GASACC-DD-006`
 
-**Realizes:** `GASACC-FR-016`, `GASACC-FR-017`
+**Realizes:** `GASACC-FR-017`
 **Decision:** The dates are dates of Tbilisi, `time.FixedZone("Asia/Tbilisi", 4*60*60)`.
 `model.PreviousMonth` answers the first and the last day of the month before the one of `now`.
-The job and the assignment both pass it to `Collect`.
+The job passes it to `Collect`.
 **Rationale:** Georgia keeps UTC+4 with no daylight time, so a fixed zone needs no zone data in
-the image. One function gives the assignment and the job the same period.
+the image.
 **Alternatives:** The zone of the process. The hub runs in UTC, so a run at 00:30 of the first
 day reads the wrong month.
 
 ### `GASACC-DD-007`
 
-**Realizes:** `GASACC-FR-016`, `GASACC-FR-024`, `GASACC-FR-027`
-**Decision:** `Collect` sends no bill. It answers `Collection.NewestReading`, and the job and
-`Connections.Assign` pass it to `Bills.Send`. `backfill` sends none. A transaction is a reading
+**Realizes:** `GASACC-FR-043`, `GASACC-FR-024`, `GASACC-FR-027`
+**Decision:** `Collect` sends no bill. It answers `Collection.NewestReading`, and the job passes
+it to `Bills.Send`. `backfill` sends none. `Connections` holds no collector: `Assign` checks the
+customer against the account, stores the assignment, and answers. A transaction is a reading
 when its operation is `operId` 125, "რეალური ჩვენება" (`Transaction.IsReading`). The chart, the
 widget, and the bill take readings alone.
 **Rationale:** One `Collect` serves every caller, and the caller decides the period and the bill.
-A repeated assignment stores no new reading, so it sends no second bill. The gas service also
+A collection inside the assignment held the request for the calls of the gas service, and the
+owner fills the history with `backfill` after the assignment. The gas service also
 records a control reading, "საკონტროლო ჩვენება": a meter value and a photo, with no usage, no
 charge, and no bill. A rule on the meter value counts it as a reading, so the chart draws a zero
 and the widget or the bill can show it. The owner chose the operation over a rule on the bill or
@@ -440,7 +441,7 @@ chart, and the money object.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `GASACC-SC-001` to `GASACC-SC-033`.
+`spec-scenarios.md` holds `GASACC-SC-001` to `GASACC-SC-034`, with `GASACC-SC-011` retired.
 
 ## 7. Build plan
 
@@ -450,7 +451,7 @@ chart, and the money object.
 | 2 | Both migrations and `repository/` | `GASACC-FR-014`, `GASACC-FR-021`, `GASACC-FR-022` | [x] |
 | 3 | `service/store.go`, `service/account.go`, `service/collector.go` | `GASACC-FR-017` to `GASACC-FR-021` | [x] |
 | 4 | `service/bill.go`, the job, and `cli/backfill.go` | `GASACC-FR-017`, `GASACC-FR-023` to `GASACC-FR-028` | [x] |
-| 5 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `GASACC-FR-004` to `GASACC-FR-016` | [x] |
+| 5 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-043` | [x] |
 | 6 | `handler/transaction.go`, `dto/transaction.go`, and `api.yaml` | `GASACC-FR-034` to `GASACC-FR-036`, `GASACC-FR-038` to `GASACC-FR-040` | [x] |
 | 7 | `widget/last_reading.go` and `main.go` | `GASACC-FR-029` to `GASACC-FR-033`, `GASACC-FR-041`, `GASACC-FR-042` | [x] |
 | 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-034` to `GASACC-FR-039` | [x] |

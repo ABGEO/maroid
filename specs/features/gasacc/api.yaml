@@ -108,10 +108,9 @@ paths:
       operationId: assignGasCustomer
       summary: Assign a customer of the account to the acting workspace.
       description: >
-        Realizes `GASACC-FR-014`, `GASACC-FR-015`, `GASACC-FR-016`, and `GASACC-DD-006`.
-        The assignment replaces the one that exists, then collects the previous month of the
-        customer and sends its bill. A failed collection keeps the assignment and answers 200. The collection answers no `GET`,
-        as `ADR-0015` permits. The permission is `account.connect`.
+        Realizes `GASACC-FR-014`, `GASACC-FR-015`, `GASACC-FR-043`, and `GASACC-DD-007`.
+        The assignment replaces the one that exists, and collects nothing. The collection
+        answers no `GET`, as `ADR-0015` permits. The permission is `account.connect`.
       requestBody:
         required: true
         content:

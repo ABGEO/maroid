@@ -4,7 +4,7 @@ title: The gas account of a workspace
 type: requirements
 status: approved
 created: 2026-10-13
-updated: 2026-10-13
+updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-13
 constrained_by: [PLG, ARC, OWN, DAT, CFG, EXT, LOG, SEC, UI, JOB, NTF, CLI]
@@ -147,16 +147,18 @@ An editor must assign one customer of the account to the workspace.
 
 The plugin must refuse a customer that the account does not hold.
 
-### `GASACC-FR-016`
+### `GASACC-FR-043`
 
-The plugin must collect the transactions of the previous calendar month of the assigned customer, as the scheduled collection does, when an editor assigns it.
+The plugin must store the assignment of a customer, and call no collection, when an editor assigns it.
 
-**Why:** The widget and the page show the last month at once. The scheduled collection runs once a month.
+**Why:** An assignment answers at once. An administrator collects the history of the
+customer from the command line after the assignment (`GASACC-FR-023`), and the schedule
+collects each month after that.
 
 **Examples:**
 
-- Normal case: the editor assigns the customer on 2026-10-13. The plugin stores the reading of 2026-09-28 and the payment of 2026-09-01, and the workspace receives the bill of 2026-09-28.
-- Limit case: the editor assigns the same customer again. The plugin stores nothing new, and the workspace receives no bill.
+- Normal case: the editor assigns the customer on 2026-10-14. The page marks it. The plugin reads no transaction, and the workspace receives no bill.
+- Limit case: the editor assigns a different customer. It replaces the first one, and the plugin reads nothing of it.
 
 ### The collection
 
@@ -205,7 +207,9 @@ Maroid must keep a transaction after a change of the assigned customer or the en
 
 An administrator must collect the transactions of one workspace for a period from the command line, with the first and the last date of the period.
 
-**Why:** The scheduled collection reads one month. The chart shows 12. An administrator fills the history once, for each workspace.
+**Why:** The scheduled collection reads one month, and an assignment reads none
+(`GASACC-FR-043`). The chart shows 12. An administrator fills the history once, for each
+workspace, after the assignment.
 
 **Examples:**
 
@@ -370,9 +374,11 @@ No answer of Maroid to a client holds the personal number of a customer or of th
 | --- | -------- | ----- | ------ |
 | 1   | Can one customer hold two transactions of one operation on one date, such as two payments? `GASACC-FR-021` merges them. | Temuri | No. The rule stays. `GASACC-FR-021`. |
 | 2   | Does the path of a bill or of a meter photo stay valid for months? If not, a download of an old transaction fails. | Temuri | Yes. Maroid stores each path once. |
-| 3   | Which range does a collection read? | Temuri | The previous calendar month, on the schedule and at the assignment (`GASACC-FR-017`, `GASACC-FR-016`). An administrator collects an earlier period from the command line (`GASACC-FR-023`). |
+| 3   | Which range does a collection read? | Temuri | The previous calendar month, on the schedule (`GASACC-FR-017`). The assignment collects nothing, changed on 2026-10-14 (`GASACC-FR-043`). An administrator collects an earlier period from the command line (`GASACC-FR-023`). |
 | 4   | Does a customer ever hold two meters? The answer names no meter. | Temuri | No. One meter for each customer. The chart shows one series. |
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID              | Retired    | Reason                                                                |
+| --------------- | ---------- | --------------------------------------------------------------------- |
+| `GASACC-FR-016` | 2026-10-14 | An assignment collects nothing. `GASACC-FR-043` replaces the statement. |

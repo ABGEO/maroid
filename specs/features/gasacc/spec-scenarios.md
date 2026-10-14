@@ -4,7 +4,7 @@ title: The scenarios of the gas account of a workspace
 type: spec
 status: approved
 created: 2026-10-13
-updated: 2026-10-13
+updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-13
 constrained_by: [TST, TRC]
@@ -110,17 +110,6 @@ otherwise. The account holds customers `C1` (`757235-992`) and `C2` (`340309-649
 **Given** a `token` secret, and the fake service lists `C1` and `C2`.
 **When** E sends `PUT /customer-assignments/self` with `999999-111`.
 **Then** the answer is 422 `customer-unknown`. No assignment is stored.
-
-## `GASACC-SC-011`
-
-**Verifies:** `GASACC-FR-016`
-**Layer:** unit
-
-**Given** a `token` secret, the date 2026-10-13 in Tbilisi, and the fake service answers the reading of 2026-09-28 and the payment of 2026-09-01, each reading with a bill and a meter photo.
-**When** E assigns `C1`, then assigns `C1` again.
-**Then** the fake service records the transactions request with `757235-992`, from `2026-09-01`
-to `2026-09-30`. The store holds two transactions. The fake notifier records one message on
-`monthly_bill`, for 2026-09-28, after the first assignment and none after the second.
 
 ## `GASACC-SC-012`
 
@@ -328,6 +317,19 @@ neither. The second page holds the next 20. No transaction of `C2` appears.
 **When** E connects, and V reads `GET /connections/self`.
 **Then** no body and no log line holds T, the password, or `62909012413`.
 
+## `GASACC-SC-034`
+
+**Verifies:** `GASACC-FR-043`, `GASACC-DD-007`
+**Layer:** unit
+
+**Given** a `token` secret, and the fake service lists `C1` and `C2` and answers transactions.
+**When** E assigns `C1`, then assigns `C2`.
+**Then** each answer is 200 and marks the customer that E assigned. The fake service records the
+list of the customers, and no request of the transactions. The store holds no transaction. The
+fake notifier records nothing.
+
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID              | Retired    | Reason                                                                 |
+| --------------- | ---------- | ---------------------------------------------------------------------- |
+| `GASACC-SC-011` | 2026-10-14 | `GASACC-FR-016` is retired. `GASACC-SC-034` verifies `GASACC-FR-043`. |

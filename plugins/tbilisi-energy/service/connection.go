@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strings"
-	"time"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/dto"
@@ -21,51 +19,26 @@ type AssignmentStore interface {
 	Unassign(ctx context.Context) error
 }
 
-// TransactionCollector collects the transactions of the acting workspace in a period.
-type TransactionCollector interface {
-	Collect(ctx context.Context, period model.Period) (model.Collection, error)
-}
-
-// BillSender sends the bill of a reading to the acting workspace.
-type BillSender interface {
-	Send(ctx context.Context, reading model.Transaction) error
-}
-
 // Connections connects the gas account of the acting workspace, and assigns one of its
-// customers to the workspace.
+// customers to the workspace. It collects nothing: an administrator collects the history
+// from the command line, and the schedule collects each month.
 type Connections struct {
-	logger    *slog.Logger
-	account   *account
-	client    APIClientService
-	store     AssignmentStore
-	collector TransactionCollector
-	bills     BillSender
-	now       func() time.Time
+	account *account
+	client  APIClientService
+	store   AssignmentStore
 }
 
-// NewConnections creates a new Connections instance. now gives the time of an
-// assignment, which picks the month that the assignment collects.
+// NewConnections creates a new Connections instance.
 func NewConnections(
-	logger *slog.Logger,
 	client APIClientService,
 	settings *pluginapi.PluginSettings,
 	secrets *pluginapi.PluginSecrets,
 	store AssignmentStore,
-	collector TransactionCollector,
-	bills BillSender,
-	now func() time.Time,
 ) *Connections {
 	return &Connections{
-		logger: logger.With(
-			slog.String("component", "service"),
-			slog.String("service", "connections"),
-		),
-		account:   &account{client: client, settings: settings, secrets: secrets},
-		client:    client,
-		store:     store,
-		collector: collector,
-		bills:     bills,
-		now:       now,
+		account: &account{client: client, settings: settings, secrets: secrets},
+		client:  client,
+		store:   store,
 	}
 }
 
@@ -138,9 +111,7 @@ func (c *Connections) Disconnect(ctx context.Context) error {
 	return nil
 }
 
-// Assign assigns a customer of the account to the acting workspace, then collects the
-// previous month and sends the bill of its new reading. A failed collection or bill
-// keeps the assignment, because the scheduled collection retries it.
+// Assign assigns a customer of the account to the acting workspace, and collects nothing.
 func (c *Connections) Assign(
 	ctx context.Context,
 	customerNumber string,
@@ -168,25 +139,7 @@ func (c *Connections) Assign(
 		return nil, fmt.Errorf("storing the assignment: %w", err)
 	}
 
-	c.collectPreviousMonth(ctx)
-
 	return connectionOf(customers, customerNumber, credentialsStored), nil
-}
-
-func (c *Connections) collectPreviousMonth(ctx context.Context) {
-	collection, err := c.collector.Collect(ctx, model.PreviousMonth(c.now()))
-	if err == nil && collection.NewestReading != nil {
-		err = c.bills.Send(ctx, *collection.NewestReading)
-	}
-
-	if err != nil {
-		c.logger.WarnContext(
-			ctx,
-			"the collection after an assignment failed, the scheduled collection retries it",
-			slog.String("workspace_id", pluginapi.ActingWorkspaceFromContext(ctx)),
-			slog.Any("error", err),
-		)
-	}
 }
 
 // customers lists the customers of the account. A token that the gas service rejects
