@@ -11,4 +11,5 @@ use (
 	./plugins/pensions
 	./plugins/tbilisi-energy
 	./plugins/telasi
+	./plugins/telmico
 )

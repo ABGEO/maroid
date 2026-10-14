@@ -451,8 +451,8 @@ more than the document. The household knows the message of the plugin of the dis
 
 | # | Step | Realizes | Done |
 | - | ---- | -------- | ---- |
-| 1 | The module, `errs/`, `model/`, `config/`, `permission/`, and `config.yaml` | `ELECACC-FR-001`, `ELECACC-FR-002`, `ELECACC-FR-018` | [ ] |
-| 2 | `service/api-client.go` and `dto/api-client.go`, against an `httptest` portal | `ELECACC-FR-009`, `ELECACC-FR-012`, `ELECACC-FR-013` | [ ] |
+| 1 | The module, `errs/`, `model/`, `config/`, `permission/`, and `config.yaml` | `ELECACC-FR-001`, `ELECACC-FR-002`, `ELECACC-FR-018` | [x] |
+| 2 | `service/api-client.go` and `dto/api-client.go`, against an `httptest` portal | `ELECACC-FR-009`, `ELECACC-FR-012`, `ELECACC-FR-013` | [x] |
 | 3 | The three migrations and `repository/` | `ELECACC-FR-014`, `ELECACC-FR-022` to `ELECACC-FR-024` | [ ] |
 | 4 | `service/store.go`, `service/account.go`, `service/collector.go` | `ELECACC-FR-017` to `ELECACC-FR-024` | [ ] |
 | 5 | `service/bill.go`, the job, and `cli/backfill.go` | `ELECACC-FR-025` to `ELECACC-FR-031` | [ ] |
