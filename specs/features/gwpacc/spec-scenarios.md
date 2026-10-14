@@ -100,12 +100,12 @@ the list with 401 for `T1`, and the sign in with `success: false`.
 
 ## `GWPACC-SC-009`
 
-**Verifies:** `GWPACC-FR-013`, `GWPACC-FR-015`, `GWPACC-INV-001`
+**Verifies:** `GWPACC-FR-013`, `GWPACC-FR-039`, `GWPACC-INV-001`
 **Layer:** unit
 
 **Given** a `token` secret and `C1` assigned.
 **When** E sends `PUT /customer-assignments/self` with `C2`.
-**Then** the answer is 200, and `C2` is the one assignment of W. The fake service records one call of `/RecordDisplay`.
+**Then** the answer is 200, and `C2` is the one assignment of W. The fake service records no call of `/RecordDisplay`.
 
 ## `GWPACC-SC-010`
 
@@ -118,15 +118,6 @@ the list with 401 for `T1`, and the sign in with `success: false`.
 **Then** (a) 422 `customer-unknown`; (b) 422 `/problems/http/validation-failed` with the
 pointer `#/customer_number`; (c) 413 `/problems/http/content-too-large`; (d) 400
 `/problems/http/member-unknown`, whose detail names `note`. No assignment exists in any case.
-
-## `GWPACC-SC-011`
-
-**Verifies:** `GWPACC-FR-015`
-**Layer:** unit
-
-**Given** a `token` secret, and the fake service answers `/RecordDisplay` with 503.
-**When** E sends `PUT /customer-assignments/self` with `C1`.
-**Then** the answer is 200, and `C1` is assigned. The log holds one warn line.
 
 ## `GWPACC-SC-012`
 
@@ -350,10 +341,6 @@ with 503 and a body of 600 bytes that starts with `maintenance`.
 **Then** the job answers an error that matches `errs.ErrRequestFailed`, names the status
 503 and `maintenance`, and holds at most 512 bytes of the body.
 
-## Retired identifiers
-
-This file has no retired identifier.
-
 ## `GWPACC-SC-034`
 
 **Verifies:** `GWPACC-FR-018`
@@ -454,13 +441,14 @@ same answer.
 
 ## `GWPACC-SC-043`
 
-**Verifies:** `GWPACC-FR-037`
+**Verifies:** `GWPACC-FR-039`, `GWPACC-FR-009`
 **Layer:** unit
 
-**Given** a `token` secret, and the fake service lists `C1` and answers `/RecordDisplay` with a
-reading of `C1`.
-**When** E assigns `C1`.
-**Then** the answer is 200, the reading is stored, and the fake notifier records nothing.
+**Given** stored settings, no `token` secret, and the fake service accepts the sign in, lists `C1`,
+and answers `/RecordDisplay` with a reading of `C1`.
+**When** E connects, then assigns `C1`.
+**Then** both answers are 200, and `C1` is assigned. The fake service records no call of
+`/RecordDisplay`, and the store holds no reading.
 
 ## `GWPACC-SC-044`
 
@@ -472,3 +460,9 @@ with 503.
 **When** the job runs in W.
 **Then** the run answers nil. The fake notifier records one message whose body holds the
 readings and `მიუწვდომელია`. The log holds a warning, and no token.
+
+## Retired identifiers
+
+| ID              | Retired    | Reason                                                                 |
+| --------------- | ---------- | ---------------------------------------------------------------------- |
+| `GWPACC-SC-011` | 2026-10-14 | `GWPACC-FR-015` is retired. `GWPACC-SC-043` verifies `GWPACC-FR-039`. |

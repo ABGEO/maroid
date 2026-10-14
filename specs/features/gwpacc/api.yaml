@@ -108,10 +108,9 @@ paths:
       operationId: assignWaterCustomer
       summary: Assign a customer of the account to the acting workspace.
       description: >
-        Realizes `GWPACC-FR-013` to `GWPACC-FR-015` and `GWPACC-DD-006`. The assignment
-        replaces the one that exists, then collects the readings of the customer. A failed
-        collection keeps the assignment and answers 200. The collection answers no `GET`,
-        as `ADR-0015` permits. The permission is `account.connect`.
+        Realizes `GWPACC-FR-013`, `GWPACC-FR-014`, `GWPACC-FR-039`, and `GWPACC-DD-019`. The
+        assignment replaces the one that exists, and collects nothing. The schedule collects
+        the readings of the customer. The permission is `account.connect`.
       requestBody:
         required: true
         content:

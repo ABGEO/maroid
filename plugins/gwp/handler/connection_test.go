@@ -81,14 +81,7 @@ func newRigWithTimeout(t *testing.T, settings *fakeSettings, timeout time.Durati
 	logs := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	connections := service.NewConnections(
-		logger,
-		client,
-		pluginSettings,
-		pluginSecrets,
-		store,
-		service.NewCollector(client, pluginSettings, pluginSecrets, store),
-	)
+	connections := service.NewConnections(client, pluginSettings, pluginSecrets, store)
 
 	return &rig{
 		service: water,
@@ -371,8 +364,7 @@ func TestReadWithRejectedCredentials(t *testing.T) {
 	require.Equal(t, customerC1, water.store.assignment())
 }
 
-// GWPACC-SC-009: An assignment replaces the one that exists and collects the readings
-// of the new customer once.
+// GWPACC-SC-009: An assignment replaces the one that exists and collects nothing.
 func TestAssign(t *testing.T) {
 	t.Parallel()
 
@@ -385,8 +377,8 @@ func TestAssign(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
 	require.Equal(t, customerC2, water.store.assignment())
-	require.Equal(t, 1, water.service.countOf(http.MethodGet, pathReadings))
-	require.Equal(t, 1, water.store.readingCount())
+	require.Zero(t, water.service.countOf(http.MethodGet, pathReadings))
+	require.Zero(t, water.store.readingCount())
 
 	assigned := customersOf(t, decode(t, recorder))[1]
 	require.Equal(t, customerC2, assigned["customer_number"])
@@ -449,23 +441,6 @@ func TestAssignRefusesAnOversizedBody(t *testing.T) {
 	require.Empty(t, water.service.recorded())
 }
 
-// GWPACC-SC-011: A failed collection after an assignment keeps the assignment, answers
-// 200, and logs one warning.
-func TestAssignKeepsTheAssignmentWhenTheCollectionFails(t *testing.T) {
-	t.Parallel()
-
-	water := newRig(t, storedCredentials())
-	water.secrets.signedIn()
-	water.service.on(http.MethodGet, pathCustomers, answer{body: customersAnswer})
-	water.service.on(http.MethodGet, pathReadings, answer{status: http.StatusServiceUnavailable})
-
-	recorder := water.do(t, http.MethodPut, pathAssignment, `{"customer_number": "`+customerC1+`"}`)
-
-	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
-	require.Equal(t, customerC1, water.store.assignment())
-	require.Equal(t, 1, strings.Count(water.logs.String(), "level=WARN"))
-}
-
 // GWPACC-SC-018: A new assignment and the end of the connection keep every reading.
 func TestTheReadingsOutliveTheAssignment(t *testing.T) {
 	t.Parallel()
@@ -483,7 +458,7 @@ func TestTheReadingsOutliveTheAssignment(t *testing.T) {
 	)
 	require.Equal(t, http.StatusNoContent, water.do(t, http.MethodDelete, pathConnection, "").Code)
 
-	require.Equal(t, 3, water.store.readingCount())
+	require.Equal(t, 2, water.store.readingCount())
 }
 
 // GWPACC-SC-023: No answer and no log line holds the token or the password, whichever
@@ -684,19 +659,27 @@ func TestReadWhenTheNewTokenIsRejectedToo(t *testing.T) {
 	require.Equal(t, tokenT2, token)
 }
 
-// GWPACC-SC-043: The collection after an assignment stores the reading and sends no
-// notification, so it lists the customers once, for the assignment alone.
-func TestTheAssignmentSendsNoNotification(t *testing.T) {
+// GWPACC-SC-043: A connection and an assignment read no reading. Only the schedule
+// collects.
+func TestConnectAndAssignCollectNothing(t *testing.T) {
 	t.Parallel()
 
 	water := newRig(t, storedCredentials())
-	water.secrets.signedIn()
+	water.service.on(
+		http.MethodPut,
+		pathSignIn,
+		answer{body: `{"success": true, "token": "` + tokenT1 + `"}`},
+	)
 	water.service.on(http.MethodGet, pathCustomers, answer{body: customersAnswer})
 	water.service.on(http.MethodGet, pathReadings, answer{body: readingsOfC2})
 
-	recorder := water.do(t, http.MethodPut, pathAssignment, `{"customer_number": "`+customerC2+`"}`)
+	connect := water.do(t, http.MethodPut, pathConnection, "")
+	require.Equal(t, http.StatusOK, connect.Code, connect.Body.String())
 
-	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
-	require.Equal(t, 1, water.store.readingCount())
-	require.Equal(t, 1, water.service.countOf(http.MethodGet, pathCustomers))
+	assign := water.do(t, http.MethodPut, pathAssignment, `{"customer_number": "`+customerC1+`"}`)
+	require.Equal(t, http.StatusOK, assign.Code, assign.Body.String())
+	require.Equal(t, customerC1, water.store.assignment())
+
+	require.Zero(t, water.service.countOf(http.MethodGet, pathReadings))
+	require.Zero(t, water.store.readingCount())
 }

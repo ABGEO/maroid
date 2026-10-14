@@ -102,14 +102,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		store,
 	)
 
-	plg.connections = service.NewConnections(
-		plg.logger,
-		client,
-		settings,
-		secrets,
-		store,
-		plg.collector,
-	)
+	plg.connections = service.NewConnections(client, settings, secrets, store)
 
 	return plg, nil
 }

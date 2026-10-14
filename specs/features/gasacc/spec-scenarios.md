@@ -330,12 +330,6 @@ neither. The second page holds the next 20. No transaction of `C2` appears.
 list of the customers, and no request of the transactions. The store holds no transaction. The
 fake notifier records nothing.
 
-## Retired identifiers
-
-| ID              | Retired    | Reason                                                                 |
-| --------------- | ---------- | ---------------------------------------------------------------------- |
-| `GASACC-SC-011` | 2026-10-14 | `GASACC-FR-016` is retired. `GASACC-SC-034` verifies `GASACC-FR-043`. |
-
 ## `GASACC-SC-035`
 
 **Verifies:** `GASACC-FR-019`
@@ -367,3 +361,9 @@ in, and rejects both tokens on the list.
 **When** V reads `GET /connections/self`.
 **Then** the answer is 502 `/problems/dev.maroid.tbilisi-energy/service-unavailable`. The fake
 service records one sign in and two lists. The `token` secret holds `T2`.
+
+## Retired identifiers
+
+| ID              | Retired    | Reason                                                                 |
+| --------------- | ---------- | ---------------------------------------------------------------------- |
+| `GASACC-SC-011` | 2026-10-14 | `GASACC-FR-016` is retired. `GASACC-SC-034` verifies `GASACC-FR-043`. |

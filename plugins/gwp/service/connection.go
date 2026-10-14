@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strings"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -20,37 +19,26 @@ type AssignmentStore interface {
 	Unassign(ctx context.Context) error
 }
 
-// ReadingCollector collects the readings of the assigned customer of the acting workspace.
-type ReadingCollector interface {
-	Collect(ctx context.Context) (model.Collection, error)
-}
-
 // Connections connects the water account of the acting workspace, and assigns one of
 // its customers to the workspace, over the API client, the settings, the plugin
-// secrets, and the store of the assignment.
+// secrets, and the store of the assignment. It collects nothing: the schedule collects.
 type Connections struct {
-	logger    *slog.Logger
-	account   *account
-	client    APIClientService
-	store     AssignmentStore
-	collector ReadingCollector
+	account *account
+	client  APIClientService
+	store   AssignmentStore
 }
 
 // NewConnections creates a new Connections instance.
 func NewConnections(
-	logger *slog.Logger,
 	client APIClientService,
 	settings *pluginapi.PluginSettings,
 	secrets *pluginapi.PluginSecrets,
 	store AssignmentStore,
-	collector ReadingCollector,
 ) *Connections {
 	return &Connections{
-		logger:    logger,
-		account:   &account{client: client, settings: settings, secrets: secrets},
-		client:    client,
-		store:     store,
-		collector: collector,
+		account: &account{client: client, settings: settings, secrets: secrets},
+		client:  client,
+		store:   store,
 	}
 }
 
@@ -123,9 +111,7 @@ func (c *Connections) Disconnect(ctx context.Context) error {
 	return nil
 }
 
-// Assign assigns a customer of the account to the acting workspace, then collects
-// its readings. A failed collection keeps the assignment, because the scheduled
-// collection retries it.
+// Assign assigns a customer of the account to the acting workspace, and collects nothing.
 func (c *Connections) Assign(
 	ctx context.Context,
 	customerNumber string,
@@ -155,15 +141,6 @@ func (c *Connections) Assign(
 
 	if err = c.store.Assign(ctx, customerNumber); err != nil {
 		return nil, fmt.Errorf("storing the assignment: %w", err)
-	}
-
-	if _, err = c.collector.Collect(ctx); err != nil {
-		c.logger.WarnContext(
-			ctx,
-			"the collection after an assignment failed, the scheduled collection retries it",
-			slog.String("workspace_id", pluginapi.ActingWorkspaceFromContext(ctx)),
-			slog.Any("error", err),
-		)
 	}
 
 	return connectionOf(customers, customerNumber, credentialsStored), nil

@@ -105,6 +105,7 @@ The plugin must sign in to the water service with the stored credentials, and st
 
 - Normal case: the credentials are correct. The page lists the customers.
 - Limit case: the workspace was connected before. The new connection replaces the old one. The assigned customer stays.
+- Limit case: the workspace holds an assigned customer. The connection reads no reading of it.
 - Unwanted case: the password is wrong. The page reports the credentials rejected. Maroid holds no connection.
 
 ### `GWPACC-FR-010`
@@ -141,11 +142,17 @@ An editor must assign one customer of the account to the workspace.
 
 The plugin must refuse a customer that the account does not hold.
 
-### `GWPACC-FR-015`
+### `GWPACC-FR-039`
 
-The plugin must collect the readings of the assigned customer when an editor assigns it.
+The plugin must store the assignment of a customer, and call no collection, when an editor assigns it.
 
-**Why:** The scheduled collection runs once a month. The home page would show nothing until then.
+**Why:** An assignment answers at once. The scheduled collection reads the readings of the
+customer at its next run, as for every other workspace.
+
+**Examples:**
+
+- Normal case: the editor assigns the customer. The page marks it. The plugin reads no reading, and the workspace receives no notification.
+- Limit case: the home page reads the widget before the next scheduled collection. The widget answers "empty" (`GWPACC-FR-024`).
 
 ### The collection
 
@@ -214,12 +221,6 @@ The scheduled collection must send one notification when it stores a reading for
 - Limit case: the run only corrects the value of a reading that Maroid holds (`GWPACC-FR-020`). The workspace receives nothing.
 - Limit case: the run stores new readings of 15/08/2026 and 15/09/2026. The workspace receives one notification, of 15/09/2026.
 
-### `GWPACC-FR-037`
-
-The collection after an assignment must send no notification.
-
-**Why:** It reads the history of the customer. A notification of an old reading tells the household nothing new.
-
 ### `GWPACC-FR-038`
 
 The notification must show the date of the latest new reading, the serial number, the value, and the usage of each meter read on that date, and the balance of the assigned customer.
@@ -242,7 +243,7 @@ Each line shows the serial number of the meter, the date of the reading, the val
 **Examples:**
 
 - Normal case: one meter, 1204.0 on 15/08/2026 and 1216.5 on 15/09/2026. The line shows 1216.5 on 15/09/2026, and a usage of 12.5.
-- Limit case: the first collection after the assignment of the customer holds one reading of the meter. The line shows the value and the date, and no usage.
+- Limit case: the first scheduled collection after the assignment of the customer holds one reading of the meter. The line shows the value and the date, and no usage.
 - Limit case: the customer has two meters. The widget shows two lines.
 - Unwanted case: a value below the one before it, after a change of the meter. The line shows the negative usage as it is.
 
@@ -369,8 +370,12 @@ No answer of Maroid to a client holds a session token or a password of a water a
 | 4   | Does the plugin assign the customer when the account holds one? | Temuri | No. The editor assigns it. `GWPACC-FR-013`. |
 | 5   | Which role connects and assigns the customer? | Temuri | Editor. `GWPACC-FR-027`. |
 | 6   | How long does Maroid keep a reading? | Temuri | As long as the workspace exists. |
-| 7   | The water service gives no bill. What does the notification show, and which collection sends it? | Temuri | The new readings and the balance, from the scheduled collection only. Added on 2026-10-14. `GWPACC-FR-035` to `GWPACC-FR-038`. |
+| 7   | The water service gives no bill. What does the notification show, and which collection sends it? | Temuri | The new readings and the balance, from the scheduled collection only. Added on 2026-10-14. `GWPACC-FR-035`, `GWPACC-FR-036`, `GWPACC-FR-038`. |
+| 8   | Does an assignment or a connection collect the readings? | Temuri | No. Only the schedule collects, changed on 2026-10-14. `GWPACC-FR-039`. |
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID              | Retired    | Reason                                                                  |
+| --------------- | ---------- | ----------------------------------------------------------------------- |
+| `GWPACC-FR-015` | 2026-10-14 | An assignment collects nothing. `GWPACC-FR-039` replaces the statement.   |
+| `GWPACC-FR-037` | 2026-10-14 | No collection follows an assignment, so the statement has no subject. `GWPACC-FR-039` covers it. |

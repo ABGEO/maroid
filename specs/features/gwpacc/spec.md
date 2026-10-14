@@ -42,7 +42,6 @@ notification of a new reading. `spec-scenarios.md` holds the scenarios.
 | `GWPACC-FR-012`   | `GWPACC-DD-002`, `GWPACC-DD-005`, `GWPACC-SC-008`, `GWPACC-SC-037` |
 | `GWPACC-FR-013`   | `api.yaml`, `GWPACC-DD-001`, `GWPACC-SC-009`, `GWPACC-SC-024` |
 | `GWPACC-FR-014`   | Section 4.5, `GWPACC-SC-010` |
-| `GWPACC-FR-015`   | Section 4.4, `GWPACC-DD-006`, `GWPACC-SC-009`, `GWPACC-SC-011` |
 | `GWPACC-FR-016`   | Section 4.3, `GWPACC-SC-012`, `GWPACC-SC-033` |
 | `GWPACC-FR-017`   | Section 4.3, `GWPACC-SC-013` |
 | `GWPACC-FR-018`   | Section 4.4, `GWPACC-DD-002`, `GWPACC-SC-014`, `GWPACC-SC-015`, `GWPACC-SC-034` to `GWPACC-SC-036` |
@@ -64,8 +63,8 @@ notification of a new reading. `spec-scenarios.md` holds the scenarios.
 | `GWPACC-FR-034`   | `spec-readings.md` 3.3, `GWPACC-SC-019` |
 | `GWPACC-FR-035`   | `spec-notification.md` 3.2, `GWPACC-SC-038` |
 | `GWPACC-FR-036`   | `spec-notification.md` 3.3, `GWPACC-DD-016`, `GWPACC-DD-017`, `GWPACC-SC-039` to `GWPACC-SC-042` |
-| `GWPACC-FR-037`   | `spec-notification.md` 3.3, `GWPACC-DD-017`, `GWPACC-SC-043` |
 | `GWPACC-FR-038`   | `spec-notification.md` 3.2, `GWPACC-DD-018`, `GWPACC-SC-039`, `GWPACC-SC-040`, `GWPACC-SC-044` |
+| `GWPACC-FR-039`   | Section 4.4, `GWPACC-DD-019`, `GWPACC-SC-009`, `GWPACC-SC-043` |
 | `GWPACC-INV-001`  | Section 4.2, `GWPACC-DD-001`, `GWPACC-SC-009` |
 | `GWPACC-INV-002`  | Section 4.2, `GWPACC-SC-022` |
 | `GWPACC-INV-003`  | `api.yaml`, `GWPACC-SC-023` |
@@ -199,7 +198,7 @@ because a reading outlives its assignment (`GWPACC-FR-021`).
 | `GET` | `/connections/self` | Authenticated | `account.read` | `GWPACC-FR-003` to `GWPACC-FR-007`, `GWPACC-FR-012` |
 | `PUT` | `/connections/self` | Authenticated | `account.connect` | `GWPACC-FR-008`, `GWPACC-FR-009` |
 | `DELETE` | `/connections/self` | Authenticated | `account.connect` | `GWPACC-FR-010`, `GWPACC-FR-011` |
-| `PUT` | `/customer-assignments/self` | Authenticated | `account.connect` | `GWPACC-FR-013` to `GWPACC-FR-015` |
+| `PUT` | `/customer-assignments/self` | Authenticated | `account.connect` | `GWPACC-FR-013`, `GWPACC-FR-014`, `GWPACC-FR-039` |
 
 **Permissions.**
 
@@ -233,7 +232,7 @@ because a reading outlives its assignment (`GWPACC-FR-021`).
 
 | Page route | Navigation entry | Page | Realizes |
 | ---------- | ---------------- | ---- | -------- |
-| `/account` | "Account" | `Account.svelte` | `GWPACC-FR-003` to `GWPACC-FR-015` |
+| `/account` | "Account" | `Account.svelte` | `GWPACC-FR-003` to `GWPACC-FR-014`, `GWPACC-FR-039` |
 
 The page hides the buttons of `account.connect` when `host.can` denies it. The list of
 customers is a radio group with one "Assign" button. "Disconnect" asks through `ConfirmDialog`.
@@ -272,14 +271,14 @@ sequenceDiagram
     H->>C: Assign
     C->>W: GET /customer/ListCustomers
     C->>D: upsert customer_assignments
-    C->>K: Collect
+    H-->>U: 200 connected, customers, assigned
+    Note over K: The job, on the schedule
     K->>W: GET /RecordDisplay
     W-->>K: 401
     K->>W: PUT /customer (username, password)
     K->>K: Put token
     K->>W: GET /RecordDisplay
     K->>D: insert readings, ON CONFLICT DO NOTHING
-    H-->>U: 200 connected, customers, assigned
 ```
 
 The 401 branch is the one of `GWPACC-FR-018`. Every call that carries the token takes it, a read of
@@ -360,14 +359,6 @@ credentials delete `token` alone. Neither touches `readings`.
 An explicit end can precede a different account.
 **Alternatives:** Delete the assignment on rejected credentials too. The editor then assigns again for the same account.
 
-### `GWPACC-DD-006`
-
-**Realizes:** `GWPACC-FR-015`
-**Decision:** `Assign` writes the row, then calls `Collector.Collect` in the same request.
-A failure of the collection is logged at warn, and the answer stays 200.
-**Rationale:** The row is stored at that moment. The next collection retries, and the widget answers "empty" meanwhile.
-**Alternatives:** Answer the failure. The editor retries an assignment that already succeeded.
-
 ### `GWPACC-DD-007`
 
 **Realizes:** `GWPACC-FR-020`
@@ -409,6 +400,16 @@ and `DD-007`. An answer of `/RecordDisplay` of 2026-10-12 gives `lastReadingDate
 whether `customerNo` of a reading equals `customerNo` of a customer.
 **Alternatives:** Ship on the assumption. A wrong assumption fails each collection in silence.
 
+### `GWPACC-DD-019`
+
+**Realizes:** `GWPACC-FR-009`, `GWPACC-FR-039`
+**Decision:** `Assign` stores the row and answers. `Connect` signs in and lists the customers.
+`Connections` holds no collector, so only `ReadingsCollector` calls `Collect`. Changed on 2026-10-14.
+**Rationale:** An assignment answers at once, with no wait on `/RecordDisplay`. The gas and
+the electricity plugins collect on the schedule alone, so the three water and energy plugins act alike.
+**Alternatives:** Collect at the assignment, as before 2026-10-14. The first reading then
+arrives with no notification, and the request waits on the water service.
+
 `spec-readings.md` holds `GWPACC-DD-011` to `GWPACC-DD-015`. `spec-notification.md` holds
 `GWPACC-DD-016` to `GWPACC-DD-018`.
 
@@ -437,7 +438,10 @@ whether `customerNo` of a reading equals `customerNo` of a customer.
 | 15 | The corrections of the review of 2026-10-13: `service.Store` (`ADR-0017`), the repository interfaces, the timeout, the body of `EXT-007`, the count of a collection, the fragment of the assignment | `GWPACC-FR-007`, `GWPACC-FR-013`, `GWPACC-FR-016`, `GWPACC-FR-018` | [x] |
 | 16 | The change of 2026-10-14: `ErrTokenRejected`, `account.call`, and `Connections` and `Collector` over it (`DD-002`). The tests of `GWPACC-SC-008`, `GWPACC-SC-014`, `GWPACC-SC-034` to `GWPACC-SC-037`. Lint and build the plugin | `GWPACC-FR-012`, `GWPACC-FR-018` | [x] |
 | 17 | The notification of `spec-notification.md`: `Insert` that answers a new row, `OnDate`, `Collection`, `Notices`, the job, and `NotificationTopics`. The tests of `GWPACC-SC-038` to `GWPACC-SC-044`. Lint and build the plugin | `GWPACC-FR-035` to `GWPACC-FR-038` | [x] |
+| 18 | The change of 2026-10-14: `Assign` calls no collection, and `Connections` loses the collector (`DD-019`). The tests of `GWPACC-SC-009` and `GWPACC-SC-043`. Lint and build the plugin | `GWPACC-FR-009`, `GWPACC-FR-039` | [x] |
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID              | Retired    | Reason                                                              |
+| --------------- | ---------- | ------------------------------------------------------------------- |
+| `GWPACC-DD-006` | 2026-10-14 | `GWPACC-FR-015` is retired. `GWPACC-DD-019` replaces the decision. |

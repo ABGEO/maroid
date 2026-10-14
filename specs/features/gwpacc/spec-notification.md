@@ -43,7 +43,6 @@ after an assignment sends nothing. No table changes, and no change reaches the h
 | `plugins/gwp/repository/reading.go` | change | `Insert` answers `(bool, error)`, true for a row stored for the first time (`DD-016`). `OnDate(ctx, customerNumber string, date time.Time) ([]model.Reading, error)` over `withUsage`, ordered by the serial number |
 | `plugins/gwp/service/store.go` | change | `InsertReadings` answers `([]model.Reading, error)`, the readings stored for the first time. `ReadingsOn(ctx, customerNumber string, date time.Time) ([]model.Reading, error)` |
 | `plugins/gwp/service/collector.go` | change | `ReadingStore.InsertReadings` takes the new signature. `Collect` answers `(model.Collection, error)` |
-| `plugins/gwp/service/connection.go` | change | `ReadingCollector.Collect` answers `(model.Collection, error)`. `Assign` reads no `NewestDate` |
 | `plugins/gwp/service/notice.go` | create | `NewReadingTopic = "new_reading"`, `Notices`, `NewNotices`, `Send(ctx, customerNumber string, date time.Time) error` |
 | `plugins/gwp/job/readings_collector.go` | change | `NoticeSender`, which the job declares. `Run` calls `Send` when `NewestDate` is set |
 | `plugins/gwp/main.go` | change | `host.Notifier`, `Notices`, and `NotificationTopics` |
@@ -95,8 +94,7 @@ sequenceDiagram
     N->>H: Notify new_reading
 ```
 
-`Connections.Assign` calls `Collect` and drops the answer, so the collection after an
-assignment reaches no `Send` (`GWPACC-FR-037`).
+Only the job calls `Collect` (`GWPACC-DD-019`), so every new reading reaches `Send`.
 
 ## 4. Design decisions
 
@@ -113,13 +111,13 @@ read, and a missed month of the past would never count.
 
 ### `GWPACC-DD-017`
 
-**Realizes:** `GWPACC-FR-036`, `GWPACC-FR-037`
+**Realizes:** `GWPACC-FR-036`
 **Decision:** The job sends the notification. `Collect` answers the newest date and sends
-nothing, so `Assign`, which calls the same `Collect`, sends nothing.
+nothing.
 **Rationale:** The gas plugin draws the same line: its job sends the bill, and its command
-line collection sends none. One `Collect` serves both callers with no flag.
-**Alternatives:** A flag on `Collect` that says whether to notify. Every caller then carries a
-choice that only the job makes.
+line collection sends none. `Collect` stays a read and a store, which a test drives alone.
+**Alternatives:** `Collect` sends the notification. It then needs the notifier and the
+balance, and every caller of it sends.
 
 ### `GWPACC-DD-018`
 
