@@ -300,14 +300,21 @@ paths:
               schema:
                 type: string
                 format: binary
-        "400":
-          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
           $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
-          $ref: "../../api/components.yaml#/components/responses/NotFound"
+          description: >
+            The identifier is no UUID, names no bill, or names a bill of a customer that
+            the acting workspace does not assign. The type is `/problems/http/not-found`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
         "409":
           description: >
             The workspace holds no connection, with the type

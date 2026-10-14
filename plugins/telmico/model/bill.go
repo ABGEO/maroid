@@ -18,3 +18,9 @@ type Bill struct {
 	IssuedAt    time.Time `db:"issued_at"`
 	MeterSerial *string   `db:"meter_serial"`
 }
+
+// Document is the file of a bill, as the portal serves it.
+type Document struct {
+	Filename string
+	Content  []byte
+}

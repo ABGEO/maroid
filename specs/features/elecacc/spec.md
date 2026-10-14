@@ -456,8 +456,8 @@ more than the document. The household knows the message of the plugin of the dis
 | 3 | The three migrations and `repository/` | `ELECACC-FR-014`, `ELECACC-FR-022` to `ELECACC-FR-024` | [x] |
 | 4 | `service/store.go`, `service/account.go`, `service/collector.go` | `ELECACC-FR-017` to `ELECACC-FR-024` | [x] |
 | 5 | `service/bill.go`, the job, and `cli/backfill.go` | `ELECACC-FR-025` to `ELECACC-FR-031` | [x] |
-| 6 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `ELECACC-FR-003` to `ELECACC-FR-016` | [ ] |
-| 7 | `handler/transaction.go`, `handler/bill.go`, `service/document.go`, their DTOs, and `api.yaml` | `ELECACC-FR-037` to `ELECACC-FR-045` | [ ] |
+| 6 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `ELECACC-FR-003` to `ELECACC-FR-016` | [x] |
+| 7 | `handler/transaction.go`, `handler/bill.go`, `service/document.go`, their DTOs, and `api.yaml` | `ELECACC-FR-037` to `ELECACC-FR-045` | [x] |
 | 8 | `widget/last_reading.go` and `main.go` | `ELECACC-FR-032` to `ELECACC-FR-036`, `ELECACC-FR-046`, `ELECACC-FR-047` | [ ] |
 | 9 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `ELECACC-FR-003` to `ELECACC-FR-015`, `ELECACC-FR-037` to `ELECACC-FR-044` | [ ] |
 | 10 | Run the flow against the portal: an ended session, the download from the deck, `backfill` of 12 months. Correct `ELECACC-DD-003` and `ELECACC-DD-015` | `ELECACC-FR-012`, `ELECACC-FR-025`, `ELECACC-FR-042` | [ ] |

@@ -7,6 +7,7 @@ require (
 	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261013200123-2035d78fd0e8
 	github.com/abgeo/maroid/libs/rest v0.0.0-20261013200123-2035d78fd0e8
 	github.com/abgeo/maroid/libs/testdb v0.0.0-20261013200123-2035d78fd0e8
+	github.com/go-chi/chi/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/spf13/cobra v1.10.2
