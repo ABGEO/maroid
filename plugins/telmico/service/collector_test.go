@@ -205,6 +205,23 @@ func (m *memoryStore) ChargesOn(
 	return charges, nil
 }
 
+func (m *memoryStore) BillByMonth(
+	_ context.Context,
+	customer string,
+	month model.Month,
+) (*model.Bill, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for _, bill := range m.bills {
+		if bill.CustomerNumber == customer && model.MonthOf(bill.Month) == month {
+			return &bill, nil
+		}
+	}
+
+	return nil, nil //nolint:nilnil // no bill is no failure
+}
+
 func (m *memoryStore) counts() (int, int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -224,6 +241,8 @@ type fakeClient struct {
 	calls     []string
 	months    []string
 	signInRun int
+	// documentFails makes the download of a bill fail.
+	documentFails bool
 }
 
 func portalAccepting(cookies ...string) *fakeClient {
@@ -307,6 +326,10 @@ func (f *fakeClient) ReceiptDocument(
 ) ([]byte, error) {
 	if err := f.record("document", session); err != nil {
 		return nil, err
+	}
+
+	if f.documentFails {
+		return nil, errs.ErrRequestFailed
 	}
 
 	return []byte("%PDF-1.3"), nil

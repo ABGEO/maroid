@@ -1,7 +1,9 @@
 package model
 
 import (
+	"math"
 	"slices"
+	"strconv"
 	"time"
 )
 
@@ -31,10 +33,11 @@ func (t *Transaction) IsCharge() bool {
 // Reading is the charges of one customer on one date. The portal splits a reading in
 // two charges when the tariff changes within the month.
 type Reading struct {
-	Date       time.Time
-	Usage      float64
-	MeterValue float64
-	Charge     float64
+	CustomerNumber string
+	Date           time.Time
+	Usage          float64
+	MeterValue     float64
+	Charge         float64
 }
 
 // ReadingsOf answers the readings that the charges among the transactions form, the
@@ -51,7 +54,7 @@ func ReadingsOf(transactions []Transaction) []Reading {
 
 		reading, found := byDate[day]
 		if !found {
-			reading = &Reading{Date: transaction.Date}
+			reading = &Reading{CustomerNumber: transaction.CustomerNumber, Date: transaction.Date}
 			byDate[day] = reading
 		}
 
@@ -87,4 +90,12 @@ type Collection struct {
 	// NewestReading is the latest reading whose charges the collection stored for the
 	// first time, or nil.
 	NewestReading *Reading
+}
+
+// KilowattHours answers an amount of energy with at most one decimal and no trailing
+// zero, as the portal prints it. A sum of charges carries the error of a float.
+func KilowattHours(value float64) string {
+	const tenths = 10
+
+	return strconv.FormatFloat(math.Round(value*tenths)/tenths, 'f', -1, 64)
 }
