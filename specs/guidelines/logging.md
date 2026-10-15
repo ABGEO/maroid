@@ -4,7 +4,7 @@ title: Logging
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-11
+updated: 2026-10-15
 scope: [apps/hub/internal/logger/, apps/, libs/, plugins/]
 related: [ERR, LIF, SEC, LNG]
 ---
@@ -41,7 +41,8 @@ The values in use are `command`, `handler`, `middleware`, `migrator`, `worker`,
 
 ## LOG-004
 
-A plugin logger adds `plugin`, `plugin_version`, and `plugin_api_version`.
+The hub adds `plugin`, `plugin_version`, and `plugin_api_version` to the logger that it
+gives a plugin. `ADR-0019`.
 
 ## LOG-005
 

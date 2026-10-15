@@ -295,6 +295,7 @@ Add a row before you create the file or the directory.
 | `GWPACC` | `features/gwpacc/` | The water account of a workspace: the connection, the customer, and the readings. | Approved |
 | `GASACC` | `features/gasacc/` | The gas account of a workspace: the connection, the customer, and the transactions. | Approved |
 | `ELECACC` | `features/elecacc/` | The electricity account of a workspace: the connection, the customer, the transactions, and the bills. | Approved |
+| `PLGBIND` | `features/plgbind/` | The host services bound to one plugin. | Approved |
 
 ## Retired identifiers
 

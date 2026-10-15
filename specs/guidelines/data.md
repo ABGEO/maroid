@@ -4,7 +4,7 @@ title: Data
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-02
+updated: 2026-10-15
 scope: [apps/hub/db/, apps/hub/internal/migrator/, plugins/*/db/, plugins/*/repository/]
 related: [ARC, PLG, OWN, RES]
 ---
@@ -34,9 +34,9 @@ A plugin gets data from another component through `pluginapi.Host`.
 
 ## DAT-004
 
-A plugin reaches the database through `pluginapi.PluginDB`.
-`PluginDB` sets the `search_path` to the schema of the plugin and to `public`.
-A plugin does not use the `*sqlx.DB` handle directly.
+A plugin reaches the database through the `pluginapi.PluginDB` that its host gives.
+The host gives no `*sqlx.DB`. `PluginDB` sets the `search_path` to the schema of the
+plugin and to `public`. `ADR-0019`.
 
 **Why:** The search path enforces `DAT-001` and `DAT-003` at runtime.
 

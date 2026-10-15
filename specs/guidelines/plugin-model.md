@@ -4,7 +4,7 @@ title: The plugin model
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-05
+updated: 2026-10-15
 scope: [plugins/, apps/hub/internal/plugin/, libs/pluginapi/]
 related: [ARC, DAT, UI, BLD]
 ---
@@ -23,10 +23,11 @@ The hub opens the file at runtime.
 
 ## PLG-002
 
-A plugin exports one symbol with the name `New`.
-The type of the symbol is `pluginapi.Constructor`.
+A plugin exports two symbols. `Meta` has the type `pluginapi.Metadata`.
+`New` has the type `pluginapi.Constructor`. The hub reads `Meta` first, and keeps that
+copy for the life of the process. `ADR-0019`.
 
-**Why:** The loader looks up one symbol. The contract stays small.
+**Why:** The hub checks the metadata and binds the host before any code of the plugin runs.
 
 ## PLG-003
 
@@ -109,6 +110,13 @@ error names the plugin and the field.
 
 **Why:** Every client shows a plugin by its name. A name that only the user interface
 declares leaves the other plugins nameless.
+
+## PLG-013
+
+A loaded plugin is trusted code. It shares the memory of the hub.
+The bound host prevents a mistake, not an attack. `ADR-0019`.
+
+**Why:** A reader must not take the binding for a sandbox.
 
 ## Retired identifiers
 

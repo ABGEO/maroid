@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-10-14
+updated: 2026-10-15
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -22,10 +22,13 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-deck`          | deck              | The web shell in `apps/deck`. It renders the user interface of the hub and of the plugins.                        |
 | `GLO-plugin`        | plugin            | A Go shared object in `build/plugins/`. The hub loads it at runtime. It adds a capability.                        |
 | `GLO-plugin-id`     | plugin identifier | The permanent name of a plugin, with the form `dev.maroid.<name>`.                                                |
+| `GLO-declared-metadata` | declared metadata | The metadata that a plugin exports as a symbol. The hub reads it before it builds the plugin, and keeps that copy. See `PLG-002`. |
 | `GLO-plugin-name`   | plugin name       | The name that a person reads for a plugin. The plugin declares it in its metadata. See `PLG-012`.                 |
 | `GLO-plugin-description` | plugin description | One or two sentences that tell a person what a plugin does. It is optional. See `PLG-012`.               |
 | `GLO-capability`    | capability        | A function that a plugin adds to the hub. The plugin gets it when it implements an interface in `libs/pluginapi`. |
-| `GLO-host`          | host              | The `pluginapi.Host` interface. It is the only path from a plugin to an external resource.                        |
+| `GLO-host`          | host              | The `pluginapi.Host` interface. The hub builds one for each plugin, and each of its services acts for the plugin of the declared metadata. It is the only path from a plugin to an external resource. `ADR-0019`. |
+| `GLO-bound-host` | bound host | The host that the hub builds for one plugin. Each of its services acts for the plugin identifier in the declared metadata. |
+| `GLO-bound-plugin` | bound plugin | The plugin whose identifier a bound host holds. |
 | `GLO-registrar`     | registrar         | A component in the hub. It finds one capability in a plugin and puts it into a registry.                          |
 | `GLO-registry`      | registry          | A component in the hub. It holds the items of one capability for every plugin.                                    |
 | `GLO-schema`        | schema            | The PostgreSQL schema that one plugin owns. The name comes from the plugin identifier.                            |

@@ -61,3 +61,4 @@ The frontmatter holds the identifier.
 | `ADR-0016` | A widget declares a permission and follows the enablement | `a-widget-declares-a-permission.md` | accepted | 2026-10-12 | `SEC-012`, `SEC-013` |
 | `ADR-0017` | The service package of a plugin holds its domain services | `a-plugin-service-holds-its-domain-services.md` | accepted | 2026-10-13 | `PKG-001` |
 | `ADR-0018` | A put of a self resource may carry no body | `a-put-may-carry-no-body.md` | accepted | 2026-10-13 | `RES-002` |
+| `ADR-0019` | The host binds each plugin to its declared metadata | `the-host-binds-each-plugin.md` | accepted | 2026-10-15 | `PLG-002`, `PLG-013`, `DAT-004`, `LOG-004`, `GLO-host`, `GLO-declared-metadata` |
