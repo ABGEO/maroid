@@ -337,7 +337,7 @@ a viewer of H.
 | 4   | `COLUMNS`, `columnsOf`, `itemsOf`, and `CapabilityPanel`.                                                                                     | `PLGINFO-FR-004`, `PLGINFO-FR-005`, `PLGINFO-FR-006`                     | [x]  |
 | 5   | The load and the page.                                                                                                                        | `PLGINFO-FR-002`, `PLGINFO-FR-003`, `PLGINFO-FR-007` to `PLGINFO-FR-011` | [x]  |
 | 6   | The link on each row of the list, the trail, and the active item of the sidebar. Lint and check the deck.                                     | `PLGINFO-FR-001`                                                         | [x]  |
-| 7   | Run `PLGINFO-SC-001` to `PLGINFO-SC-013`, except `PLGINFO-SC-012`.                                                                            | Every statement                                                          | [ ]  |
+| 7   | Run `PLGINFO-SC-001` to `PLGINFO-SC-013`, except `PLGINFO-SC-012`.                                                                            | Every statement                                                          | [x]  |
 
 ## 8. Out of scope for this specification
 
