@@ -142,6 +142,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Permission"
+        notification_topics:
+          type: array
+          description: >
+            The identifier of each notification topic that the plugin declares.
+            `NOTIF-FR-001`.
+          items:
+            type: string
 
     UIManifest:
       type: object

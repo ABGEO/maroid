@@ -67,8 +67,8 @@ of the address of a plugin stops the load. No HTTP route changes.
 | `apps/hub/internal/plugin/registrar/ui_test.go`                                | change | `PLGINFO-SC-012`.                                                                                                                                                                                                                           |
 | `apps/deck/src/lib/api/types.ts`                                               | change | `APIRoute`, `TelegramCommand`, and `MCPTool` gain `permission`. `Permission{name, role}`. `Capabilities` gains `permissions`, as `PCAP` `api.yaml` gives it, and `notification_topics`, a list of topic identifiers, as the hub reports it. |
 | `apps/deck/src/lib/api/enablements.ts`                                         | change | `get(workspaceId, pluginId): Promise<EnabledPlugin \| null>`, a `GET` of the route that `PLUGACC` already serves.                                                                                                                           |
-| `apps/deck/src/lib/state/plugins.svelte.ts`                                    | change | `loadPlugins` keeps the promise of the request in flight and answers it to a second caller, so a caller can await the list.                                                                                                                 |
-| `apps/deck/src/lib/plugins/capabilities.ts`                                    | change | `Column`, `COLUMNS`, `columnsOf(name)`, `itemsOf(plugin, name)`. `PLGINFO-DD-003`.                                                                                                                                                          |
+| `apps/deck/src/lib/state/plugins.svelte.ts`                                    | change | `loadPlugins` keeps the promise of the request in flight and answers it to a second caller, so a caller can await the list. A failed request clears it, so the next caller retries.                                                         |
+| `apps/deck/src/lib/plugins/capabilities.ts`                                    | change | `Column`, `COLUMNS`, `columnsOf(name)`, `itemsOf(plugin, name)`, `cellOf(item, field)`, `partsOf(value)`. `PLGINFO-DD-003`.                                                                                                                 |
 | `apps/deck/src/lib/plugins/switch.ts`                                          | create | `switchPlugin(workspaceId, pluginId, on): Promise<string \| null>`. Answers the message of a refusal, or null. Holds `failureMessage` from the list page.                                                                                   |
 | `apps/deck/src/lib/components/plugins/PluginSummary.svelte`                    | change | Takes `href?: ResolvedPathname`. With it, the name is a link.                                                                                                                                                                               |
 | `apps/deck/src/lib/components/plugins/CapabilityPanel.svelte`                  | create | Props `plugin`, `name`, `entryHref?: (path: string) => ResolvedPathname`. Renders one capability. Section 4.3.                                                                                                                              |
@@ -151,7 +151,9 @@ sequenceDiagram
 
 After a switch, the page calls `invalidate('app:plugin-detail')` and
 `loadEnabled(workspaceId, true)`, so the page, the list, and the navigation read the
-new state.
+new state. After a switch-off that the hub accepts, a person who may not open the page
+of the plugin while it is not in use (section 4.5) goes to the list of the plugins
+instead, as from the list itself.
 
 ### 4.5 Errors
 

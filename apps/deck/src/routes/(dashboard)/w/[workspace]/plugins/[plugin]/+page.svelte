@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidate } from '$app/navigation';
+	import { goto, invalidate } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
 	import CapabilityPanel from '$lib/components/plugins/CapabilityPanel.svelte';
@@ -8,7 +8,7 @@
 	import { PERMISSION, holds } from '$lib/permissions';
 	import { capabilitiesOf, displayNameOf, hasCapability } from '$lib/plugins/capabilities';
 	import { switchPlugin } from '$lib/plugins/switch';
-	import { loadEnabled, pluginState } from '$lib/state/plugins.svelte';
+	import { canTurnOn, loadEnabled, pluginState } from '$lib/state/plugins.svelte';
 	import { isMember } from '$lib/state/workspaces.svelte';
 
 	import type { PageProps } from './$types';
@@ -41,9 +41,18 @@
 	}
 
 	async function toggle(input: HTMLInputElement): Promise<void> {
+		const on = input.checked;
 		busy = true;
 		banner = null;
-		banner = await switchPlugin(workspaceId, data.pluginId, input.checked);
+		banner = await switchPlugin(workspaceId, data.pluginId, on);
+
+		if (!on && banner === null && !(await canTurnOn(data.pluginId))) {
+			await loadEnabled(workspaceId, true);
+			await goto(resolve('/(dashboard)/w/[workspace]/plugins', { workspace: workspaceId }));
+
+			return;
+		}
+
 		await Promise.all([invalidate('app:plugin-detail'), loadEnabled(workspaceId, true)]);
 		input.checked = inUse;
 		busy = false;

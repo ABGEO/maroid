@@ -34,7 +34,15 @@ async function fetchPlugins(): Promise<void> {
 		console.error('Failed to load plugins', error);
 		pluginState.status = 'error';
 		pluginState.plugins = [];
+		pending = null;
 	}
+}
+
+/** Whether the plugins that the person can turn on hold the plugin. */
+export async function canTurnOn(pluginId: string): Promise<boolean> {
+	await loadPlugins();
+
+	return pluginState.plugins.some((plugin) => plugin.id === pluginId);
 }
 
 /**

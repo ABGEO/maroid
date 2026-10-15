@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 
 import { ApiError, api, type EnabledPlugin } from '$lib/api';
 import { PERMISSION, holds } from '$lib/permissions';
-import { loadPlugins, pluginState } from '$lib/state/plugins.svelte';
+import { canTurnOn, pluginState } from '$lib/state/plugins.svelte';
 
 import type { PageLoad } from './$types';
 
@@ -39,12 +39,12 @@ export const load: PageLoad = async ({ params, parent, depends }) => {
 		error(404, NOT_FOUND);
 	}
 
-	await loadPlugins();
+	const found = await canTurnOn(pluginId);
 	if (pluginState.status === 'error') {
 		throw new Error('The hub answered no plugin');
 	}
 
-	if (!pluginState.plugins.some((plugin) => plugin.id === pluginId)) {
+	if (!found) {
 		error(404, NOT_FOUND);
 	}
 
