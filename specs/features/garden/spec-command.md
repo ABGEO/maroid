@@ -22,14 +22,14 @@ no change reaches the hub or `pluginapi`.
 
 ## 2. Guideline compliance
 
-| Rule                 | Guideline      | How this specification obeys it |
-| -------------------- | -------------- | ------------------------------- |
-| `TG-003`, `TG-004`   | Telegram       | `Care` implements `pluginapi.TelegramCommand`, with the default scope. |
-| `TG-007`             | Telegram       | `Care` sends through `pluginapi.TelegramBot`, never through the telego client. |
+| Rule                 | Guideline      | How this specification obeys it                                                             |
+| -------------------- | -------------- | ------------------------------------------------------------------------------------------- |
+| `TG-003`, `TG-004`   | Telegram       | `Care` implements `pluginapi.TelegramCommand`, with the default scope.                      |
+| `TG-007`             | Telegram       | `Care` sends through `pluginapi.TelegramBot`, never through the telego client.              |
 | `SEC-013`            | Security       | The command names `plants.read`, the permission of the widget and of `GET /care-intervals`. |
-| `OWN-003`, `OWN-008` | Ownership      | The wrapper of the hub gives the acting workspace. `ListAttention` does not filter on it. |
-| `PKG-001`            | Package layout | `digest/` and `telegram/command/` are new directories. `PKG-001` gains the row `digest/`. |
-| `PKG-002`            | Package layout | `main.go` only binds the bot and answers the command. |
+| `OWN-003`, `OWN-008` | Ownership      | The wrapper of the hub gives the acting workspace. `ListAttention` does not filter on it.   |
+| `PKG-001`            | Package layout | `digest/` and `telegram/command/` are new directories. `PKG-001` gains the row `digest/`.   |
+| `PKG-002`            | Package layout | `main.go` only binds the bot and answers the command.                                       |
 
 ## 3. Design
 
@@ -37,26 +37,26 @@ no change reaches the hub or `pluginapi`.
 
 Every path is under `plugins/jasmine/`, except the guideline.
 
-| Path                                           | Action | Holds |
-| ---------------------------------------------- | ------ | ----- |
-| `digest/digest.go`, `digest/doc.go`            | create | `Title = "🌿 Plant care due"`, `Block{Heading string; Lines []string}`, `Blocks(intervals []model.CareInterval) []Block`, `Body(blocks []Block) string`. The line, the marks, and `days` of `job/digest.go`. |
-| `digest/digest_test.go`                        | create | `GARDEN-SC-035`, moved from `job/`. |
-| `job/digest.go`, `job/digest_internal_test.go` | delete | `digest/` holds them. |
-| `job/care_reminder.go`                         | change | `pluginapi.Message{Title: digest.Title, Body: digest.Body(digest.Blocks(intervals))}`. |
+| Path                                                  | Action | Holds                                                                                                                                                                                                                                                                                                                                                                  |
+| ----------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `digest/digest.go`, `digest/doc.go`                   | create | `Title = "🌿 Plant care due"`, `Block{Heading string; Lines []string}`, `Blocks(intervals []model.CareInterval) []Block`, `Body(blocks []Block) string`. The line, the marks, and `days` of `job/digest.go`.                                                                                                                                                           |
+| `digest/digest_test.go`                               | create | `GARDEN-SC-035`, moved from `job/`.                                                                                                                                                                                                                                                                                                                                    |
+| `job/digest.go`, `job/digest_internal_test.go`        | delete | `digest/` holds them.                                                                                                                                                                                                                                                                                                                                                  |
+| `job/care_reminder.go`                                | change | `pluginapi.Message{Title: digest.Title, Body: digest.Body(digest.Blocks(intervals))}`.                                                                                                                                                                                                                                                                                 |
 | `telegram/command/care.go`, `telegram/command/doc.go` | create | `Care`, `NewCare(db *pluginapi.PluginDB, bot pluginapi.TelegramBot, pages pluginapi.PageLinker, pluginID *pluginapi.PluginID) *Care`, `Care.Reply(ctx context.Context, message *telego.Message) error`, which `Handle` calls, `messageLimit = 4096`, `messageCap = 3`, and `pack(blocks []digest.Block, limit, maxMessages int, more func(left int) string) []string`. |
-| `telegram/command/care_test.go`                | create | `GARDEN-SC-036`, `GARDEN-SC-038`. |
-| `main_test.go`                                 | change | `GARDEN-SC-037`. |
-| `telegram/command/care_internal_test.go`       | create | `GARDEN-SC-039`, `GARDEN-SC-042`. |
-| `telegram/command/measure_test.go`             | create | `GARDEN-SC-040`. |
-| `main.go`                                      | change | Bind `Host.TelegramBot()` and `Host.Pages()`. Add `pluginapi.TelegramCommandPlugin`, which answers `command.NewCare(p.db, p.telegramBot, p.pages, p.Meta().ID)`. |
-| `specs/guidelines/package-layout.md`           | change | The row `digest/`: "The text of a list that two surfaces send." |
+| `telegram/command/care_test.go`                       | create | `GARDEN-SC-036`, `GARDEN-SC-038`.                                                                                                                                                                                                                                                                                                                                      |
+| `main_test.go`                                        | change | `GARDEN-SC-037`.                                                                                                                                                                                                                                                                                                                                                       |
+| `telegram/command/care_internal_test.go`              | create | `GARDEN-SC-039`, `GARDEN-SC-042`.                                                                                                                                                                                                                                                                                                                                      |
+| `telegram/command/measure_test.go`                    | create | `GARDEN-SC-040`.                                                                                                                                                                                                                                                                                                                                                       |
+| `main.go`                                             | change | Bind `Host.TelegramBot()` and `Host.Pages()`. Add `pluginapi.TelegramCommandPlugin`, which answers `command.NewCare(p.db, p.telegramBot, p.pages, p.Meta().ID)`.                                                                                                                                                                                                       |
+| `specs/guidelines/package-layout.md`                  | change | The row `digest/`: "The text of a list that two surfaces send."                                                                                                                                                                                                                                                                                                        |
 
 ### 3.2 Declarations
 
 **Telegram command.**
 
-| Command | Scope   | Permission    | Validates    | Handles      | Realizes |
-| ------- | ------- | ------------- | ------------ | ------------ | -------- |
+| Command                                                                          | Scope   | Permission    | Validates     | Handles      | Realizes                           |
+| -------------------------------------------------------------------------------- | ------- | ------------- | ------------- | ------------ | ---------------------------------- |
 | `care`, sent as `/dev_maroid_jasmine_care`. Description "Plants that need care". | default | `plants.read` | Every update. | Section 3.3. | `GARDEN-FR-034` to `GARDEN-FR-038` |
 
 The wrapper of the hub checks the acting workspace, the enablement, and the permission

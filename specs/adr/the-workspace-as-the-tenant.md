@@ -6,13 +6,49 @@ status: accepted
 created: 2026-10-01
 updated: 2026-10-02
 decided: 2026-10-01
-changes: [OWN-001, OWN-002, OWN-003, OWN-004, OWN-005, OWN-006, OWN-007, OWN-008,
-  OWN-009, OWN-010, OWN-011, SEC-001, SEC-011, SEC-012, SEC-013, API-003, API-004,
-  CFG-007, ERR-003, RES-002, RES-005, RES-009, SPC-003, UI-008, PLG-010,
-  GLO-acting-user, GLO-scoped-table, GLO-shared-table, GLO-scoped-record,
-  GLO-shared-record, GLO-setting, GLO-invitation, GLO-workspace, GLO-member,
-  GLO-workspace-role, GLO-acting-workspace, GLO-administrator,
-  GLO-plugin-allowlist, GLO-enablement, GLO-permission]
+changes:
+  [
+    OWN-001,
+    OWN-002,
+    OWN-003,
+    OWN-004,
+    OWN-005,
+    OWN-006,
+    OWN-007,
+    OWN-008,
+    OWN-009,
+    OWN-010,
+    OWN-011,
+    SEC-001,
+    SEC-011,
+    SEC-012,
+    SEC-013,
+    API-003,
+    API-004,
+    CFG-007,
+    ERR-003,
+    RES-002,
+    RES-005,
+    RES-009,
+    SPC-003,
+    UI-008,
+    PLG-010,
+    GLO-acting-user,
+    GLO-scoped-table,
+    GLO-shared-table,
+    GLO-scoped-record,
+    GLO-shared-record,
+    GLO-setting,
+    GLO-invitation,
+    GLO-workspace,
+    GLO-member,
+    GLO-workspace-role,
+    GLO-acting-workspace,
+    GLO-administrator,
+    GLO-plugin-allowlist,
+    GLO-enablement,
+    GLO-permission
+  ]
 supersedes:
 superseded_by:
 ---
@@ -27,11 +63,11 @@ a permission.
 
 Three needs do not fit it:
 
-| Need                                                                                  | Why one user per row fails                                                    |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| Two or more people maintain one garden: its environments and every plant in them.     | The row has one user, and the policy hides it from the second person.          |
-| A household reads one electricity bill.                                                | Each member fetches and stores a copy, and a per-user job fetches it once for each member. |
-| A person holds a different level of access in each place: writes in one, reads in another. | A user has no level. The policy answers yes or no for the whole row.          |
+| Need                                                                                       | Why one user per row fails                                                                 |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| Two or more people maintain one garden: its environments and every plant in them.          | The row has one user, and the policy hides it from the second person.                      |
+| A household reads one electricity bill.                                                    | Each member fetches and stores a copy, and a per-user job fetches it once for each member. |
+| A person holds a different level of access in each place: writes in one, reads in another. | A user has no level. The policy answers yes or no for the whole row.                       |
 
 A pension contribution stays private to one person. Sharing is a choice of the
 people who hold the data, not a property of the plugin.
@@ -127,19 +163,19 @@ as a member of it.
 
 ## Alternatives
 
-| Alternative | Why we did not select it |
-| ----------- | ------------------------ |
-| Keep one user per row and add a permission engine. | The list problem. A shared row stays hidden from the second person, whatever the engine answers. |
-| Groups as principals, and a share table in each plugin. | Each plugin writes its own share table and its own policy. A row still has one owner, who keeps it after they leave the household. |
-| One share table in the hub for every entity of every plugin. | No foreign key reaches across schemas. Each plugin still joins the table in each policy, and inheritance needs a join for each level. |
-| A relationship service: OpenFGA, SpiceDB, Ory Keto. | A second service to deploy and to keep in sync. The list problem remains: the database still needs the facts. |
-| A personal kind of workspace, apart from a shared kind. | Two kinds of workspace, two code paths, and a rule that forbids a second member in one of them. |
-| Every workspace of a person at once in each request. | A write still names one workspace. The policy becomes `= ANY()`, and a page mixes the rows of several places. |
+| Alternative                                                               | Why we did not select it                                                                                                                                  |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keep one user per row and add a permission engine.                        | The list problem. A shared row stays hidden from the second person, whatever the engine answers.                                                          |
+| Groups as principals, and a share table in each plugin.                   | Each plugin writes its own share table and its own policy. A row still has one owner, who keeps it after they leave the household.                        |
+| One share table in the hub for every entity of every plugin.              | No foreign key reaches across schemas. Each plugin still joins the table in each policy, and inheritance needs a join for each level.                     |
+| A relationship service: OpenFGA, SpiceDB, Ory Keto.                       | A second service to deploy and to keep in sync. The list problem remains: the database still needs the facts.                                             |
+| A personal kind of workspace, apart from a shared kind.                   | Two kinds of workspace, two code paths, and a rule that forbids a second member in one of them.                                                           |
+| Every workspace of a person at once in each request.                      | A write still names one workspace. The policy becomes `= ANY()`, and a page mixes the rows of several places.                                             |
 | The workspace in a request header, or a current workspace in the session. | `Z-183` keeps business intent out of a header. A current workspace in the session makes two tabs of one person interfere, and a link loses its workspace. |
-| A slug of the workspace in the path. | A rename breaks every stored link, or the hub keeps every old slug. A slug also needs a uniqueness rule across the instance. |
-| The workspace in the access token. | One token then names one workspace. A switch needs a new sign in, and an MCP client reaches one workspace for each connection. |
-| Custom roles in each workspace. | A role editor in the deck, and a different vocabulary in each workspace. |
-| Roles that each plugin defines. | A different vocabulary in each plugin. A manager cannot read the access of a member across plugins. |
+| A slug of the workspace in the path.                                      | A rename breaks every stored link, or the hub keeps every old slug. A slug also needs a uniqueness rule across the instance.                              |
+| The workspace in the access token.                                        | One token then names one workspace. A switch needs a new sign in, and an MCP client reaches one workspace for each connection.                            |
+| Custom roles in each workspace.                                           | A role editor in the deck, and a different vocabulary in each workspace.                                                                                  |
+| Roles that each plugin defines.                                           | A different vocabulary in each plugin. A manager cannot read the access of a member across plugins.                                                       |
 
 ## Consequences
 
@@ -157,12 +193,12 @@ as a member of it.
 > without an acting workspace reaches no table that a workspace scopes. Work without
 > an acting user reaches no table that a user scopes.
 >
-> | Entry point       | Acting user                                                       | Acting workspace                                    |
-> | ----------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
-> | An HTTP request   | The identity that `federated_claims` names. See `SEC-003`.        | The `{workspaceId}` segment of the path.            |
-> | A Telegram update | The identity of the Telegram connector for the sender.            | The workspace that the chat selected.               |
-> | An MCP tool call  | The identity that `federated_claims` names. See `SEC-002`.        | The `workspace` argument of the call.               |
-> | A cron job        | The user of the run, for a job for each user. See `OWN-009`.     | The workspace of the run, for a job for each workspace. See `OWN-009`. |
+> | Entry point       | Acting user                                                  | Acting workspace                                                       |
+> | ----------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------- |
+> | An HTTP request   | The identity that `federated_claims` names. See `SEC-003`.   | The `{workspaceId}` segment of the path.                               |
+> | A Telegram update | The identity of the Telegram connector for the sender.       | The workspace that the chat selected.                                  |
+> | An MCP tool call  | The identity that `federated_claims` names. See `SEC-002`.   | The `workspace` argument of the call.                                  |
+> | A cron job        | The user of the run, for a job for each user. See `OWN-009`. | The workspace of the run, for a job for each workspace. See `OWN-009`. |
 >
 > When a unit of work carries both, the hub checks that the acting user is a member
 > of the acting workspace before it sets the workspace. A user who is not a member
@@ -310,12 +346,12 @@ as a member of it.
 
 `API-003` moves the routes of a plugin under the workspace. The changed rows:
 
-> | Method and path                                         | Serves                                         | Access                 |
-> | ------------------------------------------------------- | ---------------------------------------------- | ---------------------- |
-> | `/workspaces*`                                          | The workspaces, the members, and the enablements | Authenticated        |
-> | `/workspaces/{workspaceId}/plugins/{id}/api/*`          | The routes of a plugin                         | Member, enabled        |
-> | `/workspaces/{workspaceId}/plugins/{id}/settings*`      | The settings of a plugin                       | Member, enabled        |
-> | `/users*`                                               | The user records and the plugin allowlists     | Administrator          |
+> | Method and path                                    | Serves                                           | Access          |
+> | -------------------------------------------------- | ------------------------------------------------ | --------------- |
+> | `/workspaces*`                                     | The workspaces, the members, and the enablements | Authenticated   |
+> | `/workspaces/{workspaceId}/plugins/{id}/api/*`     | The routes of a plugin                           | Member, enabled |
+> | `/workspaces/{workspaceId}/plugins/{id}/settings*` | The settings of a plugin                         | Member, enabled |
+> | `/users*`                                          | The user records and the plugin allowlists       | Administrator   |
 
 `API-004` follows. Its second sentence becomes:
 
@@ -326,22 +362,22 @@ stays, because an asset belongs to no workspace.
 
 The glossary changes six terms and gains eight:
 
-| ID                      | Change   | Meaning                                                                                |
-| ----------------------- | -------- | -------------------------------------------------------------------------------------- |
-| `GLO-scoped-table`      | Changed  | A table whose every row belongs to one workspace or to one user, with row level security. |
-| `GLO-shared-table`      | Changed  | A table whose rows belong to no workspace and to no user.                              |
-| `GLO-scoped-record`     | Changed  | A record that belongs to exactly one workspace or exactly one user.                    |
-| `GLO-shared-record`     | Changed  | A record that belongs to nobody. Every user reads it.                                  |
-| `GLO-acting-user`       | Changed  | The user that one unit of work runs for. A request, an update, a tool call, and the run of a job for each user each have exactly one. Any other cron run has none. |
-| `GLO-setting`           | Changed  | One value that a user or a workspace stores for one field of one plugin. The plugin declares which. |
-| `GLO-workspace`         | New      | The place that owns the records of a plugin. Its members share them.                    |
-| `GLO-member`            | New      | A user who belongs to a workspace, with one workspace role.                             |
-| `GLO-workspace-role`    | New      | The access of a member: manager, editor, or viewer.                                    |
-| `GLO-acting-workspace`  | New      | The workspace that one unit of work runs in.                                           |
-| `GLO-administrator`     | New      | A user who manages the users, the plugin allowlists, and every workspace of the instance.     |
-| `GLO-plugin-allowlist`  | New      | The plugins that one user may enable in a workspace that they manage.                  |
-| `GLO-enablement`        | New      | The fact that one plugin serves one workspace.                                         |
-| `GLO-permission`        | New      | One action that the hub or a plugin checks, with the lowest workspace role that holds it. |
+| ID                     | Change  | Meaning                                                                                                                                                            |
+| ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GLO-scoped-table`     | Changed | A table whose every row belongs to one workspace or to one user, with row level security.                                                                          |
+| `GLO-shared-table`     | Changed | A table whose rows belong to no workspace and to no user.                                                                                                          |
+| `GLO-scoped-record`    | Changed | A record that belongs to exactly one workspace or exactly one user.                                                                                                |
+| `GLO-shared-record`    | Changed | A record that belongs to nobody. Every user reads it.                                                                                                              |
+| `GLO-acting-user`      | Changed | The user that one unit of work runs for. A request, an update, a tool call, and the run of a job for each user each have exactly one. Any other cron run has none. |
+| `GLO-setting`          | Changed | One value that a user or a workspace stores for one field of one plugin. The plugin declares which.                                                                |
+| `GLO-workspace`        | New     | The place that owns the records of a plugin. Its members share them.                                                                                               |
+| `GLO-member`           | New     | A user who belongs to a workspace, with one workspace role.                                                                                                        |
+| `GLO-workspace-role`   | New     | The access of a member: manager, editor, or viewer.                                                                                                                |
+| `GLO-acting-workspace` | New     | The workspace that one unit of work runs in.                                                                                                                       |
+| `GLO-administrator`    | New     | A user who manages the users, the plugin allowlists, and every workspace of the instance.                                                                          |
+| `GLO-plugin-allowlist` | New     | The plugins that one user may enable in a workspace that they manage.                                                                                              |
+| `GLO-enablement`       | New     | The fact that one plugin serves one workspace.                                                                                                                     |
+| `GLO-permission`       | New     | One action that the hub or a plugin checks, with the lowest workspace role that holds it.                                                                          |
 
 The role of a workspace is `manager` and not `owner`, because `GLO-owner` names
 the maintainer of the repository. The term is `plugin allowlist` and not
@@ -352,18 +388,18 @@ the maintainer of the repository. The term is `plugin allowlist` and not
 These rules change to agree with the rules above. Each change carries no new
 decision.
 
-| Rule                     | Change                                                                  |
-| ------------------------ | ----------------------------------------------------------------------- |
-| `OWN-001`                | An administrator gives the name of a user record.                       |
-| `CFG-007`                | A value of one workspace or one person lives in a scoped record.        |
-| `ERR-003`                | A row of another workspace, a workspace of no membership, and a disabled plugin each answer `not-found`. The registry gains `permission-denied`, status 403, for `SEC-013`, `member-exists`, status 409, for `WSPACE`, `manager-last`, status 409, for `PERMS`, and `administrator-last`, status 409, for `PLUGACC`. |
-| `RES-002`                | The `Z-110` row and the `Z-135` row name the new prefix. The `Z-143` row stays, because `/plugins/{id}` still leads to the assets of `SEC-006`. |
-| `RES-005`                | A collection answers the rows of the acting workspace.                  |
-| `RES-009`                | `uid` stays, because the permission of `SEC-013` is no scope of the token. |
-| `SPC-003`                | A route, an MCP tool, and a Telegram command declare a permission. A cron job declares where it runs. |
-| `UI-008`                 | The client of a plugin user interface reaches the acting workspace, and `can` answers a permission of `PERMS`. |
-| `PLG-010`                | Loading a plugin is not enablement.                                     |
-| `GLO-invitation`         | An administrator issues an invitation.                                  |
+| Rule             | Change                                                                                                                                                                                                                                                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OWN-001`        | An administrator gives the name of a user record.                                                                                                                                                                                                                                                                    |
+| `CFG-007`        | A value of one workspace or one person lives in a scoped record.                                                                                                                                                                                                                                                     |
+| `ERR-003`        | A row of another workspace, a workspace of no membership, and a disabled plugin each answer `not-found`. The registry gains `permission-denied`, status 403, for `SEC-013`, `member-exists`, status 409, for `WSPACE`, `manager-last`, status 409, for `PERMS`, and `administrator-last`, status 409, for `PLUGACC`. |
+| `RES-002`        | The `Z-110` row and the `Z-135` row name the new prefix. The `Z-143` row stays, because `/plugins/{id}` still leads to the assets of `SEC-006`.                                                                                                                                                                      |
+| `RES-005`        | A collection answers the rows of the acting workspace.                                                                                                                                                                                                                                                               |
+| `RES-009`        | `uid` stays, because the permission of `SEC-013` is no scope of the token.                                                                                                                                                                                                                                           |
+| `SPC-003`        | A route, an MCP tool, and a Telegram command declare a permission. A cron job declares where it runs.                                                                                                                                                                                                                |
+| `UI-008`         | The client of a plugin user interface reaches the acting workspace, and `can` answers a permission of `PERMS`.                                                                                                                                                                                                       |
+| `PLG-010`        | Loading a plugin is not enablement.                                                                                                                                                                                                                                                                                  |
+| `GLO-invitation` | An administrator issues an invitation.                                                                                                                                                                                                                                                                               |
 
 The introductions of `JOB`, `REP`, and `TG` follow too. `CLI-001` gains the
 command that makes an administrator in the feature that names it. `PLG-006`
@@ -375,14 +411,14 @@ Each feature below changed to agree with this decision. A statement that keeps i
 subject keeps its identifier. A build plan step that the code has not met yet is
 open.
 
-| Document            | Change                                                                                  |
-| ------------------- | ----------------------------------------------------------------------------------------- |
-| `features/ident/`   | A row belongs to the acting workspace. A job runs for each workspace or for each user. `IDENT-SC-013` and `IDENT-SC-014` are new. |
-| `features/pset/`    | `PSET-FR-021`: a plugin declares the scope of each field. One table for each scope, one key for each workspace, and the routes under `/workspaces/{workspaceId}`. `PSET-DD-012` and `PSET-DD-013` are new. |
-| `features/mcphub/`  | `MCPHUB-FR-020` to `MCPHUB-FR-023` and `MCPHUB-INV-003`: the workspace list tool, the `workspace` argument, and its three checks. `MCPHUB-DD-021` to `MCPHUB-DD-023` are new. |
-| `features/pcap/`    | The `permissions` capability, the permission of each item, and the workspace segment of each path. |
-| `features/extid/`   | An administrator issues an invitation. `EXTID-FR-018`: the command creates the first workspace of the record. |
-| `features/apifmt/`  | The example routes move under `/workspaces/{workspaceId}`, and a collection answers the rows of the acting workspace. |
+| Document           | Change                                                                                                                                                                                                     |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `features/ident/`  | A row belongs to the acting workspace. A job runs for each workspace or for each user. `IDENT-SC-013` and `IDENT-SC-014` are new.                                                                          |
+| `features/pset/`   | `PSET-FR-021`: a plugin declares the scope of each field. One table for each scope, one key for each workspace, and the routes under `/workspaces/{workspaceId}`. `PSET-DD-012` and `PSET-DD-013` are new. |
+| `features/mcphub/` | `MCPHUB-FR-020` to `MCPHUB-FR-023` and `MCPHUB-INV-003`: the workspace list tool, the `workspace` argument, and its three checks. `MCPHUB-DD-021` to `MCPHUB-DD-023` are new.                              |
+| `features/pcap/`   | The `permissions` capability, the permission of each item, and the workspace segment of each path.                                                                                                         |
+| `features/extid/`  | An administrator issues an invitation. `EXTID-FR-018`: the command creates the first workspace of the record.                                                                                              |
+| `features/apifmt/` | The example routes move under `/workspaces/{workspaceId}`, and a collection answers the rows of the acting workspace.                                                                                      |
 
 ### Migrations
 

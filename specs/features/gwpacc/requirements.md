@@ -346,36 +346,36 @@ No answer of Maroid to a client holds a session token or a password of a water a
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline         | Effect on this feature |
-| --------- | ----------------- | ---------------------- |
+| Rule      | Guideline         | Effect on this feature                                                            |
+| --------- | ----------------- | --------------------------------------------------------------------------------- |
 | `PLG-007` | Plugin model      | The plugin reads the settings, the connection, and the database through the host. |
-| `ARC-008` | Architecture      | The hub holds no rule that names the water plugin. |
-| `OWN-004` | Record ownership  | The connection, the assigned customer, and the readings belong to one workspace. |
-| `DAT-001` | Data              | The readings live in the schema of the plugin. |
-| `CFG-007` | Configuration     | No credential of a workspace stays in the configuration file. |
-| `EXT-005` | External services | A failure of the water service is an error, never an empty result. |
-| `LOG-008` | Logging           | No log holds a password or a session token. |
-| `SEC-013` | Security          | Each route and the widget of the plugin name a permission. |
-| `UI-006`  | Web UI            | The connection page imports no module of the deck. |
-| `JOB-007` | Jobs              | A failed collection of one workspace does not stop the collection of another. |
-| `NTF-002` | Notifications     | The plugin names the notification topic, never a destination. |
+| `ARC-008` | Architecture      | The hub holds no rule that names the water plugin.                                |
+| `OWN-004` | Record ownership  | The connection, the assigned customer, and the readings belong to one workspace.  |
+| `DAT-001` | Data              | The readings live in the schema of the plugin.                                    |
+| `CFG-007` | Configuration     | No credential of a workspace stays in the configuration file.                     |
+| `EXT-005` | External services | A failure of the water service is an error, never an empty result.                |
+| `LOG-008` | Logging           | No log holds a password or a session token.                                       |
+| `SEC-013` | Security          | Each route and the widget of the plugin name a permission.                        |
+| `UI-006`  | Web UI            | The connection page imports no module of the deck.                                |
+| `JOB-007` | Jobs              | A failed collection of one workspace does not stop the collection of another.     |
+| `NTF-002` | Notifications     | The plugin names the notification topic, never a destination.                     |
 
 ## 8. Open questions
 
-| #   | Question | Owner | Answer |
-| --- | -------- | ----- | ------ |
-| 1   | What happens when the water service rejects the token? | Temuri | Every action signs in again once, changed on 2026-10-14 (`GWPACC-FR-018`). A rejected password removes the connection (`GWPACC-FR-012`). |
-| 2   | What does the widget show for two meters? | Temuri | One line for each meter. `GWPACC-FR-022`. |
-| 3   | Does a change of customer, or the end of a connection, remove the readings? | Temuri | No. `GWPACC-FR-021`. |
-| 4   | Does the plugin assign the customer when the account holds one? | Temuri | No. The editor assigns it. `GWPACC-FR-013`. |
-| 5   | Which role connects and assigns the customer? | Temuri | Editor. `GWPACC-FR-027`. |
-| 6   | How long does Maroid keep a reading? | Temuri | As long as the workspace exists. |
+| #   | Question                                                                                         | Owner  | Answer                                                                                                                                        |
+| --- | ------------------------------------------------------------------------------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | What happens when the water service rejects the token?                                           | Temuri | Every action signs in again once, changed on 2026-10-14 (`GWPACC-FR-018`). A rejected password removes the connection (`GWPACC-FR-012`).      |
+| 2   | What does the widget show for two meters?                                                        | Temuri | One line for each meter. `GWPACC-FR-022`.                                                                                                     |
+| 3   | Does a change of customer, or the end of a connection, remove the readings?                      | Temuri | No. `GWPACC-FR-021`.                                                                                                                          |
+| 4   | Does the plugin assign the customer when the account holds one?                                  | Temuri | No. The editor assigns it. `GWPACC-FR-013`.                                                                                                   |
+| 5   | Which role connects and assigns the customer?                                                    | Temuri | Editor. `GWPACC-FR-027`.                                                                                                                      |
+| 6   | How long does Maroid keep a reading?                                                             | Temuri | As long as the workspace exists.                                                                                                              |
 | 7   | The water service gives no bill. What does the notification show, and which collection sends it? | Temuri | The new readings and the balance, from the scheduled collection only. Added on 2026-10-14. `GWPACC-FR-035`, `GWPACC-FR-036`, `GWPACC-FR-038`. |
-| 8   | Does an assignment or a connection collect the readings? | Temuri | No. Only the schedule collects, changed on 2026-10-14. `GWPACC-FR-039`. |
+| 8   | Does an assignment or a connection collect the readings?                                         | Temuri | No. Only the schedule collects, changed on 2026-10-14. `GWPACC-FR-039`.                                                                       |
 
 ## Retired identifiers
 
-| ID              | Retired    | Reason                                                                  |
-| --------------- | ---------- | ----------------------------------------------------------------------- |
-| `GWPACC-FR-015` | 2026-10-14 | An assignment collects nothing. `GWPACC-FR-039` replaces the statement.   |
+| ID              | Retired    | Reason                                                                                           |
+| --------------- | ---------- | ------------------------------------------------------------------------------------------------ |
+| `GWPACC-FR-015` | 2026-10-14 | An assignment collects nothing. `GWPACC-FR-039` replaces the statement.                          |
 | `GWPACC-FR-037` | 2026-10-14 | No collection follows an assignment, so the statement has no subject. `GWPACC-FR-039` covers it. |

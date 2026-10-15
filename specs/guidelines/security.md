@@ -119,10 +119,10 @@ The hub resolves the address of a caller with a `ClientIPFrom` middleware of chi
 which puts it in the context. Code reads it with `middleware.GetClientIPAddr`,
 and never from `RemoteAddr` or from a header of its own.
 
-| `server.trusted_proxies` | Middleware                  | Reads                                     |
-| -------------------------- | ----------------------------- | ------------------------------------------- |
-| Empty, the default       | `ClientIPFromRemoteAddr`    | The peer of the connection.               |
-| One or more CIDR         | `ClientIPFromXFF`           | `X-Forwarded-For`, from the right, past every address that a trusted network holds. |
+| `server.trusted_proxies` | Middleware               | Reads                                                                               |
+| ------------------------ | ------------------------ | ----------------------------------------------------------------------------------- |
+| Empty, the default       | `ClientIPFromRemoteAddr` | The peer of the connection.                                                         |
+| One or more CIDR         | `ClientIPFromXFF`        | `X-Forwarded-For`, from the right, past every address that a trusted network holds. |
 
 `RealIP` of chi is deprecated and does not serve this rule. It rewrites
 `RemoteAddr` from `X-Forwarded-For`, `X-Real-IP` or `True-Client-IP` sent by any

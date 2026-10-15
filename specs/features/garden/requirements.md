@@ -36,16 +36,16 @@ every plant. It holds no care history and no schedule.
 
 ## 4. Definitions
 
-| Term                | Meaning                                                                                              |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| environment         | A place in a workspace where plants live, for example "Office".                                      |
-| plant               | One plant that a workspace keeps. It lives in one environment.                                       |
-| display identifier  | The short name that a person reads for a plant or an environment: `P001`, `E001`.                    |
-| maintenance type    | One kind of care action. `GARDEN-FR-011` gives the list.                                             |
-| maintenance entry   | The record of one care action on one plant: a maintenance type, a time, and a note.                  |
-| care interval       | The number of days between two care actions of one maintenance type, for one plant.                  |
-| care state          | The state of one care interval of one plant: on schedule, due, or overdue.                           |
-| reminder            | The one notification for one workspace that lists every care interval that is due or overdue.       |
+| Term               | Meaning                                                                                       |
+| ------------------ | --------------------------------------------------------------------------------------------- |
+| environment        | A place in a workspace where plants live, for example "Office".                               |
+| plant              | One plant that a workspace keeps. It lives in one environment.                                |
+| display identifier | The short name that a person reads for a plant or an environment: `P001`, `E001`.             |
+| maintenance type   | One kind of care action. `GARDEN-FR-011` gives the list.                                      |
+| maintenance entry  | The record of one care action on one plant: a maintenance type, a time, and a note.           |
+| care interval      | The number of days between two care actions of one maintenance type, for one plant.           |
+| care state         | The state of one care interval of one plant: on schedule, due, or overdue.                    |
+| reminder           | The one notification for one workspace that lists every care interval that is due or overdue. |
 
 ## 5. Functional requirements
 
@@ -65,13 +65,13 @@ Maroid must refuse to delete an environment that holds a plant, active or inacti
 
 An editor must create a plant with these values:
 
-| Value           | Rule                                       |
-| --------------- | ------------------------------------------ |
-| Common name     | Required. 1 to 100 characters.             |
-| Scientific name | Optional. 1 to 150 characters.             |
-| Environment     | Required. An environment of the workspace. |
+| Value           | Rule                                        |
+| --------------- | ------------------------------------------- |
+| Common name     | Required. 1 to 100 characters.              |
+| Scientific name | Optional. 1 to 150 characters.              |
+| Environment     | Required. An environment of the workspace.  |
 | Acquired date   | Optional. A date that is not in the future. |
-| Care notes      | Optional. 10000 characters maximum.        |
+| Care notes      | Optional. 10000 characters maximum.         |
 
 ### `GARDEN-FR-004`
 
@@ -190,11 +190,11 @@ When a plant has no maintenance entry of a type, Maroid must count from the date
 
 Maroid must give each care interval of an active plant one care state:
 
-| Care state  | Days since the latest entry |
-| ----------- | --------------------------- |
-| On schedule | Less than the interval.     |
+| Care state  | Days since the latest entry             |
+| ----------- | --------------------------------------- |
+| On schedule | Less than the interval.                 |
 | Due         | The interval to 1.5 times the interval. |
-| Overdue     | More than 1.5 times the interval. |
+| Overdue     | More than 1.5 times the interval.       |
 
 **Examples:**
 
@@ -208,13 +208,13 @@ Maroid must give each care interval of an active plant one care state:
 
 A viewer must read these views:
 
-| View              | Content                                                                                                  |
-| ----------------- | -------------------------------------------------------------------------------------------------------- |
-| Environment list  | Each environment with its count of active plants.                                                        |
-| Plant list        | Each plant with its environment and state. A filter by environment and by state. Active plants by default. |
-| Plant page        | The values of the plant, each care interval with its care state, and its maintenance entries, newest first. |
-| Attention list    | Each care interval that is due or overdue, grouped by environment, overdue first.                       |
-| Maintenance log   | The maintenance entries of the workspace, newest first. A filter by plant and by maintenance type.       |
+| View             | Content                                                                                                     |
+| ---------------- | ----------------------------------------------------------------------------------------------------------- |
+| Environment list | Each environment with its count of active plants.                                                           |
+| Plant list       | Each plant with its environment and state. A filter by environment and by state. Active plants by default.  |
+| Plant page       | The values of the plant, each care interval with its care state, and its maintenance entries, newest first. |
+| Attention list   | Each care interval that is due or overdue, grouped by environment, overdue first.                           |
+| Maintenance log  | The maintenance entries of the workspace, newest first. A filter by plant and by maintenance type.          |
 
 ### `GARDEN-FR-023`
 
@@ -338,29 +338,29 @@ A plant holds at most one care interval for each maintenance type.
 
 ## 8. Constraints from the guidelines
 
-| Rule      | Guideline     | Effect on this feature |
-| --------- | ------------- | ---------------------- |
-| `OWN-004` | Ownership     | Every record of this feature is scoped to a workspace. |
-| `OWN-009` | Ownership     | The reminder is a job for each workspace. |
-| `DAT-009` | Data          | The internal identifier is a UUID version 7. The display identifier is a second value. |
+| Rule      | Guideline     | Effect on this feature                                                                              |
+| --------- | ------------- | --------------------------------------------------------------------------------------------------- |
+| `OWN-004` | Ownership     | Every record of this feature is scoped to a workspace.                                              |
+| `OWN-009` | Ownership     | The reminder is a job for each workspace.                                                           |
+| `DAT-009` | Data          | The internal identifier is a UUID version 7. The display identifier is a second value.              |
 | `SEC-013` | Security      | The plugin declares a read and a write permission for maintenance. Read is viewer, write is editor. |
-| `NTF-002` | Notifications | The reminder names a notification topic, not a notification provider. |
-| `CFG-007` | Configuration | The configuration holds the schedule only. `NOTIF` holds the routing of each workspace. |
-| `JOB-006` | Jobs          | A slow reminder run does not start a second run. |
-| `RES-005` | REST          | Each list answers a page. |
-| `TG-003`  | Telegram      | The command `care` declares its permission in its metadata. Read is viewer. |
+| `NTF-002` | Notifications | The reminder names a notification topic, not a notification provider.                               |
+| `CFG-007` | Configuration | The configuration holds the schedule only. `NOTIF` holds the routing of each workspace.             |
+| `JOB-006` | Jobs          | A slow reminder run does not start a second run.                                                    |
+| `RES-005` | REST          | Each list answers a page.                                                                           |
+| `TG-003`  | Telegram      | The command `care` declares its permission in its metadata. Read is viewer.                         |
 
 ## 9. Open questions
 
-| #   | Question | Owner | Answer |
-| --- | -------- | ----- | ------ |
-| 1   | `GARDEN-FR-019` needs a time zone. Is one time zone in the plugin configuration correct, with UTC as the default? | Owner | No. Maroid stores and counts in UTC. A view shows the time zone of the browser. |
+| #   | Question                                                                                                                                                                               | Owner | Answer                                                                                                    |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------------------------------- |
+| 1   | `GARDEN-FR-019` needs a time zone. Is one time zone in the plugin configuration correct, with UTC as the default?                                                                      | Owner | No. Maroid stores and counts in UTC. A view shows the time zone of the browser.                           |
 | 2   | `CFG-007` puts a value of one workspace in the database. One channel for every workspace is a value of the installation. Is that the reading you accept until the notification rework? | Owner | Yes, until the notification rework. On 2026-10-11 `NOTIF` replaced the channel with a notification topic. |
 
 ## Retired identifiers
 
-| ID              | Retired    | Reason                                                              |
-| --------------- | ---------- | ------------------------------------------------------------------- |
-| GARDEN-FR-027   | 2026-10-10 | The reminder names no workspace. `GARDEN-FR-032` keeps its content. |
-| GARDEN-FR-029   | 2026-10-10 | The measurements left the scope of this feature.                    |
-| GARDEN-FR-030   | 2026-10-10 | The measurements left the scope of this feature.                    |
+| ID            | Retired    | Reason                                                              |
+| ------------- | ---------- | ------------------------------------------------------------------- |
+| GARDEN-FR-027 | 2026-10-10 | The reminder names no workspace. `GARDEN-FR-032` keeps its content. |
+| GARDEN-FR-029 | 2026-10-10 | The measurements left the scope of this feature.                    |
+| GARDEN-FR-030 | 2026-10-10 | The measurements left the scope of this feature.                    |

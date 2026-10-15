@@ -38,17 +38,17 @@ scenario says otherwise. A manual scenario runs against `pnpm hub:serve` and
 **When** `WidgetRegistrar.Register` runs.
 **Then** each case answers:
 
-| Case | Result |
-| ---- | ------ |
-| `balance`, "Balance", `stat`, `s`, `things.read` | Registered. |
-| Title "  Balance  " | Registered with the title "Balance". |
-| Key of 64 characters | Registered. |
-| Key "" or of 65 characters, or `Balance`, or `a_b` | `ErrInvalidWidget`, ending in `key`. |
-| Title "", or "   ", or 65 characters | `ErrInvalidWidget`, ending in `title`. |
-| Kind `chart` | `ErrInvalidWidget`, ending in `kind`. |
-| Size `xl` | `ErrInvalidWidget`, ending in `size`. |
-| No permission | `ErrPermissionMissing`. |
-| Permission `things.delete` | `ErrPermissionUndeclared`. |
+| Case                                               | Result                                 |
+| -------------------------------------------------- | -------------------------------------- |
+| `balance`, "Balance", `stat`, `s`, `things.read`   | Registered.                            |
+| Title " Balance "                                  | Registered with the title "Balance".   |
+| Key of 64 characters                               | Registered.                            |
+| Key "" or of 65 characters, or `Balance`, or `a_b` | `ErrInvalidWidget`, ending in `key`.   |
+| Title "", or " ", or 65 characters                 | `ErrInvalidWidget`, ending in `title`. |
+| Kind `chart`                                       | `ErrInvalidWidget`, ending in `kind`.  |
+| Size `xl`                                          | `ErrInvalidWidget`, ending in `size`.  |
+| No permission                                      | `ErrPermissionMissing`.                |
+| Permission `things.delete`                         | `ErrPermissionUndeclared`.             |
 
 Each error names P and the key. The registry holds nothing after a refusal.
 
@@ -128,13 +128,13 @@ then `a`, each with its title, kind, size, and the permission `dev.maroid.p:thin
 **When** `Load` answers each case below.
 **Then** `Reader.Read` answers `ErrInvalidWidgetAnswer`:
 
-| Case |
-| ---- |
-| State `broken`. |
+| Case                                                           |
+| -------------------------------------------------------------- |
+| State `broken`.                                                |
 | `ready` with no `Stat` for `stat`, or with `Stat.Value` empty. |
-| `ready` with `List` for `stat`, or no `List` for `list`. |
-| `ready` of a `list` with an item whose label is empty. |
-| `empty` with no message. `not_set_up` with no link. |
+| `ready` with `List` for `stat`, or no `List` for `list`.       |
+| `ready` of a `list` with an item whose label is empty.         |
+| `empty` with no message. `not_set_up` with no link.            |
 
 A `ready` `list` with no item, and each answer of the helpers with its members set, pass.
 
@@ -328,6 +328,6 @@ declares `of-q`, and W enables both.
 
 ## Retired identifiers
 
-| ID              | Retired    | Reason |
-| --------------- | ---------- | ------ |
-| WIDGET-SC-020   | 2026-10-12 | `WIDGET-FR-011` is retired. `WIDGET-SC-027` verifies the home page with no widget. |
+| ID            | Retired    | Reason                                                                             |
+| ------------- | ---------- | ---------------------------------------------------------------------------------- |
+| WIDGET-SC-020 | 2026-10-12 | `WIDGET-FR-011` is retired. `WIDGET-SC-027` verifies the home page with no widget. |

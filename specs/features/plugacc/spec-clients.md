@@ -18,9 +18,9 @@ the four clients that read them. `SPC-001` divides them.
 
 ## 1. The command line
 
-| Command              | Flags                                                        | Does                                                      | Realizes         |
-| -------------------- | ------------------------------------------------------------ | --------------------------------------------------------- | ---------------- |
-| `maroid user invite` | `--first-name`, `--last-name`, `--user`, `--ttl`, `--admin`  | `--admin` marks the record as an administrator, for a new record and for one that `--user` names | `PLUGACC-FR-001` |
+| Command              | Flags                                                       | Does                                                                                             | Realizes         |
+| -------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------------- |
+| `maroid user invite` | `--first-name`, `--last-name`, `--user`, `--ttl`, `--admin` | `--admin` marks the record as an administrator, for a new record and for one that `--user` names | `PLUGACC-FR-001` |
 
 `InviteRequest` gains `Administrator bool`, and `auth.Service.Invite` writes the mark
 in the transaction that writes the record or the invitation. `CLI-001` keeps its tree,
@@ -28,8 +28,8 @@ because the command exists.
 
 ## 2. The bot
 
-| Path                                            | Action | Holds                                                        |
-| ----------------------------------------------- | ------ | ------------------------------------------------------------ |
+| Path                                            | Action | Holds                                                                                                          |
+| ----------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
 | `apps/hub/internal/telegram/command/wrapper.go` | change | `Wrapper.Handle` drops a command of a disabled plugin before the permission. `command.Checks` holds its checks |
 
 **The drop.** `Wrapper.Handle` reads the acting workspace from the context and asks
@@ -48,11 +48,11 @@ the menu of each chat.
 plugin of the job, so a job runs for those and for no other, which realizes
 `PLUGACC-FR-020`. This feature carries out step 15 of `features/ident/spec.md`.
 
-| Path                                  | Action | Holds                                                     |
-| ------------------------------------- | ------ | --------------------------------------------------------- |
-| `libs/pluginapi/cron.go`              | change | `CronScopePerWorkspace`                                   |
-| `apps/hub/internal/registry/cron.go`  | change | `RegisterOf` keeps the plugin of each job. `Entries` answers each job with its plugin. A job identifier is unique within its plugin |
-| `apps/hub/internal/worker/cron.go`    | change | `runForEachWorkspace`, from `WorkspacesEnabling`          |
+| Path                                 | Action | Holds                                                                                                                               |
+| ------------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `libs/pluginapi/cron.go`             | change | `CronScopePerWorkspace`                                                                                                             |
+| `apps/hub/internal/registry/cron.go` | change | `RegisterOf` keeps the plugin of each job. `Entries` answers each job with its plugin. A job identifier is unique within its plugin |
+| `apps/hub/internal/worker/cron.go`   | change | `runForEachWorkspace`, from `WorkspacesEnabling`                                                                                    |
 
 A job of the hub names no plugin, so no workspace enables it. A job of the hub that
 declares `CronScopePerWorkspace` fails the preparation of the worker with
@@ -63,20 +63,20 @@ every workspace of the instance. `features/psecret/spec.md` gives the change.
 
 ## 4. The deck
 
-| Path                                                                   | Action | Holds                                                        |
-| ---------------------------------------------------------------------- | ------ | ------------------------------------------------------------ |
-| `apps/deck/src/routes/(dashboard)/admin/+layout.svelte`                | create | Renders a page of `/admin` for an administrator alone        |
-| `apps/deck/src/routes/(dashboard)/admin/users/+page.svelte`            | create | The users: create, invite, block, unblock, mark, and the link to an allowlist |
-| `apps/deck/src/routes/(dashboard)/admin/users/[user]/+page.svelte`     | create | One user and their allowlist                                 |
-| `apps/deck/src/routes/(dashboard)/admin/workspaces/+page.svelte`       | create | Every workspace, with links to its members and its plugins   |
-| `apps/deck/src/routes/(dashboard)/admin/plugins/+page.svelte`          | create | Every loaded plugin, and the workspaces that enable each one |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/+page.svelte`  | create | The plugins in use and the plugins to turn on, the switch of each, and the state of the settings of each plugin in use |
-| `apps/deck/src/lib/api/{users,enablements}.ts`                         | create | The routes of `spec.md` section 4.3                          |
-| `apps/deck/src/lib/state/plugins.svelte.ts`                            | change | The entries of the plugins of the acting workspace, from `/workspaces/{id}/plugins` |
-| `apps/deck/src/lib/navigation/breadcrumbs.ts`                          | change | Names a plugin and a workspace from the page that loaded them, and names `/admin/plugins` |
-| `apps/deck/src/routes/(dashboard)/plugins/+page.svelte`                | delete | `PLUGACC-FR-036` keeps every list of plugins inside a workspace |
-| `libs/api-client/src/problem.ts`                                       | change | `PROBLEM_TYPE.administratorLast`                             |
-| `apps/deck/src/lib/components/layout/Sidebar.svelte`                   | change | Names the plugins of the acting workspace alone, links the page of its plugins, and links an administrator to the pages of `/admin` |
+| Path                                                                  | Action | Holds                                                                                                                               |
+| --------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/deck/src/routes/(dashboard)/admin/+layout.svelte`               | create | Renders a page of `/admin` for an administrator alone                                                                               |
+| `apps/deck/src/routes/(dashboard)/admin/users/+page.svelte`           | create | The users: create, invite, block, unblock, mark, and the link to an allowlist                                                       |
+| `apps/deck/src/routes/(dashboard)/admin/users/[user]/+page.svelte`    | create | One user and their allowlist                                                                                                        |
+| `apps/deck/src/routes/(dashboard)/admin/workspaces/+page.svelte`      | create | Every workspace, with links to its members and its plugins                                                                          |
+| `apps/deck/src/routes/(dashboard)/admin/plugins/+page.svelte`         | create | Every loaded plugin, and the workspaces that enable each one                                                                        |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/+page.svelte` | create | The plugins in use and the plugins to turn on, the switch of each, and the state of the settings of each plugin in use              |
+| `apps/deck/src/lib/api/{users,enablements}.ts`                        | create | The routes of `spec.md` section 4.3                                                                                                 |
+| `apps/deck/src/lib/state/plugins.svelte.ts`                           | change | The entries of the plugins of the acting workspace, from `/workspaces/{id}/plugins`                                                 |
+| `apps/deck/src/lib/navigation/breadcrumbs.ts`                         | change | Names a plugin and a workspace from the page that loaded them, and names `/admin/plugins`                                           |
+| `apps/deck/src/routes/(dashboard)/plugins/+page.svelte`               | delete | `PLUGACC-FR-036` keeps every list of plugins inside a workspace                                                                     |
+| `libs/api-client/src/problem.ts`                                      | change | `PROBLEM_TYPE.administratorLast`                                                                                                    |
+| `apps/deck/src/lib/components/layout/Sidebar.svelte`                  | change | Names the plugins of the acting workspace alone, links the page of its plugins, and links an administrator to the pages of `/admin` |
 
 The pages under `/admin` render for an administrator alone. `GET /auth/sessions/self`
 already answers the person of the session, and gains `is_administrator` for that test.
@@ -135,7 +135,7 @@ an invitation shows one time, with a control that copies it.
 
 ## Retired identifiers
 
-| ID               | Retired    | Reason |
-| ---------------- | ---------- | ------ |
-| PLUGACC-DD-007   | 2026-10-04 | The owner postponed the menu of each chat (`PLUGACC-FR-031`, `PLUGACC-NFR-002`). Its later design takes new identifiers. |
-| PLUGACC-DD-008   | 2026-10-04 | The owner postponed the menu of each chat (`PLUGACC-FR-031`, `PLUGACC-NFR-002`). Its later design takes new identifiers. |
+| ID             | Retired    | Reason                                                                                                                   |
+| -------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| PLUGACC-DD-007 | 2026-10-04 | The owner postponed the menu of each chat (`PLUGACC-FR-031`, `PLUGACC-NFR-002`). Its later design takes new identifiers. |
+| PLUGACC-DD-008 | 2026-10-04 | The owner postponed the menu of each chat (`PLUGACC-FR-031`, `PLUGACC-NFR-002`). Its later design takes new identifiers. |

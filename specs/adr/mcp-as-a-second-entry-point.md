@@ -48,11 +48,11 @@ inherits `OWN-005` through `OWN-008` for free, in this iteration or the next.
 
 ## Alternatives
 
-| Alternative                                          | Why we did not select it                                                                                                    |
-| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| Alternative                                                 | Why we did not select it                                                                                                    |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Route an MCP client through the hub's own client identifier | An MCP client would need the client secret of the hub. A native or a command line application cannot keep one confidential. |
-| A second verification path for an MCP tool call      | Duplicates the check that `SEC-002` already gives, and a defect in one path would not appear in the other.                  |
-| Leave a tool call outside `OWN-003`, with no acting user | A tool that reaches a scoped table would set no acting user, and `OWN-006` would return zero rows for every caller.        |
+| A second verification path for an MCP tool call             | Duplicates the check that `SEC-002` already gives, and a defect in one path would not appear in the other.                  |
+| Leave a tool call outside `OWN-003`, with no acting user    | A tool that reaches a scoped table would set no acting user, and `OWN-006` would return zero rows for every caller.         |
 
 ## Consequences
 

@@ -7,7 +7,8 @@ created: 2026-09-14
 updated: 2026-10-08
 approved_by: Temuri
 approved_on: 2026-10-05
-constrained_by: [CFG, PLG, OWN, SEC, ARC, API, ERR, EXT, PRC, DAT, REP, PKG, LIF, DEP, LOG, JOB, TST, SPC]
+constrained_by:
+  [CFG, PLG, OWN, SEC, ARC, API, ERR, EXT, PRC, DAT, REP, PKG, LIF, DEP, LOG, JOB, TST, SPC]
 requirements: features/pset/requirements.md
 ---
 
@@ -30,98 +31,98 @@ carry that change into the code.
 
 ## 2. Coverage
 
-| Requirement     | Where this specification realizes it            |
-| --------------- | ----------------------------------------------- |
-| `PSET-FR-001`   | `PSET-DD-001`, Section 4.1, `PSET-SC-001`       |
-| `PSET-FR-002`   | `PSET-DD-001`, `PSET-SC-002`                    |
-| `PSET-FR-021`   | `PSET-DD-012`, Section 4.2, `PSET-SC-023`, `PSET-SC-024` |
-| `PSET-FR-003`   | `PSET-DD-010`, `PSET-DD-013`, Section 4.3, `PSET-SC-003` |
-| `PSET-FR-004`   | `PSET-DD-010`, `PSET-SC-004`                    |
-| `PSET-FR-005`   | `PSET-DD-010`, `PSET-SC-004`                    |
-| `PSET-FR-006`   | `PSET-DD-010`, `PSET-SC-005`, `PSET-SC-021`     |
-| `PSET-FR-007`   | `PSET-DD-010`, `PSET-SC-006`, `PSET-SC-022`     |
-| `PSET-FR-008`   | Section 4.5, `PSET-SC-007`                      |
-| `PSET-FR-009`   | Section 4.5, `PSET-SC-007`                      |
-| `PSET-FR-010`   | `PSET-DD-008`, `PSET-SC-008`                    |
-| `PSET-FR-011`   | `PSET-DD-008`, `PSET-SC-009`                    |
-| `PSET-FR-012`   | `PSET-DD-006`, Section 4.4, `PSET-SC-010`       |
-| `PSET-FR-013`   | `PSET-DD-007`, `PSET-SC-011`                    |
-| `PSET-FR-014`   | `PSET-DD-007`, `PSET-SC-012`                    |
-| `PSET-FR-015`   | `PSET-DD-002`, `PSET-DD-004`, `PSET-SC-013`     |
-| `PSET-FR-016`   | `PSET-DD-004`, `PSET-SC-014`                    |
-| `PSET-FR-017`   | `PSET-DD-004`, `PSET-SC-015`                    |
-| `PSET-FR-018`   | `PSET-DD-005`, `PSET-SC-016`                    |
-| `PSET-FR-019`   | Section 4.5, `PSET-SC-017`                      |
-| `PSET-FR-020`   | `PSET-DD-009`, `PSET-SC-018`                    |
-| `PSET-NFR-001`  | `PSET-DD-011`, `PSET-SC-019`                    |
-| `PSET-NFR-002`  | `PSET-DD-011`, `PSET-SC-020`                    |
-| `PSET-INV-001`  | `PSET-DD-003`, Section 4.2, `PSET-SC-010`, `PSET-SC-023` |
-| `PSET-INV-002`  | `PSET-DD-002`, `PSET-SC-013`                    |
+| Requirement    | Where this specification realizes it                     |
+| -------------- | -------------------------------------------------------- |
+| `PSET-FR-001`  | `PSET-DD-001`, Section 4.1, `PSET-SC-001`                |
+| `PSET-FR-002`  | `PSET-DD-001`, `PSET-SC-002`                             |
+| `PSET-FR-021`  | `PSET-DD-012`, Section 4.2, `PSET-SC-023`, `PSET-SC-024` |
+| `PSET-FR-003`  | `PSET-DD-010`, `PSET-DD-013`, Section 4.3, `PSET-SC-003` |
+| `PSET-FR-004`  | `PSET-DD-010`, `PSET-SC-004`                             |
+| `PSET-FR-005`  | `PSET-DD-010`, `PSET-SC-004`                             |
+| `PSET-FR-006`  | `PSET-DD-010`, `PSET-SC-005`, `PSET-SC-021`              |
+| `PSET-FR-007`  | `PSET-DD-010`, `PSET-SC-006`, `PSET-SC-022`              |
+| `PSET-FR-008`  | Section 4.5, `PSET-SC-007`                               |
+| `PSET-FR-009`  | Section 4.5, `PSET-SC-007`                               |
+| `PSET-FR-010`  | `PSET-DD-008`, `PSET-SC-008`                             |
+| `PSET-FR-011`  | `PSET-DD-008`, `PSET-SC-009`                             |
+| `PSET-FR-012`  | `PSET-DD-006`, Section 4.4, `PSET-SC-010`                |
+| `PSET-FR-013`  | `PSET-DD-007`, `PSET-SC-011`                             |
+| `PSET-FR-014`  | `PSET-DD-007`, `PSET-SC-012`                             |
+| `PSET-FR-015`  | `PSET-DD-002`, `PSET-DD-004`, `PSET-SC-013`              |
+| `PSET-FR-016`  | `PSET-DD-004`, `PSET-SC-014`                             |
+| `PSET-FR-017`  | `PSET-DD-004`, `PSET-SC-015`                             |
+| `PSET-FR-018`  | `PSET-DD-005`, `PSET-SC-016`                             |
+| `PSET-FR-019`  | Section 4.5, `PSET-SC-017`                               |
+| `PSET-FR-020`  | `PSET-DD-009`, `PSET-SC-018`                             |
+| `PSET-NFR-001` | `PSET-DD-011`, `PSET-SC-019`                             |
+| `PSET-NFR-002` | `PSET-DD-011`, `PSET-SC-020`                             |
+| `PSET-INV-001` | `PSET-DD-003`, Section 4.2, `PSET-SC-010`, `PSET-SC-023` |
+| `PSET-INV-002` | `PSET-DD-002`, `PSET-SC-013`                             |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline        | How this specification obeys it                                                    |
-| --------- | ---------------- | ----------------------------------------------------------------------------------- |
-| `PLG-006` | Plugin model     | `PSET-DD-001` gives the interface, the registry, and the registrar.                |
-| `PLG-007` | Plugin model     | `PSET-DD-006`. The plugin reaches the settings through `pluginapi.Host`.           |
-| `PLG-011` | Plugin model     | `SettingsRegistry.Register` returns `ErrSettingsSchemaAlreadyRegistered`.          |
-| `ARC-008` | Architecture     | Every rule in this design reads the schema of a plugin. No rule names a plugin.    |
-| `DAT-002` | Data             | The table lives in `public`, which the hub owns.                                   |
-| `DAT-009` | Data             | `id` declares `DEFAULT uuidv7()`. No Go code names it.                             |
-| `OWN-004` | Record ownership | One table is scoped to a workspace, and one to a user. Section 4.2 states it.      |
-| `OWN-005` | Record ownership | `workspace_id` takes its value from `app.workspace_id`, and `user_id` from `app.user_id`. No insert names either. |
-| `OWN-006` | Record ownership | Section 4.2 gives the policy of each table, and forces it on the owner of the table. |
-| `OWN-007` | Record ownership | `PSET-DD-003`. `database.WithScopeTx` sets both values for the hub, and no other function of the hub does. |
-| `SEC-012` | Security         | Each route answers `not-found` for a plugin that the acting workspace does not enable. |
-| `SEC-013` | Security         | `PSET-DD-013` declares the permission of each route.                               |
-| `REP-003` | Repository       | The repository takes `*sqlx.Tx`. `database.WithScopeTx` creates it.                |
+| Rule      | Guideline        | How this specification obeys it                                                                                      |
+| --------- | ---------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `PLG-006` | Plugin model     | `PSET-DD-001` gives the interface, the registry, and the registrar.                                                  |
+| `PLG-007` | Plugin model     | `PSET-DD-006`. The plugin reaches the settings through `pluginapi.Host`.                                             |
+| `PLG-011` | Plugin model     | `SettingsRegistry.Register` returns `ErrSettingsSchemaAlreadyRegistered`.                                            |
+| `ARC-008` | Architecture     | Every rule in this design reads the schema of a plugin. No rule names a plugin.                                      |
+| `DAT-002` | Data             | The table lives in `public`, which the hub owns.                                                                     |
+| `DAT-009` | Data             | `id` declares `DEFAULT uuidv7()`. No Go code names it.                                                               |
+| `OWN-004` | Record ownership | One table is scoped to a workspace, and one to a user. Section 4.2 states it.                                        |
+| `OWN-005` | Record ownership | `workspace_id` takes its value from `app.workspace_id`, and `user_id` from `app.user_id`. No insert names either.    |
+| `OWN-006` | Record ownership | Section 4.2 gives the policy of each table, and forces it on the owner of the table.                                 |
+| `OWN-007` | Record ownership | `PSET-DD-003`. `database.WithScopeTx` sets both values for the hub, and no other function of the hub does.           |
+| `SEC-012` | Security         | Each route answers `not-found` for a plugin that the acting workspace does not enable.                               |
+| `SEC-013` | Security         | `PSET-DD-013` declares the permission of each route.                                                                 |
+| `REP-003` | Repository       | The repository takes `*sqlx.Tx`. `database.WithScopeTx` creates it.                                                  |
 | `REP-006` | Repository       | The save is one `INSERT ... ON CONFLICT (<scope column>, plugin_id) DO UPDATE` for each table that the save touches. |
-| `API-003` | The HTTP API     | The row `/workspaces/{workspaceId}/plugins/{id}/settings*`, and `handler.Plugin` is the one owner of the prefix. |
-| `API-006` | The HTTP API     | Section 4.5. A rejected save answers with a body that names each field.            |
-| `CFG-003` | Configuration    | Section 4.3 gives the configuration scheme with a `default` and a `validate` tag.  |
-| `CFG-007` | Configuration    | The credential of one workspace or one person leaves the file and reaches a scoped row. |
-| `EXT-005` | External         | A status that is not a success from the protection service is an error.            |
-| `DEP-005` | Dependencies     | `PSET-DD-005`. The login fails the build of the provider, and that stops the process. |
-| `LOG-005` | Logging          | `PSET-DD-009`. An error is an attribute, and it carries no secret.                 |
-| `JOB-007` | Jobs             | `PSET-DD-007`. A skip is not an error, and it does not stop the scheduler.         |
-| `PKG-004` | Package layout   | Every new hub package lives under `apps/hub/internal`.                             |
+| `API-003` | The HTTP API     | The row `/workspaces/{workspaceId}/plugins/{id}/settings*`, and `handler.Plugin` is the one owner of the prefix.     |
+| `API-006` | The HTTP API     | Section 4.5. A rejected save answers with a body that names each field.                                              |
+| `CFG-003` | Configuration    | Section 4.3 gives the configuration scheme with a `default` and a `validate` tag.                                    |
+| `CFG-007` | Configuration    | The credential of one workspace or one person leaves the file and reaches a scoped row.                              |
+| `EXT-005` | External         | A status that is not a success from the protection service is an error.                                              |
+| `DEP-005` | Dependencies     | `PSET-DD-005`. The login fails the build of the provider, and that stops the process.                                |
+| `LOG-005` | Logging          | `PSET-DD-009`. An error is an attribute, and it carries no secret.                                                   |
+| `JOB-007` | Jobs             | `PSET-DD-007`. A skip is not an error, and it does not stop the scheduler.                                           |
+| `PKG-004` | Package layout   | Every new hub package lives under `apps/hub/internal`.                                                               |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                                                | Action | Holds                                                                    |
-| ------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------ |
-| `libs/pluginapi/settings.go`                                        | create | `ConfigurablePlugin`, `SettingsProvider`, `PluginSettings`, `ErrSettingsAbsent` |
-| `libs/pluginconfig/config.go`                                       | change | `DecodeAndValidateSettings`, which reads the `json` tag                  |
-| `libs/pluginapi/host.go`                                            | change | `Settings() (SettingsProvider, error)` joins `Host`                      |
-| `apps/hub/db/migrations/20260914090000_table_plugin_settings_create.*` | create | `public.plugin_settings`, its policy, its trigger                     |
-| `apps/hub/db/migrations/<timestamp>_table_plugin_settings_split.*`     | create | `public.plugin_workspace_settings`, and the rename to `public.plugin_user_settings`. `PSET-DD-012` |
-| `apps/hub/internal/model/plugin_settings.go`                        | create | `model.PluginSettings`, `model.Fields`, `model.SettingEntry`, `model.FieldKind`, `LogValue` |
-| `apps/hub/internal/repository/plugin_settings.go`                   | create | `repository.PluginSettingsRepository`, `repository.PluginSettings`       |
-| `apps/hub/internal/database/tx.go`                                  | create | `database.WithScopeTx`                                                   |
-| `apps/hub/internal/openbao/{doc,session}.go`                        | create | `openbao.New`, which builds the client and logs in                       |
-| `apps/hub/internal/secret/{doc,cipher,transit}.go`                  | create | `secret.Cipher`, `secret.Transit`, `secret.Key`, `secret.UserKey`, `secret.UserKeyPrefix`, `secret.WorkspaceKey`, `secret.WorkspaceKeyPrefix` |
-| `apps/hub/internal/settings/{doc,service,schema,validate}.go`       | create | `settings.Service`, `settings.Manager`, `settings.SchemaSource`, `settings.Schema`, `settings.Infer`, `settings.Validate`, `settings.InvalidError`, `settings.MaxValueLength`, `settings.SecretMask` |
-| `apps/hub/internal/registry/settings.go`                            | create | `registry.SettingsRegistry`, `registry.SettingsEntry`                    |
-| `apps/hub/internal/plugin/registrar/settings.go`                    | create | `registrar.SettingsRegistrar`                                            |
-| `apps/hub/internal/handler/plugin.go`                               | change | `handler.Plugin` takes the settings service, and it owns every settings route of a plugin |
-| `apps/hub/internal/depresolver/{secret,settings}.go`                | create | `OpenBaoSession`, `SecretCipher`, `SettingsRegistry`, `SettingsService`  |
-| `apps/hub/internal/config/config.go`                                | change | `OpenBao`, and the `OpenBao` field of `Config`                           |
-| `apps/hub/internal/depresolver/resolver.go`                         | change | The four providers join `Resolver`, and four fields join `Container`     |
-| `apps/hub/internal/depresolver/plugin.go`                           | change | `PluginHost` takes the service. `buildPluginLoader` passes the registry. |
-| `apps/hub/internal/depresolver/server.go`                           | change | `registerHandlers` passes the settings service to the plugin handler     |
-| `apps/hub/internal/plugin/host/host.go`                             | change | `Settings()`                                                             |
-| `apps/hub/internal/plugin/loader/loader.go`                         | change | `NewSettingsRegistrar` joins the list, and `New` takes the registry      |
-| `apps/hub/internal/worker/cron.go`                                  | change | An absent settings record ends a run with no failure                     |
+| Path                                                                   | Action | Holds                                                                                                                                                                                                |
+| ---------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `libs/pluginapi/settings.go`                                           | create | `ConfigurablePlugin`, `SettingsProvider`, `PluginSettings`, `ErrSettingsAbsent`                                                                                                                      |
+| `libs/pluginconfig/config.go`                                          | change | `DecodeAndValidateSettings`, which reads the `json` tag                                                                                                                                              |
+| `libs/pluginapi/host.go`                                               | change | `Settings() (SettingsProvider, error)` joins `Host`                                                                                                                                                  |
+| `apps/hub/db/migrations/20260914090000_table_plugin_settings_create.*` | create | `public.plugin_settings`, its policy, its trigger                                                                                                                                                    |
+| `apps/hub/db/migrations/<timestamp>_table_plugin_settings_split.*`     | create | `public.plugin_workspace_settings`, and the rename to `public.plugin_user_settings`. `PSET-DD-012`                                                                                                   |
+| `apps/hub/internal/model/plugin_settings.go`                           | create | `model.PluginSettings`, `model.Fields`, `model.SettingEntry`, `model.FieldKind`, `LogValue`                                                                                                          |
+| `apps/hub/internal/repository/plugin_settings.go`                      | create | `repository.PluginSettingsRepository`, `repository.PluginSettings`                                                                                                                                   |
+| `apps/hub/internal/database/tx.go`                                     | create | `database.WithScopeTx`                                                                                                                                                                               |
+| `apps/hub/internal/openbao/{doc,session}.go`                           | create | `openbao.New`, which builds the client and logs in                                                                                                                                                   |
+| `apps/hub/internal/secret/{doc,cipher,transit}.go`                     | create | `secret.Cipher`, `secret.Transit`, `secret.Key`, `secret.UserKey`, `secret.UserKeyPrefix`, `secret.WorkspaceKey`, `secret.WorkspaceKeyPrefix`                                                        |
+| `apps/hub/internal/settings/{doc,service,schema,validate}.go`          | create | `settings.Service`, `settings.Manager`, `settings.SchemaSource`, `settings.Schema`, `settings.Infer`, `settings.Validate`, `settings.InvalidError`, `settings.MaxValueLength`, `settings.SecretMask` |
+| `apps/hub/internal/registry/settings.go`                               | create | `registry.SettingsRegistry`, `registry.SettingsEntry`                                                                                                                                                |
+| `apps/hub/internal/plugin/registrar/settings.go`                       | create | `registrar.SettingsRegistrar`                                                                                                                                                                        |
+| `apps/hub/internal/handler/plugin.go`                                  | change | `handler.Plugin` takes the settings service, and it owns every settings route of a plugin                                                                                                            |
+| `apps/hub/internal/depresolver/{secret,settings}.go`                   | create | `OpenBaoSession`, `SecretCipher`, `SettingsRegistry`, `SettingsService`                                                                                                                              |
+| `apps/hub/internal/config/config.go`                                   | change | `OpenBao`, and the `OpenBao` field of `Config`                                                                                                                                                       |
+| `apps/hub/internal/depresolver/resolver.go`                            | change | The four providers join `Resolver`, and four fields join `Container`                                                                                                                                 |
+| `apps/hub/internal/depresolver/plugin.go`                              | change | `PluginHost` takes the service. `buildPluginLoader` passes the registry.                                                                                                                             |
+| `apps/hub/internal/depresolver/server.go`                              | change | `registerHandlers` passes the settings service to the plugin handler                                                                                                                                 |
+| `apps/hub/internal/plugin/host/host.go`                                | change | `Settings()`                                                                                                                                                                                         |
+| `apps/hub/internal/plugin/loader/loader.go`                            | change | `NewSettingsRegistrar` joins the list, and `New` takes the registry                                                                                                                                  |
+| `apps/hub/internal/worker/cron.go`                                     | change | An absent settings record ends a run with no failure                                                                                                                                                 |
 
-| `apps/hub/internal/domain/errs/errs.go`                             | change | `ErrSettingsSchemaNotFound`, `ErrSettingsSchemaAlreadyRegistered`, `ErrInvalidSettingsModel`, `ErrProtectionUnavailable`, `ErrUnsupportedFieldsSource` |
-| `apps/hub/go.mod`                                                   | change | `github.com/openbao/openbao/api/v2`, `.../api/auth/approle/v2`, `github.com/invopop/jsonschema`, `github.com/santhosh-tekuri/jsonschema/v6`, and `testcontainers-go` for the tests |
-| `.golangci.yaml`                                                    | change | `secret.Cipher`, `settings.Service`, and `pluginapi.SettingsProvider` join the `ireturn` allowlist. `tagliatelle` reads a `json` tag as camel case. |
-| `specs/features/pset/api.yaml`                                      | create | The three routes. See `SPC-002`.                                         |
-| `specs/guidelines/ownership.md`                                     | change | `OWN-007`. See `PSET-DD-003`.                                            |
+| `apps/hub/internal/domain/errs/errs.go` | change | `ErrSettingsSchemaNotFound`, `ErrSettingsSchemaAlreadyRegistered`, `ErrInvalidSettingsModel`, `ErrProtectionUnavailable`, `ErrUnsupportedFieldsSource` |
+| `apps/hub/go.mod` | change | `github.com/openbao/openbao/api/v2`, `.../api/auth/approle/v2`, `github.com/invopop/jsonschema`, `github.com/santhosh-tekuri/jsonschema/v6`, and `testcontainers-go` for the tests |
+| `.golangci.yaml` | change | `secret.Cipher`, `settings.Service`, and `pluginapi.SettingsProvider` join the `ireturn` allowlist. `tagliatelle` reads a `json` tag as camel case. |
+| `specs/features/pset/api.yaml` | create | The three routes. See `SPC-002`. |
+| `specs/guidelines/ownership.md` | change | `OWN-007`. See `PSET-DD-003`. |
 
-| `specs/guidelines/http-api.md`                                      | change | `API-003` gains one row.                                                 |
+| `specs/guidelines/http-api.md` | change | `API-003` gains one row. |
 
 The signatures:
 
@@ -290,10 +291,10 @@ type Settings struct {
 
 ### 4.2 Data model
 
-| Table                       | Schema   | Scope               | Migration                                              | Realizes                                     |
-| --------------------------- | -------- | ------------------- | ------------------------------------------------------ | -------------------------------------------- |
-| `plugin_workspace_settings` | `public` | scoped to a workspace | `<timestamp>_table_plugin_settings_split.up.sql`     | `PSET-FR-003`, `PSET-FR-021`, `PSET-INV-001` |
-| `plugin_user_settings`      | `public` | scoped to a user    | `20260914090000_table_plugin_settings_create.up.sql`, renamed by `<timestamp>_table_plugin_settings_split.up.sql` | `PSET-FR-003`, `PSET-FR-021`, `PSET-INV-001` |
+| Table                       | Schema   | Scope                 | Migration                                                                                                         | Realizes                                     |
+| --------------------------- | -------- | --------------------- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `plugin_workspace_settings` | `public` | scoped to a workspace | `<timestamp>_table_plugin_settings_split.up.sql`                                                                  | `PSET-FR-003`, `PSET-FR-021`, `PSET-INV-001` |
+| `plugin_user_settings`      | `public` | scoped to a user      | `20260914090000_table_plugin_settings_create.up.sql`, renamed by `<timestamp>_table_plugin_settings_split.up.sql` | `PSET-FR-003`, `PSET-FR-021`, `PSET-INV-001` |
 
 ```sql
 CREATE TABLE public.plugin_workspace_settings
@@ -333,9 +334,9 @@ kind and the value, so the read path finds every ciphertext without the schema:
 
 ```json
 {
-  "email":    { "kind": "text",   "value": "person@example.com" },
-  "password": { "kind": "secret", "value": "vault:v1:R0hIbUx..." },
-  "notify":   { "kind": "switch", "value": true }
+	"email": { "kind": "text", "value": "person@example.com" },
+	"password": { "kind": "secret", "value": "vault:v1:R0hIbUx..." },
+	"notify": { "kind": "switch", "value": true }
 }
 ```
 
@@ -343,10 +344,10 @@ kind and the value, so the read path finds every ciphertext without the schema:
 
 **HTTP routes.** `api.yaml` holds the bodies and the status codes. See `SPC-002`.
 
-| Method | Path                                                     | Access          | Permission       | Realizes                                      |
-| ------ | -------------------------------------------------------- | --------------- | ---------------- | --------------------------------------------- |
-| `GET`  | `/workspaces/{workspaceId}/plugins/{id}/settings/schema` | Member, enabled | `settings.read`  | `PSET-FR-001`, `PSET-FR-002`, `PSET-FR-021`  |
-| `GET`  | `/workspaces/{workspaceId}/plugins/{id}/settings`        | Member, enabled | `settings.read`  | `PSET-FR-004`, `PSET-FR-005`, `PSET-FR-010`  |
+| Method | Path                                                     | Access          | Permission       | Realizes                                                                                 |
+| ------ | -------------------------------------------------------- | --------------- | ---------------- | ---------------------------------------------------------------------------------------- |
+| `GET`  | `/workspaces/{workspaceId}/plugins/{id}/settings/schema` | Member, enabled | `settings.read`  | `PSET-FR-001`, `PSET-FR-002`, `PSET-FR-021`                                              |
+| `GET`  | `/workspaces/{workspaceId}/plugins/{id}/settings`        | Member, enabled | `settings.read`  | `PSET-FR-004`, `PSET-FR-005`, `PSET-FR-010`                                              |
 | `PUT`  | `/workspaces/{workspaceId}/plugins/{id}/settings`        | Member, enabled | `settings.write` | `PSET-FR-003`, `PSET-FR-006`, `PSET-FR-007`, `PSET-FR-008`, `PSET-FR-009`, `PSET-FR-011` |
 
 **Configuration scheme.**
@@ -409,23 +410,23 @@ sequenceDiagram
 
 ### 4.5 Errors
 
-| Condition                                             | Status | Type                | The text, and the keyword or the behavior   |
-| ----------------------------------------------------- | ------ | --------------------- | ------------------------------------------- |
-| The request carries no active user record             | 401    | `access-denied`     | See `SEC-004`.                              |
-| The acting user is not a member of the workspace      | 404    | `not-found`         | See `OWN-003`.                              |
-| The acting workspace does not enable the plugin       | 404    | `not-found`         | See `SEC-012`.                              |
-| The role of the member does not hold the permission   | 403    | `permission-denied` | See `SEC-013`.                              |
-| The plugin declares no settings schema                | 404    | `settings-absent`   |                                             |
-| The body does not decode as a JSON object             | 400    | `body-invalid`      | The hub stored nothing                      |
-| The save names a field the schema declares no property for | 422 | `settings-invalid` | `the field is unknown`. `additionalProperties` |
-| The save leaves a required field with no value        | 422    | `settings-invalid`  | `the field is required`. `required`         |
-| The save gives a value outside the list of a choice   | 422    | `settings-invalid`  | `the value is not in the list`. `enum`      |
-| The save gives a value longer than 4096 characters    | 422    | `settings-invalid`  | `the value is too long`. `maxLength`        |
-| The save gives a value whose type is not the kind     | 422    | `settings-invalid`  | `the value has the wrong type`. `type`      |
-| OpenBao holds no key for the acting workspace or the acting user | 500 | `internal` | `protecting the value failed`, with the key name |
-| OpenBao refuses the login or answers nothing          | 500    | `internal`          | `reaching the protection failed`. The process stops at the start |
-| A stored entry does not decrypt                       | 500    | `internal`          | `reading the protected value failed`. The read returns no value |
-| A required field of the schema holds no stored value  | None   | None                | `ErrSettingsAbsent` to the plugin. The run ends |
+| Condition                                                        | Status | Type                | The text, and the keyword or the behavior                        |
+| ---------------------------------------------------------------- | ------ | ------------------- | ---------------------------------------------------------------- |
+| The request carries no active user record                        | 401    | `access-denied`     | See `SEC-004`.                                                   |
+| The acting user is not a member of the workspace                 | 404    | `not-found`         | See `OWN-003`.                                                   |
+| The acting workspace does not enable the plugin                  | 404    | `not-found`         | See `SEC-012`.                                                   |
+| The role of the member does not hold the permission              | 403    | `permission-denied` | See `SEC-013`.                                                   |
+| The plugin declares no settings schema                           | 404    | `settings-absent`   |                                                                  |
+| The body does not decode as a JSON object                        | 400    | `body-invalid`      | The hub stored nothing                                           |
+| The save names a field the schema declares no property for       | 422    | `settings-invalid`  | `the field is unknown`. `additionalProperties`                   |
+| The save leaves a required field with no value                   | 422    | `settings-invalid`  | `the field is required`. `required`                              |
+| The save gives a value outside the list of a choice              | 422    | `settings-invalid`  | `the value is not in the list`. `enum`                           |
+| The save gives a value longer than 4096 characters               | 422    | `settings-invalid`  | `the value is too long`. `maxLength`                             |
+| The save gives a value whose type is not the kind                | 422    | `settings-invalid`  | `the value has the wrong type`. `type`                           |
+| OpenBao holds no key for the acting workspace or the acting user | 500    | `internal`          | `protecting the value failed`, with the key name                 |
+| OpenBao refuses the login or answers nothing                     | 500    | `internal`          | `reaching the protection failed`. The process stops at the start |
+| A stored entry does not decrypt                                  | 500    | `internal`          | `reading the protected value failed`. The read returns no value  |
+| A required field of the schema holds no stored value             | None   | None                | `ErrSettingsAbsent` to the plugin. The run ends                  |
 
 A 422 carries one `errors` item for each field: the text is `detail`, and the instance
 location is `pointer`. `ERR-004`. A 500 carries no `detail`, and its text reaches the
@@ -442,12 +443,12 @@ tagged struct. The registrar infers a JSON Schema document from that struct with
 The route serves the document, and the save validates against the compiled form. The
 reflector sets `additionalProperties` to false. The four kinds are keywords:
 
-| Kind                       | Keywords                                                     |
-| -------------------------- | ------------------------------------------------------------ |
-| A free text                | `"type": "string"`                                           |
+| Kind                       | Keywords                                                        |
+| -------------------------- | --------------------------------------------------------------- |
+| A free text                | `"type": "string"`                                              |
 | A secret                   | `"type": "string"`, `"format": "password"`, `"writeOnly": true` |
-| A true or false value      | `"type": "boolean"`                                          |
-| A choice from a fixed list | `"type": "string"` with `enum`                               |
+| A true or false value      | `"type": "boolean"`                                             |
+| A choice from a fixed list | `"type": "string"` with `enum`                                  |
 
 **Rationale:** One struct is the declaration and the decode target, so the two cannot
 drift. `writeOnly` states in the standard what `PSET-FR-004` and `PSET-FR-005` demand,
@@ -662,35 +663,35 @@ field of their own, and the route would split one save into two checks.
 
 ## 7. Build plan
 
-| #   | Step                                                                              | Realizes                      | Done |
-| --- | --------------------------------------------------------------------------------- | ----------------------------- | ---- |
-| 1   | Correct `OWN-007` and `API-003` first.                                            | `PSET-DD-003`                 | [x]  |
-| 2   | Add the capability and the reader to `libs/pluginapi`.                            | `PSET-FR-001`, `PSET-FR-012`  | [x]  |
-| 3   | Write the migration and run it.                                                   | `PSET-FR-003`, `PSET-INV-001` | [x]  |
-| 4   | Write `database.WithUserTx`, `model.PluginSettings`, and the repository.          | `PSET-INV-001`, `PSET-FR-020` | [x]  |
-| 5   | Write `openbao.New`, `secret.Cipher`, `secret.Transit`, and the configuration scheme. | `PSET-FR-015` to `PSET-FR-018` | [x] |
-| 6   | Write the registry, the registrar that infers and compiles the schema, and add both to the loader. | `PSET-FR-001`, `PSET-FR-002` | [x] |
-| 7   | Write `settings.Manager` with the save, the two reads, and the mapping of a validation error onto its field. | `PSET-FR-003` to `PSET-FR-011` | [x] |
-| 8   | Write `api.yaml`, then the settings methods on `handler.Plugin`.                              | `PSET-FR-004` to `PSET-FR-009` | [x] |
-| 9   | Add `Settings()` to the host, and the providers to the container.                 | `PSET-FR-012`                 | [x]  |
-| 10  | Change the cron worker.                                                           | `PSET-FR-014`                 | [x]  |
-| 11  | Rebuild every plugin. `BLD-004` binds a change in `libs/pluginapi`.               | `PSET-FR-012`                 | [x]  |
-| 12  | Write `PSET-SC-023`, then the scope in `settings.Infer` and `settings.Schema`.     | `PSET-FR-021`                 | [x]  |
-| 13  | Write the migration that splits the table, then the scope of the repository and `database.WithScopeTx`. It needs the table of `OWN-010`. | `PSET-FR-003`, `PSET-INV-001` | [x]  |
-| 14  | Add `secret.WorkspaceKey`, then choose the key by the scope of the field in `settings.Manager`. | `PSET-FR-016`, `PSET-FR-017` | [x]  |
+| #   | Step                                                                                                                                                                               | Realizes                       | Done |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ---- |
+| 1   | Correct `OWN-007` and `API-003` first.                                                                                                                                             | `PSET-DD-003`                  | [x]  |
+| 2   | Add the capability and the reader to `libs/pluginapi`.                                                                                                                             | `PSET-FR-001`, `PSET-FR-012`   | [x]  |
+| 3   | Write the migration and run it.                                                                                                                                                    | `PSET-FR-003`, `PSET-INV-001`  | [x]  |
+| 4   | Write `database.WithUserTx`, `model.PluginSettings`, and the repository.                                                                                                           | `PSET-INV-001`, `PSET-FR-020`  | [x]  |
+| 5   | Write `openbao.New`, `secret.Cipher`, `secret.Transit`, and the configuration scheme.                                                                                              | `PSET-FR-015` to `PSET-FR-018` | [x]  |
+| 6   | Write the registry, the registrar that infers and compiles the schema, and add both to the loader.                                                                                 | `PSET-FR-001`, `PSET-FR-002`   | [x]  |
+| 7   | Write `settings.Manager` with the save, the two reads, and the mapping of a validation error onto its field.                                                                       | `PSET-FR-003` to `PSET-FR-011` | [x]  |
+| 8   | Write `api.yaml`, then the settings methods on `handler.Plugin`.                                                                                                                   | `PSET-FR-004` to `PSET-FR-009` | [x]  |
+| 9   | Add `Settings()` to the host, and the providers to the container.                                                                                                                  | `PSET-FR-012`                  | [x]  |
+| 10  | Change the cron worker.                                                                                                                                                            | `PSET-FR-014`                  | [x]  |
+| 11  | Rebuild every plugin. `BLD-004` binds a change in `libs/pluginapi`.                                                                                                                | `PSET-FR-012`                  | [x]  |
+| 12  | Write `PSET-SC-023`, then the scope in `settings.Infer` and `settings.Schema`.                                                                                                     | `PSET-FR-021`                  | [x]  |
+| 13  | Write the migration that splits the table, then the scope of the repository and `database.WithScopeTx`. It needs the table of `OWN-010`.                                           | `PSET-FR-003`, `PSET-INV-001`  | [x]  |
+| 14  | Add `secret.WorkspaceKey`, then choose the key by the scope of the field in `settings.Manager`.                                                                                    | `PSET-FR-016`, `PSET-FR-017`   | [x]  |
 | 15  | Move the three routes under `/workspaces/{workspaceId}`, with the permissions of `PSET-DD-013`, in `api.yaml` and in `handler.Plugin`. It needs the membership check of `OWN-003`. | `PSET-FR-003` to `PSET-FR-009` | [x]  |
-| 16  | Mark each field of the user as personal in the form of the deck, with the note that its value serves every workspace of the user. | `PSET-FR-021` | [x]  |
+| 16  | Mark each field of the user as personal in the form of the deck, with the note that its value serves every workspace of the user.                                                  | `PSET-FR-021`                  | [x]  |
 
 Write the test of each step before the code of that step. See `TST-002`.
 
 ## 8. Out of scope for this specification
 
-| Item                                                                    | Reason                                                                  |
-| ----------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| The form in the deck                                                    | The requirements exclude it. The routes and `api.yaml` are its contract. |
-| Moving a value of an existing plugin out of `config.yaml`               | `CFG-007` moves one value at a time. One feature for each plugin.        |
-| A plugin that reads the settings of another plugin through the provider | A plugin is trusted code in the process, as `PluginDB` already is.       |
-| A command that creates or destroys the protection of a workspace or a user | Open question 1 of the requirements gives the call to the service.     |
+| Item                                                                       | Reason                                                                   |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| The form in the deck                                                       | The requirements exclude it. The routes and `api.yaml` are its contract. |
+| Moving a value of an existing plugin out of `config.yaml`                  | `CFG-007` moves one value at a time. One feature for each plugin.        |
+| A plugin that reads the settings of another plugin through the provider    | A plugin is trusted code in the process, as `PluginDB` already is.       |
+| A command that creates or destroys the protection of a workspace or a user | Open question 1 of the requirements gives the call to the service.       |
 
 ## Retired identifiers
 

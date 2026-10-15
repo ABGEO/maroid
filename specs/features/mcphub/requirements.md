@@ -358,36 +358,36 @@ acting user is a member of it.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline        | Effect on this feature                                                                                  |
-| --------- | ----------------- | --------------------------------------------------------------------------------------------------------- |
-| `SEC-002` | Security          | A verified token's audience names the MCP client's own identifier of the IdP, distinct from the hub's. `ADR-0003` widens the rule. |
-| `SEC-004` | Security          | `MCPHUB-FR-003` enforces it at the new entry point.                                                     |
-| `OWN-003` | Record ownership  | An MCP tool call becomes a third entry point that resolves an acting user. `ADR-0003` adds the row. The `workspace` argument gives the acting workspace. `ADR-0008`. |
-| `SEC-012` | Security          | `MCPHUB-FR-022`. A plugin that the workspace does not enable answers as a missing tool.                 |
-| `SEC-013` | Security          | `MCPHUB-FR-023`. Each tool that acts in a workspace declares one permission.                            |
-| `API-003` | HTTP API          | The MCP route and the discovery route take a place in the fixed list of prefixes.                       |
-| `API-006` | HTTP API          | A response body is JSON. This feature answers a tool call with one JSON response, and needs no exception to the rule. |
-| `ARC-008` | Architecture      | The plugin list tool reports every loaded plugin through the existing registry. It names no plugin by hand. |
-| `PLG-006` | Plugin model      | This iteration adds the interface and the registrar. The registry already exists.                       |
-| `PLG-007` | Plugin model      | A plugin declares a tool through the plugin interface, and imports no package of the hub.                |
-| `PLG-011` | Plugin model      | `MCPHUB-INV-002` is the outcome. A second tool under one name is refused at the load.                    |
-| `OWN-005` | Record ownership  | A change that a tool makes names no workspace. The policy sets it.                                      |
-| `OWN-006` | Record ownership  | A tool that reaches a scoped table with no acting workspace reads no row. `MCPHUB-FR-010` prevents that state. |
-| `OWN-007` | Record ownership  | `MCPHUB-FR-010` carries the acting user and the acting workspace into the transaction of the plugin.    |
-| `DAT-004` | Data              | A plugin reaches the database on one path. A tool adds no other.                                        |
-| `LOG-003` | Logging           | A log line of the MCP server carries its own component attribute.                                       |
+| Rule      | Guideline        | Effect on this feature                                                                                                                                               |
+| --------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SEC-002` | Security         | A verified token's audience names the MCP client's own identifier of the IdP, distinct from the hub's. `ADR-0003` widens the rule.                                   |
+| `SEC-004` | Security         | `MCPHUB-FR-003` enforces it at the new entry point.                                                                                                                  |
+| `OWN-003` | Record ownership | An MCP tool call becomes a third entry point that resolves an acting user. `ADR-0003` adds the row. The `workspace` argument gives the acting workspace. `ADR-0008`. |
+| `SEC-012` | Security         | `MCPHUB-FR-022`. A plugin that the workspace does not enable answers as a missing tool.                                                                              |
+| `SEC-013` | Security         | `MCPHUB-FR-023`. Each tool that acts in a workspace declares one permission.                                                                                         |
+| `API-003` | HTTP API         | The MCP route and the discovery route take a place in the fixed list of prefixes.                                                                                    |
+| `API-006` | HTTP API         | A response body is JSON. This feature answers a tool call with one JSON response, and needs no exception to the rule.                                                |
+| `ARC-008` | Architecture     | The plugin list tool reports every loaded plugin through the existing registry. It names no plugin by hand.                                                          |
+| `PLG-006` | Plugin model     | This iteration adds the interface and the registrar. The registry already exists.                                                                                    |
+| `PLG-007` | Plugin model     | A plugin declares a tool through the plugin interface, and imports no package of the hub.                                                                            |
+| `PLG-011` | Plugin model     | `MCPHUB-INV-002` is the outcome. A second tool under one name is refused at the load.                                                                                |
+| `OWN-005` | Record ownership | A change that a tool makes names no workspace. The policy sets it.                                                                                                   |
+| `OWN-006` | Record ownership | A tool that reaches a scoped table with no acting workspace reads no row. `MCPHUB-FR-010` prevents that state.                                                       |
+| `OWN-007` | Record ownership | `MCPHUB-FR-010` carries the acting user and the acting workspace into the transaction of the plugin.                                                                 |
+| `DAT-004` | Data             | A plugin reaches the database on one path. A tool adds no other.                                                                                                     |
+| `LOG-003` | Logging          | A log line of the MCP server carries its own component attribute.                                                                                                    |
 
 `ADR-0003` changes `SEC-002` and `OWN-003`. The owner accepted that decision on
 2026-09-17.
 
 ## 8. Open questions
 
-| #   | Question                                                                                                          | Owner  | Answer |
-| --- | --------------------------------------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | Does a tool call ever stream more than one response (progress, a partial result), or does every call answer with one JSON response? Streaming needs an exception to `API-006`. | Temuri | No streaming this iteration. Every tool call answers with one JSON response. |
-| 2   | Does the plugin list tool report whether a plugin declares settings, the way `GET /plugins` does, or only the identifier and the version that `MCPHUB-FR-005` gives? | Temuri | The same shape `GET /plugins` gives: the identifier, the version, the settings flag, and the user interface manifest. |
-| 3   | May a tool of a plugin change data, or does this iteration keep every tool a report? | Temuri | A tool may change data. `MCPHUB-FR-011` and `MCPHUB-FR-012` state it. |
-| 4   | Does a tool of a plugin disappear from the list when the acting workspace filled no setting for that plugin, or does it stay and fail at the call? | Temuri | It stays. `MCPHUB-FR-013` and `MCPHUB-FR-014` state it. |
+| #   | Question                                                                                                                                                                       | Owner  | Answer                                                                                                                |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------- |
+| 1   | Does a tool call ever stream more than one response (progress, a partial result), or does every call answer with one JSON response? Streaming needs an exception to `API-006`. | Temuri | No streaming this iteration. Every tool call answers with one JSON response.                                          |
+| 2   | Does the plugin list tool report whether a plugin declares settings, the way `GET /plugins` does, or only the identifier and the version that `MCPHUB-FR-005` gives?           | Temuri | The same shape `GET /plugins` gives: the identifier, the version, the settings flag, and the user interface manifest. |
+| 3   | May a tool of a plugin change data, or does this iteration keep every tool a report?                                                                                           | Temuri | A tool may change data. `MCPHUB-FR-011` and `MCPHUB-FR-012` state it.                                                 |
+| 4   | Does a tool of a plugin disappear from the list when the acting workspace filled no setting for that plugin, or does it stay and fail at the call?                             | Temuri | It stays. `MCPHUB-FR-013` and `MCPHUB-FR-014` state it.                                                               |
 
 Answer every question before the approval. An open question blocks stage 2.
 

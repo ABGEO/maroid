@@ -15,24 +15,24 @@ related: [PLG, GO, REP, EXT]
 
 A plugin uses this layout. Create a directory only when the plugin needs it.
 
-| Directory                     | Holds                                                 |
-| ----------------------------- | ----------------------------------------------------- |
-| `config/`                     | The typed configuration of the plugin. See `CFG-006`. |
-| `dto/`                        | The shapes of an external API. See `EXT-006`.         |
-| `model/`                      | The domain entities. See `REP-005`.                   |
-| `repository/`                 | The data access. See `REP-001`.                       |
+| Directory                     | Holds                                                                                             |
+| ----------------------------- | ------------------------------------------------------------------------------------------------- |
+| `config/`                     | The typed configuration of the plugin. See `CFG-006`.                                             |
+| `dto/`                        | The shapes of an external API. See `EXT-006`.                                                     |
+| `model/`                      | The domain entities. See `REP-005`.                                                               |
+| `repository/`                 | The data access. See `REP-001`.                                                                   |
 | `service/`                    | The clients of an external system (`EXT-001`), and the domain services that use them. `ADR-0017`. |
-| `job/`                        | The cron jobs. See `JOB-005`.                         |
-| `digest/`                     | The text of a list that two surfaces send.            |
-| `handler/`                    | The HTTP handlers. See `API-004`.                     |
-| `cli/`                        | The commands of the command line. See `CLI-005`.      |
-| `telegram/command/`           | The bot commands. See `TG-003`.                       |
-| `telegram/conversation/step/` | The conversation steps. See `TG-005`.                 |
-| `mcp/tool/`                   | The Model Context Protocol tools. See `PLG-006`.      |
-| `mqtt/subscriber/`            | The MQTT subscribers. See `MQT-001`.                  |
-| `db/migrations/`              | The migrations. See `DAT-006`.                        |
-| `errs/`                       | The sentinel errors of the plugin. See `GO-005`.      |
-| `ui/`                         | The user interface. See `UI-002`.                     |
+| `job/`                        | The cron jobs. See `JOB-005`.                                                                     |
+| `digest/`                     | The text of a list that two surfaces send.                                                        |
+| `handler/`                    | The HTTP handlers. See `API-004`.                                                                 |
+| `cli/`                        | The commands of the command line. See `CLI-005`.                                                  |
+| `telegram/command/`           | The bot commands. See `TG-003`.                                                                   |
+| `telegram/conversation/step/` | The conversation steps. See `TG-005`.                                                             |
+| `mcp/tool/`                   | The Model Context Protocol tools. See `PLG-006`.                                                  |
+| `mqtt/subscriber/`            | The MQTT subscribers. See `MQT-001`.                                                              |
+| `db/migrations/`              | The migrations. See `DAT-006`.                                                                    |
+| `errs/`                       | The sentinel errors of the plugin. See `GO-005`.                                                  |
+| `ui/`                         | The user interface. See `UI-002`.                                                                 |
 
 ## PKG-002
 

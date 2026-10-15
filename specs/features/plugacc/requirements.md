@@ -381,28 +381,28 @@ An instance that holds an administrator holds at least one active administrator.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline        | Effect on this feature                                                        |
-| --------- | ---------------- | ------------------------------------------------------------------------------- |
-| `SEC-011` | Security         | The administrator, and the access to every workspace without its records.     |
+| Rule      | Guideline        | Effect on this feature                                                                  |
+| --------- | ---------------- | --------------------------------------------------------------------------------------- |
+| `SEC-011` | Security         | The administrator, and the access to every workspace without its records.               |
 | `SEC-012` | Security         | The enablement, the allowlist, the answer of a disabled plugin, and the menu of a chat. |
-| `SEC-004` | Security         | A blocked record reaches nothing at its next request.                         |
-| `OWN-002` | Record ownership | No user record is deleted. A block keeps every record.                        |
-| `ERR-003` | Errors           | A disabled plugin answers `not-found`.                                         |
-| `JOB-005` | Jobs             | A job of a plugin runs for each workspace that enables it.                    |
-| `ARC-008` | Architecture     | The hub names no plugin in a rule of the enablement.                          |
-| `CLI-001` | Command line     | `maroid user invite` gains the mark of an administrator.                      |
-| `TG-004`  | Telegram         | The hub registers the commands of a chat for that chat, beside the default scope. |
+| `SEC-004` | Security         | A blocked record reaches nothing at its next request.                                   |
+| `OWN-002` | Record ownership | No user record is deleted. A block keeps every record.                                  |
+| `ERR-003` | Errors           | A disabled plugin answers `not-found`.                                                  |
+| `JOB-005` | Jobs             | A job of a plugin runs for each workspace that enables it.                              |
+| `ARC-008` | Architecture     | The hub names no plugin in a rule of the enablement.                                    |
+| `CLI-001` | Command line     | `maroid user invite` gains the mark of an administrator.                                |
+| `TG-004`  | Telegram         | The hub registers the commands of a chat for that chat, beside the default scope.       |
 
 ## 8. Open questions
 
-| #   | Question                                                                         | Owner  | Answer |
-| --- | -------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | What do the workspaces and the users that exist before this feature receive?    | Temuri | Nothing. `PLUGACC-FR-026`. |
-| 2   | How does a user become an administrator?                                         | Temuri | The command line makes the first one, `PLUGACC-FR-001`. An administrator marks the others, `PLUGACC-FR-029`. |
-| 3   | Does a command of the bot of a disabled plugin leave the menu?                   | Temuri | Yes, as `SEC-012` gives. A use of it gets no answer. |
-| 4   | Does a member use a plugin that their own allowlist does not hold?               | Temuri | Yes. The workspace acts on its enabled plugins, whoever enabled them. `PLUGACC-FR-017`. |
-| 5   | Does a removal from an allowlist disable the plugin where the person turned it on? | Temuri | No. The plugin stays on, and an administrator disables it by hand. `PLUGACC-FR-016`, `PLUGACC-FR-027`. |
-| 6   | Does an administrator keep the members and the plugins of any workspace?         | Temuri | Yes. `PLUGACC-FR-010`, `PLUGACC-FR-013`, `PLUGACC-FR-027`. |
+| #   | Question                                                                           | Owner  | Answer                                                                                                       |
+| --- | ---------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| 1   | What do the workspaces and the users that exist before this feature receive?       | Temuri | Nothing. `PLUGACC-FR-026`.                                                                                   |
+| 2   | How does a user become an administrator?                                           | Temuri | The command line makes the first one, `PLUGACC-FR-001`. An administrator marks the others, `PLUGACC-FR-029`. |
+| 3   | Does a command of the bot of a disabled plugin leave the menu?                     | Temuri | Yes, as `SEC-012` gives. A use of it gets no answer.                                                         |
+| 4   | Does a member use a plugin that their own allowlist does not hold?                 | Temuri | Yes. The workspace acts on its enabled plugins, whoever enabled them. `PLUGACC-FR-017`.                      |
+| 5   | Does a removal from an allowlist disable the plugin where the person turned it on? | Temuri | No. The plugin stays on, and an administrator disables it by hand. `PLUGACC-FR-016`, `PLUGACC-FR-027`.       |
+| 6   | Does an administrator keep the members and the plugins of any workspace?           | Temuri | Yes. `PLUGACC-FR-010`, `PLUGACC-FR-013`, `PLUGACC-FR-027`.                                                   |
 
 Answer every question before the approval. An open question blocks stage 2.
 

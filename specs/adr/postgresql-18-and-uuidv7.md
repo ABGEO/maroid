@@ -53,11 +53,11 @@ columns that the caller does not name.
 
 ## Alternatives
 
-| Alternative                                                                                                                 | Why we did not select it                                                                                                       |
-| --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Stay on PostgreSQL 17 and write a `uuid_generate_v7()` function of 12 lines.                                                | Maroid then owns a function that PostgreSQL 18 provides. The version move deletes it again.                                    |
-| Stay on PostgreSQL 17 and let the owner paste a UUID into each `INSERT`.                                                     | A version 4 value pasted by mistake is accepted with no error, and it loses the time ordering that `DAT-009` exists for.        |
-| Move to PostgreSQL 18, keep `uuid.NewV7()` for a table that Go inserts into, and default only a table with no Go write path. | The rule then carries a case split, and the author of a new table decides which half applies.                                  |
+| Alternative                                                                                                                  | Why we did not select it                                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Stay on PostgreSQL 17 and write a `uuid_generate_v7()` function of 12 lines.                                                 | Maroid then owns a function that PostgreSQL 18 provides. The version move deletes it again.                              |
+| Stay on PostgreSQL 17 and let the owner paste a UUID into each `INSERT`.                                                     | A version 4 value pasted by mistake is accepted with no error, and it loses the time ordering that `DAT-009` exists for. |
+| Move to PostgreSQL 18, keep `uuid.NewV7()` for a table that Go inserts into, and default only a table with no Go write path. | The rule then carries a case split, and the author of a new table decides which half applies.                            |
 
 ## Consequences
 

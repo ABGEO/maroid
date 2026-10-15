@@ -22,56 +22,56 @@ and gains a password section. No table changes.
 
 ## 2. Coverage
 
-| Requirement       | Where this specification realizes it            |
-| ----------------- | ----------------------------------------------- |
-| `PROFILE-FR-001`  | Section 4.2, `PROFILE-DD-001`, `PROFILE-SC-001` |
-| `PROFILE-FR-002`  | Section 4.2, `PROFILE-SC-002`, `PROFILE-SC-003` |
-| `PROFILE-FR-003`  | `PROFILE-DD-001`, `PROFILE-SC-004`              |
-| `PROFILE-FR-004`  | `PROFILE-DD-004`, `PROFILE-SC-005`              |
+| Requirement       | Where this specification realizes it                 |
+| ----------------- | ---------------------------------------------------- |
+| `PROFILE-FR-001`  | Section 4.2, `PROFILE-DD-001`, `PROFILE-SC-001`      |
+| `PROFILE-FR-002`  | Section 4.2, `PROFILE-SC-002`, `PROFILE-SC-003`      |
+| `PROFILE-FR-003`  | `PROFILE-DD-001`, `PROFILE-SC-004`                   |
+| `PROFILE-FR-004`  | `PROFILE-DD-004`, `PROFILE-SC-005`                   |
 | `PROFILE-FR-005`  | `PROFILE-DD-004`, `PROFILE-SC-005`, `PROFILE-SC-012` |
-| `PROFILE-FR-006`  | Section 4.2, `PROFILE-SC-006`, `PROFILE-SC-007` |
-| `PROFILE-FR-007`  | `PROFILE-DD-003`, `PROFILE-SC-008`              |
-| `PROFILE-FR-008`  | Section 4.1, `PROFILE-SC-009`                   |
-| `PROFILE-FR-009`  | Section 4.3, `PROFILE-SC-010`                   |
-| `PROFILE-FR-010`  | Section 4.3, `PROFILE-SC-006`                   |
-| `PROFILE-NFR-001` | Section 4.4, `PROFILE-SC-011`                   |
+| `PROFILE-FR-006`  | Section 4.2, `PROFILE-SC-006`, `PROFILE-SC-007`      |
+| `PROFILE-FR-007`  | `PROFILE-DD-003`, `PROFILE-SC-008`                   |
+| `PROFILE-FR-008`  | Section 4.1, `PROFILE-SC-009`                        |
+| `PROFILE-FR-009`  | Section 4.3, `PROFILE-SC-010`                        |
+| `PROFILE-FR-010`  | Section 4.3, `PROFILE-SC-006`                        |
+| `PROFILE-NFR-001` | Section 4.4, `PROFILE-SC-011`                        |
 | `PROFILE-INV-001` | `PROFILE-DD-001`, `PROFILE-DD-002`, `PROFILE-SC-003` |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline | How this specification obeys it                                                |
-| --------- | --------- | ------------------------------------------------------------------------------ |
-| `SEC-001` | Security  | Section 4.3 hashes the new password in memory. No row, log, or answer holds either password. |
-| `SEC-004` | Security  | The resolver refuses a blocked record before either route runs.                |
-| `SEC-011` | Security  | `PATCH /users/self` decodes the names alone. The other fields stay with an administrator. |
-| `API-003` | HTTP API  | `/users/self` is an Authenticated exception under `/users*`. `PROFILE-DD-001`. The table of `API-003` holds the row. |
-| `API-007` | HTTP API  | `/users/self` answers `ETag`, and its change reads `If-Match`.                 |
-| `Z-143`   | REST      | `self` names the record that the session gives, as `/auth/sessions/self` does. |
-| `ERR-001` | Errors    | Every refusal answers a problem of section 4.4. No new problem type.          |
-| `LOG-008` | Logging   | No log line carries `current_password` or `password`.                          |
-| `OWN-002` | Ownership | No route creates a user record.                                                |
-| `SPC-002` | Spec artifacts | `User`, `Password`, and `IdPUnavailable` move to `specs/api/components.yaml`, because a second fragment needs them. |
+| Rule      | Guideline      | How this specification obeys it                                                                                      |
+| --------- | -------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `SEC-001` | Security       | Section 4.3 hashes the new password in memory. No row, log, or answer holds either password.                         |
+| `SEC-004` | Security       | The resolver refuses a blocked record before either route runs.                                                      |
+| `SEC-011` | Security       | `PATCH /users/self` decodes the names alone. The other fields stay with an administrator.                            |
+| `API-003` | HTTP API       | `/users/self` is an Authenticated exception under `/users*`. `PROFILE-DD-001`. The table of `API-003` holds the row. |
+| `API-007` | HTTP API       | `/users/self` answers `ETag`, and its change reads `If-Match`.                                                       |
+| `Z-143`   | REST           | `self` names the record that the session gives, as `/auth/sessions/self` does.                                       |
+| `ERR-001` | Errors         | Every refusal answers a problem of section 4.4. No new problem type.                                                 |
+| `LOG-008` | Logging        | No log line carries `current_password` or `password`.                                                                |
+| `OWN-002` | Ownership      | No route creates a user record.                                                                                      |
+| `SPC-002` | Spec artifacts | `User`, `Password`, and `IdPUnavailable` move to `specs/api/components.yaml`, because a second fragment needs them.  |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                                          | Action | Holds                                                         |
-| ------------------------------------------------------------- | ------ | ------------------------------------------------------------- |
-| `apps/hub/internal/dex/client.go`                             | change | `VerifyPassword` on `dex.Client` and `GRPC`                   |
-| `apps/hub/internal/dex/dextest/memory.go`                     | change | `VerifyPassword` compares with the stored hash                |
-| `apps/hub/internal/provider/local.go`                         | change | `PasswordChange`, `ChangeOwn` on `LocalAccounts` and `Accounts` |
-| `apps/hub/internal/auth/verifier.go`                          | change | `Claims.Profile`, the profile that a token gives an identity  |
-| `apps/hub/internal/handler/user.go`                           | change | The route group of `/users/self`. `GetSelf`, `ChangeSelf`     |
-| `apps/hub/internal/user/service.go`                           | change | `Change` locks and counts the administrators only for a change of `status` or the mark |
-| `apps/hub/internal/handler/auth.go`                           | change | `PATCH /identities/{provider}`, `ChangeOwnPassword`. Every write of a profile reads `Claims.Profile` |
-| `apps/deck/src/lib/api/{users,identities}.ts`                 | change | `users.self`, `users.changeSelf`, `identities.changePassword` |
-| `libs/api-client/src/{client,types}.ts`                       | change | `patchTagged`, the write that answers the new entity tag      |
-| `apps/deck/src/routes/(dashboard)/profile/+page.svelte`       | change | The name form saves. The password section.                    |
-| `specs/api/components.yaml`                                   | change | `User`, `Password`, `IdPUnavailable`                          |
-| `specs/features/{plugacc,idprov}/api.yaml`                    | change | Reference the three moved components                          |
-| `specs/guidelines/http-api.md`                                | change | `API-003` gains the row of `/users/self`                      |
-| `specs/features/profile/api.yaml`                             | create | The routes of section 4.2                                     |
+| Path                                                    | Action | Holds                                                                                                |
+| ------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------- |
+| `apps/hub/internal/dex/client.go`                       | change | `VerifyPassword` on `dex.Client` and `GRPC`                                                          |
+| `apps/hub/internal/dex/dextest/memory.go`               | change | `VerifyPassword` compares with the stored hash                                                       |
+| `apps/hub/internal/provider/local.go`                   | change | `PasswordChange`, `ChangeOwn` on `LocalAccounts` and `Accounts`                                      |
+| `apps/hub/internal/auth/verifier.go`                    | change | `Claims.Profile`, the profile that a token gives an identity                                         |
+| `apps/hub/internal/handler/user.go`                     | change | The route group of `/users/self`. `GetSelf`, `ChangeSelf`                                            |
+| `apps/hub/internal/user/service.go`                     | change | `Change` locks and counts the administrators only for a change of `status` or the mark               |
+| `apps/hub/internal/handler/auth.go`                     | change | `PATCH /identities/{provider}`, `ChangeOwnPassword`. Every write of a profile reads `Claims.Profile` |
+| `apps/deck/src/lib/api/{users,identities}.ts`           | change | `users.self`, `users.changeSelf`, `identities.changePassword`                                        |
+| `libs/api-client/src/{client,types}.ts`                 | change | `patchTagged`, the write that answers the new entity tag                                             |
+| `apps/deck/src/routes/(dashboard)/profile/+page.svelte` | change | The name form saves. The password section.                                                           |
+| `specs/api/components.yaml`                             | change | `User`, `Password`, `IdPUnavailable`                                                                 |
+| `specs/features/{plugacc,idprov}/api.yaml`              | change | Reference the three moved components                                                                 |
+| `specs/guidelines/http-api.md`                          | change | `API-003` gains the row of `/users/self`                                                             |
+| `specs/features/profile/api.yaml`                       | create | The routes of section 4.2                                                                            |
 
 ```go
 // apps/hub/internal/dex/client.go
@@ -133,10 +133,10 @@ again. Save stays disabled until the two new entries match.
 
 **HTTP routes.** `api.yaml` holds the bodies and the status codes.
 
-| Method  | Path                          | Access        | Permission | Realizes                                         |
-| ------- | ----------------------------- | ------------- | ---------- | ------------------------------------------------ |
-| `GET`   | `/users/self`                 | Authenticated | none       | `PROFILE-FR-001`, `PROFILE-INV-001`              |
-| `PATCH` | `/users/self`                 | Authenticated | none       | `PROFILE-FR-002`, `PROFILE-FR-003`, `PROFILE-INV-001` |
+| Method  | Path                          | Access        | Permission | Realizes                                                                                  |
+| ------- | ----------------------------- | ------------- | ---------- | ----------------------------------------------------------------------------------------- |
+| `GET`   | `/users/self`                 | Authenticated | none       | `PROFILE-FR-001`, `PROFILE-INV-001`                                                       |
+| `PATCH` | `/users/self`                 | Authenticated | none       | `PROFILE-FR-002`, `PROFILE-FR-003`, `PROFILE-INV-001`                                     |
 | `PATCH` | `/auth/identities/{provider}` | Authenticated | none       | `PROFILE-FR-006`, `PROFILE-FR-007`, `PROFILE-FR-009`, `PROFILE-FR-010`, `PROFILE-INV-001` |
 
 `PATCH /auth/identities/{provider}` accepts `local` alone. `GET /auth/identities` and
@@ -168,15 +168,15 @@ as `Reset` does. A record with no account stops there with
 
 ### 4.4 Errors
 
-| Condition                                                | Behavior | Type                                       |
-| -------------------------------------------------------- | -------- | ------------------------------------------ |
-| A member other than the names on `PATCH /users/self`     | 400      | `member-unknown`, names the member         |
-| `If-Match` names a version that moved                    | 412      | `precondition-failed`                      |
-| `current_password` or `password` absent                  | 422      | `validation-failed`, pointer of the member |
-| `current_password` does not match                        | 422      | `validation-failed`, `/current_password`   |
-| `password` under 12 characters or over 72 bytes          | 422      | `validation-failed`, `/password`           |
-| A provider other than `local`, or no local account       | 404      | `not-found`                                |
-| Dex refuses the connection, or passes `dex.timeout`      | 503      | `not-ready`, dependency `dex`              |
+| Condition                                            | Behavior | Type                                       |
+| ---------------------------------------------------- | -------- | ------------------------------------------ |
+| A member other than the names on `PATCH /users/self` | 400      | `member-unknown`, names the member         |
+| `If-Match` names a version that moved                | 412      | `precondition-failed`                      |
+| `current_password` or `password` absent              | 422      | `validation-failed`, pointer of the member |
+| `current_password` does not match                    | 422      | `validation-failed`, `/current_password`   |
+| `password` under 12 characters or over 72 bytes      | 422      | `validation-failed`, `/password`           |
+| A provider other than `local`, or no local account   | 404      | `not-found`                                |
+| Dex refuses the connection, or passes `dex.timeout`  | 503      | `not-ready`, dependency `dex`              |
 
 `ChangeOwn` answers a `provider.FieldError` at `/current_password` for the fourth row, as
 it answers one at `/password` for the fifth.
@@ -362,13 +362,13 @@ answer is 503 `not-ready` with the dependency `dex`, and Dex still verifies
 
 ## 7. Build plan
 
-| #   | Step                                                                                     | Realizes                                         | Done |
-| --- | ---------------------------------------------------------------------------------------- | ------------------------------------------------ | ---- |
-| 1   | The row of `API-003`. The three components move to `components.yaml`.                    | `PROFILE-FR-001`                                 | [x]  |
-| 2   | `GET` and `PATCH /users/self`, and the two groups of `User.Register`                     | `PROFILE-FR-001` to `PROFILE-FR-003`, `PROFILE-INV-001` | [x] |
-| 3   | `dex.Client.VerifyPassword`, the fake, `LocalAccounts.ChangeOwn`                             | `PROFILE-FR-007`, `PROFILE-NFR-001`              | [x]  |
-| 4   | `PATCH /auth/identities/{provider}`                                                      | `PROFILE-FR-006` to `PROFILE-FR-010`             | [x]  |
-| 5   | The deck: the name form saves, the password section                                      | `PROFILE-FR-001`, `PROFILE-FR-002`, `PROFILE-FR-004` to `PROFILE-FR-008` | [x] |
+| #   | Step                                                                  | Realizes                                                                 | Done |
+| --- | --------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---- |
+| 1   | The row of `API-003`. The three components move to `components.yaml`. | `PROFILE-FR-001`                                                         | [x]  |
+| 2   | `GET` and `PATCH /users/self`, and the two groups of `User.Register`  | `PROFILE-FR-001` to `PROFILE-FR-003`, `PROFILE-INV-001`                  | [x]  |
+| 3   | `dex.Client.VerifyPassword`, the fake, `LocalAccounts.ChangeOwn`      | `PROFILE-FR-007`, `PROFILE-NFR-001`                                      | [x]  |
+| 4   | `PATCH /auth/identities/{provider}`                                   | `PROFILE-FR-006` to `PROFILE-FR-010`                                     | [x]  |
+| 5   | The deck: the name form saves, the password section                   | `PROFILE-FR-001`, `PROFILE-FR-002`, `PROFILE-FR-004` to `PROFILE-FR-008` | [x]  |
 
 ## 8. Out of scope for this specification
 

@@ -25,11 +25,11 @@ the start only.
 
 ## 2. Users
 
-| Person                      | Needs                                                              |
-| --------------------------- | ------------------------------------------------------------------ |
+| Person                      | Needs                                                                  |
+| --------------------------- | ---------------------------------------------------------------------- |
 | A household member          | A saved secret and a plugin run that work on any day, with no restart. |
-| A person who deploys Maroid | No restart to cure an ended access, and the cause when access fails. |
-| An orchestrator             | A readiness answer that fails while Maroid cannot use the store.   |
+| A person who deploys Maroid | No restart to cure an ended access, and the cause when access fails.   |
+| An orchestrator             | A readiness answer that fails while Maroid cannot use the store.       |
 
 ## 3. Out of scope
 
@@ -131,18 +131,18 @@ the secret store as up.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline | Effect on this feature                                                     |
-| --------- | --------- | -------------------------------------------------------------------------- |
+| Rule      | Guideline | Effect on this feature                                                      |
+| --------- | --------- | --------------------------------------------------------------------------- |
 | `LOG-008` | Logging   | The log of `SSACCESS-FR-005` holds no store access and no login credential. |
-| `LIF-005` | Lifecycle | Maroid stops trying to gain a store access when the shutdown starts.       |
-| `LIF-006` | Lifecycle | The stop of the attempts fits inside the 10 seconds of a shutdown step.    |
+| `LIF-005` | Lifecycle | Maroid stops trying to gain a store access when the shutdown starts.        |
+| `LIF-006` | Lifecycle | The stop of the attempts fits inside the 10 seconds of a shutdown step.     |
 
 ## 8. Open questions
 
-| #   | Question                                                                 | Owner  | Answer                                                                 |
-| --- | ------------------------------------------------------------------------ | ------ | ---------------------------------------------------------------------- |
-| 1   | Does Maroid stop when it cannot gain a store access after the start?     | Temuri | No. It keeps running and tries again. See `SSACCESS-FR-003`.           |
-| 2   | Does this feature or `HEALTH` own the readiness answer for a lost access? | Temuri | This feature. `SSACCESS-FR-006`. `HEALTH` stays unchanged.             |
+| #   | Question                                                                  | Owner  | Answer                                                       |
+| --- | ------------------------------------------------------------------------- | ------ | ------------------------------------------------------------ |
+| 1   | Does Maroid stop when it cannot gain a store access after the start?      | Temuri | No. It keeps running and tries again. See `SSACCESS-FR-003`. |
+| 2   | Does this feature or `HEALTH` own the readiness answer for a lost access? | Temuri | This feature. `SSACCESS-FR-006`. `HEALTH` stays unchanged.   |
 
 ## Retired identifiers
 

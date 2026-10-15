@@ -31,11 +31,11 @@ machine opens the deck and reads the records of the first person.
 
 ## 2. Users
 
-| Person           | Need                                                                     |
-| ---------------- | ------------------------------------------------------------------------ |
+| Person               | Need                                                                 |
+| -------------------- | -------------------------------------------------------------------- |
 | A person at the deck | Sign in one time, work, and sign out at the end. Read no credential. |
-| The owner        | A person who leaves a shared machine stops reaching the records.         |
-| A plugin author  | One acting user for each request, with no change to a plugin.            |
+| The owner            | A person who leaves a shared machine stops reaching the records.     |
+| A plugin author      | One acting user for each request, with no change to a plugin.        |
 
 ## 3. Out of scope
 
@@ -170,15 +170,15 @@ in it.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline            | Effect on this feature                                                                   |
-| --------- | -------------------- | ---------------------------------------------------------------------------------------- |
-| `SEC-002` | Security             | The hub verifies the access token against the key set of the IdP, as it verifies the identity token today. |
-| `SEC-004` | Security             | A sign out does not change the user record. The record stays the allowlist.               |
-| `SEC-005` | Security             | The rule names the cookie and gives the header as a second path. `WEBSESS-FR-001`, `WEBSESS-FR-002`, and `WEBSESS-FR-005` all contradict it. The rule changes, so this feature needs an ADR. |
-| `API-003` | The HTTP API         | The prefix table gains the address of the sign out.                                       |
-| `UI-001`  | The web user interface | The deck carries the control that `WEBSESS-FR-008` gives. A plugin serves no full page. |
-| `CFG-003` | Configuration        | The hub validates the configuration at the start. The name of a cookie that fails `WEBSESS-FR-002` stops the hub there. |
-| `CFG-007` | Configuration        | The list of the targets that `WEBSESS-FR-007` checks is a value of the installation.      |
+| Rule      | Guideline              | Effect on this feature                                                                                                                                                                       |
+| --------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SEC-002` | Security               | The hub verifies the access token against the key set of the IdP, as it verifies the identity token today.                                                                                   |
+| `SEC-004` | Security               | A sign out does not change the user record. The record stays the allowlist.                                                                                                                  |
+| `SEC-005` | Security               | The rule names the cookie and gives the header as a second path. `WEBSESS-FR-001`, `WEBSESS-FR-002`, and `WEBSESS-FR-005` all contradict it. The rule changes, so this feature needs an ADR. |
+| `API-003` | The HTTP API           | The prefix table gains the address of the sign out.                                                                                                                                          |
+| `UI-001`  | The web user interface | The deck carries the control that `WEBSESS-FR-008` gives. A plugin serves no full page.                                                                                                      |
+| `CFG-003` | Configuration          | The hub validates the configuration at the start. The name of a cookie that fails `WEBSESS-FR-002` stops the hub there.                                                                      |
+| `CFG-007` | Configuration          | The list of the targets that `WEBSESS-FR-007` checks is a value of the installation.                                                                                                         |
 
 `EXTID-NFR-002` stays true. A person signs in no more often than one time in seven
 days, and this feature does not change that interval.

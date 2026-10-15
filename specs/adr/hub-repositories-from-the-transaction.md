@@ -52,11 +52,11 @@ an identity, and a trigger refuses the write of an invitation.
 
 ## Alternatives
 
-| Alternative                                                          | Why we did not select it                                                                                 |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| Keep the pool repositories and their `tx` parameters.                | Two shapes, and a hook for each write that crosses to an external service.                                |
-| Convert `Identity` alone, which `IDPROV` uses.                       | Four repositories from the transaction and seven on the pool. The mix stays.                              |
-| A second constructor from the transaction beside the one from the pool. | A third shape.                                                                                         |
+| Alternative                                                             | Why we did not select it                                                     |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Keep the pool repositories and their `tx` parameters.                   | Two shapes, and a hook for each write that crosses to an external service.   |
+| Convert `Identity` alone, which `IDPROV` uses.                          | Four repositories from the transaction and seven on the pool. The mix stays. |
+| A second constructor from the transaction beside the one from the pool. | A third shape.                                                               |
 
 ## Consequences
 
@@ -88,14 +88,14 @@ for both, and a round trip on the network of the deployment is under 1 milliseco
 
 ### Specifications to examine
 
-| Document                        | Why                                                                                 |
-| ------------------------------- | ----------------------------------------------------------------------------------- |
-| `features/ident/spec.md`        | The row of `REP-003` gives the pool as the shape of the hub.                        |
-| `features/extid/spec.md`        | `IdentityRepository.Attach` takes a transaction.                                    |
-| `features/wspace/spec.md`       | `workspace.Middleware` takes `WorkspaceMemberRepository`.                           |
-| `features/plugacc/spec.md`      | `AdmitAdministrator` takes `WorkspaceRepository`, and `WorkspaceAccess` holds `Members`. |
-| `features/mcphub/spec.md`       | `tools.NewListWorkspaces` takes a repository.                                       |
-| `features/idprov/spec.md`       | `Detach` and `DeleteByProvider` take a transaction.                                 |
+| Document                   | Why                                                                                      |
+| -------------------------- | ---------------------------------------------------------------------------------------- |
+| `features/ident/spec.md`   | The row of `REP-003` gives the pool as the shape of the hub.                             |
+| `features/extid/spec.md`   | `IdentityRepository.Attach` takes a transaction.                                         |
+| `features/wspace/spec.md`  | `workspace.Middleware` takes `WorkspaceMemberRepository`.                                |
+| `features/plugacc/spec.md` | `AdmitAdministrator` takes `WorkspaceRepository`, and `WorkspaceAccess` holds `Members`. |
+| `features/mcphub/spec.md`  | `tools.NewListWorkspaces` takes a repository.                                            |
+| `features/idprov/spec.md`  | `Detach` and `DeleteByProvider` take a transaction.                                      |
 
 ### Result
 

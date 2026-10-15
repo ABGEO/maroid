@@ -55,13 +55,13 @@ the process keeps their shape.
 
 ## Alternatives
 
-| Alternative | Why we did not select it |
-| ----------- | ------------------------ |
-| A symbol for the identifier, and the metadata method | Two copies of the identifier, and a check that compares them. The method still runs after the constructor. |
-| The identifier in the configuration entry | A second copy of the name, and the operator can set a wrong one. |
-| The identifier in the context of each call | The plugin builds the context that it passes. A service bound at construction needs no check on each call. |
-| A database account for each plugin | A real limit on the database. It needs a pool and a secret for each plugin. A later decision. |
-| A plugin in a separate process or a WebAssembly module | The real isolation. It changes every capability. A later decision, after a trial port of one plugin. |
+| Alternative                                            | Why we did not select it                                                                                   |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| A symbol for the identifier, and the metadata method   | Two copies of the identifier, and a check that compares them. The method still runs after the constructor. |
+| The identifier in the configuration entry              | A second copy of the name, and the operator can set a wrong one.                                           |
+| The identifier in the context of each call             | The plugin builds the context that it passes. A service bound at construction needs no check on each call. |
+| A database account for each plugin                     | A real limit on the database. It needs a pool and a secret for each plugin. A later decision.              |
+| A plugin in a separate process or a WebAssembly module | The real isolation. It changes every capability. A later decision, after a trial port of one plugin.       |
 
 ## Consequences
 

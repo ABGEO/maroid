@@ -68,15 +68,15 @@ they had.
 
 The roles must reach these actions of the hub, and no role below the one named:
 
-| Action                                                    | Lowest role |
-| --------------------------------------------------------- | ----------- |
-| Read the workspace, its members, and their roles          | viewer      |
-| Leave the workspace                                       | viewer      |
-| Read the settings of a plugin                             | viewer      |
-| Change the settings of a plugin                           | editor      |
-| Rename the workspace                                      | manager     |
-| List the user records to add                              | manager     |
-| Add a member, remove a member, or change a role           | manager     |
+| Action                                           | Lowest role |
+| ------------------------------------------------ | ----------- |
+| Read the workspace, its members, and their roles | viewer      |
+| Leave the workspace                              | viewer      |
+| Read the settings of a plugin                    | viewer      |
+| Change the settings of a plugin                  | editor      |
+| Rename the workspace                             | manager     |
+| List the user records to add                     | manager     |
+| Add a member, remove a member, or change a role  | manager     |
 
 **Examples:**
 
@@ -214,15 +214,15 @@ Every workspace has at least one manager.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline        | Effect on this feature                                                    |
-| --------- | ---------------- | --------------------------------------------------------------------------- |
-| `OWN-011` | Record ownership | The three roles, their order, and the last manager rule.                  |
+| Rule      | Guideline        | Effect on this feature                                                         |
+| --------- | ---------------- | ------------------------------------------------------------------------------ |
+| `OWN-011` | Record ownership | The three roles, their order, and the last manager rule.                       |
 | `SEC-013` | Security         | Every action that acts in a workspace names one permission. The hub checks it. |
-| `ERR-003` | Errors           | A refusal under `PERMS-FR-015` answers `permission-denied`.               |
-| `PLG-006` | Plugin model     | The declaration of the permissions is a capability.                       |
-| `PLG-007` | Plugin model     | A plugin declares its permissions through the plugin interface.           |
-| `ARC-008` | Architecture     | The hub names no permission of a plugin.                                  |
-| `TG-003`  | Telegram         | A command of a plugin names its permission in its metadata.               |
+| `ERR-003` | Errors           | A refusal under `PERMS-FR-015` answers `permission-denied`.                    |
+| `PLG-006` | Plugin model     | The declaration of the permissions is a capability.                            |
+| `PLG-007` | Plugin model     | A plugin declares its permissions through the plugin interface.                |
+| `ARC-008` | Architecture     | The hub names no permission of a plugin.                                       |
+| `TG-003`  | Telegram         | A command of a plugin names its permission in its metadata.                    |
 
 `WSPACE` releases together with this feature, as `WSPACE-DD-005` gives. At the
 approval of this document, `WSPACE-FR-004`, `WSPACE-FR-005`, `WSPACE-FR-006`, and
@@ -231,11 +231,11 @@ approval of this document, `WSPACE-FR-004`, `WSPACE-FR-005`, `WSPACE-FR-006`, an
 
 ## 8. Open questions
 
-| #   | Question                                                                         | Owner  | Answer |
-| --- | -------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | Can the last member leave a workspace?                                           | Temuri | No. `PERMS-FR-008` and `OWN-011` keep a manager in every workspace. |
-| 2   | Does a command of the bot that the role does not reach leave the menu?           | Temuri | No. It stays, and the use answers under `PERMS-FR-016`. |
-| 3   | Which role does a new member get?                                                | Temuri | The one that the manager picks. The form starts on viewer. |
+| #   | Question                                                               | Owner  | Answer                                                              |
+| --- | ---------------------------------------------------------------------- | ------ | ------------------------------------------------------------------- |
+| 1   | Can the last member leave a workspace?                                 | Temuri | No. `PERMS-FR-008` and `OWN-011` keep a manager in every workspace. |
+| 2   | Does a command of the bot that the role does not reach leave the menu? | Temuri | No. It stays, and the use answers under `PERMS-FR-016`.             |
+| 3   | Which role does a new member get?                                      | Temuri | The one that the manager picks. The form starts on viewer.          |
 
 Answer every question before the approval. An open question blocks stage 2.
 

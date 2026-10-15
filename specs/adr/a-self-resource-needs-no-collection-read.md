@@ -35,10 +35,10 @@ route of zero value is a route to test, document, and keep.
 
 ## Alternatives
 
-| Alternative | Why we did not select it |
-| ----------- | ------------------------ |
+| Alternative                                                       | Why we did not select it                                                                |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | A `GET` of the collection that answers a page of zero or one item | It repeats `/connections/self`, and `RES-005` makes it carry a cursor that never moves. |
-| A singular segment, `/connection` | `Z-134` asks for the plural, and `RES-002` holds no deviation for a plugin route. |
+| A singular segment, `/connection`                                 | `Z-134` asks for the plural, and `RES-002` holds no deviation for a plugin route.       |
 
 ## Consequences
 

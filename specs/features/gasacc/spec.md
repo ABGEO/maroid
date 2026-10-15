@@ -7,7 +7,8 @@ created: 2026-10-13
 updated: 2026-10-14
 approved_by: Temuri
 approved_on: 2026-10-13
-constrained_by: [PLG, ARC, OWN, DAT, CFG, EXT, LOG, SEC, UI, JOB, NTF, CLI, API, ERR, RES, PKG, BLD, TST]
+constrained_by:
+  [PLG, ARC, OWN, DAT, CFG, EXT, LOG, SEC, UI, JOB, NTF, CLI, API, ERR, RES, PKG, BLD, TST]
 requirements: features/gasacc/requirements.md
 ---
 
@@ -28,66 +29,66 @@ the hub, `pluginapi`, or another plugin. `spec-pages.md` holds the decisions of 
 
 ## 2. Coverage
 
-| Requirement | Where this specification realizes it |
-| ----------- | ------------------------------------ |
-| `GASACC-FR-001`, `GASACC-FR-002`, `GASACC-FR-003` | Section 4.3, `GASACC-SC-001` |
-| `GASACC-FR-004`, `GASACC-FR-005` | `api.yaml`, `GASACC-SC-002` |
-| `GASACC-FR-006`, `GASACC-FR-007` | `api.yaml`, `GASACC-DD-001`, `GASACC-SC-003` |
-| `GASACC-FR-008` | Section 4.5, `GASACC-SC-004` |
-| `GASACC-FR-009`, `GASACC-FR-010` | Section 4.4, `GASACC-DD-002`, `GASACC-SC-005`, `GASACC-SC-006` |
-| `GASACC-FR-011`, `GASACC-FR-012` | `api.yaml`, `GASACC-SC-007` |
-| `GASACC-FR-013` | Section 4.5, `GASACC-DD-016`, `GASACC-SC-008`, `GASACC-SC-015` |
-| `GASACC-FR-014`, `GASACC-FR-015` | `api.yaml`, `GASACC-SC-009`, `GASACC-SC-010` |
-| `GASACC-FR-043` | Section 4.4, `GASACC-DD-007`, `GASACC-SC-034` |
-| `GASACC-FR-017` | Section 4.3, `GASACC-DD-006`, `GASACC-SC-012` |
-| `GASACC-FR-018` | Section 4.3, `GASACC-SC-013` |
-| `GASACC-FR-019` | Section 4.4, `GASACC-DD-016`, `GASACC-SC-014`, `GASACC-SC-015`, `GASACC-SC-035` to `GASACC-SC-037` |
-| `GASACC-FR-020` | `GASACC-DD-005`, `GASACC-SC-016` |
-| `GASACC-FR-021` | Section 4.2, `GASACC-DD-008`, `GASACC-SC-017` |
-| `GASACC-FR-022` | Section 4.2, `GASACC-SC-018` |
-| `GASACC-FR-023` | Section 4.3, `GASACC-DD-009`, `GASACC-SC-019`, `GASACC-SC-020` |
-| `GASACC-FR-024` | `GASACC-DD-007`, `GASACC-SC-019` |
-| `GASACC-FR-025` | Section 4.5, `GASACC-SC-021` |
-| `GASACC-FR-026` | Section 4.3, `GASACC-SC-022` |
-| `GASACC-FR-027` | `GASACC-DD-007`, `GASACC-DD-010`, `GASACC-SC-023`, `GASACC-SC-024` |
-| `GASACC-FR-028` | `GASACC-DD-010`, `GASACC-SC-023`, `GASACC-SC-022` |
-| `GASACC-FR-029` to `GASACC-FR-033` | Section 4.3, `GASACC-DD-011`, `GASACC-SC-025`, `GASACC-SC-026` |
-| `GASACC-FR-034`, `GASACC-FR-035` | `api.yaml`, `GASACC-DD-012`, `GASACC-DD-015`, `GASACC-SC-027` |
-| `GASACC-FR-036` | `api.yaml`, `GASACC-DD-013`, `GASACC-SC-028` |
-| `GASACC-FR-037` | `GASACC-DD-014`, `GASACC-SC-029` |
-| `GASACC-FR-038`, `GASACC-FR-039` | Section 4.5, `GASACC-SC-030` |
-| `GASACC-FR-040` | Section 4.3, `GASACC-SC-027` |
-| `GASACC-FR-041`, `GASACC-FR-042` | Section 4.3, `GASACC-SC-031` |
-| `GASACC-INV-001` | Section 4.2, `GASACC-SC-009` |
-| `GASACC-INV-002` | Section 4.2, `GASACC-SC-032` |
-| `GASACC-INV-003`, `GASACC-INV-004` | `api.yaml`, `GASACC-DD-001`, `GASACC-SC-033` |
+| Requirement                                       | Where this specification realizes it                                                               |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `GASACC-FR-001`, `GASACC-FR-002`, `GASACC-FR-003` | Section 4.3, `GASACC-SC-001`                                                                       |
+| `GASACC-FR-004`, `GASACC-FR-005`                  | `api.yaml`, `GASACC-SC-002`                                                                        |
+| `GASACC-FR-006`, `GASACC-FR-007`                  | `api.yaml`, `GASACC-DD-001`, `GASACC-SC-003`                                                       |
+| `GASACC-FR-008`                                   | Section 4.5, `GASACC-SC-004`                                                                       |
+| `GASACC-FR-009`, `GASACC-FR-010`                  | Section 4.4, `GASACC-DD-002`, `GASACC-SC-005`, `GASACC-SC-006`                                     |
+| `GASACC-FR-011`, `GASACC-FR-012`                  | `api.yaml`, `GASACC-SC-007`                                                                        |
+| `GASACC-FR-013`                                   | Section 4.5, `GASACC-DD-016`, `GASACC-SC-008`, `GASACC-SC-015`                                     |
+| `GASACC-FR-014`, `GASACC-FR-015`                  | `api.yaml`, `GASACC-SC-009`, `GASACC-SC-010`                                                       |
+| `GASACC-FR-043`                                   | Section 4.4, `GASACC-DD-007`, `GASACC-SC-034`                                                      |
+| `GASACC-FR-017`                                   | Section 4.3, `GASACC-DD-006`, `GASACC-SC-012`                                                      |
+| `GASACC-FR-018`                                   | Section 4.3, `GASACC-SC-013`                                                                       |
+| `GASACC-FR-019`                                   | Section 4.4, `GASACC-DD-016`, `GASACC-SC-014`, `GASACC-SC-015`, `GASACC-SC-035` to `GASACC-SC-037` |
+| `GASACC-FR-020`                                   | `GASACC-DD-005`, `GASACC-SC-016`                                                                   |
+| `GASACC-FR-021`                                   | Section 4.2, `GASACC-DD-008`, `GASACC-SC-017`                                                      |
+| `GASACC-FR-022`                                   | Section 4.2, `GASACC-SC-018`                                                                       |
+| `GASACC-FR-023`                                   | Section 4.3, `GASACC-DD-009`, `GASACC-SC-019`, `GASACC-SC-020`                                     |
+| `GASACC-FR-024`                                   | `GASACC-DD-007`, `GASACC-SC-019`                                                                   |
+| `GASACC-FR-025`                                   | Section 4.5, `GASACC-SC-021`                                                                       |
+| `GASACC-FR-026`                                   | Section 4.3, `GASACC-SC-022`                                                                       |
+| `GASACC-FR-027`                                   | `GASACC-DD-007`, `GASACC-DD-010`, `GASACC-SC-023`, `GASACC-SC-024`                                 |
+| `GASACC-FR-028`                                   | `GASACC-DD-010`, `GASACC-SC-023`, `GASACC-SC-022`                                                  |
+| `GASACC-FR-029` to `GASACC-FR-033`                | Section 4.3, `GASACC-DD-011`, `GASACC-SC-025`, `GASACC-SC-026`                                     |
+| `GASACC-FR-034`, `GASACC-FR-035`                  | `api.yaml`, `GASACC-DD-012`, `GASACC-DD-015`, `GASACC-SC-027`                                      |
+| `GASACC-FR-036`                                   | `api.yaml`, `GASACC-DD-013`, `GASACC-SC-028`                                                       |
+| `GASACC-FR-037`                                   | `GASACC-DD-014`, `GASACC-SC-029`                                                                   |
+| `GASACC-FR-038`, `GASACC-FR-039`                  | Section 4.5, `GASACC-SC-030`                                                                       |
+| `GASACC-FR-040`                                   | Section 4.3, `GASACC-SC-027`                                                                       |
+| `GASACC-FR-041`, `GASACC-FR-042`                  | Section 4.3, `GASACC-SC-031`                                                                       |
+| `GASACC-INV-001`                                  | Section 4.2, `GASACC-SC-009`                                                                       |
+| `GASACC-INV-002`                                  | Section 4.2, `GASACC-SC-032`                                                                       |
+| `GASACC-INV-003`, `GASACC-INV-004`                | `api.yaml`, `GASACC-DD-001`, `GASACC-SC-033`                                                       |
 
 ## 3. Guideline compliance
 
-| Rule | Guideline | How this specification obeys it |
-| ---- | --------- | ------------------------------- |
-| `PLG-006`, `PLG-007` | Plugin model | The plugin adds the permission, route, UI, and widget capabilities through the existing interfaces, and reaches every resource through the host. |
-| `PLG-008` | Plugin model | The plugin imports no other plugin. The chart comes from `@maroid/ui` (`GASACC-DD-014`). |
-| `ARC-008` | Architecture | No file of the hub changes. |
-| `DAT-001`, `DAT-006`, `DAT-009` | Data | Both tables live in `dev_maroid_tbilisi_energy`. Each `id` is `uuidv7()`. |
-| `OWN-004` to `OWN-008` | Ownership | Both tables carry `workspace_id` and forced row level security. No repository filters by workspace. `transaction_types` stays a shared table. |
-| `OWN-003` | Ownership | `backfill` sets the acting workspace from `--workspace`, and no acting user. |
-| `OWN-009` | Ownership | The collection keeps `CronScopePerWorkspace`. |
-| `CFG-007` | Configuration | The credentials stay workspace settings. |
-| `EXT-005`, `EXT-007` | External services | A status that is not a success, or `code` other than 0, is an error that wraps the status and at most 512 bytes of the body. |
-| `LOG-003`, `LOG-007` | Logging | Each service and handler adds `component` and its name. A message names the event, and a value goes in an attribute. |
-| `LOG-008` | Logging | No log line holds the password, the token, or a personal number. |
-| `SEC-013` | Security | Each route and the widget name a permission. |
-| `NTF-002` | Notifications | The bill keeps the topic `monthly_bill`. |
-| `CLI-003` to `CLI-006` | Command line | `backfill` holds the collector and a logger with `component=command`. `PreRunE` checks the flags. `RunE` collects with `cmd.Context()` and returns an error. |
-| `API-004` | HTTP API | The routes mount under `/workspaces/{workspaceId}/plugins/dev.maroid.tbilisi-energy/api`. |
-| `ERR-002` | Errors | Each problem type has the form `/problems/dev.maroid.tbilisi-energy/<slug>`. |
-| `RES-002`, `RES-005`, `RES-006` | REST | `/connections/self` and `/customer-assignments/self` keep the plural of `Z-134`, and the collections answer no `GET`, as `ADR-0015` permits. `PUT /connections/self` carries no body (`ADR-0018`). `GET /transactions` answers the `Page` of `libs/rest/page`. |
-| `RES-001` (`Z-173`) | REST | An amount travels as the money object, with `amount` and `currency` (`GASACC-DD-015`). |
-| `GO-005` | Go style | Every sentinel error lives in `errs/`. |
-| `UI-005` to `UI-009` | Web UI | The remote exports `/transactions` and `/account`, and reaches the API through `host.api`. |
-| `PKG-001` | Package layout | The plugin gains `cli/`, `handler/`, `permission/`, `widget/`, and `ui/`. `service/` holds the domain services and the store (`ADR-0017`). |
-| `BLD-003` | Build | The build plan builds the UI before the `.so`. |
+| Rule                            | Guideline         | How this specification obeys it                                                                                                                                                                                                                                |
+| ------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PLG-006`, `PLG-007`            | Plugin model      | The plugin adds the permission, route, UI, and widget capabilities through the existing interfaces, and reaches every resource through the host.                                                                                                               |
+| `PLG-008`                       | Plugin model      | The plugin imports no other plugin. The chart comes from `@maroid/ui` (`GASACC-DD-014`).                                                                                                                                                                       |
+| `ARC-008`                       | Architecture      | No file of the hub changes.                                                                                                                                                                                                                                    |
+| `DAT-001`, `DAT-006`, `DAT-009` | Data              | Both tables live in `dev_maroid_tbilisi_energy`. Each `id` is `uuidv7()`.                                                                                                                                                                                      |
+| `OWN-004` to `OWN-008`          | Ownership         | Both tables carry `workspace_id` and forced row level security. No repository filters by workspace. `transaction_types` stays a shared table.                                                                                                                  |
+| `OWN-003`                       | Ownership         | `backfill` sets the acting workspace from `--workspace`, and no acting user.                                                                                                                                                                                   |
+| `OWN-009`                       | Ownership         | The collection keeps `CronScopePerWorkspace`.                                                                                                                                                                                                                  |
+| `CFG-007`                       | Configuration     | The credentials stay workspace settings.                                                                                                                                                                                                                       |
+| `EXT-005`, `EXT-007`            | External services | A status that is not a success, or `code` other than 0, is an error that wraps the status and at most 512 bytes of the body.                                                                                                                                   |
+| `LOG-003`, `LOG-007`            | Logging           | Each service and handler adds `component` and its name. A message names the event, and a value goes in an attribute.                                                                                                                                           |
+| `LOG-008`                       | Logging           | No log line holds the password, the token, or a personal number.                                                                                                                                                                                               |
+| `SEC-013`                       | Security          | Each route and the widget name a permission.                                                                                                                                                                                                                   |
+| `NTF-002`                       | Notifications     | The bill keeps the topic `monthly_bill`.                                                                                                                                                                                                                       |
+| `CLI-003` to `CLI-006`          | Command line      | `backfill` holds the collector and a logger with `component=command`. `PreRunE` checks the flags. `RunE` collects with `cmd.Context()` and returns an error.                                                                                                   |
+| `API-004`                       | HTTP API          | The routes mount under `/workspaces/{workspaceId}/plugins/dev.maroid.tbilisi-energy/api`.                                                                                                                                                                      |
+| `ERR-002`                       | Errors            | Each problem type has the form `/problems/dev.maroid.tbilisi-energy/<slug>`.                                                                                                                                                                                   |
+| `RES-002`, `RES-005`, `RES-006` | REST              | `/connections/self` and `/customer-assignments/self` keep the plural of `Z-134`, and the collections answer no `GET`, as `ADR-0015` permits. `PUT /connections/self` carries no body (`ADR-0018`). `GET /transactions` answers the `Page` of `libs/rest/page`. |
+| `RES-001` (`Z-173`)             | REST              | An amount travels as the money object, with `amount` and `currency` (`GASACC-DD-015`).                                                                                                                                                                         |
+| `GO-005`                        | Go style          | Every sentinel error lives in `errs/`.                                                                                                                                                                                                                         |
+| `UI-005` to `UI-009`            | Web UI            | The remote exports `/transactions` and `/account`, and reaches the API through `host.api`.                                                                                                                                                                     |
+| `PKG-001`                       | Package layout    | The plugin gains `cli/`, `handler/`, `permission/`, `widget/`, and `ui/`. `service/` holds the domain services and the store (`ADR-0017`).                                                                                                                     |
+| `BLD-003`                       | Build             | The build plan builds the UI before the `.so`.                                                                                                                                                                                                                 |
 
 ## 4. Design
 
@@ -95,32 +96,32 @@ the hub, `pluginapi`, or another plugin. `spec-pages.md` holds the decisions of 
 
 Every path is under `plugins/tbilisi-energy/`.
 
-| Path | Action | Holds |
-| ---- | ------ | ----- |
-| `db/migrations/<ts>_table_customer_assignments_create.{up,down}.sql` | create | Section 4.2 |
-| `db/migrations/<ts>_transactions_key_by_customer_and_operation.{up,down}.sql` | create | Section 4.2, `GASACC-DD-008` |
-| `errs/errs.go` | change | `ErrRequestFailed` stays. `ErrNotConnected`, `ErrTokenRejected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrSignInBlocked`, `ErrNotAssigned`, `ErrCustomerUnknown`, `ErrCustomerAbsent`, `ErrReversedPeriod` |
-| `model/connection.go` | create | `ConnectionState`, `Connection`, `Customer` with `Number`, `Name`, `Address`, `Assigned` |
-| `model/transaction.go` | change | `Transaction` (section 4.2), `OperationReading`, `IsReading()`, `Tbilisi()`, `Period`, `Period.Months()`, `PreviousMonth(now time.Time) Period`, `Collection` |
-| `dto/api-client.go` | change | `HomeResponse`, `Customer` with `custNumber`, `controlNumber`, `customerName`, `address`, and no other member (`GASACC-INV-004`). `Transaction.MapToModel(customerNumber string)`. `Hash` goes |
-| `dto/connection.go`, `dto/transaction.go` | create | `ConnectionResponse`, `CustomerResponse`, `AssignmentRequest`, `TransactionResponse`, `MoneyResponse`, `NewTransactionResponseList(transactions, fileBase)` |
-| `config/config.go` | change | `Config.RequestTimeout`. `base_url` is a URL with no trailing slash. `WorkspaceSettings.CustomerNumber` goes |
-| `service/api-client.go` | change | `GetCustomers(ctx, token) ([]dto.Customer, error)`. A rejected token is `errs.ErrTokenRejected` (`GASACC-DD-004`, `GASACC-DD-016`). A sign in with `recaptchaRequested` is `errs.ErrSignInBlocked`, one with a `code` other than 0 is `errs.ErrCredentialsRejected`. Every call ends after `request_timeout`, and a body passes no 10 MiB |
-| `service/account.go` | create | `account`, which `Connections`, `Collector`, and `Bills` share: `credentials` reads the settings, `token` reads the secret, `signIn` signs in and writes the secret, `forgetToken` deletes it, and `call` repeats a call once after a new sign in on `errs.ErrTokenRejected`. `signIn` deletes `token` on `errs.ErrCredentialsRejected` (`GASACC-DD-016`) |
-| `service/connection.go` | create | `Connections`, `NewConnections`. It collects nothing |
-| `service/collector.go` | create | `Collector`, `NewCollector` |
-| `service/bill.go` | create | `Bills`, `NewBills`. The message and the attachments of the bill, moved from the job |
-| `service/store.go` | create | `Store` over `PluginDB`, one transaction for each call |
-| `repository/assignment.go` | create | `CustomerAssignment`: `Get`, `Put`, `Delete` |
-| `repository/transaction.go` | change | `Insert(ctx, *model.Transaction) (bool, error)`, `LatestReading(ctx, customerNumber)`, `List(ctx, seek, customerNumber, from)` |
-| `job/transactions_collector.go` | change | `Run` calls `Collect` with `PreviousMonth`, then `Bills.Send` |
-| `cli/{doc,backfill}.go` | create | `Backfill`, `NewBackfill`, `Command() *cobra.Command` |
-| `handler/{doc,connection,transaction,problem}.go` | create | `ConnectionHandler`, `TransactionHandler`, the problem types of section 4.5 |
-| `permission/permission.go` | create | `AccountRead`, `AccountConnect` |
-| `widget/{doc,last_reading}.go` | create | `NewLastReading` |
-| `embed.go` | create | `uiAssets`, the embedded `ui/dist` |
-| `main.go` | change | `Commands`, `Permissions`, `Routes`, `Widgets`, `UIManifest`, `host.Secrets`. `Version` is `0.2.0` |
-| `ui/` | create | `package.json` with `d3-scale` `4.0.2`, `d3-shape` `3.2.0`, and their types as development dependencies, `index.html`, `vite.config.ts`, `svelte.config.js`, `tsconfig.json`, `src/entry.ts`, `src/app.css`, `src/api/{index,connection,transaction,types}.ts`, `src/lib/chart.ts`, `src/pages/account/Account.svelte`, `src/pages/transactions/{Transactions,UsageChart}.svelte` |
+| Path                                                                          | Action | Holds                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db/migrations/<ts>_table_customer_assignments_create.{up,down}.sql`          | create | Section 4.2                                                                                                                                                                                                                                                                                                                                                                       |
+| `db/migrations/<ts>_transactions_key_by_customer_and_operation.{up,down}.sql` | create | Section 4.2, `GASACC-DD-008`                                                                                                                                                                                                                                                                                                                                                      |
+| `errs/errs.go`                                                                | change | `ErrRequestFailed` stays. `ErrNotConnected`, `ErrTokenRejected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrSignInBlocked`, `ErrNotAssigned`, `ErrCustomerUnknown`, `ErrCustomerAbsent`, `ErrReversedPeriod`                                                                                                                                                           |
+| `model/connection.go`                                                         | create | `ConnectionState`, `Connection`, `Customer` with `Number`, `Name`, `Address`, `Assigned`                                                                                                                                                                                                                                                                                          |
+| `model/transaction.go`                                                        | change | `Transaction` (section 4.2), `OperationReading`, `IsReading()`, `Tbilisi()`, `Period`, `Period.Months()`, `PreviousMonth(now time.Time) Period`, `Collection`                                                                                                                                                                                                                     |
+| `dto/api-client.go`                                                           | change | `HomeResponse`, `Customer` with `custNumber`, `controlNumber`, `customerName`, `address`, and no other member (`GASACC-INV-004`). `Transaction.MapToModel(customerNumber string)`. `Hash` goes                                                                                                                                                                                    |
+| `dto/connection.go`, `dto/transaction.go`                                     | create | `ConnectionResponse`, `CustomerResponse`, `AssignmentRequest`, `TransactionResponse`, `MoneyResponse`, `NewTransactionResponseList(transactions, fileBase)`                                                                                                                                                                                                                       |
+| `config/config.go`                                                            | change | `Config.RequestTimeout`. `base_url` is a URL with no trailing slash. `WorkspaceSettings.CustomerNumber` goes                                                                                                                                                                                                                                                                      |
+| `service/api-client.go`                                                       | change | `GetCustomers(ctx, token) ([]dto.Customer, error)`. A rejected token is `errs.ErrTokenRejected` (`GASACC-DD-004`, `GASACC-DD-016`). A sign in with `recaptchaRequested` is `errs.ErrSignInBlocked`, one with a `code` other than 0 is `errs.ErrCredentialsRejected`. Every call ends after `request_timeout`, and a body passes no 10 MiB                                         |
+| `service/account.go`                                                          | create | `account`, which `Connections`, `Collector`, and `Bills` share: `credentials` reads the settings, `token` reads the secret, `signIn` signs in and writes the secret, `forgetToken` deletes it, and `call` repeats a call once after a new sign in on `errs.ErrTokenRejected`. `signIn` deletes `token` on `errs.ErrCredentialsRejected` (`GASACC-DD-016`)                         |
+| `service/connection.go`                                                       | create | `Connections`, `NewConnections`. It collects nothing                                                                                                                                                                                                                                                                                                                              |
+| `service/collector.go`                                                        | create | `Collector`, `NewCollector`                                                                                                                                                                                                                                                                                                                                                       |
+| `service/bill.go`                                                             | create | `Bills`, `NewBills`. The message and the attachments of the bill, moved from the job                                                                                                                                                                                                                                                                                              |
+| `service/store.go`                                                            | create | `Store` over `PluginDB`, one transaction for each call                                                                                                                                                                                                                                                                                                                            |
+| `repository/assignment.go`                                                    | create | `CustomerAssignment`: `Get`, `Put`, `Delete`                                                                                                                                                                                                                                                                                                                                      |
+| `repository/transaction.go`                                                   | change | `Insert(ctx, *model.Transaction) (bool, error)`, `LatestReading(ctx, customerNumber)`, `List(ctx, seek, customerNumber, from)`                                                                                                                                                                                                                                                    |
+| `job/transactions_collector.go`                                               | change | `Run` calls `Collect` with `PreviousMonth`, then `Bills.Send`                                                                                                                                                                                                                                                                                                                     |
+| `cli/{doc,backfill}.go`                                                       | create | `Backfill`, `NewBackfill`, `Command() *cobra.Command`                                                                                                                                                                                                                                                                                                                             |
+| `handler/{doc,connection,transaction,problem}.go`                             | create | `ConnectionHandler`, `TransactionHandler`, the problem types of section 4.5                                                                                                                                                                                                                                                                                                       |
+| `permission/permission.go`                                                    | create | `AccountRead`, `AccountConnect`                                                                                                                                                                                                                                                                                                                                                   |
+| `widget/{doc,last_reading}.go`                                                | create | `NewLastReading`                                                                                                                                                                                                                                                                                                                                                                  |
+| `embed.go`                                                                    | create | `uiAssets`, the embedded `ui/dist`                                                                                                                                                                                                                                                                                                                                                |
+| `main.go`                                                                     | change | `Commands`, `Permissions`, `Routes`, `Widgets`, `UIManifest`, `host.Secrets`. `Version` is `0.2.0`                                                                                                                                                                                                                                                                                |
+| `ui/`                                                                         | create | `package.json` with `d3-scale` `4.0.2`, `d3-shape` `3.2.0`, and their types as development dependencies, `index.html`, `vite.config.ts`, `svelte.config.js`, `tsconfig.json`, `src/entry.ts`, `src/app.css`, `src/api/{index,connection,transaction,types}.ts`, `src/lib/chart.ts`, `src/pages/account/Account.svelte`, `src/pages/transactions/{Transactions,UsageChart}.svelte` |
 
 `Collector`:
 
@@ -133,10 +134,10 @@ Collect(ctx context.Context, period model.Period) (model.Collection, error)
 
 The caller gives the period, and decides on the bill, which `Bills.Send(ctx context.Context, reading model.Transaction) error` sends:
 
-| Caller | Period | Bill |
-| ------ | ------ | ---- |
-| The job | `PreviousMonth(now)` | `Bills.Send` with `NewestReading` when it is not nil |
-| `backfill` | Each calendar month of `--from` to `--to` | None |
+| Caller     | Period                                    | Bill                                                 |
+| ---------- | ----------------------------------------- | ---------------------------------------------------- |
+| The job    | `PreviousMonth(now)`                      | `Bills.Send` with `NewestReading` when it is not nil |
+| `backfill` | Each calendar month of `--from` to `--to` | None                                                 |
 
 `model.Collection` holds `Count`, the count of the transactions that the gas service answered, and `NewestReading`, the latest reading that the call stored for the first time, or nil.
 `handler.ConnectionService`, which the handler declares as its consumer:
@@ -154,39 +155,39 @@ Assign(ctx context.Context, customerNumber string) (*model.Connection, error)
 
 The token lives in the workspace plugin secret `token`, with no expiry.
 
-| Table | Schema | Scope | Migration | Realizes |
-| ----- | ------ | ----- | --------- | -------- |
-| `customer_assignments` | `dev_maroid_tbilisi_energy` | Workspace | `<ts>_table_customer_assignments_create` | `GASACC-FR-014`, `GASACC-INV-001` |
-| `transactions` | `dev_maroid_tbilisi_energy` | Workspace | `<ts>_transactions_key_by_customer_and_operation` | `GASACC-FR-021`, `GASACC-FR-022` |
-| `transaction_types` | `dev_maroid_tbilisi_energy` | Shared | none | The name of each operation |
+| Table                  | Schema                      | Scope     | Migration                                         | Realizes                          |
+| ---------------------- | --------------------------- | --------- | ------------------------------------------------- | --------------------------------- |
+| `customer_assignments` | `dev_maroid_tbilisi_energy` | Workspace | `<ts>_table_customer_assignments_create`          | `GASACC-FR-014`, `GASACC-INV-001` |
+| `transactions`         | `dev_maroid_tbilisi_energy` | Workspace | `<ts>_transactions_key_by_customer_and_operation` | `GASACC-FR-021`, `GASACC-FR-022`  |
+| `transaction_types`    | `dev_maroid_tbilisi_energy` | Shared    | none                                              | The name of each operation        |
 
 `customer_assignments`:
 
-| Column | Type | Null | Default | Note |
-| ------ | ---- | ---- | ------- | ---- |
-| `id` | `UUID` | no | `uuidv7()` | Primary key |
-| `workspace_id` | `UUID` | no | the acting workspace (`OWN-005`) | `UNIQUE`, so one row for each workspace |
-| `customer_number` | `TEXT` | no | | 1 to 64 characters (`GASACC-DD-001`) |
-| `assigned_at` | `TIMESTAMPTZ` | no | `now()` | |
+| Column            | Type          | Null | Default                          | Note                                    |
+| ----------------- | ------------- | ---- | -------------------------------- | --------------------------------------- |
+| `id`              | `UUID`        | no   | `uuidv7()`                       | Primary key                             |
+| `workspace_id`    | `UUID`        | no   | the acting workspace (`OWN-005`) | `UNIQUE`, so one row for each workspace |
+| `customer_number` | `TEXT`        | no   |                                  | 1 to 64 characters (`GASACC-DD-001`)    |
+| `assigned_at`     | `TIMESTAMPTZ` | no   | `now()`                          |                                         |
 
 `Put` runs `INSERT ... ON CONFLICT (workspace_id) DO UPDATE`.
 
 `transactions`, created again:
 
-| Column | Type | Null | Default | Note |
-| ------ | ---- | ---- | ------- | ---- |
-| `id` | `UUID` | no | `uuidv7()` | Primary key |
-| `workspace_id` | `UUID` | no | the acting workspace (`OWN-005`) | |
-| `customer_number` | `TEXT` | no | | `<custNumber>-<controlNumber>` (`GASACC-DD-001`). It stays after a new assignment |
-| `transaction_type_id` | `INTEGER` | no | | `operId`, references `transaction_types (id)` |
-| `transaction_date` | `DATE` | no | | `operDate`, a date of Tbilisi |
-| `consumption` | `NUMERIC` | no | | `consumption`, in cubic metres |
-| `meter_value` | `NUMERIC` | no | | `meterReading`, 0 for a payment |
-| `amount` | `NUMERIC` | no | | `amount`, in lari |
-| `balance` | `NUMERIC` | no | | `balance`, in lari |
-| `bill_path` | `TEXT` | yes | | `billDocPath`. An empty path is null |
-| `meter_photo_path` | `TEXT` | yes | | `meterPhotoPath`. An empty path is null |
-| `collected_at` | `TIMESTAMPTZ` | no | `now()` | |
+| Column                | Type          | Null | Default                          | Note                                                                              |
+| --------------------- | ------------- | ---- | -------------------------------- | --------------------------------------------------------------------------------- |
+| `id`                  | `UUID`        | no   | `uuidv7()`                       | Primary key                                                                       |
+| `workspace_id`        | `UUID`        | no   | the acting workspace (`OWN-005`) |                                                                                   |
+| `customer_number`     | `TEXT`        | no   |                                  | `<custNumber>-<controlNumber>` (`GASACC-DD-001`). It stays after a new assignment |
+| `transaction_type_id` | `INTEGER`     | no   |                                  | `operId`, references `transaction_types (id)`                                     |
+| `transaction_date`    | `DATE`        | no   |                                  | `operDate`, a date of Tbilisi                                                     |
+| `consumption`         | `NUMERIC`     | no   |                                  | `consumption`, in cubic metres                                                    |
+| `meter_value`         | `NUMERIC`     | no   |                                  | `meterReading`, 0 for a payment                                                   |
+| `amount`              | `NUMERIC`     | no   |                                  | `amount`, in lari                                                                 |
+| `balance`             | `NUMERIC`     | no   |                                  | `balance`, in lari                                                                |
+| `bill_path`           | `TEXT`        | yes  |                                  | `billDocPath`. An empty path is null                                              |
+| `meter_photo_path`    | `TEXT`        | yes  |                                  | `meterPhotoPath`. An empty path is null                                           |
+| `collected_at`        | `TIMESTAMPTZ` | no   | `now()`                          |                                                                                   |
 
 The constraint `transactions_workspace_customer_operation_date_key` is `UNIQUE (workspace_id,
 customer_number, transaction_type_id, transaction_date)`. Its index serves every read through
@@ -198,66 +199,66 @@ them, because a transaction outlives its assignment.
 **HTTP routes.** The prefix is `/workspaces/{workspaceId}/plugins/dev.maroid.tbilisi-energy/api`.
 `api.yaml` holds the bodies and the status codes.
 
-| Method | Path | Access | Permission | Realizes |
-| ------ | ---- | ------ | ---------- | -------- |
-| `GET` | `/connections/self` | Authenticated | `account.read` | `GASACC-FR-004` to `GASACC-FR-008`, `GASACC-FR-013` |
-| `PUT` | `/connections/self` | Authenticated | `account.connect` | `GASACC-FR-009`, `GASACC-FR-010` |
-| `DELETE` | `/connections/self` | Authenticated | `account.connect` | `GASACC-FR-011`, `GASACC-FR-012` |
-| `PUT` | `/customer-assignments/self` | Authenticated | `account.connect` | `GASACC-FR-014`, `GASACC-FR-015`, `GASACC-FR-043` |
-| `GET` | `/transactions` | Authenticated | `account.read` | `GASACC-FR-034` to `GASACC-FR-040` |
+| Method   | Path                         | Access        | Permission        | Realizes                                            |
+| -------- | ---------------------------- | ------------- | ----------------- | --------------------------------------------------- |
+| `GET`    | `/connections/self`          | Authenticated | `account.read`    | `GASACC-FR-004` to `GASACC-FR-008`, `GASACC-FR-013` |
+| `PUT`    | `/connections/self`          | Authenticated | `account.connect` | `GASACC-FR-009`, `GASACC-FR-010`                    |
+| `DELETE` | `/connections/self`          | Authenticated | `account.connect` | `GASACC-FR-011`, `GASACC-FR-012`                    |
+| `PUT`    | `/customer-assignments/self` | Authenticated | `account.connect` | `GASACC-FR-014`, `GASACC-FR-015`, `GASACC-FR-043`   |
+| `GET`    | `/transactions`              | Authenticated | `account.read`    | `GASACC-FR-034` to `GASACC-FR-040`                  |
 
 `GET /transactions` takes `limit` (1 to 100, default 20), `cursor`, and the filter `from`, a
 date `YYYY-MM-DD`. The order is `transaction_date DESC, id DESC`, fixed.
 
 **Permissions.**
 
-| Name | Description | Lowest | Realizes |
-| ---- | ----------- | ------ | -------- |
-| `account.read` | Read the gas account and the transactions of the workspace | `viewer` | `GASACC-FR-041` |
-| `account.connect` | Connect the gas account and assign its customer | `editor` | `GASACC-FR-042` |
+| Name              | Description                                                | Lowest   | Realizes        |
+| ----------------- | ---------------------------------------------------------- | -------- | --------------- |
+| `account.read`    | Read the gas account and the transactions of the workspace | `viewer` | `GASACC-FR-041` |
+| `account.connect` | Connect the gas account and assign its customer            | `editor` | `GASACC-FR-042` |
 
 **Settings.** `WorkspaceSettings` keeps two fields, with `x-maroid-scope=workspace`. A stored
 `customer_number` stays in the settings of a workspace, and the decoder ignores it.
 
-| Field | Kind | Title | Realizes |
-| ----- | ---- | ----- | -------- |
-| `username` | free text | Username | `GASACC-FR-001` |
-| `password` | secret | Password | `GASACC-FR-001`, `GASACC-FR-002` |
+| Field      | Kind      | Title    | Realizes                         |
+| ---------- | --------- | -------- | -------------------------------- |
+| `username` | free text | Username | `GASACC-FR-001`                  |
+| `password` | secret    | Password | `GASACC-FR-001`, `GASACC-FR-002` |
 
 **Configuration.**
 
-| Key | Type | Default | Secret | Realizes |
-| --- | ---- | ------- | ------ | -------- |
-| `base_url` | string | `https://my.te.ge` | no | `GASACC-FR-010`, `GASACC-DD-013` |
-| `request_timeout` | duration | `15s` | no | `GASACC-FR-008`, `GASACC-FR-019` |
-| `cron_schedule.transactions_collector` | cron | `0 10 1 * *` | no | `GASACC-FR-017` |
+| Key                                    | Type     | Default            | Secret | Realizes                         |
+| -------------------------------------- | -------- | ------------------ | ------ | -------------------------------- |
+| `base_url`                             | string   | `https://my.te.ge` | no     | `GASACC-FR-010`, `GASACC-DD-013` |
+| `request_timeout`                      | duration | `15s`              | no     | `GASACC-FR-008`, `GASACC-FR-019` |
+| `cron_schedule.transactions_collector` | cron     | `0 10 1 * *`       | no     | `GASACC-FR-017`                  |
 
 **Cron job.** The identifier and the schedule stay.
 
-| Identifier | Schedule | Runs in | Behavior | Realizes |
-| ---------- | -------- | ------- | -------- | -------- |
+| Identifier               | Schedule                               | Runs in                                | Behavior                                                                                                                                         | Realizes                                                               |
+| ------------------------ | -------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
 | `transactions_collector` | `cron_schedule.transactions_collector` | Each workspace that enabled the plugin | `Collect` with `PreviousMonth`, then `Bills.Send` with `NewestReading`. `ErrNotConnected` and `ErrNotAssigned` log a skip at info and answer nil | `GASACC-FR-017` to `GASACC-FR-020`, `GASACC-FR-026` to `GASACC-FR-028` |
 
 **Notification topic.**
 
-| Identifier | Name | Description | Realizes |
-| ---------- | ---- | ----------- | -------- |
+| Identifier     | Name         | Description                                       | Realizes        |
+| -------------- | ------------ | ------------------------------------------------- | --------------- |
 | `monthly_bill` | Monthly bill | The gas bill of the last month, with its receipt. | `GASACC-FR-026` |
 
 The topic stays as today, so the routes of each workspace stay. The message keeps the title `თბილისი ენერჯი | ქვითარი` and its body: the date, the meter value and the usage without a decimal, and the amount with two (`GASACC-FR-028`).
 
 **CLI command.** The registrar mounts it under `maroid dev-maroid-tbilisi-energy`.
 
-| Command | Flags | Behavior | Realizes |
-| ------- | ----- | -------- | -------- |
+| Command    | Flags                                                                        | Behavior                                                                                                                             | Realizes                           |
+| ---------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- |
 | `backfill` | `--workspace` (UUID, required), `--from` and `--to` (`YYYY-MM-DD`, required) | `Collect` for each calendar month of the period in the acting workspace of `--workspace`, and print the count of each month. No bill | `GASACC-FR-023` to `GASACC-FR-025` |
 
 **UI routes.**
 
-| Page route | Navigation entry | Page | Realizes |
-| ---------- | ---------------- | ---- | -------- |
-| `/transactions` | "Transactions" | `Transactions.svelte` | `GASACC-FR-034` to `GASACC-FR-040` |
-| `/account` | "Account" | `Account.svelte` | `GASACC-FR-004` to `GASACC-FR-015` |
+| Page route      | Navigation entry | Page                  | Realizes                           |
+| --------------- | ---------------- | --------------------- | ---------------------------------- |
+| `/transactions` | "Transactions"   | `Transactions.svelte` | `GASACC-FR-034` to `GASACC-FR-040` |
+| `/account`      | "Account"        | `Account.svelte`      | `GASACC-FR-004` to `GASACC-FR-015` |
 
 `Account.svelte` shows "not connected", the settings to fill, or the list of the customers. The
 list is a radio group of the number, the name, and the address, with one "Assign" button, and
@@ -267,9 +268,9 @@ marks the assigned customer. "Connect" and "Disconnect" start and end the connec
 
 **Widget.**
 
-| Key | Title | Kind | Size | Permission | Realizes |
-| --- | ----- | ---- | ---- | ---------- | -------- |
-| `last-reading` | Gas usage | `stat` | `s` | `account.read` | `GASACC-FR-029` to `GASACC-FR-033` |
+| Key            | Title     | Kind   | Size | Permission     | Realizes                           |
+| -------------- | --------- | ------ | ---- | -------------- | ---------------------------------- |
+| `last-reading` | Gas usage | `stat` | `s`  | `account.read` | `GASACC-FR-029` to `GASACC-FR-033` |
 
 The key obeys `WIDGET-FR-005`: lowercase letters, digits, and the hyphen. `Load` calls `Store.LatestReading` and no service. No assignment answers
 `NotSetUpAnswer("Connect the gas account and assign a customer.", "/account")`. No reading
@@ -314,23 +315,23 @@ too (`GASACC-DD-016`). No stored token takes no branch: no action but `Connect` 
 
 ### 4.5 Errors
 
-| Condition | Route answer | Collection |
-| --------- | ------------ | ---------- |
-| No `token` secret | `GET` connection: 200 `not_connected`. `PUT` assignment: 409 `not-connected` | Skip (`GASACC-FR-018`) |
-| The gas service rejects the token | Sign in again, once, and repeat the call. A second rejection: 502 `service-unavailable` | Sign in again, once. A second rejection: error `ErrRequestFailed` |
-| The new sign in of a rejected token is rejected | `GET` connection: 200 `not_connected`, and the token goes. `PUT` assignment: 409 `not-connected`, and the token goes | Error `ErrCredentialsRejected`, and the token goes |
-| The settings are absent at the new sign in of a rejected token | `GET` connection: 200 `not_connected`. `PUT` assignment: 409 `not-connected` | Error `ErrCredentialsAbsent` |
-| The settings are absent | `PUT` connection: 422 `credentials-absent` | Error `ErrCredentialsAbsent` |
-| The sign in answers a `code` other than 0 | 422 `credentials-rejected` | Error `ErrCredentialsRejected` |
-| The sign in answers `recaptchaRequested: true` | 422 `sign-in-blocked` | Error `ErrSignInBlocked` |
-| The customer is not in the list of the account | 422 `customer-unknown` | Error `ErrCustomerAbsent`, nothing stored |
-| `backfill` in a workspace with no connection or no assignment | Not reached | The command fails with `ErrNotConnected` or `ErrNotAssigned` (`GASACC-FR-025`) |
-| `backfill` with `--from` after `--to`, a date that does not parse, or a `--workspace` that is not a UUID | Not reached | `PreRunE` fails, and no service is called |
-| The body of the assignment passes 4 KiB | 413 `/problems/http/content-too-large` | Not reached |
-| No assigned customer | `GET /transactions`: 409 `not-assigned` | Skip |
-| `from` is not a date | 400 `/problems/http/request-invalid` | Not reached |
-| The gas service answers 5xx, or fails to answer | 502 `service-unavailable`. The token stays | Error `ErrRequestFailed` |
-| A file of the bill fails to download | Not reached | The bill goes without it (`GASACC-DD-010`) |
+| Condition                                                                                                | Route answer                                                                                                         | Collection                                                                     |
+| -------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| No `token` secret                                                                                        | `GET` connection: 200 `not_connected`. `PUT` assignment: 409 `not-connected`                                         | Skip (`GASACC-FR-018`)                                                         |
+| The gas service rejects the token                                                                        | Sign in again, once, and repeat the call. A second rejection: 502 `service-unavailable`                              | Sign in again, once. A second rejection: error `ErrRequestFailed`              |
+| The new sign in of a rejected token is rejected                                                          | `GET` connection: 200 `not_connected`, and the token goes. `PUT` assignment: 409 `not-connected`, and the token goes | Error `ErrCredentialsRejected`, and the token goes                             |
+| The settings are absent at the new sign in of a rejected token                                           | `GET` connection: 200 `not_connected`. `PUT` assignment: 409 `not-connected`                                         | Error `ErrCredentialsAbsent`                                                   |
+| The settings are absent                                                                                  | `PUT` connection: 422 `credentials-absent`                                                                           | Error `ErrCredentialsAbsent`                                                   |
+| The sign in answers a `code` other than 0                                                                | 422 `credentials-rejected`                                                                                           | Error `ErrCredentialsRejected`                                                 |
+| The sign in answers `recaptchaRequested: true`                                                           | 422 `sign-in-blocked`                                                                                                | Error `ErrSignInBlocked`                                                       |
+| The customer is not in the list of the account                                                           | 422 `customer-unknown`                                                                                               | Error `ErrCustomerAbsent`, nothing stored                                      |
+| `backfill` in a workspace with no connection or no assignment                                            | Not reached                                                                                                          | The command fails with `ErrNotConnected` or `ErrNotAssigned` (`GASACC-FR-025`) |
+| `backfill` with `--from` after `--to`, a date that does not parse, or a `--workspace` that is not a UUID | Not reached                                                                                                          | `PreRunE` fails, and no service is called                                      |
+| The body of the assignment passes 4 KiB                                                                  | 413 `/problems/http/content-too-large`                                                                               | Not reached                                                                    |
+| No assigned customer                                                                                     | `GET /transactions`: 409 `not-assigned`                                                                              | Skip                                                                           |
+| `from` is not a date                                                                                     | 400 `/problems/http/request-invalid`                                                                                 | Not reached                                                                    |
+| The gas service answers 5xx, or fails to answer                                                          | 502 `service-unavailable`. The token stays                                                                           | Error `ErrRequestFailed`                                                       |
+| A file of the bill fails to download                                                                     | Not reached                                                                                                          | The bill goes without it (`GASACC-DD-010`)                                     |
 
 No detail names the password, the token, or a personal number.
 
@@ -465,19 +466,19 @@ chart, and the money object.
 
 ## 7. Build plan
 
-| # | Step | Realizes | Done |
-| - | ---- | -------- | ---- |
-| 1 | `errs/`, `model/`, `permission/`, `config/`, and the API client: `GetCustomers`, the rejected token, the blocked sign in, the timeout | `GASACC-FR-003`, `GASACC-FR-010`, `GASACC-FR-019` | [x] |
-| 2 | Both migrations and `repository/` | `GASACC-FR-014`, `GASACC-FR-021`, `GASACC-FR-022` | [x] |
-| 3 | `service/store.go`, `service/account.go`, `service/collector.go` | `GASACC-FR-017` to `GASACC-FR-021` | [x] |
-| 4 | `service/bill.go`, the job, and `cli/backfill.go` | `GASACC-FR-017`, `GASACC-FR-023` to `GASACC-FR-028` | [x] |
-| 5 | `service/connection.go`, `handler/connection.go`, `dto/connection.go` | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-043` | [x] |
-| 6 | `handler/transaction.go`, `dto/transaction.go`, and `api.yaml` | `GASACC-FR-034` to `GASACC-FR-036`, `GASACC-FR-038` to `GASACC-FR-040` | [x] |
-| 7 | `widget/last_reading.go` and `main.go` | `GASACC-FR-029` to `GASACC-FR-033`, `GASACC-FR-041`, `GASACC-FR-042` | [x] |
-| 8 | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`) | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-034` to `GASACC-FR-039` | [x] |
-| 9 | Run the flow against the gas service: an expired token, a link to a bill with no session, `backfill` of 12 months. Correct `GASACC-DD-013` and `GASACC-DD-004` | `GASACC-FR-019`, `GASACC-FR-023`, `GASACC-FR-036` | [x] |
-| 10 | The tests of `spec-scenarios.md`. Lint and build the plugin | Every statement | [x] |
-| 11 | The change of 2026-10-14: `ErrTokenRejected`, `signIn` that deletes `token`, and `Connections` over `account.call` (`GASACC-DD-016`). The tests of `GASACC-SC-008`, `GASACC-SC-015`, `GASACC-SC-035` to `GASACC-SC-037`. Lint and build the plugin | `GASACC-FR-013`, `GASACC-FR-019` | [x] |
+| #   | Step                                                                                                                                                                                                                                               | Realizes                                                               | Done |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---- |
+| 1   | `errs/`, `model/`, `permission/`, `config/`, and the API client: `GetCustomers`, the rejected token, the blocked sign in, the timeout                                                                                                              | `GASACC-FR-003`, `GASACC-FR-010`, `GASACC-FR-019`                      | [x]  |
+| 2   | Both migrations and `repository/`                                                                                                                                                                                                                  | `GASACC-FR-014`, `GASACC-FR-021`, `GASACC-FR-022`                      | [x]  |
+| 3   | `service/store.go`, `service/account.go`, `service/collector.go`                                                                                                                                                                                   | `GASACC-FR-017` to `GASACC-FR-021`                                     | [x]  |
+| 4   | `service/bill.go`, the job, and `cli/backfill.go`                                                                                                                                                                                                  | `GASACC-FR-017`, `GASACC-FR-023` to `GASACC-FR-028`                    | [x]  |
+| 5   | `service/connection.go`, `handler/connection.go`, `dto/connection.go`                                                                                                                                                                              | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-043`                    | [x]  |
+| 6   | `handler/transaction.go`, `dto/transaction.go`, and `api.yaml`                                                                                                                                                                                     | `GASACC-FR-034` to `GASACC-FR-036`, `GASACC-FR-038` to `GASACC-FR-040` | [x]  |
+| 7   | `widget/last_reading.go` and `main.go`                                                                                                                                                                                                             | `GASACC-FR-029` to `GASACC-FR-033`, `GASACC-FR-041`, `GASACC-FR-042`   | [x]  |
+| 8   | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`)                                                                                                                                                                      | `GASACC-FR-004` to `GASACC-FR-015`, `GASACC-FR-034` to `GASACC-FR-039` | [x]  |
+| 9   | Run the flow against the gas service: an expired token, a link to a bill with no session, `backfill` of 12 months. Correct `GASACC-DD-013` and `GASACC-DD-004`                                                                                     | `GASACC-FR-019`, `GASACC-FR-023`, `GASACC-FR-036`                      | [x]  |
+| 10  | The tests of `spec-scenarios.md`. Lint and build the plugin                                                                                                                                                                                        | Every statement                                                        | [x]  |
+| 11  | The change of 2026-10-14: `ErrTokenRejected`, `signIn` that deletes `token`, and `Connections` over `account.call` (`GASACC-DD-016`). The tests of `GASACC-SC-008`, `GASACC-SC-015`, `GASACC-SC-035` to `GASACC-SC-037`. Lint and build the plugin | `GASACC-FR-013`, `GASACC-FR-019`                                       | [x]  |
 
 ## Retired identifiers
 

@@ -41,14 +41,14 @@ A plugin has no way to put its one important value in front of the person.
 
 ## 4. Definitions
 
-| Term         | Meaning |
-| ------------ | ------- |
+| Term         | Meaning                                                               |
+| ------------ | --------------------------------------------------------------------- |
 | home page    | The page of a workspace that the deck opens first for that workspace. |
 | widget       | One card on the home page. A plugin declares it and answers its data. |
-| widget key   | The name of a widget, unique within its plugin. |
-| widget kind  | The shape of the data of a widget: `stat` or `list`. |
-| widget size  | The space of a widget on the home page: `xs`, `s`, `m`, or `l`. |
-| widget state | What one answer of a widget says: `ready`, `empty`, or `not set up`. |
+| widget key   | The name of a widget, unique within its plugin.                       |
+| widget kind  | The shape of the data of a widget: `stat` or `list`.                  |
+| widget size  | The space of a widget on the home page: `xs`, `s`, `m`, or `l`.       |
+| widget state | What one answer of a widget says: `ready`, `empty`, or `not set up`.  |
 
 ## 5. Functional requirements
 
@@ -371,28 +371,28 @@ Maroid keeps no answer of a widget after it sends it.
 
 ## 8. Constraints from the guidelines
 
-| Rule      | Guideline    | Effect on this feature |
-| --------- | ------------ | ---------------------- |
-| `PLG-005`, `PLG-006` | Plugin model | A widget is a capability: an interface, a registry, a registrar. |
-| `PLG-011` | Plugin model | A second widget with one key is refused. |
-| `ARC-008` | Architecture | The hub treats every widget alike and names no plugin. |
-| `SEC-012` | Security     | A plugin disabled in the workspace shows no widget. |
-| `SEC-013` | Security     | A widget acts in a workspace, so it declares one permission. |
-| `OWN-005` | Ownership    | The plugin reads through the policy, which limits the rows to the workspace. |
-| `API-003` | HTTP API     | The hub adds routes under `/workspaces*`. |
-| `UI-001`  | Web UI       | The deck draws every widget. A plugin serves no part of the home page. |
+| Rule                 | Guideline    | Effect on this feature                                                       |
+| -------------------- | ------------ | ---------------------------------------------------------------------------- |
+| `PLG-005`, `PLG-006` | Plugin model | A widget is a capability: an interface, a registry, a registrar.             |
+| `PLG-011`            | Plugin model | A second widget with one key is refused.                                     |
+| `ARC-008`            | Architecture | The hub treats every widget alike and names no plugin.                       |
+| `SEC-012`            | Security     | A plugin disabled in the workspace shows no widget.                          |
+| `SEC-013`            | Security     | A widget acts in a workspace, so it declares one permission.                 |
+| `OWN-005`            | Ownership    | The plugin reads through the policy, which limits the rows to the workspace. |
+| `API-003`            | HTTP API     | The hub adds routes under `/workspaces*`.                                    |
+| `UI-001`             | Web UI       | The deck draws every widget. A plugin serves no part of the home page.       |
 
 ## 9. Open questions
 
-| #   | Question | Owner | Answer |
-| --- | -------- | ----- | ------ |
-| 1   | Is a cache in scope? | Temuri | No. Each load asks the plugin. |
-| 2   | How long does the hub wait for a plugin? | Temuri | 5 seconds, the same for every widget. |
-| 3   | Does the deck read a widget again on focus? | Temuri | No. Once, when the page opens. |
-| 4   | Does the registrar check a pair of kind and size? | Temuri | No. Only that the size is known. |
+| #   | Question                                          | Owner  | Answer                                |
+| --- | ------------------------------------------------- | ------ | ------------------------------------- |
+| 1   | Is a cache in scope?                              | Temuri | No. Each load asks the plugin.        |
+| 2   | How long does the hub wait for a plugin?          | Temuri | 5 seconds, the same for every widget. |
+| 3   | Does the deck read a widget again on focus?       | Temuri | No. Once, when the page opens.        |
+| 4   | Does the registrar check a pair of kind and size? | Temuri | No. Only that the size is known.      |
 
 ## Retired identifiers
 
-| ID              | Retired    | Reason |
-| --------------- | ---------- | ------ |
-| WIDGET-FR-011   | 2026-10-12 | The links of the home page move to the Workspace group of the navigation. `WIDGET-FR-038` to `WIDGET-FR-040` replace it. |
+| ID            | Retired    | Reason                                                                                                                   |
+| ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| WIDGET-FR-011 | 2026-10-12 | The links of the home page move to the Workspace group of the navigation. `WIDGET-FR-038` to `WIDGET-FR-040` replace it. |

@@ -199,6 +199,6 @@ with a flow identifier.
 
 ## Retired identifiers
 
-| ID               | Retired    | Reason                                                              |
-| ---------------- | ---------- | ------------------------------------------------------------------- |
-| `HEALTH-SC-017`  | 2026-09-29 | `HEALTH-DD-010` embeds `Problem`, so no type encodes to a non-object. |
+| ID              | Retired    | Reason                                                                |
+| --------------- | ---------- | --------------------------------------------------------------------- |
+| `HEALTH-SC-017` | 2026-09-29 | `HEALTH-DD-010` embeds `Problem`, so no type encodes to a non-object. |

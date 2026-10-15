@@ -58,13 +58,13 @@ sentence, and a required field invites filler.
 
 ## Alternatives
 
-| Alternative                                              | Why we did not select it                                                                     |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Keep the name in the UI manifest, and add one to the metadata. | Two sources of one fact. The deck needs a rule for which one wins.                      |
-| Derive the name from the identifier.                     | `tbilisi-energy` is no name a person reads. A plugin cannot choose capitals, spaces, or Georgian. |
-| An optional name in the metadata.                        | Every client keeps the fallback to the identifier, and the problem stays for each new plugin. |
-| Require a unique name across the loaded plugins.         | The identifier is already unique, as `PLG-003` and `PLG-011` give. Two plugins of one name confuse a person, and do not break the hub. |
-| Bump the API version to `v2`.                            | Every plugin rebuilds anyway, and the missing name gives the clearer error.                  |
+| Alternative                                                    | Why we did not select it                                                                                                               |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Keep the name in the UI manifest, and add one to the metadata. | Two sources of one fact. The deck needs a rule for which one wins.                                                                     |
+| Derive the name from the identifier.                           | `tbilisi-energy` is no name a person reads. A plugin cannot choose capitals, spaces, or Georgian.                                      |
+| An optional name in the metadata.                              | Every client keeps the fallback to the identifier, and the problem stays for each new plugin.                                          |
+| Require a unique name across the loaded plugins.               | The identifier is already unique, as `PLG-003` and `PLG-011` give. Two plugins of one name confuse a person, and do not break the hub. |
+| Bump the API version to `v2`.                                  | Every plugin rebuilds anyway, and the missing name gives the clearer error.                                                            |
 
 ## Consequences
 
@@ -84,20 +84,20 @@ sentence, and a required field invites filler.
 
 The glossary gains two terms.
 
-| ID                        | Term               | Definition                                                                    |
-| ------------------------- | ------------------ | ----------------------------------------------------------------------------- |
-| `GLO-plugin-name`         | plugin name        | The name that a person reads for a plugin. The plugin declares it in its metadata. |
-| `GLO-plugin-description`  | plugin description | One or two sentences that tell a person what a plugin does. It is optional.   |
+| ID                       | Term               | Definition                                                                         |
+| ------------------------ | ------------------ | ---------------------------------------------------------------------------------- |
+| `GLO-plugin-name`        | plugin name        | The name that a person reads for a plugin. The plugin declares it in its metadata. |
+| `GLO-plugin-description` | plugin description | One or two sentences that tell a person what a plugin does. It is optional.        |
 
 `PLG-004` does not change.
 
 ### Specifications to examine
 
-| Document                        | Why                                                                                  |
-| ------------------------------- | ------------------------------------------------------------------------------------ |
-| `features/pcap/requirements.md` | The report of a plugin gains the name and the description.                           |
-| `features/pcap/spec.md`         | `PluginEntry`, `api.yaml`, the `ui` capability without `name`, and the deck that reads the name from the entry. |
-| `features/plugacc/spec-clients.md` | The pages of the plugins read the name and show the description.                 |
+| Document                           | Why                                                                                                             |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `features/pcap/requirements.md`    | The report of a plugin gains the name and the description.                                                      |
+| `features/pcap/spec.md`            | `PluginEntry`, `api.yaml`, the `ui` capability without `name`, and the deck that reads the name from the entry. |
+| `features/plugacc/spec-clients.md` | The pages of the plugins read the name and show the description.                                                |
 
 ### Code that changes
 

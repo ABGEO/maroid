@@ -6,54 +6,54 @@ export const PROBLEM_MEDIA_TYPE = 'application/problem+json';
 
 /** One field that caused a rejection. */
 export interface FieldFailure {
-  /** The reason, as a sentence a person reads. */
-  detail: string;
-  /** A JSON Pointer in the fragment form of RFC 6901, so it starts with `#`. */
-  pointer: string;
+	/** The reason, as a sentence a person reads. */
+	detail: string;
+	/** A JSON Pointer in the fragment form of RFC 6901, so it starts with `#`. */
+	pointer: string;
 }
 
 /** The body of an error response. It obeys RFC 9457. */
 export interface Problem {
-  /** The problem type, a relative reference of the form /problems/<owner>/<slug>. */
-  type: string;
-  title: string;
-  status: number;
-  detail?: string;
-  instance?: string;
-  errors?: FieldFailure[];
+	/** The problem type, a relative reference of the form /problems/<owner>/<slug>. */
+	type: string;
+	title: string;
+	status: number;
+	detail?: string;
+	instance?: string;
+	errors?: FieldFailure[];
 }
 
 /** The problem types that the hub owns. */
 export const PROBLEM_TYPE = {
-  requestInvalid: '/problems/http/request-invalid',
-  bodyInvalid: '/problems/http/body-invalid',
-  memberUnknown: '/problems/http/member-unknown',
-  cursorStale: '/problems/http/cursor-stale',
-  accessDenied: '/problems/http/access-denied',
-  networkNotAllowed: '/problems/hub/network-not-allowed',
-  notFound: '/problems/http/not-found',
-  settingsAbsent: '/problems/hub/settings-absent',
-  memberExists: '/problems/hub/member-exists',
-  managerLast: '/problems/hub/manager-last',
-  administratorLast: '/problems/hub/administrator-last',
-  administratorAllowlist: '/problems/hub/administrator-allowlist',
-  permissionDenied: '/problems/http/permission-denied',
-  methodNotAllowed: '/problems/http/method-not-allowed',
-  requestInProgress: '/problems/http/request-in-progress',
-  preconditionFailed: '/problems/http/precondition-failed',
-  contentTooLarge: '/problems/http/content-too-large',
-  identityLast: '/problems/hub/identity-last',
-  validationFailed: '/problems/http/validation-failed',
-  settingsInvalid: '/problems/hub/settings-invalid',
-  providerExists: '/problems/hub/provider-exists',
-  providerStatic: '/problems/hub/provider-static',
-  localAccountExists: '/problems/hub/local-account-exists',
-  localProviderAbsent: '/problems/hub/local-provider-absent',
-  notificationRouteExists: '/problems/hub/notification-route-exists',
-  deliveryRefused: '/problems/hub/delivery-refused',
-  messagingUnreachable: '/problems/hub/messaging-unreachable',
-  notReady: '/problems/hub/not-ready',
-  internal: '/problems/http/internal'
+	requestInvalid: '/problems/http/request-invalid',
+	bodyInvalid: '/problems/http/body-invalid',
+	memberUnknown: '/problems/http/member-unknown',
+	cursorStale: '/problems/http/cursor-stale',
+	accessDenied: '/problems/http/access-denied',
+	networkNotAllowed: '/problems/hub/network-not-allowed',
+	notFound: '/problems/http/not-found',
+	settingsAbsent: '/problems/hub/settings-absent',
+	memberExists: '/problems/hub/member-exists',
+	managerLast: '/problems/hub/manager-last',
+	administratorLast: '/problems/hub/administrator-last',
+	administratorAllowlist: '/problems/hub/administrator-allowlist',
+	permissionDenied: '/problems/http/permission-denied',
+	methodNotAllowed: '/problems/http/method-not-allowed',
+	requestInProgress: '/problems/http/request-in-progress',
+	preconditionFailed: '/problems/http/precondition-failed',
+	contentTooLarge: '/problems/http/content-too-large',
+	identityLast: '/problems/hub/identity-last',
+	validationFailed: '/problems/http/validation-failed',
+	settingsInvalid: '/problems/hub/settings-invalid',
+	providerExists: '/problems/hub/provider-exists',
+	providerStatic: '/problems/hub/provider-static',
+	localAccountExists: '/problems/hub/local-account-exists',
+	localProviderAbsent: '/problems/hub/local-provider-absent',
+	notificationRouteExists: '/problems/hub/notification-route-exists',
+	deliveryRefused: '/problems/hub/delivery-refused',
+	messagingUnreachable: '/problems/hub/messaging-unreachable',
+	notReady: '/problems/hub/not-ready',
+	internal: '/problems/http/internal'
 } as const;
 
 /**
@@ -61,15 +61,15 @@ export const PROBLEM_TYPE = {
  * A body that another server wrote reaches this too, so it checks the shape.
  */
 export function isProblem(value: unknown): value is Problem {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
+	if (typeof value !== 'object' || value === null) {
+		return false;
+	}
 
-  const candidate = value as Partial<Problem>;
+	const candidate = value as Partial<Problem>;
 
-  return (
-    typeof candidate.type === 'string' &&
-    typeof candidate.title === 'string' &&
-    typeof candidate.status === 'number'
-  );
+	return (
+		typeof candidate.type === 'string' &&
+		typeof candidate.title === 'string' &&
+		typeof candidate.status === 'number'
+	);
 }

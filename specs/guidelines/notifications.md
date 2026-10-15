@@ -61,6 +61,6 @@ The configuration holds none of them. See `CFG-007`.
 
 ## Retired identifiers
 
-| ID        | Retired    | Reason                                                              |
-| --------- | ---------- | ------------------------------------------------------------------- |
+| ID        | Retired    | Reason                                                             |
+| --------- | ---------- | ------------------------------------------------------------------ |
 | `NTF-005` | 2026-10-11 | A URL defines no transport. `NTF-007` replaces it. See `ADR-0013`. |

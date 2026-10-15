@@ -20,18 +20,18 @@ This file holds the three clients that name a workspace. `SPC-001` divides them.
 
 ### 1.1 Coverage
 
-| Requirement     | Where this section realizes it                         |
-| --------------- | ------------------------------------------------------ |
-| `WSPACE-FR-015` | Section 1.3, `WSPACE-DD-007`, `WSPACE-SC-013`          |
-| `WSPACE-FR-016` | Section 1.2, `WSPACE-DD-009`, `WSPACE-SC-013`          |
-| `WSPACE-FR-017` | Section 1.4, `WSPACE-DD-006`, `WSPACE-SC-014`          |
-| `WSPACE-FR-018` | Section 1.4, `WSPACE-DD-008`, `WSPACE-SC-015`          |
-| `WSPACE-FR-019` | Section 1.4, `WSPACE-DD-006`, `WSPACE-SC-016`          |
+| Requirement     | Where this section realizes it                |
+| --------------- | --------------------------------------------- |
+| `WSPACE-FR-015` | Section 1.3, `WSPACE-DD-007`, `WSPACE-SC-013` |
+| `WSPACE-FR-016` | Section 1.2, `WSPACE-DD-009`, `WSPACE-SC-013` |
+| `WSPACE-FR-017` | Section 1.4, `WSPACE-DD-006`, `WSPACE-SC-014` |
+| `WSPACE-FR-018` | Section 1.4, `WSPACE-DD-008`, `WSPACE-SC-015` |
+| `WSPACE-FR-019` | Section 1.4, `WSPACE-DD-006`, `WSPACE-SC-016` |
 
 ### 1.2 Data model
 
-| Table                      | Schema   | Scope            | Migration                                                   | Realizes                         |
-| -------------------------- | -------- | ---------------- | ----------------------------------------------------------- | -------------------------------- |
+| Table            | Schema   | Scope            | Migration                                           | Realizes                                          |
+| ---------------- | -------- | ---------------- | --------------------------------------------------- | ------------------------------------------------- |
 | `telegram_chats` | `public` | scoped to a user | `20261003110000_table_telegram_chats_create.up.sql` | `WSPACE-FR-015`, `WSPACE-FR-016`, `WSPACE-FR-019` |
 
 ```sql
@@ -58,8 +58,8 @@ selection sets it to `NULL` and keeps the row. `WSPACE-DD-009` gives the shape.
 
 ### 1.3 Declarations
 
-| Command      | Scope   | Permission | Validates                    | Handles                                              | Realizes        |
-| ------------ | ------- | ---------- | ---------------------------- | ---------------------------------------------------- | --------------- |
+| Command      | Scope   | Permission | Validates                    | Handles                                                    | Realizes        |
+| ------------ | ------- | ---------- | ---------------------------- | ---------------------------------------------------------- | --------------- |
 | `/workspace` | Default | None       | The update carries a message | Answers one inline button for each workspace of the person | `WSPACE-FR-015` |
 
 A tap on a button sends a callback whose data is `workspace:<uuid>`. The hub handles
@@ -68,17 +68,17 @@ selection, answers the callback, and edits the message to name the selected
 workspace. A callback for a workspace of no membership answers "That workspace is no
 longer yours" and writes nothing.
 
-| Path                                                          | Action | Holds                                               |
-| ------------------------------------------------------------- | ------ | --------------------------------------------------- |
-| `apps/hub/db/migrations/20261003110000_table_telegram_chats_create.*` | create | The table and its policy             |
-| `apps/hub/internal/model/telegram_chat.go`                    | create | `model.TelegramChat`                                |
-| `apps/hub/internal/repository/telegram_chat.go`               | create | `repository.TelegramChatRepository`, `repository.TelegramChat` |
-| `apps/hub/internal/telegram/command/workspace.go`             | create | `command.Workspace`, `command.WorkspaceSelect`      |
-| `apps/hub/internal/workspace/chat.go`                         | create | `workspace.ChatSelection`: the rule of `WSPACE-DD-006`, the selection of a tap, and the memberships for the buttons |
-| `apps/hub/internal/telegram/middleware/acting_workspace.go`   | create | `middleware.ActingWorkspace`                        |
-| `apps/hub/internal/telegram/command/wrapper.go`               | change | `Wrapper.Handle` refuses an update with no acting workspace, and asks `command.Workspace` for the buttons |
-| `apps/hub/internal/telegram/update/update.go`                 | change | `ChatOf`, the chat of a message or of a callback    |
-| `apps/hub/internal/telegram/handler.go`                       | change | The middleware after `ActingUser`, and the callback handler |
+| Path                                                                  | Action | Holds                                                                                                               |
+| --------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| `apps/hub/db/migrations/20261003110000_table_telegram_chats_create.*` | create | The table and its policy                                                                                            |
+| `apps/hub/internal/model/telegram_chat.go`                            | create | `model.TelegramChat`                                                                                                |
+| `apps/hub/internal/repository/telegram_chat.go`                       | create | `repository.TelegramChatRepository`, `repository.TelegramChat`                                                      |
+| `apps/hub/internal/telegram/command/workspace.go`                     | create | `command.Workspace`, `command.WorkspaceSelect`                                                                      |
+| `apps/hub/internal/workspace/chat.go`                                 | create | `workspace.ChatSelection`: the rule of `WSPACE-DD-006`, the selection of a tap, and the memberships for the buttons |
+| `apps/hub/internal/telegram/middleware/acting_workspace.go`           | create | `middleware.ActingWorkspace`                                                                                        |
+| `apps/hub/internal/telegram/command/wrapper.go`                       | change | `Wrapper.Handle` refuses an update with no acting workspace, and asks `command.Workspace` for the buttons           |
+| `apps/hub/internal/telegram/update/update.go`                         | change | `ChatOf`, the chat of a message or of a callback                                                                    |
+| `apps/hub/internal/telegram/handler.go`                               | change | The middleware after `ActingUser`, and the callback handler                                                         |
 
 ### 1.4 Flow
 
@@ -178,38 +178,38 @@ reaches a tool call through the argument.
 
 ### 3.1 Coverage
 
-| Requirement     | Where this section realizes it                         |
-| --------------- | ------------------------------------------------------ |
-| `WSPACE-FR-020` | Section 3.2, `WSPACE-SC-017`                           |
-| `WSPACE-FR-021` | Section 3.2, `WSPACE-DD-010`, `WSPACE-SC-017`          |
-| `WSPACE-FR-022` | Section 3.2, `WSPACE-SC-018`                           |
-| `WSPACE-FR-023` | Section 3.3, `WSPACE-DD-011`, `WSPACE-SC-019`          |
-| `WSPACE-FR-024` | Section 3.3, `WSPACE-SC-020`                           |
-| `WSPACE-FR-025` | Section 3.2, `WSPACE-SC-021`                           |
+| Requirement     | Where this section realizes it                |
+| --------------- | --------------------------------------------- |
+| `WSPACE-FR-020` | Section 3.2, `WSPACE-SC-017`                  |
+| `WSPACE-FR-021` | Section 3.2, `WSPACE-DD-010`, `WSPACE-SC-017` |
+| `WSPACE-FR-022` | Section 3.2, `WSPACE-SC-018`                  |
+| `WSPACE-FR-023` | Section 3.3, `WSPACE-DD-011`, `WSPACE-SC-019` |
+| `WSPACE-FR-024` | Section 3.3, `WSPACE-SC-020`                  |
+| `WSPACE-FR-025` | Section 3.2, `WSPACE-SC-021`                  |
 
 ### 3.2 Components
 
 Every address that reads a workspace starts with `/w/{workspaceId}`. The owner chose
 the prefix.
 
-| Path                                                                      | Action | Holds                                                     |
-| ------------------------------------------------------------------------- | ------ | --------------------------------------------------------- |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/+layout.ts`               | create | Loads the workspace, answers 404 for a workspace of no membership, remembers it |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/+page.svelte`             | create | The overview of the workspace                             |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/members/+page.svelte`     | create | The members, the candidates, the removal, and the leave action |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/settings/+page.svelte`    | create | The name of the workspace                                 |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]/*` | move | From `(dashboard)/plugins/[plugin]/[...path]/`        |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/[plugin]/settings/*` | move | From `(dashboard)/plugins/[plugin]/settings/`          |
-| `apps/deck/src/routes/(dashboard)/workspaces/new/+page.svelte`            | create | The form that creates a workspace                         |
-| `apps/deck/src/routes/(dashboard)/+page.svelte`                           | change | Opens the remembered workspace, or offers to create one   |
-| `apps/deck/src/lib/api/workspaces.ts`                                     | create | The nine routes of `spec.md` section 4.3                  |
-| `apps/deck/src/lib/api/client.ts`                                         | change | `createPluginClient(workspaceId, pluginId)`               |
-| `apps/deck/src/lib/state/workspaces.svelte.ts`                            | create | The memberships, the acting workspace, the remembered one |
-| `apps/deck/src/lib/components/layout/WorkspaceSwitcher.svelte`            | create | The name of the acting workspace, and the menu of the others |
-| `apps/deck/src/lib/components/layout/Header.svelte`                       | change | Holds the switcher                                        |
-| `apps/deck/src/lib/components/layout/Sidebar.svelte`                      | change | Links under `/w/{workspaceId}`, and none with no workspace |
-| `libs/api-client/src/client.ts`                                           | change | `patch`, which sends `application/merge-patch+json`       |
-| `libs/plugin-sdk/src/types.ts`                                            | change | The comment of `api` names the prefix of `API-004`        |
+| Path                                                                          | Action | Holds                                                                           |
+| ----------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------- |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/+layout.ts`                   | create | Loads the workspace, answers 404 for a workspace of no membership, remembers it |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/+page.svelte`                 | create | The overview of the workspace                                                   |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/members/+page.svelte`         | create | The members, the candidates, the removal, and the leave action                  |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/settings/+page.svelte`        | create | The name of the workspace                                                       |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]/*` | move   | From `(dashboard)/plugins/[plugin]/[...path]/`                                  |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/[plugin]/settings/*`  | move   | From `(dashboard)/plugins/[plugin]/settings/`                                   |
+| `apps/deck/src/routes/(dashboard)/workspaces/new/+page.svelte`                | create | The form that creates a workspace                                               |
+| `apps/deck/src/routes/(dashboard)/+page.svelte`                               | change | Opens the remembered workspace, or offers to create one                         |
+| `apps/deck/src/lib/api/workspaces.ts`                                         | create | The nine routes of `spec.md` section 4.3                                        |
+| `apps/deck/src/lib/api/client.ts`                                             | change | `createPluginClient(workspaceId, pluginId)`                                     |
+| `apps/deck/src/lib/state/workspaces.svelte.ts`                                | create | The memberships, the acting workspace, the remembered one                       |
+| `apps/deck/src/lib/components/layout/WorkspaceSwitcher.svelte`                | create | The name of the acting workspace, and the menu of the others                    |
+| `apps/deck/src/lib/components/layout/Header.svelte`                           | change | Holds the switcher                                                              |
+| `apps/deck/src/lib/components/layout/Sidebar.svelte`                          | change | Links under `/w/{workspaceId}`, and none with no workspace                      |
+| `libs/api-client/src/client.ts`                                               | change | `patch`, which sends `application/merge-patch+json`                             |
+| `libs/plugin-sdk/src/types.ts`                                                | change | The comment of `api` names the prefix of `API-004`                              |
 
 The switcher sits in the header of every page. It shows the name of the acting
 workspace, which realizes `WSPACE-FR-020`. One click opens its menu, and a second

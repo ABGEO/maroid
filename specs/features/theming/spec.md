@@ -24,24 +24,24 @@ dex's own stock look.
 
 ## 2. Coverage
 
-| Requirement       | Where this specification realizes it            |
-| ------------------ | -------------------------------------------------- |
-| `THEMING-FR-001`   | Section 4.1, `THEMING-DD-002`, `THEMING-DD-008`, `THEMING-SC-001` to `THEMING-SC-003`, `THEMING-SC-008` |
-| `THEMING-FR-002`   | Section 4.1, `THEMING-DD-001`, `THEMING-DD-004`, `THEMING-SC-004`, `THEMING-SC-005` |
-| `THEMING-FR-003`   | Section 4.1, `THEMING-DD-005`, `THEMING-SC-006`   |
-| `THEMING-FR-004`   | Section 4.1, `THEMING-DD-002`, `THEMING-SC-001`   |
-| `THEMING-INV-001`  | Section 4.1, `THEMING-DD-003`, `THEMING-SC-007`   |
+| Requirement       | Where this specification realizes it                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| `THEMING-FR-001`  | Section 4.1, `THEMING-DD-002`, `THEMING-DD-008`, `THEMING-SC-001` to `THEMING-SC-003`, `THEMING-SC-008` |
+| `THEMING-FR-002`  | Section 4.1, `THEMING-DD-001`, `THEMING-DD-004`, `THEMING-SC-004`, `THEMING-SC-005`                     |
+| `THEMING-FR-003`  | Section 4.1, `THEMING-DD-005`, `THEMING-SC-006`                                                         |
+| `THEMING-FR-004`  | Section 4.1, `THEMING-DD-002`, `THEMING-SC-001`                                                         |
+| `THEMING-INV-001` | Section 4.1, `THEMING-DD-003`, `THEMING-SC-007`                                                         |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline      | How this specification obeys it |
-| --------- | -------------- | -------------------------------- |
-| `ARC-003` | Architecture   | `libs/theme` ships plain CSS. The shell's own TypeScript toolchain (Tailwind, in `apps/deck`) imports it with no extra build step, the same way it already imports `tailwindcss` itself. |
-| `ARC-005` | Architecture   | `libs/theme` is a shared library, the kind `libs/*` already names. `apps/gate` joins `apps/hub` and `apps/deck` under `apps/`, a buildable package like `apps/deck`, with no server of its own. |
-| `ARC-007` | Architecture   | Section 7 adds `libs/theme` and `apps/gate` to `pnpm-workspace.yaml`. |
-| `ARC-009` | Architecture   | `apps/gate/Dockerfile` builds one container image. Deploying it through `chart/` is unchanged by this specification. |
-| `TS-005`  | Frontend style | `libs/theme` and the identity provider's stylesheet both compile through Tailwind CSS 4 and daisyUI, the same as `apps/deck`. `TS-001` to `TS-004` do not apply: the package holds no TypeScript and no Svelte file. |
-| `BLD-001` | Build and release | Section 7 gives the lint and build command for `libs/theme` and `apps/gate`. |
+| Rule      | Guideline         | How this specification obeys it                                                                                                                                                                                      |
+| --------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ARC-003` | Architecture      | `libs/theme` ships plain CSS. The shell's own TypeScript toolchain (Tailwind, in `apps/deck`) imports it with no extra build step, the same way it already imports `tailwindcss` itself.                             |
+| `ARC-005` | Architecture      | `libs/theme` is a shared library, the kind `libs/*` already names. `apps/gate` joins `apps/hub` and `apps/deck` under `apps/`, a buildable package like `apps/deck`, with no server of its own.                      |
+| `ARC-007` | Architecture      | Section 7 adds `libs/theme` and `apps/gate` to `pnpm-workspace.yaml`.                                                                                                                                                |
+| `ARC-009` | Architecture      | `apps/gate/Dockerfile` builds one container image. Deploying it through `chart/` is unchanged by this specification.                                                                                                 |
+| `TS-005`  | Frontend style    | `libs/theme` and the identity provider's stylesheet both compile through Tailwind CSS 4 and daisyUI, the same as `apps/deck`. `TS-001` to `TS-004` do not apply: the package holds no TypeScript and no Svelte file. |
+| `BLD-001` | Build and release | Section 7 gives the lint and build command for `libs/theme` and `apps/gate`.                                                                                                                                         |
 
 ## 4. Design
 
@@ -49,11 +49,11 @@ dex's own stock look.
 
 **`libs/theme`**, a shared library.
 
-| File                            | Holds                                                                  |
-| --------------------------------- | ------------------------------------------------------------------------ |
-| `libs/theme/package.json`       | The package manifest. Exports `maroid.css` and `maroid-dusk.css`.      |
-| `libs/theme/.prettierrc`        | `useTabs`, `singleQuote`, matching `apps/deck/.prettierrc`.            |
-| `libs/theme/src/maroid.css`     | The `maroid` daisyUI theme: its colors, radii, and the three font declarations. The light theme, and the only one the identity provider imports. |
+| File                             | Holds                                                                                                                                                   |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `libs/theme/package.json`        | The package manifest. Exports `maroid.css` and `maroid-dusk.css`.                                                                                       |
+| `libs/theme/.prettierrc`         | `useTabs`, `singleQuote`, matching `apps/deck/.prettierrc`.                                                                                             |
+| `libs/theme/src/maroid.css`      | The `maroid` daisyUI theme: its colors, radii, and the three font declarations. The light theme, and the only one the identity provider imports.        |
 | `libs/theme/src/maroid-dusk.css` | The `maroid-dusk` daisyUI theme, the dark counterpart. Only `apps/deck` imports it: `THEMING` keeps a dark theme out of scope at the identity provider. |
 
 `libs/theme` also carries the page background texture and the font-family
@@ -67,17 +67,17 @@ same way `apps/deck` does.
 **`apps/gate`**, a buildable frontend under `apps/`, built to static output,
 running no server process of its own.
 
-| File                                         | Holds                                                                |
-| ----------------------------------------------- | ------------------------------------------------------------------------ |
-| `apps/gate/package.json`                   | The package manifest: one build script, `@maroid/theme` as a dependency. |
-| `apps/gate/.prettierrc`                    | `useTabs`, `singleQuote`, matching `libs/theme/.prettierrc`.           |
-| `apps/gate/src/styles.css`                 | The build entry: the shared theme, Tailwind, daisyUI, and the templates it scans. |
-| `apps/gate/.gitignore`                     | `web/themes/light/styles.css`, the one generated file.                 |
-| `apps/gate/web/templates/*.html`           | Every template the identity provider can render. `THEMING-DD-008` gives why all of them, not a subset. |
-| `apps/gate/web/static/img/oidc-icon.svg`   | Replaces the OpenID Connect provider's icon. No other file under `static/` exists here; the rest comes from the base image, unchanged. |
-| `apps/gate/web/themes/light/favicon.png`   | dex v2.45.1's own favicon, unchanged bytes.                            |
-| `apps/gate/web/themes/light/logo.png`      | The shell's own logo, unchanged bytes.                                 |
-| `apps/gate/web/themes/light/styles.css`    | Generated. The build script writes it directly here.                   |
+| File                                     | Holds                                                                                                                                  |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/gate/package.json`                 | The package manifest: one build script, `@maroid/theme` as a dependency.                                                               |
+| `apps/gate/.prettierrc`                  | `useTabs`, `singleQuote`, matching `libs/theme/.prettierrc`.                                                                           |
+| `apps/gate/src/styles.css`               | The build entry: the shared theme, Tailwind, daisyUI, and the templates it scans.                                                      |
+| `apps/gate/.gitignore`                   | `web/themes/light/styles.css`, the one generated file.                                                                                 |
+| `apps/gate/web/templates/*.html`         | Every template the identity provider can render. `THEMING-DD-008` gives why all of them, not a subset.                                 |
+| `apps/gate/web/static/img/oidc-icon.svg` | Replaces the OpenID Connect provider's icon. No other file under `static/` exists here; the rest comes from the base image, unchanged. |
+| `apps/gate/web/themes/light/favicon.png` | dex v2.45.1's own favicon, unchanged bytes.                                                                                            |
+| `apps/gate/web/themes/light/logo.png`    | The shell's own logo, unchanged bytes.                                                                                                 |
+| `apps/gate/web/themes/light/styles.css`  | Generated. The build script writes it directly here.                                                                                   |
 
 `apps/gate/web/themes/light/` replaces dex's own `light` theme in place,
 rather than adding a directory under a new name. `THEMING-DD-006` gives the
@@ -133,10 +133,10 @@ flowchart LR
 
 ### 4.5 Errors
 
-| Condition                                                          | Behavior                                            | Message                              |
-| --------------------------------------------------------------------- | ------------------------------------------------------ | ----------------------------------------- |
-| `frontend.theme` names a theme other than `light` (`dark`, or a name this web root does not carry) | The identity provider serves that theme, or falls back to its own `dark` theme for a name it does not recognize | A page in the identity provider's own stock theme, with no error |
-| The base image runs its process as a user other than uid 1001        | The copied files stay owned by 1001, unreadable        | The identity provider fails to start or to serve its themed assets |
+| Condition                                                                                          | Behavior                                                                                                        | Message                                                            |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `frontend.theme` names a theme other than `light` (`dark`, or a name this web root does not carry) | The identity provider serves that theme, or falls back to its own `dark` theme for a name it does not recognize | A page in the identity provider's own stock theme, with no error   |
+| The base image runs its process as a user other than uid 1001                                      | The copied files stay owned by 1001, unreadable                                                                 | The identity provider fails to start or to serve its themed assets |
 
 ## 5. Design decisions
 
@@ -351,18 +351,18 @@ stock look.
 
 ## 7. Build plan
 
-| #   | Step                                                                    | Realizes                          | Done |
-| --- | -------------------------------------------------------------------------- | ------------------------------------ | ---- |
-| 1   | Create `libs/theme`: the package manifest, `.prettierrc`, `src/maroid.css`, `src/maroid-dusk.css`. | `THEMING-FR-002` | [x]  |
-| 2   | Point `apps/deck/src/app.css` and its `package.json` at `@maroid/theme`. Delete the duplicated block. | `THEMING-FR-002` | [x]  |
-| 3   | Create `apps/gate`: the package manifest, `src/styles.css`, `.gitignore`, `.prettierrc`. | `THEMING-FR-002` | [x]  |
-| 4   | Copy dex v2.45.1's favicon and the shell's logo into `apps/gate/web/themes/light/`. Leave `robots.txt` and the base image's own `static/` out. | `THEMING-FR-001`, `THEMING-FR-003` | [x]  |
-| 5   | Own every template the identity provider's base image ships under `apps/gate/web/templates/`, matching the shell's header, footer, and panel shape. | `THEMING-FR-001`, `THEMING-FR-004` | [x]  |
-| 6   | Mark every page with the `maroid` theme explicitly.                    | `THEMING-INV-001`                 | [x]  |
-| 7   | Write `.docker/dex/Dockerfile`.                                        | `THEMING-FR-001`                  | [x]  |
-| 8   | Add `libs/theme` and `apps/gate` to `pnpm-workspace.yaml`. Add their lint and build rows to `BLD-001`. | `ARC-007`, `BLD-001` | [x]  |
-| 9   | Replace the OpenID Connect provider's icon under `apps/gate/web/static/img/`. | `THEMING-FR-001` | [x] |
-| 10  | Build the image. Walk every page under `THEMING-SC-001` to `THEMING-SC-008`, once with the device set to light, once set to dark, once with the session feature on. | Every scenario | [x]  |
+| #   | Step                                                                                                                                                                | Realizes                           | Done |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ---- |
+| 1   | Create `libs/theme`: the package manifest, `.prettierrc`, `src/maroid.css`, `src/maroid-dusk.css`.                                                                  | `THEMING-FR-002`                   | [x]  |
+| 2   | Point `apps/deck/src/app.css` and its `package.json` at `@maroid/theme`. Delete the duplicated block.                                                               | `THEMING-FR-002`                   | [x]  |
+| 3   | Create `apps/gate`: the package manifest, `src/styles.css`, `.gitignore`, `.prettierrc`.                                                                            | `THEMING-FR-002`                   | [x]  |
+| 4   | Copy dex v2.45.1's favicon and the shell's logo into `apps/gate/web/themes/light/`. Leave `robots.txt` and the base image's own `static/` out.                      | `THEMING-FR-001`, `THEMING-FR-003` | [x]  |
+| 5   | Own every template the identity provider's base image ships under `apps/gate/web/templates/`, matching the shell's header, footer, and panel shape.                 | `THEMING-FR-001`, `THEMING-FR-004` | [x]  |
+| 6   | Mark every page with the `maroid` theme explicitly.                                                                                                                 | `THEMING-INV-001`                  | [x]  |
+| 7   | Write `.docker/dex/Dockerfile`.                                                                                                                                     | `THEMING-FR-001`                   | [x]  |
+| 8   | Add `libs/theme` and `apps/gate` to `pnpm-workspace.yaml`. Add their lint and build rows to `BLD-001`.                                                              | `ARC-007`, `BLD-001`               | [x]  |
+| 9   | Replace the OpenID Connect provider's icon under `apps/gate/web/static/img/`.                                                                                       | `THEMING-FR-001`                   | [x]  |
+| 10  | Build the image. Walk every page under `THEMING-SC-001` to `THEMING-SC-008`, once with the device set to light, once set to dark, once with the session feature on. | Every scenario                     | [x]  |
 
 ## 8. Out of scope for this specification
 

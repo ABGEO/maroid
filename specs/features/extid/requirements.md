@@ -207,15 +207,15 @@ One session and one bot conversation each resolve to exactly one user record.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline        | Effect on this feature                                                          |
-| --------- | ---------------- | --------------------------------------------------------------------------------- |
+| Rule      | Guideline        | Effect on this feature                                                                                                  |
+| --------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `OWN-002` | Record ownership | An administrator creates every record. `EXTID-FR-010` is an action of an administrator, not of the person who signs in. |
-| `OWN-010` | Record ownership | `EXTID-FR-018`. The record and its first workspace come from one action.          |
-| `OWN-003` | Record ownership | Each entry point carries one acting user, and the identity resolves it.          |
-| `OWN-004` | Record ownership | A table that the resolver reads before an acting user exists is shared, and states its reason. |
-| `SEC-004` | Security         | The user record is the allowlist, and the hub reads it on each request.          |
-| `API-003` | HTTP API         | Each new route takes a place in the fixed list of prefixes.                      |
-| `TG-006`  | Telegram         | The conversation store keeps its key.                                            |
+| `OWN-010` | Record ownership | `EXTID-FR-018`. The record and its first workspace come from one action.                                                |
+| `OWN-003` | Record ownership | Each entry point carries one acting user, and the identity resolves it.                                                 |
+| `OWN-004` | Record ownership | A table that the resolver reads before an acting user exists is shared, and states its reason.                          |
+| `SEC-004` | Security         | The user record is the allowlist, and the hub reads it on each request.                                                 |
+| `API-003` | HTTP API         | Each new route takes a place in the fixed list of prefixes.                                                             |
+| `TG-006`  | Telegram         | The conversation store keeps its key.                                                                                   |
 
 `ADR-0002` changes `SEC-001`, `SEC-002`, `SEC-003`, `OWN-001`, `API-003`, and
 `GLO-user`. The owner accepted that decision on 2026-09-15.
@@ -226,14 +226,14 @@ succeeds it.
 
 ## 8. Open questions
 
-| #   | Question                                                                            | Owner  | Answer                                                                                                                                                        |
-| --- | ------------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | What happens when the token of the identity provider expires during a session?      | Temuri | the person signs in again. Maroid holds no renewal and stores no second token. The identity provider carries the lifetime that `EXTID-NFR-002` gives. |
-| 2   | Which providers does the first iteration offer?                                     | Temuri | the providers that the identity provider federates today. A further one costs configuration only, because `EXTID-FR-009` reads the list. A provider that holds a password is not one of them, because no statement asks Maroid to serve a password. `ADR-0010` later adds the local provider, and `IDPROV` serves it. |
-| 3   | Does an invitation name the provider that redeems it?                                | Temuri | no. The person uses whichever account they hold.                                                                                                     |
-| 4   | What becomes of a user record whose invitation expired with no sign in?             | Temuri | nothing. The record holds no identity, so it reaches nobody. An administrator issues a second invitation or blocks the record.                              |
-| 5   | How does the invitation reach the person?                                           | Temuri | the administrator sends it by hand. Maroid delivers nothing.                                                                                                 |
-| 6   | Does a detached external account keep the handle and the picture that it gave?       | Temuri | no. A detach removes the identity and everything on it.                                                                                              |
+| #   | Question                                                                       | Owner  | Answer                                                                                                                                                                                                                                                                                                                |
+| --- | ------------------------------------------------------------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | What happens when the token of the identity provider expires during a session? | Temuri | the person signs in again. Maroid holds no renewal and stores no second token. The identity provider carries the lifetime that `EXTID-NFR-002` gives.                                                                                                                                                                 |
+| 2   | Which providers does the first iteration offer?                                | Temuri | the providers that the identity provider federates today. A further one costs configuration only, because `EXTID-FR-009` reads the list. A provider that holds a password is not one of them, because no statement asks Maroid to serve a password. `ADR-0010` later adds the local provider, and `IDPROV` serves it. |
+| 3   | Does an invitation name the provider that redeems it?                          | Temuri | no. The person uses whichever account they hold.                                                                                                                                                                                                                                                                      |
+| 4   | What becomes of a user record whose invitation expired with no sign in?        | Temuri | nothing. The record holds no identity, so it reaches nobody. An administrator issues a second invitation or blocks the record.                                                                                                                                                                                        |
+| 5   | How does the invitation reach the person?                                      | Temuri | the administrator sends it by hand. Maroid delivers nothing.                                                                                                                                                                                                                                                          |
+| 6   | Does a detached external account keep the handle and the picture that it gave? | Temuri | no. A detach removes the identity and everything on it.                                                                                                                                                                                                                                                               |
 
 ## Retired identifiers
 

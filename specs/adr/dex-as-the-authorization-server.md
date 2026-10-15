@@ -6,8 +6,20 @@ status: accepted
 created: 2026-09-15
 updated: 2026-09-16
 decided: 2026-09-15
-changes: [SEC-001, SEC-002, SEC-003, OWN-001, OWN-003, API-003, GLO-user,
-  GLO-identity, GLO-provider, GLO-external-account, GLO-invitation]
+changes:
+  [
+    SEC-001,
+    SEC-002,
+    SEC-003,
+    OWN-001,
+    OWN-003,
+    API-003,
+    GLO-user,
+    GLO-identity,
+    GLO-provider,
+    GLO-external-account,
+    GLO-invitation
+  ]
 supersedes:
 superseded_by:
 ---
@@ -28,11 +40,11 @@ resource server at the same time.
 Dex federates several providers behind one OpenID Connect endpoint. Three of its
 properties decide the shape of this decision.
 
-| Property of Dex                                                                                      | Consequence for Maroid                                        |
-| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Property of Dex                                                                                                                                              | Consequence for Maroid                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
 | A token carries the connector and the upstream user identifier in the `federated_claims` claim, and the request asks for the scope `federated:id` to get it. | One pair of values names one external account. A consumer that omits the scope resolves to nobody. |
-| The `sub` claim encodes the upstream user identifier and the connector, so `userIDKey` changes it.   | A row that joins on `sub` orphans when a connector changes.     |
-| A connector accepts every account that its upstream provider accepts.                                | Authentication at Dex is not permission at Maroid.              |
+| The `sub` claim encodes the upstream user identifier and the connector, so `userIDKey` changes it.                                                           | A row that joins on `sub` orphans when a connector changes.                                        |
+| A connector accepts every account that its upstream provider accepts.                                                                                        | Authentication at Dex is not permission at Maroid.                                                 |
 
 ## Decision
 
@@ -60,13 +72,13 @@ for one person. The user record carries the name that the owner chose.
 
 ## Alternatives
 
-| Alternative                                             | Why we did not select it                                                                            |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Keep the Telegram OIDC service as the issuer.           | One connector only. A second provider needs a second flow inside the hub.                            |
+| Alternative                                             | Why we did not select it                                                                                                         |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Keep the Telegram OIDC service as the issuer.           | One connector only. A second provider needs a second flow inside the hub.                                                        |
 | Hold the provider and the external account on `users`.  | One person then holds one external account. A second one needs a second user record, and the rows of a person split across both. |
-| Join on the `sub` claim of Dex.                         | `sub` changes when a connector changes, and every identity then names nobody.                        |
-| Keep the token of the hub and read Dex at the callback. | Two token formats to verify when an agent arrives, and `.keys/` stays.                               |
-| Let an unknown external account create a user record.   | Any Google account then reaches Maroid. `SEC-004` states the opposite.                               |
+| Join on the `sub` claim of Dex.                         | `sub` changes when a connector changes, and every identity then names nobody.                                                    |
+| Keep the token of the hub and read Dex at the callback. | Two token formats to verify when an agent arrives, and `.keys/` stays.                                                           |
+| Let an unknown external account create a user record.   | Any Google account then reaches Maroid. `SEC-004` states the opposite.                                                           |
 
 ## Consequences
 
@@ -169,18 +181,18 @@ that person.
 
 Two settings stop being a choice of the owner.
 
-| Setting                                                       | Reason                                                                                          |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Setting                                                                                               | Reason                                                                                                                 |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | The Telegram connector exposes the numeric Telegram user identifier as its connector user identifier. | The bot reads that number from an update. A different value gives one person two identities and breaks `EXTID-FR-017`. |
-| The lifetime of a token matches the lifetime that `EXTID-NFR-002` gives. | The hub renews nothing, so the token alone decides when a person signs in again.                 |
+| The lifetime of a token matches the lifetime that `EXTID-NFR-002` gives.                              | The hub renews nothing, so the token alone decides when a person signs in again.                                       |
 
 ### Specifications to examine
 
-| Document                             | Why                                                                                  |
-| ------------------------------------ | -------------------------------------------------------------------------------------- |
-| `features/ident/requirements.md`     | `IDENT-INV-003` names the Telegram identifier. It retires, and `EXTID-INV-001` succeeds it. |
-| `features/ident/spec.md`             | Section 4.2, `IDENT-DD-005`, and the design decision on the subject claim all name the Telegram identifier. |
-| `features/ident/spec-scenarios.md`   | The scenario that inserts a duplicate Telegram identifier.                            |
+| Document                           | Why                                                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `features/ident/requirements.md`   | `IDENT-INV-003` names the Telegram identifier. It retires, and `EXTID-INV-001` succeeds it.                 |
+| `features/ident/spec.md`           | Section 4.2, `IDENT-DD-005`, and the design decision on the subject claim all name the Telegram identifier. |
+| `features/ident/spec-scenarios.md` | The scenario that inserts a duplicate Telegram identifier.                                                  |
 
 `IDENT-FR-002`, `IDENT-FR-010`, and `IDENT-FR-011` stay true word for word. The
 resolution of the acting user changes under them, and the statements do not.

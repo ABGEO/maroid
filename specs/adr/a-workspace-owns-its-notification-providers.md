@@ -6,9 +6,26 @@ status: accepted
 created: 2026-10-11
 updated: 2026-10-11
 decided: 2026-10-11
-changes: [NTF-001, NTF-002, NTF-004, NTF-005, NTF-006, NTF-007, NTF-008, SPC-003,
-  LOG-003, GIT-004, GLO-notification, GLO-notification-topic, GLO-notification-provider,
-  GLO-notification-provider-kind, GLO-destination, GLO-notification-route, GLO-unrouted]
+changes:
+  [
+    NTF-001,
+    NTF-002,
+    NTF-004,
+    NTF-005,
+    NTF-006,
+    NTF-007,
+    NTF-008,
+    SPC-003,
+    LOG-003,
+    GIT-004,
+    GLO-notification,
+    GLO-notification-topic,
+    GLO-notification-provider,
+    GLO-notification-provider-kind,
+    GLO-destination,
+    GLO-notification-route,
+    GLO-unrouted
+  ]
 supersedes:
 superseded_by:
 ---
@@ -26,13 +43,13 @@ question 2 deferred this to a rework. `NOTIF` is that rework.
 
 The facts of the code today:
 
-| Fact                                                                                       | Consequence                                                        |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| The configuration holds three transports. Each repeats one bot token with another thread. | A credential and a destination are two things with two lifetimes. |
-| A channel name is a string that a plugin hardcodes or reads from its configuration.       | The hub cannot list what a plugin sends.                           |
-| `libs/notifierapi` holds two interfaces and two types. Only `libs/pluginapi` and the plugins import it. | A second module adds a version to bump and no isolation.         |
-| `libs/notifier` holds the dispatcher, the registry, and the Telegram transport. Only the hub imports it. | `PLG-007` already keeps a plugin away from it.                   |
-| `PSET` gives a JSON Schema from a Go struct, a form in the deck, and a transit key for each workspace. | A notification provider kind reuses all three.                   |
+| Fact                                                                                                     | Consequence                                                       |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| The configuration holds three transports. Each repeats one bot token with another thread.                | A credential and a destination are two things with two lifetimes. |
+| A channel name is a string that a plugin hardcodes or reads from its configuration.                      | The hub cannot list what a plugin sends.                          |
+| `libs/notifierapi` holds two interfaces and two types. Only `libs/pluginapi` and the plugins import it.  | A second module adds a version to bump and no isolation.          |
+| `libs/notifier` holds the dispatcher, the registry, and the Telegram transport. Only the hub imports it. | `PLG-007` already keeps a plugin away from it.                    |
+| `PSET` gives a JSON Schema from a Go struct, a form in the deck, and a transit key for each workspace.   | A notification provider kind reuses all three.                    |
 
 ## Decision
 
@@ -69,16 +86,16 @@ The two modules end because the hub is the only consumer of `libs/notifier`, and
 
 ## Alternatives
 
-| Alternative                                                       | Why we did not select it                                                                    |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| Keep the channels in the configuration, one set for each workspace. | A restart for each change, and the bot token stays in plain text.                         |
-| A notification provider that holds the destination too.          | The token repeats in each record, as it repeats in the configuration today.                 |
-| A named destination record between a provider and a route.        | One more page and one more table for a reuse that one household does not need.              |
-| Keep the primary and fallback lists on a notification route.     | A fallback only matters when one route serves everyone. Two routes cover the case.          |
-| A durable queue with a retry.                                     | Each attachment then lives in the database. No job sends more than one notification a day. |
-| A notification provider or route that a user owns.                | Doubles the records, the policies, and the pages. No plugin sends to one person today.      |
-| The bot of the hub as the default notification provider.          | Every workspace then sends through the bot of the instance.                                |
-| Keep `libs/notifier` as a library.                                | One consumer. The scheme registry and the URL parser have no use after this decision.      |
+| Alternative                                                         | Why we did not select it                                                                   |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Keep the channels in the configuration, one set for each workspace. | A restart for each change, and the bot token stays in plain text.                          |
+| A notification provider that holds the destination too.             | The token repeats in each record, as it repeats in the configuration today.                |
+| A named destination record between a provider and a route.          | One more page and one more table for a reuse that one household does not need.             |
+| Keep the primary and fallback lists on a notification route.        | A fallback only matters when one route serves everyone. Two routes cover the case.         |
+| A durable queue with a retry.                                       | Each attachment then lives in the database. No job sends more than one notification a day. |
+| A notification provider or route that a user owns.                  | Doubles the records, the policies, and the pages. No plugin sends to one person today.     |
+| The bot of the hub as the default notification provider.            | Every workspace then sends through the bot of the instance.                                |
+| Keep `libs/notifier` as a library.                                  | One consumer. The scheme registry and the URL parser have no use after this decision.      |
 
 ## Consequences
 

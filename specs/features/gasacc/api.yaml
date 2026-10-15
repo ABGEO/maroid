@@ -226,7 +226,6 @@ paths:
               schema:
                 $ref: "../../api/components.yaml#/components/schemas/Problem"
 
-
 components:
   securitySchemes:
     sessionCookie:
@@ -278,7 +277,6 @@ components:
           type: string
           minLength: 1
           maxLength: 64
-
 
     Transaction:
       type: object

@@ -364,6 +364,6 @@ service records one sign in and two lists. The `token` secret holds `T2`.
 
 ## Retired identifiers
 
-| ID              | Retired    | Reason                                                                 |
-| --------------- | ---------- | ---------------------------------------------------------------------- |
+| ID              | Retired    | Reason                                                                |
+| --------------- | ---------- | --------------------------------------------------------------------- |
 | `GASACC-SC-011` | 2026-10-14 | `GASACC-FR-016` is retired. `GASACC-SC-034` verifies `GASACC-FR-043`. |

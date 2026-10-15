@@ -33,10 +33,10 @@ let a request bypass them. The method still tells a client that a repeat is safe
 
 ## Alternatives
 
-| Alternative | Why we did not select it |
-| ----------- | ------------------------ |
-| `POST /connections` | A repeat has no new effect, so `POST` tells the client that a retry is unsafe when it is safe. |
-| A `PUT` with an empty object `{}` | A body with no member is a representation in name alone, and every client must send it. |
+| Alternative                       | Why we did not select it                                                                       |
+| --------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `POST /connections`               | A repeat has no new effect, so `POST` tells the client that a retry is unsafe when it is safe. |
+| A `PUT` with an empty object `{}` | A body with no member is a representation in name alone, and every client must send it.        |
 
 ## Consequences
 

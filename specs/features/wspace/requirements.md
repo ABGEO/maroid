@@ -231,25 +231,25 @@ A user holds at most one membership in one workspace.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline        | Effect on this feature                                                      |
-| --------- | ---------------- | ----------------------------------------------------------------------------- |
-| `OWN-003` | Record ownership | `WSPACE-FR-013` and `WSPACE-FR-015` give the acting workspace of each entry point. |
-| `OWN-010` | Record ownership | Any active user creates a workspace. No workspace is deleted.               |
+| Rule      | Guideline        | Effect on this feature                                                                             |
+| --------- | ---------------- | -------------------------------------------------------------------------------------------------- |
+| `OWN-003` | Record ownership | `WSPACE-FR-013` and `WSPACE-FR-015` give the acting workspace of each entry point.                 |
+| `OWN-010` | Record ownership | Any active user creates a workspace. No workspace is deleted.                                      |
 | `OWN-011` | Record ownership | A membership binds one user to one workspace. `PERMS` adds the role, and the two release together. |
-| `SEC-004` | Security         | A blocked user record reaches no workspace.                                 |
-| `SEC-011` | Security         | An administrator changes the members of every workspace. `PLUGACC` gives that access. |
-| `SEC-013` | Security         | `PERMS` declares the permission of each route. The two release together.   |
-| `ERR-003` | Errors           | `WSPACE-FR-014` answers `not-found`.                                         |
-| `API-003` | HTTP API         | The routes of this feature sit under `/workspaces`.                         |
+| `SEC-004` | Security         | A blocked user record reaches no workspace.                                                        |
+| `SEC-011` | Security         | An administrator changes the members of every workspace. `PLUGACC` gives that access.              |
+| `SEC-013` | Security         | `PERMS` declares the permission of each route. The two release together.                           |
+| `ERR-003` | Errors           | `WSPACE-FR-014` answers `not-found`.                                                               |
+| `API-003` | HTTP API         | The routes of this feature sit under `/workspaces`.                                                |
 
 ## 8. Open questions
 
-| #   | Question                                                                                        | Owner  | Answer |
-| --- | ----------------------------------------------------------------------------------------------- | ------ | ------ |
-| 1   | Does `WSPACE-FR-023` remember the last workspace for the person on every device, or for each browser alone? | Temuri | For each browser alone. Maroid stores nothing for it. |
-| 2   | Who renames a workspace and changes its members before `PERMS` adds the roles?    | Temuri | Any member. Every member is equal until `PERMS`.      |
-| 3   | May the last member leave?                                                        | Temuri | Yes. The records stay, and nobody reaches them.       |
-| 4   | How does this feature meet `SEC-013` and `OWN-011`, which name roles and permissions? | Temuri | It releases together with `PERMS`. No guideline changes. |
+| #   | Question                                                                                                    | Owner  | Answer                                                   |
+| --- | ----------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------- |
+| 1   | Does `WSPACE-FR-023` remember the last workspace for the person on every device, or for each browser alone? | Temuri | For each browser alone. Maroid stores nothing for it.    |
+| 2   | Who renames a workspace and changes its members before `PERMS` adds the roles?                              | Temuri | Any member. Every member is equal until `PERMS`.         |
+| 3   | May the last member leave?                                                                                  | Temuri | Yes. The records stay, and nobody reaches them.          |
+| 4   | How does this feature meet `SEC-013` and `OWN-011`, which name roles and permissions?                       | Temuri | It releases together with `PERMS`. No guideline changes. |
 
 Answer every question before the approval. An open question blocks stage 2.
 

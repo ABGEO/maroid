@@ -23,54 +23,54 @@ token of the hub still works.
 
 ## 2. Coverage
 
-| Requirement        | Where this specification realizes it                          |
-| ------------------ | ------------------------------------------------------------- |
+| Requirement        | Where this specification realizes it                                                                       |
+| ------------------ | ---------------------------------------------------------------------------------------------------------- |
 | `SSACCESS-FR-001`  | Section 4.1, `SSACCESS-DD-001`, `SSACCESS-DD-002`, `SSACCESS-DD-004`, `SSACCESS-SC-001`, `SSACCESS-SC-002` |
-| `SSACCESS-FR-002`  | `SSACCESS-DD-002`, `SSACCESS-SC-002`                          |
-| `SSACCESS-FR-003`  | `SSACCESS-DD-003`, `SSACCESS-SC-003`, `SSACCESS-SC-004`       |
-| `SSACCESS-FR-004`  | `SSACCESS-DD-003`, `SSACCESS-SC-003`                          |
-| `SSACCESS-FR-005`  | Section 4.5, `SSACCESS-DD-006`, `SSACCESS-SC-005`, `SSACCESS-SC-006` |
-| `SSACCESS-FR-006`  | `SSACCESS-DD-005`, `SSACCESS-SC-007`, `SSACCESS-SC-008`       |
-| `SSACCESS-NFR-001` | `SSACCESS-DD-003`, `SSACCESS-SC-009`                          |
+| `SSACCESS-FR-002`  | `SSACCESS-DD-002`, `SSACCESS-SC-002`                                                                       |
+| `SSACCESS-FR-003`  | `SSACCESS-DD-003`, `SSACCESS-SC-003`, `SSACCESS-SC-004`                                                    |
+| `SSACCESS-FR-004`  | `SSACCESS-DD-003`, `SSACCESS-SC-003`                                                                       |
+| `SSACCESS-FR-005`  | Section 4.5, `SSACCESS-DD-006`, `SSACCESS-SC-005`, `SSACCESS-SC-006`                                       |
+| `SSACCESS-FR-006`  | `SSACCESS-DD-005`, `SSACCESS-SC-007`, `SSACCESS-SC-008`                                                    |
+| `SSACCESS-NFR-001` | `SSACCESS-DD-003`, `SSACCESS-SC-009`                                                                       |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline         | How this specification obeys it                                                   |
-| --------- | ----------------- | --------------------------------------------------------------------------------- |
-| `LIF-003` | Lifecycle         | The first login stays inside the build of the provider. The start keeps five steps. |
-| `LIF-004` | Lifecycle         | `SSACCESS-DD-004`. Each command runs `Session.Run` in its errgroup.               |
-| `LIF-005` | Lifecycle         | `SSACCESS-DD-004`. The session starts first, so its stop is the last step.        |
-| `LIF-006` | Lifecycle         | `Session.Stop` takes the shutdown context with its 10 seconds. `SSACCESS-SC-010`. |
-| `LOG-003` | Logging           | The logger of the session carries `component` and `address`.                      |
-| `LOG-005` | Logging           | Each failure goes to `slog.Any("error", err)`.                                    |
-| `LOG-008` | Logging           | `SSACCESS-DD-006`. No record holds the token or the secret ID. `SSACCESS-SC-005`. |
-| `DEP-003` | Dependencies      | `openBaoSession` replaces the field `openBaoClient`.                              |
-| `DEP-005` | Dependencies      | The build of the session can fail, so it holds `mu` and resets `once`.            |
-| `DEP-008` | Dependencies      | The session holds no resource that `Close` frees. The command stops the loop.     |
+| Rule      | Guideline         | How this specification obeys it                                                              |
+| --------- | ----------------- | -------------------------------------------------------------------------------------------- |
+| `LIF-003` | Lifecycle         | The first login stays inside the build of the provider. The start keeps five steps.          |
+| `LIF-004` | Lifecycle         | `SSACCESS-DD-004`. Each command runs `Session.Run` in its errgroup.                          |
+| `LIF-005` | Lifecycle         | `SSACCESS-DD-004`. The session starts first, so its stop is the last step.                   |
+| `LIF-006` | Lifecycle         | `Session.Stop` takes the shutdown context with its 10 seconds. `SSACCESS-SC-010`.            |
+| `LOG-003` | Logging           | The logger of the session carries `component` and `address`.                                 |
+| `LOG-005` | Logging           | Each failure goes to `slog.Any("error", err)`.                                               |
+| `LOG-008` | Logging           | `SSACCESS-DD-006`. No record holds the token or the secret ID. `SSACCESS-SC-005`.            |
+| `DEP-003` | Dependencies      | `openBaoSession` replaces the field `openBaoClient`.                                         |
+| `DEP-005` | Dependencies      | The build of the session can fail, so it holds `mu` and resets `once`.                       |
+| `DEP-008` | Dependencies      | The session holds no resource that `Close` frees. The command stops the loop.                |
 | `JOB-001` | Jobs              | `SSACCESS-DD-004`. The session is not a `worker.Worker`, so `--workers` cannot leave it out. |
-| `EXT-005` | External services | A refused lookup of the token is a failed check, never an up.                     |
-| `TST-004` | Testing           | Section 6 gives each scenario a layer. `SSACCESS-SC-009` measures the 60 seconds. |
+| `EXT-005` | External services | A refused lookup of the token is a failed check, never an up.                                |
+| `TST-004` | Testing           | Section 6 gives each scenario a layer. `SSACCESS-SC-009` measures the 60 seconds.            |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                              | Action | Content                                                                 |
-| ------------------------------------------------- | ------ | ----------------------------------------------------------------------- |
-| `apps/hub/internal/openbao/client.go`             | delete | Its login moves into `session.go`.                                      |
-| `apps/hub/internal/openbao/session.go`            | create | `Session`, `New`, `Client`, `Run`, `Stop`                               |
-| `apps/hub/internal/openbao/doc.go`                | change | The package keeps the access of the hub to OpenBao.                     |
-| `apps/hub/internal/openbao/session_test.go`       | create | `SSACCESS-SC-001` to `SSACCESS-SC-006`, `SSACCESS-SC-009` to `SSACCESS-SC-011` |
-| `apps/hub/internal/depresolver/secret.go`         | change | `OpenBaoSession` replaces `OpenBaoClient`. `SecretCipher` takes `Client()`. |
-| `apps/hub/internal/depresolver/health.go`         | change | `HealthService` takes `OpenBaoSession().Client()`.                      |
-| `apps/hub/internal/depresolver/resolver.go`       | change | `Resolver` lists `OpenBaoSession`. The field `openBaoSession` replaces `openBaoClient`. |
-| `apps/hub/internal/command/serve/http.go`         | change | Runs the session in the errgroup. Stops it in the last shutdown step.   |
-| `apps/hub/internal/command/worker.go`             | change | Runs the session in the errgroup. Stops it after every worker.          |
-| `apps/hub/internal/healthcheck/openbao.go`        | change | `secretStoreCheck` looks up the token after the health of the store.    |
-| `apps/hub/internal/healthcheck/service_test.go`   | change | The fake store answers `lookup-self`. `SSACCESS-SC-007`, `SSACCESS-SC-008`. |
-| `apps/hub/internal/secret/transit_test.go`        | change | Builds the cipher from `openbao.New(...).Client()`.                     |
-| `apps/hub/internal/settings/manager_test.go`      | change | Builds the cipher from `openbao.New(...).Client()`.                     |
-| `specs/features/pset/spec.md`                     | change | Section 4 names `openbao.New` with its new result.                      |
+| Path                                            | Action | Content                                                                                 |
+| ----------------------------------------------- | ------ | --------------------------------------------------------------------------------------- |
+| `apps/hub/internal/openbao/client.go`           | delete | Its login moves into `session.go`.                                                      |
+| `apps/hub/internal/openbao/session.go`          | create | `Session`, `New`, `Client`, `Run`, `Stop`                                               |
+| `apps/hub/internal/openbao/doc.go`              | change | The package keeps the access of the hub to OpenBao.                                     |
+| `apps/hub/internal/openbao/session_test.go`     | create | `SSACCESS-SC-001` to `SSACCESS-SC-006`, `SSACCESS-SC-009` to `SSACCESS-SC-011`          |
+| `apps/hub/internal/depresolver/secret.go`       | change | `OpenBaoSession` replaces `OpenBaoClient`. `SecretCipher` takes `Client()`.             |
+| `apps/hub/internal/depresolver/health.go`       | change | `HealthService` takes `OpenBaoSession().Client()`.                                      |
+| `apps/hub/internal/depresolver/resolver.go`     | change | `Resolver` lists `OpenBaoSession`. The field `openBaoSession` replaces `openBaoClient`. |
+| `apps/hub/internal/command/serve/http.go`       | change | Runs the session in the errgroup. Stops it in the last shutdown step.                   |
+| `apps/hub/internal/command/worker.go`           | change | Runs the session in the errgroup. Stops it after every worker.                          |
+| `apps/hub/internal/healthcheck/openbao.go`      | change | `secretStoreCheck` looks up the token after the health of the store.                    |
+| `apps/hub/internal/healthcheck/service_test.go` | change | The fake store answers `lookup-self`. `SSACCESS-SC-007`, `SSACCESS-SC-008`.             |
+| `apps/hub/internal/secret/transit_test.go`      | change | Builds the cipher from `openbao.New(...).Client()`.                                     |
+| `apps/hub/internal/settings/manager_test.go`    | change | Builds the cipher from `openbao.New(...).Client()`.                                     |
+| `specs/features/pset/spec.md`                   | change | Section 4 names `openbao.New` with its new result.                                      |
 
 ```go
 // apps/hub/internal/openbao/session.go
@@ -101,11 +101,11 @@ OpenBaoSession() (*openbao.Session, error)
 
 The constants of `session.go`:
 
-| Constant          | Value      | Use                                       |
-| ----------------- | ---------- | ----------------------------------------- |
-| `firstRetryDelay` | 1 second   | The wait after the first failed login.    |
-| `maxRetryDelay`   | 30 seconds | The longest wait between two logins.      |
-| `loginTimeout`    | 10 seconds | The limit of one login request.           |
+| Constant          | Value      | Use                                    |
+| ----------------- | ---------- | -------------------------------------- |
+| `firstRetryDelay` | 1 second   | The wait after the first failed login. |
+| `maxRetryDelay`   | 30 seconds | The longest wait between two logins.   |
+| `loginTimeout`    | 10 seconds | The limit of one login request.        |
 
 ### 4.3 Declarations
 
@@ -142,14 +142,14 @@ sequenceDiagram
 
 ### 4.5 Errors
 
-| Condition                                        | Behavior                                         | Log record                                          |
-| ------------------------------------------------ | ------------------------------------------------ | --------------------------------------------------- |
-| The first login fails                            | `New` returns the error. The process stops.      | None. `PSET` gives the message.                     |
-| A renewal fails                                  | The watcher tries again until the lease ends, then ends with the error | Warn, `renewing the openbao token failed`, at the end of the watch |
-| A login after the start fails                    | Wait, then try again. Run keeps running.         | Error, `logging in to openbao failed`, with `retry_in` |
-| A login after the start succeeds                 | Watch the new secret                             | Info, `logged in to openbao`                        |
-| The token lookup of a readiness check fails      | The secret store counts as failed                | The record of `HEALTH`                              |
-| `Stop` reaches the deadline of its context       | `Stop` returns the error of the context          | The shutdown step logs it. `LIF-008`.               |
+| Condition                                   | Behavior                                                               | Log record                                                         |
+| ------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| The first login fails                       | `New` returns the error. The process stops.                            | None. `PSET` gives the message.                                    |
+| A renewal fails                             | The watcher tries again until the lease ends, then ends with the error | Warn, `renewing the openbao token failed`, at the end of the watch |
+| A login after the start fails               | Wait, then try again. Run keeps running.                               | Error, `logging in to openbao failed`, with `retry_in`             |
+| A login after the start succeeds            | Watch the new secret                                                   | Info, `logged in to openbao`                                       |
+| The token lookup of a readiness check fails | The secret store counts as failed                                      | The record of `HEALTH`                                             |
+| `Stop` reaches the deadline of its context  | `Stop` returns the error of the context                                | The shutdown step logs it. `LIF-008`.                              |
 
 ## 5. Design decisions
 
@@ -343,15 +343,15 @@ restore. The waits double past 60 seconds inside the outage, so a wait with no
 
 ## 7. Build plan
 
-| #   | Step                                                                                  | Realizes                                   | Done |
-| --- | ------------------------------------------------------------------------------------- | ------------------------------------------ | ---- |
-| 1   | Write the test proxy and `SSACCESS-SC-001` to `SC-006`, `SC-010`, `SC-011`. Watch them fail. | `SSACCESS-FR-001` to `SSACCESS-FR-005`     | [x]  |
-| 2   | Write `openbao.Session` and delete `client.go`.                                       | `SSACCESS-FR-001` to `SSACCESS-FR-005`     | [x]  |
-| 3   | Replace `OpenBaoClient` with `OpenBaoSession` in the container.                       | `SSACCESS-FR-001`                          | [x]  |
-| 4   | Run and stop the session in `serve http` and in `worker`.                             | `SSACCESS-FR-001`                          | [x]  |
-| 5   | Add `lookup-self` to the fake store. Write `SC-007` and `SC-008`, then the check.     | `SSACCESS-FR-006`                          | [x]  |
-| 6   | Write `SSACCESS-SC-009`.                                                              | `SSACCESS-NFR-001`                         | [x]  |
-| 7   | Name the new result of `openbao.New` in section 4 of `specs/features/pset/spec.md`.   | `SSACCESS-FR-001`                          | [x]  |
+| #   | Step                                                                                         | Realizes                               | Done |
+| --- | -------------------------------------------------------------------------------------------- | -------------------------------------- | ---- |
+| 1   | Write the test proxy and `SSACCESS-SC-001` to `SC-006`, `SC-010`, `SC-011`. Watch them fail. | `SSACCESS-FR-001` to `SSACCESS-FR-005` | [x]  |
+| 2   | Write `openbao.Session` and delete `client.go`.                                              | `SSACCESS-FR-001` to `SSACCESS-FR-005` | [x]  |
+| 3   | Replace `OpenBaoClient` with `OpenBaoSession` in the container.                              | `SSACCESS-FR-001`                      | [x]  |
+| 4   | Run and stop the session in `serve http` and in `worker`.                                    | `SSACCESS-FR-001`                      | [x]  |
+| 5   | Add `lookup-self` to the fake store. Write `SC-007` and `SC-008`, then the check.            | `SSACCESS-FR-006`                      | [x]  |
+| 6   | Write `SSACCESS-SC-009`.                                                                     | `SSACCESS-NFR-001`                     | [x]  |
+| 7   | Name the new result of `openbao.New` in section 4 of `specs/features/pset/spec.md`.          | `SSACCESS-FR-001`                      | [x]  |
 
 ## Retired identifiers
 

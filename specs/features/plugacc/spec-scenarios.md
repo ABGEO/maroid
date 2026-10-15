@@ -339,6 +339,6 @@ H.
 
 ## Retired identifiers
 
-| ID               | Retired    | Reason |
-| ---------------- | ---------- | ------ |
-| PLUGACC-SC-015   | 2026-10-04 | The owner postponed the menu of each chat (`PLUGACC-FR-031`, `PLUGACC-NFR-002`). Its later design takes new identifiers. |
+| ID             | Retired    | Reason                                                                                                                   |
+| -------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| PLUGACC-SC-015 | 2026-10-04 | The owner postponed the menu of each chat (`PLUGACC-FR-031`, `PLUGACC-NFR-002`). Its later design takes new identifiers. |

@@ -25,99 +25,99 @@ and routes under `/users/{userId}/identities` give, reset, and remove a local ac
 
 ## 2. Coverage
 
-| Requirement      | Where this specification realizes it                    |
-| ---------------- | -------------------------------------------------------- |
-| `IDPROV-FR-001`  | Section 4.3, `IDPROV-DD-002`, `IDPROV-SC-001`             |
+| Requirement      | Where this specification realizes it                           |
+| ---------------- | -------------------------------------------------------------- |
+| `IDPROV-FR-001`  | Section 4.3, `IDPROV-DD-002`, `IDPROV-SC-001`                  |
 | `IDPROV-FR-002`  | Section 4.3, `IDPROV-DD-004`, `IDPROV-SC-002`, `IDPROV-SC-003` |
-| `IDPROV-FR-003`  | Section 4.4, `IDPROV-SC-002`                              |
-| `IDPROV-FR-004`  | Section 4.4, `IDPROV-SC-004`                              |
-| `IDPROV-FR-005`  | `IDPROV-DD-008`, `IDPROV-SC-004`                          |
-| `IDPROV-FR-006`  | Section 4.4, `IDPROV-SC-006`                              |
-| `IDPROV-FR-007`  | Section 4.3, `IDPROV-SC-007`                              |
-| `IDPROV-FR-008`  | `IDPROV-DD-005`, `IDPROV-SC-008`                          |
-| `IDPROV-FR-009`  | Section 4.3, `IDPROV-SC-009`                              |
-| `IDPROV-FR-010`  | Section 4.3, `IDPROV-SC-010`                              |
-| `IDPROV-FR-011`  | `IDPROV-DD-006`, `IDPROV-SC-011`                          |
-| `IDPROV-FR-012`  | `IDPROV-DD-007`, `IDPROV-SC-012`                          |
-| `IDPROV-FR-013`  | Section 4.3, `IDPROV-SC-013`                              |
-| `IDPROV-FR-014`  | `IDPROV-DD-003`, `IDPROV-SC-013`                          |
-| `IDPROV-FR-015`  | Section 4.5, `IDPROV-SC-014`                              |
-| `IDPROV-FR-016`  | `IDPROV-DD-002`, `IDPROV-SC-015`                          |
-| `IDPROV-FR-017`  | Section 4.1, `IDPROV-SC-016`                              |
-| `IDPROV-FR-018`  | Section 4.3, `IDPROV-DD-009`, `IDPROV-SC-017`             |
-| `IDPROV-FR-019`  | Section 4.3, `IDPROV-SC-018`                              |
-| `IDPROV-FR-020`  | Section 4.3, `IDPROV-SC-019`                              |
-| `IDPROV-FR-021`  | Section 4.5, `IDPROV-SC-020`                              |
-| `IDPROV-FR-022`  | Section 4.6, `IDPROV-SC-021`                              |
-| `IDPROV-FR-023`  | Section 4.6, `IDPROV-SC-022`                              |
-| `IDPROV-FR-024`  | Section 4.3, `IDPROV-SC-010`, `IDPROV-SC-023`             |
-| `IDPROV-FR-025`  | Section 4.3, `IDPROV-SC-024`, `IDPROV-SC-025`             |
-| `IDPROV-FR-026`  | Section 4.3, `IDPROV-SC-024`                              |
-| `IDPROV-FR-027`  | Section 4.3, `IDPROV-SC-026`                              |
-| `IDPROV-FR-028`  | Section 4.3, `IDPROV-DD-012`, `IDPROV-SC-027`             |
-| `IDPROV-NFR-001` | `IDPROV-DD-001`, `IDPROV-SC-028`                          |
-| `IDPROV-NFR-002` | `IDPROV-DD-003`, `IDPROV-SC-029`                          |
-| `IDPROV-INV-001` | Section 4.6, `IDPROV-SC-009`                              |
-| `IDPROV-INV-002` | Section 4.4, `IDPROV-SC-004`                              |
-| `IDPROV-INV-003` | Section 4.4, `IDPROV-SC-005`                              |
-| `IDPROV-INV-004` | `IDPROV-DD-009`, `IDPROV-SC-017`                          |
-| `IDPROV-INV-005` | `IDPROV-DD-009`, `IDPROV-SC-030`                          |
+| `IDPROV-FR-003`  | Section 4.4, `IDPROV-SC-002`                                   |
+| `IDPROV-FR-004`  | Section 4.4, `IDPROV-SC-004`                                   |
+| `IDPROV-FR-005`  | `IDPROV-DD-008`, `IDPROV-SC-004`                               |
+| `IDPROV-FR-006`  | Section 4.4, `IDPROV-SC-006`                                   |
+| `IDPROV-FR-007`  | Section 4.3, `IDPROV-SC-007`                                   |
+| `IDPROV-FR-008`  | `IDPROV-DD-005`, `IDPROV-SC-008`                               |
+| `IDPROV-FR-009`  | Section 4.3, `IDPROV-SC-009`                                   |
+| `IDPROV-FR-010`  | Section 4.3, `IDPROV-SC-010`                                   |
+| `IDPROV-FR-011`  | `IDPROV-DD-006`, `IDPROV-SC-011`                               |
+| `IDPROV-FR-012`  | `IDPROV-DD-007`, `IDPROV-SC-012`                               |
+| `IDPROV-FR-013`  | Section 4.3, `IDPROV-SC-013`                                   |
+| `IDPROV-FR-014`  | `IDPROV-DD-003`, `IDPROV-SC-013`                               |
+| `IDPROV-FR-015`  | Section 4.5, `IDPROV-SC-014`                                   |
+| `IDPROV-FR-016`  | `IDPROV-DD-002`, `IDPROV-SC-015`                               |
+| `IDPROV-FR-017`  | Section 4.1, `IDPROV-SC-016`                                   |
+| `IDPROV-FR-018`  | Section 4.3, `IDPROV-DD-009`, `IDPROV-SC-017`                  |
+| `IDPROV-FR-019`  | Section 4.3, `IDPROV-SC-018`                                   |
+| `IDPROV-FR-020`  | Section 4.3, `IDPROV-SC-019`                                   |
+| `IDPROV-FR-021`  | Section 4.5, `IDPROV-SC-020`                                   |
+| `IDPROV-FR-022`  | Section 4.6, `IDPROV-SC-021`                                   |
+| `IDPROV-FR-023`  | Section 4.6, `IDPROV-SC-022`                                   |
+| `IDPROV-FR-024`  | Section 4.3, `IDPROV-SC-010`, `IDPROV-SC-023`                  |
+| `IDPROV-FR-025`  | Section 4.3, `IDPROV-SC-024`, `IDPROV-SC-025`                  |
+| `IDPROV-FR-026`  | Section 4.3, `IDPROV-SC-024`                                   |
+| `IDPROV-FR-027`  | Section 4.3, `IDPROV-SC-026`                                   |
+| `IDPROV-FR-028`  | Section 4.3, `IDPROV-DD-012`, `IDPROV-SC-027`                  |
+| `IDPROV-NFR-001` | `IDPROV-DD-001`, `IDPROV-SC-028`                               |
+| `IDPROV-NFR-002` | `IDPROV-DD-003`, `IDPROV-SC-029`                               |
+| `IDPROV-INV-001` | Section 4.6, `IDPROV-SC-009`                                   |
+| `IDPROV-INV-002` | Section 4.4, `IDPROV-SC-004`                                   |
+| `IDPROV-INV-003` | Section 4.4, `IDPROV-SC-005`                                   |
+| `IDPROV-INV-004` | `IDPROV-DD-009`, `IDPROV-SC-017`                               |
+| `IDPROV-INV-005` | `IDPROV-DD-009`, `IDPROV-SC-030`                               |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline     | How this specification obeys it                                                   |
-| --------- | ------------- | ----------------------------------------------------------------------------------- |
-| `SEC-001` | Security      | Section 4.5 hashes a password in memory. No row, log, or answer holds it.          |
-| `SEC-003` | Security      | Section 4.6 refuses a change to the identifier, the issuer, or the claim.          |
-| `SEC-004` | Security      | A block touches no local account. The resolver still refuses the record.           |
-| `SEC-011` | Security      | Every route of section 4.3 runs `auth.RequireAdministrator`.                       |
-| `OWN-002` | Ownership     | No route creates a user record. The command reaches an existing one.               |
-| `OWN-004` | Ownership     | `public.identities` stays shared. No table is added.                               |
-| `ERR-003` | Errors        | Section 4.6 adds four types of the hub. The owner approves them with this specification. |
-| `API-003` | HTTP API      | The routes sit under `/providers` and `/users`.                                    |
+| Rule      | Guideline     | How this specification obeys it                                                               |
+| --------- | ------------- | --------------------------------------------------------------------------------------------- |
+| `SEC-001` | Security      | Section 4.5 hashes a password in memory. No row, log, or answer holds it.                     |
+| `SEC-003` | Security      | Section 4.6 refuses a change to the identifier, the issuer, or the claim.                     |
+| `SEC-004` | Security      | A block touches no local account. The resolver still refuses the record.                      |
+| `SEC-011` | Security      | Every route of section 4.3 runs `auth.RequireAdministrator`.                                  |
+| `OWN-002` | Ownership     | No route creates a user record. The command reaches an existing one.                          |
+| `OWN-004` | Ownership     | `public.identities` stays shared. No table is added.                                          |
+| `ERR-003` | Errors        | Section 4.6 adds four types of the hub. The owner approves them with this specification.      |
+| `API-003` | HTTP API      | The routes sit under `/providers` and `/users`.                                               |
 | `API-007` | HTTP API      | A provider carries `ETag`, and its change reads `If-Match`. A `POST` reads `Idempotency-Key`. |
-| `RES-005` | REST          | Each collection answers one bounded page.                                          |
-| `Z-134`   | REST          | Every path segment of a resource is plural. The local account is an identity.      |
-| `Z-148`   | REST          | A change uses `PATCH` with merge patch.                                            |
-| `CLI-001` | CLI           | `maroid user password` joins the tree. `CLI-004` validates in `PreRunE`.           |
-| `CFG-003` | Configuration | The `dex` block declares its defaults and its validation in tags.                  |
-| `CFG-004` | Configuration | The certificate and the key live in files outside the repository.                  |
-| `DEP-005` | Dependencies  | `DexClient` can fail to build, so it holds `mu` and resets `once`.                 |
-| `DEP-008` | Dependencies  | `CloseDexClient` closes the gRPC connection.                                       |
-| `LOG-008` | Logging       | No log line carries a password, a hash, a connector config, or a client secret.    |
+| `RES-005` | REST          | Each collection answers one bounded page.                                                     |
+| `Z-134`   | REST          | Every path segment of a resource is plural. The local account is an identity.                 |
+| `Z-148`   | REST          | A change uses `PATCH` with merge patch.                                                       |
+| `CLI-001` | CLI           | `maroid user password` joins the tree. `CLI-004` validates in `PreRunE`.                      |
+| `CFG-003` | Configuration | The `dex` block declares its defaults and its validation in tags.                             |
+| `CFG-004` | Configuration | The certificate and the key live in files outside the repository.                             |
+| `DEP-005` | Dependencies  | `DexClient` can fail to build, so it holds `mu` and resets `once`.                            |
+| `DEP-008` | Dependencies  | `CloseDexClient` closes the gRPC connection.                                                  |
+| `LOG-008` | Logging       | No log line carries a password, a hash, a connector config, or a client secret.               |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                                        | Action | Holds                                                               |
-| ----------------------------------------------------------- | ------ | ------------------------------------------------------------------- |
-| `apps/hub/internal/config/config.go`                        | change | `Dex` block. `Auth.Providers` and `Provider` go.                    |
-| `apps/hub/internal/dex/{doc,client}.go`                     | create | `dex.Client`, the gRPC client of Dex with mutual TLS and a deadline |
-| `apps/hub/internal/provider/{doc,preset,options,build,discovery}.go` | create | `provider.Preset`, the fixed fields, `oidcOptions`, the checks of a preset, `provider.OIDCDiscovery` |
-| `apps/hub/internal/provider/service.go`                     | create | `provider.Service`: list, read, add, change, remove                 |
-| `apps/hub/internal/provider/local.go`                       | create | `provider.LocalAccounts`: give, reset, remove                       |
-| `apps/hub/internal/repository/identity.go`                  | change | `CountByProvider`, `AdministratorsBySoleProvider`, `DeleteByProvider`. The repository comes from the transaction (`ADR-0011`) |
-| `apps/hub/internal/auth/resolver.go`                        | change | `ProviderLocal`                                                     |
-| `apps/hub/internal/handler/provider.go`                     | create | `handler.Provider`, the routes under `/providers`                   |
-| `apps/hub/internal/handler/{user,user_identity}.go`         | change, create | The routes under `/users/{userId}/identities`                |
-| `apps/hub/internal/handler/auth.go`                         | change | `Identities` reads `provider.Service.List`. `Link` refuses `local`. `Detach` of `local` runs `LocalAccounts.Remove`. |
-| `apps/hub/internal/domain/problems/problems.go`             | change | The four types of section 4.6                                       |
-| `apps/hub/internal/domain/errs/errs.go`                     | change | The sentinels of section 4.6                                        |
-| `apps/hub/internal/depresolver/{dex,provider,server}.go`    | create, change | `DexClient`, `CloseDexClient`, `ProviderService`, `LocalAccounts`, the handler |
-| `apps/hub/internal/command/user/password.go`                | create | `PasswordCommand`                                                   |
-| `apps/hub/internal/command/user/{user,invite}.go`           | change | Registers `password`. `invite` prints the record identifier.        |
-| `apps/deck/src/lib/api/{providers,users,types,index}.ts`    | create, change | The client of section 4.3                                    |
-| `apps/deck/src/routes/(dashboard)/admin/providers/+page.svelte` | create | The list, and the menu that adds a provider                     |
-| `apps/deck/src/routes/(dashboard)/admin/providers/[provider]/+page.svelte` | create | The form, the redirect address, the removal dialog   |
-| `apps/deck/src/routes/(dashboard)/admin/users/[user]/+page.svelte` | change | The local account section                                    |
-| `apps/deck/src/lib/components/layout/Sidebar.svelte`        | change | The entry `/admin/providers`                                        |
-| `apps/deck/src/routes/(dashboard)/profile/+page.svelte`    | change | The local provider offers no attach. `IDPROV-FR-022`              |
-| `apps/deck/package.json`                                    | change | The `yaml` package. `IDPROV-DD-004`                                 |
-| `libs/api-client/src/problem.ts`                            | change | The four problem types of section 4.6, and `not-ready`             |
-| `config.example.yaml`, `docker-compose.yaml`, `.docker/dex/config.yaml`, `chart/` | change | The `dex` block, the certificates, no published port |
-| `specs/features/idprov/api.yaml`                            | create | The routes of section 4.3                                           |
-| `specs/features/extid/api.yaml`                             | change | `startAttach` answers 400 for `local`                               |
+| Path                                                                              | Action         | Holds                                                                                                                         |
+| --------------------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `apps/hub/internal/config/config.go`                                              | change         | `Dex` block. `Auth.Providers` and `Provider` go.                                                                              |
+| `apps/hub/internal/dex/{doc,client}.go`                                           | create         | `dex.Client`, the gRPC client of Dex with mutual TLS and a deadline                                                           |
+| `apps/hub/internal/provider/{doc,preset,options,build,discovery}.go`              | create         | `provider.Preset`, the fixed fields, `oidcOptions`, the checks of a preset, `provider.OIDCDiscovery`                          |
+| `apps/hub/internal/provider/service.go`                                           | create         | `provider.Service`: list, read, add, change, remove                                                                           |
+| `apps/hub/internal/provider/local.go`                                             | create         | `provider.LocalAccounts`: give, reset, remove                                                                                 |
+| `apps/hub/internal/repository/identity.go`                                        | change         | `CountByProvider`, `AdministratorsBySoleProvider`, `DeleteByProvider`. The repository comes from the transaction (`ADR-0011`) |
+| `apps/hub/internal/auth/resolver.go`                                              | change         | `ProviderLocal`                                                                                                               |
+| `apps/hub/internal/handler/provider.go`                                           | create         | `handler.Provider`, the routes under `/providers`                                                                             |
+| `apps/hub/internal/handler/{user,user_identity}.go`                               | change, create | The routes under `/users/{userId}/identities`                                                                                 |
+| `apps/hub/internal/handler/auth.go`                                               | change         | `Identities` reads `provider.Service.List`. `Link` refuses `local`. `Detach` of `local` runs `LocalAccounts.Remove`.          |
+| `apps/hub/internal/domain/problems/problems.go`                                   | change         | The four types of section 4.6                                                                                                 |
+| `apps/hub/internal/domain/errs/errs.go`                                           | change         | The sentinels of section 4.6                                                                                                  |
+| `apps/hub/internal/depresolver/{dex,provider,server}.go`                          | create, change | `DexClient`, `CloseDexClient`, `ProviderService`, `LocalAccounts`, the handler                                                |
+| `apps/hub/internal/command/user/password.go`                                      | create         | `PasswordCommand`                                                                                                             |
+| `apps/hub/internal/command/user/{user,invite}.go`                                 | change         | Registers `password`. `invite` prints the record identifier.                                                                  |
+| `apps/deck/src/lib/api/{providers,users,types,index}.ts`                          | create, change | The client of section 4.3                                                                                                     |
+| `apps/deck/src/routes/(dashboard)/admin/providers/+page.svelte`                   | create         | The list, and the menu that adds a provider                                                                                   |
+| `apps/deck/src/routes/(dashboard)/admin/providers/[provider]/+page.svelte`        | create         | The form, the redirect address, the removal dialog                                                                            |
+| `apps/deck/src/routes/(dashboard)/admin/users/[user]/+page.svelte`                | change         | The local account section                                                                                                     |
+| `apps/deck/src/lib/components/layout/Sidebar.svelte`                              | change         | The entry `/admin/providers`                                                                                                  |
+| `apps/deck/src/routes/(dashboard)/profile/+page.svelte`                           | change         | The local provider offers no attach. `IDPROV-FR-022`                                                                          |
+| `apps/deck/package.json`                                                          | change         | The `yaml` package. `IDPROV-DD-004`                                                                                           |
+| `libs/api-client/src/problem.ts`                                                  | change         | The four problem types of section 4.6, and `not-ready`                                                                        |
+| `config.example.yaml`, `docker-compose.yaml`, `.docker/dex/config.yaml`, `chart/` | change         | The `dex` block, the certificates, no published port                                                                          |
+| `specs/features/idprov/api.yaml`                                                  | create         | The routes of section 4.3                                                                                                     |
+| `specs/features/extid/api.yaml`                                                   | change         | `startAttach` answers 400 for `local`                                                                                         |
 
 ```go
 // apps/hub/internal/dex/client.go
@@ -194,12 +194,12 @@ serves `CountByProvider` and `DeleteByProvider`, because `provider` leads it.
 
 The local account lives in Dex. Its fields map as follows.
 
-| Field of Dex     | Value                                         |
-| ---------------- | --------------------------------------------- |
-| `email`          | The email address that the administrator gave, in lower case |
-| `hash`           | bcrypt of the password, cost 12               |
-| `username`       | The email address                             |
-| `user_id`        | The identifier of the user record             |
+| Field of Dex | Value                                                        |
+| ------------ | ------------------------------------------------------------ |
+| `email`      | The email address that the administrator gave, in lower case |
+| `hash`       | bcrypt of the password, cost 12                              |
+| `username`   | The email address                                            |
+| `user_id`    | The identifier of the user record                            |
 
 The identity of a local account is `(local, <user record identifier>)`.
 
@@ -207,17 +207,17 @@ The identity of a local account is `(local, <user record identifier>)`.
 
 **HTTP routes.** `api.yaml` holds the bodies and the status codes.
 
-| Method   | Path                                     | Access        | Permission | Realizes                              |
-| -------- | ---------------------------------------- | ------------- | ---------- | ------------------------------------- |
-| `GET`    | `/providers`                             | Administrator | none       | `IDPROV-FR-001`, `IDPROV-FR-012`      |
-| `POST`   | `/providers`                             | Administrator | none       | `IDPROV-FR-002` to `IDPROV-FR-008`, `IDPROV-FR-011` |
-| `GET`    | `/providers/{providerId}`                | Administrator | none       | `IDPROV-FR-001`, `IDPROV-FR-007`, `IDPROV-FR-012` |
-| `PATCH`  | `/providers/{providerId}`                | Administrator | none       | `IDPROV-FR-008` to `IDPROV-FR-010`, `IDPROV-FR-016` |
-| `DELETE` | `/providers/{providerId}`                | Administrator | none       | `IDPROV-FR-013` to `IDPROV-FR-016`    |
-| `GET`    | `/users/{userId}/identities`             | Administrator | none       | `IDPROV-FR-018` to `IDPROV-FR-020`    |
-| `POST`   | `/users/{userId}/identities`             | Administrator | none       | `IDPROV-FR-018`, `IDPROV-FR-023`      |
-| `PATCH`  | `/users/{userId}/identities/{provider}`  | Administrator | none       | `IDPROV-FR-019`, `IDPROV-FR-023`      |
-| `DELETE` | `/users/{userId}/identities/{provider}`  | Administrator | none       | `IDPROV-FR-020`                       |
+| Method   | Path                                    | Access        | Permission | Realizes                                            |
+| -------- | --------------------------------------- | ------------- | ---------- | --------------------------------------------------- |
+| `GET`    | `/providers`                            | Administrator | none       | `IDPROV-FR-001`, `IDPROV-FR-012`                    |
+| `POST`   | `/providers`                            | Administrator | none       | `IDPROV-FR-002` to `IDPROV-FR-008`, `IDPROV-FR-011` |
+| `GET`    | `/providers/{providerId}`               | Administrator | none       | `IDPROV-FR-001`, `IDPROV-FR-007`, `IDPROV-FR-012`   |
+| `PATCH`  | `/providers/{providerId}`               | Administrator | none       | `IDPROV-FR-008` to `IDPROV-FR-010`, `IDPROV-FR-016` |
+| `DELETE` | `/providers/{providerId}`               | Administrator | none       | `IDPROV-FR-013` to `IDPROV-FR-016`                  |
+| `GET`    | `/users/{userId}/identities`            | Administrator | none       | `IDPROV-FR-018` to `IDPROV-FR-020`                  |
+| `POST`   | `/users/{userId}/identities`            | Administrator | none       | `IDPROV-FR-018`, `IDPROV-FR-023`                    |
+| `PATCH`  | `/users/{userId}/identities/{provider}` | Administrator | none       | `IDPROV-FR-019`, `IDPROV-FR-023`                    |
+| `DELETE` | `/users/{userId}/identities/{provider}` | Administrator | none       | `IDPROV-FR-020`                                     |
 
 The three routes under `/users/{userId}/identities` that write accept the provider
 `local` alone. `IDPROV-DD-011`.
@@ -238,10 +238,10 @@ moves it too. `IDPROV-DD-013`.
 
 **CLI commands.**
 
-| Command                | Flags                                   | Does                                                         | Realizes |
-| ---------------------- | --------------------------------------- | ------------------------------------------------------------ | -------- |
-| `maroid user password` | `--user` (required), `--email`          | Adds the local provider when absent, then gives the record a local account, or resets the one it holds. Reads the password from a prompt or from the standard input. | `IDPROV-FR-025` to `IDPROV-FR-027` |
-| `maroid user invite`   | unchanged                               | Prints the record identifier on line one, the address on line two. | `IDPROV-FR-028` |
+| Command                | Flags                          | Does                                                                                                                                                                 | Realizes                           |
+| ---------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `maroid user password` | `--user` (required), `--email` | Adds the local provider when absent, then gives the record a local account, or resets the one it holds. Reads the password from a prompt or from the standard input. | `IDPROV-FR-025` to `IDPROV-FR-027` |
+| `maroid user invite`   | unchanged                      | Prints the record identifier on line one, the address on line two.                                                                                                   | `IDPROV-FR-028`                    |
 
 `--email` is required when the record holds no local account, and refused when it
 holds one. The command offers no flag for the password. On a terminal it prompts
@@ -251,14 +251,14 @@ so a refused run changes nothing.
 
 **Configuration scheme.**
 
-| Key           | Type     | Default | Secret | Realizes                          |
-| ------------- | -------- | ------- | ------ | --------------------------------- |
-| `dex.address` | string   | None    | No     | `IDPROV-FR-001`                   |
-| `dex.ca_file` | path     | None    | No     | `IDPROV-FR-001`                   |
-| `dex.cert_file` | path   | None    | No     | `IDPROV-FR-001`                   |
-| `dex.key_file` | path    | None    | Yes    | `IDPROV-FR-001`                   |
-| `dex.timeout` | duration | `5s`    | No     | `IDPROV-NFR-002`                  |
-| `auth.providers` | removed | None  | No     | `IDPROV-FR-017`                   |
+| Key              | Type     | Default | Secret | Realizes         |
+| ---------------- | -------- | ------- | ------ | ---------------- |
+| `dex.address`    | string   | None    | No     | `IDPROV-FR-001`  |
+| `dex.ca_file`    | path     | None    | No     | `IDPROV-FR-001`  |
+| `dex.cert_file`  | path     | None    | No     | `IDPROV-FR-001`  |
+| `dex.key_file`   | path     | None    | Yes    | `IDPROV-FR-001`  |
+| `dex.timeout`    | duration | `5s`    | No     | `IDPROV-NFR-002` |
+| `auth.providers` | removed  | None    | No     | `IDPROV-FR-017`  |
 
 Every key of `dex` but `timeout` is required. The hub stops at the start when one is
 absent, as `CFG-003` gives.
@@ -268,11 +268,11 @@ absent, as `CFG-003` gives.
 The hub writes the key `maroidPreset` into every connector config that it stores.
 `IDPROV-DD-002`.
 
-| Preset     | Identifier            | Type of Dex | Name at creation | Fixed config                                                         | Default config                                          |
-| ---------- | --------------------- | ----------- | ---------------- | -------------------------------------------------------------------- | ------------------------------------------------------- |
-| `local`    | `local`               | `local`     | `Email`          | `maroidPreset`                                                       | None                                                    |
-| `telegram` | `telegram`            | `oidc`      | `Telegram`       | `issuer: https://oauth.telegram.org`, `userIDKey: id`, `scopes: [openid, profile]`, `redirectURI`, `maroidPreset` | `clientID`: the prefix of `telegram.token` before `:` |
-| `oidc`     | Chosen, then fixed    | `oidc`      | Chosen           | `redirectURI`, `maroidPreset`                                        | `userIDKey: sub`, `scopes: [openid, profile, email]`    |
+| Preset     | Identifier         | Type of Dex | Name at creation | Fixed config                                                                                                      | Default config                                        |
+| ---------- | ------------------ | ----------- | ---------------- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `local`    | `local`            | `local`     | `Email`          | `maroidPreset`                                                                                                    | None                                                  |
+| `telegram` | `telegram`         | `oidc`      | `Telegram`       | `issuer: https://oauth.telegram.org`, `userIDKey: id`, `scopes: [openid, profile]`, `redirectURI`, `maroidPreset` | `clientID`: the prefix of `telegram.token` before `:` |
+| `oidc`     | Chosen, then fixed | `oidc`      | Chosen           | `redirectURI`, `maroidPreset`                                                                                     | `userIDKey: sub`, `scopes: [openid, profile, email]`  |
 
 The identifier of a generic OIDC provider matches `^[a-z][a-z0-9-]{1,31}$`, and is
 neither `local` nor `telegram`. The issuer is an `https` address.
@@ -315,22 +315,22 @@ The handler of `DELETE /auth/identities/{provider}` sends a detach of `local` to
 
 ### 4.6 Errors
 
-| Condition                                             | Behavior | Type                                  |
-| ----------------------------------------------------- | -------- | ------------------------------------- |
-| The identifier names a provider that exists           | 409      | `/problems/hub/provider-exists`       |
-| A change or a removal of a static provider            | 409      | `/problems/hub/provider-static`       |
-| A local account for an email that another one holds   | 409      | `/problems/hub/local-account-exists`  |
-| A local account while no local provider exists        | 409      | `/problems/hub/local-provider-absent` |
-| An identifier, an issuer, or a claim that a change names | 422   | `validation-failed`, pointer of the field |
-| An option key that the preset fixes or that Dex lacks | 422      | `validation-failed`, `/options/<key>` |
-| An option value of the wrong type                     | 422      | `validation-failed`, `/options/<key>` |
-| An issuer with no discovery document                  | 422      | `validation-failed`, `/issuer`        |
-| A password under 12 characters or over 72 bytes       | 422      | `validation-failed`, `/password`      |
-| An attach through `local` at `POST /auth/identities`  | 400      | `request-invalid`, names `provider`   |
-| A change or a removal of an identity of a provider other than `local` | 404 | `not-found` |
-| A new identity of a provider other than `local`       | 422      | `validation-failed`, `/provider`      |
-| Dex refuses the connection, or passes `dex.timeout`   | 503      | `not-ready`, dependency `dex`         |
-| The removal of the last identity of a record          | 409      | `identity-last`                       |
+| Condition                                                             | Behavior | Type                                      |
+| --------------------------------------------------------------------- | -------- | ----------------------------------------- |
+| The identifier names a provider that exists                           | 409      | `/problems/hub/provider-exists`           |
+| A change or a removal of a static provider                            | 409      | `/problems/hub/provider-static`           |
+| A local account for an email that another one holds                   | 409      | `/problems/hub/local-account-exists`      |
+| A local account while no local provider exists                        | 409      | `/problems/hub/local-provider-absent`     |
+| An identifier, an issuer, or a claim that a change names              | 422      | `validation-failed`, pointer of the field |
+| An option key that the preset fixes or that Dex lacks                 | 422      | `validation-failed`, `/options/<key>`     |
+| An option value of the wrong type                                     | 422      | `validation-failed`, `/options/<key>`     |
+| An issuer with no discovery document                                  | 422      | `validation-failed`, `/issuer`            |
+| A password under 12 characters or over 72 bytes                       | 422      | `validation-failed`, `/password`          |
+| An attach through `local` at `POST /auth/identities`                  | 400      | `request-invalid`, names `provider`       |
+| A change or a removal of an identity of a provider other than `local` | 404      | `not-found`                               |
+| A new identity of a provider other than `local`                       | 422      | `validation-failed`, `/provider`          |
+| Dex refuses the connection, or passes `dex.timeout`                   | 503      | `not-ready`, dependency `dex`             |
+| The removal of the last identity of a record                          | 409      | `identity-last`                           |
 
 `ERR-003` gains the four types of the hub in the first rows, each with the title
 of its condition. `errs` gains `ErrProviderExists`, `ErrProviderStatic`,
@@ -497,17 +497,17 @@ administrators overwrite the first with no warning.
 
 ## 7. Build plan
 
-| #   | Step                                                                          | Realizes                              | Done |
-| --- | ----------------------------------------------------------------------------- | ------------------------------------- | ---- |
-| 1   | Development certificates, the TLS block of Dex, no published port. The owner edits `.docker/dex/config.yaml`. | `IDPROV-FR-001` | [ ] |
-| 2   | `config.Dex`, `dex.Client`, `DexClient` and `CloseDexClient`                  | `IDPROV-FR-001`, `IDPROV-NFR-002`     | [x]  |
-| 3   | `provider` presets, `oidcOptions`, and the validation                         | `IDPROV-FR-002` to `IDPROV-FR-011`, `IDPROV-INV-001` to `IDPROV-INV-003` | [x] |
-| 4   | The identity repository: count, delete, report, the hook of `Detach`          | `IDPROV-FR-012`, `IDPROV-FR-014`      | [x]  |
-| 5   | `provider.Service` and the routes under `/providers`, the problem types       | `IDPROV-FR-001` to `IDPROV-FR-016`    | [x]  |
-| 6   | `GET /auth/identities` reads Dex. `auth.providers` goes. `Link` refuses `local`. | `IDPROV-FR-017`, `IDPROV-FR-022`    | [x]  |
-| 7   | `LocalAccounts`, the routes under `/users/{userId}/identities`, the detach    | `IDPROV-FR-018` to `IDPROV-FR-024`    | [x]  |
-| 8   | `maroid user password`, and the output of `maroid user invite`                | `IDPROV-FR-025` to `IDPROV-FR-028`    | [x]  |
-| 9   | The deck: the providers pages, the local account section, the sidebar entry   | `IDPROV-FR-001` to `IDPROV-FR-020`    | [x]  |
+| #   | Step                                                                                                          | Realizes                                                                 | Done |
+| --- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---- |
+| 1   | Development certificates, the TLS block of Dex, no published port. The owner edits `.docker/dex/config.yaml`. | `IDPROV-FR-001`                                                          | [ ]  |
+| 2   | `config.Dex`, `dex.Client`, `DexClient` and `CloseDexClient`                                                  | `IDPROV-FR-001`, `IDPROV-NFR-002`                                        | [x]  |
+| 3   | `provider` presets, `oidcOptions`, and the validation                                                         | `IDPROV-FR-002` to `IDPROV-FR-011`, `IDPROV-INV-001` to `IDPROV-INV-003` | [x]  |
+| 4   | The identity repository: count, delete, report, the hook of `Detach`                                          | `IDPROV-FR-012`, `IDPROV-FR-014`                                         | [x]  |
+| 5   | `provider.Service` and the routes under `/providers`, the problem types                                       | `IDPROV-FR-001` to `IDPROV-FR-016`                                       | [x]  |
+| 6   | `GET /auth/identities` reads Dex. `auth.providers` goes. `Link` refuses `local`.                              | `IDPROV-FR-017`, `IDPROV-FR-022`                                         | [x]  |
+| 7   | `LocalAccounts`, the routes under `/users/{userId}/identities`, the detach                                    | `IDPROV-FR-018` to `IDPROV-FR-024`                                       | [x]  |
+| 8   | `maroid user password`, and the output of `maroid user invite`                                                | `IDPROV-FR-025` to `IDPROV-FR-028`                                       | [x]  |
+| 9   | The deck: the providers pages, the local account section, the sidebar entry                                   | `IDPROV-FR-001` to `IDPROV-FR-020`                                       | [x]  |
 
 ## 8. Out of scope for this specification
 

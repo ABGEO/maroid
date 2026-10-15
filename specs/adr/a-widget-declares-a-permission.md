@@ -34,10 +34,10 @@ between the two would let a viewer read on the home page what the route denies.
 
 ## Alternatives
 
-| Alternative | Why we did not select it |
-| ----------- | ------------------------ |
+| Alternative                                                           | Why we did not select it                                                          |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | The widget reads through a route of the plugin, and the route checks. | The hub then calls its own HTTP routes, and a plugin with no route has no widget. |
-| No permission. Every member sees every widget. | A role that cannot read the plants would read them on the home page. |
+| No permission. Every member sees every widget.                        | A role that cannot read the plants would read them on the home page.              |
 
 ## Consequences
 

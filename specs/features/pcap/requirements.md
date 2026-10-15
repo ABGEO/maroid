@@ -226,14 +226,14 @@ the hub loaded for that plugin, and no other.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline          | Effect on this feature                                                                                   |
+| Rule      | Guideline          | Effect on this feature                                                                                     |
 | --------- | ------------------ | ---------------------------------------------------------------------------------------------------------- |
-| `PLG-006` | Plugin model       | A capability is an interface in the plugin contract. The report names the capabilities that rule creates. |
-| `PLG-012` | Plugin model       | Every plugin declares a name, so the report of every plugin carries one.                                  |
-| `ARC-008` | Architecture       | The report holds no rule that names one plugin. Every plugin passes one detection.                        |
+| `PLG-006` | Plugin model       | A capability is an interface in the plugin contract. The report names the capabilities that rule creates.  |
+| `PLG-012` | Plugin model       | Every plugin declares a name, so the report of every plugin carries one.                                   |
+| `ARC-008` | Architecture       | The report holds no rule that names one plugin. Every plugin passes one detection.                         |
 | `API-004` | HTTP API           | The route of a plugin carries the prefix that the hub gives it. The report states the path a client calls. |
-| `API-006` | HTTP API           | The report travels as JSON.                                                                               |
-| `UI-001`  | Web user interface | `apps/deck` is the only web shell, so `PCAP-FR-006` lands there.                                          |
+| `API-006` | HTTP API           | The report travels as JSON.                                                                                |
+| `UI-001`  | Web user interface | `apps/deck` is the only web shell, so `PCAP-FR-006` lands there.                                           |
 
 `MCPHUB-FR-005` already gives an agent the report of a loaded plugin. The
 capabilities travel in that report, so this feature adds no statement for the
@@ -241,14 +241,14 @@ agent beyond `PCAP-FR-002`.
 
 ## 8. Open questions
 
-| #   | Question                                                                          | Owner  | Answer                                                                                      |
-| --- | --------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------- |
-| 1   | Does the report keep a separate flag for the settings beside the capabilities?     | Temuri | No. The capability names itself, and the flag goes.                                          |
-| 2   | Does a capability carry its items?                                                | Temuri | Yes. Every capability that holds items reports them. |
-| 4   | How does the report state the settings capability and the migrations capability, which hold no item? | Temuri | As present. `PCAP-FR-007` states the behavior, and a client must not read them as absent. |
-| 3   | Does the report hold a list of names beside the data, or one member for both?      | Temuri | One member. A capability names itself and carries its items in one place, so the two cannot disagree. |
-| 5   | Where does the name of a plugin live?                                              | Temuri | In the metadata of the plugin, beside an optional description. The manifest of the user interface loses it. `ADR-0009`. |
-| 6   | Which surfaces read the name, beside the deck and `GET /plugins`?                  | Temuri | `list_plugins`, through the same report. The bot, the problem details, and the logs keep the identifier. |
+| #   | Question                                                                                             | Owner  | Answer                                                                                                                  |
+| --- | ---------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
+| 1   | Does the report keep a separate flag for the settings beside the capabilities?                       | Temuri | No. The capability names itself, and the flag goes.                                                                     |
+| 2   | Does a capability carry its items?                                                                   | Temuri | Yes. Every capability that holds items reports them.                                                                    |
+| 4   | How does the report state the settings capability and the migrations capability, which hold no item? | Temuri | As present. `PCAP-FR-007` states the behavior, and a client must not read them as absent.                               |
+| 3   | Does the report hold a list of names beside the data, or one member for both?                        | Temuri | One member. A capability names itself and carries its items in one place, so the two cannot disagree.                   |
+| 5   | Where does the name of a plugin live?                                                                | Temuri | In the metadata of the plugin, beside an optional description. The manifest of the user interface loses it. `ADR-0009`. |
+| 6   | Which surfaces read the name, beside the deck and `GET /plugins`?                                    | Temuri | `list_plugins`, through the same report. The bot, the problem details, and the logs keep the identifier.                |
 
 Answer every question before the approval. An open question blocks stage 2.
 

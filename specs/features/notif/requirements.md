@@ -49,14 +49,14 @@ credential of a workspace a protection. The bot token has none.
 
 ## 4. Definitions
 
-| Term                            | Meaning                                                                                                  |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| notification topic              | One kind of notification that a plugin declares and sends, with an identifier, a name, and a description. |
-| notification provider           | An account at an external messaging service that a workspace stores. Maroid delivers a notification through it. A Telegram bot is one. Never write "provider" alone. |
-| notification provider kind      | The external messaging service of a notification provider. It fixes the fields of the notification provider and of a destination. Telegram is the only one. |
-| destination                     | The place at the external messaging service that receives a notification. For Telegram: a chat, and a thread of a forum when the chat has threads. |
-| notification route              | The rule of a workspace that sends one notification topic through one notification provider to one destination. |
-| unrouted                        | The state of a notification topic in a workspace with no enabled notification route.                      |
+| Term                       | Meaning                                                                                                                                                              |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| notification topic         | One kind of notification that a plugin declares and sends, with an identifier, a name, and a description.                                                            |
+| notification provider      | An account at an external messaging service that a workspace stores. Maroid delivers a notification through it. A Telegram bot is one. Never write "provider" alone. |
+| notification provider kind | The external messaging service of a notification provider. It fixes the fields of the notification provider and of a destination. Telegram is the only one.          |
+| destination                | The place at the external messaging service that receives a notification. For Telegram: a chat, and a thread of a forum when the chat has threads.                   |
+| notification route         | The rule of a workspace that sends one notification topic through one notification provider to one destination.                                                      |
+| unrouted                   | The state of a notification topic in a workspace with no enabled notification route.                                                                                 |
 
 ## 5. Functional requirements
 
@@ -333,29 +333,29 @@ The configuration of the installation holds no notification provider and no noti
 
 ## 8. Constraints from the guidelines
 
-| Rule      | Guideline         | Effect on this feature                                                              |
-| --------- | ----------------- | ----------------------------------------------------------------------------------- |
-| `NTF-001` to `NTF-006` | Notifications | `ADR-0013` changes them. The channel and the transport of the configuration end. |
-| `PLG-006` | Plugin model      | The notification topics of a plugin are a capability: an interface, a registry, a registrar. |
-| `PLG-007` | Plugin model      | A plugin sends a notification through the host.                                     |
-| `PLG-011` | Plugin model      | `NOTIF-FR-002`. A registry rejects a second notification topic with one identifier. |
-| `ARC-008` | Architecture      | No rule names a plugin or a notification topic of a plugin.                         |
-| `CFG-007` | Configuration     | `NOTIF-INV-004`. The routing of a workspace leaves the configuration file.          |
-| `OWN-004` | Record ownership  | A notification provider and a notification route belong to one workspace.          |
-| `OWN-006` | Record ownership  | The isolation runs in the database and fails closed.                                |
-| `SEC-012` | Security          | `NOTIF-FR-014` and `NOTIF-FR-016` read the plugins that the workspace enables.      |
-| `SEC-013` | Security          | A manager holds each change. A viewer holds each list.                              |
-| `EXT-005` | External services | `NOTIF-FR-013`. A status that is not a success from Telegram is a refusal.          |
-| `LOG-005` | Logging           | `NOTIF-FR-035`. An error attribute carries no secret.                               |
-| `JOB-007` | Jobs              | `NOTIF-FR-027`. An unrouted notification topic does not fail the run.               |
+| Rule                   | Guideline         | Effect on this feature                                                                       |
+| ---------------------- | ----------------- | -------------------------------------------------------------------------------------------- |
+| `NTF-001` to `NTF-006` | Notifications     | `ADR-0013` changes them. The channel and the transport of the configuration end.             |
+| `PLG-006`              | Plugin model      | The notification topics of a plugin are a capability: an interface, a registry, a registrar. |
+| `PLG-007`              | Plugin model      | A plugin sends a notification through the host.                                              |
+| `PLG-011`              | Plugin model      | `NOTIF-FR-002`. A registry rejects a second notification topic with one identifier.          |
+| `ARC-008`              | Architecture      | No rule names a plugin or a notification topic of a plugin.                                  |
+| `CFG-007`              | Configuration     | `NOTIF-INV-004`. The routing of a workspace leaves the configuration file.                   |
+| `OWN-004`              | Record ownership  | A notification provider and a notification route belong to one workspace.                    |
+| `OWN-006`              | Record ownership  | The isolation runs in the database and fails closed.                                         |
+| `SEC-012`              | Security          | `NOTIF-FR-014` and `NOTIF-FR-016` read the plugins that the workspace enables.               |
+| `SEC-013`              | Security          | A manager holds each change. A viewer holds each list.                                       |
+| `EXT-005`              | External services | `NOTIF-FR-013`. A status that is not a success from Telegram is a refusal.                   |
+| `LOG-005`              | Logging           | `NOTIF-FR-035`. An error attribute carries no secret.                                        |
+| `JOB-007`              | Jobs              | `NOTIF-FR-027`. An unrouted notification topic does not fail the run.                        |
 
 ## 9. Open questions
 
-| #   | Question                                                                                                                   | Owner  | Answer                                                         |
-| --- | -------------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------- |
-| 1   | `NOTIF-FR-013` refuses the save when Telegram does not answer. Do you accept that a Telegram outage blocks the save?       | Temuri | Yes.                                                           |
-| 2   | `NOTIF-FR-026` lets a job pass when one notification route of two fails. Is a log line enough for the failed one?          | Temuri | Yes.                                                           |
-| 3   | Does a viewer see the destination of a notification route (the chat identifier), or the notification provider name only? | Temuri | A viewer sees the destination. `NOTIF-FR-014`.                 |
+| #   | Question                                                                                                                 | Owner  | Answer                                         |
+| --- | ------------------------------------------------------------------------------------------------------------------------ | ------ | ---------------------------------------------- |
+| 1   | `NOTIF-FR-013` refuses the save when Telegram does not answer. Do you accept that a Telegram outage blocks the save?     | Temuri | Yes.                                           |
+| 2   | `NOTIF-FR-026` lets a job pass when one notification route of two fails. Is a log line enough for the failed one?        | Temuri | Yes.                                           |
+| 3   | Does a viewer see the destination of a notification route (the chat identifier), or the notification provider name only? | Temuri | A viewer sees the destination. `NOTIF-FR-014`. |
 
 ## Retired identifiers
 

@@ -32,43 +32,43 @@ changes a secret field, and it names the page of the deck that fills one.
 
 ## 2. Coverage
 
-| Requirement     | Where this specification realizes it                            |
-| --------------- | --------------------------------------------------------------- |
-| `MCPHUB-FR-015` | Section 4.3, `MCPHUB-DD-016`, `MCPHUB-DD-017`, `MCPHUB-SC-017`, `MCPHUB-SC-018` |
-| `MCPHUB-FR-016` | Section 4.3, `MCPHUB-DD-016`, `MCPHUB-SC-017`, `MCPHUB-SC-025`  |
-| `MCPHUB-FR-017` | Section 4.3, `MCPHUB-DD-019`, `MCPHUB-SC-019`                   |
-| `MCPHUB-FR-018` | Section 4.5, `MCPHUB-DD-020`, `MCPHUB-SC-020`                   |
+| Requirement     | Where this specification realizes it                                                             |
+| --------------- | ------------------------------------------------------------------------------------------------ |
+| `MCPHUB-FR-015` | Section 4.3, `MCPHUB-DD-016`, `MCPHUB-DD-017`, `MCPHUB-SC-017`, `MCPHUB-SC-018`                  |
+| `MCPHUB-FR-016` | Section 4.3, `MCPHUB-DD-016`, `MCPHUB-SC-017`, `MCPHUB-SC-025`                                   |
+| `MCPHUB-FR-017` | Section 4.3, `MCPHUB-DD-019`, `MCPHUB-SC-019`                                                    |
+| `MCPHUB-FR-018` | Section 4.5, `MCPHUB-DD-020`, `MCPHUB-SC-020`                                                    |
 | `MCPHUB-FR-019` | Section 4.4, `MCPHUB-DD-018`, `MCPHUB-SC-021`, `MCPHUB-SC-022`, `MCPHUB-SC-023`, `MCPHUB-SC-024` |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline        | How this specification obeys it                                                      |
-| --------- | ---------------- | -------------------------------------------------------------------------------------- |
-| `ARC-008` | Architecture     | Both tools take a plugin identifier from the call and read `settings.Service`. Neither names a plugin. |
-| `PLG-011` | Plugin model     | `MCPToolRegistry.Register` refuses a second tool under one name. The two names are bare, and a tool of a plugin carries its plugin identifier, so neither can collide. |
-| `OWN-006` | Record ownership | `database.WithScopeTx` sets `app.user_id` and `app.workspace_id` before the first statement of a read and of a save. The policy filters each row. |
+| Rule      | Guideline        | How this specification obeys it                                                                                                                                         |
+| --------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ARC-008` | Architecture     | Both tools take a plugin identifier from the call and read `settings.Service`. Neither names a plugin.                                                                  |
+| `PLG-011` | Plugin model     | `MCPToolRegistry.Register` refuses a second tool under one name. The two names are bare, and a tool of a plugin carries its plugin identifier, so neither can collide.  |
+| `OWN-006` | Record ownership | `database.WithScopeTx` sets `app.user_id` and `app.workspace_id` before the first statement of a read and of a save. The policy filters each row.                       |
 | `OWN-007` | Record ownership | `actingUserMiddleware` puts the acting user, and `workspaceMiddleware` the acting workspace, into the context of the call. Both tools pass that context to the service. |
-| `OWN-005` | Record ownership | `repository.PluginSettings` names no workspace and no user in a statement. The policy sets each scope column. |
-| `SEC-013` | Security         | `get_plugin_settings` declares `settings.read`, and `save_plugin_settings` declares `settings.write`. `PSET-DD-013` gives both. |
-| `LOG-008` | Logging          | `MCPHUB-DD-020` maps every failure to a text that names a field and never a value. |
-| `GO-005`  | Go style         | The design adds no sentinel error. It reuses `errs.ErrSettingsSchemaNotFound` and `settings.InvalidError`. |
-| `TST-004` | Testing          | Section 6 gives the layer of each scenario.                                          |
+| `OWN-005` | Record ownership | `repository.PluginSettings` names no workspace and no user in a statement. The policy sets each scope column.                                                           |
+| `SEC-013` | Security         | `get_plugin_settings` declares `settings.read`, and `save_plugin_settings` declares `settings.write`. `PSET-DD-013` gives both.                                         |
+| `LOG-008` | Logging          | `MCPHUB-DD-020` maps every failure to a text that names a field and never a value.                                                                                      |
+| `GO-005`  | Go style         | The design adds no sentinel error. It reuses `errs.ErrSettingsSchemaNotFound` and `settings.InvalidError`.                                                              |
+| `TST-004` | Testing          | Section 6 gives the layer of each scenario.                                                                                                                             |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                              | Change | Holds                                                                |
-| -------------------------------------------------- | ------ | ---------------------------------------------------------------------- |
-| `apps/hub/internal/settings/service.go`           | Change | `Service` gains `SecretFields` and `ChangedSecrets`. `Manager` implements both. |
-| `apps/hub/internal/mcpserver/settings_page.go`    | Create | `SettingsPath`. One definition of the page that fills the settings of a plugin. |
-| `apps/hub/internal/mcpserver/plugintool.go`       | Change | `reasonOf` calls `SettingsPath`. Deletes `settingsPathFormat`.       |
-| `apps/hub/internal/mcpserver/tools/settings.go`   | Create | `settingsAccess`, which both tools embed. It reads the stored settings and maps each failure. |
-| `apps/hub/internal/mcpserver/tools/settings_get.go` | Create | `NewGetPluginSettings`.                                            |
-| `apps/hub/internal/mcpserver/tools/settings_save.go` | Create | `NewSavePluginSettings`.                                          |
-| `apps/hub/internal/mcpserver/tools/doc.go`        | Change | The package comment names the file that carries no tool.             |
-| `apps/hub/internal/depresolver/mcp.go`            | Change | `MCPToolRegistry` resolves `SettingsService` and registers both tools. |
-| `apps/hub/internal/handler/mcp_test.go`           | Change | `stubSettings` gains the two methods that `Service` gained.          |
+| Path                                                 | Change | Holds                                                                                         |
+| ---------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------- |
+| `apps/hub/internal/settings/service.go`              | Change | `Service` gains `SecretFields` and `ChangedSecrets`. `Manager` implements both.               |
+| `apps/hub/internal/mcpserver/settings_page.go`       | Create | `SettingsPath`. One definition of the page that fills the settings of a plugin.               |
+| `apps/hub/internal/mcpserver/plugintool.go`          | Change | `reasonOf` calls `SettingsPath`. Deletes `settingsPathFormat`.                                |
+| `apps/hub/internal/mcpserver/tools/settings.go`      | Create | `settingsAccess`, which both tools embed. It reads the stored settings and maps each failure. |
+| `apps/hub/internal/mcpserver/tools/settings_get.go`  | Create | `NewGetPluginSettings`.                                                                       |
+| `apps/hub/internal/mcpserver/tools/settings_save.go` | Create | `NewSavePluginSettings`.                                                                      |
+| `apps/hub/internal/mcpserver/tools/doc.go`           | Change | The package comment names the file that carries no tool.                                      |
+| `apps/hub/internal/depresolver/mcp.go`               | Change | `MCPToolRegistry` resolves `SettingsService` and registers both tools.                        |
+| `apps/hub/internal/handler/mcp_test.go`              | Change | `stubSettings` gains the two methods that `Service` gained.                                   |
 
 Each constructor takes a `*slog.Logger`, because `MCPHUB-DD-020` gives the tool
 the one line that reports a failure which names no field.
@@ -163,10 +163,10 @@ and `public.plugin_user_settings` through the service that `PSET` built. `DAT` a
 
 ### 4.3 Declarations
 
-| Tool                   | Declared by | Annotations                          | Permission       | Realizes                                          |
-| ---------------------- | ----------- | ------------------------------------ | ---------------- | ------------------------------------------------- |
-| `get_plugin_settings`  | The hub     | `ReadOnlyHint: true`                 | `settings.read`  | `MCPHUB-FR-015`, `MCPHUB-FR-016`, `MCPHUB-FR-021` |
-| `save_plugin_settings` | The hub     | `IdempotentHint: true`               | `settings.write` | `MCPHUB-FR-017`, `MCPHUB-FR-018`, `MCPHUB-FR-019`, `MCPHUB-FR-021` |
+| Tool                   | Declared by | Annotations            | Permission       | Realizes                                                           |
+| ---------------------- | ----------- | ---------------------- | ---------------- | ------------------------------------------------------------------ |
+| `get_plugin_settings`  | The hub     | `ReadOnlyHint: true`   | `settings.read`  | `MCPHUB-FR-015`, `MCPHUB-FR-016`, `MCPHUB-FR-021`                  |
+| `save_plugin_settings` | The hub     | `IdempotentHint: true` | `settings.write` | `MCPHUB-FR-017`, `MCPHUB-FR-018`, `MCPHUB-FR-019`, `MCPHUB-FR-021` |
 
 `save_plugin_settings` leaves `DestructiveHint` at the default that the protocol
 gives it, which is true. A save overwrites a value that a person stored, so the
@@ -201,12 +201,12 @@ sequenceDiagram
 
 ### 4.5 Errors
 
-| Condition                                       | The text that the agent reads                                      |
-| ----------------------------------------------- | -------------------------------------------------------------------- |
-| The plugin declares no settings schema          | "the plugin `<id>` declares no settings"                            |
-| The input changes a secret field                | "a secret field changes in the deck only: `<keys>`. Fill it at `<path>`" |
-| A value does not match the settings schema      | "the settings do not match the schema: `<pointer>`: `<detail>`", one pair for each field |
-| Anything else                                   | "the settings request failed"                                       |
+| Condition                                  | The text that the agent reads                                                            |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| The plugin declares no settings schema     | "the plugin `<id>` declares no settings"                                                 |
+| The input changes a secret field           | "a secret field changes in the deck only: `<keys>`. Fill it at `<path>`"                 |
+| A value does not match the settings schema | "the settings do not match the schema: `<pointer>`: `<detail>`", one pair for each field |
+| Anything else                              | "the settings request failed"                                                            |
 
 Each text names a field and never a value. `InvalidError.Fields` holds one order,
 so two identical calls read one text.
@@ -398,16 +398,16 @@ value of the other.
 
 ## 7. Build plan
 
-| #   | Step                                                                                              | Realizes                        | Done |
-| --- | --------------------------------------------------------------------------------------------------- | ----------------------------------- | ---- |
-| 1   | Add `SecretFields` and `ChangedSecrets` to `settings.Service` and to `Manager`. Extend `stubSettings`. | `MCPHUB-DD-018`                 | [x]  |
-| 2   | Create `mcpserver.SettingsPath`. Change `reasonOf` to call it.                                    | `MCPHUB-DD-020`                 | [x]  |
-| 3   | Create `tools/settings.go` with `settingsAccess`. Change `tools/doc.go`.                          | `MCPHUB-FR-018`, `MCPHUB-DD-020` | [x]  |
-| 4   | Create `tools/settings_get.go`.                                                                   | `MCPHUB-FR-015`, `MCPHUB-FR-016`, `MCPHUB-DD-016`, `MCPHUB-DD-017` | [x]  |
-| 5   | Create `tools/settings_save.go`.                                                                  | `MCPHUB-FR-017`, `MCPHUB-FR-019`, `MCPHUB-DD-018`, `MCPHUB-DD-019` | [x]  |
-| 6   | Register both tools in `depresolver.MCPToolRegistry`, which resolves `SettingsService` and passes `Logger`. | `MCPHUB-DD-016`        | [x]  |
-| 7   | Check the item off in `specs/work/todo.md`.                                                       | None                            | [x]  |
-| 8   | Mark both tools as acting in a workspace, with the permissions of `PSET-DD-013`. It needs `workspaceMiddleware` of `spec-plugin-tools.md`. | `MCPHUB-FR-021`, `SEC-013` | [x]  |
+| #   | Step                                                                                                                                       | Realizes                                                           | Done |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ | ---- |
+| 1   | Add `SecretFields` and `ChangedSecrets` to `settings.Service` and to `Manager`. Extend `stubSettings`.                                     | `MCPHUB-DD-018`                                                    | [x]  |
+| 2   | Create `mcpserver.SettingsPath`. Change `reasonOf` to call it.                                                                             | `MCPHUB-DD-020`                                                    | [x]  |
+| 3   | Create `tools/settings.go` with `settingsAccess`. Change `tools/doc.go`.                                                                   | `MCPHUB-FR-018`, `MCPHUB-DD-020`                                   | [x]  |
+| 4   | Create `tools/settings_get.go`.                                                                                                            | `MCPHUB-FR-015`, `MCPHUB-FR-016`, `MCPHUB-DD-016`, `MCPHUB-DD-017` | [x]  |
+| 5   | Create `tools/settings_save.go`.                                                                                                           | `MCPHUB-FR-017`, `MCPHUB-FR-019`, `MCPHUB-DD-018`, `MCPHUB-DD-019` | [x]  |
+| 6   | Register both tools in `depresolver.MCPToolRegistry`, which resolves `SettingsService` and passes `Logger`.                                | `MCPHUB-DD-016`                                                    | [x]  |
+| 7   | Check the item off in `specs/work/todo.md`.                                                                                                | None                                                               | [x]  |
+| 8   | Mark both tools as acting in a workspace, with the permissions of `PSET-DD-013`. It needs `workspaceMiddleware` of `spec-plugin-tools.md`. | `MCPHUB-FR-021`, `SEC-013`                                         | [x]  |
 
 `TST-002` puts the test of each step before the code of that step.
 

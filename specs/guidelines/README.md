@@ -70,38 +70,38 @@ A guideline identifier is permanent. A retired guideline identifier never repeat
 
 ## Where to put a new rule
 
-| The rule is about                               | Put it in |
-| ----------------------------------------------- | --------- |
-| The shape of the system or a technology choice  | `ARC`     |
-| What a plugin must do to load and to register   | `PLG`     |
-| A schema, a migration, or a query               | `DAT`     |
-| A page, a remote, or the navigation             | `UI`      |
-| A configuration value or a secret               | `CFG`     |
-| An HTTP route, a prefix, or the middleware      | `API`     |
-| An error response or a problem type             | `ERR`     |
-| The API standard, a deviation from it, a success body, a page, a cursor, a property name, an OpenAPI document, or a client of the API | `RES` |
-| A token, an identity, an allowlist, a permission, or an administrator | `SEC` |
-| A user, a workspace, a member, or row isolation | `OWN`     |
-| A bot command or a conversation                 | `TG`      |
-| An MQTT topic or a subscriber                   | `MQT`     |
-| A cron job or a background worker               | `JOB`     |
-| A notification topic, provider, or route        | `NTF`     |
-| A directory or a package name                   | `PKG`     |
-| A shared dependency or a provider               | `DEP`     |
-| The start order or the shutdown                 | `LIF`     |
-| A CLI command or a flag                         | `CLI`     |
-| A query, a repository, or an entity             | `REP`     |
-| A call to a third-party API                     | `EXT`     |
-| A log message or a log attribute                | `LOG`     |
-| How to write Go                                 | `GO`      |
-| How to write TypeScript or Svelte               | `TS`      |
-| A test                                          | `TST`     |
-| A build step or a release step                  | `BLD`     |
-| How we work                                     | `PRC`     |
-| A commit, a branch, or a tag                    | `GIT`     |
-| An identifier or a frontmatter field            | `TRC`     |
-| A word, a sentence, or a document               | `LNG`     |
-| An artifact or a declaration in a specification | `SPC`     |
+| The rule is about                                                                                                                     | Put it in |
+| ------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| The shape of the system or a technology choice                                                                                        | `ARC`     |
+| What a plugin must do to load and to register                                                                                         | `PLG`     |
+| A schema, a migration, or a query                                                                                                     | `DAT`     |
+| A page, a remote, or the navigation                                                                                                   | `UI`      |
+| A configuration value or a secret                                                                                                     | `CFG`     |
+| An HTTP route, a prefix, or the middleware                                                                                            | `API`     |
+| An error response or a problem type                                                                                                   | `ERR`     |
+| The API standard, a deviation from it, a success body, a page, a cursor, a property name, an OpenAPI document, or a client of the API | `RES`     |
+| A token, an identity, an allowlist, a permission, or an administrator                                                                 | `SEC`     |
+| A user, a workspace, a member, or row isolation                                                                                       | `OWN`     |
+| A bot command or a conversation                                                                                                       | `TG`      |
+| An MQTT topic or a subscriber                                                                                                         | `MQT`     |
+| A cron job or a background worker                                                                                                     | `JOB`     |
+| A notification topic, provider, or route                                                                                              | `NTF`     |
+| A directory or a package name                                                                                                         | `PKG`     |
+| A shared dependency or a provider                                                                                                     | `DEP`     |
+| The start order or the shutdown                                                                                                       | `LIF`     |
+| A CLI command or a flag                                                                                                               | `CLI`     |
+| A query, a repository, or an entity                                                                                                   | `REP`     |
+| A call to a third-party API                                                                                                           | `EXT`     |
+| A log message or a log attribute                                                                                                      | `LOG`     |
+| How to write Go                                                                                                                       | `GO`      |
+| How to write TypeScript or Svelte                                                                                                     | `TS`      |
+| A test                                                                                                                                | `TST`     |
+| A build step or a release step                                                                                                        | `BLD`     |
+| How we work                                                                                                                           | `PRC`     |
+| A commit, a branch, or a tag                                                                                                          | `GIT`     |
+| An identifier or a frontmatter field                                                                                                  | `TRC`     |
+| A word, a sentence, or a document                                                                                                     | `LNG`     |
+| An artifact or a declaration in a specification                                                                                       | `SPC`     |
 
 A rule that fits no guideline needs a new guideline. A new guideline needs an ADR.
 

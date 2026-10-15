@@ -23,73 +23,73 @@ the readiness answers 503, and the listener stays open for the drain period.
 
 ## 2. Coverage
 
-| Requirement       | Where this specification realizes it                              |
-| ----------------- | ----------------------------------------------------------------- |
-| `HEALTH-FR-001`   | Section 4.3, `HEALTH-DD-002`, `HEALTH-SC-001`                      |
-| `HEALTH-FR-002`   | `HEALTH-DD-002`, `HEALTH-SC-002`                                   |
-| `HEALTH-FR-003`   | Section 4.3, `HEALTH-DD-003`, `HEALTH-SC-003`                      |
-| `HEALTH-FR-004`   | Section 4.5, `HEALTH-DD-004`, `HEALTH-SC-004`, `HEALTH-SC-005`     |
-| `HEALTH-FR-005`   | `HEALTH-DD-005`, `HEALTH-SC-006`                                   |
-| `HEALTH-FR-006`   | `HEALTH-DD-005`, `HEALTH-SC-007`                                   |
-| `HEALTH-FR-007`   | Section 4.5, `HEALTH-DD-004`, `HEALTH-DD-006`, `HEALTH-DD-010`, `HEALTH-SC-008`, `HEALTH-SC-016`, `HEALTH-SC-019` |
-| `HEALTH-FR-008`   | `HEALTH-DD-004`, `HEALTH-DD-011`, `HEALTH-SC-009`, `HEALTH-SC-018` |
-| `HEALTH-FR-009`   | Section 4.3, `HEALTH-DD-001`, `HEALTH-SC-010`                      |
-| `HEALTH-FR-010`   | Section 4.4, `HEALTH-DD-007`, `HEALTH-SC-011`                      |
-| `HEALTH-FR-011`   | Section 4.4, `HEALTH-DD-007`, `HEALTH-SC-012`                      |
-| `HEALTH-FR-012`   | `HEALTH-DD-009`, `HEALTH-SC-013`                                   |
-| `HEALTH-NFR-001`  | `HEALTH-DD-008`, `HEALTH-SC-005`                                   |
-| `HEALTH-NFR-002`  | `HEALTH-DD-002`, `HEALTH-SC-014`                                   |
-| `HEALTH-NFR-003`  | Section 4.3, `HEALTH-DD-007`, `HEALTH-SC-012`, `HEALTH-SC-015`     |
-| `HEALTH-INV-001`  | `HEALTH-DD-002`, `HEALTH-SC-002`                                   |
+| Requirement      | Where this specification realizes it                                                                              |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `HEALTH-FR-001`  | Section 4.3, `HEALTH-DD-002`, `HEALTH-SC-001`                                                                     |
+| `HEALTH-FR-002`  | `HEALTH-DD-002`, `HEALTH-SC-002`                                                                                  |
+| `HEALTH-FR-003`  | Section 4.3, `HEALTH-DD-003`, `HEALTH-SC-003`                                                                     |
+| `HEALTH-FR-004`  | Section 4.5, `HEALTH-DD-004`, `HEALTH-SC-004`, `HEALTH-SC-005`                                                    |
+| `HEALTH-FR-005`  | `HEALTH-DD-005`, `HEALTH-SC-006`                                                                                  |
+| `HEALTH-FR-006`  | `HEALTH-DD-005`, `HEALTH-SC-007`                                                                                  |
+| `HEALTH-FR-007`  | Section 4.5, `HEALTH-DD-004`, `HEALTH-DD-006`, `HEALTH-DD-010`, `HEALTH-SC-008`, `HEALTH-SC-016`, `HEALTH-SC-019` |
+| `HEALTH-FR-008`  | `HEALTH-DD-004`, `HEALTH-DD-011`, `HEALTH-SC-009`, `HEALTH-SC-018`                                                |
+| `HEALTH-FR-009`  | Section 4.3, `HEALTH-DD-001`, `HEALTH-SC-010`                                                                     |
+| `HEALTH-FR-010`  | Section 4.4, `HEALTH-DD-007`, `HEALTH-SC-011`                                                                     |
+| `HEALTH-FR-011`  | Section 4.4, `HEALTH-DD-007`, `HEALTH-SC-012`                                                                     |
+| `HEALTH-FR-012`  | `HEALTH-DD-009`, `HEALTH-SC-013`                                                                                  |
+| `HEALTH-NFR-001` | `HEALTH-DD-008`, `HEALTH-SC-005`                                                                                  |
+| `HEALTH-NFR-002` | `HEALTH-DD-002`, `HEALTH-SC-014`                                                                                  |
+| `HEALTH-NFR-003` | Section 4.3, `HEALTH-DD-007`, `HEALTH-SC-012`, `HEALTH-SC-015`                                                    |
+| `HEALTH-INV-001` | `HEALTH-DD-002`, `HEALTH-SC-002`                                                                                  |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline     | How this specification obeys it                                                   |
-| --------- | ------------- | --------------------------------------------------------------------------------- |
+| Rule      | Guideline     | How this specification obeys it                                                             |
+| --------- | ------------- | ------------------------------------------------------------------------------------------- |
 | `API-002` | HTTP API      | The probe routes pass the full chain. `HEALTH-DD-009` changes one option of the access log. |
-| `API-003` | HTTP API      | Section 4.3 gives the two routes that the table holds, both public.               |
-| `API-005` | HTTP API      | `handler.Health` implements `handler.Handler`.                                    |
-| `API-007` | HTTP API      | The chain sets `X-Flow-ID` and `Cache-Control`. No route overrides either.        |
-| `ERR-001` | Errors        | `HEALTH-DD-004`. A failed readiness is a problem with the media type of the rule. |
-| `ERR-003` | Errors        | `HEALTH-DD-006`. `not-ready` lives in `apps/hub/internal/domain/problems`.        |
-| `ERR-004` | Errors        | `HEALTH-DD-010`. `dependencies` and `errors` are two extensions of one mechanism. |
-| `ERR-005` | Errors        | The `detail` of a drain is one constant sentence.                                 |
-| `RES-001` | REST          | `HEALTH-DD-003`. The handler writes the timestamp in UTC with the `Z` suffix.     |
-| `RES-002` | REST          | The `Z-134` and `Z-104` rows name `livez` and `readyz`.                           |
-| `RES-007` | REST          | `api.yaml` feeds `hub.yaml`.                                                      |
-| `LOG-005` | Logging       | `HEALTH-DD-011`. The text of a failure is the attribute `error`, never the message. |
-| `LOG-006` | Logging       | `HEALTH-DD-011`. The record takes the context of the request, so it carries `flow_id`. |
-| `LOG-007` | Logging       | `HEALTH-DD-011`. The message is the constant `dependency check failed`.           |
-| `LOG-008` | Logging       | The log of a failure holds the error of the check, which carries no password.     |
-| `LOG-010` | Logging       | `HEALTH-DD-009` sets `Skip` as the rule gives it.                                 |
-| `LIF-005` | Lifecycle     | Section 4.4. The drain is the first step of the reverse order.                    |
-| `LIF-006` | Lifecycle     | The drain runs inside a shutdown step. `HEALTH-DD-007` bounds it at 10 seconds.   |
-| `CFG-003` | Configuration | Section 4.3. `server.drain_period` carries a `default` and a `validate` tag.      |
-| `DEP-005` | Dependencies  | `HealthService` exists. Its build can fail, so it holds `mu` and resets `once`.   |
-| `GO-007`  | Go style      | `var _ Checker = (*Service)(nil)`.                                                |
-| `GO-009`  | Go style      | `healthcheck.New` returns `*Service`.                                             |
-| `TST-004` | Testing       | Section 6 gives a layer for each scenario.                                        |
-| `BLD-004` | Build         | `HEALTH-DD-010` changes `libs/rest`. Step 1 of section 7 builds and loads every plugin. |
+| `API-003` | HTTP API      | Section 4.3 gives the two routes that the table holds, both public.                         |
+| `API-005` | HTTP API      | `handler.Health` implements `handler.Handler`.                                              |
+| `API-007` | HTTP API      | The chain sets `X-Flow-ID` and `Cache-Control`. No route overrides either.                  |
+| `ERR-001` | Errors        | `HEALTH-DD-004`. A failed readiness is a problem with the media type of the rule.           |
+| `ERR-003` | Errors        | `HEALTH-DD-006`. `not-ready` lives in `apps/hub/internal/domain/problems`.                  |
+| `ERR-004` | Errors        | `HEALTH-DD-010`. `dependencies` and `errors` are two extensions of one mechanism.           |
+| `ERR-005` | Errors        | The `detail` of a drain is one constant sentence.                                           |
+| `RES-001` | REST          | `HEALTH-DD-003`. The handler writes the timestamp in UTC with the `Z` suffix.               |
+| `RES-002` | REST          | The `Z-134` and `Z-104` rows name `livez` and `readyz`.                                     |
+| `RES-007` | REST          | `api.yaml` feeds `hub.yaml`.                                                                |
+| `LOG-005` | Logging       | `HEALTH-DD-011`. The text of a failure is the attribute `error`, never the message.         |
+| `LOG-006` | Logging       | `HEALTH-DD-011`. The record takes the context of the request, so it carries `flow_id`.      |
+| `LOG-007` | Logging       | `HEALTH-DD-011`. The message is the constant `dependency check failed`.                     |
+| `LOG-008` | Logging       | The log of a failure holds the error of the check, which carries no password.               |
+| `LOG-010` | Logging       | `HEALTH-DD-009` sets `Skip` as the rule gives it.                                           |
+| `LIF-005` | Lifecycle     | Section 4.4. The drain is the first step of the reverse order.                              |
+| `LIF-006` | Lifecycle     | The drain runs inside a shutdown step. `HEALTH-DD-007` bounds it at 10 seconds.             |
+| `CFG-003` | Configuration | Section 4.3. `server.drain_period` carries a `default` and a `validate` tag.                |
+| `DEP-005` | Dependencies  | `HealthService` exists. Its build can fail, so it holds `mu` and resets `once`.             |
+| `GO-007`  | Go style      | `var _ Checker = (*Service)(nil)`.                                                          |
+| `GO-009`  | Go style      | `healthcheck.New` returns `*Service`.                                                       |
+| `TST-004` | Testing       | Section 6 gives a layer for each scenario.                                                  |
+| `BLD-004` | Build         | `HEALTH-DD-010` changes `libs/rest`. Step 1 of section 7 builds and loads every plugin.     |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                              | Action | Holds                                                           |
-| ------------------------------------------------- | ------ | --------------------------------------------------------------- |
-| `apps/hub/internal/healthcheck/doc.go`            | create | The package comment.                                            |
-| `apps/hub/internal/healthcheck/service.go`        | create | `Checker`, `Service`, `New`, `Drain`, the path constants, the name and the version of the component, and `limited`, which ends a check at its limit. |
-| `apps/hub/internal/healthcheck/postgres.go`       | create | The check `database`. It wraps the error as `pinging the database: %w`. |
-| `apps/hub/internal/healthcheck/idp.go`            | create | The check `idp`.                                                |
-| `apps/hub/internal/healthcheck/openbao.go`        | create | The check `secret-store`.                                       |
-| `apps/hub/internal/handler/health.go`             | create | The two routes and the map from a measurement to an answer.     |
-| `libs/rest/problem/`                              | change | `Body`, `ValidationProblem`, and pointer constructors. `Errors` leaves `Problem`. |
-| `apps/hub/internal/domain/problems/problems.go`   | change | `TypeNotReady`, `NotReadyProblem`, `NewNotReady`, and pointer constructors. |
-| Every caller of a constructor or of `Fill`        | change | The hub, `libs/rest`, and `plugins/jasmine` take `*Problem`.    |
-| `apps/hub/internal/server/access.go`              | change | `Skip` of the access log.                                       |
-| `apps/hub/internal/config/config.go`              | change | `Server.DrainPeriod`.                                           |
-| `apps/hub/internal/depresolver/health.go`         | create | `HealthService`. `resolver.go` and `server.go` register it.     |
-| `apps/hub/internal/command/serve/http.go`         | change | The drain step at the start of the shutdown.                    |
+| Path                                            | Action | Holds                                                                                                                                                |
+| ----------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/hub/internal/healthcheck/doc.go`          | create | The package comment.                                                                                                                                 |
+| `apps/hub/internal/healthcheck/service.go`      | create | `Checker`, `Service`, `New`, `Drain`, the path constants, the name and the version of the component, and `limited`, which ends a check at its limit. |
+| `apps/hub/internal/healthcheck/postgres.go`     | create | The check `database`. It wraps the error as `pinging the database: %w`.                                                                              |
+| `apps/hub/internal/healthcheck/idp.go`          | create | The check `idp`.                                                                                                                                     |
+| `apps/hub/internal/healthcheck/openbao.go`      | create | The check `secret-store`.                                                                                                                            |
+| `apps/hub/internal/handler/health.go`           | create | The two routes and the map from a measurement to an answer.                                                                                          |
+| `libs/rest/problem/`                            | change | `Body`, `ValidationProblem`, and pointer constructors. `Errors` leaves `Problem`.                                                                    |
+| `apps/hub/internal/domain/problems/problems.go` | change | `TypeNotReady`, `NotReadyProblem`, `NewNotReady`, and pointer constructors.                                                                          |
+| Every caller of a constructor or of `Fill`      | change | The hub, `libs/rest`, and `plugins/jasmine` take `*Problem`.                                                                                         |
+| `apps/hub/internal/server/access.go`            | change | `Skip` of the access log.                                                                                                                            |
+| `apps/hub/internal/config/config.go`            | change | `Server.DrainPeriod`.                                                                                                                                |
+| `apps/hub/internal/depresolver/health.go`       | create | `HealthService`. `resolver.go` and `server.go` register it.                                                                                          |
+| `apps/hub/internal/command/serve/http.go`       | change | The drain step at the start of the shutdown.                                                                                                         |
 
 `healthcheck` declares:
 
@@ -117,10 +117,10 @@ the access log cannot differ.
 
 **HTTP routes.** `api.yaml` holds the bodies and the status codes.
 
-| Method | Path      | Access | Realizes                                            |
-| ------ | --------- | ------ | --------------------------------------------------- |
-| `GET`  | `/livez`  | Public | `HEALTH-FR-001`, `HEALTH-FR-009`                    |
-| `GET`  | `/readyz` | Public | `HEALTH-FR-003`, `HEALTH-FR-004`, `HEALTH-FR-009`   |
+| Method | Path      | Access | Realizes                                          |
+| ------ | --------- | ------ | ------------------------------------------------- |
+| `GET`  | `/livez`  | Public | `HEALTH-FR-001`, `HEALTH-FR-009`                  |
+| `GET`  | `/readyz` | Public | `HEALTH-FR-003`, `HEALTH-FR-004`, `HEALTH-FR-009` |
 
 **Configuration scheme.**
 
@@ -156,11 +156,11 @@ step, whichever comes first.
 
 ### 4.5 Errors
 
-| Condition                          | Status | Body                                              | Log                                      |
-| ---------------------------------- | ------ | ------------------------------------------------- | ---------------------------------------- |
-| One dependency or more fails       | 503    | `not-ready`, `dependencies` holds each name       | One record for each failed check. `HEALTH-DD-011` |
-| A check passes its time limit      | 503    | The same. The name of the check is in the list.   | The same. `error` holds the timeout text of the library |
-| The hub drains                     | 503    | `not-ready` with a `detail`, and no `dependencies` | None                                    |
+| Condition                     | Status | Body                                               | Log                                                     |
+| ----------------------------- | ------ | -------------------------------------------------- | ------------------------------------------------------- |
+| One dependency or more fails  | 503    | `not-ready`, `dependencies` holds each name        | One record for each failed check. `HEALTH-DD-011`       |
+| A check passes its time limit | 503    | The same. The name of the check is in the list.    | The same. `error` holds the timeout text of the library |
+| The hub drains                | 503    | `not-ready` with a `detail`, and no `dependencies` | None                                                    |
 
 The `detail` of a drain is `The hub is shutting down.`
 
@@ -351,16 +351,16 @@ the hub.
 
 ## 7. Build plan
 
-| #   | Step                                                                          | Realizes                                   | Done |
-| --- | ----------------------------------------------------------------------------- | ------------------------------------------ | ---- |
-| 1   | Add `Body` and `ValidationProblem` to `libs/rest/problem`. Build every plugin and load each one. `BLD-004`. | `HEALTH-FR-007`                  | [x]  |
-| 2   | Add `TypeNotReady`, `NotReadyProblem`, and `NewNotReady`.                            | `HEALTH-FR-007`                            | [x]  |
-| 3   | Rename the checks, set `WithMaxConcurrent`, add `Drain`, `Draining`, the paths. | `HEALTH-FR-005`, `HEALTH-FR-006`, `HEALTH-NFR-001` | [x]  |
-| 4   | Map a measurement to an answer in `handler.Health`.                           | `HEALTH-FR-001` to `HEALTH-FR-004`, `HEALTH-FR-007` to `HEALTH-FR-009` | [x]  |
-| 5   | Set `Skip` in `accessLog`.                                                    | `HEALTH-FR-012`                            | [x]  |
-| 6   | Add `Server.DrainPeriod`, and the drain step in `serve http`.                 | `HEALTH-FR-010`, `HEALTH-FR-011`, `HEALTH-NFR-003` | [x]  |
-| 7   | Build `hub.yaml` and lint it, when step 13 of the APIFMT build plan adds the commands of `RES-008`. | `HEALTH-FR-009`                            | [ ]  |
-| 8   | Run `HEALTH-SC-012` by hand.                                                  | `HEALTH-FR-011`                            | [ ]  |
+| #   | Step                                                                                                        | Realizes                                                               | Done |
+| --- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---- |
+| 1   | Add `Body` and `ValidationProblem` to `libs/rest/problem`. Build every plugin and load each one. `BLD-004`. | `HEALTH-FR-007`                                                        | [x]  |
+| 2   | Add `TypeNotReady`, `NotReadyProblem`, and `NewNotReady`.                                                   | `HEALTH-FR-007`                                                        | [x]  |
+| 3   | Rename the checks, set `WithMaxConcurrent`, add `Drain`, `Draining`, the paths.                             | `HEALTH-FR-005`, `HEALTH-FR-006`, `HEALTH-NFR-001`                     | [x]  |
+| 4   | Map a measurement to an answer in `handler.Health`.                                                         | `HEALTH-FR-001` to `HEALTH-FR-004`, `HEALTH-FR-007` to `HEALTH-FR-009` | [x]  |
+| 5   | Set `Skip` in `accessLog`.                                                                                  | `HEALTH-FR-012`                                                        | [x]  |
+| 6   | Add `Server.DrainPeriod`, and the drain step in `serve http`.                                               | `HEALTH-FR-010`, `HEALTH-FR-011`, `HEALTH-NFR-003`                     | [x]  |
+| 7   | Build `hub.yaml` and lint it, when step 13 of the APIFMT build plan adds the commands of `RES-008`.         | `HEALTH-FR-009`                                                        | [ ]  |
+| 8   | Run `HEALTH-SC-012` by hand.                                                                                | `HEALTH-FR-011`                                                        | [ ]  |
 
 ## Retired identifiers
 

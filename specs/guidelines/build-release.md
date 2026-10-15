@@ -19,19 +19,19 @@ Every command must pass before the work is complete.
 
 Do not run a repository-wide script. Run the command for the artifact.
 
-| Artifact you changed  | Lint or check                                                            | Build                                                                                  |
-| --------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| `plugins/<name>` (Go) | `cd plugins/<name> && golangci-lint run ./...`                           | `CGO_ENABLED=1 go build -buildmode=plugin -o build/plugins/<name>.so ./plugins/<name>` |
-| `plugins/<name>/ui`   | None today. The build reports a type error.                              | `pnpm --filter ./plugins/<name>/ui build`                                              |
-| `apps/hub`            | `cd apps/hub && golangci-lint run ./...`                                 | `go build ./apps/hub/...`                                                              |
-| `apps/deck`           | `pnpm --filter @maroid/deck lint` and `pnpm --filter @maroid/deck check` | `pnpm --filter @maroid/deck build`                                                     |
-| `libs/<name>` (Go)    | `cd libs/<name> && golangci-lint run ./...`                              | `cd libs/<name> && go build ./...`                                                     |
-| `libs/plugin-sdk`     | `pnpm --filter @maroid/plugin-sdk check`                                 | `pnpm --filter @maroid/plugin-sdk build`                                               |
-| `libs/api-client`     | `pnpm --filter @maroid/api-client check`                                 | None today.                                                                            |
-| `libs/theme`          | `pnpm --filter @maroid/theme lint`                                       | None today.                                                                            |
-| `libs/ui`             | `pnpm --filter @maroid/ui lint` and `pnpm --filter @maroid/ui check`     | None today.                                                                            |
-| `apps/gate`           | None today. The build reports a type error.                              | `pnpm --filter @maroid/gate build`                                                     |
-| `specs/features/*/api.yaml`, `specs/api/` | None today. Tranche 3 of `ADR-0006` adds `pnpm api:lint`.  | None today. Tranche 3 of `ADR-0006` adds `pnpm api:build`.                              |
+| Artifact you changed                      | Lint or check                                                            | Build                                                                                  |
+| ----------------------------------------- | ------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| `plugins/<name>` (Go)                     | `cd plugins/<name> && golangci-lint run ./...`                           | `CGO_ENABLED=1 go build -buildmode=plugin -o build/plugins/<name>.so ./plugins/<name>` |
+| `plugins/<name>/ui`                       | None today. The build reports a type error.                              | `pnpm --filter ./plugins/<name>/ui build`                                              |
+| `apps/hub`                                | `cd apps/hub && golangci-lint run ./...`                                 | `go build ./apps/hub/...`                                                              |
+| `apps/deck`                               | `pnpm --filter @maroid/deck lint` and `pnpm --filter @maroid/deck check` | `pnpm --filter @maroid/deck build`                                                     |
+| `libs/<name>` (Go)                        | `cd libs/<name> && golangci-lint run ./...`                              | `cd libs/<name> && go build ./...`                                                     |
+| `libs/plugin-sdk`                         | `pnpm --filter @maroid/plugin-sdk check`                                 | `pnpm --filter @maroid/plugin-sdk build`                                               |
+| `libs/api-client`                         | `pnpm --filter @maroid/api-client check`                                 | None today.                                                                            |
+| `libs/theme`                              | `pnpm --filter @maroid/theme lint`                                       | None today.                                                                            |
+| `libs/ui`                                 | `pnpm --filter @maroid/ui lint` and `pnpm --filter @maroid/ui check`     | None today.                                                                            |
+| `apps/gate`                               | None today. The build reports a type error.                              | `pnpm --filter @maroid/gate build`                                                     |
+| `specs/features/*/api.yaml`, `specs/api/` | None today. Tranche 3 of `ADR-0006` adds `pnpm api:lint`.                | None today. Tranche 3 of `ADR-0006` adds `pnpm api:build`.                             |
 
 **Why:** A repository-wide script hides which artifact failed. It also reports a
 failure in an artifact that the change did not touch.

@@ -27,48 +27,48 @@ action that exists today.
 
 ## 2. Coverage
 
-| Requirement     | Where this specification realizes it                       |
-| --------------- | ------------------------------------------------------------ |
-| `PERMS-FR-001`  | Section 4.2, `PERMS-DD-001`, `PERMS-SC-001`                  |
-| `PERMS-FR-002`  | `PERMS-DD-001`, `PERMS-SC-002`                               |
-| `PERMS-FR-003`  | Section 4.2, `PERMS-SC-003`                                  |
-| `PERMS-FR-004`  | Section 4.2, `PERMS-DD-009`, `PERMS-SC-004`                  |
-| `PERMS-FR-005`  | Section 4.3, `PERMS-SC-005`                                  |
-| `PERMS-FR-006`  | Section 4.3, `PERMS-SC-006`                                  |
-| `PERMS-FR-007`  | Section 4.3, `PERMS-SC-007`                                  |
-| `PERMS-FR-008`  | Section 4.5, `PERMS-DD-008`, `PERMS-SC-008`                  |
-| `PERMS-FR-009`  | Section 4.3, `PERMS-SC-009`                                  |
-| `PERMS-FR-010`  | Section 4.3, `PERMS-SC-009`                                  |
-| `PERMS-FR-011`  | Section 4.1, `PERMS-DD-002`, `PERMS-SC-010`                  |
-| `PERMS-FR-012`  | Section 4.3, `PERMS-DD-003`, `PERMS-SC-011`                  |
-| `PERMS-FR-013`  | Section 4.5, `PERMS-DD-003`, `PERMS-SC-011`                  |
-| `PERMS-FR-014`  | `PERMS-DD-002`, `PERMS-SC-012`                               |
-| `PERMS-FR-015`  | Section 4.4, `PERMS-DD-005`, `PERMS-SC-013`                  |
-| `PERMS-FR-016`  | Section 4.5, `PERMS-DD-006`, `PERMS-SC-013`                  |
-| `PERMS-FR-017`  | Section 4.3, `PERMS-DD-007`, `PERMS-SC-014`                  |
-| `PERMS-FR-018`  | Section 4.6, `PERMS-DD-007`, `PERMS-SC-015`                  |
-| `PERMS-FR-019`  | Section 4.6, `PERMS-SC-016`                                  |
-| `PERMS-FR-020`  | Section 4.6, `PERMS-SC-016`                                  |
-| `PERMS-NFR-001` | `PERMS-DD-005`, `PERMS-SC-017`                               |
-| `PERMS-NFR-002` | `PERMS-DD-004`, `PERMS-SC-018`                               |
-| `PERMS-INV-001` | `PERMS-DD-008`, `PERMS-SC-008`                               |
+| Requirement     | Where this specification realizes it        |
+| --------------- | ------------------------------------------- |
+| `PERMS-FR-001`  | Section 4.2, `PERMS-DD-001`, `PERMS-SC-001` |
+| `PERMS-FR-002`  | `PERMS-DD-001`, `PERMS-SC-002`              |
+| `PERMS-FR-003`  | Section 4.2, `PERMS-SC-003`                 |
+| `PERMS-FR-004`  | Section 4.2, `PERMS-DD-009`, `PERMS-SC-004` |
+| `PERMS-FR-005`  | Section 4.3, `PERMS-SC-005`                 |
+| `PERMS-FR-006`  | Section 4.3, `PERMS-SC-006`                 |
+| `PERMS-FR-007`  | Section 4.3, `PERMS-SC-007`                 |
+| `PERMS-FR-008`  | Section 4.5, `PERMS-DD-008`, `PERMS-SC-008` |
+| `PERMS-FR-009`  | Section 4.3, `PERMS-SC-009`                 |
+| `PERMS-FR-010`  | Section 4.3, `PERMS-SC-009`                 |
+| `PERMS-FR-011`  | Section 4.1, `PERMS-DD-002`, `PERMS-SC-010` |
+| `PERMS-FR-012`  | Section 4.3, `PERMS-DD-003`, `PERMS-SC-011` |
+| `PERMS-FR-013`  | Section 4.5, `PERMS-DD-003`, `PERMS-SC-011` |
+| `PERMS-FR-014`  | `PERMS-DD-002`, `PERMS-SC-012`              |
+| `PERMS-FR-015`  | Section 4.4, `PERMS-DD-005`, `PERMS-SC-013` |
+| `PERMS-FR-016`  | Section 4.5, `PERMS-DD-006`, `PERMS-SC-013` |
+| `PERMS-FR-017`  | Section 4.3, `PERMS-DD-007`, `PERMS-SC-014` |
+| `PERMS-FR-018`  | Section 4.6, `PERMS-DD-007`, `PERMS-SC-015` |
+| `PERMS-FR-019`  | Section 4.6, `PERMS-SC-016`                 |
+| `PERMS-FR-020`  | Section 4.6, `PERMS-SC-016`                 |
+| `PERMS-NFR-001` | `PERMS-DD-005`, `PERMS-SC-017`              |
+| `PERMS-NFR-002` | `PERMS-DD-004`, `PERMS-SC-018`              |
+| `PERMS-INV-001` | `PERMS-DD-008`, `PERMS-SC-008`              |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline        | How this specification obeys it                                                 |
-| --------- | ---------------- | --------------------------------------------------------------------------------- |
-| `OWN-011` | Record ownership | Section 4.2 adds the role. `PERMS-DD-008` keeps a manager.                       |
+| Rule      | Guideline        | How this specification obeys it                                                            |
+| --------- | ---------------- | ------------------------------------------------------------------------------------------ |
+| `OWN-011` | Record ownership | Section 4.2 adds the role. `PERMS-DD-008` keeps a manager.                                 |
 | `SEC-013` | Security         | Section 4.3 names one permission for every action. `PERMS-DD-003` fails the load of a gap. |
-| `ERR-003` | Errors           | A refusal answers `permission-denied`. The last manager answers `manager-last`.   |
-| `ERR-004` | Errors           | `libs/rest` gains `NewPermissionDenied`.                                          |
-| `PLG-006` | Plugin model     | `PermissionPlugin`, `registry.PermissionRegistry`, `registrar.PermissionRegistrar`. |
-| `PLG-007` | Plugin model     | `pluginapi.Role` and `pluginapi.Permission` live in `libs/pluginapi`.             |
-| `PLG-011` | Plugin model     | The registry refuses a second permission under one name.                          |
-| `ARC-008` | Architecture     | The hub reads every permission of a plugin from the registry. It names none.      |
-| `TG-003`  | Telegram         | `TelegramCommandMeta` gains `Permission`.                                         |
-| `UI-008`  | Web UI           | `PluginHost` gains `can`. `PERMS-DD-007` names the change of the rule.             |
-| `DAT-009` | Data             | The migration adds a column and writes no `id`.                                   |
-| `BLD-004` | Build            | `libs/pluginapi` changes, so every plugin is rebuilt. Step 9 of the build plan.  |
+| `ERR-003` | Errors           | A refusal answers `permission-denied`. The last manager answers `manager-last`.            |
+| `ERR-004` | Errors           | `libs/rest` gains `NewPermissionDenied`.                                                   |
+| `PLG-006` | Plugin model     | `PermissionPlugin`, `registry.PermissionRegistry`, `registrar.PermissionRegistrar`.        |
+| `PLG-007` | Plugin model     | `pluginapi.Role` and `pluginapi.Permission` live in `libs/pluginapi`.                      |
+| `PLG-011` | Plugin model     | The registry refuses a second permission under one name.                                   |
+| `ARC-008` | Architecture     | The hub reads every permission of a plugin from the registry. It names none.               |
+| `TG-003`  | Telegram         | `TelegramCommandMeta` gains `Permission`.                                                  |
+| `UI-008`  | Web UI           | `PluginHost` gains `can`. `PERMS-DD-007` names the change of the rule.                     |
+| `DAT-009` | Data             | The migration adds a column and writes no `id`.                                            |
+| `BLD-004` | Build            | `libs/pluginapi` changes, so every plugin is rebuilt. Step 9 of the build plan.            |
 
 `ERR-003` gains the type `manager-last`. `UI-008` gains the member `can`. Both change
 a guideline, and both follow `ADR-0008` at the approval of this specification.
@@ -77,33 +77,33 @@ a guideline, and both follow `ADR-0008` at the approval of this specification.
 
 ### 4.1 Components
 
-| Path                                                               | Action | Holds                                                         |
-| ------------------------------------------------------------------ | ------ | ------------------------------------------------------------- |
-| `libs/pluginapi/permission.go`                                     | create | `Role`, the three roles, `Role.Holds`, `Permission`, `PermissionPlugin` |
-| `libs/pluginapi/route.go`                                          | change | `Route.Permission`                                            |
-| `libs/pluginapi/mcp.go`                                            | change | `MCPToolMeta.Permission`                                      |
-| `libs/pluginapi/telegram.go`                                       | change | `TelegramCommandMeta.Permission`                              |
-| `apps/hub/internal/registry/permission.go`                         | create | `registry.PermissionRegistry`                                 |
-| `apps/hub/internal/plugin/registrar/permission.go`                 | create | `registrar.PermissionRegistrar`                               |
-| `apps/hub/internal/plugin/registrar/{handler,mcp_tool,telegram_command}.go` | change | Each refuses an entry whose permission the registry does not hold |
-| `apps/hub/internal/plugin/loader/loader.go`                        | change | `PermissionRegistrar` runs right after `PluginRegistrar`      |
-| `apps/hub/internal/authz/{doc,authorizer,hub}.go`                  | create | `authz.Authorizer`, `authz.RoleAuthorizer`, the permissions of the hub |
-| `apps/hub/internal/workspace/middleware.go`                        | change | Reads the role with the membership, and puts it into the context |
-| `apps/hub/internal/workspace/require.go`                           | create | `workspace.Require`, the check of one route                   |
-| `apps/hub/internal/workspace/service.go`                           | change | `ChangeRole`, the role of `AddMember`, the lock of `PERMS-DD-008` |
-| `apps/hub/internal/handler/{workspace,plugin,plugin_wrapper}.go`   | change | Each route passes its permission to `workspace.Require`       |
-| `apps/hub/internal/mcpserver/workspace.go`                         | change | `workspaceMiddleware` checks the permission of `MCPHUB-DD-023`      |
-| `apps/hub/internal/telegram/command/wrapper.go`                    | change | `Wrapper.Handle` checks the permission before the command     |
-| `apps/hub/internal/telegram/middleware/acting_workspace.go`        | change | Puts the role into the context beside the workspace           |
-| `apps/hub/db/migrations/20261003120000_table_workspace_members_alter.*` | create | The column `role`. `PERMS-DD-009`                        |
-| `apps/hub/internal/domain/problems/problems.go`                    | change | `NewManagerLast`                                              |
-| `libs/rest/problem/registry.go`                                    | change | `NewPermissionDenied`                                         |
-| `libs/plugin-sdk/src/types.ts`                                     | change | `PluginHost.can`                                              |
-| `apps/deck/src/lib/state/workspaces.svelte.ts`                     | change | The role and the permissions of the acting workspace          |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/members/+page.svelte` | change | The role of each member, the select of a manager, the add form on viewer |
-| `plugins/jasmine/{main.go,permission/permission.go,handler/*.go}`  | change | `main.go` declares its permissions, `permission` names them, and each route names one |
-| `plugins/parking/{main.go,permission/permission.go,telegram/command/*.go}` | change | `main.go` declares its permissions, `permission` names them, and each command names one |
-| `specs/features/perms/api.yaml`                                    | create | `PATCH /workspaces/{workspaceId}/members/{userId}`. `PERMS-DD-010` |
+| Path                                                                        | Action | Holds                                                                                   |
+| --------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------- |
+| `libs/pluginapi/permission.go`                                              | create | `Role`, the three roles, `Role.Holds`, `Permission`, `PermissionPlugin`                 |
+| `libs/pluginapi/route.go`                                                   | change | `Route.Permission`                                                                      |
+| `libs/pluginapi/mcp.go`                                                     | change | `MCPToolMeta.Permission`                                                                |
+| `libs/pluginapi/telegram.go`                                                | change | `TelegramCommandMeta.Permission`                                                        |
+| `apps/hub/internal/registry/permission.go`                                  | create | `registry.PermissionRegistry`                                                           |
+| `apps/hub/internal/plugin/registrar/permission.go`                          | create | `registrar.PermissionRegistrar`                                                         |
+| `apps/hub/internal/plugin/registrar/{handler,mcp_tool,telegram_command}.go` | change | Each refuses an entry whose permission the registry does not hold                       |
+| `apps/hub/internal/plugin/loader/loader.go`                                 | change | `PermissionRegistrar` runs right after `PluginRegistrar`                                |
+| `apps/hub/internal/authz/{doc,authorizer,hub}.go`                           | create | `authz.Authorizer`, `authz.RoleAuthorizer`, the permissions of the hub                  |
+| `apps/hub/internal/workspace/middleware.go`                                 | change | Reads the role with the membership, and puts it into the context                        |
+| `apps/hub/internal/workspace/require.go`                                    | create | `workspace.Require`, the check of one route                                             |
+| `apps/hub/internal/workspace/service.go`                                    | change | `ChangeRole`, the role of `AddMember`, the lock of `PERMS-DD-008`                       |
+| `apps/hub/internal/handler/{workspace,plugin,plugin_wrapper}.go`            | change | Each route passes its permission to `workspace.Require`                                 |
+| `apps/hub/internal/mcpserver/workspace.go`                                  | change | `workspaceMiddleware` checks the permission of `MCPHUB-DD-023`                          |
+| `apps/hub/internal/telegram/command/wrapper.go`                             | change | `Wrapper.Handle` checks the permission before the command                               |
+| `apps/hub/internal/telegram/middleware/acting_workspace.go`                 | change | Puts the role into the context beside the workspace                                     |
+| `apps/hub/db/migrations/20261003120000_table_workspace_members_alter.*`     | create | The column `role`. `PERMS-DD-009`                                                       |
+| `apps/hub/internal/domain/problems/problems.go`                             | change | `NewManagerLast`                                                                        |
+| `libs/rest/problem/registry.go`                                             | change | `NewPermissionDenied`                                                                   |
+| `libs/plugin-sdk/src/types.ts`                                              | change | `PluginHost.can`                                                                        |
+| `apps/deck/src/lib/state/workspaces.svelte.ts`                              | change | The role and the permissions of the acting workspace                                    |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/members/+page.svelte`       | change | The role of each member, the select of a manager, the add form on viewer                |
+| `plugins/jasmine/{main.go,permission/permission.go,handler/*.go}`           | change | `main.go` declares its permissions, `permission` names them, and each route names one   |
+| `plugins/parking/{main.go,permission/permission.go,telegram/command/*.go}`  | change | `main.go` declares its permissions, `permission` names them, and each command names one |
+| `specs/features/perms/api.yaml`                                             | create | `PATCH /workspaces/{workspaceId}/members/{userId}`. `PERMS-DD-010`                      |
 
 ```go
 // libs/pluginapi/permission.go
@@ -181,20 +181,20 @@ The default writes `manager` into every row that exists, which realizes
 **The routes of the hub.** `WSPACE` and `PSET` hold the routes. This feature adds one
 route and the permission of each.
 
-| Method   | Path                                                     | Permission         | Lowest role | Realizes                       |
-| -------- | -------------------------------------------------------- | ------------------ | ----------- | ------------------------------ |
-| `GET`    | `/workspaces/{workspaceId}`                              | `workspace.read`   | viewer      | `PERMS-FR-005`, `PERMS-FR-009`, `PERMS-FR-017` |
-| `PATCH`  | `/workspaces/{workspaceId}`                              | `workspace.write`  | manager     | `PERMS-FR-005`                 |
-| `GET`    | `/workspaces/{workspaceId}/members`                      | `workspace.read`   | viewer      | `PERMS-FR-010`                 |
-| `GET`    | `/workspaces/{workspaceId}/members/{userId}`             | `workspace.read`   | viewer      | `PERMS-FR-010`                 |
-| `POST`   | `/workspaces/{workspaceId}/members`                      | `members.write`    | manager     | `PERMS-FR-005`, `PERMS-FR-006` |
-| `PATCH`  | `/workspaces/{workspaceId}/members/{userId}`             | `members.write`    | manager     | `PERMS-FR-007`. New            |
-| `DELETE` | `/workspaces/{workspaceId}/members/{userId}`, another member | `members.write` | manager    | `PERMS-FR-005`                 |
-| `DELETE` | `/workspaces/{workspaceId}/members/{userId}`, the acting user | `membership.leave` | viewer | `PERMS-FR-005`               |
-| `GET`    | `/workspaces/{workspaceId}/member-candidates`            | `members.write`    | manager     | `PERMS-FR-005`                 |
-| `GET`    | `/workspaces/{workspaceId}/plugins/{id}/settings/schema` | `settings.read`    | viewer      | `PERMS-FR-005`                 |
-| `GET`    | `/workspaces/{workspaceId}/plugins/{id}/settings`        | `settings.read`    | viewer      | `PERMS-FR-005`                 |
-| `PUT`    | `/workspaces/{workspaceId}/plugins/{id}/settings`        | `settings.write`   | editor      | `PERMS-FR-005`                 |
+| Method   | Path                                                          | Permission         | Lowest role | Realizes                                       |
+| -------- | ------------------------------------------------------------- | ------------------ | ----------- | ---------------------------------------------- |
+| `GET`    | `/workspaces/{workspaceId}`                                   | `workspace.read`   | viewer      | `PERMS-FR-005`, `PERMS-FR-009`, `PERMS-FR-017` |
+| `PATCH`  | `/workspaces/{workspaceId}`                                   | `workspace.write`  | manager     | `PERMS-FR-005`                                 |
+| `GET`    | `/workspaces/{workspaceId}/members`                           | `workspace.read`   | viewer      | `PERMS-FR-010`                                 |
+| `GET`    | `/workspaces/{workspaceId}/members/{userId}`                  | `workspace.read`   | viewer      | `PERMS-FR-010`                                 |
+| `POST`   | `/workspaces/{workspaceId}/members`                           | `members.write`    | manager     | `PERMS-FR-005`, `PERMS-FR-006`                 |
+| `PATCH`  | `/workspaces/{workspaceId}/members/{userId}`                  | `members.write`    | manager     | `PERMS-FR-007`. New                            |
+| `DELETE` | `/workspaces/{workspaceId}/members/{userId}`, another member  | `members.write`    | manager     | `PERMS-FR-005`                                 |
+| `DELETE` | `/workspaces/{workspaceId}/members/{userId}`, the acting user | `membership.leave` | viewer      | `PERMS-FR-005`                                 |
+| `GET`    | `/workspaces/{workspaceId}/member-candidates`                 | `members.write`    | manager     | `PERMS-FR-005`                                 |
+| `GET`    | `/workspaces/{workspaceId}/plugins/{id}/settings/schema`      | `settings.read`    | viewer      | `PERMS-FR-005`                                 |
+| `GET`    | `/workspaces/{workspaceId}/plugins/{id}/settings`             | `settings.read`    | viewer      | `PERMS-FR-005`                                 |
+| `PUT`    | `/workspaces/{workspaceId}/plugins/{id}/settings`             | `settings.write`   | editor      | `PERMS-FR-005`                                 |
 
 `DELETE` on a membership checks `membership.leave` when `{userId}` names the acting
 user, and `members.write` otherwise. `PERMS-DD-005` gives the reason.
@@ -219,14 +219,14 @@ workspace either.
 
 **The permissions of the plugins.** `PERMS-DD-011` gives the choice of each.
 
-| Plugin       | Permission           | Lowest role | Named by                                                   |
-| ------------ | -------------------- | ----------- | ---------------------------------------------------------- |
-| `jasmine`    | `environments.read`  | viewer      | `GET /environments`, `GET /environments/{id}`              |
-| `jasmine`    | `environments.write` | editor      | `POST /environments`, `PUT` and `DELETE /environments/{id}` |
-| `jasmine`    | `plants.read`        | viewer      | `GET /plants`, `GET /plants/{id}`                          |
-| `jasmine`    | `plants.write`       | editor      | `POST /plants`, `PUT` and `DELETE /plants/{id}`            |
-| `parking`    | `sessions.read`      | viewer      | The commands `status` and `balance`                        |
-| `parking`    | `sessions.write`     | editor      | The commands `start` and `stop`, and the conversation that `start` opens |
+| Plugin    | Permission           | Lowest role | Named by                                                                 |
+| --------- | -------------------- | ----------- | ------------------------------------------------------------------------ |
+| `jasmine` | `environments.read`  | viewer      | `GET /environments`, `GET /environments/{id}`                            |
+| `jasmine` | `environments.write` | editor      | `POST /environments`, `PUT` and `DELETE /environments/{id}`              |
+| `jasmine` | `plants.read`        | viewer      | `GET /plants`, `GET /plants/{id}`                                        |
+| `jasmine` | `plants.write`       | editor      | `POST /plants`, `PUT` and `DELETE /plants/{id}`                          |
+| `parking` | `sessions.read`      | viewer      | The commands `status` and `balance`                                      |
+| `parking` | `sessions.write`     | editor      | The commands `start` and `stop`, and the conversation that `start` opens |
 
 The hub prefixes each name with the plugin identifier: `dev.maroid.jasmine:plants.write`.
 `gwp`, `pensions`, `tbilisi-energy`, and `telasi` hold no action with an acting user, so
@@ -259,15 +259,15 @@ the membership put into the context.
 
 ### 4.5 Errors
 
-| Condition                                                   | Answer                                                                |
-| ----------------------------------------------------------- | --------------------------------------------------------------------- |
-| A route: the role does not hold the permission              | 403, `/problems/http/permission-denied`, with `permission` and `required_role` |
-| An MCP tool: the role does not hold the permission          | A result with `isError` that names the permission and the role        |
-| A command of the bot: the role does not hold the permission | "This needs the role `<role>` (`<permission>`)", and the command runs no step |
-| A change leaves the workspace with no manager               | 409, `/problems/hub/manager-last`                                     |
-| `POST` on the members names no role, or an unknown one      | 422, `/problems/http/validation-failed`, pointer `/role`              |
-| A plugin entry names no permission, or one it does not declare | The load of the plugin fails, and the log names the plugin and the entry |
-| A plugin declares one permission name twice                 | The load of the plugin fails. `PLG-011`                               |
+| Condition                                                      | Answer                                                                         |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| A route: the role does not hold the permission                 | 403, `/problems/http/permission-denied`, with `permission` and `required_role` |
+| An MCP tool: the role does not hold the permission             | A result with `isError` that names the permission and the role                 |
+| A command of the bot: the role does not hold the permission    | "This needs the role `<role>` (`<permission>`)", and the command runs no step  |
+| A change leaves the workspace with no manager                  | 409, `/problems/hub/manager-last`                                              |
+| `POST` on the members names no role, or an unknown one         | 422, `/problems/http/validation-failed`, pointer `/role`                       |
+| A plugin entry names no permission, or one it does not declare | The load of the plugin fails, and the log names the plugin and the entry       |
+| A plugin declares one permission name twice                    | The load of the plugin fails. `PLG-011`                                        |
 
 ### 4.6 The deck
 
@@ -405,11 +405,11 @@ too. At the approval of this specification these change with it:
 - Every route of section 4.3 answers 403 in the fragments of `WSPACE` and `PSET`.
 - The route table of `features/wspace/spec.md` section 4.3 takes the permission of
   each route from section 4.3 of this file.
-**Rationale:** `WSPACE-DD-005` releases the two features together, and a route keeps one
-description. `RES-008` holds no merge of two operations of one path yet, so a second
-copy of a changed operation has no defined result.
-**Alternatives:** A full copy of every changed path in this fragment. Two descriptions of
-one route then drift.
+  **Rationale:** `WSPACE-DD-005` releases the two features together, and a route keeps one
+  description. `RES-008` holds no merge of two operations of one path yet, so a second
+  copy of a changed operation has no defined result.
+  **Alternatives:** A full copy of every changed path in this fragment. Two descriptions of
+  one route then drift.
 
 ### `PERMS-DD-011`
 
@@ -430,29 +430,29 @@ plant that died.
 
 ## 7. Build plan
 
-| #   | Step                                                                                          | Realizes                          | Done |
-| --- | --------------------------------------------------------------------------------------------- | --------------------------------- | ---- |
-| 1   | Add `NewPermissionDenied` to `libs/rest` and `NewManagerLast` to the hub. `ERR-003` and `UI-008` hold their rows. | `ERR-003`, `UI-008` | [x]  |
-| 2   | Write `PERMS-SC-004`, then the migration.                                                     | `PERMS-FR-001`, `PERMS-FR-004`    | [x]  |
-| 3   | Write `PERMS-SC-002`, then `libs/pluginapi/permission.go` and the three `Permission` fields.  | `PERMS-FR-002`, `PERMS-FR-012`    | [x]  |
-| 4   | Write `PERMS-SC-010` to `PERMS-SC-012`, then the registry, the registrar, and the checks of the three registrars. | `PERMS-FR-011` to `PERMS-FR-014` | [x] |
-| 5   | Write `PERMS-SC-018`, then `authz.RoleAuthorizer` and the permissions of the hub.             | `PERMS-NFR-002`                   | [x]  |
-| 6   | Write `PERMS-SC-005`, `PERMS-SC-013`, and `PERMS-SC-017`, then the role in the membership check, `workspace.Require`, and each route of section 4.3. | `PERMS-FR-005`, `PERMS-FR-015`, `PERMS-NFR-001` | [x] |
-| 7   | Write `PERMS-SC-006` to `PERMS-SC-009`, then the role in the service, `PATCH` on a membership, and the lock. | `PERMS-FR-003`, `PERMS-FR-006` to `PERMS-FR-010` | [x] |
-| 8   | The check in `workspaceMiddleware` and in `command.Wrapper`, and the refusal of `PERMS-DD-006`.      | `PERMS-FR-015`, `PERMS-FR-016`    | [x]  |
-| 9   | Declare the permissions of `jasmine` and `parking`, and name one on each entry. Build every plugin. | `PERMS-FR-012`, `BLD-004`   | [x]  |
-| 10  | Write `PERMS-SC-014`, then `permissions` on the workspace and `PluginHost.can`.               | `PERMS-FR-017`                    | [x]  |
-| 11  | The deck: the role in each list, the select of a manager, and the hidden controls.             | `PERMS-FR-018` to `PERMS-FR-020`  | [x]  |
-| 12  | Record the `permissions` capability of `PCAP`, step 12 of `features/pcap/spec.md`.             | `PCAP-FR-004`                     | [x]  |
+| #   | Step                                                                                                                                                 | Realizes                                         | Done |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ---- |
+| 1   | Add `NewPermissionDenied` to `libs/rest` and `NewManagerLast` to the hub. `ERR-003` and `UI-008` hold their rows.                                    | `ERR-003`, `UI-008`                              | [x]  |
+| 2   | Write `PERMS-SC-004`, then the migration.                                                                                                            | `PERMS-FR-001`, `PERMS-FR-004`                   | [x]  |
+| 3   | Write `PERMS-SC-002`, then `libs/pluginapi/permission.go` and the three `Permission` fields.                                                         | `PERMS-FR-002`, `PERMS-FR-012`                   | [x]  |
+| 4   | Write `PERMS-SC-010` to `PERMS-SC-012`, then the registry, the registrar, and the checks of the three registrars.                                    | `PERMS-FR-011` to `PERMS-FR-014`                 | [x]  |
+| 5   | Write `PERMS-SC-018`, then `authz.RoleAuthorizer` and the permissions of the hub.                                                                    | `PERMS-NFR-002`                                  | [x]  |
+| 6   | Write `PERMS-SC-005`, `PERMS-SC-013`, and `PERMS-SC-017`, then the role in the membership check, `workspace.Require`, and each route of section 4.3. | `PERMS-FR-005`, `PERMS-FR-015`, `PERMS-NFR-001`  | [x]  |
+| 7   | Write `PERMS-SC-006` to `PERMS-SC-009`, then the role in the service, `PATCH` on a membership, and the lock.                                         | `PERMS-FR-003`, `PERMS-FR-006` to `PERMS-FR-010` | [x]  |
+| 8   | The check in `workspaceMiddleware` and in `command.Wrapper`, and the refusal of `PERMS-DD-006`.                                                      | `PERMS-FR-015`, `PERMS-FR-016`                   | [x]  |
+| 9   | Declare the permissions of `jasmine` and `parking`, and name one on each entry. Build every plugin.                                                  | `PERMS-FR-012`, `BLD-004`                        | [x]  |
+| 10  | Write `PERMS-SC-014`, then `permissions` on the workspace and `PluginHost.can`.                                                                      | `PERMS-FR-017`                                   | [x]  |
+| 11  | The deck: the role in each list, the select of a manager, and the hidden controls.                                                                   | `PERMS-FR-018` to `PERMS-FR-020`                 | [x]  |
+| 12  | Record the `permissions` capability of `PCAP`, step 12 of `features/pcap/spec.md`.                                                                   | `PCAP-FR-004`                                    | [x]  |
 
 ## 8. Out of scope for this specification
 
-| Postponed                                   | Reason and the condition that brings it back                      |
-| ------------------------------------------- | ------------------------------------------------------------------- |
-| A policy engine.                            | `PERMS-DD-004` names the three conditions that bring one back.     |
-| A list of grants for each role.             | `PERMS-DD-004` names the two conditions that bring one back.       |
-| The check of the enablement of a plugin.    | `PLUGACC`.                                                          |
-| A menu of the bot that follows the role.    | The requirements put it out of scope.                               |
+| Postponed                                | Reason and the condition that brings it back                   |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| A policy engine.                         | `PERMS-DD-004` names the three conditions that bring one back. |
+| A list of grants for each role.          | `PERMS-DD-004` names the two conditions that bring one back.   |
+| The check of the enablement of a plugin. | `PLUGACC`.                                                     |
+| A menu of the bot that follows the role. | The requirements put it out of scope.                          |
 
 ## Retired identifiers
 

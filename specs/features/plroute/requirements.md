@@ -23,10 +23,10 @@ no address of its own, so the plugin shows it inside the page of the list:
 
 ## 2. Users
 
-| Person                       | Needs                                                        |
-| ---------------------------- | ------------------------------------------------------------ |
-| A member of a workspace      | An address for each record page, which a reload and a link keep. |
-| The author of a plugin       | To declare a page whose address carries a value, and to read that value. |
+| Person                  | Needs                                                                    |
+| ----------------------- | ------------------------------------------------------------------------ |
+| A member of a workspace | An address for each record page, which a reload and a link keep.         |
+| The author of a plugin  | To declare a page whose address carries a value, and to read that value. |
 
 ## 3. Out of scope
 
@@ -38,13 +38,13 @@ no address of its own, so the plugin shows it inside the page of the list:
 
 ## 4. Definitions
 
-| Term              | Meaning |
-| ----------------- | ------- |
-| page route        | A path that a remote declares, and the page that the deck opens for it. |
+| Term              | Meaning                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| page route        | A path that a remote declares, and the page that the deck opens for it.                      |
 | parameter segment | A segment of a page route that takes any one value, and gives the page that value by a name. |
-| navigation entry  | A page route that the deck lists under the plugin in the navigation of the workspace. |
-| trail             | The line of links above a page that names each level from the hub to the page. |
-| page title        | The name that a page gives itself for the last link of the trail. |
+| navigation entry  | A page route that the deck lists under the plugin in the navigation of the workspace.        |
+| trail             | The line of links above a page that names each level from the hub to the page.               |
+| page title        | The name that a page gives itself for the last link of the trail.                            |
 
 ## 5. Functional requirements
 
@@ -186,22 +186,22 @@ One address of a plugin opens at most one page route.
 
 ## 7. Constraints from the guidelines
 
-| Rule     | Guideline      | Effect on this feature |
-| -------- | -------------- | ---------------------- |
-| `UI-005` | Web UI         | Every path of a remote is a navigation entry today. A parameter route is not one, so the rule changes. |
-| `UI-008` | Web UI         | The page gives its page title through the host that the deck gives it, so the host gains a member. |
-| `UI-006` | Web UI         | A plugin reads its parameters from the host, never from a module of the deck. |
-| `ARC-008` | Architecture  | The deck and the hub match every plugin the same way. No rule names jasmine. |
-| `TS-002` | Frontend style | The page reads its parameters as runes props. |
+| Rule      | Guideline      | Effect on this feature                                                                                 |
+| --------- | -------------- | ------------------------------------------------------------------------------------------------------ |
+| `UI-005`  | Web UI         | Every path of a remote is a navigation entry today. A parameter route is not one, so the rule changes. |
+| `UI-008`  | Web UI         | The page gives its page title through the host that the deck gives it, so the host gains a member.     |
+| `UI-006`  | Web UI         | A plugin reads its parameters from the host, never from a module of the deck.                          |
+| `ARC-008` | Architecture   | The deck and the hub match every plugin the same way. No rule names jasmine.                           |
+| `TS-002`  | Frontend style | The page reads its parameters as runes props.                                                          |
 
 ## 8. Open questions
 
-| #   | Question | Owner | Answer |
-| --- | -------- | ----- | ------ |
-| 1   | The key of the feature. | Temuri | `PLROUTE`. |
-| 2   | What an address that matches no route shows. | Temuri | A not-found page of the deck. `PLROUTE-FR-007`. |
-| 3   | Whether a page reads the query of its address. | Temuri | No. Out of scope. |
-| 4   | Whether the plant page of jasmine is part of this feature. | Temuri | Yes. `PLROUTE-FR-013` to `PLROUTE-FR-016`. |
+| #   | Question                                                   | Owner  | Answer                                          |
+| --- | ---------------------------------------------------------- | ------ | ----------------------------------------------- |
+| 1   | The key of the feature.                                    | Temuri | `PLROUTE`.                                      |
+| 2   | What an address that matches no route shows.               | Temuri | A not-found page of the deck. `PLROUTE-FR-007`. |
+| 3   | Whether a page reads the query of its address.             | Temuri | No. Out of scope.                               |
+| 4   | Whether the plant page of jasmine is part of this feature. | Temuri | Yes. `PLROUTE-FR-013` to `PLROUTE-FR-016`.      |
 
 ## Retired identifiers
 

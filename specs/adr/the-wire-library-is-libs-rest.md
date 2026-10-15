@@ -34,11 +34,11 @@ import.
 
 Three modules could hold them:
 
-| Module            | Holds today                                      |
-| ----------------- | ------------------------------------------------ |
-| `libs/problem`    | The failure half of the wire contract.           |
-| `libs/pluginapi`  | What a plugin declares to the hub.               |
-| A new `libs/page` | Nothing. It would be the tenth Go module.        |
+| Module            | Holds today                               |
+| ----------------- | ----------------------------------------- |
+| `libs/problem`    | The failure half of the wire contract.    |
+| `libs/pluginapi`  | What a plugin declares to the hub.        |
+| A new `libs/page` | Nothing. It would be the tenth Go module. |
 
 `APIFMT-DD-001` selected the first and recorded that this decision must ratify it.
 
@@ -82,16 +82,16 @@ contract across two imports with no rule to say which half a new type joins.
 
 ### What changes
 
-| Item                        | Change                                                          |
-| --------------------------- | ----------------------------------------------------------------- |
-| `libs/problem/go.mod`       | The module path becomes `github.com/abgeo/maroid/libs/rest`.    |
-| `go.work`                   | `./libs/problem` becomes `./libs/rest`.                         |
-| 17 Go files                 | The import path becomes `libs/rest/problem`. The `problem.` qualifier stays. |
-| `ERR-003`, `ERR-007`        | Every sentence that names `libs/problem` names `libs/rest`.     |
-| `ERR-007`                   | It names the page and the cursor as the other residents, and cites `ARC-005`. |
-| `errors.md` frontmatter     | The `scope` list names `libs/rest/`.                            |
-| `BLD-004`                   | It reaches any module of `libs/` that every plugin imports.     |
-| `ADR-0005`                  | No change. It records what was true when it was decided.        |
+| Item                    | Change                                                                        |
+| ----------------------- | ----------------------------------------------------------------------------- |
+| `libs/problem/go.mod`   | The module path becomes `github.com/abgeo/maroid/libs/rest`.                  |
+| `go.work`               | `./libs/problem` becomes `./libs/rest`.                                       |
+| 17 Go files             | The import path becomes `libs/rest/problem`. The `problem.` qualifier stays.  |
+| `ERR-003`, `ERR-007`    | Every sentence that names `libs/problem` names `libs/rest`.                   |
+| `ERR-007`               | It names the page and the cursor as the other residents, and cites `ARC-005`. |
+| `errors.md` frontmatter | The `scope` list names `libs/rest/`.                                          |
+| `BLD-004`               | It reaches any module of `libs/` that every plugin imports.                   |
+| `ADR-0005`              | No change. It records what was true when it was decided.                      |
 
 The out-of-tree `asg` plugin of `go.work` imports nothing from this module, so it
 takes no change.

@@ -7,7 +7,8 @@ created: 2026-10-11
 updated: 2026-10-12
 approved_by: Temuri
 approved_on: 2026-10-11
-constrained_by: [NTF, PLG, CFG, OWN, SEC, ARC, API, ERR, EXT, DAT, REP, PKG, LOG, JOB, TST, SPC, RES, BLD]
+constrained_by:
+  [NTF, PLG, CFG, OWN, SEC, ARC, API, ERR, EXT, DAT, REP, PKG, LOG, JOB, TST, SPC, RES, BLD]
 requirements: features/notif/requirements.md
 ---
 
@@ -28,121 +29,121 @@ notification provider takes the transit key of its workspace through `secret.Cip
 
 ## 2. Coverage
 
-| Requirement     | Where this specification realizes it                         |
-| --------------- | ------------------------------------------------------------ |
-| `NOTIF-FR-001`  | Section 4.1, `NOTIF-DD-001`, `NOTIF-SC-001`                  |
-| `NOTIF-FR-002`  | `NOTIF-DD-001`, `NOTIF-SC-002`                               |
-| `NOTIF-FR-003`  | `NOTIF-DD-002`, `NOTIF-SC-003`                               |
-| `NOTIF-FR-004`  | Section 4.3, `NOTIF-DD-006`, `NOTIF-SC-004`                  |
-| `NOTIF-FR-005`  | `NOTIF-DD-006`, `NOTIF-SC-004`                               |
-| `NOTIF-FR-006`  | Section 4.3, `NOTIF-DD-007`, `NOTIF-SC-005`                  |
-| `NOTIF-FR-007`  | Section 4.3, `NOTIF-SC-006`                                  |
-| `NOTIF-FR-008`  | `NOTIF-DD-006`, `NOTIF-SC-006`                               |
-| `NOTIF-FR-009`  | Section 4.2, `NOTIF-SC-007`                                  |
-| `NOTIF-FR-010`  | Section 4.3, `NOTIF-SC-008`                                  |
-| `NOTIF-FR-011`  | Section 4.5, `NOTIF-DD-004`, `NOTIF-SC-009`                  |
-| `NOTIF-FR-012`  | Section 4.5, `NOTIF-SC-009`                                  |
-| `NOTIF-FR-013`  | `NOTIF-DD-005`, Section 4.5, `NOTIF-SC-010`                  |
-| `NOTIF-FR-014`  | `NOTIF-DD-008`, `NOTIF-SC-011`, `NOTIF-SC-030`               |
-| `NOTIF-FR-015`  | `NOTIF-DD-008`, `NOTIF-SC-011`                               |
-| `NOTIF-FR-016`  | Section 4.3, `NOTIF-SC-012`                                  |
-| `NOTIF-FR-017`  | Section 4.2, `NOTIF-SC-013`                                  |
-| `NOTIF-FR-018`  | Section 4.3, `NOTIF-SC-014`                                  |
-| `NOTIF-FR-019`  | Section 4.3, `NOTIF-SC-014`                                  |
-| `NOTIF-FR-020`  | Section 4.3, `NOTIF-SC-015`                                  |
-| `NOTIF-FR-021`  | `NOTIF-DD-009`, `NOTIF-SC-016`                               |
-| `NOTIF-FR-022`  | `NOTIF-DD-008`, `NOTIF-SC-017`                               |
-| `NOTIF-FR-023`  | `NOTIF-DD-008`, `NOTIF-SC-018`                               |
-| `NOTIF-FR-024`  | Section 4.4, `NOTIF-DD-003`, `NOTIF-SC-019`                  |
-| `NOTIF-FR-025`  | `NOTIF-DD-003`, `NOTIF-SC-020`                               |
-| `NOTIF-FR-026`  | `NOTIF-DD-003`, `NOTIF-SC-020`                               |
-| `NOTIF-FR-027`  | `NOTIF-DD-003`, `NOTIF-SC-021`                               |
-| `NOTIF-FR-028`  | `NOTIF-DD-003`, `NOTIF-SC-022`                               |
-| `NOTIF-FR-029`  | `NOTIF-DD-002`, `NOTIF-SC-003`                               |
-| `NOTIF-FR-030`  | `NOTIF-DD-010`, `NOTIF-SC-021`, `NOTIF-SC-022`               |
-| `NOTIF-FR-031`  | `NOTIF-DD-010`, `NOTIF-SC-020`                               |
-| `NOTIF-FR-032`  | `NOTIF-DD-011`, `NOTIF-SC-023`                               |
-| `NOTIF-FR-033`  | `NOTIF-DD-006`, `NOTIF-SC-024`                               |
-| `NOTIF-FR-034`  | `NOTIF-DD-006`, `NOTIF-SC-004`                               |
-| `NOTIF-FR-035`  | `NOTIF-DD-010`, `NOTIF-SC-025`                               |
-| `NOTIF-NFR-001` | `NOTIF-DD-012`, `NOTIF-SC-026`                               |
-| `NOTIF-NFR-002` | `NOTIF-DD-012`, `NOTIF-SC-027`                               |
-| `NOTIF-INV-001` | Section 4.2, `NOTIF-SC-028`                                  |
-| `NOTIF-INV-002` | Section 4.2, `NOTIF-SC-028`                                  |
-| `NOTIF-INV-003` | `NOTIF-DD-006`, `NOTIF-SC-024`                               |
-| `NOTIF-INV-004` | `NOTIF-DD-013`, `NOTIF-SC-029`                               |
+| Requirement     | Where this specification realizes it           |
+| --------------- | ---------------------------------------------- |
+| `NOTIF-FR-001`  | Section 4.1, `NOTIF-DD-001`, `NOTIF-SC-001`    |
+| `NOTIF-FR-002`  | `NOTIF-DD-001`, `NOTIF-SC-002`                 |
+| `NOTIF-FR-003`  | `NOTIF-DD-002`, `NOTIF-SC-003`                 |
+| `NOTIF-FR-004`  | Section 4.3, `NOTIF-DD-006`, `NOTIF-SC-004`    |
+| `NOTIF-FR-005`  | `NOTIF-DD-006`, `NOTIF-SC-004`                 |
+| `NOTIF-FR-006`  | Section 4.3, `NOTIF-DD-007`, `NOTIF-SC-005`    |
+| `NOTIF-FR-007`  | Section 4.3, `NOTIF-SC-006`                    |
+| `NOTIF-FR-008`  | `NOTIF-DD-006`, `NOTIF-SC-006`                 |
+| `NOTIF-FR-009`  | Section 4.2, `NOTIF-SC-007`                    |
+| `NOTIF-FR-010`  | Section 4.3, `NOTIF-SC-008`                    |
+| `NOTIF-FR-011`  | Section 4.5, `NOTIF-DD-004`, `NOTIF-SC-009`    |
+| `NOTIF-FR-012`  | Section 4.5, `NOTIF-SC-009`                    |
+| `NOTIF-FR-013`  | `NOTIF-DD-005`, Section 4.5, `NOTIF-SC-010`    |
+| `NOTIF-FR-014`  | `NOTIF-DD-008`, `NOTIF-SC-011`, `NOTIF-SC-030` |
+| `NOTIF-FR-015`  | `NOTIF-DD-008`, `NOTIF-SC-011`                 |
+| `NOTIF-FR-016`  | Section 4.3, `NOTIF-SC-012`                    |
+| `NOTIF-FR-017`  | Section 4.2, `NOTIF-SC-013`                    |
+| `NOTIF-FR-018`  | Section 4.3, `NOTIF-SC-014`                    |
+| `NOTIF-FR-019`  | Section 4.3, `NOTIF-SC-014`                    |
+| `NOTIF-FR-020`  | Section 4.3, `NOTIF-SC-015`                    |
+| `NOTIF-FR-021`  | `NOTIF-DD-009`, `NOTIF-SC-016`                 |
+| `NOTIF-FR-022`  | `NOTIF-DD-008`, `NOTIF-SC-017`                 |
+| `NOTIF-FR-023`  | `NOTIF-DD-008`, `NOTIF-SC-018`                 |
+| `NOTIF-FR-024`  | Section 4.4, `NOTIF-DD-003`, `NOTIF-SC-019`    |
+| `NOTIF-FR-025`  | `NOTIF-DD-003`, `NOTIF-SC-020`                 |
+| `NOTIF-FR-026`  | `NOTIF-DD-003`, `NOTIF-SC-020`                 |
+| `NOTIF-FR-027`  | `NOTIF-DD-003`, `NOTIF-SC-021`                 |
+| `NOTIF-FR-028`  | `NOTIF-DD-003`, `NOTIF-SC-022`                 |
+| `NOTIF-FR-029`  | `NOTIF-DD-002`, `NOTIF-SC-003`                 |
+| `NOTIF-FR-030`  | `NOTIF-DD-010`, `NOTIF-SC-021`, `NOTIF-SC-022` |
+| `NOTIF-FR-031`  | `NOTIF-DD-010`, `NOTIF-SC-020`                 |
+| `NOTIF-FR-032`  | `NOTIF-DD-011`, `NOTIF-SC-023`                 |
+| `NOTIF-FR-033`  | `NOTIF-DD-006`, `NOTIF-SC-024`                 |
+| `NOTIF-FR-034`  | `NOTIF-DD-006`, `NOTIF-SC-004`                 |
+| `NOTIF-FR-035`  | `NOTIF-DD-010`, `NOTIF-SC-025`                 |
+| `NOTIF-NFR-001` | `NOTIF-DD-012`, `NOTIF-SC-026`                 |
+| `NOTIF-NFR-002` | `NOTIF-DD-012`, `NOTIF-SC-027`                 |
+| `NOTIF-INV-001` | Section 4.2, `NOTIF-SC-028`                    |
+| `NOTIF-INV-002` | Section 4.2, `NOTIF-SC-028`                    |
+| `NOTIF-INV-003` | `NOTIF-DD-006`, `NOTIF-SC-024`                 |
+| `NOTIF-INV-004` | `NOTIF-DD-013`, `NOTIF-SC-029`                 |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline        | How this specification obeys it                                                      |
-| --------- | ---------------- | ------------------------------------------------------------------------------------ |
-| `NTF-001` | Notifications    | `NOTIF-DD-001`. `pluginapi.NotifyingPlugin`, a registry, and a registrar.            |
-| `NTF-002` | Notifications    | `NOTIF-DD-002`. `PluginNotifier.Notify` takes a topic identifier only.               |
-| `NTF-004` | Notifications    | `NOTIF-DD-003`. The dispatcher tries each route in order and joins the errors.       |
-| `NTF-006` | Notifications    | `notification.KindRegistry` lives in the hub. No plugin reaches it.                  |
-| `NTF-007` | Notifications    | `NOTIF-DD-004`, `NOTIF-DD-005`. A kind gives two models and a `Verify` method.       |
-| `NTF-008` | Notifications    | Section 4.2, `NOTIF-DD-006`, `NOTIF-DD-013`.                                         |
-| `PLG-006` | Plugin model     | `NotifyingPlugin`, `NotificationTopicRegistry`, `NotificationTopicRegistrar`.        |
-| `PLG-007` | Plugin model     | A plugin reaches the sender through `Host.Notifier()`.                               |
+| Rule      | Guideline        | How this specification obeys it                                                       |
+| --------- | ---------------- | ------------------------------------------------------------------------------------- |
+| `NTF-001` | Notifications    | `NOTIF-DD-001`. `pluginapi.NotifyingPlugin`, a registry, and a registrar.             |
+| `NTF-002` | Notifications    | `NOTIF-DD-002`. `PluginNotifier.Notify` takes a topic identifier only.                |
+| `NTF-004` | Notifications    | `NOTIF-DD-003`. The dispatcher tries each route in order and joins the errors.        |
+| `NTF-006` | Notifications    | `notification.KindRegistry` lives in the hub. No plugin reaches it.                   |
+| `NTF-007` | Notifications    | `NOTIF-DD-004`, `NOTIF-DD-005`. A kind gives two models and a `Verify` method.        |
+| `NTF-008` | Notifications    | Section 4.2, `NOTIF-DD-006`, `NOTIF-DD-013`.                                          |
+| `PLG-006` | Plugin model     | `NotifyingPlugin`, `NotificationTopicRegistry`, `NotificationTopicRegistrar`.         |
+| `PLG-007` | Plugin model     | A plugin reaches the sender through `Host.Notifier()`.                                |
 | `PLG-011` | Plugin model     | `NotificationTopicRegistry.Register` returns `ErrNotificationTopicAlreadyRegistered`. |
-| `ARC-008` | Architecture     | No rule names a plugin. A topic reaches the hub as data.                             |
-| `DAT-009` | Data             | Each `id` declares `DEFAULT uuidv7()`. No insert names it.                           |
-| `OWN-004` | Record ownership | Both tables are scoped to a workspace.                                               |
-| `OWN-005` | Record ownership | `workspace_id` takes its value from `app.workspace_id`. No insert names it.          |
-| `OWN-006` | Record ownership | Section 4.2 gives the forced policy of each table.                                   |
-| `REP-003` | Repository       | Each repository takes `*sqlx.Tx` from `database.WithScopeTx`.                        |
-| `SEC-012` | Security         | `NOTIF-DD-008`. The topic list and a new route read the enablements.                 |
-| `SEC-013` | Security         | Section 4.3. `notifications.read` for a viewer, `notifications.write` for a manager. |
-| `API-002` | The HTTP API     | A `PATCH` reads `If-Match`. A `POST` that creates reads `Idempotency-Key`.          |
-| `API-003` | The HTTP API     | Every route lives under `/workspaces*`. The table needs no new row.                  |
-| `ERR-003` | Errors           | Section 4.5 adds three hub problem types.                                            |
-| `EXT-005` | External         | `NOTIF-DD-005`. A Telegram answer with `ok: false` is a refusal.                     |
-| `LOG-005` | Logging          | `NOTIF-DD-010`. `model.NotificationProvider.LogValue` hides the fields.              |
-| `JOB-007` | Jobs             | `NOTIF-DD-003`. An unrouted topic returns nil, so the run does not fail.             |
-| `CFG-007` | Configuration    | `NOTIF-DD-013`. The `notifier` key leaves `config.Config`.                           |
-| `BLD-004` | Build            | Build plan step 11 rebuilds every plugin after `libs/pluginapi` changes.             |
-| `PKG-004` | Package layout   | Every new hub package lives under `apps/hub/internal`.                               |
+| `ARC-008` | Architecture     | No rule names a plugin. A topic reaches the hub as data.                              |
+| `DAT-009` | Data             | Each `id` declares `DEFAULT uuidv7()`. No insert names it.                            |
+| `OWN-004` | Record ownership | Both tables are scoped to a workspace.                                                |
+| `OWN-005` | Record ownership | `workspace_id` takes its value from `app.workspace_id`. No insert names it.           |
+| `OWN-006` | Record ownership | Section 4.2 gives the forced policy of each table.                                    |
+| `REP-003` | Repository       | Each repository takes `*sqlx.Tx` from `database.WithScopeTx`.                         |
+| `SEC-012` | Security         | `NOTIF-DD-008`. The topic list and a new route read the enablements.                  |
+| `SEC-013` | Security         | Section 4.3. `notifications.read` for a viewer, `notifications.write` for a manager.  |
+| `API-002` | The HTTP API     | A `PATCH` reads `If-Match`. A `POST` that creates reads `Idempotency-Key`.            |
+| `API-003` | The HTTP API     | Every route lives under `/workspaces*`. The table needs no new row.                   |
+| `ERR-003` | Errors           | Section 4.5 adds three hub problem types.                                             |
+| `EXT-005` | External         | `NOTIF-DD-005`. A Telegram answer with `ok: false` is a refusal.                      |
+| `LOG-005` | Logging          | `NOTIF-DD-010`. `model.NotificationProvider.LogValue` hides the fields.               |
+| `JOB-007` | Jobs             | `NOTIF-DD-003`. An unrouted topic returns nil, so the run does not fail.              |
+| `CFG-007` | Configuration    | `NOTIF-DD-013`. The `notifier` key leaves `config.Config`.                            |
+| `BLD-004` | Build            | Build plan step 11 rebuilds every plugin after `libs/pluginapi` changes.              |
+| `PKG-004` | Package layout   | Every new hub package lives under `apps/hub/internal`.                                |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                                                     | Action | Holds                                                                                   |
-| ------------------------------------------------------------------------ | ------ | --------------------------------------------------------------------------------------- |
-| `libs/pluginapi/notification.go`                                         | create | `Message`, `Attachment`, `NotificationTopic`, `NotifyingPlugin`, `NotificationSender`, `PluginNotifier`, `NewPluginNotifier`, `ErrNotificationTopicUndeclared` |
-| `libs/pluginapi/host.go`                                                 | change | `Notifier() (NotificationSender, error)` replaces the `notifierapi` method              |
-| `libs/pluginapi/go.mod`                                                  | change | Drop `libs/notifierapi`                                                                 |
-| `apps/hub/db/migrations/20261011100000_table_notification_providers_create.*` | create | `public.notification_providers`, its policy, its trigger                          |
-| `apps/hub/db/migrations/20261011100100_table_notification_routes_create.*` | create | `public.notification_routes`, its policy, its trigger                                 |
-| `apps/hub/internal/model/notification.go`                                | create | `NotificationProvider`, `NotificationRoute`, `Destination`, `LogValue` of each          |
-| `apps/hub/internal/repository/notification_provider.go`                  | create | `NotificationProviderRepository`, `NewNotificationProvider`                             |
-| `apps/hub/internal/repository/notification_route.go`                     | create | `NotificationRouteRepository`, `NewNotificationRoute`                                   |
-| `apps/hub/internal/notification/{doc,kind,registry}.go`                  | create | `Kind`, `KindRegistry`, `KindEntry`                                                     |
-| `apps/hub/internal/notification/service.go`                              | create | `Service`, `Manager`, `TopicView`, `ProviderInput`, `RouteInput`                        |
-| `apps/hub/internal/notification/dispatcher.go`                           | create | `Dispatcher`, which satisfies `pluginapi.NotificationSender`                            |
-| `apps/hub/internal/notification/telegram/{doc,kind,send}.go`             | create | `telegram.Kind`, `ProviderFields`, `DestinationFields`. The send code moves from `libs/notifier/transport/telegram`. |
-| `apps/hub/internal/notification/telegramtest/server.go`                  | create | `telegramtest.Server`, a stub of the Bot API that the tests of the hub share |
-| `apps/hub/internal/registry/notification_topic.go`                       | create | `NotificationTopicRegistry`, `NotificationTopicEntry`                                   |
-| `apps/hub/internal/registry/capability.go`                               | change | `CapNotificationTopics`                                                                 |
-| `apps/hub/internal/plugin/registrar/notification_topic.go`               | create | `NotificationTopicRegistrar`                                                            |
-| `apps/hub/internal/plugin/loader/loader.go`                              | change | `New` takes the topic registry. The registrar joins the list.                           |
-| `apps/hub/internal/plugin/host/host.go`                                  | change | `Notifier()` answers the dispatcher                                                     |
-| `apps/hub/internal/authz/hub.go`                                         | change | `PermissionNotificationsRead`, `PermissionNotificationsWrite`                           |
-| `apps/hub/internal/handler/notification.go`                              | create | `handler.Notification`, every route of section 4.3                                      |
-| `apps/hub/internal/domain/errs/errs.go`                                  | change | The sentinels of section 4.5                                                            |
-| `apps/hub/internal/domain/problems/problems.go`                          | change | `NewNotificationRouteExists`, `NewDeliveryRefused`, `NewMessagingUnreachable`           |
-| `apps/hub/internal/depresolver/notification.go`                          | create | `NotificationKinds`, `NotificationTopicRegistry`, `NotificationService`, `NotificationDispatcher`. Replaces `notifier.go`. |
-| `apps/hub/internal/depresolver/{resolver,plugin,server}.go`              | change | The four providers replace the two of the notifier                                      |
-| `apps/hub/internal/config/config.go`                                     | change | Drop the `Notifier` field                                                               |
-| `libs/notifier/`, `libs/notifierapi/`                                    | delete | `ADR-0013`                                                                              |
-| `go.work`, `.golangci.yaml`, `config.yaml`, `chart/values.yaml`          | change | Drop both modules and the `notifier` section. `ireturn` swaps `notifierapi.*` for `pluginapi.NotificationSender` and `notification.Kind`. |
-| `libs/api-client/src/problem.ts`                                        | change | `PROBLEM_TYPE` gains the three types of section 4.5                                     |
-| `apps/deck/src/lib/api/notifications.ts`                                 | create | The client of every route of section 4.3                                                |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/settings/notifications/` | create | The page: the providers list, the topics list, the two dialogs                          |
-| `apps/deck/src/lib/components/notifications/`                            | create | `ProviderDialog.svelte`, `RouteDialog.svelte`. Each renders `SchemaForm`.               |
-| `apps/deck/src/lib/navigation/breadcrumbs.ts`, `apps/deck/src/lib/permissions.ts` | change | The trail of the page, and the two permissions                               |
-| `specs/guidelines/errors.md`                                             | change | Three rows in the table of the hub types                                                |
-| `specs/features/notif/api.yaml`                                          | create | Every route. See `SPC-002`.                                                             |
+| Path                                                                              | Action | Holds                                                                                                                                                          |
+| --------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `libs/pluginapi/notification.go`                                                  | create | `Message`, `Attachment`, `NotificationTopic`, `NotifyingPlugin`, `NotificationSender`, `PluginNotifier`, `NewPluginNotifier`, `ErrNotificationTopicUndeclared` |
+| `libs/pluginapi/host.go`                                                          | change | `Notifier() (NotificationSender, error)` replaces the `notifierapi` method                                                                                     |
+| `libs/pluginapi/go.mod`                                                           | change | Drop `libs/notifierapi`                                                                                                                                        |
+| `apps/hub/db/migrations/20261011100000_table_notification_providers_create.*`     | create | `public.notification_providers`, its policy, its trigger                                                                                                       |
+| `apps/hub/db/migrations/20261011100100_table_notification_routes_create.*`        | create | `public.notification_routes`, its policy, its trigger                                                                                                          |
+| `apps/hub/internal/model/notification.go`                                         | create | `NotificationProvider`, `NotificationRoute`, `Destination`, `LogValue` of each                                                                                 |
+| `apps/hub/internal/repository/notification_provider.go`                           | create | `NotificationProviderRepository`, `NewNotificationProvider`                                                                                                    |
+| `apps/hub/internal/repository/notification_route.go`                              | create | `NotificationRouteRepository`, `NewNotificationRoute`                                                                                                          |
+| `apps/hub/internal/notification/{doc,kind,registry}.go`                           | create | `Kind`, `KindRegistry`, `KindEntry`                                                                                                                            |
+| `apps/hub/internal/notification/service.go`                                       | create | `Service`, `Manager`, `TopicView`, `ProviderInput`, `RouteInput`                                                                                               |
+| `apps/hub/internal/notification/dispatcher.go`                                    | create | `Dispatcher`, which satisfies `pluginapi.NotificationSender`                                                                                                   |
+| `apps/hub/internal/notification/telegram/{doc,kind,send}.go`                      | create | `telegram.Kind`, `ProviderFields`, `DestinationFields`. The send code moves from `libs/notifier/transport/telegram`.                                           |
+| `apps/hub/internal/notification/telegramtest/server.go`                           | create | `telegramtest.Server`, a stub of the Bot API that the tests of the hub share                                                                                   |
+| `apps/hub/internal/registry/notification_topic.go`                                | create | `NotificationTopicRegistry`, `NotificationTopicEntry`                                                                                                          |
+| `apps/hub/internal/registry/capability.go`                                        | change | `CapNotificationTopics`                                                                                                                                        |
+| `apps/hub/internal/plugin/registrar/notification_topic.go`                        | create | `NotificationTopicRegistrar`                                                                                                                                   |
+| `apps/hub/internal/plugin/loader/loader.go`                                       | change | `New` takes the topic registry. The registrar joins the list.                                                                                                  |
+| `apps/hub/internal/plugin/host/host.go`                                           | change | `Notifier()` answers the dispatcher                                                                                                                            |
+| `apps/hub/internal/authz/hub.go`                                                  | change | `PermissionNotificationsRead`, `PermissionNotificationsWrite`                                                                                                  |
+| `apps/hub/internal/handler/notification.go`                                       | create | `handler.Notification`, every route of section 4.3                                                                                                             |
+| `apps/hub/internal/domain/errs/errs.go`                                           | change | The sentinels of section 4.5                                                                                                                                   |
+| `apps/hub/internal/domain/problems/problems.go`                                   | change | `NewNotificationRouteExists`, `NewDeliveryRefused`, `NewMessagingUnreachable`                                                                                  |
+| `apps/hub/internal/depresolver/notification.go`                                   | create | `NotificationKinds`, `NotificationTopicRegistry`, `NotificationService`, `NotificationDispatcher`. Replaces `notifier.go`.                                     |
+| `apps/hub/internal/depresolver/{resolver,plugin,server}.go`                       | change | The four providers replace the two of the notifier                                                                                                             |
+| `apps/hub/internal/config/config.go`                                              | change | Drop the `Notifier` field                                                                                                                                      |
+| `libs/notifier/`, `libs/notifierapi/`                                             | delete | `ADR-0013`                                                                                                                                                     |
+| `go.work`, `.golangci.yaml`, `config.yaml`, `chart/values.yaml`                   | change | Drop both modules and the `notifier` section. `ireturn` swaps `notifierapi.*` for `pluginapi.NotificationSender` and `notification.Kind`.                      |
+| `libs/api-client/src/problem.ts`                                                  | change | `PROBLEM_TYPE` gains the three types of section 4.5                                                                                                            |
+| `apps/deck/src/lib/api/notifications.ts`                                          | create | The client of every route of section 4.3                                                                                                                       |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/settings/notifications/`          | create | The page: the providers list, the topics list, the two dialogs                                                                                                 |
+| `apps/deck/src/lib/components/notifications/`                                     | create | `ProviderDialog.svelte`, `RouteDialog.svelte`. Each renders `SchemaForm`.                                                                                      |
+| `apps/deck/src/lib/navigation/breadcrumbs.ts`, `apps/deck/src/lib/permissions.ts` | change | The trail of the page, and the two permissions                                                                                                                 |
+| `specs/guidelines/errors.md`                                                      | change | Three rows in the table of the hub types                                                                                                                       |
+| `specs/features/notif/api.yaml`                                                   | create | Every route. See `SPC-002`.                                                                                                                                    |
 
 The signatures:
 
@@ -251,46 +252,46 @@ func (r *NotificationTopicRegistry) Of(pluginID string) []NotificationTopicEntry
 
 ### 4.2 Data model
 
-| Table                    | Schema   | Scope  | Migration                                                 | Realizes                                     |
-| ------------------------ | -------- | ------ | --------------------------------------------------------- | -------------------------------------------- |
+| Table                    | Schema   | Scope  | Migration                                                   | Realizes                                                           |
+| ------------------------ | -------- | ------ | ----------------------------------------------------------- | ------------------------------------------------------------------ |
 | `notification_providers` | `public` | scoped | `20261011100000_table_notification_providers_create.up.sql` | `NOTIF-FR-004` to `NOTIF-FR-010`, `NOTIF-INV-002`, `NOTIF-INV-003` |
-| `notification_routes`    | `public` | scoped | `20261011100100_table_notification_routes_create.up.sql`  | `NOTIF-FR-016` to `NOTIF-FR-020`, `NOTIF-INV-001`, `NOTIF-INV-002` |
+| `notification_routes`    | `public` | scoped | `20261011100100_table_notification_routes_create.up.sql`    | `NOTIF-FR-016` to `NOTIF-FR-020`, `NOTIF-INV-001`, `NOTIF-INV-002` |
 
 `notification_providers`:
 
-| Column         | Type          | Null | Default                                              | Note                                    |
-| -------------- | ------------- | ---- | ---------------------------------------------------- | --------------------------------------- |
-| `id`           | `UUID`        | No   | `uuidv7()`                                           | Primary key                             |
-| `workspace_id` | `UUID`        | No   | `NULLIF(current_setting('app.workspace_id', true), '')::uuid` | References `public.workspaces (id)` |
-| `kind`         | `TEXT`        | No   |                                                      | The identifier of a kind                |
-| `name`         | `TEXT`        | No   |                                                      | `CHECK (char_length(name) BETWEEN 1 AND 64)` |
-| `fields`       | `JSONB`       | No   | `'{}'::jsonb`                                        | `model.Fields`, as `PSET` stores them   |
-| `enabled`      | `BOOLEAN`     | No   | `TRUE`                                               |                                         |
-| `created_at`   | `TIMESTAMPTZ` | No   | `NOW()`                                              |                                         |
-| `updated_at`   | `TIMESTAMPTZ` | No   | `NOW()`                                              | `set_updated_at` trigger                |
+| Column         | Type          | Null | Default                                                       | Note                                         |
+| -------------- | ------------- | ---- | ------------------------------------------------------------- | -------------------------------------------- |
+| `id`           | `UUID`        | No   | `uuidv7()`                                                    | Primary key                                  |
+| `workspace_id` | `UUID`        | No   | `NULLIF(current_setting('app.workspace_id', true), '')::uuid` | References `public.workspaces (id)`          |
+| `kind`         | `TEXT`        | No   |                                                               | The identifier of a kind                     |
+| `name`         | `TEXT`        | No   |                                                               | `CHECK (char_length(name) BETWEEN 1 AND 64)` |
+| `fields`       | `JSONB`       | No   | `'{}'::jsonb`                                                 | `model.Fields`, as `PSET` stores them        |
+| `enabled`      | `BOOLEAN`     | No   | `TRUE`                                                        |                                              |
+| `created_at`   | `TIMESTAMPTZ` | No   | `NOW()`                                                       |                                              |
+| `updated_at`   | `TIMESTAMPTZ` | No   | `NOW()`                                                       | `set_updated_at` trigger                     |
 
 Constraint `notification_providers_workspace_id_id_key UNIQUE (workspace_id, id)` serves
 the composite foreign key below.
 
 `notification_routes`:
 
-| Column         | Type          | Null | Default                     | Note                                                   |
-| -------------- | ------------- | ---- | --------------------------- | ------------------------------------------------------ |
-| `id`           | `UUID`        | No   | `uuidv7()`                  | Primary key                                            |
-| `workspace_id` | `UUID`        | No   | As the table above          | References `public.workspaces (id)`                    |
-| `provider_id`  | `UUID`        | No   |                             | See the foreign key below                              |
-| `plugin_id`    | `TEXT`        | No   |                             |                                                        |
-| `topic_id`     | `TEXT`        | No   |                             |                                                        |
-| `destination`  | `JSONB`       | No   | `'{}'::jsonb`               | Plain values. `NOTIF-DD-004` forbids a secret in it.   |
-| `enabled`      | `BOOLEAN`     | No   | `TRUE`                      |                                                        |
-| `created_at`   | `TIMESTAMPTZ` | No   | `NOW()`                     |                                                        |
-| `updated_at`   | `TIMESTAMPTZ` | No   | `NOW()`                     | `set_updated_at` trigger                               |
+| Column         | Type          | Null | Default            | Note                                                 |
+| -------------- | ------------- | ---- | ------------------ | ---------------------------------------------------- |
+| `id`           | `UUID`        | No   | `uuidv7()`         | Primary key                                          |
+| `workspace_id` | `UUID`        | No   | As the table above | References `public.workspaces (id)`                  |
+| `provider_id`  | `UUID`        | No   |                    | See the foreign key below                            |
+| `plugin_id`    | `TEXT`        | No   |                    |                                                      |
+| `topic_id`     | `TEXT`        | No   |                    |                                                      |
+| `destination`  | `JSONB`       | No   | `'{}'::jsonb`      | Plain values. `NOTIF-DD-004` forbids a secret in it. |
+| `enabled`      | `BOOLEAN`     | No   | `TRUE`             |                                                      |
+| `created_at`   | `TIMESTAMPTZ` | No   | `NOW()`            |                                                      |
+| `updated_at`   | `TIMESTAMPTZ` | No   | `NOW()`            | `set_updated_at` trigger                             |
 
 - `notification_routes_provider_fkey FOREIGN KEY (workspace_id, provider_id) REFERENCES
-  public.notification_providers (workspace_id, id) ON DELETE CASCADE`. The composite key
+public.notification_providers (workspace_id, id) ON DELETE CASCADE`. The composite key
   enforces `NOTIF-INV-001`, and the cascade realizes `NOTIF-FR-009`.
 - `notification_routes_unique_key UNIQUE (workspace_id, plugin_id, topic_id, provider_id,
-  destination)` realizes `NOTIF-FR-017`. Two JSONB values with the same members compare
+destination)` realizes `NOTIF-FR-017`. Two JSONB values with the same members compare
   equal, whatever the order of the members.
 - The unique key starts with `(workspace_id, plugin_id, topic_id)`, so its index also
   serves the query of the dispatcher, and the table needs no second index.
@@ -312,21 +313,21 @@ erDiagram
 **HTTP routes.** Every path starts with `/workspaces/{workspaceId}`. Every route passes
 `auth.Middleware`, `idempotency.Middleware`, and `workspace.Middleware`.
 
-| Method   | Path                                           | Access | Permission            | Realizes                         |
-| -------- | ---------------------------------------------- | ------ | --------------------- | -------------------------------- |
-| `GET`    | `/notification-provider-kinds`                 | Member | `notifications.read`  | `NOTIF-FR-006`, `NOTIF-FR-016`   |
-| `GET`    | `/notification-providers`                      | Member | `notifications.read`  | `NOTIF-FR-004`, `NOTIF-FR-005`   |
-| `POST`   | `/notification-providers`                      | Member | `notifications.write` | `NOTIF-FR-006`, `NOTIF-FR-013`   |
-| `GET`    | `/notification-providers/{providerId}`         | Member | `notifications.read`  | `NOTIF-FR-004`                   |
+| Method   | Path                                           | Access | Permission            | Realizes                                       |
+| -------- | ---------------------------------------------- | ------ | --------------------- | ---------------------------------------------- |
+| `GET`    | `/notification-provider-kinds`                 | Member | `notifications.read`  | `NOTIF-FR-006`, `NOTIF-FR-016`                 |
+| `GET`    | `/notification-providers`                      | Member | `notifications.read`  | `NOTIF-FR-004`, `NOTIF-FR-005`                 |
+| `POST`   | `/notification-providers`                      | Member | `notifications.write` | `NOTIF-FR-006`, `NOTIF-FR-013`                 |
+| `GET`    | `/notification-providers/{providerId}`         | Member | `notifications.read`  | `NOTIF-FR-004`                                 |
 | `PATCH`  | `/notification-providers/{providerId}`         | Member | `notifications.write` | `NOTIF-FR-007`, `NOTIF-FR-008`, `NOTIF-FR-010` |
-| `DELETE` | `/notification-providers/{providerId}`         | Member | `notifications.write` | `NOTIF-FR-009`                   |
-| `GET`    | `/notification-topics`                         | Member | `notifications.read`  | `NOTIF-FR-014`, `NOTIF-FR-015`   |
+| `DELETE` | `/notification-providers/{providerId}`         | Member | `notifications.write` | `NOTIF-FR-009`                                 |
+| `GET`    | `/notification-topics`                         | Member | `notifications.read`  | `NOTIF-FR-014`, `NOTIF-FR-015`                 |
 | `GET`    | `/notification-routes`                         | Member | `notifications.read`  | `NOTIF-FR-014`, `NOTIF-FR-022`, `NOTIF-FR-023` |
-| `POST`   | `/notification-routes`                         | Member | `notifications.write` | `NOTIF-FR-016`, `NOTIF-FR-017`   |
-| `GET`    | `/notification-routes/{routeId}`               | Member | `notifications.read`  | `NOTIF-FR-014`                   |
-| `PATCH`  | `/notification-routes/{routeId}`               | Member | `notifications.write` | `NOTIF-FR-018`, `NOTIF-FR-020`   |
-| `DELETE` | `/notification-routes/{routeId}`               | Member | `notifications.write` | `NOTIF-FR-019`                   |
-| `POST`   | `/notification-routes/{routeId}/test-messages` | Member | `notifications.write` | `NOTIF-FR-021`                   |
+| `POST`   | `/notification-routes`                         | Member | `notifications.write` | `NOTIF-FR-016`, `NOTIF-FR-017`                 |
+| `GET`    | `/notification-routes/{routeId}`               | Member | `notifications.read`  | `NOTIF-FR-014`                                 |
+| `PATCH`  | `/notification-routes/{routeId}`               | Member | `notifications.write` | `NOTIF-FR-018`, `NOTIF-FR-020`                 |
+| `DELETE` | `/notification-routes/{routeId}`               | Member | `notifications.write` | `NOTIF-FR-019`                                 |
+| `POST`   | `/notification-routes/{routeId}/test-messages` | Member | `notifications.write` | `NOTIF-FR-021`                                 |
 
 `notifications.read` names the lowest role viewer. `notifications.write` names manager.
 
@@ -361,19 +362,19 @@ sequenceDiagram
 
 ### 4.5 Errors
 
-| Condition                                                    | Behavior                                         | Problem                     |
-| ------------------------------------------------------------ | ------------------------------------------------ | --------------------------- |
-| A field value fails the schema of the kind                   | Store nothing. Name each field.                  | `settings-invalid` (422)    |
-| The kind is unknown                                          | Store nothing. Name `/kind`.                     | `validation-failed` (422)   |
-| The name is empty or longer than 64 characters               | Store nothing. Name `/name`.                     | `validation-failed` (422)   |
-| The route names an undeclared topic, or a plugin not enabled | Store nothing. Name `/topic_id` or `/plugin_id`. | `validation-failed` (422)   |
-| The route names a provider that the workspace does not hold  | Store nothing. Name `/provider_id`.              | `validation-failed` (422)   |
-| The route repeats another route                              | Store nothing.                                   | `notification-route-exists` (409) |
-| Telegram answers `ok: false` to a check or a test message    | Store nothing. Detail: the `description` of Telegram. | `delivery-refused` (422) |
-| Telegram does not answer within 10 seconds                   | Store nothing.                                   | `messaging-unreachable` (502) |
-| The record moved since the read                              | Change nothing.                                  | `precondition-failed` (412) |
-| The provider or the route does not exist in the workspace    | Change nothing.                                  | `not-found` (404)           |
-| `secret.Cipher` fails                                        | Store nothing. Log the error with no value.      | `internal` (500)            |
+| Condition                                                    | Behavior                                              | Problem                           |
+| ------------------------------------------------------------ | ----------------------------------------------------- | --------------------------------- |
+| A field value fails the schema of the kind                   | Store nothing. Name each field.                       | `settings-invalid` (422)          |
+| The kind is unknown                                          | Store nothing. Name `/kind`.                          | `validation-failed` (422)         |
+| The name is empty or longer than 64 characters               | Store nothing. Name `/name`.                          | `validation-failed` (422)         |
+| The route names an undeclared topic, or a plugin not enabled | Store nothing. Name `/topic_id` or `/plugin_id`.      | `validation-failed` (422)         |
+| The route names a provider that the workspace does not hold  | Store nothing. Name `/provider_id`.                   | `validation-failed` (422)         |
+| The route repeats another route                              | Store nothing.                                        | `notification-route-exists` (409) |
+| Telegram answers `ok: false` to a check or a test message    | Store nothing. Detail: the `description` of Telegram. | `delivery-refused` (422)          |
+| Telegram does not answer within 10 seconds                   | Store nothing.                                        | `messaging-unreachable` (502)     |
+| The record moved since the read                              | Change nothing.                                       | `precondition-failed` (412)       |
+| The provider or the route does not exist in the workspace    | Change nothing.                                       | `not-found` (404)                 |
+| `secret.Cipher` fails                                        | Store nothing. Log the error with no value.           | `internal` (500)                  |
 
 New sentinels in `errs`: `ErrNotificationKindAlreadyRegistered`, `ErrNilNotificationKind`,
 `ErrNotificationTopicAlreadyRegistered`, `ErrInvalidNotificationTopic`,
@@ -521,21 +522,21 @@ about it.
 
 ## 7. Build plan
 
-| #   | Step                                                                                      | Realizes                                | Done |
-| --- | ----------------------------------------------------------------------------------------- | --------------------------------------- | ---- |
-| 1   | `libs/pluginapi/notification.go`, and `Host.Notifier()`.                                  | `NOTIF-FR-001`, `NOTIF-FR-003`          | [x]  |
-| 2   | The topic registry, the registrar, the capability, the loader.                            | `NOTIF-FR-001`, `NOTIF-FR-002`          | [x]  |
-| 3   | The two migrations, the model, the two repositories.                                      | `NOTIF-FR-009`, `NOTIF-FR-017`, `NOTIF-INV-001`, `NOTIF-INV-002` | [x]  |
-| 4   | `notification.Kind`, `KindRegistry`, and `telegram.Kind` with `Verify` and `Send`.        | `NOTIF-FR-011`, `NOTIF-FR-013`, `NOTIF-FR-032` | [x]  |
-| 5   | `notification.Manager`: providers, with the protection of the secrets.                    | `NOTIF-FR-004` to `NOTIF-FR-010`, `NOTIF-FR-033` to `NOTIF-FR-035` | [x]  |
-| 6   | `notification.Manager`: topics, routes, and the test message.                             | `NOTIF-FR-014` to `NOTIF-FR-023`        | [x]  |
-| 7   | `notification.Dispatcher`, and `Host.Notifier()` in the hub.                              | `NOTIF-FR-024` to `NOTIF-FR-031`, `NOTIF-NFR-001`, `NOTIF-NFR-002` | [x]  |
-| 8   | The permissions, `handler.Notification`, the problems, `api.yaml`.                        | `NOTIF-FR-004` to `NOTIF-FR-021`        | [x]  |
-| 9   | The depresolver. Delete `libs/notifier`, `libs/notifierapi`, the `notifier` configuration. | `NOTIF-INV-004`                        | [x]  |
-| 10  | Each plugin that sends declares its topics and calls `Notify`. Its notification keys leave its configuration. | `NOTIF-FR-001`, `NOTIF-FR-003` | [x]  |
-| 11  | Rebuild and lint every plugin, as `BLD-004` gives.                                        | `NOTIF-FR-001`                          | [x]  |
-| 12  | The deck: the client, the page, the two dialogs, the trail.                               | `NOTIF-FR-004` to `NOTIF-FR-021`        | [x]  |
-| 13  | The manual scenarios against a real bot.                                                  | `NOTIF-FR-013`, `NOTIF-FR-021`, `NOTIF-FR-032` | [x]  |
+| #   | Step                                                                                                          | Realizes                                                           | Done |
+| --- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ---- |
+| 1   | `libs/pluginapi/notification.go`, and `Host.Notifier()`.                                                      | `NOTIF-FR-001`, `NOTIF-FR-003`                                     | [x]  |
+| 2   | The topic registry, the registrar, the capability, the loader.                                                | `NOTIF-FR-001`, `NOTIF-FR-002`                                     | [x]  |
+| 3   | The two migrations, the model, the two repositories.                                                          | `NOTIF-FR-009`, `NOTIF-FR-017`, `NOTIF-INV-001`, `NOTIF-INV-002`   | [x]  |
+| 4   | `notification.Kind`, `KindRegistry`, and `telegram.Kind` with `Verify` and `Send`.                            | `NOTIF-FR-011`, `NOTIF-FR-013`, `NOTIF-FR-032`                     | [x]  |
+| 5   | `notification.Manager`: providers, with the protection of the secrets.                                        | `NOTIF-FR-004` to `NOTIF-FR-010`, `NOTIF-FR-033` to `NOTIF-FR-035` | [x]  |
+| 6   | `notification.Manager`: topics, routes, and the test message.                                                 | `NOTIF-FR-014` to `NOTIF-FR-023`                                   | [x]  |
+| 7   | `notification.Dispatcher`, and `Host.Notifier()` in the hub.                                                  | `NOTIF-FR-024` to `NOTIF-FR-031`, `NOTIF-NFR-001`, `NOTIF-NFR-002` | [x]  |
+| 8   | The permissions, `handler.Notification`, the problems, `api.yaml`.                                            | `NOTIF-FR-004` to `NOTIF-FR-021`                                   | [x]  |
+| 9   | The depresolver. Delete `libs/notifier`, `libs/notifierapi`, the `notifier` configuration.                    | `NOTIF-INV-004`                                                    | [x]  |
+| 10  | Each plugin that sends declares its topics and calls `Notify`. Its notification keys leave its configuration. | `NOTIF-FR-001`, `NOTIF-FR-003`                                     | [x]  |
+| 11  | Rebuild and lint every plugin, as `BLD-004` gives.                                                            | `NOTIF-FR-001`                                                     | [x]  |
+| 12  | The deck: the client, the page, the two dialogs, the trail.                                                   | `NOTIF-FR-004` to `NOTIF-FR-021`                                   | [x]  |
+| 13  | The manual scenarios against a real bot.                                                                      | `NOTIF-FR-013`, `NOTIF-FR-021`, `NOTIF-FR-032`                     | [x]  |
 
 ## 8. Out of scope for this specification
 

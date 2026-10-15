@@ -125,22 +125,22 @@ that starts at the person and ends at the hub.
 
 ## 5. Constraints from the guidelines
 
-| Rule      | Guideline         | Effect on this feature                                                                     |
-| --------- | ----------------- | ------------------------------------------------------------------------------------------ |
-| `ARC-008` | Architecture      | The two tools read the registry that holds the settings schema of each plugin. They name no plugin. |
-| `SEC-004` | Security          | The user record grants the call. The verification that `MCPHUB-FR-002` gives applies with no change. |
-| `OWN-003` | Record ownership  | `MCPHUB-INV-001` and `MCPHUB-INV-003` give the call one acting user and one acting workspace. Their settings answer it. |
-| `OWN-005` | Record ownership  | A save names no workspace and no user. The policy sets the scope column of each row.       |
-| `OWN-006` | Record ownership  | A call with no acting workspace reads no row of the workspace and writes none.             |
-| `SEC-013` | Security          | The two tools of the settings declare the permissions that `PSET-DD-013` gives.            |
-| `LOG-008` | Logging           | An MCP client can send a credential that `MCPHUB-FR-019` rejects. No log line holds that value. |
+| Rule      | Guideline        | Effect on this feature                                                                                                  |
+| --------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `ARC-008` | Architecture     | The two tools read the registry that holds the settings schema of each plugin. They name no plugin.                     |
+| `SEC-004` | Security         | The user record grants the call. The verification that `MCPHUB-FR-002` gives applies with no change.                    |
+| `OWN-003` | Record ownership | `MCPHUB-INV-001` and `MCPHUB-INV-003` give the call one acting user and one acting workspace. Their settings answer it. |
+| `OWN-005` | Record ownership | A save names no workspace and no user. The policy sets the scope column of each row.                                    |
+| `OWN-006` | Record ownership | A call with no acting workspace reads no row of the workspace and writes none.                                          |
+| `SEC-013` | Security         | The two tools of the settings declare the permissions that `PSET-DD-013` gives.                                         |
+| `LOG-008` | Logging          | An MCP client can send a credential that `MCPHUB-FR-019` rejects. No log line holds that value.                         |
 
 ## 6. Open questions
 
-| #   | Question                                                                                        | Owner  | Answer                                                                                                                             |
-| --- | ----------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | Does a tool store a secret field, or does a person type a secret in the deck only?              | Temuri | A person types it in the deck. `MCPHUB-FR-019` states it. A setup that needs a credential ends in the deck, and no credential reaches the MCP client. |
-| 2   | Does one call report the settings of every plugin, or of the one plugin that the call names?    | Temuri | The one plugin that the call names. `MCPHUB-FR-015` and `MCPHUB-FR-016` state it.                                                   |
+| #   | Question                                                                                     | Owner  | Answer                                                                                                                                                |
+| --- | -------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Does a tool store a secret field, or does a person type a secret in the deck only?           | Temuri | A person types it in the deck. `MCPHUB-FR-019` states it. A setup that needs a credential ends in the deck, and no credential reaches the MCP client. |
+| 2   | Does one call report the settings of every plugin, or of the one plugin that the call names? | Temuri | The one plugin that the call names. `MCPHUB-FR-015` and `MCPHUB-FR-016` state it.                                                                     |
 
 ## Retired identifiers
 

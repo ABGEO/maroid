@@ -22,55 +22,55 @@ identity for the HTTP path and for the Telegram path.
 
 ## 2. Coverage
 
-| Requirement     | Where this specification realizes it                          |
-| --------------- | --------------------------------------------------------------- |
-| `EXTID-FR-001`  | Section 4.4, `EXTID-DD-012`, `EXTID-SC-001`, `EXTID-SC-003`     |
-| `EXTID-FR-002`  | Section 4.5, `EXTID-DD-013`, `EXTID-SC-004`                     |
-| `EXTID-FR-003`  | Section 4.4, `EXTID-SC-002`                                     |
-| `EXTID-FR-004`  | Section 4.3, Section 4.4, `EXTID-DD-004`, `EXTID-SC-005`, `EXTID-SC-006` |
-| `EXTID-FR-005`  | Section 4.2, `EXTID-DD-002`, `EXTID-SC-007`                     |
-| `EXTID-FR-006`  | Section 4.2, `EXTID-DD-001`, `EXTID-SC-008`                     |
-| `EXTID-FR-007`  | Section 4.3, `EXTID-SC-009`                                     |
-| `EXTID-FR-008`  | Section 4.2, `EXTID-DD-003`, `EXTID-SC-010`, `EXTID-SC-022`     |
-| `EXTID-FR-009`  | Section 4.3, `EXTID-DD-009`, `EXTID-DD-016`, `EXTID-SC-011`     |
-| `EXTID-FR-010`  | Section 4.3, `EXTID-DD-010`, `EXTID-DD-015`, `EXTID-SC-012`     |
-| `EXTID-FR-018`  | Section 4.3, `EXTID-DD-010`, `EXTID-SC-025`                     |
-| `EXTID-FR-011`  | Section 4.3, `EXTID-SC-013`                                     |
-| `EXTID-FR-012`  | Section 4.4, `EXTID-DD-008`, `EXTID-DD-015`, `EXTID-SC-014`     |
-| `EXTID-FR-013`  | Section 4.2, `EXTID-DD-007`, `EXTID-DD-008`, `EXTID-SC-015`     |
-| `EXTID-FR-014`  | Section 4.2, `EXTID-SC-016`                                     |
-| `EXTID-FR-015`  | Section 4.2, `EXTID-DD-011`, `EXTID-SC-017`                     |
-| `EXTID-FR-016`  | Section 4.2, `EXTID-DD-011`, `EXTID-SC-018`                     |
+| Requirement     | Where this specification realizes it                                                     |
+| --------------- | ---------------------------------------------------------------------------------------- |
+| `EXTID-FR-001`  | Section 4.4, `EXTID-DD-012`, `EXTID-SC-001`, `EXTID-SC-003`                              |
+| `EXTID-FR-002`  | Section 4.5, `EXTID-DD-013`, `EXTID-SC-004`                                              |
+| `EXTID-FR-003`  | Section 4.4, `EXTID-SC-002`                                                              |
+| `EXTID-FR-004`  | Section 4.3, Section 4.4, `EXTID-DD-004`, `EXTID-SC-005`, `EXTID-SC-006`                 |
+| `EXTID-FR-005`  | Section 4.2, `EXTID-DD-002`, `EXTID-SC-007`                                              |
+| `EXTID-FR-006`  | Section 4.2, `EXTID-DD-001`, `EXTID-SC-008`                                              |
+| `EXTID-FR-007`  | Section 4.3, `EXTID-SC-009`                                                              |
+| `EXTID-FR-008`  | Section 4.2, `EXTID-DD-003`, `EXTID-SC-010`, `EXTID-SC-022`                              |
+| `EXTID-FR-009`  | Section 4.3, `EXTID-DD-009`, `EXTID-DD-016`, `EXTID-SC-011`                              |
+| `EXTID-FR-010`  | Section 4.3, `EXTID-DD-010`, `EXTID-DD-015`, `EXTID-SC-012`                              |
+| `EXTID-FR-018`  | Section 4.3, `EXTID-DD-010`, `EXTID-SC-025`                                              |
+| `EXTID-FR-011`  | Section 4.3, `EXTID-SC-013`                                                              |
+| `EXTID-FR-012`  | Section 4.4, `EXTID-DD-008`, `EXTID-DD-015`, `EXTID-SC-014`                              |
+| `EXTID-FR-013`  | Section 4.2, `EXTID-DD-007`, `EXTID-DD-008`, `EXTID-SC-015`                              |
+| `EXTID-FR-014`  | Section 4.2, `EXTID-SC-016`                                                              |
+| `EXTID-FR-015`  | Section 4.2, `EXTID-DD-011`, `EXTID-SC-017`                                              |
+| `EXTID-FR-016`  | Section 4.2, `EXTID-DD-011`, `EXTID-SC-018`                                              |
 | `EXTID-FR-017`  | Section 4.2, Section 4.4, `EXTID-DD-012`, `EXTID-DD-014`, `EXTID-SC-019`, `EXTID-SC-024` |
-| `EXTID-NFR-001` | `EXTID-DD-005`, `EXTID-SC-020`                                  |
-| `EXTID-NFR-002` | `EXTID-SC-021`. `ADR-0004` moved the decision to `WEBSESS`.     |
-| `EXTID-INV-001` | Section 4.2, `EXTID-DD-002`, `EXTID-SC-007`                     |
-| `EXTID-INV-002` | Section 4.2, `EXTID-DD-003`, `EXTID-SC-022`                     |
-| `EXTID-INV-003` | Section 4.4, `EXTID-DD-012`, `EXTID-SC-023`                     |
+| `EXTID-NFR-001` | `EXTID-DD-005`, `EXTID-SC-020`                                                           |
+| `EXTID-NFR-002` | `EXTID-SC-021`. `ADR-0004` moved the decision to `WEBSESS`.                              |
+| `EXTID-INV-001` | Section 4.2, `EXTID-DD-002`, `EXTID-SC-007`                                              |
+| `EXTID-INV-002` | Section 4.2, `EXTID-DD-003`, `EXTID-SC-022`                                              |
+| `EXTID-INV-003` | Section 4.4, `EXTID-DD-012`, `EXTID-SC-023`                                              |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline        | How this specification obeys it                                                            |
-| --------- | ---------------- | -------------------------------------------------------------------------------------------- |
-| `SEC-002` | Security         | `EXTID-DD-005`. The hub verifies against the JWKS of Dex and signs nothing.                 |
-| `SEC-003` | Security         | Section 4.4 reads `federated_claims` and resolves through `public.identities`.               |
-| `SEC-004` | Security         | Section 4.4 reads the user record on each request. The status decides.                       |
-| `SEC-005` | Security         | `ADR-0004` changed the rule. The cookie and the token it holds moved to `WEBSESS`.           |
-| `OWN-001` | Record ownership | Section 4.2 gives `public.identities`, the natural key.                                      |
-| `OWN-002` | Record ownership | `EXTID-DD-010`. The command of an administrator creates the record. No sign in creates one. |
-| `OWN-010` | Record ownership | `EXTID-DD-010`. The command creates the first workspace of the record in the same transaction. |
+| Rule      | Guideline        | How this specification obeys it                                                                            |
+| --------- | ---------------- | ---------------------------------------------------------------------------------------------------------- |
+| `SEC-002` | Security         | `EXTID-DD-005`. The hub verifies against the JWKS of Dex and signs nothing.                                |
+| `SEC-003` | Security         | Section 4.4 reads `federated_claims` and resolves through `public.identities`.                             |
+| `SEC-004` | Security         | Section 4.4 reads the user record on each request. The status decides.                                     |
+| `SEC-005` | Security         | `ADR-0004` changed the rule. The cookie and the token it holds moved to `WEBSESS`.                         |
+| `OWN-001` | Record ownership | Section 4.2 gives `public.identities`, the natural key.                                                    |
+| `OWN-002` | Record ownership | `EXTID-DD-010`. The command of an administrator creates the record. No sign in creates one.                |
+| `OWN-010` | Record ownership | `EXTID-DD-010`. The command creates the first workspace of the record in the same transaction.             |
 | `OWN-003` | Record ownership | `EXTID-DD-012`. One resolver serves the HTTP entry point, the Telegram entry point, and the MCP tool call. |
-| `OWN-004` | Record ownership | Section 4.2 states the reason that each of the three tables is shared.                       |
-| `API-003` | HTTP API         | Section 4.3 uses the prefixes that the rule fixes, and adds none.                            |
-| `API-005` | HTTP API         | Each handler implements `handler.Handler` and returns an error.                              |
-| `API-006` | HTTP API         | Section 4.5 gives the status and the body of each failure.                                   |
-| `TG-006`  | Telegram         | The conversation store keeps the Telegram identifier as its key. This feature changes no store. |
-| `DAT-005` | Data             | Section 4.2 names the four migrations.                                                       |
-| `DAT-009` | Data             | Each table declares `id UUID ... DEFAULT uuidv7()`, and no insert names `id`.                |
-| `REP-002` | Repository       | Each repository declares its interface and asserts the implementation.                       |
-| `CFG-003` | Configuration    | Section 4.3 gives the configuration scheme.                                                  |
-| `CLI-001` | The command line | The tree holds `maroid user invite`. Section 4.3 declares its flags.                         |
-| `CLI-004` | The command line | `PreRunE` validates the flags. `RunE` writes the rows and prints the address.                |
+| `OWN-004` | Record ownership | Section 4.2 states the reason that each of the three tables is shared.                                     |
+| `API-003` | HTTP API         | Section 4.3 uses the prefixes that the rule fixes, and adds none.                                          |
+| `API-005` | HTTP API         | Each handler implements `handler.Handler` and returns an error.                                            |
+| `API-006` | HTTP API         | Section 4.5 gives the status and the body of each failure.                                                 |
+| `TG-006`  | Telegram         | The conversation store keeps the Telegram identifier as its key. This feature changes no store.            |
+| `DAT-005` | Data             | Section 4.2 names the four migrations.                                                                     |
+| `DAT-009` | Data             | Each table declares `id UUID ... DEFAULT uuidv7()`, and no insert names `id`.                              |
+| `REP-002` | Repository       | Each repository declares its interface and asserts the implementation.                                     |
+| `CFG-003` | Configuration    | Section 4.3 gives the configuration scheme.                                                                |
+| `CLI-001` | The command line | The tree holds `maroid user invite`. Section 4.3 declares its flags.                                       |
+| `CLI-004` | The command line | `PreRunE` validates the flags. `RunE` writes the rows and prints the address.                              |
 
 `ADR-0002` changed `SEC-001`, `SEC-002`, `SEC-003`, `OWN-001`, `OWN-003`, `API-003`,
 and `GLO-user` for this specification.
@@ -81,36 +81,36 @@ and `GLO-user` for this specification.
 
 ### 4.1 Components
 
-| Path                                                   | Action | Holds                                                               |
-| ------------------------------------------------------ | ------ | --------------------------------------------------------------------- |
-| `apps/hub/db/migrations/20260915120300_table_users_alter.*`        | create | The extract, then the new shape of `public.users`         |
-| `apps/hub/db/migrations/20260915120000_table_identities_create.*`  | create | `public.identities`                                       |
-| `apps/hub/db/migrations/20260915120100_table_invitations_create.*` | create | `public.invitations`                                      |
-| `apps/hub/db/migrations/20260915120200_table_auth_flows_create.*`  | create | `public.auth_flows`                                       |
-| `apps/hub/internal/model/user.go`                      | change | `first_name` and `last_name`. `TelegramID` goes                      |
-| `apps/hub/internal/model/identity.go`                  | create | `model.Identity`, `model.Profile` moves here                         |
-| `apps/hub/internal/model/invitation.go`                | create | `model.Invitation`                                                    |
-| `apps/hub/internal/model/authflow.go`                  | create | `model.AuthFlow`, `model.Intent`, `model.ParseIntent`                |
-| `apps/hub/internal/repository/user.go`                 | change | `GetActiveByTelegramID` and `SyncProfileByTelegramID` go. `Create` arrives |
-| `apps/hub/internal/repository/identity.go`             | create | `IdentityRepository`, `Identity`                                      |
-| `apps/hub/internal/repository/invitation.go`           | create | `InvitationRepository`, `Invitation`                                  |
-| `apps/hub/internal/repository/authflow.go`             | create | `AuthFlowRepository`, `AuthFlow`                                      |
-| `apps/hub/internal/auth/jwt.go`                        | delete | The hub signs no token. `SEC-002`                                     |
-| `apps/hub/internal/auth/verifier.go`                   | create | `auth.TokenVerifier`, `auth.Claims`, `auth.FederatedClaims`           |
-| `apps/hub/internal/auth/resolver.go`                   | create | `auth.IdentityResolver`, `auth.Resolver`                              |
-| `apps/hub/internal/auth/middleware.go`                 | change | Verifies with `TokenVerifier`, resolves with `IdentityResolver`       |
-| `apps/hub/internal/auth/oidc.go`                       | change | `AuthURL` takes the provider and sends `connector_id`                 |
-| `apps/hub/internal/auth/oidc_flow.go`                  | change | `Verify` returns `federated_claims`. The flow row holds the secrets   |
-| `apps/hub/internal/auth/service.go`                    | create | `auth.Service`, which holds the attach, the detach, and the redemption |
-| `apps/hub/internal/handler/auth.go`                    | change | The five routes of section 4.3                                        |
-| `apps/hub/internal/telegram/middleware/acting_user.go` | change | Resolves through `IdentityResolver`                                   |
-| `apps/hub/internal/command/user/invite.go`             | create | `maroid user invite`. `EXTID-DD-010`                                  |
-| `apps/hub/internal/command/root.go`                    | change | The `user` command joins the tree                                     |
-| `apps/hub/internal/config/config.go`                   | change | The `JWT` block goes. `Auth.Providers` and two lifetimes arrive       |
-| `apps/hub/internal/depresolver/{auth,resolver}.go`     | change | `JWTService` goes. The verifier, the resolver, and three repositories arrive |
-| `apps/hub/internal/domain/errs/errs.go`                | change | The sentinel errors of section 4.5                                    |
-| `.keys/`                                               | delete | The hub holds no key pair                                             |
-| `config.yaml`                                          | change | The `jwt` block goes. The `auth` block grows                          |
+| Path                                                               | Action | Holds                                                                        |
+| ------------------------------------------------------------------ | ------ | ---------------------------------------------------------------------------- |
+| `apps/hub/db/migrations/20260915120300_table_users_alter.*`        | create | The extract, then the new shape of `public.users`                            |
+| `apps/hub/db/migrations/20260915120000_table_identities_create.*`  | create | `public.identities`                                                          |
+| `apps/hub/db/migrations/20260915120100_table_invitations_create.*` | create | `public.invitations`                                                         |
+| `apps/hub/db/migrations/20260915120200_table_auth_flows_create.*`  | create | `public.auth_flows`                                                          |
+| `apps/hub/internal/model/user.go`                                  | change | `first_name` and `last_name`. `TelegramID` goes                              |
+| `apps/hub/internal/model/identity.go`                              | create | `model.Identity`, `model.Profile` moves here                                 |
+| `apps/hub/internal/model/invitation.go`                            | create | `model.Invitation`                                                           |
+| `apps/hub/internal/model/authflow.go`                              | create | `model.AuthFlow`, `model.Intent`, `model.ParseIntent`                        |
+| `apps/hub/internal/repository/user.go`                             | change | `GetActiveByTelegramID` and `SyncProfileByTelegramID` go. `Create` arrives   |
+| `apps/hub/internal/repository/identity.go`                         | create | `IdentityRepository`, `Identity`                                             |
+| `apps/hub/internal/repository/invitation.go`                       | create | `InvitationRepository`, `Invitation`                                         |
+| `apps/hub/internal/repository/authflow.go`                         | create | `AuthFlowRepository`, `AuthFlow`                                             |
+| `apps/hub/internal/auth/jwt.go`                                    | delete | The hub signs no token. `SEC-002`                                            |
+| `apps/hub/internal/auth/verifier.go`                               | create | `auth.TokenVerifier`, `auth.Claims`, `auth.FederatedClaims`                  |
+| `apps/hub/internal/auth/resolver.go`                               | create | `auth.IdentityResolver`, `auth.Resolver`                                     |
+| `apps/hub/internal/auth/middleware.go`                             | change | Verifies with `TokenVerifier`, resolves with `IdentityResolver`              |
+| `apps/hub/internal/auth/oidc.go`                                   | change | `AuthURL` takes the provider and sends `connector_id`                        |
+| `apps/hub/internal/auth/oidc_flow.go`                              | change | `Verify` returns `federated_claims`. The flow row holds the secrets          |
+| `apps/hub/internal/auth/service.go`                                | create | `auth.Service`, which holds the attach, the detach, and the redemption       |
+| `apps/hub/internal/handler/auth.go`                                | change | The five routes of section 4.3                                               |
+| `apps/hub/internal/telegram/middleware/acting_user.go`             | change | Resolves through `IdentityResolver`                                          |
+| `apps/hub/internal/command/user/invite.go`                         | create | `maroid user invite`. `EXTID-DD-010`                                         |
+| `apps/hub/internal/command/root.go`                                | change | The `user` command joins the tree                                            |
+| `apps/hub/internal/config/config.go`                               | change | The `JWT` block goes. `Auth.Providers` and two lifetimes arrive              |
+| `apps/hub/internal/depresolver/{auth,resolver}.go`                 | change | `JWTService` goes. The verifier, the resolver, and three repositories arrive |
+| `apps/hub/internal/domain/errs/errs.go`                            | change | The sentinel errors of section 4.5                                           |
+| `.keys/`                                                           | delete | The hub holds no key pair                                                    |
+| `config.yaml`                                                      | change | The `jwt` block goes. The `auth` block grows                                 |
 
 The signatures:
 
@@ -163,12 +163,12 @@ a status filter in the query would make the two indistinguishable.
 
 ### 4.2 Data model
 
-| Table         | Schema   | Scope  | Migration                                    | Realizes                        |
-| ------------- | -------- | ------ | ---------------------------------------------- | -------------------------------- |
-| `users`       | `public` | shared | `20260915120300_table_users_alter.up.sql`       | `EXTID-FR-015`, `EXTID-FR-017`   |
-| `identities`  | `public` | shared | `20260915120000_table_identities_create.up.sql` | `EXTID-FR-016`, `EXTID-INV-001` |
-| `invitations` | `public` | shared | `20260915120100_table_invitations_create.up.sql` | `EXTID-FR-013`, `EXTID-FR-014` |
-| `auth_flows`  | `public` | shared | `20260915120200_table_auth_flows_create.up.sql` | `EXTID-FR-006`                  |
+| Table         | Schema   | Scope  | Migration                                        | Realizes                        |
+| ------------- | -------- | ------ | ------------------------------------------------ | ------------------------------- |
+| `users`       | `public` | shared | `20260915120300_table_users_alter.up.sql`        | `EXTID-FR-015`, `EXTID-FR-017`  |
+| `identities`  | `public` | shared | `20260915120000_table_identities_create.up.sql`  | `EXTID-FR-016`, `EXTID-INV-001` |
+| `invitations` | `public` | shared | `20260915120100_table_invitations_create.up.sql` | `EXTID-FR-013`, `EXTID-FR-014`  |
+| `auth_flows`  | `public` | shared | `20260915120200_table_auth_flows_create.up.sql`  | `EXTID-FR-006`                  |
 
 Each of the three new tables is shared. Each migration states the same reason: the
 resolver reads the table before an acting user exists. The ownership therefore cannot
@@ -308,15 +308,15 @@ holds no identity of that record, or the identity is the last one.
 
 **HTTP routes.** `api.yaml` holds the bodies and the status codes. See `SPC-002`.
 
-| Method   | Path                          | Access        | Realizes                        |
-| -------- | ----------------------------- | ------------- | -------------------------------- |
-| `GET`    | `/auth`                       | Public        | `EXTID-FR-001`                   |
+| Method   | Path                          | Access        | Realizes                                       |
+| -------- | ----------------------------- | ------------- | ---------------------------------------------- |
+| `GET`    | `/auth`                       | Public        | `EXTID-FR-001`                                 |
 | `GET`    | `/auth/callback`              | Public        | `EXTID-FR-001`, `EXTID-FR-004`, `EXTID-FR-012` |
-| `GET`    | `/auth/invite`                | Public        | `EXTID-FR-012`                   |
-| `GET`    | `/auth/link`                  | Authenticated | `EXTID-FR-004`                   |
-| `GET`    | `/auth/me`                    | Authenticated | The body does not change         |
-| `GET`    | `/auth/identities`            | Authenticated | `EXTID-FR-009`                   |
-| `DELETE` | `/auth/identities/{provider}` | Authenticated | `EXTID-FR-007`, `EXTID-FR-008`   |
+| `GET`    | `/auth/invite`                | Public        | `EXTID-FR-012`                                 |
+| `GET`    | `/auth/link`                  | Authenticated | `EXTID-FR-004`                                 |
+| `GET`    | `/auth/me`                    | Authenticated | The body does not change                       |
+| `GET`    | `/auth/identities`            | Authenticated | `EXTID-FR-009`                                 |
+| `DELETE` | `/auth/identities/{provider}` | Authenticated | `EXTID-FR-007`, `EXTID-FR-008`                 |
 
 **The scopes of the authorization request.** The hub asks for `openid`, `profile`,
 and `federated:id`. Dex emits the `federated_claims` claim for the third scope
@@ -331,8 +331,8 @@ it builds today, and this feature adds no page to it. `/auth/invite` reads `toke
 
 **CLI command.**
 
-| Command              | Flags                                             | Does                                                                  | Realizes                       |
-| -------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------- |
+| Command              | Flags                                            | Does                                                                                                       | Realizes                                       |
+| -------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | `maroid user invite` | `--first-name`, `--last-name`, `--user`, `--ttl` | Creates a user record, its first workspace, and an invitation for it, then prints the address of the deck. | `EXTID-FR-010`, `EXTID-FR-011`, `EXTID-FR-018` |
 
 `--user` names a record that exists, and it excludes `--first-name` and
@@ -350,17 +350,17 @@ does not hold. The hub reports every outcome at that target with the query param
 
 **Configuration scheme.**
 
-| Key                      | Type              | Default | Secret | Realizes                       |
-| ------------------------ | ----------------- | ------- | ------ | ------------------------------- |
-| `jwt.issuer`             | Removed           | None    | No     | `SEC-002`                       |
-| `jwt.private_key`        | Removed           | None    | No     | `SEC-002`                       |
-| `jwt.public_key`         | Removed           | None    | No     | `SEC-002`                       |
-| `jwt.token_expiry`       | Removed           | None    | No     | `SEC-002`                       |
-| `auth.deck_url`          | String            | None    | No     | `EXTID-FR-010`                  |
-| `auth.providers`         | Removed. `IDPROV-FR-017` reads Dex. | None | No | `EXTID-FR-009` |
-| `auth.invitation_ttl`    | Duration          | `72h`   | No     | `EXTID-FR-014`                  |
-| `auth.flow_ttl`          | Duration          | `10m`   | No     | `EXTID-FR-006`                  |
-| `auth.session_ttl`       | Removed           | None    | No     | `EXTID-NFR-002`                 |
+| Key                   | Type                                | Default | Secret | Realizes        |
+| --------------------- | ----------------------------------- | ------- | ------ | --------------- |
+| `jwt.issuer`          | Removed                             | None    | No     | `SEC-002`       |
+| `jwt.private_key`     | Removed                             | None    | No     | `SEC-002`       |
+| `jwt.public_key`      | Removed                             | None    | No     | `SEC-002`       |
+| `jwt.token_expiry`    | Removed                             | None    | No     | `SEC-002`       |
+| `auth.deck_url`       | String                              | None    | No     | `EXTID-FR-010`  |
+| `auth.providers`      | Removed. `IDPROV-FR-017` reads Dex. | None    | No     | `EXTID-FR-009`  |
+| `auth.invitation_ttl` | Duration                            | `72h`   | No     | `EXTID-FR-014`  |
+| `auth.flow_ttl`       | Duration                            | `10m`   | No     | `EXTID-FR-006`  |
+| `auth.session_ttl`    | Removed                             | None    | No     | `EXTID-NFR-002` |
 
 A provider carries `id` and `name`. `id` is the identifier of the connector in Dex,
 and `name` is the text that the deck shows. `EXTID-DD-009` gives the reason that the
@@ -430,22 +430,22 @@ A failure that answers a status answers with a problem. `ERR-001` gives the shap
 A failure that redirects carries its reason in the `error` parameter of the target,
 because the person reads the page of the deck and not a body.
 
-| Condition                                              | Answer                                                          | Type or parameter              |
-| ------------------------------------------------------ | --------------------------------------------------------------- | ------------------------------- |
-| The token is absent, or it fails the verification      | Status 401                                                      | `access-denied`                |
-| The token carries no `federated_claims`                | Status 401, one error line in the log. The request asked for the wrong scopes | `access-denied`   |
-| No identity names the external account, at a request   | Status 401, one info line in the log                            | `access-denied`                |
-| No identity names the external account, at a sign in   | Redirect. `EXTID-FR-002` demands the distinct reason            | `error=no_identity`            |
-| The identity names a record that is not active         | Redirect                                                        | `error=access_denied`          |
-| The state names no flow row, or the row is consumed    | Status 400                                                      | `request-invalid`              |
-| The browser carries no matching binding cookie         | Status 400. The row is spent, and the person starts again       | `request-invalid`              |
-| The flow row expired                                   | Redirect                                                        | `error=auth_failed`            |
-| The attach finds the account on another record         | Redirect. Both records stay unchanged                           | `error=identity_taken`         |
-| The attach finds the account on the same record        | Redirect with no error. Nothing changes                         | None                           |
-| The detach names the last identity                     | Status 409                                                      | `identity-last`                |
-| The detach names a provider with no identity           | Status 404                                                      | `not-found`                    |
-| The invitation is absent, consumed, or expired         | Redirect to the target. The deck renders it                     | `error=invitation_invalid`     |
-| The target of the redemption is absent or not allowed  | Status 400. No target exists to report the failure at. `EXTID-DD-015` | `request-invalid`        |
+| Condition                                             | Answer                                                                        | Type or parameter          |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------- |
+| The token is absent, or it fails the verification     | Status 401                                                                    | `access-denied`            |
+| The token carries no `federated_claims`               | Status 401, one error line in the log. The request asked for the wrong scopes | `access-denied`            |
+| No identity names the external account, at a request  | Status 401, one info line in the log                                          | `access-denied`            |
+| No identity names the external account, at a sign in  | Redirect. `EXTID-FR-002` demands the distinct reason                          | `error=no_identity`        |
+| The identity names a record that is not active        | Redirect                                                                      | `error=access_denied`      |
+| The state names no flow row, or the row is consumed   | Status 400                                                                    | `request-invalid`          |
+| The browser carries no matching binding cookie        | Status 400. The row is spent, and the person starts again                     | `request-invalid`          |
+| The flow row expired                                  | Redirect                                                                      | `error=auth_failed`        |
+| The attach finds the account on another record        | Redirect. Both records stay unchanged                                         | `error=identity_taken`     |
+| The attach finds the account on the same record       | Redirect with no error. Nothing changes                                       | None                       |
+| The detach names the last identity                    | Status 409                                                                    | `identity-last`            |
+| The detach names a provider with no identity          | Status 404                                                                    | `not-found`                |
+| The invitation is absent, consumed, or expired        | Redirect to the target. The deck renders it                                   | `error=invitation_invalid` |
+| The target of the redemption is absent or not allowed | Status 400. No target exists to report the failure at. `EXTID-DD-015`         | `request-invalid`          |
 
 Every 401 answers with one type and one title, so a caller learns nothing about which
 account exists.
@@ -453,7 +453,7 @@ account exists.
 The command line answers a person and writes no problem:
 
 | Condition                                           | Message                                        |
-| ----------------------------------------------------- | ------------------------------------------------ |
+| --------------------------------------------------- | ---------------------------------------------- |
 | `maroid user invite` gets `--user` with a name flag | `--user excludes --first-name and --last-name` |
 | `maroid user invite` gets `--user` with no record   | `no user record holds that identifier`         |
 
@@ -718,22 +718,22 @@ needs a rule that no statement asks for.
 
 ## 7. Build plan
 
-| #   | Step                                                                                             | Realizes                        | Done |
-| --- | -------------------------------------------------------------------------------------------------- | -------------------------------- | ---- |
-| 1   | Write `EXTID-SC-024`. Add the four migrations in their order. Add the four models.                | Section 4.2, `EXTID-FR-017`      | [ ]  |
-| 2   | Write `EXTID-SC-007` and `EXTID-SC-022`, then `repository.Identity`.                              | `EXTID-INV-001`, `EXTID-INV-002` | [ ]  |
-| 3   | Write `repository.Invitation` and `repository.AuthFlow`.                                          | `EXTID-FR-013`, `EXTID-FR-006`   | [ ]  |
-| 4   | Write `EXTID-SC-020`, then `auth.TokenVerifier`. Delete `auth/jwt.go` and `.keys/`.               | `EXTID-NFR-001`                  | [ ]  |
-| 5   | Write `EXTID-SC-023`, then `auth.IdentityResolver`. Move both middlewares onto it.                | `EXTID-FR-017`, `EXTID-INV-003`  | [ ]  |
-| 6   | Write `EXTID-SC-001` to `EXTID-SC-004`, then the sign in on the flow row.                         | `EXTID-FR-001` to `EXTID-FR-003` | [ ]  |
-| 7   | Write `EXTID-SC-005`, `EXTID-SC-006`, and `EXTID-SC-008`, then `/auth/link`.                      | `EXTID-FR-004` to `EXTID-FR-006` | [ ]  |
-| 8   | Write `EXTID-SC-009` and `EXTID-SC-010`, then `DELETE /auth/identities/{provider}`.                | `EXTID-FR-007`, `EXTID-FR-008`   | [ ]  |
-| 9   | Write `EXTID-SC-012` to `EXTID-SC-016`, then `maroid user invite` and `/auth/invite`.              | `EXTID-FR-010` to `EXTID-FR-014` | [ ]  |
-| 10  | Write `EXTID-SC-011`, then `GET /auth/identities` and `auth.providers`.                           | `EXTID-FR-009`                   | [x]  |
-| 11  | Write `EXTID-SC-017` and `EXTID-SC-018`, then the profile write of the sign in.                   | `EXTID-FR-015`, `EXTID-FR-016`   | [ ]  |
-| 12  | Remove the `JWT` block from the configuration. Set the token lifetime of Dex to seven days.       | `EXTID-NFR-002`                  | [ ]  |
-| 13  | Build the invite page of the deck. Point the command at it, and drop the target flag.             | `EXTID-DD-015`                   | [x]  |
-| 14  | Run `EXTID-SC-019` and `EXTID-SC-021` against the running hub.                                    | `EXTID-FR-017`, `EXTID-NFR-002`  | [ ]  |
+| #   | Step                                                                                                                    | Realizes                         | Done |
+| --- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ---- |
+| 1   | Write `EXTID-SC-024`. Add the four migrations in their order. Add the four models.                                      | Section 4.2, `EXTID-FR-017`      | [ ]  |
+| 2   | Write `EXTID-SC-007` and `EXTID-SC-022`, then `repository.Identity`.                                                    | `EXTID-INV-001`, `EXTID-INV-002` | [ ]  |
+| 3   | Write `repository.Invitation` and `repository.AuthFlow`.                                                                | `EXTID-FR-013`, `EXTID-FR-006`   | [ ]  |
+| 4   | Write `EXTID-SC-020`, then `auth.TokenVerifier`. Delete `auth/jwt.go` and `.keys/`.                                     | `EXTID-NFR-001`                  | [ ]  |
+| 5   | Write `EXTID-SC-023`, then `auth.IdentityResolver`. Move both middlewares onto it.                                      | `EXTID-FR-017`, `EXTID-INV-003`  | [ ]  |
+| 6   | Write `EXTID-SC-001` to `EXTID-SC-004`, then the sign in on the flow row.                                               | `EXTID-FR-001` to `EXTID-FR-003` | [ ]  |
+| 7   | Write `EXTID-SC-005`, `EXTID-SC-006`, and `EXTID-SC-008`, then `/auth/link`.                                            | `EXTID-FR-004` to `EXTID-FR-006` | [ ]  |
+| 8   | Write `EXTID-SC-009` and `EXTID-SC-010`, then `DELETE /auth/identities/{provider}`.                                     | `EXTID-FR-007`, `EXTID-FR-008`   | [ ]  |
+| 9   | Write `EXTID-SC-012` to `EXTID-SC-016`, then `maroid user invite` and `/auth/invite`.                                   | `EXTID-FR-010` to `EXTID-FR-014` | [ ]  |
+| 10  | Write `EXTID-SC-011`, then `GET /auth/identities` and `auth.providers`.                                                 | `EXTID-FR-009`                   | [x]  |
+| 11  | Write `EXTID-SC-017` and `EXTID-SC-018`, then the profile write of the sign in.                                         | `EXTID-FR-015`, `EXTID-FR-016`   | [ ]  |
+| 12  | Remove the `JWT` block from the configuration. Set the token lifetime of Dex to seven days.                             | `EXTID-NFR-002`                  | [ ]  |
+| 13  | Build the invite page of the deck. Point the command at it, and drop the target flag.                                   | `EXTID-DD-015`                   | [x]  |
+| 14  | Run `EXTID-SC-019` and `EXTID-SC-021` against the running hub.                                                          | `EXTID-FR-017`, `EXTID-NFR-002`  | [ ]  |
 | 15  | Write `EXTID-SC-025`, then the first workspace in `maroid user invite`. It needs the tables of `OWN-010` and `OWN-011`. | `EXTID-FR-018`                   | [x]  |
 
 Step 5 changes no behavior that a person sees, because the hub still reads the same
@@ -741,18 +741,18 @@ records. A failure in step 6 then names the flow row and nothing else.
 
 ## 8. Out of scope for this specification
 
-| Postponed                                                       | Reason and the condition that brings it back                                                              |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| The page that shows the attached accounts.                      | `EXTID-FR-009` serves the data. One feature of the deck renders it.                                        |
-| An avatar in the web shell.                                     | `EXTID-DD-011` picks no picture, and the shell draws the initials of the two names. A feature that wants one states the rule that chooses it. |
-| The renewal of a session.                                       | Open question 1 answers it. The lifetime that `EXTID-NFR-002` gives must hurt first.                        |
-| `Host.UserCapabilities` and the provider that carries a notification. | The requirements put both out of scope. It is a change to `libs/pluginapi`, so it takes its own feature. |
-| The scopes of a token and the MCP surface.                      | `ADR-0002` puts them after this feature. An agent that reaches the hub must ask for `federated:id` as well, or its token resolves to nobody. |
-| A merge of two user records.                                    | The requirements put it out of scope. It reassigns every membership and every row that a user scopes, of two records. |
-| The removal of an expired flow row and an expired invitation.   | Neither row grants anything after its expiry. A cron job arrives when the count of the rows matters.        |
+| Postponed                                                             | Reason and the condition that brings it back                                                                                                  |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| The page that shows the attached accounts.                            | `EXTID-FR-009` serves the data. One feature of the deck renders it.                                                                           |
+| An avatar in the web shell.                                           | `EXTID-DD-011` picks no picture, and the shell draws the initials of the two names. A feature that wants one states the rule that chooses it. |
+| The renewal of a session.                                             | Open question 1 answers it. The lifetime that `EXTID-NFR-002` gives must hurt first.                                                          |
+| `Host.UserCapabilities` and the provider that carries a notification. | The requirements put both out of scope. It is a change to `libs/pluginapi`, so it takes its own feature.                                      |
+| The scopes of a token and the MCP surface.                            | `ADR-0002` puts them after this feature. An agent that reaches the hub must ask for `federated:id` as well, or its token resolves to nobody.  |
+| A merge of two user records.                                          | The requirements put it out of scope. It reassigns every membership and every row that a user scopes, of two records.                         |
+| The removal of an expired flow row and an expired invitation.         | Neither row grants anything after its expiry. A cron job arrives when the count of the rows matters.                                          |
 
 ## Retired identifiers
 
-| ID             | Retired    | Reason                                                                                      |
-| -------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| ID             | Retired    | Reason                                                                                                                                       |
+| -------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `EXTID-DD-006` | 2026-09-21 | `ADR-0004` moved the credential to the access token and the cookie to the `__Host-` prefix. The successor is the specification of `WEBSESS`. |

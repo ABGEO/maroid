@@ -25,10 +25,10 @@ success half one, so each handler chose.
 
 ## 2. Users
 
-| Person                      | Needs                                                               |
-| --------------------------- | --------------------------------------------------------------------- |
-| A person who deploys Maroid | One shape for every answer, so that a client they write keeps working. |
-| The person at the deck      | A page that loads when a collection grows past a screen.             |
+| Person                      | Needs                                                                                   |
+| --------------------------- | --------------------------------------------------------------------------------------- |
+| A person who deploys Maroid | One shape for every answer, so that a client they write keeps working.                  |
+| The person at the deck      | A page that loads when a collection grows past a screen.                                |
 | The owner                   | An answer that matches the standard, so that a reviewer carries no rules in their head. |
 
 ## 3. Out of scope
@@ -243,19 +243,19 @@ third-party service chose.
 
 ## 8. Constraints from the guidelines
 
-| Rule      | Guideline        | Effect on this feature                                                   |
-| --------- | ---------------- | -------------------------------------------------------------------------- |
-| `RES-001` | REST conventions | The standard decides each shape. This feature chooses none of them.      |
+| Rule      | Guideline        | Effect on this feature                                                                     |
+| --------- | ---------------- | ------------------------------------------------------------------------------------------ |
+| `RES-001` | REST conventions | The standard decides each shape. This feature chooses none of them.                        |
 | `RES-002` | REST conventions | Holds every deviation. This feature introduces none, and an ADR adds a row if one appears. |
-| `RES-003` | REST conventions | Gives the two surfaces that `APIFMT-INV-002` does not reach.             |
-| `RES-005` | REST conventions | Gives the members of the page, the two page sizes, and the order that a route declares. |
-| `RES-006` | REST conventions | Gives the cursor, which a client passes back and never builds.           |
-| `ERR-001` | Errors           | Every failure of this feature answers a problem.                         |
-| `ERR-002` | Errors           | Gives the form of the identifier that `APIFMT-FR-010` demands.           |
-| `ERR-003` | Errors           | Holds `cursor-stale`, which `APIFMT-FR-005` names.                       |
-| `DAT-009` | Data             | Every row carries an identifier that sorts by time, which `APIFMT-NFR-001` rests on. |
-| `DAT-010` | Data             | Stores a point in time in UTC, which `APIFMT-FR-008` answers.            |
-| `OWN-006` | Ownership        | A collection answers the rows of the acting workspace, and a page counts those rows only. |
+| `RES-003` | REST conventions | Gives the two surfaces that `APIFMT-INV-002` does not reach.                               |
+| `RES-005` | REST conventions | Gives the members of the page, the two page sizes, and the order that a route declares.    |
+| `RES-006` | REST conventions | Gives the cursor, which a client passes back and never builds.                             |
+| `ERR-001` | Errors           | Every failure of this feature answers a problem.                                           |
+| `ERR-002` | Errors           | Gives the form of the identifier that `APIFMT-FR-010` demands.                             |
+| `ERR-003` | Errors           | Holds `cursor-stale`, which `APIFMT-FR-005` names.                                         |
+| `DAT-009` | Data             | Every row carries an identifier that sorts by time, which `APIFMT-NFR-001` rests on.       |
+| `DAT-010` | Data             | Stores a point in time in UTC, which `APIFMT-FR-008` answers.                              |
+| `OWN-006` | Ownership        | A collection answers the rows of the acting workspace, and a page counts those rows only.  |
 
 ## 9. Open questions
 

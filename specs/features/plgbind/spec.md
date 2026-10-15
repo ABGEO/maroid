@@ -22,44 +22,44 @@ the hub implements them in `apps/hub/internal/plugin/host`.
 
 ## 2. Coverage
 
-| Requirement         | Where this specification realizes it                    |
-| ------------------- | ------------------------------------------------------- |
-| `PLGBIND-FR-001`    | Section 4.3, `PLGBIND-DD-001`, `PLGBIND-SC-001`         |
-| `PLGBIND-FR-002`    | Section 4.4, `PLGBIND-DD-001`, `PLGBIND-SC-002`         |
-| `PLGBIND-FR-003`    | Section 4.4, `PLGBIND-DD-002`, `PLGBIND-SC-003` to `PLGBIND-SC-005` |
-| `PLGBIND-FR-004`    | Section 4.1, `PLGBIND-DD-005`, `PLGBIND-SC-007`         |
-| `PLGBIND-FR-005`    | `PLGBIND-DD-001`, `PLGBIND-DD-003`, `PLGBIND-SC-008`, `PLGBIND-SC-009` |
-| `PLGBIND-FR-006`    | Section 4.1, `PLGBIND-DD-004`, `PLGBIND-SC-010`         |
-| `PLGBIND-FR-007`    | Section 4.1, `PLGBIND-DD-004`, `PLGBIND-SC-011`         |
-| `PLGBIND-FR-008`    | Section 4.1, `PLGBIND-DD-004`, `PLGBIND-SC-012`         |
-| `PLGBIND-FR-009`    | Section 4.1, `PLGBIND-DD-004`, `PLGBIND-SC-013`         |
-| `PLGBIND-FR-010`    | Section 4.1, `PLGBIND-DD-004`, `PLGBIND-SC-014`         |
-| `PLGBIND-FR-011`    | `PLGBIND-DD-007`, `PLGBIND-SC-015`                      |
-| `PLGBIND-FR-012`    | `PLGBIND-DD-006`, `PLGBIND-SC-016`                      |
-| `PLGBIND-FR-013`    | `PLGBIND-DD-006`, `PLGBIND-SC-016`                      |
-| `PLGBIND-NFR-001`   | `PLGBIND-DD-004`, `PLGBIND-SC-017`                      |
-| `PLGBIND-INV-001`   | `PLGBIND-DD-001`, `PLGBIND-DD-005`, `PLGBIND-SC-009`    |
-| `PLGBIND-INV-002`   | `PLGBIND-DD-002`, `PLGBIND-DD-004`, `PLGBIND-SC-006`, `PLGBIND-SC-011` |
+| Requirement       | Where this specification realizes it                                   |
+| ----------------- | ---------------------------------------------------------------------- |
+| `PLGBIND-FR-001`  | Section 4.3, `PLGBIND-DD-001`, `PLGBIND-SC-001`                        |
+| `PLGBIND-FR-002`  | Section 4.4, `PLGBIND-DD-001`, `PLGBIND-SC-002`                        |
+| `PLGBIND-FR-003`  | Section 4.4, `PLGBIND-DD-002`, `PLGBIND-SC-003` to `PLGBIND-SC-005`    |
+| `PLGBIND-FR-004`  | Section 4.1, `PLGBIND-DD-005`, `PLGBIND-SC-007`                        |
+| `PLGBIND-FR-005`  | `PLGBIND-DD-001`, `PLGBIND-DD-003`, `PLGBIND-SC-008`, `PLGBIND-SC-009` |
+| `PLGBIND-FR-006`  | Section 4.1, `PLGBIND-DD-004`, `PLGBIND-SC-010`                        |
+| `PLGBIND-FR-007`  | Section 4.1, `PLGBIND-DD-004`, `PLGBIND-SC-011`                        |
+| `PLGBIND-FR-008`  | Section 4.1, `PLGBIND-DD-004`, `PLGBIND-SC-012`                        |
+| `PLGBIND-FR-009`  | Section 4.1, `PLGBIND-DD-004`, `PLGBIND-SC-013`                        |
+| `PLGBIND-FR-010`  | Section 4.1, `PLGBIND-DD-004`, `PLGBIND-SC-014`                        |
+| `PLGBIND-FR-011`  | `PLGBIND-DD-007`, `PLGBIND-SC-015`                                     |
+| `PLGBIND-FR-012`  | `PLGBIND-DD-006`, `PLGBIND-SC-016`                                     |
+| `PLGBIND-FR-013`  | `PLGBIND-DD-006`, `PLGBIND-SC-016`                                     |
+| `PLGBIND-NFR-001` | `PLGBIND-DD-004`, `PLGBIND-SC-017`                                     |
+| `PLGBIND-INV-001` | `PLGBIND-DD-001`, `PLGBIND-DD-005`, `PLGBIND-SC-009`                   |
+| `PLGBIND-INV-002` | `PLGBIND-DD-002`, `PLGBIND-DD-004`, `PLGBIND-SC-006`, `PLGBIND-SC-011` |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline    | How this specification obeys it                                                  |
-| --------- | ------------ | -------------------------------------------------------------------------------- |
-| `PLG-002` | Plugin model | Section 4.3. The loader looks up `Meta`, then `New`.                             |
-| `PLG-003` | Plugin model | `PLGBIND-DD-002` parses the identifier again before the constructor.             |
-| `PLG-004` | Plugin model | `PLGBIND-DD-002` checks the API version before the constructor.                  |
-| `PLG-007` | Plugin model | Each bound service is a method of `pluginapi.Host`.                              |
+| Rule      | Guideline    | How this specification obeys it                                                                     |
+| --------- | ------------ | --------------------------------------------------------------------------------------------------- |
+| `PLG-002` | Plugin model | Section 4.3. The loader looks up `Meta`, then `New`.                                                |
+| `PLG-003` | Plugin model | `PLGBIND-DD-002` parses the identifier again before the constructor.                                |
+| `PLG-004` | Plugin model | `PLGBIND-DD-002` checks the API version before the constructor.                                     |
+| `PLG-007` | Plugin model | Each bound service is a method of `pluginapi.Host`.                                                 |
 | `PLG-011` | Plugin model | `PLGBIND-DD-002` asks the plugin registry before the constructor. The registry keeps its own check. |
-| `PLG-012` | Plugin model | `validateMetadata` runs before the constructor.                                  |
-| `PLG-013` | Plugin model | Section 8. The design adds no check that only an attack would defeat.            |
-| `DAT-001` | Data         | `boundDB` derives the schema from the copied identifier.                         |
-| `DAT-004` | Data         | `Host.Database` answers `pluginapi.PluginDB`. No method answers `*sqlx.DB`.      |
-| `OWN-005` | Ownership    | `boundDB.WithTx` sets the acting user and the acting workspace, as today.        |
-| `LOG-004` | Logging      | `PLGBIND-DD-007`. The binder adds the three attributes.                          |
-| `ARC-008` | Architecture | The loader and the binder treat each plugin the same way.                        |
-| `BLD-004` | Build        | Build plan step 9 rebuilds every plugin.                                         |
-| `GO-003`  | Go style     | Every new exported interface and method carries a documentation comment.         |
-| `GO-004`  | Go style     | Each bound service wraps an error of the hub with the wording of today.          |
+| `PLG-012` | Plugin model | `validateMetadata` runs before the constructor.                                                     |
+| `PLG-013` | Plugin model | Section 8. The design adds no check that only an attack would defeat.                               |
+| `DAT-001` | Data         | `boundDB` derives the schema from the copied identifier.                                            |
+| `DAT-004` | Data         | `Host.Database` answers `pluginapi.PluginDB`. No method answers `*sqlx.DB`.                         |
+| `OWN-005` | Ownership    | `boundDB.WithTx` sets the acting user and the acting workspace, as today.                           |
+| `LOG-004` | Logging      | `PLGBIND-DD-007`. The binder adds the three attributes.                                             |
+| `ARC-008` | Architecture | The loader and the binder treat each plugin the same way.                                           |
+| `BLD-004` | Build        | Build plan step 9 rebuilds every plugin.                                                            |
+| `GO-003`  | Go style     | Every new exported interface and method carries a documentation comment.                            |
+| `GO-004`  | Go style     | Each bound service wraps an error of the hub with the wording of today.                             |
 
 ## 4. Design
 
@@ -67,32 +67,32 @@ the hub implements them in `apps/hub/internal/plugin/host`.
 
 **`libs/pluginapi`**
 
-| File              | Change                                                                                                    |
-| ----------------- | --------------------------------------------------------------------------------------------------------- |
-| `plugin.go`       | `Plugin` becomes `any`. `PLGBIND-DD-008`.                                                                 |
-| The capability interfaces | Drop the embedding of `Plugin`. `PLGBIND-DD-008`.                                               |
-| `host.go`         | The `Host` of section 4.2.                                                                                |
-| `database.go`     | `PluginDB` becomes an interface with `WithTx`. Delete `NewPluginDB` and the struct.                       |
-| `secret.go`       | `PluginSecrets` becomes an interface with `Get`, `Put`, `PutUntil`, `Delete`. Delete `SecretProvider`, `NewPluginSecrets`, and the struct. `SecretScope` and the errors stay. |
-| `settings.go`     | `PluginSettings` becomes an interface with `Get`. Delete `SettingsProvider`, `NewPluginSettings`, and the struct. `ErrSettingsAbsent` stays. |
-| `notification.go` | `PluginNotifier` becomes an interface with `Notify`. Delete `NotificationSender`, `NewPluginNotifier`, and the struct. The rest stays. |
-| `page.go`         | Replace `PageLinker` with `PluginPages`, whose `PageURL(ctx, path)` takes no identifier.                  |
-| `host_test.go`    | Create. `PLGBIND-SC-016`.                                                                                 |
-| `database_test.go`, `secret_test.go`, `settings_test.go`, `notification_test.go` | Move to `apps/hub/internal/plugin/host`, with their scenario citations. |
+| File                                                                             | Change                                                                                                                                                                        |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plugin.go`                                                                      | `Plugin` becomes `any`. `PLGBIND-DD-008`.                                                                                                                                     |
+| The capability interfaces                                                        | Drop the embedding of `Plugin`. `PLGBIND-DD-008`.                                                                                                                             |
+| `host.go`                                                                        | The `Host` of section 4.2.                                                                                                                                                    |
+| `database.go`                                                                    | `PluginDB` becomes an interface with `WithTx`. Delete `NewPluginDB` and the struct.                                                                                           |
+| `secret.go`                                                                      | `PluginSecrets` becomes an interface with `Get`, `Put`, `PutUntil`, `Delete`. Delete `SecretProvider`, `NewPluginSecrets`, and the struct. `SecretScope` and the errors stay. |
+| `settings.go`                                                                    | `PluginSettings` becomes an interface with `Get`. Delete `SettingsProvider`, `NewPluginSettings`, and the struct. `ErrSettingsAbsent` stays.                                  |
+| `notification.go`                                                                | `PluginNotifier` becomes an interface with `Notify`. Delete `NotificationSender`, `NewPluginNotifier`, and the struct. The rest stays.                                        |
+| `page.go`                                                                        | Replace `PageLinker` with `PluginPages`, whose `PageURL(ctx, path)` takes no identifier.                                                                                      |
+| `host_test.go`                                                                   | Create. `PLGBIND-SC-016`.                                                                                                                                                     |
+| `database_test.go`, `secret_test.go`, `settings_test.go`, `notification_test.go` | Move to `apps/hub/internal/plugin/host`, with their scenario citations.                                                                                                       |
 
 The signatures of the methods of each bound interface equal the methods of the struct
 that it replaces. `PluginPages.PageURL` drops the identifier.
 
 **`apps/hub/internal/plugin/host`**
 
-| File          | Change                                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------ |
+| File          | Change                                                                                                                                  |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `host.go`     | `New(deps Dependencies) (*Binder, error)`. `Binder.Bind(meta pluginapi.Metadata) *Host`. `Host` holds the bound services of one plugin. |
-| `database.go` | Create. `boundDB{pool *sqlx.DB; schema string}` with the `WithTx` body of `libs/pluginapi/database.go`. |
-| `secret.go`   | Create. `SecretStore` interface (the methods of `pluginsecret.Store`), and `boundSecrets{store; id}`.   |
-| `settings.go` | Create. `SettingsReader` interface (`Settings(ctx, *pluginapi.PluginID)`), and `boundSettings{reader; id}`. |
-| `notifier.go` | Create. `NotificationSender` interface (`Send` of `notification.Dispatcher`), and `boundNotifier{sender; id}`. |
-| `page.go`     | `pageLinker` becomes `boundPages{deckURL string; id *pluginapi.PluginID}`.                            |
+| `database.go` | Create. `boundDB{pool *sqlx.DB; schema string}` with the `WithTx` body of `libs/pluginapi/database.go`.                                 |
+| `secret.go`   | Create. `SecretStore` interface (the methods of `pluginsecret.Store`), and `boundSecrets{store; id}`.                                   |
+| `settings.go` | Create. `SettingsReader` interface (`Settings(ctx, *pluginapi.PluginID)`), and `boundSettings{reader; id}`.                             |
+| `notifier.go` | Create. `NotificationSender` interface (`Send` of `notification.Dispatcher`), and `boundNotifier{sender; id}`.                          |
+| `page.go`     | `pageLinker` becomes `boundPages{deckURL string; id *pluginapi.PluginID}`.                                                              |
 
 `Dependencies` keeps its fields. `Settings`, `Secrets`, and `Notifier` take the three
 interfaces above. They are exported, because `Dependencies` is. The loader no longer needs `Dependencies.Logger` from a host,
@@ -100,39 +100,39 @@ so `loader.New` takes the logger. `PLGBIND-DD-005`.
 
 **`apps/hub/internal/registry`**
 
-| File                | Change                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| `plugin.go`         | Create `LoadedPlugin{Meta pluginapi.Metadata; Instance pluginapi.Plugin}`. The registry stores it. Add `Has(pluginID string) bool`. `All` answers `[]LoadedPlugin`. |
-| `plugin_entry.go`   | Read `plg.Meta` in place of `plg.Meta()`.                                                   |
+| File              | Change                                                                                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plugin.go`       | Create `LoadedPlugin{Meta pluginapi.Metadata; Instance pluginapi.Plugin}`. The registry stores it. Add `Has(pluginID string) bool`. `All` answers `[]LoadedPlugin`. |
+| `plugin_entry.go` | Read `plg.Meta` in place of `plg.Meta()`.                                                                                                                           |
 
 **Other files of the hub**
 
-| File                                         | Change                                                         |
-| -------------------------------------------- | -------------------------------------------------------------- |
-| `internal/plugin/loader/loader.go`           | Section 4.3 and 4.4.                                           |
-| `internal/plugin/registrar/*.go` (15 files)  | `Supports` and `Register` take `registry.LoadedPlugin`. A registrar type-asserts `loaded.Instance` and reads `loaded.Meta.ID`. |
-| `internal/workspace/enablement.go`           | `PluginCatalog` declares `Has`, and `loaded` calls it.         |
-| `internal/user/service.go`                   | `PluginCatalog` declares `Has`, and `loaded` calls it.         |
-| `internal/pluginsecret/store.go`             | Delete the assertion `var _ pluginapi.SecretProvider`.         |
-| `internal/settings/service.go`               | Delete the assertion `_ pluginapi.SettingsProvider`.           |
-| `internal/notification/dispatcher.go`        | Delete the assertion `var _ pluginapi.NotificationSender`.     |
-| `internal/depresolver/plugin.go`, `resolver.go` | `PluginHost` becomes `PluginBinder`. `buildPluginLoader` passes the binder and `c.Logger()`. |
+| File                                            | Change                                                                                                                         |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `internal/plugin/loader/loader.go`              | Section 4.3 and 4.4.                                                                                                           |
+| `internal/plugin/registrar/*.go` (15 files)     | `Supports` and `Register` take `registry.LoadedPlugin`. A registrar type-asserts `loaded.Instance` and reads `loaded.Meta.ID`. |
+| `internal/workspace/enablement.go`              | `PluginCatalog` declares `Has`, and `loaded` calls it.                                                                         |
+| `internal/user/service.go`                      | `PluginCatalog` declares `Has`, and `loaded` calls it.                                                                         |
+| `internal/pluginsecret/store.go`                | Delete the assertion `var _ pluginapi.SecretProvider`.                                                                         |
+| `internal/settings/service.go`                  | Delete the assertion `_ pluginapi.SettingsProvider`.                                                                           |
+| `internal/notification/dispatcher.go`           | Delete the assertion `var _ pluginapi.NotificationSender`.                                                                     |
+| `internal/depresolver/plugin.go`, `resolver.go` | `PluginHost` becomes `PluginBinder`. `buildPluginLoader` passes the binder and `c.Logger()`.                                   |
 
 **`libs/testdb`**
 
-| File        | Change                                                                                   |
-| ----------- | ---------------------------------------------------------------------------------------- |
+| File        | Change                                                                                               |
+| ----------- | ---------------------------------------------------------------------------------------------------- |
 | `plugin.go` | Create. `PluginDB(instance *Instance, id *pluginapi.PluginID) pluginapi.PluginDB`. `PLGBIND-DD-009`. |
 
 **Plugins** (`gwp`, `jasmine`, `parking`, `pensions`, `tbilisi-energy`, `telasi`, `telmico`)
 
-| Change | Files |
-| ------ | ----- |
-| Replace the `pluginID` variable and the `Meta()` method with `var Meta = pluginapi.Metadata{...}`. Delete the assertion `_ pluginapi.Plugin`. | `main.go` |
-| Take each bound service from the host. Delete each `pluginapi.NewPlugin*` call and the logger attributes. | `main.go` |
+| Change                                                                                                                                                             | Files                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Replace the `pluginID` variable and the `Meta()` method with `var Meta = pluginapi.Metadata{...}`. Delete the assertion `_ pluginapi.Plugin`.                      | `main.go`                                                                                                                                                                                                                                                                                                                    |
+| Take each bound service from the host. Delete each `pluginapi.NewPlugin*` call and the logger attributes.                                                          | `main.go`                                                                                                                                                                                                                                                                                                                    |
 | A field or a parameter of type `*pluginapi.PluginDB`, `*pluginapi.PluginSecrets`, `*pluginapi.PluginSettings`, or `*pluginapi.PluginNotifier` takes the interface. | `gwp/service/` (5 files), `jasmine/handler/` (7), `jasmine/widget/attention.go`, `jasmine/job/care_reminder.go`, `jasmine/mqtt/subscriber/measurement.go`, `parking/service/` (2), `pensions/job/contributions_collector.go`, `tbilisi-energy/service/` (5), `telasi/job/billing_items_collector.go`, `telmico/service/` (6) |
-| `Care` and `Notice` take `pluginapi.PluginPages` and drop the identifier. | `jasmine/telegram/command/care.go`, `parking/telegram/command/notice.go` |
-| A fake implements the bound interface. A store test takes `testdb.PluginDB`. | `*/handler/fakes_test.go`, `*/service/*_test.go`, `jasmine/handler/setup_test.go` |
+| `Care` and `Notice` take `pluginapi.PluginPages` and drop the identifier.                                                                                          | `jasmine/telegram/command/care.go`, `parking/telegram/command/notice.go`                                                                                                                                                                                                                                                     |
+| A fake implements the bound interface. A store test takes `testdb.PluginDB`.                                                                                       | `*/handler/fakes_test.go`, `*/service/*_test.go`, `jasmine/handler/setup_test.go`                                                                                                                                                                                                                                            |
 
 ### 4.2 The contract
 
@@ -190,16 +190,16 @@ sequenceDiagram
 
 The loader stops at the first failure and registers nothing.
 
-| Condition                                  | Error                                       | Message                                                    |
-| ------------------------------------------ | ------------------------------------------- | ---------------------------------------------------------- |
-| The object exports no `Meta`               | the error of `Lookup`                       | `cannot find metadata in plugin "<path>": <cause>`         |
-| `Meta` is not a `pluginapi.Metadata`       | `errs.ErrUnexpectedPluginSymbolType`        | `<sentinel>: "Meta" (<path>)`                              |
-| `Meta.ID` is nil                           | `errs.ErrInvalidPluginID`                   | `<sentinel>: plugin "<path>"`                              |
-| `Meta.ID` does not parse again             | `errs.ErrInvalidPluginID`                   | `<sentinel>: "<id>" in plugin "<path>"`                    |
-| The name or the description breaks a limit | `errs.ErrInvalidPluginMetadata`             | As today.                                                  |
-| The API version differs                    | `errs.ErrIncompatiblePluginAPIVersion`      | As today.                                                  |
-| The registry holds the identifier          | `errs.ErrPluginAlreadyRegistered`           | `<sentinel>: <id> (<path>)`                                |
-| The constructor fails                      | the error of the constructor                | As today.                                                  |
+| Condition                                  | Error                                  | Message                                            |
+| ------------------------------------------ | -------------------------------------- | -------------------------------------------------- |
+| The object exports no `Meta`               | the error of `Lookup`                  | `cannot find metadata in plugin "<path>": <cause>` |
+| `Meta` is not a `pluginapi.Metadata`       | `errs.ErrUnexpectedPluginSymbolType`   | `<sentinel>: "Meta" (<path>)`                      |
+| `Meta.ID` is nil                           | `errs.ErrInvalidPluginID`              | `<sentinel>: plugin "<path>"`                      |
+| `Meta.ID` does not parse again             | `errs.ErrInvalidPluginID`              | `<sentinel>: "<id>" in plugin "<path>"`            |
+| The name or the description breaks a limit | `errs.ErrInvalidPluginMetadata`        | As today.                                          |
+| The API version differs                    | `errs.ErrIncompatiblePluginAPIVersion` | As today.                                          |
+| The registry holds the identifier          | `errs.ErrPluginAlreadyRegistered`      | `<sentinel>: <id> (<path>)`                        |
+| The constructor fails                      | the error of the constructor           | As today.                                          |
 
 ## 5. Design decisions
 
@@ -458,17 +458,17 @@ copy is three lines, and `PLGBIND-SC-010` checks the version of the hub.
 
 ## 7. Build plan
 
-| #   | Step                                                                                         | Realizes                                   | Done |
-| --- | -------------------------------------------------------------------------------------------- | ------------------------------------------ | ---- |
-| 1   | `libs/pluginapi`: the empty `Plugin`, the bound interfaces, the `Host`. `PLGBIND-SC-016`.     | FR-012, FR-013, NFR-001                    | [x]  |
-| 2   | `libs/testdb`: `PluginDB`.                                                                   | FR-006                                     | [x]  |
-| 3   | `plugin/host`: `Binder`, the bound services, the moved tests. `PLGBIND-SC-007`, `PLGBIND-SC-010` to `PLGBIND-SC-015`. | FR-004, FR-006 to FR-011, INV-002 | [x]  |
-| 4   | `registry`: `LoadedPlugin`, `Has`, the catalog.                                              | FR-005                                     | [x]  |
-| 5   | The registrars, the enablements, the user manager.                                           | FR-005                                     | [x]  |
+| #   | Step                                                                                                                     | Realizes                                   | Done |
+| --- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------ | ---- |
+| 1   | `libs/pluginapi`: the empty `Plugin`, the bound interfaces, the `Host`. `PLGBIND-SC-016`.                                | FR-012, FR-013, NFR-001                    | [x]  |
+| 2   | `libs/testdb`: `PluginDB`.                                                                                               | FR-006                                     | [x]  |
+| 3   | `plugin/host`: `Binder`, the bound services, the moved tests. `PLGBIND-SC-007`, `PLGBIND-SC-010` to `PLGBIND-SC-015`.    | FR-004, FR-006 to FR-011, INV-002          | [x]  |
+| 4   | `registry`: `LoadedPlugin`, `Has`, the catalog.                                                                          | FR-005                                     | [x]  |
+| 5   | The registrars, the enablements, the user manager.                                                                       | FR-005                                     | [x]  |
 | 6   | The loader: `openSymbols`, `load`, the checks. `PLGBIND-SC-001` to `PLGBIND-SC-006`, `PLGBIND-SC-008`, `PLGBIND-SC-009`. | FR-001 to FR-003, FR-005, INV-001, INV-002 | [x]  |
-| 7   | `depresolver`: the binder and the logger of the loader. Delete the provider assertions.      | FR-004                                     | [x]  |
-| 8   | Each of the seven plugins: `Meta`, the constructor, the field types, the fakes, the tests.  | FR-001, FR-011                             | [x]  |
-| 9   | Lint and build the hub, `libs/pluginapi`, `libs/testdb`, and every plugin (`BLD-001`, `BLD-004`). `PLGBIND-SC-017`. | All                | [x]  |
+| 7   | `depresolver`: the binder and the logger of the loader. Delete the provider assertions.                                  | FR-004                                     | [x]  |
+| 8   | Each of the seven plugins: `Meta`, the constructor, the field types, the fakes, the tests.                               | FR-001, FR-011                             | [x]  |
+| 9   | Lint and build the hub, `libs/pluginapi`, `libs/testdb`, and every plugin (`BLD-001`, `BLD-004`). `PLGBIND-SC-017`.      | All                                        | [x]  |
 
 The hub and the plugins do not build between step 1 and step 8. One branch holds the
 whole plan.

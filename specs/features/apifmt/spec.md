@@ -25,65 +25,65 @@ time takes UTC. The deck and `libs/api-client` read the new shape.
 
 ## 2. Coverage
 
-| Statement       | Section                              |
-| --------------- | ------------------------------------- |
-| `APIFMT-FR-001` | 4.1, `APIFMT-DD-004`                  |
-| `APIFMT-FR-002` | 4.1, `APIFMT-DD-002`                  |
-| `APIFMT-FR-003` | 4.1, `APIFMT-DD-003`                  |
-| `APIFMT-FR-004` | 4.3, `APIFMT-DD-006`                  |
-| `APIFMT-FR-005` | 4.5, `APIFMT-DD-003`                  |
-| `APIFMT-FR-006` | 4.3, `APIFMT-DD-003`                  |
-| `APIFMT-FR-007` | 4.5                                   |
-| `APIFMT-FR-008` | 4.1, `APIFMT-DD-005`                  |
-| `APIFMT-FR-009` | `APIFMT-DD-007`                       |
-| `APIFMT-FR-010` | 4.5                                   |
-| `APIFMT-NFR-001`| `APIFMT-SC-011`                       |
-| `APIFMT-NFR-002`| 4.3, `APIFMT-SC-005`                  |
-| `APIFMT-INV-001`| `APIFMT-DD-003`, `APIFMT-SC-004`      |
-| `APIFMT-INV-002`| `APIFMT-DD-004`, `APIFMT-SC-001`      |
+| Statement        | Section                          |
+| ---------------- | -------------------------------- |
+| `APIFMT-FR-001`  | 4.1, `APIFMT-DD-004`             |
+| `APIFMT-FR-002`  | 4.1, `APIFMT-DD-002`             |
+| `APIFMT-FR-003`  | 4.1, `APIFMT-DD-003`             |
+| `APIFMT-FR-004`  | 4.3, `APIFMT-DD-006`             |
+| `APIFMT-FR-005`  | 4.5, `APIFMT-DD-003`             |
+| `APIFMT-FR-006`  | 4.3, `APIFMT-DD-003`             |
+| `APIFMT-FR-007`  | 4.5                              |
+| `APIFMT-FR-008`  | 4.1, `APIFMT-DD-005`             |
+| `APIFMT-FR-009`  | `APIFMT-DD-007`                  |
+| `APIFMT-FR-010`  | 4.5                              |
+| `APIFMT-NFR-001` | `APIFMT-SC-011`                  |
+| `APIFMT-NFR-002` | 4.3, `APIFMT-SC-005`             |
+| `APIFMT-INV-001` | `APIFMT-DD-003`, `APIFMT-SC-004` |
+| `APIFMT-INV-002` | `APIFMT-DD-004`, `APIFMT-SC-001` |
 
 ## 3. Guideline compliance
 
-| Rule      | How this design obeys it                                                  |
-| --------- | --------------------------------------------------------------------------- |
+| Rule      | How this design obeys it                                                               |
+| --------- | -------------------------------------------------------------------------------------- |
 | `RES-005` | `page.Page[T]` carries the five members, and `items`, `self` and `first` are required. |
-| `RES-006` | `page.Cursor` holds the five members, and a client never builds one.      |
-| `ERR-001` | Every failure answers `problem.Write`.                                    |
-| `ERR-003` | `cursor-stale` joins the registry of `libs/rest`.                         |
-| `PLG-007` | `libs/rest` imports no package of `apps/hub`.                             |
-| `ARC-005` | `libs/rest` holds what the hub and a plugin both import.                  |
-| `DAT-009` | The keyset reads the primary key, so no query gains an index.             |
-| `OWN-005` | No repository filters by user. A page counts the rows that the policy leaves. |
-| `GO-003`  | Every exported identifier of `libs/rest` carries a documentation comment. |
+| `RES-006` | `page.Cursor` holds the five members, and a client never builds one.                   |
+| `ERR-001` | Every failure answers `problem.Write`.                                                 |
+| `ERR-003` | `cursor-stale` joins the registry of `libs/rest`.                                      |
+| `PLG-007` | `libs/rest` imports no package of `apps/hub`.                                          |
+| `ARC-005` | `libs/rest` holds what the hub and a plugin both import.                               |
+| `DAT-009` | The keyset reads the primary key, so no query gains an index.                          |
+| `OWN-005` | No repository filters by user. A page counts the rows that the policy leaves.          |
+| `GO-003`  | Every exported identifier of `libs/rest` carries a documentation comment.              |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| File                                   | Change | Holds                                                         |
-| -------------------------------------- | ------ | --------------------------------------------------------------- |
-| `libs/rest/go.mod`                     | rename | The module path becomes `github.com/abgeo/maroid/libs/rest`.  |
-| `libs/rest/problem/problem.go`         | move   | `Problem`, `FieldFailure`, and the three builders. Unchanged.  |
-| `libs/rest/problem/registry.go`        | change | The constructors. `NewCursorStale` and `NewMemberUnknown` join them. |
-| `libs/rest/problem/writer.go`          | move   | `Fill` and `Write`. Unchanged.                                |
-| `libs/rest/page/page.go`               | create | `Page[T]`, `New`, and the link builder.                       |
-| `libs/rest/address/address.go`         | create | The middleware that carries the external address, and its reader. |
-| `libs/rest/page/cursor.go`             | create | `Cursor`, `EncodeCursor`, `DecodeCursor`.                     |
-| `libs/rest/page/request.go`            | create | `ReadRequest`, which reads `limit`, `cursor`, and `sort`.     |
-| `libs/rest/page/keyset.go`             | create | `Seek`, `Fetch`, `Window`, and `Read`, which finds the neighbors. |
-| `libs/rest/flow/flow.go`               | rename | The middleware. `spec-platform.md` holds it.                  |
-| `apps/hub/internal/handler/plugin.go`  | change | `List` answers a page. `SaveSettings` keeps its shape.        |
-| `apps/hub/internal/handler/auth.go`    | change | Five tags take snake case. `Identities` answers a page.       |
-| `plugins/jasmine/dto/plant.go`         | change | Four tags take snake case. The two times take UTC.            |
-| `plugins/jasmine/dto/environment.go`   | change | Two tags take snake case. The two times take UTC.             |
-| `plugins/jasmine/repository/plant.go`  | change | `List` takes a cursor and a limit.                            |
-| `plugins/jasmine/repository/environment.go` | change | The same.                                                |
-| `libs/api-client/src/page.ts`          | create | `Page<T>`.                                                    |
-| `libs/api-client/src/client.ts`        | change | `follow` reads a link as it came. Another origin throws.      |
-| `plugins/jasmine/ui/src/lib/`          | create | A pager that follows `next` and `prev`.                       |
-| `libs/api-client/src/problem.ts`       | change | Every type constant takes the relative form.                  |
-| `apps/deck/src/lib/api/types.ts`       | change | The five members already read snake case. See `APIFMT-DD-004`. |
-| `.golangci.yaml`                       | change | `tagliatelle` takes `json: snake`.                            |
+| File                                        | Change | Holds                                                                |
+| ------------------------------------------- | ------ | -------------------------------------------------------------------- |
+| `libs/rest/go.mod`                          | rename | The module path becomes `github.com/abgeo/maroid/libs/rest`.         |
+| `libs/rest/problem/problem.go`              | move   | `Problem`, `FieldFailure`, and the three builders. Unchanged.        |
+| `libs/rest/problem/registry.go`             | change | The constructors. `NewCursorStale` and `NewMemberUnknown` join them. |
+| `libs/rest/problem/writer.go`               | move   | `Fill` and `Write`. Unchanged.                                       |
+| `libs/rest/page/page.go`                    | create | `Page[T]`, `New`, and the link builder.                              |
+| `libs/rest/address/address.go`              | create | The middleware that carries the external address, and its reader.    |
+| `libs/rest/page/cursor.go`                  | create | `Cursor`, `EncodeCursor`, `DecodeCursor`.                            |
+| `libs/rest/page/request.go`                 | create | `ReadRequest`, which reads `limit`, `cursor`, and `sort`.            |
+| `libs/rest/page/keyset.go`                  | create | `Seek`, `Fetch`, `Window`, and `Read`, which finds the neighbors.    |
+| `libs/rest/flow/flow.go`                    | rename | The middleware. `spec-platform.md` holds it.                         |
+| `apps/hub/internal/handler/plugin.go`       | change | `List` answers a page. `SaveSettings` keeps its shape.               |
+| `apps/hub/internal/handler/auth.go`         | change | Five tags take snake case. `Identities` answers a page.              |
+| `plugins/jasmine/dto/plant.go`              | change | Four tags take snake case. The two times take UTC.                   |
+| `plugins/jasmine/dto/environment.go`        | change | Two tags take snake case. The two times take UTC.                    |
+| `plugins/jasmine/repository/plant.go`       | change | `List` takes a cursor and a limit.                                   |
+| `plugins/jasmine/repository/environment.go` | change | The same.                                                            |
+| `libs/api-client/src/page.ts`               | create | `Page<T>`.                                                           |
+| `libs/api-client/src/client.ts`             | change | `follow` reads a link as it came. Another origin throws.             |
+| `plugins/jasmine/ui/src/lib/`               | create | A pager that follows `next` and `prev`.                              |
+| `libs/api-client/src/problem.ts`            | change | Every type constant takes the relative form.                         |
+| `apps/deck/src/lib/api/types.ts`            | change | The five members already read snake case. See `APIFMT-DD-004`.       |
+| `.golangci.yaml`                            | change | `tagliatelle` takes `json: snake`.                                   |
 
 `Page[T]` and its members:
 
@@ -106,10 +106,10 @@ trigger.
 
 ### 4.3 Declarations
 
-| Method and path                      | Access        | Answers                          | Realizes        |
-| ------------------------------------ | ------------- | --------------------------------- | --------------- |
-| `GET /plugins`                       | Authenticated | One page, no cursor               | `APIFMT-FR-004` |
-| `GET /auth/identities`               | Authenticated | One page, no cursor               | `APIFMT-FR-004` |
+| Method and path                                               | Access          | Answers               | Realizes        |
+| ------------------------------------------------------------- | --------------- | --------------------- | --------------- |
+| `GET /plugins`                                                | Authenticated   | One page, no cursor   | `APIFMT-FR-004` |
+| `GET /auth/identities`                                        | Authenticated   | One page, no cursor   | `APIFMT-FR-004` |
 | `GET /workspaces/{workspaceId}/plugins/{id}/api/plants`       | Member, enabled | A page, with a cursor | `APIFMT-FR-002` |
 | `GET /workspaces/{workspaceId}/plugins/{id}/api/environments` | Member, enabled | A page, with a cursor | `APIFMT-FR-002` |
 
@@ -153,13 +153,13 @@ Every read of one page runs in one transaction.
 
 ### 4.5 Errors
 
-| Condition                                  | Type                              | Status |
-| ------------------------------------------ | --------------------------------- | ------ |
-| A cursor that does not decode              | `/problems/http/request-invalid`  | 400    |
-| A cursor whose sort or filters differ      | `/problems/http/cursor-stale`     | 400    |
-| A `limit` below 1, above 100, or not a number | `/problems/http/request-invalid` | 400    |
-| A `sort` naming a field the route does not declare | `/problems/http/request-invalid` | 400 |
-| A bounded collection that a request pages   | `/problems/http/request-invalid`  | 400    |
+| Condition                                          | Type                             | Status |
+| -------------------------------------------------- | -------------------------------- | ------ |
+| A cursor that does not decode                      | `/problems/http/request-invalid` | 400    |
+| A cursor whose sort or filters differ              | `/problems/http/cursor-stale`    | 400    |
+| A `limit` below 1, above 100, or not a number      | `/problems/http/request-invalid` | 400    |
+| A `sort` naming a field the route does not declare | `/problems/http/request-invalid` | 400    |
+| A bounded collection that a request pages          | `/problems/http/request-invalid` | 400    |
 
 Every `detail` names the parameter that failed. `ERR-005` bounds it.
 
@@ -378,19 +378,19 @@ rows measure the cost, because the time of a read this small drowns in noise.
 
 ## 7. Build plan
 
-| #   | Step                                                                      | Realizes                        | Done |
-| --- | --------------------------------------------------------------------------- | ------------------------------- | ---- |
-| 1   | Rename `libs/problem` to `libs/rest` in `go.work`, `go.mod` and every import. | `APIFMT-DD-001`                | [x]  |
-| 2   | Add `page.go` and `cursor.go` to `libs/rest`, with their tests.            | `APIFMT-FR-002`, `APIFMT-FR-003` | [x]  |
-| 3   | Add `NewCursorStale` to the registry.                                     | `APIFMT-FR-005`                 | [x]  |
-| 4   | Flip `tagliatelle`, mark each exempt struct, and change the eleven tags. | `APIFMT-FR-001`                 | [x]  |
-| 5   | Add `.UTC()` to each DTO that formats a moment.                           | `APIFMT-FR-008`                 | [x]  |
-| 6   | Add `omitempty` to every optional member.                                 | `APIFMT-FR-009`                 | [x]  |
-| 7   | Take a cursor and a limit in each `List` of `jasmine`.                    | `APIFMT-FR-003`                 | [x]  |
-| 8   | Answer a page from the four list routes.                                  | `APIFMT-FR-002`, `APIFMT-FR-004` | [x]  |
-| 9   | Add `page.ts` to `libs/api-client`, and change the relative type constants. | `APIFMT-FR-010`                | [x]  |
-| 10  | Change the four list call sites of the deck and of the plugin interface.  | `APIFMT-FR-002`                 | [x]  |
-| 11  | Change `pcap/api.yaml` and `extid/api.yaml` to the page and the cursor.   | `SPC-002`                       | [x]  |
+| #   | Step                                                                          | Realizes                         | Done |
+| --- | ----------------------------------------------------------------------------- | -------------------------------- | ---- |
+| 1   | Rename `libs/problem` to `libs/rest` in `go.work`, `go.mod` and every import. | `APIFMT-DD-001`                  | [x]  |
+| 2   | Add `page.go` and `cursor.go` to `libs/rest`, with their tests.               | `APIFMT-FR-002`, `APIFMT-FR-003` | [x]  |
+| 3   | Add `NewCursorStale` to the registry.                                         | `APIFMT-FR-005`                  | [x]  |
+| 4   | Flip `tagliatelle`, mark each exempt struct, and change the eleven tags.      | `APIFMT-FR-001`                  | [x]  |
+| 5   | Add `.UTC()` to each DTO that formats a moment.                               | `APIFMT-FR-008`                  | [x]  |
+| 6   | Add `omitempty` to every optional member.                                     | `APIFMT-FR-009`                  | [x]  |
+| 7   | Take a cursor and a limit in each `List` of `jasmine`.                        | `APIFMT-FR-003`                  | [x]  |
+| 8   | Answer a page from the four list routes.                                      | `APIFMT-FR-002`, `APIFMT-FR-004` | [x]  |
+| 9   | Add `page.ts` to `libs/api-client`, and change the relative type constants.   | `APIFMT-FR-010`                  | [x]  |
+| 10  | Change the four list call sites of the deck and of the plugin interface.      | `APIFMT-FR-002`                  | [x]  |
+| 11  | Change `pcap/api.yaml` and `extid/api.yaml` to the page and the cursor.       | `SPC-002`                        | [x]  |
 
 Step 1 lands alone, because every later step imports the new path.
 

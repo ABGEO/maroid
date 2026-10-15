@@ -39,11 +39,11 @@ same loop for the second scope.
 
 ## Alternatives
 
-| Alternative | Why we did not select it |
-| ----------- | ------------------------ |
-| A second policy that lets a shared run delete an expired row of any scope | It is the first policy that crosses a scope. It changes `OWN-006`, and a defect in it reaches every workspace. |
-| A delete of the expired rows of a scope at each read and each write in that scope | A scope that no unit of work touches keeps its expired rows for ever. `PSECRET-FR-010` fails. |
-| A role of the database that bypasses the policy for the job | It adds a second connection and a second credential to the hub for one delete. |
+| Alternative                                                                       | Why we did not select it                                                                                       |
+| --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| A second policy that lets a shared run delete an expired row of any scope         | It is the first policy that crosses a scope. It changes `OWN-006`, and a defect in it reaches every workspace. |
+| A delete of the expired rows of a scope at each read and each write in that scope | A scope that no unit of work touches keeps its expired rows for ever. `PSECRET-FR-010` fails.                  |
+| A role of the database that bypasses the policy for the job                       | It adds a second connection and a second credential to the hub for one delete.                                 |
 
 ## Consequences
 

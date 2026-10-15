@@ -23,34 +23,34 @@ widget links to the page. The page and the route read only the database.
 
 ## 2. Guideline compliance
 
-| Rule      | Guideline | How this specification obeys it |
-| --------- | --------- | ------------------------------- |
-| `RES-005`, `RES-006` | REST | The route answers the `Page` of `libs/rest/page`, with `limit`, `cursor`, `self`, `first`, `next`, and `prev`. |
-| `OWN-005`, `OWN-008` | Ownership | The repository writes no filter on `workspace_id`. The policy scopes every read. |
-| `ERR-002` | Errors | `not-assigned` has the form `/problems/dev.maroid.gwp/<slug>`. |
-| `SEC-013` | Security | The route names `account.read`. |
-| `UI-005`, `UI-006`, `UI-007` | Web UI | The remote adds `/readings`, imports the shared `Pagination` and `createPager` from `@maroid/ui`, and reaches the route through `host.api`. |
-| `TS-002` | Frontend | The page and the chart take their props through `$props`. |
+| Rule                         | Guideline | How this specification obeys it                                                                                                             |
+| ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `RES-005`, `RES-006`         | REST      | The route answers the `Page` of `libs/rest/page`, with `limit`, `cursor`, `self`, `first`, `next`, and `prev`.                              |
+| `OWN-005`, `OWN-008`         | Ownership | The repository writes no filter on `workspace_id`. The policy scopes every read.                                                            |
+| `ERR-002`                    | Errors    | `not-assigned` has the form `/problems/dev.maroid.gwp/<slug>`.                                                                              |
+| `SEC-013`                    | Security  | The route names `account.read`.                                                                                                             |
+| `UI-005`, `UI-006`, `UI-007` | Web UI    | The remote adds `/readings`, imports the shared `Pagination` and `createPager` from `@maroid/ui`, and reaches the route through `host.api`. |
+| `TS-002`                     | Frontend  | The page and the chart take their props through `$props`.                                                                                   |
 
 ## 3. Design
 
 ### 3.1 Components
 
-| Path | Action | Holds |
-| ---- | ------ | ----- |
-| `plugins/gwp/model/reading.go` | change | `Reading.ID` |
-| `plugins/gwp/repository/reading.go` | change | `List(ctx, seek page.Seek, customerNumber string, from *time.Time) ([]model.Reading, error)` |
-| `plugins/gwp/service/store.go` | change | `ReadingsPage(ctx, asked page.Request, from *time.Time) (page.Window[model.Reading], error)`. It reads the assignment and the page in one transaction, and answers `errs.ErrNotAssigned` |
-| `plugins/gwp/dto/reading.go` | create | `MeterReadingResponse`, `NewMeterReadingResponseList`. `ReadingResponse` already names the answer of the water service |
-| `plugins/gwp/handler/reading.go` | create | `ReadingHandler`, `NewReadingHandler`, `ReadingLister` |
-| `plugins/gwp/handler/problem.go` | change | `typeNotAssigned` |
-| `plugins/gwp/widget/usage.go` | change | `ListData.More` is `/readings` |
-| `plugins/gwp/main.go` | change | `Routes` adds the readings route. `UIManifest` adds `/readings` |
-| `plugins/gwp/ui/package.json` | change | `d3-scale` at exactly `4.0.2` and `d3-shape` at exactly `3.2.0`. `@types/d3-scale` `4.0.9` and `@types/d3-shape` `3.2.0` as development dependencies |
-| `plugins/gwp/ui/src/api/{reading,types,index}.ts` | create, change | `Reading`, `ReadingPage`, `createReadingApi` with `page(cursorLink?)` and `since(from)` |
-| `plugins/gwp/ui/src/lib/chart.ts` | create | `chartSeries(readings)`: the dates, the meters, and the usage and the value of each meter on each date. `meterTone(index)`: the daisyUI classes of a meter |
-| `plugins/gwp/ui/src/pages/readings/{Readings,UsageChart}.svelte` | create | The page and the chart |
-| `plugins/gwp/ui/src/entry.ts` | change | `/readings` |
+| Path                                                             | Action         | Holds                                                                                                                                                                                    |
+| ---------------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plugins/gwp/model/reading.go`                                   | change         | `Reading.ID`                                                                                                                                                                             |
+| `plugins/gwp/repository/reading.go`                              | change         | `List(ctx, seek page.Seek, customerNumber string, from *time.Time) ([]model.Reading, error)`                                                                                             |
+| `plugins/gwp/service/store.go`                                   | change         | `ReadingsPage(ctx, asked page.Request, from *time.Time) (page.Window[model.Reading], error)`. It reads the assignment and the page in one transaction, and answers `errs.ErrNotAssigned` |
+| `plugins/gwp/dto/reading.go`                                     | create         | `MeterReadingResponse`, `NewMeterReadingResponseList`. `ReadingResponse` already names the answer of the water service                                                                   |
+| `plugins/gwp/handler/reading.go`                                 | create         | `ReadingHandler`, `NewReadingHandler`, `ReadingLister`                                                                                                                                   |
+| `plugins/gwp/handler/problem.go`                                 | change         | `typeNotAssigned`                                                                                                                                                                        |
+| `plugins/gwp/widget/usage.go`                                    | change         | `ListData.More` is `/readings`                                                                                                                                                           |
+| `plugins/gwp/main.go`                                            | change         | `Routes` adds the readings route. `UIManifest` adds `/readings`                                                                                                                          |
+| `plugins/gwp/ui/package.json`                                    | change         | `d3-scale` at exactly `4.0.2` and `d3-shape` at exactly `3.2.0`. `@types/d3-scale` `4.0.9` and `@types/d3-shape` `3.2.0` as development dependencies                                     |
+| `plugins/gwp/ui/src/api/{reading,types,index}.ts`                | create, change | `Reading`, `ReadingPage`, `createReadingApi` with `page(cursorLink?)` and `since(from)`                                                                                                  |
+| `plugins/gwp/ui/src/lib/chart.ts`                                | create         | `chartSeries(readings)`: the dates, the meters, and the usage and the value of each meter on each date. `meterTone(index)`: the daisyUI classes of a meter                               |
+| `plugins/gwp/ui/src/pages/readings/{Readings,UsageChart}.svelte` | create         | The page and the chart                                                                                                                                                                   |
+| `plugins/gwp/ui/src/entry.ts`                                    | change         | `/readings`                                                                                                                                                                              |
 
 ### 3.2 Data model
 
@@ -61,37 +61,37 @@ leading columns `workspace_id` and `customer_number`.
 
 **HTTP route.** The prefix is `/workspaces/{workspaceId}/plugins/dev.maroid.gwp/api`.
 
-| Method | Path | Access | Permission | Realizes |
-| ------ | ---- | ------ | ---------- | -------- |
-| `GET` | `/readings` | Authenticated | `account.read` | `GWPACC-FR-028` to `GWPACC-FR-033` |
+| Method | Path        | Access        | Permission     | Realizes                           |
+| ------ | ----------- | ------------- | -------------- | ---------------------------------- |
+| `GET`  | `/readings` | Authenticated | `account.read` | `GWPACC-FR-028` to `GWPACC-FR-033` |
 
 The route takes `limit` (1 to 100, default 20), `cursor`, and the filter `from`, a date
 `YYYY-MM-DD`. It takes no `sort`. Each item is:
 
-| Member | Type | From |
-| ------ | ---- | ---- |
-| `id` | string, UUID | `readings.id` |
-| `serial_number` | string | `serial_number` |
-| `reading_date` | string, `date` | `reading_date` |
-| `value` | number | `value` |
-| `usage` | number, absent for the earliest reading of a meter | `value` minus the `value` of the reading before it, of the same meter |
+| Member          | Type                                               | From                                                                  |
+| --------------- | -------------------------------------------------- | --------------------------------------------------------------------- |
+| `id`            | string, UUID                                       | `readings.id`                                                         |
+| `serial_number` | string                                             | `serial_number`                                                       |
+| `reading_date`  | string, `date`                                     | `reading_date`                                                        |
+| `value`         | number                                             | `value`                                                               |
+| `usage`         | number, absent for the earliest reading of a meter | `value` minus the `value` of the reading before it, of the same meter |
 
 **UI routes.**
 
-| Page route | Navigation entry | Page | Realizes |
-| ---------- | ---------------- | ---- | -------- |
-| `/readings` | "Readings" | `Readings.svelte` | `GWPACC-FR-028` to `GWPACC-FR-032` |
+| Page route  | Navigation entry | Page              | Realizes                           |
+| ----------- | ---------------- | ----------------- | ---------------------------------- |
+| `/readings` | "Readings"       | `Readings.svelte` | `GWPACC-FR-028` to `GWPACC-FR-032` |
 
 **Widget.** `usage` answers `More: "/readings"` (`GWPACC-FR-034`).
 
 ### 3.4 Errors
 
-| Condition | Answer |
-| --------- | ------ |
-| No assigned customer | 409 `/problems/dev.maroid.gwp/not-assigned` |
-| `from` is not a date `YYYY-MM-DD` | 400 `/problems/http/request-invalid`, naming `from` |
-| `limit`, `cursor`, or `sort` that `RES-006` refuses | 400, as `libs/rest/page` answers |
-| No reading of the assigned customer | 200 with an empty `items` |
+| Condition                                           | Answer                                              |
+| --------------------------------------------------- | --------------------------------------------------- |
+| No assigned customer                                | 409 `/problems/dev.maroid.gwp/not-assigned`         |
+| `from` is not a date `YYYY-MM-DD`                   | 400 `/problems/http/request-invalid`, naming `from` |
+| `limit`, `cursor`, or `sort` that `RES-006` refuses | 400, as `libs/rest/page` answers                    |
+| No reading of the assigned customer                 | 200 with an empty `items`                           |
 
 ## 4. Design decisions
 

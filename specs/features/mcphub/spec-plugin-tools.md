@@ -31,40 +31,40 @@ acting workspace.
 
 ## 2. Coverage
 
-| Requirement       | Where this specification realizes it                          |
-| ----------------- | ------------------------------------------------------------- |
-| `MCPHUB-FR-007`   | Section 4.1, `MCPHUB-DD-009`, `MCPHUB-SC-008`                 |
-| `MCPHUB-FR-008`   | `MCPHUB-DD-011`, `MCPHUB-SC-009`                              |
-| `MCPHUB-FR-009`   | `MCPHUB-DD-011`, `MCPHUB-SC-010`                              |
-| `MCPHUB-FR-010`   | Section 4.4, `MCPHUB-DD-012`, `MCPHUB-SC-011`                 |
-| `MCPHUB-FR-011`   | `MCPHUB-DD-012`, `MCPHUB-SC-012`                              |
-| `MCPHUB-FR-012`   | `MCPHUB-DD-014`, `MCPHUB-SC-013`                              |
-| `MCPHUB-FR-013`   | Section 4.5, `MCPHUB-DD-013`, `MCPHUB-SC-014`                 |
-| `MCPHUB-FR-014`   | `MCPHUB-DD-013`, `MCPHUB-SC-015`                              |
-| `MCPHUB-FR-021`   | Section 4.4, `MCPHUB-DD-022`, `MCPHUB-SC-027`                 |
-| `MCPHUB-FR-022`   | Section 4.5, `MCPHUB-DD-023`, `MCPHUB-SC-028`                 |
-| `MCPHUB-FR-023`   | Section 4.5, `MCPHUB-DD-023`, `MCPHUB-SC-029`                 |
-| `MCPHUB-NFR-002`  | `MCPHUB-DD-015`, `MCPHUB-SC-016`                              |
-| `MCPHUB-INV-002`  | `MCPHUB-DD-011`, `MCPHUB-SC-009`                              |
-| `MCPHUB-INV-003`  | `MCPHUB-DD-022`, `MCPHUB-SC-027`, `MCPHUB-SC-028`             |
+| Requirement      | Where this specification realizes it              |
+| ---------------- | ------------------------------------------------- |
+| `MCPHUB-FR-007`  | Section 4.1, `MCPHUB-DD-009`, `MCPHUB-SC-008`     |
+| `MCPHUB-FR-008`  | `MCPHUB-DD-011`, `MCPHUB-SC-009`                  |
+| `MCPHUB-FR-009`  | `MCPHUB-DD-011`, `MCPHUB-SC-010`                  |
+| `MCPHUB-FR-010`  | Section 4.4, `MCPHUB-DD-012`, `MCPHUB-SC-011`     |
+| `MCPHUB-FR-011`  | `MCPHUB-DD-012`, `MCPHUB-SC-012`                  |
+| `MCPHUB-FR-012`  | `MCPHUB-DD-014`, `MCPHUB-SC-013`                  |
+| `MCPHUB-FR-013`  | Section 4.5, `MCPHUB-DD-013`, `MCPHUB-SC-014`     |
+| `MCPHUB-FR-014`  | `MCPHUB-DD-013`, `MCPHUB-SC-015`                  |
+| `MCPHUB-FR-021`  | Section 4.4, `MCPHUB-DD-022`, `MCPHUB-SC-027`     |
+| `MCPHUB-FR-022`  | Section 4.5, `MCPHUB-DD-023`, `MCPHUB-SC-028`     |
+| `MCPHUB-FR-023`  | Section 4.5, `MCPHUB-DD-023`, `MCPHUB-SC-029`     |
+| `MCPHUB-NFR-002` | `MCPHUB-DD-015`, `MCPHUB-SC-016`                  |
+| `MCPHUB-INV-002` | `MCPHUB-DD-011`, `MCPHUB-SC-009`                  |
+| `MCPHUB-INV-003` | `MCPHUB-DD-022`, `MCPHUB-SC-027`, `MCPHUB-SC-028` |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline      | How this specification obeys it                                                                 |
-| --------- | -------------- | ----------------------------------------------------------------------------------------------- |
-| `PLG-006` | Plugin model   | The interface is `pluginapi.MCPToolPlugin`, the registry is `registry.MCPToolRegistry`, and the registrar is `registrar.MCPToolRegistrar`. The loader holds the registrar. |
-| `PLG-007` | Plugin model   | `MCPHUB-DD-009` keeps the SDK inside `apps/hub`. A plugin imports `libs/pluginapi` and nothing of the hub. |
-| `PLG-011` | Plugin model   | `MCPToolRegistry.Register` already refuses a second tool under one name. `MCPHUB-DD-011` makes a collision between two plugins impossible. |
-| `ARC-008` | Architecture   | The registrar reads every plugin through `Supports`. It names no plugin.                        |
+| Rule      | Guideline        | How this specification obeys it                                                                                                                                                                                |
+| --------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PLG-006` | Plugin model     | The interface is `pluginapi.MCPToolPlugin`, the registry is `registry.MCPToolRegistry`, and the registrar is `registrar.MCPToolRegistrar`. The loader holds the registrar.                                     |
+| `PLG-007` | Plugin model     | `MCPHUB-DD-009` keeps the SDK inside `apps/hub`. A plugin imports `libs/pluginapi` and nothing of the hub.                                                                                                     |
+| `PLG-011` | Plugin model     | `MCPToolRegistry.Register` already refuses a second tool under one name. `MCPHUB-DD-011` makes a collision between two plugins impossible.                                                                     |
+| `ARC-008` | Architecture     | The registrar reads every plugin through `Supports`. It names no plugin.                                                                                                                                       |
 | `OWN-003` | Record ownership | `MCPHUB-DD-012` resolves the acting user once, at the entry point. `MCPHUB-DD-022` takes the acting workspace from the `workspace` argument and checks the membership. Every tool reads both from the context. |
-| `OWN-007` | Record ownership | The acting user and the acting workspace reach the context before the tool runs, so `PluginDB.WithTx` sets `app.user_id` and `app.workspace_id`. |
-| `OWN-008` | Record ownership | A repository of a plugin writes no filter on `workspace_id`. The policy does it. This design adds no path around it. |
-| `SEC-012` | Security       | `MCPHUB-DD-023`. A call in a workspace that does not enable the plugin answers as an unknown tool. |
-| `SEC-013` | Security       | `MCPToolMeta.Permission`. The registrar refuses a tool that declares none. `MCPHUB-DD-023` checks it. |
-| `DAT-004` | Data           | A plugin reaches the database through `pluginapi.PluginDB`. A tool adds no other path.          |
-| `PKG-003` | Package layout | `mcpserver` already holds `doc.go`.                                                             |
-| `BLD-004` | Build          | `libs/pluginapi` changes, so every plugin is rebuilt. Step 8 of the build plan.                 |
-| `LOG-003` | Logging        | The registrar logs through the logger of the loader. It adds no component of its own.           |
+| `OWN-007` | Record ownership | The acting user and the acting workspace reach the context before the tool runs, so `PluginDB.WithTx` sets `app.user_id` and `app.workspace_id`.                                                               |
+| `OWN-008` | Record ownership | A repository of a plugin writes no filter on `workspace_id`. The policy does it. This design adds no path around it.                                                                                           |
+| `SEC-012` | Security         | `MCPHUB-DD-023`. A call in a workspace that does not enable the plugin answers as an unknown tool.                                                                                                             |
+| `SEC-013` | Security         | `MCPToolMeta.Permission`. The registrar refuses a tool that declares none. `MCPHUB-DD-023` checks it.                                                                                                          |
+| `DAT-004` | Data             | A plugin reaches the database through `pluginapi.PluginDB`. A tool adds no other path.                                                                                                                         |
+| `PKG-003` | Package layout   | `mcpserver` already holds `doc.go`.                                                                                                                                                                            |
+| `BLD-004` | Build            | `libs/pluginapi` changes, so every plugin is rebuilt. Step 8 of the build plan.                                                                                                                                |
+| `LOG-003` | Logging          | The registrar logs through the logger of the loader. It adds no component of its own.                                                                                                                          |
 
 The plugin API version stays `v1`. `MCPToolPlugin` is a further optional
 interface, and a plugin that does not implement it loads unchanged, because
@@ -74,20 +74,20 @@ interface, and a plugin that does not implement it loads unchanged, because
 
 ### 4.1 Components
 
-| Path                                                 | Change | Holds                                                                    |
-| ---------------------------------------------------- | ------ | ------------------------------------------------------------------------ |
-| `libs/pluginapi/mcp.go`                              | Create | `MCPToolPlugin`, `MCPTool`, `MCPToolMeta`, `MCPToolAnnotations`, `NewTypedTool`. |
-| `apps/hub/internal/mcpserver/schema.go`              | Create | `inferSchema`, the input schema and its compiled form.                   |
-| `apps/hub/internal/mcpserver/plugintool.go`          | Create | `NewPluginTool`, the adapter from `pluginapi.MCPTool` to `registry.MCPTool`. |
-| `apps/hub/internal/mcpserver/workspace.go`           | Create | `workspaceMiddleware`, which adds the `workspace` argument and runs the checks of `MCPHUB-DD-022` and `MCPHUB-DD-023`. |
-| `apps/hub/internal/registry/mcp_tool.go`             | Change | `MCPTool` gains `ActsInWorkspace` and `Permission`.                      |
-| `apps/hub/internal/mcpserver/acting_user.go`         | Create | `actingUserMiddleware`.                                                  |
-| `apps/hub/internal/mcpserver/server.go`              | Change | `NewServer` adds `actingUserMiddleware`.                                 |
-| `apps/hub/internal/plugin/registrar/mcp_tool.go`     | Create | `MCPToolRegistrar`.                                                      |
-| `apps/hub/internal/plugin/loader/loader.go`          | Change | The registrar joins the list.                                            |
-| `apps/hub/internal/depresolver/plugin.go`            | Change | `PluginLoader` resolves `MCPToolRegistry()` and passes it to the loader. |
-| `apps/hub/internal/handler/mcp.go`                   | Change | The `mcp.Server` is built in `Register`. `MCPHUB-DD-015`.              |
-| `apps/hub/internal/domain/errs/errs.go`              | Change | Adds `ErrInvalidMCPToolModel`.                                           |
+| Path                                             | Change | Holds                                                                                                                  |
+| ------------------------------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `libs/pluginapi/mcp.go`                          | Create | `MCPToolPlugin`, `MCPTool`, `MCPToolMeta`, `MCPToolAnnotations`, `NewTypedTool`.                                       |
+| `apps/hub/internal/mcpserver/schema.go`          | Create | `inferSchema`, the input schema and its compiled form.                                                                 |
+| `apps/hub/internal/mcpserver/plugintool.go`      | Create | `NewPluginTool`, the adapter from `pluginapi.MCPTool` to `registry.MCPTool`.                                           |
+| `apps/hub/internal/mcpserver/workspace.go`       | Create | `workspaceMiddleware`, which adds the `workspace` argument and runs the checks of `MCPHUB-DD-022` and `MCPHUB-DD-023`. |
+| `apps/hub/internal/registry/mcp_tool.go`         | Change | `MCPTool` gains `ActsInWorkspace` and `Permission`.                                                                    |
+| `apps/hub/internal/mcpserver/acting_user.go`     | Create | `actingUserMiddleware`.                                                                                                |
+| `apps/hub/internal/mcpserver/server.go`          | Change | `NewServer` adds `actingUserMiddleware`.                                                                               |
+| `apps/hub/internal/plugin/registrar/mcp_tool.go` | Create | `MCPToolRegistrar`.                                                                                                    |
+| `apps/hub/internal/plugin/loader/loader.go`      | Change | The registrar joins the list.                                                                                          |
+| `apps/hub/internal/depresolver/plugin.go`        | Change | `PluginLoader` resolves `MCPToolRegistry()` and passes it to the loader.                                               |
+| `apps/hub/internal/handler/mcp.go`               | Change | The `mcp.Server` is built in `Register`. `MCPHUB-DD-015`.                                                              |
+| `apps/hub/internal/domain/errs/errs.go`          | Change | Adds `ErrInvalidMCPToolModel`.                                                                                         |
 
 The contract names no type of the SDK. `MCPHUB-DD-009` gives the reason.
 
@@ -167,9 +167,9 @@ through `OWN-008` govern no new surface.
 
 **MCP tools.** `SPC-003` gives the columns.
 
-| Tool                      | Declared by         | Annotations                        | Permission                  | Realizes                                          |
-| ------------------------- | ------------------- | ---------------------------------- | --------------------------- | ------------------------------------------------- |
-| `<plugin id>_<tool name>` | Any `MCPToolPlugin` | The plugin declares each hint      | The plugin declares it      | `MCPHUB-FR-007`, `MCPHUB-FR-008`, `MCPHUB-FR-012`, `MCPHUB-FR-021` |
+| Tool                      | Declared by         | Annotations                   | Permission             | Realizes                                                           |
+| ------------------------- | ------------------- | ----------------------------- | ---------------------- | ------------------------------------------------------------------ |
+| `<plugin id>_<tool name>` | Any `MCPToolPlugin` | The plugin declares each hint | The plugin declares it | `MCPHUB-FR-007`, `MCPHUB-FR-008`, `MCPHUB-FR-012`, `MCPHUB-FR-021` |
 
 Every tool of a plugin acts in a workspace, so its input schema carries the
 required member `workspace` beside the members of the model of the plugin.
@@ -219,20 +219,20 @@ sequenceDiagram
 
 ### 4.5 Errors
 
-| Condition                                                   | Behavior                          | Message                                                           |
-| ----------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------ |
-| A plugin declares a model that the hub cannot reflect       | The load of that plugin fails     | `ErrInvalidMCPToolModel`, with the plugin and the tool             |
-| Two tools of one plugin carry one name                      | The load of that plugin fails     | `ErrMCPToolAlreadyRegistered`, with the name                       |
-| A tool name collides with a tool of the hub                 | The load of that plugin fails     | `ErrMCPToolAlreadyRegistered`, with the name                       |
-| The arguments do not match the input schema                 | One result, `isError`             | The field and the reason, from the SDK. `MCPHUB-DD-010`.           |
-| The call names no workspace                                 | One result, `isError`             | The missing member `workspace`, from the SDK                       |
-| The acting user is no member of the workspace               | The protocol error of an unknown tool | The text that the SDK gives for a tool it does not hold. `MCPHUB-DD-023`. |
-| The workspace does not enable the plugin                    | The protocol error of an unknown tool | The same text. `MCPHUB-DD-023`.                                   |
-| The role of the member does not hold the permission         | One result, `isError`             | The permission and the role that holds it                          |
-| A tool of a plugin declares no permission, or one that the plugin does not declare | The load of that plugin fails | `ErrInvalidMCPToolModel`, with the plugin and the tool |
-| A model of a plugin declares the member `workspace`         | The load of that plugin fails     | `ErrInvalidMCPToolModel`, with the plugin and the tool             |
-| The acting workspace holds no complete settings for the plugin | One result, `isError`          | The plugin identifier and the path of its settings page            |
-| The tool returns any other error                            | One result, `isError`             | The text of the error of the plugin                                |
+| Condition                                                                          | Behavior                              | Message                                                                   |
+| ---------------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------- |
+| A plugin declares a model that the hub cannot reflect                              | The load of that plugin fails         | `ErrInvalidMCPToolModel`, with the plugin and the tool                    |
+| Two tools of one plugin carry one name                                             | The load of that plugin fails         | `ErrMCPToolAlreadyRegistered`, with the name                              |
+| A tool name collides with a tool of the hub                                        | The load of that plugin fails         | `ErrMCPToolAlreadyRegistered`, with the name                              |
+| The arguments do not match the input schema                                        | One result, `isError`                 | The field and the reason, from the SDK. `MCPHUB-DD-010`.                  |
+| The call names no workspace                                                        | One result, `isError`                 | The missing member `workspace`, from the SDK                              |
+| The acting user is no member of the workspace                                      | The protocol error of an unknown tool | The text that the SDK gives for a tool it does not hold. `MCPHUB-DD-023`. |
+| The workspace does not enable the plugin                                           | The protocol error of an unknown tool | The same text. `MCPHUB-DD-023`.                                           |
+| The role of the member does not hold the permission                                | One result, `isError`                 | The permission and the role that holds it                                 |
+| A tool of a plugin declares no permission, or one that the plugin does not declare | The load of that plugin fails         | `ErrInvalidMCPToolModel`, with the plugin and the tool                    |
+| A model of a plugin declares the member `workspace`                                | The load of that plugin fails         | `ErrInvalidMCPToolModel`, with the plugin and the tool                    |
+| The acting workspace holds no complete settings for the plugin                     | One result, `isError`                 | The plugin identifier and the path of its settings page                   |
+| The tool returns any other error                                                   | One result, `isError`                 | The text of the error of the plugin                                       |
 
 A failure of a tool is a result with `isError`, never a protocol error, so an
 agent reads the reason and continues the conversation.
@@ -569,20 +569,20 @@ permission whose lowest role is `editor`.
 
 ## 7. Build plan
 
-| #   | Step                                                                                      | Realizes                          | Done |
-| --- | ----------------------------------------------------------------------------------------- | --------------------------------- | ---- |
-| 1   | Create `pluginapi.MCPToolPlugin`, `MCPTool`, `MCPToolMeta`, and `NewTypedTool`.           | `MCPHUB-FR-007`, `MCPHUB-DD-009`  | [x]  |
-| 2   | Create `mcpserver.inferSchema`, anonymous, with no validator of its own. Add `errs.ErrInvalidMCPToolModel`. | `MCPHUB-DD-010`                   | [x]  |
-| 3   | Create `mcpserver.actingUserMiddleware`, and add it in `NewServer`.                       | `MCPHUB-FR-010`, `MCPHUB-DD-012`  | [x]  |
-| 4   | Create `mcpserver.NewPluginTool`: the name, the schema, the validation, the result.       | `MCPHUB-FR-008`, `MCPHUB-FR-009`, `MCPHUB-FR-012`, `MCPHUB-DD-011`, `MCPHUB-DD-014` | [x]  |
-| 5   | Map `pluginapi.ErrSettingsAbsent` in the adapter.                                         | `MCPHUB-FR-013`, `MCPHUB-DD-013`  | [x]  |
-| 6   | Create `registrar.MCPToolRegistrar`, and add it to the list in the loader.                | `MCPHUB-FR-007`, `MCPHUB-INV-002` | [x]  |
-| 7   | Change `depresolver.PluginLoader` to resolve `MCPToolRegistry()` and pass it. Build the server of `handler.MCP` in `Register`. | `MCPHUB-DD-015`                   | [x]  |
-| 8   | Build every plugin. `libs/pluginapi` changed.                                             | `BLD-004`                         | [x]  |
-| 9   | Declare one tool in one plugin, as the first caller of the contract.                      | `MCPHUB-FR-011`, `MCPHUB-SC-012`  | [x]  |
-| 10  | Add `Permission` to `MCPToolMeta`, and refuse a tool that declares none in the registrar. Build every plugin. | `MCPHUB-FR-023`, `SEC-013`, `BLD-004` | [x]  |
-| 11  | Write `MCPHUB-SC-027`, then create `workspaceMiddleware` with the `workspace` argument, and mark each tool that acts in a workspace. | `MCPHUB-FR-021`, `MCPHUB-DD-022`  | [x]  |
-| 12  | Write `MCPHUB-SC-028` and `MCPHUB-SC-029`, then the three checks of `MCPHUB-DD-023`. They need the tables of `OWN-011` and `SEC-012`. | `MCPHUB-FR-022`, `MCPHUB-FR-023`, `MCPHUB-DD-023` | [x]  |
+| #   | Step                                                                                                                                  | Realizes                                                                            | Done |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---- |
+| 1   | Create `pluginapi.MCPToolPlugin`, `MCPTool`, `MCPToolMeta`, and `NewTypedTool`.                                                       | `MCPHUB-FR-007`, `MCPHUB-DD-009`                                                    | [x]  |
+| 2   | Create `mcpserver.inferSchema`, anonymous, with no validator of its own. Add `errs.ErrInvalidMCPToolModel`.                           | `MCPHUB-DD-010`                                                                     | [x]  |
+| 3   | Create `mcpserver.actingUserMiddleware`, and add it in `NewServer`.                                                                   | `MCPHUB-FR-010`, `MCPHUB-DD-012`                                                    | [x]  |
+| 4   | Create `mcpserver.NewPluginTool`: the name, the schema, the validation, the result.                                                   | `MCPHUB-FR-008`, `MCPHUB-FR-009`, `MCPHUB-FR-012`, `MCPHUB-DD-011`, `MCPHUB-DD-014` | [x]  |
+| 5   | Map `pluginapi.ErrSettingsAbsent` in the adapter.                                                                                     | `MCPHUB-FR-013`, `MCPHUB-DD-013`                                                    | [x]  |
+| 6   | Create `registrar.MCPToolRegistrar`, and add it to the list in the loader.                                                            | `MCPHUB-FR-007`, `MCPHUB-INV-002`                                                   | [x]  |
+| 7   | Change `depresolver.PluginLoader` to resolve `MCPToolRegistry()` and pass it. Build the server of `handler.MCP` in `Register`.        | `MCPHUB-DD-015`                                                                     | [x]  |
+| 8   | Build every plugin. `libs/pluginapi` changed.                                                                                         | `BLD-004`                                                                           | [x]  |
+| 9   | Declare one tool in one plugin, as the first caller of the contract.                                                                  | `MCPHUB-FR-011`, `MCPHUB-SC-012`                                                    | [x]  |
+| 10  | Add `Permission` to `MCPToolMeta`, and refuse a tool that declares none in the registrar. Build every plugin.                         | `MCPHUB-FR-023`, `SEC-013`, `BLD-004`                                               | [x]  |
+| 11  | Write `MCPHUB-SC-027`, then create `workspaceMiddleware` with the `workspace` argument, and mark each tool that acts in a workspace.  | `MCPHUB-FR-021`, `MCPHUB-DD-022`                                                    | [x]  |
+| 12  | Write `MCPHUB-SC-028` and `MCPHUB-SC-029`, then the three checks of `MCPHUB-DD-023`. They need the tables of `OWN-011` and `SEC-012`. | `MCPHUB-FR-022`, `MCPHUB-FR-023`, `MCPHUB-DD-023`                                   | [x]  |
 
 ## 8. Out of scope for this specification
 

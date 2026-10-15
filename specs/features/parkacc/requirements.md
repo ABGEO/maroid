@@ -241,27 +241,27 @@ No answer of Maroid to a client holds a session token or a password of a parking
 
 ## 6. Constraints from the guidelines
 
-| Rule      | Guideline         | Effect on this feature                                                            |
-| --------- | ----------------- | --------------------------------------------------------------------------------- |
+| Rule      | Guideline         | Effect on this feature                                                                |
+| --------- | ----------------- | ------------------------------------------------------------------------------------- |
 | `PLG-007` | Plugin model      | The plugin reads the settings, the connection, and the deck address through the host. |
-| `ARC-008` | Architecture      | The deck address that the hub gives names no plugin.                              |
-| `OWN-004` | Record ownership  | The credentials and the connection belong to one user.                            |
-| `CFG-007` | Configuration     | No credential of a person stays in the configuration file.                        |
-| `EXT-005` | External services | A failure of the parking service is an error, never an empty result.              |
-| `LOG-008` | Logging           | No log holds a password, a code, or a session token.                              |
-| `SEC-013` | Security          | Each route and each command of the plugin names a permission.                     |
-| `UI-006`  | Web UI            | The connection page imports from `@maroid/plugin-sdk` only.                      |
-| `TG-005`  | Telegram          | The vehicle choice is a step of the conversation that starts a parking session.  |
+| `ARC-008` | Architecture      | The deck address that the hub gives names no plugin.                                  |
+| `OWN-004` | Record ownership  | The credentials and the connection belong to one user.                                |
+| `CFG-007` | Configuration     | No credential of a person stays in the configuration file.                            |
+| `EXT-005` | External services | A failure of the parking service is an error, never an empty result.                  |
+| `LOG-008` | Logging           | No log holds a password, a code, or a session token.                                  |
+| `SEC-013` | Security          | Each route and each command of the plugin names a permission.                         |
+| `UI-006`  | Web UI            | The connection page imports from `@maroid/plugin-sdk` only.                           |
+| `TG-005`  | Telegram          | The vehicle choice is a step of the conversation that starts a parking session.       |
 
 ## 7. Open questions
 
-| #   | Question                                                                   | Owner  | Answer                                                 |
-| --- | -------------------------------------------------------------------------- | ------ | ------------------------------------------------------ |
-| 1   | Does a change of the credentials end the connection?                       | Temuri | No. `PARKACC-FR-020`.                                  |
-| 2   | Does a wrong code end the pending connection?                              | Temuri | No. The member retries until it ends. `PARKACC-FR-015`. |
-| 3   | Does a connected member start a second connection?                         | Temuri | Yes. It replaces the first one. `PARKACC-FR-014`.      |
-| 4   | Does the end of a connection remove the credentials?                       | Temuri | No. Only the connection.                              |
-| 5   | Which role reads the connection page?                                      | Temuri | Viewer. `PARKACC-FR-023`.                              |
+| #   | Question                                             | Owner  | Answer                                                  |
+| --- | ---------------------------------------------------- | ------ | ------------------------------------------------------- |
+| 1   | Does a change of the credentials end the connection? | Temuri | No. `PARKACC-FR-020`.                                   |
+| 2   | Does a wrong code end the pending connection?        | Temuri | No. The member retries until it ends. `PARKACC-FR-015`. |
+| 3   | Does a connected member start a second connection?   | Temuri | Yes. It replaces the first one. `PARKACC-FR-014`.       |
+| 4   | Does the end of a connection remove the credentials? | Temuri | No. Only the connection.                                |
+| 5   | Which role reads the connection page?                | Temuri | Viewer. `PARKACC-FR-023`.                               |
 
 ## Retired identifiers
 

@@ -326,27 +326,27 @@ Every local account belongs to exactly one user record, through one identity.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline  | Effect on this feature                                                         |
-| --------- | ---------- | ------------------------------------------------------------------------------ |
-| `SEC-001` | Security   | Maroid stores no password and no hash. A password passes through in memory.    |
-| `SEC-003` | Security   | `IDPROV-INV-001` and `IDPROV-FR-014`.                                          |
-| `SEC-004` | Security   | A blocked record keeps its local account and still reaches nothing.            |
-| `SEC-011` | Security   | Only an administrator adds a provider or gives a local account.                |
-| `LOG-008` | Logging    | No log line carries a password, a hash, or a client secret.                    |
-| `OWN-002` | Ownership  | An administrator creates a user record. No statement here creates one.         |
-| `API-003` | HTTP API   | The provider routes live under `/providers*`. The local account under `/users*`. |
-| `CLI-001` | CLI        | `maroid user password` serves `IDPROV-FR-025` to `IDPROV-FR-027`.              |
-| `CFG-004` | Configuration | The client certificate of the hub stays out of the repository.             |
+| Rule      | Guideline     | Effect on this feature                                                           |
+| --------- | ------------- | -------------------------------------------------------------------------------- |
+| `SEC-001` | Security      | Maroid stores no password and no hash. A password passes through in memory.      |
+| `SEC-003` | Security      | `IDPROV-INV-001` and `IDPROV-FR-014`.                                            |
+| `SEC-004` | Security      | A blocked record keeps its local account and still reaches nothing.              |
+| `SEC-011` | Security      | Only an administrator adds a provider or gives a local account.                  |
+| `LOG-008` | Logging       | No log line carries a password, a hash, or a client secret.                      |
+| `OWN-002` | Ownership     | An administrator creates a user record. No statement here creates one.           |
+| `API-003` | HTTP API      | The provider routes live under `/providers*`. The local account under `/users*`. |
+| `CLI-001` | CLI           | `maroid user password` serves `IDPROV-FR-025` to `IDPROV-FR-027`.                |
+| `CFG-004` | Configuration | The client certificate of the hub stays out of the repository.                   |
 
 ## 8. Open questions
 
-| #   | Question                                                         | Owner  | Answer |
-| --- | ---------------------------------------------------------------- | ------ | ------ |
+| #   | Question                                                                      | Owner  | Answer                                                                   |
+| --- | ----------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------ |
 | 1   | What happens when the web shell sets a password and no local provider exists? | Temuri | Maroid refuses. Only the command line adds the local provider by itself. |
-| 2   | What length does a local password take?                          | Temuri | 12 characters to 72 bytes.                                                |
-| 3   | Does blocking a record remove its local account?                 | Temuri | No. `SEC-004` already stops the person.                                   |
-| 4   | Does removing a provider end its live sessions?                  | Temuri | No, not in this feature.                                                  |
-| 5   | Does a local user change their own password?                     | Temuri | Not here. `PROFILE` gives the change with the current password.           |
+| 2   | What length does a local password take?                                       | Temuri | 12 characters to 72 bytes.                                               |
+| 3   | Does blocking a record remove its local account?                              | Temuri | No. `SEC-004` already stops the person.                                  |
+| 4   | Does removing a provider end its live sessions?                               | Temuri | No, not in this feature.                                                 |
+| 5   | Does a local user change their own password?                                  | Temuri | Not here. `PROFILE` gives the change with the current password.          |
 
 ## Retired identifiers
 

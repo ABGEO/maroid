@@ -55,12 +55,12 @@ the load, not the first job.
 Configuration holds a value of the installation. A value that belongs to one
 workspace or to one person lives in the database, in a scoped record. See `OWN-004`.
 
-| Value                                                   | Place         |
-| ------------------------------------------------------- | ------------- |
-| The address of an external service                      | Configuration |
-| A token that the installation shares                    | Configuration |
-| The credential of one workspace or one person           | The database  |
-| The account or the vehicle of one workspace or one person | The database |
+| Value                                                     | Place         |
+| --------------------------------------------------------- | ------------- |
+| The address of an external service                        | Configuration |
+| A token that the installation shares                      | Configuration |
+| The credential of one workspace or one person             | The database  |
+| The account or the vehicle of one workspace or one person | The database  |
 
 A plugin that keeps such a value in its configuration serves one workspace.
 Moving that value is the step that makes the plugin serve every workspace, and a

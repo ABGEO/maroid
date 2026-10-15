@@ -151,24 +151,24 @@ feature. The request names no record. The session decides it.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline | Effect on this feature                                                   |
-| --------- | --------- | ------------------------------------------------------------------------ |
-| `SEC-001` | Security  | Maroid stores no password and no hash. A password passes through in memory. |
-| `SEC-004` | Security  | A blocked record reaches nothing, this feature included.                 |
-| `SEC-011` | Security  | `PROFILE-FR-003`. Only an administrator changes the other fields.        |
+| Rule      | Guideline | Effect on this feature                                                                 |
+| --------- | --------- | -------------------------------------------------------------------------------------- |
+| `SEC-001` | Security  | Maroid stores no password and no hash. A password passes through in memory.            |
+| `SEC-004` | Security  | A blocked record reaches nothing, this feature included.                               |
+| `SEC-011` | Security  | `PROFILE-FR-003`. Only an administrator changes the other fields.                      |
 | `API-003` | HTTP API  | `/users*` is for an administrator. The route of the acting user is an exception there. |
-| `LOG-008` | Logging   | No log line carries the current password or the new one.                 |
-| `OWN-002` | Ownership | No statement here creates a user record.                                 |
+| `LOG-008` | Logging   | No log line carries the current password or the new one.                               |
+| `OWN-002` | Ownership | No statement here creates a user record.                                               |
 
 ## 8. Open questions
 
-| #   | Question                                                         | Owner  | Answer |
-| --- | ---------------------------------------------------------------- | ------ | ------ |
-| 1   | Does a person change their name without an administrator?        | Temuri | Yes. The first name and the last name only. |
-| 2   | Who sees the password section?                                   | Temuri | A holder of a local account, while the local provider exists. |
-| 3   | Does a password change need the current password?                | Temuri | Yes.   |
-| 4   | Does a password change end the other sessions?                   | Temuri | No.    |
-| 5   | Does a person change the email address of their local account?   | Temuri | No. It shows read only. |
+| #   | Question                                                       | Owner  | Answer                                                        |
+| --- | -------------------------------------------------------------- | ------ | ------------------------------------------------------------- |
+| 1   | Does a person change their name without an administrator?      | Temuri | Yes. The first name and the last name only.                   |
+| 2   | Who sees the password section?                                 | Temuri | A holder of a local account, while the local provider exists. |
+| 3   | Does a password change need the current password?              | Temuri | Yes.                                                          |
+| 4   | Does a password change end the other sessions?                 | Temuri | No.                                                           |
+| 5   | Does a person change the email address of their local account? | Temuri | No. It shows read only.                                       |
 
 ## Retired identifiers
 

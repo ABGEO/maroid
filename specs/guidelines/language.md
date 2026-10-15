@@ -226,13 +226,13 @@ A wrong comment costs more than no comment.
 
 These comments are correct:
 
-| Kind                                                   | Rule                                                                      |
-| ------------------------------------------------------ | ------------------------------------------------------------------------- |
-| A documentation comment on an exported identifier      | Required. See `GO-003`.                                                   |
-| A statement identifier above the test that verifies it, or above the migration constraint that enforces it | Required. See `TRC-007`. Production code carries none. |
-| A reason that the code cannot show                     | Correct. Give the constraint, the standard, or the defect that forced it, in words. |
-| A warning about a result that a reader does not expect | Correct.                                                                  |
-| `// @todo:` with the work named                        | Correct.                                                                  |
+| Kind                                                                                                       | Rule                                                                                |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| A documentation comment on an exported identifier                                                          | Required. See `GO-003`.                                                             |
+| A statement identifier above the test that verifies it, or above the migration constraint that enforces it | Required. See `TRC-007`. Production code carries none.                              |
+| A reason that the code cannot show                                                                         | Correct. Give the constraint, the standard, or the defect that forced it, in words. |
+| A warning about a result that a reader does not expect                                                     | Correct.                                                                            |
+| `// @todo:` with the work named                                                                            | Correct.                                                                            |
 
 A comment that is not in this table is wrong. Delete it.
 
@@ -261,7 +261,7 @@ token that the work cannot spend.
 The figures below are targets. Cut the text, never the statement.
 
 | Document                | Target lines |
-| ----------------------- |--------------|
+| ----------------------- | ------------ |
 | A guideline             | 150          |
 | An index                | 200          |
 | The process guide       | 250          |

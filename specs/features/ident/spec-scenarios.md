@@ -155,6 +155,6 @@ the two workspace identifiers, and no context carries an acting user.
 
 ## Retired identifiers
 
-| ID             | Retired    | Reason                                                                                    |
-| -------------- | ---------- | ------------------------------------------------------------------------------------------- |
+| ID             | Retired    | Reason                                                                                                              |
+| -------------- | ---------- | ------------------------------------------------------------------------------------------------------------------- |
 | `IDENT-SC-011` | 2026-09-15 | It proves the unique constraint on `telegram_id`, which the migration of `EXTID` drops. `EXTID-SC-007` succeeds it. |

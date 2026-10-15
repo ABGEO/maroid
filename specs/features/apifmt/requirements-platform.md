@@ -30,11 +30,11 @@ keeps it.
 
 ## 2. Users
 
-| Person                      | Needs                                                                 |
-| --------------------------- | ----------------------------------------------------------------------- |
-| A person who deploys Maroid | One document to read, and an address that reaches their deployment.   |
+| Person                       | Needs                                                                |
+| ---------------------------- | -------------------------------------------------------------------- |
+| A person who deploys Maroid  | One document to read, and an address that reaches their deployment.  |
 | A person who reports a fault | One value that finds every record of the request that failed.        |
-| The owner                   | A check that refuses a departure, so that a review carries no rules.  |
+| The owner                    | A check that refuses a departure, so that a review carries no rules. |
 
 ## 3. Out of scope
 
@@ -45,9 +45,9 @@ keeps it.
 
 ## 4. Definitions
 
-| Term             | Meaning                                                                    |
-| ---------------- | ---------------------------------------------------------------------------- |
-| external address | The address that reaches one deployment from outside it, with the scheme.  |
+| Term             | Meaning                                                                                |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| external address | The address that reaches one deployment from outside it, with the scheme.              |
 | key of a write   | A value that a client sends with a write that creates, so that the hub knows a repeat. |
 
 `GLO-api-document` gives the published document.
@@ -247,23 +247,23 @@ attempt makes for itself lets that second press create a second record.
 
 ## 6. Constraints from the guidelines
 
-| Rule      | Guideline        | Effect on this feature                                                   |
-| --------- | ---------------- | -------------------------------------------------------------------------- |
-| `RES-004` | REST conventions | Names the one address that `APIFMT-FR-011` does not reach.               |
-| `RES-005` | REST conventions | Builds a link from the value that `APIFMT-FR-013` stores.                |
-| `RES-007` | REST conventions | Names the documents that `APIFMT-FR-016` publishes, and the block each one carries. |
-| `RES-008` | REST conventions | Gives the merge and the check that `APIFMT-FR-017` demands.              |
-| `RES-011` | REST conventions | Gives the window before a route goes, and the exemption that `APIFMT-FR-012` takes. |
-| `ERR-006` | Errors           | Gives the identifier of `APIFMT-FR-018`, its source, and its bound.      |
-| `API-003` | The HTTP API     | Fixes the route table that `APIFMT-FR-011` realizes, and the route that `APIFMT-FR-012` removes. |
-| `API-007` | The HTTP API     | Holds the headers that `APIFMT-FR-019` and `APIFMT-FR-021` add.          |
-| `DAT-010` | Data             | Gives the column and the trigger that `APIFMT-FR-014` corrects.          |
-| `DAT-011` | Data             | Gives the order that `APIFMT-FR-015` demands.                            |
-| `CFG-003` | Configuration    | The value of `APIFMT-FR-013` validates at the start, and the hub stops without it. |
-| `SEC-006` | Security         | The assets of a plugin stay public, and `APIFMT-FR-011` does not reach them. |
-| `TG-002`  | Telegram         | The value of `APIFMT-FR-013` feeds the webhook registration.             |
-| `LOG-009` | Logging          | Carries the identifier of `APIFMT-FR-018` on every record.               |
-| `BLD-001` | Build            | Holds the command that `APIFMT-FR-017` runs.                             |
+| Rule      | Guideline        | Effect on this feature                                                                                  |
+| --------- | ---------------- | ------------------------------------------------------------------------------------------------------- |
+| `RES-004` | REST conventions | Names the one address that `APIFMT-FR-011` does not reach.                                              |
+| `RES-005` | REST conventions | Builds a link from the value that `APIFMT-FR-013` stores.                                               |
+| `RES-007` | REST conventions | Names the documents that `APIFMT-FR-016` publishes, and the block each one carries.                     |
+| `RES-008` | REST conventions | Gives the merge and the check that `APIFMT-FR-017` demands.                                             |
+| `RES-011` | REST conventions | Gives the window before a route goes, and the exemption that `APIFMT-FR-012` takes.                     |
+| `ERR-006` | Errors           | Gives the identifier of `APIFMT-FR-018`, its source, and its bound.                                     |
+| `API-003` | The HTTP API     | Fixes the route table that `APIFMT-FR-011` realizes, and the route that `APIFMT-FR-012` removes.        |
+| `API-007` | The HTTP API     | Holds the headers that `APIFMT-FR-019` and `APIFMT-FR-021` add.                                         |
+| `DAT-010` | Data             | Gives the column and the trigger that `APIFMT-FR-014` corrects.                                         |
+| `DAT-011` | Data             | Gives the order that `APIFMT-FR-015` demands.                                                           |
+| `CFG-003` | Configuration    | The value of `APIFMT-FR-013` validates at the start, and the hub stops without it.                      |
+| `SEC-006` | Security         | The assets of a plugin stay public, and `APIFMT-FR-011` does not reach them.                            |
+| `TG-002`  | Telegram         | The value of `APIFMT-FR-013` feeds the webhook registration.                                            |
+| `LOG-009` | Logging          | Carries the identifier of `APIFMT-FR-018` on every record.                                              |
+| `BLD-001` | Build            | Holds the command that `APIFMT-FR-017` runs.                                                            |
 | `OWN-006` | Ownership        | Filters every collection by the acting workspace or the acting user, which `APIFMT-FR-021` answers for. |
 
 ## 7. Open questions

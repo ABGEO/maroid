@@ -6,7 +6,52 @@ status: accepted
 created: 2026-09-22
 updated: 2026-09-27
 decided: 2026-09-24
-changes: [API-001, API-002, API-003, API-006, API-007, BLD-001, CLI-001, DAT-010, DAT-011, ERR-001, ERR-002, ERR-003, ERR-004, ERR-006, GLO-api-document, GLO-api-fragment, GLO-binding, GLO-cursor, GLO-flow-id, GLO-handoff, GLO-page, GLO-shipped-client, GLO-transport-route, LNG-013, LOG-009, LOG-010, RES-001, RES-002, RES-003, RES-004, RES-005, RES-006, RES-007, RES-008, RES-009, RES-010, RES-011, SEC-008, SEC-010, SPC-001, SPC-002, TG-001, TRC-001]
+changes:
+  [
+    API-001,
+    API-002,
+    API-003,
+    API-006,
+    API-007,
+    BLD-001,
+    CLI-001,
+    DAT-010,
+    DAT-011,
+    ERR-001,
+    ERR-002,
+    ERR-003,
+    ERR-004,
+    ERR-006,
+    GLO-api-document,
+    GLO-api-fragment,
+    GLO-binding,
+    GLO-cursor,
+    GLO-flow-id,
+    GLO-handoff,
+    GLO-page,
+    GLO-shipped-client,
+    GLO-transport-route,
+    LNG-013,
+    LOG-009,
+    LOG-010,
+    RES-001,
+    RES-002,
+    RES-003,
+    RES-004,
+    RES-005,
+    RES-006,
+    RES-007,
+    RES-008,
+    RES-009,
+    RES-010,
+    RES-011,
+    SEC-008,
+    SEC-010,
+    SPC-001,
+    SPC-002,
+    TG-001,
+    TRC-001
+  ]
 supersedes:
 superseded_by:
 ---
@@ -22,17 +67,17 @@ superseded_by:
 No rule names the case of a property, the shape of a collection, the format of a
 date, or the members of a page. Each handler decides, and the decisions differ.
 
-| Fact                                                                          | Sites                                             |
-| ----------------------------------------------------------------------------- | ------------------------------------------------- |
-| A list answers a bare JSON array, so no member can join it later.             | `/plugins`, `/auth/identities`, two of `jasmine`  |
-| No route takes a page parameter. No contract names an order.                  | Every list route                                  |
-| Every list query sorts by `id`, and no document says so.                      | 4 repositories                                    |
-| A property name is camel case. `PCAP-DD-002` decided it.                      | 11 tags, and 3 capability names                   |
-| A timestamp reads `updatedAt`, and three plugins store it without a zone.     | `jasmine`, `telasi`, `pensions`, `tbilisi-energy` |
-| Five routes name an action, and `/auth/me` names a pronoun.                   | `apps/hub/internal/handler/`                      |
-| Three fragments declare a bearer for a route that a cookie guards.            | `pcap`, `pset`, `templates/api.yaml`              |
-| No specification carries an identifier or an audience. Each carries `0.1.0`.  | The five `api.yaml`                               |
-| Five `api.yaml` fragments exist, and no document merges them.                 | `specs/features/`                                 |
+| Fact                                                                         | Sites                                             |
+| ---------------------------------------------------------------------------- | ------------------------------------------------- |
+| A list answers a bare JSON array, so no member can join it later.            | `/plugins`, `/auth/identities`, two of `jasmine`  |
+| No route takes a page parameter. No contract names an order.                 | Every list route                                  |
+| Every list query sorts by `id`, and no document says so.                     | 4 repositories                                    |
+| A property name is camel case. `PCAP-DD-002` decided it.                     | 11 tags, and 3 capability names                   |
+| A timestamp reads `updatedAt`, and three plugins store it without a zone.    | `jasmine`, `telasi`, `pensions`, `tbilisi-energy` |
+| Five routes name an action, and `/auth/me` names a pronoun.                  | `apps/hub/internal/handler/`                      |
+| Three fragments declare a bearer for a route that a cookie guards.           | `pcap`, `pset`, `templates/api.yaml`              |
+| No specification carries an identifier or an audience. Each carries `0.1.0`. | The five `api.yaml`                               |
+| Five `api.yaml` fragments exist, and no document merges them.                | `specs/features/`                                 |
 
 Five questions have no answer today: the shape of a successful response, the
 page and the sort of a collection, the format of a date and its zone, the
@@ -66,14 +111,14 @@ The naming rule reaches less code than it looks. The repository holds 109 camel
 case JSON tags. 11 of them sit on the API surface and change, and 4 test
 fixtures change with the production tag that each one asserts.
 
-| Surface                                        | Tags | Changes                                |
-| ---------------------------------------------- | ---- | -------------------------------------- |
-| `plugins/*/dto/api-client.go`                  | 90   | No. A third-party service sends the name, and `EXT` governs it. |
-| `apps/hub/internal/handler/auth.go`            | 5    | Yes                                    |
-| `plugins/jasmine/dto/`                         | 6    | Yes                                    |
-| `plugins/parking/config/config.go`             | 2    | No. `SettingsValues` declares `additionalProperties` and no property, so it is a map of `Z-216` and its keys carry their own format. No migration rewrites `public.plugin_settings.fields`. |
-| `apps/hub/internal/mcpserver/tools/`           | 2    | No. `RES-003` puts the payload of an MCP tool outside the reach of the standard. |
-| Test fixtures in `apps/hub/internal/`          | 4    | With the tag that each one asserts.      |
+| Surface                               | Tags | Changes                                                                                                                                                                                     |
+| ------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plugins/*/dto/api-client.go`         | 90   | No. A third-party service sends the name, and `EXT` governs it.                                                                                                                             |
+| `apps/hub/internal/handler/auth.go`   | 5    | Yes                                                                                                                                                                                         |
+| `plugins/jasmine/dto/`                | 6    | Yes                                                                                                                                                                                         |
+| `plugins/parking/config/config.go`    | 2    | No. `SettingsValues` declares `additionalProperties` and no property, so it is a map of `Z-216` and its keys carry their own format. No migration rewrites `public.plugin_settings.fields`. |
+| `apps/hub/internal/mcpserver/tools/`  | 2    | No. `RES-003` puts the payload of an MCP tool outside the reach of the standard.                                                                                                            |
+| Test fixtures in `apps/hub/internal/` | 4    | With the tag that each one asserts.                                                                                                                                                         |
 
 The deck and a plugin user interface read those names in 15 places across 5
 files. `libs/plugin-sdk` reads none of them.
@@ -94,15 +139,15 @@ describe work that does not exist. `RES-001` holds the condition that starts the
 
 ## Alternatives
 
-| Alternative                                                      | Why we did not select it                                                                                                                                       |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A house standard assembled from the RFCs.                        | Every rule then needs a decision and a reason. The repository holds no second opinion to test a decision against, and the reasons cost more than the rules.   |
-| Google AIP.                                                      | Its JSON mapping emits camel case, so `PCAP-DD-002` survives, and its page is lighter. It assumes protocol buffers, resource names, and long running operations, and it ships 150 documents and no linter for this stack. |
-| The Microsoft REST guidelines.                                   | Camel case and an OData collection. A member that starts with `@` reads badly in TypeScript, and the standard carries the same size as Zalando with less rationale. |
-| JSON:API 1.1.                                                    | It rewrites every DTO, both clients, and the settings form, to serve one first-party consumer.                                                                |
-| A curated subset of Zalando, with the rest cited as a source.    | A rule that the subset does not name stays undecided, and the next feature decides it again. The register of `RES-002` holds fewer lines than the subset.     |
-| Adopt Zalando and keep camel case.                               | It deviates from the rule that Zalando argues at the greatest length, on the surface that a reader meets first. 11 tags and 15 reads buy the whole standard.  |
-| Adopt the event chapter now.                                     | Maroid publishes no event. A rule with no subject cannot be checked, and it goes stale before it gets one.                                                    |
+| Alternative                                                   | Why we did not select it                                                                                                                                                                                                  |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A house standard assembled from the RFCs.                     | Every rule then needs a decision and a reason. The repository holds no second opinion to test a decision against, and the reasons cost more than the rules.                                                               |
+| Google AIP.                                                   | Its JSON mapping emits camel case, so `PCAP-DD-002` survives, and its page is lighter. It assumes protocol buffers, resource names, and long running operations, and it ships 150 documents and no linter for this stack. |
+| The Microsoft REST guidelines.                                | Camel case and an OData collection. A member that starts with `@` reads badly in TypeScript, and the standard carries the same size as Zalando with less rationale.                                                       |
+| JSON:API 1.1.                                                 | It rewrites every DTO, both clients, and the settings form, to serve one first-party consumer.                                                                                                                            |
+| A curated subset of Zalando, with the rest cited as a source. | A rule that the subset does not name stays undecided, and the next feature decides it again. The register of `RES-002` holds fewer lines than the subset.                                                                 |
+| Adopt Zalando and keep camel case.                            | It deviates from the rule that Zalando argues at the greatest length, on the surface that a reader meets first. 11 tags and 15 reads buy the whole standard.                                                              |
+| Adopt the event chapter now.                                  | Maroid publishes no event. A rule with no subject cannot be checked, and it goes stale before it gets one.                                                                                                                |
 
 ## Consequences
 
@@ -118,14 +163,14 @@ permission, the rules that bind a client, and the window before a route goes.
 
 `API-003` holds the new path table. `RES-004` holds the exemption.
 
-| New                                | Old                  | Answers                                      |
-| ---------------------------------- | -------------------- | -------------------------------------------- |
-| `POST /auth/sessions`              | `GET /auth`          | 202 with the address of the IdP.             |
-| `GET /auth/sessions/self`       | `GET /auth/me`       | The acting user and the provider.            |
-| `DELETE /auth/sessions/self`    | `POST /auth/logout`  | 200 with the target. Public, and idempotent. |
-| `POST /auth/identities`            | `GET /auth/link`     | 202 with the address of the IdP.             |
-| `POST /auth/invitation-redemptions`| `GET /auth/invite`   | 202 with the address of the IdP.             |
-| None                               | `GET /ping`          | The route goes. Nothing calls it.            |
+| New                                 | Old                 | Answers                                      |
+| ----------------------------------- | ------------------- | -------------------------------------------- |
+| `POST /auth/sessions`               | `GET /auth`         | 202 with the address of the IdP.             |
+| `GET /auth/sessions/self`           | `GET /auth/me`      | The acting user and the provider.            |
+| `DELETE /auth/sessions/self`        | `POST /auth/logout` | 200 with the target. Public, and idempotent. |
+| `POST /auth/identities`             | `GET /auth/link`    | 202 with the address of the IdP.             |
+| `POST /auth/invitation-redemptions` | `GET /auth/invite`  | 202 with the address of the IdP.             |
+| None                                | `GET /ping`         | The route goes. Nothing calls it.            |
 
 The three routes that hand off to the IdP take `POST`, and each one answers 202.
 `GET /auth` writes today: it mints a binding and sets a cookie, which `Z-149`
@@ -169,10 +214,10 @@ stays.
 `/.well-known/oauth-protected-resource` keep their paths, and each one keeps it
 for a different reason.
 
-| Route                                    | Why it keeps the path                                                                                     |
-| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `/.well-known/oauth-protected-resource*` | A client derives the address from RFC 9728. `RES-004`.                                                    |
-| `/mcp`, `/telegram/webhook`              | A transport route, outside the reach of `RES-003`. The configuration holds the address.                   |
+| Route                                    | Why it keeps the path                                                                                                |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `/.well-known/oauth-protected-resource*` | A client derives the address from RFC 9728. `RES-004`.                                                               |
+| `/mcp`, `/telegram/webhook`              | A transport route, outside the reach of `RES-003`. The configuration holds the address.                              |
 | `GET /auth/callback`                     | `RES-002` holds the deviation. The address is ours, and RFC 6749 section 4.1.2 makes the method a `GET` that writes. |
 
 Only the first address is fixed. Maroid registers the second pair with Dex and
@@ -298,11 +343,11 @@ that replace a divide, and the row that targets a decision record at 400 lines. 
 convention could divide a guideline. `rest.md` passes the target that `LNG-013`
 holds. This decision asks the owner for that exception until a later pass cuts it.
 
-| Term      | Meaning                                                                    |
-| --------- | -------------------------------------------------------------------------- |
-| page      | One answer of a collection. It holds the items and the links of `RES-005`. |
-| cursor    | The opaque value that names the position of a page. `RES-006`.             |
-| flow identifier | The value that joins every record of one request. `ERR-006`.         |
+| Term            | Meaning                                                                    |
+| --------------- | -------------------------------------------------------------------------- |
+| page            | One answer of a collection. It holds the items and the links of `RES-005`. |
+| cursor          | The opaque value that names the position of a page. `RES-006`.             |
+| flow identifier | The value that joins every record of one request. `ERR-006`.               |
 
 The prefix register in `traceability.md` gains the row for `RES`.
 
@@ -311,37 +356,37 @@ The prefix register in `traceability.md` gains the row for `RES`.
 
 ### Specifications to examine
 
-| Document                                  | What the examination found                                                                                      |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `features/pcap/spec.md`, `PCAP-DD-002`    | The decision reverses. `Z-216` exempts the key of a map, and `Capabilities` is not a map: it declares ten properties, each with its own value schema. An object that declares a property is not a map, whatever its keys look like. Every key is a property name, so `telegramCommands`, `telegramConversations`, and `mcpTools` become snake case. |
-| `apps/hub/internal/registry/capability.go` | The ten keys are Go constants, and `registry.PluginEntries` feeds both the HTTP answer and the `list_plugins` MCP tool. Renaming three for `Z-118` renames them in the MCP payload too. `RES-003` exempts that payload from the rule, and it does not forbid the change, so one name serves both. |
-| `features/pcap/api.yaml`                  | The three camel case keys change. `additionalProperties: false` on `Capabilities` breaks `Z-111`, which forbids a schema to close itself, and it goes. |
-| `features/extid/api.yaml`                 | `nullable: true` on `firstName` and `lastName` is a keyword of OpenAPI 3.0 that 3.1 ignores, so each takes `type: ["string", "null"]`. `ProviderState` in the same file already does. Three renamed paths, and five camel case members of `CurrentUser` and `ProviderState`: `firstName`, `lastName`, `displayName`, `pictureUrl`, `attachedAt` become snake case, in the schema and in each example. |
-| `features/websess/api.yaml`               | `/auth/logout` becomes `DELETE /auth/sessions/self`. |
-| `features/extid/spec.md`, `spec-scenarios.md` | `GET /auth/link` becomes `POST /auth/identities`, and the deck reads the address of the IdP from a body in place of a redirect. Every scenario that names the old route changes. |
-| `apps/deck/src/lib/api/client.ts` and five callers | `buildAuthUrl`, `buildInviteUrl`, and `buildLinkUrl` stop composing an address. Each one posts and returns the address of the body. The five call sites await it before they assign `window.location.href`. |
-| `features/websess/spec.md`                | `GET /auth`, `GET /auth/me`, and `POST /auth/logout` change. The rule that keeps the sign out public stands.      |
-| `features/ident/spec.md`                  | `GET /auth/invite` becomes `POST /auth/invitation-redemptions`.                                                  |
-| `features/pset/spec.md`, `api.yaml`       | `SettingsValues` and `SettingsInput` declare `additionalProperties` and no property, so `Z-216` puts their keys outside `Z-118`. `authToken` and `vehicleId` stand, and no migration rewrites the stored rows. `SettingsValues` is a map at the top level of a response, which `Z-110` forbids, and `RES-002` registers that until an envelope lands. The `PUT` answers 204 with no body, and `Z-110` binds no request body. |
-| The `Problem` schema of every fragment    | `type` and `instance` declare `format: uri`, and `ERR-002` and `ERR-006` make each one a relative reference. `Z-238` gives `uri-reference` for that. Fifteen literal `urn:maroid:problem:` strings across the five fragments take the new form, in a description and in an example value. |
-| `templates/api.yaml`, the resource schema | `format: uuid` on an identifier. `Z-144` asks a UUID identifier to carry no format, and the template propagates it into every new feature. |
-| The five `api.yaml` with no `default`     | `Z-151` covers a standard failure with one `default` response that names the problem body. None declares it, so 500 is undocumented everywhere. |
-| `features/mcphub/spec.md`, `api.yaml`     | `/mcp` keeps its path and its payload. `RES-003` puts the fields of the MCP protocol outside the reach of rule 118. |
-| The five `api.yaml`                       | Each names the document of `RES-007` that holds its routes, and gains the `uid` permission on each operation that needs a caller, and a format on each number. A fragment carries no meta block, and `SPC-002` gives the merged document that one. |
-| The security scheme of every fragment     | Three fragments answer one question three ways. `extid` declares `apiKey`, which `ADR-0004` made correct. `pcap`, `pset`, and `templates/api.yaml` still declare a bearer, which no web route uses. `mcphub` declares `http` bearer, which `RES-009` confirms for `mcp.yaml`. `websess` declares none. `RES-009` gives the one answer for each document. |
-| `templates/api.yaml`                      | It gains the page object, the cookie scheme, the `uid` permission, and the snake case example. `<Resource>` and `<Resource>Input` collapse into one schema that carries `readOnly` and `writeOnly`, which `Z-252` asks for and which the template already uses on `id`. `pset` splits the same way.                     |
+| Document                                           | What the examination found                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `features/pcap/spec.md`, `PCAP-DD-002`             | The decision reverses. `Z-216` exempts the key of a map, and `Capabilities` is not a map: it declares ten properties, each with its own value schema. An object that declares a property is not a map, whatever its keys look like. Every key is a property name, so `telegramCommands`, `telegramConversations`, and `mcpTools` become snake case.                                                                          |
+| `apps/hub/internal/registry/capability.go`         | The ten keys are Go constants, and `registry.PluginEntries` feeds both the HTTP answer and the `list_plugins` MCP tool. Renaming three for `Z-118` renames them in the MCP payload too. `RES-003` exempts that payload from the rule, and it does not forbid the change, so one name serves both.                                                                                                                            |
+| `features/pcap/api.yaml`                           | The three camel case keys change. `additionalProperties: false` on `Capabilities` breaks `Z-111`, which forbids a schema to close itself, and it goes.                                                                                                                                                                                                                                                                       |
+| `features/extid/api.yaml`                          | `nullable: true` on `firstName` and `lastName` is a keyword of OpenAPI 3.0 that 3.1 ignores, so each takes `type: ["string", "null"]`. `ProviderState` in the same file already does. Three renamed paths, and five camel case members of `CurrentUser` and `ProviderState`: `firstName`, `lastName`, `displayName`, `pictureUrl`, `attachedAt` become snake case, in the schema and in each example.                        |
+| `features/websess/api.yaml`                        | `/auth/logout` becomes `DELETE /auth/sessions/self`.                                                                                                                                                                                                                                                                                                                                                                         |
+| `features/extid/spec.md`, `spec-scenarios.md`      | `GET /auth/link` becomes `POST /auth/identities`, and the deck reads the address of the IdP from a body in place of a redirect. Every scenario that names the old route changes.                                                                                                                                                                                                                                             |
+| `apps/deck/src/lib/api/client.ts` and five callers | `buildAuthUrl`, `buildInviteUrl`, and `buildLinkUrl` stop composing an address. Each one posts and returns the address of the body. The five call sites await it before they assign `window.location.href`.                                                                                                                                                                                                                  |
+| `features/websess/spec.md`                         | `GET /auth`, `GET /auth/me`, and `POST /auth/logout` change. The rule that keeps the sign out public stands.                                                                                                                                                                                                                                                                                                                 |
+| `features/ident/spec.md`                           | `GET /auth/invite` becomes `POST /auth/invitation-redemptions`.                                                                                                                                                                                                                                                                                                                                                              |
+| `features/pset/spec.md`, `api.yaml`                | `SettingsValues` and `SettingsInput` declare `additionalProperties` and no property, so `Z-216` puts their keys outside `Z-118`. `authToken` and `vehicleId` stand, and no migration rewrites the stored rows. `SettingsValues` is a map at the top level of a response, which `Z-110` forbids, and `RES-002` registers that until an envelope lands. The `PUT` answers 204 with no body, and `Z-110` binds no request body. |
+| The `Problem` schema of every fragment             | `type` and `instance` declare `format: uri`, and `ERR-002` and `ERR-006` make each one a relative reference. `Z-238` gives `uri-reference` for that. Fifteen literal `urn:maroid:problem:` strings across the five fragments take the new form, in a description and in an example value.                                                                                                                                    |
+| `templates/api.yaml`, the resource schema          | `format: uuid` on an identifier. `Z-144` asks a UUID identifier to carry no format, and the template propagates it into every new feature.                                                                                                                                                                                                                                                                                   |
+| The five `api.yaml` with no `default`              | `Z-151` covers a standard failure with one `default` response that names the problem body. None declares it, so 500 is undocumented everywhere.                                                                                                                                                                                                                                                                              |
+| `features/mcphub/spec.md`, `api.yaml`              | `/mcp` keeps its path and its payload. `RES-003` puts the fields of the MCP protocol outside the reach of rule 118.                                                                                                                                                                                                                                                                                                          |
+| The five `api.yaml`                                | Each names the document of `RES-007` that holds its routes, and gains the `uid` permission on each operation that needs a caller, and a format on each number. A fragment carries no meta block, and `SPC-002` gives the merged document that one.                                                                                                                                                                           |
+| The security scheme of every fragment              | Three fragments answer one question three ways. `extid` declares `apiKey`, which `ADR-0004` made correct. `pcap`, `pset`, and `templates/api.yaml` still declare a bearer, which no web route uses. `mcphub` declares `http` bearer, which `RES-009` confirms for `mcp.yaml`. `websess` declares none. `RES-009` gives the one answer for each document.                                                                     |
+| `templates/api.yaml`                               | It gains the page object, the cookie scheme, the `uid` permission, and the snake case example. `<Resource>` and `<Resource>Input` collapse into one schema that carries `readOnly` and `writeOnly`, which `Z-252` asks for and which the template already uses on `id`. `pset` splits the same way.                                                                                                                          |
 
 ### Migration
 
 Five tranches. Each one lints, builds, and ships on its own.
 
-| # | Tranche              | Holds                                                                                                          |
-| - | -------------------- | -------------------------------------------------------------------------------------------------------------- |
-| 0 | The database         | The core migration that replaces the body of `set_updated_at`; the deterministic order of `buildMigrationPlan`; and the four columns of `telasi`, `pensions`, and `tbilisi-energy` that hold a bare `TIMESTAMP`, each altered `USING <column> AT TIME ZONE 'UTC'` because the producing code wrote UTC. `DAT-010`, `DAT-011`. It ships first, because `DAT-011` orders every migration that follows. |
-| 1 | The payload          | `.golangci.yaml` sets `tagliatelle` to `json: camel` under `default: all`, so the linter refuses this tranche until the rule flips and every exempt tag of `RES-003` gains an exception. Snake case (118), a number format (171), the null rules (122 to 124), an enum in upper snake case (240), the date and the zone (169, 238), the map through `Z-216`. No migration touches `plugin_settings.fields`, and 15 readers change. |
-| 2 | The collection       | An object at the top level (110) and the page object (248) together, because a list route keeps its bare array until the page replaces it. The cursor (160), the links as absolute addresses (161, 217), the conventional parameter (137), the sort with `+` and `-` (137, 154).                                     |
-| 3 | The meta and the lint | The meta block of each document (218, 116, 215, 219), the permission on each operation (105, 225), the split and the merge (101, 219), `vacuum` in the build.                                                             |
-| 4 | The header           | `ETag` with `If-Match` (182), `Idempotency-Key` (230), the cacheable route (227). `X-Flow-ID` ships with tranche 1.                                                                                       |
+| #   | Tranche               | Holds                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0   | The database          | The core migration that replaces the body of `set_updated_at`; the deterministic order of `buildMigrationPlan`; and the four columns of `telasi`, `pensions`, and `tbilisi-energy` that hold a bare `TIMESTAMP`, each altered `USING <column> AT TIME ZONE 'UTC'` because the producing code wrote UTC. `DAT-010`, `DAT-011`. It ships first, because `DAT-011` orders every migration that follows.                               |
+| 1   | The payload           | `.golangci.yaml` sets `tagliatelle` to `json: camel` under `default: all`, so the linter refuses this tranche until the rule flips and every exempt tag of `RES-003` gains an exception. Snake case (118), a number format (171), the null rules (122 to 124), an enum in upper snake case (240), the date and the zone (169, 238), the map through `Z-216`. No migration touches `plugin_settings.fields`, and 15 readers change. |
+| 2   | The collection        | An object at the top level (110) and the page object (248) together, because a list route keeps its bare array until the page replaces it. The cursor (160), the links as absolute addresses (161, 217), the conventional parameter (137), the sort with `+` and `-` (137, 154).                                                                                                                                                   |
+| 3   | The meta and the lint | The meta block of each document (218, 116, 215, 219), the permission on each operation (105, 225), the split and the merge (101, 219), `vacuum` in the build.                                                                                                                                                                                                                                                                      |
+| 4   | The header            | `ETag` with `If-Match` (182), `Idempotency-Key` (230), the cacheable route (227). `X-Flow-ID` ships with tranche 1.                                                                                                                                                                                                                                                                                                                |
 
 The route table of `API-003` lands with tranche 1, because the deck reads a body
 in place of a redirect and the two changes reach the same files. `ERR-002`,

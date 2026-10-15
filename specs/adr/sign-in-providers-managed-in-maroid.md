@@ -6,8 +6,18 @@ status: accepted
 created: 2026-10-08
 updated: 2026-10-08
 decided: 2026-10-08
-changes: [SEC-001, SEC-003, SEC-011, API-003, CLI-001, GLO-provider,
-  GLO-provider-preset, GLO-static-provider, GLO-local-provider]
+changes:
+  [
+    SEC-001,
+    SEC-003,
+    SEC-011,
+    API-003,
+    CLI-001,
+    GLO-provider,
+    GLO-provider-preset,
+    GLO-static-provider,
+    GLO-local-provider
+  ]
 supersedes:
 superseded_by:
 ---
@@ -30,16 +40,16 @@ redeems the invitation of the first administrator.
 
 A spike against Dex `v2.46.0` (API 4) on 2026-10-08 found these facts.
 
-| Fact of Dex                                                                                       | Consequence for Maroid                                                  |
-| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| The gRPC API creates, updates, lists, and deletes a connector when `DEX_API_CONNECTORS_CRUD=true`. A change takes effect with no restart. | The hub can own the lifecycle of a provider.                              |
-| `ListConnectors` returns the connectors of the file with the stored ones, and marks neither. A write to a connector of the file fails with `read-only`. | A connector of the file stays possible, and the hub cannot change it.     |
-| Dex validates nothing on a write. It accepted an unknown type, an issuer that does not resolve, and an unknown key. The login page then lists the broken connector, and a click answers 400. | The hub validates a connector before it writes it.                        |
-| Dex returns a stored connector config as the exact JSON that it received.                         | The hub reads back what it wrote, and no hub table is needed.             |
-| A connector of type `local` reads one password database that every `local` connector shares. Its login form asks for an email address. | One local provider is the only sensible count.                            |
-| `CreatePassword` takes a bcrypt hash and a `user_id` that the caller chooses. Dex has no page where a person sets or changes a password. | A password reaches Dex only through a caller of the API.                  |
-| Seven wrong passwords in a row did not block a local account.                                     | A local account carries no lockout today.                                 |
-| The gRPC port of the compose file is published to the host in plain text, with no client authentication. | Anyone who reaches the port sets a password and signs in as that person.  |
+| Fact of Dex                                                                                                                                                                                  | Consequence for Maroid                                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| The gRPC API creates, updates, lists, and deletes a connector when `DEX_API_CONNECTORS_CRUD=true`. A change takes effect with no restart.                                                    | The hub can own the lifecycle of a provider.                             |
+| `ListConnectors` returns the connectors of the file with the stored ones, and marks neither. A write to a connector of the file fails with `read-only`.                                      | A connector of the file stays possible, and the hub cannot change it.    |
+| Dex validates nothing on a write. It accepted an unknown type, an issuer that does not resolve, and an unknown key. The login page then lists the broken connector, and a click answers 400. | The hub validates a connector before it writes it.                       |
+| Dex returns a stored connector config as the exact JSON that it received.                                                                                                                    | The hub reads back what it wrote, and no hub table is needed.            |
+| A connector of type `local` reads one password database that every `local` connector shares. Its login form asks for an email address.                                                       | One local provider is the only sensible count.                           |
+| `CreatePassword` takes a bcrypt hash and a `user_id` that the caller chooses. Dex has no page where a person sets or changes a password.                                                     | A password reaches Dex only through a caller of the API.                 |
+| Seven wrong passwords in a row did not block a local account.                                                                                                                                | A local account carries no lockout today.                                |
+| The gRPC port of the compose file is published to the host in plain text, with no client authentication.                                                                                     | Anyone who reaches the port sets a password and signs in as that person. |
 
 ## Decision
 
@@ -70,16 +80,16 @@ person, so it takes the same guard as a signing key.
 
 ## Alternatives
 
-| Alternative                                                       | Why we did not select it                                                                                          |
-| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Keep the connectors in the file of Dex and in `auth.providers`.   | Two files for one fact, and a restart for each change.                                                             |
-| A hub table that holds the providers and writes them to Dex.       | Two stores for one fact. A failed write leaves them apart.                                                         |
-| One raw JSON field and no preset.                                 | Nothing then fixes the issuer or `userIDKey`, and one edit orphans every identity of the provider.                 |
-| A web wizard that a one-time code opens on a new instance.         | Anyone who reaches the instance first claims it. The CLI needs access to the host.                                 |
-| `staticPasswords` in the file of Dex for the first administrator. | The hash lives in a file, and nobody changes it from Maroid. It stays possible, because the file keeps working.   |
-| A page where a local user sets or changes the password.            | Dex has none, so the hub would build it. Deferred until a second local user needs it.                              |
-| The plain gRPC port inside the network of the deployment.         | Any process on that network then sets a password.                                                                  |
-| Client certificates that OpenBao PKI issues to the hub.            | A second moving part on the sign in path. A file path accepts a certificate from any issuer, OpenBao included.     |
+| Alternative                                                       | Why we did not select it                                                                                        |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Keep the connectors in the file of Dex and in `auth.providers`.   | Two files for one fact, and a restart for each change.                                                          |
+| A hub table that holds the providers and writes them to Dex.      | Two stores for one fact. A failed write leaves them apart.                                                      |
+| One raw JSON field and no preset.                                 | Nothing then fixes the issuer or `userIDKey`, and one edit orphans every identity of the provider.              |
+| A web wizard that a one-time code opens on a new instance.        | Anyone who reaches the instance first claims it. The CLI needs access to the host.                              |
+| `staticPasswords` in the file of Dex for the first administrator. | The hash lives in a file, and nobody changes it from Maroid. It stays possible, because the file keeps working. |
+| A page where a local user sets or changes the password.           | Dex has none, so the hub would build it. Deferred until a second local user needs it.                           |
+| The plain gRPC port inside the network of the deployment.         | Any process on that network then sets a password.                                                               |
+| Client certificates that OpenBao PKI issues to the hub.           | A second moving part on the sign in path. A file path accepts a certificate from any issuer, OpenBao included.  |
 
 ## Consequences
 
@@ -116,8 +126,8 @@ The last sentence of `SEC-011` becomes:
 
 `API-003` gains one row:
 
-> | Method and path | Serves                       | Access        |
-> | --------------- | ---------------------------- | ------------- |
+> | Method and path | Serves                        | Access        |
+> | --------------- | ----------------------------- | ------------- |
 > | `/providers*`   | The providers of the instance | Administrator |
 
 `/users*` already carries the password of a local account.
@@ -130,12 +140,12 @@ The last sentence of `SEC-011` becomes:
 
 The glossary changes `GLO-provider` and gains three terms:
 
-> | ID                    | Term            | Definition                                                                                  |
-> | --------------------- | --------------- | ------------------------------------------------------------------------------------------- |
-> | `GLO-provider`        | provider        | One account system that Dex federates. Telegram is one. An administrator manages it, or the file of Dex holds it. |
+> | ID                    | Term            | Definition                                                                                                                         |
+> | --------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+> | `GLO-provider`        | provider        | One account system that Dex federates. Telegram is one. An administrator manages it, or the file of Dex holds it.                  |
 > | `GLO-provider-preset` | provider preset | The kind of a provider that the hub offers: local, Telegram, or generic OIDC. It fixes the fields that decide the user identifier. |
-> | `GLO-static-provider` | static provider | A provider that the file of Dex holds. The hub lists it and changes nothing on it.         |
-> | `GLO-local-provider`  | local provider  | The provider whose accounts sign in with an email address and a password that Dex holds.   |
+> | `GLO-static-provider` | static provider | A provider that the file of Dex holds. The hub lists it and changes nothing on it.                                                 |
+> | `GLO-local-provider`  | local provider  | The provider whose accounts sign in with an email address and a password that Dex holds.                                           |
 
 ### Configuration
 
@@ -148,11 +158,11 @@ port, and `chart/` follows.
 
 ### Specifications to examine
 
-| Document                           | Why                                                                                               |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `features/extid/requirements.md`   | Question 2 excludes a provider that holds a password. `EXTID-FR-009` reads the providers from Dex. |
-| `features/extid/spec.md`           | The configuration table names `auth.providers`.                                                    |
-| `features/plugacc/spec.md`         | The user management of the deck gains the password of a local account.                             |
+| Document                         | Why                                                                                                |
+| -------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `features/extid/requirements.md` | Question 2 excludes a provider that holds a password. `EXTID-FR-009` reads the providers from Dex. |
+| `features/extid/spec.md`         | The configuration table names `auth.providers`.                                                    |
+| `features/plugacc/spec.md`       | The user management of the deck gains the password of a local account.                             |
 
 ### Result
 

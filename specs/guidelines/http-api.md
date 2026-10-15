@@ -73,29 +73,29 @@ a scheme nobody implements teaches a client nothing.
 
 The hub fixes these routes:
 
-| Method and path                          | Serves                                    | Access                 |
-| ---------------------------------------- | ----------------------------------------- | ---------------------- |
-| `POST /auth/sessions`                    | The start of a sign in                    | Public                 |
-| `GET /auth/sessions/self`             | The acting user of the session            | Authenticated          |
-| `DELETE /auth/sessions/self`          | The end of a session                      | Public                 |
-| `GET /auth/callback`                     | The finish of a flow                      | Public                 |
-| `POST /auth/invitation-redemptions`      | The redemption of an invitation           | Public                 |
-| `POST /auth/identities`                  | The start of an attach                    | Authenticated          |
-| `GET /auth/identities`                   | The external accounts of the acting user  | Authenticated          |
-| `DELETE /auth/identities/{provider}`     | The removal of one external account       | Authenticated          |
-| `/plugins`                               | The list of loaded plugins                | Authenticated          |
-| `/workspaces*`                           | The workspaces, the members, and the enablements | Authenticated   |
-| `/workspaces/{workspaceId}/plugins/{id}/api/*` | The routes of a plugin              | Member, enabled        |
-| `/workspaces/{workspaceId}/plugins/{id}/settings*` | The settings of a plugin        | Member, enabled        |
-| `GET, PATCH /users/self`                 | The user record of the acting user        | Authenticated          |
-| `/users*`                                | The user records and the plugin allowlists | Administrator         |
-| `/providers*`                            | The providers of the instance             | Administrator          |
-| `/plugins/{id}/ui/*`                     | The assets of a plugin                    | Public. See `SEC-006`. |
-| `/telegram/webhook`                      | The Telegram updates                      | Secret token, allowlist |
-| `/.well-known/oauth-protected-resource*` | The discovery of the IdP for an MCP client | Public                |
-| `/mcp`                                   | The Model Context Protocol tools          | Bearer, MCP audience   |
-| `GET /livez`                             | The liveness of the process               | Public                 |
-| `GET /readyz`                            | The readiness of the process              | Public                 |
+| Method and path                                    | Serves                                           | Access                  |
+| -------------------------------------------------- | ------------------------------------------------ | ----------------------- |
+| `POST /auth/sessions`                              | The start of a sign in                           | Public                  |
+| `GET /auth/sessions/self`                          | The acting user of the session                   | Authenticated           |
+| `DELETE /auth/sessions/self`                       | The end of a session                             | Public                  |
+| `GET /auth/callback`                               | The finish of a flow                             | Public                  |
+| `POST /auth/invitation-redemptions`                | The redemption of an invitation                  | Public                  |
+| `POST /auth/identities`                            | The start of an attach                           | Authenticated           |
+| `GET /auth/identities`                             | The external accounts of the acting user         | Authenticated           |
+| `DELETE /auth/identities/{provider}`               | The removal of one external account              | Authenticated           |
+| `/plugins`                                         | The list of loaded plugins                       | Authenticated           |
+| `/workspaces*`                                     | The workspaces, the members, and the enablements | Authenticated           |
+| `/workspaces/{workspaceId}/plugins/{id}/api/*`     | The routes of a plugin                           | Member, enabled         |
+| `/workspaces/{workspaceId}/plugins/{id}/settings*` | The settings of a plugin                         | Member, enabled         |
+| `GET, PATCH /users/self`                           | The user record of the acting user               | Authenticated           |
+| `/users*`                                          | The user records and the plugin allowlists       | Administrator           |
+| `/providers*`                                      | The providers of the instance                    | Administrator           |
+| `/plugins/{id}/ui/*`                               | The assets of a plugin                           | Public. See `SEC-006`.  |
+| `/telegram/webhook`                                | The Telegram updates                             | Secret token, allowlist |
+| `/.well-known/oauth-protected-resource*`           | The discovery of the IdP for an MCP client       | Public                  |
+| `/mcp`                                             | The Model Context Protocol tools                 | Bearer, MCP audience    |
+| `GET /livez`                                       | The liveness of the process                      | Public                  |
+| `GET /readyz`                                      | The readiness of the process                     | Public                  |
 
 A path holds no verb, as `Z-141` asks. `RES-002` holds the method, the status,
 and the name that `GET /auth/callback` deviates on, and `RES-004` the one address

@@ -61,13 +61,13 @@ It does not build a request URL itself.
 
 `@maroid/plugin-sdk` gives a plugin user interface a `PluginHost` with:
 
-| Member     | Gives                                             |
-| ---------- | ------------------------------------------------- |
-| `user`     | The current user, or null.                        |
-| `api`      | A client already scoped to the mount prefix of `API-004`, for the acting workspace. |
-| `can`      | Whether the role of the person holds a permission of the plugin. `SEC-013`. |
-| `href`     | A deck URL for a plugin-relative path.            |
-| `navigate` | Client-side navigation to a plugin-relative path. |
+| Member     | Gives                                                                                    |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| `user`     | The current user, or null.                                                               |
+| `api`      | A client already scoped to the mount prefix of `API-004`, for the acting workspace.      |
+| `can`      | Whether the role of the person holds a permission of the plugin. `SEC-013`.              |
+| `href`     | A deck URL for a plugin-relative path.                                                   |
+| `navigate` | Client-side navigation to a plugin-relative path.                                        |
 | `setTitle` | Names the page in the last link of the trail. The deck clears it when the page unmounts. |
 
 The deck mounts a page with the props `host` and `params`. `params` maps the name of

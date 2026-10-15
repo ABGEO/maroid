@@ -29,68 +29,68 @@ answers a disabled plugin as absent.
 
 ## 2. Coverage
 
-| Requirement       | Where this specification realizes it                           |
-| ----------------- | ---------------------------------------------------------------- |
-| `PLUGACC-FR-001`  | `spec-clients.md` section 1, `PLUGACC-SC-001`                    |
-| `PLUGACC-FR-002`  | Section 4.3, `PLUGACC-SC-002`                                    |
-| `PLUGACC-FR-003`  | Section 4.3, `PLUGACC-DD-004`, `PLUGACC-SC-003`                  |
-| `PLUGACC-FR-004`  | Section 4.3, `PLUGACC-DD-004`, `PLUGACC-SC-003`                  |
-| `PLUGACC-FR-005`  | Section 4.3, `PLUGACC-SC-004`                                    |
-| `PLUGACC-FR-006`  | Section 4.3, `PLUGACC-SC-004`                                    |
-| `PLUGACC-FR-007`  | Section 4.5, `PLUGACC-DD-005`, `PLUGACC-SC-005`                  |
-| `PLUGACC-FR-008`  | Section 4.3, `PLUGACC-SC-006`                                    |
-| `PLUGACC-FR-009`  | Section 4.3, `PLUGACC-DD-006`, `PLUGACC-SC-007`                  |
-| `PLUGACC-FR-010`  | Section 4.4, `PLUGACC-DD-003`, `PLUGACC-SC-008`                  |
-| `PLUGACC-FR-011`  | Section 4.2, `PLUGACC-SC-009`                                    |
-| `PLUGACC-FR-012`  | Section 4.3, `PLUGACC-SC-009`                                    |
-| `PLUGACC-FR-013`  | Section 4.3, `PLUGACC-SC-010`                                    |
-| `PLUGACC-FR-014`  | Section 4.3, `PLUGACC-SC-011`                                    |
-| `PLUGACC-FR-015`  | Section 4.2, `PLUGACC-DD-002`, `PLUGACC-SC-011`                  |
-| `PLUGACC-FR-016`  | Section 4.2, `PLUGACC-SC-012`                                    |
+| Requirement       | Where this specification realizes it                              |
+| ----------------- | ----------------------------------------------------------------- |
+| `PLUGACC-FR-001`  | `spec-clients.md` section 1, `PLUGACC-SC-001`                     |
+| `PLUGACC-FR-002`  | Section 4.3, `PLUGACC-SC-002`                                     |
+| `PLUGACC-FR-003`  | Section 4.3, `PLUGACC-DD-004`, `PLUGACC-SC-003`                   |
+| `PLUGACC-FR-004`  | Section 4.3, `PLUGACC-DD-004`, `PLUGACC-SC-003`                   |
+| `PLUGACC-FR-005`  | Section 4.3, `PLUGACC-SC-004`                                     |
+| `PLUGACC-FR-006`  | Section 4.3, `PLUGACC-SC-004`                                     |
+| `PLUGACC-FR-007`  | Section 4.5, `PLUGACC-DD-005`, `PLUGACC-SC-005`                   |
+| `PLUGACC-FR-008`  | Section 4.3, `PLUGACC-SC-006`                                     |
+| `PLUGACC-FR-009`  | Section 4.3, `PLUGACC-DD-006`, `PLUGACC-SC-007`                   |
+| `PLUGACC-FR-010`  | Section 4.4, `PLUGACC-DD-003`, `PLUGACC-SC-008`                   |
+| `PLUGACC-FR-011`  | Section 4.2, `PLUGACC-SC-009`                                     |
+| `PLUGACC-FR-012`  | Section 4.3, `PLUGACC-SC-009`                                     |
+| `PLUGACC-FR-013`  | Section 4.3, `PLUGACC-SC-010`                                     |
+| `PLUGACC-FR-014`  | Section 4.3, `PLUGACC-SC-011`                                     |
+| `PLUGACC-FR-015`  | Section 4.2, `PLUGACC-DD-002`, `PLUGACC-SC-011`                   |
+| `PLUGACC-FR-016`  | Section 4.2, `PLUGACC-SC-012`                                     |
 | `PLUGACC-FR-017`  | Section 4.3, `PLUGACC-DD-009`, `PLUGACC-SC-009`, `PLUGACC-SC-024` |
 | `PLUGACC-FR-018`  | Section 4.4, `PLUGACC-DD-001`, `PLUGACC-SC-013`, `PLUGACC-SC-028` |
-| `PLUGACC-FR-019`  | `spec-clients.md` section 2, `PLUGACC-SC-014`                    |
-| `PLUGACC-FR-020`  | `spec-clients.md` section 3, `PLUGACC-SC-016`                    |
-| `PLUGACC-FR-021`  | Section 4.3, `PLUGACC-SC-017`, `PLUGACC-SC-029` |
-| `PLUGACC-FR-022`  | Section 4.5, `PLUGACC-DD-003`, `PLUGACC-SC-018`                  |
-| `PLUGACC-FR-023`  | `spec-clients.md` section 4, `PLUGACC-SC-022`                    |
-| `PLUGACC-FR-024`  | `spec-clients.md` section 4, `PLUGACC-SC-022`                    |
-| `PLUGACC-FR-025`  | `spec-clients.md` section 4, `PLUGACC-SC-021`                    |
-| `PLUGACC-FR-026`  | Section 4.2, `PLUGACC-SC-019`                                    |
-| `PLUGACC-FR-027`  | Section 4.3, `PLUGACC-SC-011`                                    |
-| `PLUGACC-FR-028`  | Section 4.3, `PLUGACC-SC-017`                                    |
-| `PLUGACC-FR-029`  | Section 4.3, `PLUGACC-SC-005`                                    |
-| `PLUGACC-FR-030`  | Section 4.3, `PLUGACC-SC-005`                                    |
-| `PLUGACC-FR-031`  | Postponed. Section 8                                             |
-| `PLUGACC-FR-032`  | Section 4.3, `PLUGACC-DD-010`, `PLUGACC-SC-023`                  |
-| `PLUGACC-FR-033`  | `spec-clients.md` section 4, `PLUGACC-SC-025`                    |
-| `PLUGACC-FR-034`  | Section 4.3, `PLUGACC-SC-026`                                    |
-| `PLUGACC-FR-035`  | Section 4.5, `PLUGACC-SC-027`                                    |
-| `PLUGACC-FR-036`  | `spec-clients.md` section 4, `PLUGACC-SC-030`                    |
-| `PLUGACC-FR-037`  | `spec-clients.md` section 4, `PLUGACC-SC-031`                    |
-| `PLUGACC-NFR-001` | `PLUGACC-DD-001`, `PLUGACC-SC-020`                               |
-| `PLUGACC-NFR-002` | Postponed. Section 8                                             |
-| `PLUGACC-INV-001` | Section 4.4, `PLUGACC-DD-001`, `PLUGACC-SC-013`                  |
-| `PLUGACC-INV-002` | `PLUGACC-DD-003`, `PLUGACC-SC-008`                               |
-| `PLUGACC-INV-003` | `PLUGACC-DD-005`, `PLUGACC-SC-005`                               |
+| `PLUGACC-FR-019`  | `spec-clients.md` section 2, `PLUGACC-SC-014`                     |
+| `PLUGACC-FR-020`  | `spec-clients.md` section 3, `PLUGACC-SC-016`                     |
+| `PLUGACC-FR-021`  | Section 4.3, `PLUGACC-SC-017`, `PLUGACC-SC-029`                   |
+| `PLUGACC-FR-022`  | Section 4.5, `PLUGACC-DD-003`, `PLUGACC-SC-018`                   |
+| `PLUGACC-FR-023`  | `spec-clients.md` section 4, `PLUGACC-SC-022`                     |
+| `PLUGACC-FR-024`  | `spec-clients.md` section 4, `PLUGACC-SC-022`                     |
+| `PLUGACC-FR-025`  | `spec-clients.md` section 4, `PLUGACC-SC-021`                     |
+| `PLUGACC-FR-026`  | Section 4.2, `PLUGACC-SC-019`                                     |
+| `PLUGACC-FR-027`  | Section 4.3, `PLUGACC-SC-011`                                     |
+| `PLUGACC-FR-028`  | Section 4.3, `PLUGACC-SC-017`                                     |
+| `PLUGACC-FR-029`  | Section 4.3, `PLUGACC-SC-005`                                     |
+| `PLUGACC-FR-030`  | Section 4.3, `PLUGACC-SC-005`                                     |
+| `PLUGACC-FR-031`  | Postponed. Section 8                                              |
+| `PLUGACC-FR-032`  | Section 4.3, `PLUGACC-DD-010`, `PLUGACC-SC-023`                   |
+| `PLUGACC-FR-033`  | `spec-clients.md` section 4, `PLUGACC-SC-025`                     |
+| `PLUGACC-FR-034`  | Section 4.3, `PLUGACC-SC-026`                                     |
+| `PLUGACC-FR-035`  | Section 4.5, `PLUGACC-SC-027`                                     |
+| `PLUGACC-FR-036`  | `spec-clients.md` section 4, `PLUGACC-SC-030`                     |
+| `PLUGACC-FR-037`  | `spec-clients.md` section 4, `PLUGACC-SC-031`                     |
+| `PLUGACC-NFR-001` | `PLUGACC-DD-001`, `PLUGACC-SC-020`                                |
+| `PLUGACC-NFR-002` | Postponed. Section 8                                              |
+| `PLUGACC-INV-001` | Section 4.4, `PLUGACC-DD-001`, `PLUGACC-SC-013`                   |
+| `PLUGACC-INV-002` | `PLUGACC-DD-003`, `PLUGACC-SC-008`                                |
+| `PLUGACC-INV-003` | `PLUGACC-DD-005`, `PLUGACC-SC-005`                                |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline        | How this specification obeys it                                                  |
-| --------- | ---------------- | ---------------------------------------------------------------------------------- |
-| `SEC-011` | Security         | Section 4.2 gives the mark. `PLUGACC-DD-003` reaches every workspace and no record. |
-| `SEC-012` | Security         | Section 4.4 checks the enablement at every entry point. `spec-clients.md` gives the menu. |
-| `SEC-013` | Security         | Each route of a workspace names a permission. The hub gains `plugins.write`.       |
-| `SEC-004` | Security         | A block sets the status that the resolver reads on each request.                 |
-| `OWN-002` | Record ownership | No route deletes a user record. A block keeps every record.                       |
-| `OWN-004` | Record ownership | Section 4.2 gives the scope and the reason of each table.                         |
+| Rule      | Guideline        | How this specification obeys it                                                                                                              |
+| --------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SEC-011` | Security         | Section 4.2 gives the mark. `PLUGACC-DD-003` reaches every workspace and no record.                                                          |
+| `SEC-012` | Security         | Section 4.4 checks the enablement at every entry point. `spec-clients.md` gives the menu.                                                    |
+| `SEC-013` | Security         | Each route of a workspace names a permission. The hub gains `plugins.write`.                                                                 |
+| `SEC-004` | Security         | A block sets the status that the resolver reads on each request.                                                                             |
+| `OWN-002` | Record ownership | No route deletes a user record. A block keeps every record.                                                                                  |
+| `OWN-004` | Record ownership | Section 4.2 gives the scope and the reason of each table.                                                                                    |
 | `ERR-003` | Errors           | A disabled plugin answers `not-found`. A non-administrator answers `permission-denied`. The last administrator answers `administrator-last`. |
-| `API-003` | HTTP API         | The routes sit under `/users` and `/workspaces`.                                   |
-| `API-007` | HTTP API         | A user record carries `ETag`, and its change reads `If-Match`. A `POST` reads `Idempotency-Key`. |
-| `RES-005` | REST             | Every collection of this feature is bounded and answers one page.                 |
-| `Z-148`   | REST             | A change of a user uses `PATCH` with merge patch. An enablement uses `PUT`, because the client names the plugin. |
-| `DAT-009` | Data             | Both new tables relate records, so each takes the pair as its primary key and no `id`. |
-| `ARC-008` | Architecture     | The hub reads every plugin identifier from the plugin registry. It names none.    |
+| `API-003` | HTTP API         | The routes sit under `/users` and `/workspaces`.                                                                                             |
+| `API-007` | HTTP API         | A user record carries `ETag`, and its change reads `If-Match`. A `POST` reads `Idempotency-Key`.                                             |
+| `RES-005` | REST             | Every collection of this feature is bounded and answers one page.                                                                            |
+| `Z-148`   | REST             | A change of a user uses `PATCH` with merge patch. An enablement uses `PUT`, because the client names the plugin.                             |
+| `DAT-009` | Data             | Both new tables relate records, so each takes the pair as its primary key and no `id`.                                                       |
+| `ARC-008` | Architecture     | The hub reads every plugin identifier from the plugin registry. It names none.                                                               |
 
 `ERR-003` gains the type `administrator-last`. The owner approves it with this
 specification.
@@ -99,32 +99,32 @@ specification.
 
 ### 4.1 Components
 
-| Path                                                                  | Action | Holds                                                         |
-| --------------------------------------------------------------------- | ------ | ------------------------------------------------------------- |
-| `apps/hub/db/migrations/20261003130000_table_users_alter.*`           | create | `public.users.is_administrator`                               |
-| `apps/hub/db/migrations/20261003140000_table_allowed_plugins_create.*` | create | `public.allowed_plugins`                                     |
-| `apps/hub/db/migrations/20261003140100_table_workspace_plugins_create.*` | create | `public.workspace_plugins`                                 |
-| `apps/hub/internal/model/user.go`                                     | change | `User.IsAdministrator`                                        |
-| `apps/hub/internal/model/enablement.go`                               | create | `model.Enablement`, `model.AllowedPlugin`                     |
-| `apps/hub/internal/repository/user.go`                                | change | `GetByID`, `List`, `Change` (the status and the mark), `LockAdministrators`, `CountActiveAdministrators`, the column in every query |
-| `apps/hub/internal/repository/workspace.go`                           | change | `ListAll`, every workspace with the count of its members and the plugins it enables, for `scope=all` |
-| `apps/hub/internal/repository/allowed_plugin.go`                      | create | `repository.AllowedPluginRepository`, `repository.AllowedPlugin` |
-| `apps/hub/internal/repository/workspace_plugin.go`                    | create | `repository.WorkspacePluginRepository`, `repository.WorkspacePlugin` |
-| `apps/hub/internal/user/{doc,service}.go`                             | create | `user.Service`: the user records, the mark, and the allowlist of each |
-| `apps/hub/internal/auth/service.go`                                   | change | `InviteRequest.AllowedPlugins`, written in the transaction of the record |
-| `apps/hub/internal/workspace/service.go`                              | change | `workspace.Catalog` and `Manager.ListAll`, every workspace of the instance, for `scope=all` |
-| `apps/hub/internal/workspace/enablement.go`                           | create | `workspace.EnablementService`, `workspace.RequireEnabled`     |
-| `apps/hub/internal/workspace/middleware.go`                           | change | An administrator passes a route that admits one, as `manager` |
-| `apps/hub/internal/auth/middleware.go`                                | change | `auth.ContextWithAdministrator`, `auth.IsAdministratorFromContext`, `auth.RequireAdministrator` |
-| `apps/hub/internal/handler/user.go`                                   | create | `handler.User`, the routes under `/users`                     |
-| `apps/hub/internal/handler/workspace.go`                              | change | The routes of the enablements, and `scope=all`                |
-| `apps/hub/internal/handler/workspace_plugin.go`                       | create | The enablement answers the entry of the loaded plugin, `PLUGACC-DD-009` |
-| `apps/hub/internal/registry/plugin_entry.go`                          | change | `registry.Catalog`, the entry of each loaded plugin, in place of `PluginEntries` |
-| `apps/hub/internal/handler/plugin.go`                                 | change | `List` filters the catalog by the allowlist. Takes `registry.Catalog` in place of the plugin and the capability registries |
-| `apps/hub/internal/handler/plugin_wrapper.go`                         | change | `workspace.RequireEnabled` after the membership               |
-| `apps/hub/internal/authz/hub.go`                                      | change | The permission `plugins.write`                                |
-| `apps/hub/internal/domain/problems/problems.go`                       | change | `NewAdministratorLast`                                        |
-| `specs/features/plugacc/api.yaml`                                     | create | The routes of section 4.3                                     |
+| Path                                                                     | Action | Holds                                                                                                                               |
+| ------------------------------------------------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/hub/db/migrations/20261003130000_table_users_alter.*`              | create | `public.users.is_administrator`                                                                                                     |
+| `apps/hub/db/migrations/20261003140000_table_allowed_plugins_create.*`   | create | `public.allowed_plugins`                                                                                                            |
+| `apps/hub/db/migrations/20261003140100_table_workspace_plugins_create.*` | create | `public.workspace_plugins`                                                                                                          |
+| `apps/hub/internal/model/user.go`                                        | change | `User.IsAdministrator`                                                                                                              |
+| `apps/hub/internal/model/enablement.go`                                  | create | `model.Enablement`, `model.AllowedPlugin`                                                                                           |
+| `apps/hub/internal/repository/user.go`                                   | change | `GetByID`, `List`, `Change` (the status and the mark), `LockAdministrators`, `CountActiveAdministrators`, the column in every query |
+| `apps/hub/internal/repository/workspace.go`                              | change | `ListAll`, every workspace with the count of its members and the plugins it enables, for `scope=all`                                |
+| `apps/hub/internal/repository/allowed_plugin.go`                         | create | `repository.AllowedPluginRepository`, `repository.AllowedPlugin`                                                                    |
+| `apps/hub/internal/repository/workspace_plugin.go`                       | create | `repository.WorkspacePluginRepository`, `repository.WorkspacePlugin`                                                                |
+| `apps/hub/internal/user/{doc,service}.go`                                | create | `user.Service`: the user records, the mark, and the allowlist of each                                                               |
+| `apps/hub/internal/auth/service.go`                                      | change | `InviteRequest.AllowedPlugins`, written in the transaction of the record                                                            |
+| `apps/hub/internal/workspace/service.go`                                 | change | `workspace.Catalog` and `Manager.ListAll`, every workspace of the instance, for `scope=all`                                         |
+| `apps/hub/internal/workspace/enablement.go`                              | create | `workspace.EnablementService`, `workspace.RequireEnabled`                                                                           |
+| `apps/hub/internal/workspace/middleware.go`                              | change | An administrator passes a route that admits one, as `manager`                                                                       |
+| `apps/hub/internal/auth/middleware.go`                                   | change | `auth.ContextWithAdministrator`, `auth.IsAdministratorFromContext`, `auth.RequireAdministrator`                                     |
+| `apps/hub/internal/handler/user.go`                                      | create | `handler.User`, the routes under `/users`                                                                                           |
+| `apps/hub/internal/handler/workspace.go`                                 | change | The routes of the enablements, and `scope=all`                                                                                      |
+| `apps/hub/internal/handler/workspace_plugin.go`                          | create | The enablement answers the entry of the loaded plugin, `PLUGACC-DD-009`                                                             |
+| `apps/hub/internal/registry/plugin_entry.go`                             | change | `registry.Catalog`, the entry of each loaded plugin, in place of `PluginEntries`                                                    |
+| `apps/hub/internal/handler/plugin.go`                                    | change | `List` filters the catalog by the allowlist. Takes `registry.Catalog` in place of the plugin and the capability registries          |
+| `apps/hub/internal/handler/plugin_wrapper.go`                            | change | `workspace.RequireEnabled` after the membership                                                                                     |
+| `apps/hub/internal/authz/hub.go`                                         | change | The permission `plugins.write`                                                                                                      |
+| `apps/hub/internal/domain/problems/problems.go`                          | change | `NewAdministratorLast`                                                                                                              |
+| `specs/features/plugacc/api.yaml`                                        | create | The routes of section 4.3                                                                                                           |
 
 ```go
 // apps/hub/internal/user/service.go
@@ -205,11 +205,11 @@ type WorkspaceAccess struct {
 
 ### 4.2 Data model
 
-| Table               | Schema   | Scope  | Migration                                                  | Realizes                                         |
-| ------------------- | -------- | ------ | ---------------------------------------------------------- | ------------------------------------------------ |
-| `users`             | `public` | shared | `20261003130000_table_users_alter.up.sql`                  | `PLUGACC-FR-001`, `PLUGACC-FR-029`, `PLUGACC-FR-030` |
-| `allowed_plugins`   | `public` | shared | `20261003140000_table_allowed_plugins_create.up.sql`       | `PLUGACC-FR-008`, `PLUGACC-FR-021`, `PLUGACC-FR-026` |
-| `workspace_plugins` | `public` | shared | `20261003140100_table_workspace_plugins_create.up.sql`     | `PLUGACC-FR-011` to `PLUGACC-FR-017`, `PLUGACC-FR-026` |
+| Table               | Schema   | Scope  | Migration                                              | Realizes                                               |
+| ------------------- | -------- | ------ | ------------------------------------------------------ | ------------------------------------------------------ |
+| `users`             | `public` | shared | `20261003130000_table_users_alter.up.sql`              | `PLUGACC-FR-001`, `PLUGACC-FR-029`, `PLUGACC-FR-030`   |
+| `allowed_plugins`   | `public` | shared | `20261003140000_table_allowed_plugins_create.up.sql`   | `PLUGACC-FR-008`, `PLUGACC-FR-021`, `PLUGACC-FR-026`   |
+| `workspace_plugins` | `public` | shared | `20261003140100_table_workspace_plugins_create.up.sql` | `PLUGACC-FR-011` to `PLUGACC-FR-017`, `PLUGACC-FR-026` |
 
 ```sql
 ALTER TABLE public.users
@@ -266,22 +266,22 @@ erDiagram
 
 **HTTP routes.** `api.yaml` holds the bodies and the status codes.
 
-| Method   | Path                                            | Access        | Permission        | Realizes                          |
-| -------- | ----------------------------------------------- | ------------- | ----------------- | --------------------------------- |
-| `GET`    | `/users`                                        | Administrator | None              | `PLUGACC-FR-002`                  |
-| `POST`   | `/users`                                        | Administrator | None              | `PLUGACC-FR-003`, `PLUGACC-FR-029`, `PLUGACC-FR-032`, `PLUGACC-FR-035` |
-| `GET`    | `/users/{userId}`                               | Administrator | None              | `PLUGACC-FR-002`                  |
-| `PATCH`  | `/users/{userId}`                               | Administrator | None              | `PLUGACC-FR-005` to `PLUGACC-FR-007`, `PLUGACC-FR-029`, `PLUGACC-FR-030`, `PLUGACC-FR-034` |
-| `POST`   | `/users/{userId}/invitations`                   | Administrator | None              | `PLUGACC-FR-004`                  |
-| `GET`    | `/users/{userId}/allowed-plugins`               | Administrator | None              | `PLUGACC-FR-008`                  |
-| `POST`   | `/users/{userId}/allowed-plugins`               | Administrator | None              | `PLUGACC-FR-008`, `PLUGACC-FR-035` |
-| `DELETE` | `/users/{userId}/allowed-plugins/{pluginId}`    | Administrator | None              | `PLUGACC-FR-008`, `PLUGACC-FR-035` |
-| `GET`    | `/workspaces?scope=all`                         | Administrator | None              | `PLUGACC-FR-009`                  |
-| `GET`    | `/workspaces/{workspaceId}/plugins`             | Member        | `workspace.read`  | `PLUGACC-FR-017`                  |
-| `GET`    | `/workspaces/{workspaceId}/plugins/{pluginId}`  | Member        | `workspace.read`  | `PLUGACC-FR-017`                  |
-| `PUT`    | `/workspaces/{workspaceId}/plugins/{pluginId}`  | Member        | `plugins.write`   | `PLUGACC-FR-012`, `PLUGACC-FR-013` |
-| `DELETE` | `/workspaces/{workspaceId}/plugins/{pluginId}`  | Member        | `plugins.write`   | `PLUGACC-FR-014`, `PLUGACC-FR-027` |
-| `GET`    | `/plugins`                                      | Authenticated | None              | `PLUGACC-FR-021`, `PLUGACC-FR-028` |
+| Method   | Path                                           | Access        | Permission       | Realizes                                                                                   |
+| -------- | ---------------------------------------------- | ------------- | ---------------- | ------------------------------------------------------------------------------------------ |
+| `GET`    | `/users`                                       | Administrator | None             | `PLUGACC-FR-002`                                                                           |
+| `POST`   | `/users`                                       | Administrator | None             | `PLUGACC-FR-003`, `PLUGACC-FR-029`, `PLUGACC-FR-032`, `PLUGACC-FR-035`                     |
+| `GET`    | `/users/{userId}`                              | Administrator | None             | `PLUGACC-FR-002`                                                                           |
+| `PATCH`  | `/users/{userId}`                              | Administrator | None             | `PLUGACC-FR-005` to `PLUGACC-FR-007`, `PLUGACC-FR-029`, `PLUGACC-FR-030`, `PLUGACC-FR-034` |
+| `POST`   | `/users/{userId}/invitations`                  | Administrator | None             | `PLUGACC-FR-004`                                                                           |
+| `GET`    | `/users/{userId}/allowed-plugins`              | Administrator | None             | `PLUGACC-FR-008`                                                                           |
+| `POST`   | `/users/{userId}/allowed-plugins`              | Administrator | None             | `PLUGACC-FR-008`, `PLUGACC-FR-035`                                                         |
+| `DELETE` | `/users/{userId}/allowed-plugins/{pluginId}`   | Administrator | None             | `PLUGACC-FR-008`, `PLUGACC-FR-035`                                                         |
+| `GET`    | `/workspaces?scope=all`                        | Administrator | None             | `PLUGACC-FR-009`                                                                           |
+| `GET`    | `/workspaces/{workspaceId}/plugins`            | Member        | `workspace.read` | `PLUGACC-FR-017`                                                                           |
+| `GET`    | `/workspaces/{workspaceId}/plugins/{pluginId}` | Member        | `workspace.read` | `PLUGACC-FR-017`                                                                           |
+| `PUT`    | `/workspaces/{workspaceId}/plugins/{pluginId}` | Member        | `plugins.write`  | `PLUGACC-FR-012`, `PLUGACC-FR-013`                                                         |
+| `DELETE` | `/workspaces/{workspaceId}/plugins/{pluginId}` | Member        | `plugins.write`  | `PLUGACC-FR-014`, `PLUGACC-FR-027`                                                         |
+| `GET`    | `/plugins`                                     | Authenticated | None             | `PLUGACC-FR-021`, `PLUGACC-FR-028`                                                         |
 
 A route under `/users` declares no permission and passes `auth.RequireAdministrator`. `plugins.write` holds the lowest role `manager`,
 and `authz` declares it beside the permissions of `PERMS`.
@@ -348,17 +348,17 @@ call names, and `list_plugins` reads the allowlist as `GET /plugins` does.
 
 ### 4.5 Errors
 
-| Condition                                                    | Status | Type                                    |
-| ------------------------------------------------------------ | ------ | --------------------------------------- |
-| A user who is no administrator calls a route of `/users`, or `scope=all` | 403 | `/problems/http/permission-denied`, `permission` set to `administration` |
-| The change leaves the instance with no active administrator  | 409    | `/problems/hub/administrator-last`      |
-| A change to the allowlist of an administrator, or `allowed_plugins` for a new administrator | 409 | `/problems/hub/administrator-allowlist` |
-| A plugin that the hub did not load                           | 422    | `/problems/http/validation-failed`, pointer `/plugin_id`, or `/allowed_plugins/{index}` at the creation of a user |
-| A manager enables a plugin that their allowlist does not hold | 403   | `/problems/http/permission-denied`, `permission` set to `plugin-allowlist` |
-| The plugin is already on the allowlist                       | 200    | The row that holds it                   |
-| A disabled plugin, at a route of it or of its settings       | 404    | `/problems/http/not-found`              |
-| A disabled plugin, at an MCP tool of it                      | The protocol error of an unknown tool | `MCPHUB-DD-023`  |
-| `If-Match` names a version that moved                        | 412    | `/problems/http/precondition-failed`    |
+| Condition                                                                                   | Status                                | Type                                                                                                              |
+| ------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| A user who is no administrator calls a route of `/users`, or `scope=all`                    | 403                                   | `/problems/http/permission-denied`, `permission` set to `administration`                                          |
+| The change leaves the instance with no active administrator                                 | 409                                   | `/problems/hub/administrator-last`                                                                                |
+| A change to the allowlist of an administrator, or `allowed_plugins` for a new administrator | 409                                   | `/problems/hub/administrator-allowlist`                                                                           |
+| A plugin that the hub did not load                                                          | 422                                   | `/problems/http/validation-failed`, pointer `/plugin_id`, or `/allowed_plugins/{index}` at the creation of a user |
+| A manager enables a plugin that their allowlist does not hold                               | 403                                   | `/problems/http/permission-denied`, `permission` set to `plugin-allowlist`                                        |
+| The plugin is already on the allowlist                                                      | 200                                   | The row that holds it                                                                                             |
+| A disabled plugin, at a route of it or of its settings                                      | 404                                   | `/problems/http/not-found`                                                                                        |
+| A disabled plugin, at an MCP tool of it                                                     | The protocol error of an unknown tool | `MCPHUB-DD-023`                                                                                                   |
+| `If-Match` names a version that moved                                                       | 412                                   | `/problems/http/precondition-failed`                                                                              |
 
 ## 5. Design decisions
 
@@ -438,7 +438,6 @@ members of one workspace when the person opens it.
 **Alternatives:** A route under `/users` that answers the workspaces. `API-003` gives
 `/workspaces*` the workspaces.
 
-
 ### `PLUGACC-DD-009`
 
 **Realizes:** `PLUGACC-FR-017`, `PLUGACC-FR-025`
@@ -471,31 +470,31 @@ plugin after the creation. A failure in the middle leaves a partial allowlist.
 
 ## 7. Build plan
 
-| #   | Step                                                                                     | Realizes                                       | Done |
-| --- | ---------------------------------------------------------------------------------------- | ---------------------------------------------- | ---- |
-| 1   | Add `NewAdministratorLast` to the hub. `ERR-003` holds its row.                          | `ERR-003`                                      | [x]  |
-| 2   | Write `PLUGACC-SC-019`, then the three migrations.                                       | `PLUGACC-FR-011`, `PLUGACC-FR-026`             | [x]  |
-| 3   | Write the models and the three repositories, and the mark in every query of a user.     | `PLUGACC-FR-002`, `PLUGACC-FR-008`             | [x]  |
-| 4   | Write `PLUGACC-SC-005` and `PLUGACC-SC-018`, then the mark in the context, `auth.RequireAdministrator`, and the lock. | `PLUGACC-FR-007`, `PLUGACC-FR-022` | [x]  |
-| 5   | Write `PLUGACC-SC-002` to `PLUGACC-SC-007`, then `user.Service`, the routes of `/users`, and `scope=all`. | `PLUGACC-FR-002` to `PLUGACC-FR-009`, `PLUGACC-FR-029`, `PLUGACC-FR-030` | [x] |
-| 6   | Write `PLUGACC-SC-008` to `PLUGACC-SC-013` and `PLUGACC-SC-020`, then the enablement service, its routes, `RequireEnabled`, and the admission of an administrator. | `PLUGACC-FR-010` to `PLUGACC-FR-018`, `PLUGACC-FR-027`, `PLUGACC-NFR-001` | [x] |
-| 7   | Write `PLUGACC-SC-017`, then the filter of `GET /plugins`.                               | `PLUGACC-FR-021`, `PLUGACC-FR-028`             | [x]  |
-| 8   | Carry out `spec-clients.md`: the command line, the bot, the scheduler, and the deck.    | `PLUGACC-FR-001`, `PLUGACC-FR-019`, `PLUGACC-FR-020`, `PLUGACC-FR-023` to `PLUGACC-FR-025` | [x] |
-| 9   | Write `PLUGACC-SC-024`, then `plugin` in the answer of an enablement.                   | `PLUGACC-FR-017`                               | [x]  |
-| 10  | Write `PLUGACC-SC-023`, then `allowed_plugins` at the creation of a user.               | `PLUGACC-FR-032`                               | [x]  |
-| 11  | Carry out section 4 of `spec-clients.md` again: the navigation from the enablements, the allowlist in the form of a new user, and no page of a plugin for an administrator who is no member. | `PLUGACC-FR-017`, `PLUGACC-FR-025`, `PLUGACC-FR-032`, `PLUGACC-FR-033` | [x] |
-| 12  | Write `PLUGACC-SC-026`, then the names in `PATCH /users/{userId}` and on the page of one user. | `PLUGACC-FR-034`                               | [x]  |
-| 13  | Write `PLUGACC-SC-027`, then `administrator-allowlist` at the routes of an allowlist and at the creation, and the disabled allowlist in the deck. | `PLUGACC-FR-035`                               | [x]  |
-| 14  | Write `PLUGACC-SC-028` and `PLUGACC-SC-029`, then the enablement in the MCP settings tools, the allowlist in `list_plugins`, and the mark of an administrator over MCP. | `PLUGACC-FR-018`, `PLUGACC-FR-021`, `PLUGACC-FR-028` | [x]  |
-| 15  | Carry out section 4 of `spec-clients.md` again: the two lists of the plugins of a workspace, the page `/admin/plugins`, the removal of `/plugins`, and the links of the sidebar. | `PLUGACC-FR-036`, `PLUGACC-FR-037` | [x]  |
+| #   | Step                                                                                                                                                                                         | Realizes                                                                                   | Done |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---- |
+| 1   | Add `NewAdministratorLast` to the hub. `ERR-003` holds its row.                                                                                                                              | `ERR-003`                                                                                  | [x]  |
+| 2   | Write `PLUGACC-SC-019`, then the three migrations.                                                                                                                                           | `PLUGACC-FR-011`, `PLUGACC-FR-026`                                                         | [x]  |
+| 3   | Write the models and the three repositories, and the mark in every query of a user.                                                                                                          | `PLUGACC-FR-002`, `PLUGACC-FR-008`                                                         | [x]  |
+| 4   | Write `PLUGACC-SC-005` and `PLUGACC-SC-018`, then the mark in the context, `auth.RequireAdministrator`, and the lock.                                                                        | `PLUGACC-FR-007`, `PLUGACC-FR-022`                                                         | [x]  |
+| 5   | Write `PLUGACC-SC-002` to `PLUGACC-SC-007`, then `user.Service`, the routes of `/users`, and `scope=all`.                                                                                    | `PLUGACC-FR-002` to `PLUGACC-FR-009`, `PLUGACC-FR-029`, `PLUGACC-FR-030`                   | [x]  |
+| 6   | Write `PLUGACC-SC-008` to `PLUGACC-SC-013` and `PLUGACC-SC-020`, then the enablement service, its routes, `RequireEnabled`, and the admission of an administrator.                           | `PLUGACC-FR-010` to `PLUGACC-FR-018`, `PLUGACC-FR-027`, `PLUGACC-NFR-001`                  | [x]  |
+| 7   | Write `PLUGACC-SC-017`, then the filter of `GET /plugins`.                                                                                                                                   | `PLUGACC-FR-021`, `PLUGACC-FR-028`                                                         | [x]  |
+| 8   | Carry out `spec-clients.md`: the command line, the bot, the scheduler, and the deck.                                                                                                         | `PLUGACC-FR-001`, `PLUGACC-FR-019`, `PLUGACC-FR-020`, `PLUGACC-FR-023` to `PLUGACC-FR-025` | [x]  |
+| 9   | Write `PLUGACC-SC-024`, then `plugin` in the answer of an enablement.                                                                                                                        | `PLUGACC-FR-017`                                                                           | [x]  |
+| 10  | Write `PLUGACC-SC-023`, then `allowed_plugins` at the creation of a user.                                                                                                                    | `PLUGACC-FR-032`                                                                           | [x]  |
+| 11  | Carry out section 4 of `spec-clients.md` again: the navigation from the enablements, the allowlist in the form of a new user, and no page of a plugin for an administrator who is no member. | `PLUGACC-FR-017`, `PLUGACC-FR-025`, `PLUGACC-FR-032`, `PLUGACC-FR-033`                     | [x]  |
+| 12  | Write `PLUGACC-SC-026`, then the names in `PATCH /users/{userId}` and on the page of one user.                                                                                               | `PLUGACC-FR-034`                                                                           | [x]  |
+| 13  | Write `PLUGACC-SC-027`, then `administrator-allowlist` at the routes of an allowlist and at the creation, and the disabled allowlist in the deck.                                            | `PLUGACC-FR-035`                                                                           | [x]  |
+| 14  | Write `PLUGACC-SC-028` and `PLUGACC-SC-029`, then the enablement in the MCP settings tools, the allowlist in `list_plugins`, and the mark of an administrator over MCP.                      | `PLUGACC-FR-018`, `PLUGACC-FR-021`, `PLUGACC-FR-028`                                       | [x]  |
+| 15  | Carry out section 4 of `spec-clients.md` again: the two lists of the plugins of a workspace, the page `/admin/plugins`, the removal of `/plugins`, and the links of the sidebar.             | `PLUGACC-FR-036`, `PLUGACC-FR-037`                                                         | [x]  |
 
 ## 8. Out of scope for this specification
 
-| Postponed                                                  | Reason and the condition that brings it back                           |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------- |
-| A job of a plugin that still declares `CronScopeShared`.   | Its plugin reads shared tables today, as `OWN-009` lets it. The feature that moves the plugin to the workspace moves the job to `CronScopePerWorkspace`, and `PLUGACC-FR-020` then reaches it. |
-| A history of the changes to an allowlist or an enablement. | The requirements put it out of scope.                                  |
-| The menu of each chat, `PLUGACC-FR-031` and `PLUGACC-NFR-002`. | The owner postponed it on 2026-10-04. The menu keeps every command, and the drop of `PLUGACC-FR-019` answers nothing for a disabled plugin. A later specification of the menu brings it back. |
+| Postponed                                                      | Reason and the condition that brings it back                                                                                                                                                   |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A job of a plugin that still declares `CronScopeShared`.       | Its plugin reads shared tables today, as `OWN-009` lets it. The feature that moves the plugin to the workspace moves the job to `CronScopePerWorkspace`, and `PLUGACC-FR-020` then reaches it. |
+| A history of the changes to an allowlist or an enablement.     | The requirements put it out of scope.                                                                                                                                                          |
+| The menu of each chat, `PLUGACC-FR-031` and `PLUGACC-NFR-002`. | The owner postponed it on 2026-10-04. The menu keeps every command, and the drop of `PLUGACC-FR-019` answers nothing for a disabled plugin. A later specification of the menu brings it back.  |
 
 ## Retired identifiers
 

@@ -5,7 +5,12 @@ type: guideline
 status: active
 created: 2026-09-11
 updated: 2026-09-11
-scope: [apps/hub/internal/worker/mqtt.go, apps/hub/internal/plugin/registrar/mqtt_subscriber.go, plugins/*/mqtt/]
+scope:
+  [
+    apps/hub/internal/worker/mqtt.go,
+    apps/hub/internal/plugin/registrar/mqtt_subscriber.go,
+    plugins/*/mqtt/
+  ]
 related: [PLG, JOB, CFG]
 ---
 

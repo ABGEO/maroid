@@ -23,26 +23,26 @@ pager and its own colors.
 
 ## 2. Coverage
 
-| Requirement      | Where this specification realizes it                                  |
-| ---------------- | --------------------------------------------------------------------- |
-| `UIKIT-FR-001`   | Section 4.1, `UIKIT-DD-002`, `UIKIT-SC-001`                           |
-| `UIKIT-FR-002`   | Section 4.4, `UIKIT-DD-003`, `UIKIT-SC-002`, `UIKIT-SC-003`           |
-| `UIKIT-FR-003`   | Section 4.1, `UIKIT-DD-002`, `UIKIT-SC-004`                           |
-| `UIKIT-FR-004`   | Section 4.4, `UIKIT-DD-003`, `UIKIT-SC-005`                           |
-| `UIKIT-FR-005`   | Section 4.1, section 4.3, `UIKIT-DD-005`, `UIKIT-SC-006`              |
-| `UIKIT-FR-006`   | Section 4.1, `UIKIT-SC-006`, `UIKIT-SC-007`                           |
-| `UIKIT-FR-007`   | Section 4.1, `UIKIT-SC-008`                                           |
-| `UIKIT-FR-008`   | Section 4.1, `UIKIT-SC-009`                                           |
-| `UIKIT-FR-009`   | Section 4.1, section 4.5, `UIKIT-DD-006`, `UIKIT-SC-010`              |
-| `UIKIT-FR-010`   | Section 4.1, section 4.4, `UIKIT-SC-011`                              |
-| `UIKIT-FR-011`   | Section 4.1, section 4.4, `UIKIT-SC-011`                              |
-| `UIKIT-FR-012`   | Section 4.1, `UIKIT-SC-012`                                           |
-| `UIKIT-FR-013`   | Section 4.1, `UIKIT-SC-001`, `UIKIT-SC-013`                           |
-| `UIKIT-NFR-001`  | `UIKIT-SC-003`                                                        |
-| `UIKIT-NFR-002`  | `UIKIT-DD-004`, `UIKIT-SC-014`                                        |
-| `UIKIT-INV-001`  | Section 4.1, `UIKIT-DD-002`, `UIKIT-SC-013`                           |
-| `UIKIT-INV-002`  | `UIKIT-DD-004`, `UIKIT-SC-015`                                        |
-| `UIKIT-INV-003`  | Section 4.1, `UIKIT-DD-001`, `UIKIT-DD-005`, `UIKIT-SC-016`           |
+| Requirement     | Where this specification realizes it                        |
+| --------------- | ----------------------------------------------------------- |
+| `UIKIT-FR-001`  | Section 4.1, `UIKIT-DD-002`, `UIKIT-SC-001`                 |
+| `UIKIT-FR-002`  | Section 4.4, `UIKIT-DD-003`, `UIKIT-SC-002`, `UIKIT-SC-003` |
+| `UIKIT-FR-003`  | Section 4.1, `UIKIT-DD-002`, `UIKIT-SC-004`                 |
+| `UIKIT-FR-004`  | Section 4.4, `UIKIT-DD-003`, `UIKIT-SC-005`                 |
+| `UIKIT-FR-005`  | Section 4.1, section 4.3, `UIKIT-DD-005`, `UIKIT-SC-006`    |
+| `UIKIT-FR-006`  | Section 4.1, `UIKIT-SC-006`, `UIKIT-SC-007`                 |
+| `UIKIT-FR-007`  | Section 4.1, `UIKIT-SC-008`                                 |
+| `UIKIT-FR-008`  | Section 4.1, `UIKIT-SC-009`                                 |
+| `UIKIT-FR-009`  | Section 4.1, section 4.5, `UIKIT-DD-006`, `UIKIT-SC-010`    |
+| `UIKIT-FR-010`  | Section 4.1, section 4.4, `UIKIT-SC-011`                    |
+| `UIKIT-FR-011`  | Section 4.1, section 4.4, `UIKIT-SC-011`                    |
+| `UIKIT-FR-012`  | Section 4.1, `UIKIT-SC-012`                                 |
+| `UIKIT-FR-013`  | Section 4.1, `UIKIT-SC-001`, `UIKIT-SC-013`                 |
+| `UIKIT-NFR-001` | `UIKIT-SC-003`                                              |
+| `UIKIT-NFR-002` | `UIKIT-DD-004`, `UIKIT-SC-014`                              |
+| `UIKIT-INV-001` | Section 4.1, `UIKIT-DD-002`, `UIKIT-SC-013`                 |
+| `UIKIT-INV-002` | `UIKIT-DD-004`, `UIKIT-SC-015`                              |
+| `UIKIT-INV-003` | Section 4.1, `UIKIT-DD-001`, `UIKIT-DD-005`, `UIKIT-SC-016` |
 
 ## 3. Guideline compliance
 
@@ -58,34 +58,34 @@ pager and its own colors.
 | `TS-002`  | Frontend style    | `Pagination.svelte` reads its props with `$props`. The pager keeps its state in `$state`.        |
 | `TS-004`  | Frontend style    | `pnpm --filter @maroid/ui check` runs `svelte-check`. Build plan step 9.                         |
 | `TS-005`  | Frontend style    | Tailwind CSS 4 and daisyUI give every style. The jasmine pages drop their `<style>` blocks.      |
-| `BLD-001` | Build and release | A new row for `libs/ui`. Build plan step 8.                                                       |
-| `BLD-003` | Build and release | A change to `libs/ui` rebuilds each remote, then its shared object.                               |
-| `RES-005` | REST              | The pager reads `next` and `prev` of a page. Section 4.1.                                         |
-| `RES-006` | REST              | The pager passes a link back unchanged. It builds no cursor.                                      |
-| `TST-004` | Testing           | Every scenario declares its layer. Section 6.                                                     |
+| `BLD-001` | Build and release | A new row for `libs/ui`. Build plan step 8.                                                      |
+| `BLD-003` | Build and release | A change to `libs/ui` rebuilds each remote, then its shared object.                              |
+| `RES-005` | REST              | The pager reads `next` and `prev` of a page. Section 4.1.                                        |
+| `RES-006` | REST              | The pager passes a link back unchanged. It builds no cursor.                                     |
+| `TST-004` | Testing           | Every scenario declares its layer. Section 6.                                                    |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                           | Action | Holds                                                           |
-| ---------------------------------------------- | ------ | --------------------------------------------------------------- |
-| `libs/ui/package.json`                         | Create | `@maroid/ui`. Exports in section 4.3.                           |
-| `libs/ui/tsconfig.json`                        | Create | Strict. The same options as `plugins/jasmine/ui/tsconfig.json`. |
-| `libs/ui/svelte.config.js`                     | Create | No option.                                                      |
-| `libs/ui/src/index.ts`                         | Create | The exports of section 4.3.                                     |
-| `libs/ui/src/remote.css`                       | Create | The remote stylesheet, below.                                   |
-| `libs/ui/src/pagination/Pagination.svelte`     | Create | The pagination control, below.                                  |
-| `libs/ui/src/pagination/pager.svelte.ts`       | Create | `createPager` and its types, below.                             |
-| `pnpm-workspace.yaml`                          | Change | Add `libs/ui`.                                                  |
-| `.docker/deck/Dockerfile`                      | Change | Copy `libs/ui/package.json`, as the comment in the file demands. |
-| `specs/guidelines/build-release.md`            | Change | Add the `libs/ui` row to `BLD-001`.                             |
-| `plugins/jasmine/ui/package.json`              | Change | Add `@maroid/ui`, `tailwindcss`, `@tailwindcss/vite`, `daisyui`. |
-| `plugins/jasmine/ui/vite.config.ts`            | Change | Add `tailwindcss()` before `svelte()`.                          |
-| `plugins/jasmine/ui/src/app.css`               | Create | `@import '@maroid/ui/remote.css';` and nothing else.            |
-| `plugins/jasmine/ui/src/pages/**/*.svelte`     | Change | The jasmine pages, below.                                       |
-| `plugins/jasmine/ui/src/lib/Pager.svelte`      | Delete | Replaced by `Pagination`.                                       |
-| `plugins/jasmine/ui/src/lib/paging.svelte.ts`  | Delete | Replaced by `createPager`.                                      |
+| Path                                          | Action | Holds                                                            |
+| --------------------------------------------- | ------ | ---------------------------------------------------------------- |
+| `libs/ui/package.json`                        | Create | `@maroid/ui`. Exports in section 4.3.                            |
+| `libs/ui/tsconfig.json`                       | Create | Strict. The same options as `plugins/jasmine/ui/tsconfig.json`.  |
+| `libs/ui/svelte.config.js`                    | Create | No option.                                                       |
+| `libs/ui/src/index.ts`                        | Create | The exports of section 4.3.                                      |
+| `libs/ui/src/remote.css`                      | Create | The remote stylesheet, below.                                    |
+| `libs/ui/src/pagination/Pagination.svelte`    | Create | The pagination control, below.                                   |
+| `libs/ui/src/pagination/pager.svelte.ts`      | Create | `createPager` and its types, below.                              |
+| `pnpm-workspace.yaml`                         | Change | Add `libs/ui`.                                                   |
+| `.docker/deck/Dockerfile`                     | Change | Copy `libs/ui/package.json`, as the comment in the file demands. |
+| `specs/guidelines/build-release.md`           | Change | Add the `libs/ui` row to `BLD-001`.                              |
+| `plugins/jasmine/ui/package.json`             | Change | Add `@maroid/ui`, `tailwindcss`, `@tailwindcss/vite`, `daisyui`. |
+| `plugins/jasmine/ui/vite.config.ts`           | Change | Add `tailwindcss()` before `svelte()`.                           |
+| `plugins/jasmine/ui/src/app.css`              | Create | `@import '@maroid/ui/remote.css';` and nothing else.             |
+| `plugins/jasmine/ui/src/pages/**/*.svelte`    | Change | The jasmine pages, below.                                        |
+| `plugins/jasmine/ui/src/lib/Pager.svelte`     | Delete | Replaced by `Pagination`.                                        |
+| `plugins/jasmine/ui/src/lib/paging.svelte.ts` | Delete | Replaced by `createPager`.                                       |
 
 **The package.** `libs/ui` imports no TypeScript module from the workspace: nothing
 from `apps/`, from `@maroid/plugin-sdk`, from `@maroid/api-client`, or from a global
@@ -98,13 +98,13 @@ and a `lint` script, `prettier --check .`.
 **The remote stylesheet.** `libs/ui/src/remote.css` is the only stylesheet that a
 remote imports.
 
-| Emits                                                          | Does not emit                                                               |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| Each Tailwind utility that the remote or `libs/ui` names       | The Tailwind base reset. The deck already carries it.                       |
-| Each daisyUI component rule that the remote or `libs/ui` names | Any daisyUI theme.                                                          |
-|                                                                | Any daisyUI base rule. The deck already carries each one.                   |
-| Each Tailwind default variable that such a utility reads       | Any variable that `libs/theme` defines.                                     |
-|                                                                | The font import of `@maroid/theme`.                                         |
+| Emits                                                          | Does not emit                                             |
+| -------------------------------------------------------------- | --------------------------------------------------------- |
+| Each Tailwind utility that the remote or `libs/ui` names       | The Tailwind base reset. The deck already carries it.     |
+| Each daisyUI component rule that the remote or `libs/ui` names | Any daisyUI theme.                                        |
+|                                                                | Any daisyUI base rule. The deck already carries each one. |
+| Each Tailwind default variable that such a utility reads       | Any variable that `libs/theme` defines.                   |
+|                                                                | The font import of `@maroid/theme`.                       |
 
 A Tailwind default variable, such as `--text-lg`, is not a theme value. The deck
 emits only the defaults that the deck uses, so the remote emits the ones it uses.
@@ -152,41 +152,41 @@ as it is, and `pager.page` keeps the full type of the caller.
 
 ```ts
 export interface PageLinks {
-  next?: string;
-  prev?: string;
+	next?: string;
+	prev?: string;
 }
 
 export type PageStatus = 'loading' | 'ready' | 'error';
 export type PageReader<P extends PageLinks> = (link?: string) => Promise<P | null>;
 
 export interface Pager<P extends PageLinks> {
-  readonly page: P | null;
-  readonly status: PageStatus;
-  readonly hasPrevious: boolean;
-  readonly hasNext: boolean;
-  reload(): Promise<void>;
-  next(): Promise<void>;
-  previous(): Promise<void>;
+	readonly page: P | null;
+	readonly status: PageStatus;
+	readonly hasPrevious: boolean;
+	readonly hasNext: boolean;
+	reload(): Promise<void>;
+	next(): Promise<void>;
+	previous(): Promise<void>;
 }
 ```
 
-| Member     | Behavior                                                                                                   | Change                        |
-| ---------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| `reload`   | Reads the link that the pager last requested. The first call reads with no link.                           | None                          |
-| `next`     | Reads `page.next`. Does nothing when `page.next` is absent or `status` is `loading`.                       | Ignores a call during a load. |
-| `previous` | Reads `page.prev`. Does nothing when `page.prev` is absent or `status` is `loading`.                       | Ignores a call during a load. |
-| A load     | Sets `loading`. On an answer, sets `page` and `ready`. On a throw, sets `error` and keeps `page`.          | Discards a replaced answer.   |
+| Member     | Behavior                                                                                          | Change                        |
+| ---------- | ------------------------------------------------------------------------------------------------- | ----------------------------- |
+| `reload`   | Reads the link that the pager last requested. The first call reads with no link.                  | None                          |
+| `next`     | Reads `page.next`. Does nothing when `page.next` is absent or `status` is `loading`.              | Ignores a call during a load. |
+| `previous` | Reads `page.prev`. Does nothing when `page.prev` is absent or `status` is `loading`.              | Ignores a call during a load. |
+| A load     | Sets `loading`. On an answer, sets `page` and `ready`. On a throw, sets `error` and keeps `page`. | Discards a replaced answer.   |
 
 **The jasmine pages.** Each page of `plugins/jasmine/ui/src/pages/` imports
 `../../app.css` and deletes its `<style>` block. `Plants.svelte` and
 `Environments.svelte` import `createPager` and `Pagination` from `@maroid/ui`.
 
-| Element          | Today                           | After                                             |
-| ---------------- | ------------------------------- | ------------------------------------------------- |
-| Error text       | `.error { color: #f87171 }`     | `text-error`                                      |
-| Table            | Hand-written borders, `#1e293b` | `table`                                           |
-| Retry, add, save | Unstyled `button`, `a`          | `btn btn-sm`, `btn btn-primary btn-sm`            |
-| Heading          | `h2 { margin }`                 | `text-lg font-semibold mb-4`                      |
+| Element          | Today                           | After                                               |
+| ---------------- | ------------------------------- | --------------------------------------------------- |
+| Error text       | `.error { color: #f87171 }`     | `text-error`                                        |
+| Table            | Hand-written borders, `#1e293b` | `table`                                             |
+| Retry, add, save | Unstyled `button`, `a`          | `btn btn-sm`, `btn btn-primary btn-sm`              |
+| Heading          | `h2 { margin }`                 | `text-lg font-semibold mb-4`                        |
 | Pager            | `<Pager {pager} />`             | `<Pagination {pager} class="mt-4 ml-auto w-fit" />` |
 
 ### 4.2 Data model
@@ -198,15 +198,15 @@ None. This feature adds no table.
 None. This feature adds no surface that `SPC-003` lists. It adds one package
 interface:
 
-| Export                  | Kind       | Signature                                         | Realizes                                         |
-| ----------------------- | ---------- | ------------------------------------------------- | ------------------------------------------------ |
-| `Pagination`            | Component  | Props `{ pager: Pager<PageLinks>; class?: string }` | `UIKIT-FR-005` to `UIKIT-FR-007`, `UIKIT-FR-009` |
+| Export                  | Kind       | Signature                                                         | Realizes                                         |
+| ----------------------- | ---------- | ----------------------------------------------------------------- | ------------------------------------------------ |
+| `Pagination`            | Component  | Props `{ pager: Pager<PageLinks>; class?: string }`               | `UIKIT-FR-005` to `UIKIT-FR-007`, `UIKIT-FR-009` |
 | `createPager`           | Function   | `createPager<P extends PageLinks>(read: PageReader<P>): Pager<P>` | `UIKIT-FR-008` to `UIKIT-FR-011`                 |
-| `Pager<P>`              | Type       | Section 4.1                                       | `UIKIT-FR-010`                                   |
-| `PageReader<P>`         | Type       | Section 4.1                                       | `UIKIT-FR-008`                                   |
-| `PageLinks`             | Type       | Section 4.1                                       | `UIKIT-FR-008`, `UIKIT-INV-003`                  |
-| `PageStatus`            | Type       | Section 4.1                                       | `UIKIT-FR-010`                                   |
-| `@maroid/ui/remote.css` | Stylesheet | Section 4.1                                       | `UIKIT-FR-001`, `UIKIT-FR-003`                   |
+| `Pager<P>`              | Type       | Section 4.1                                                       | `UIKIT-FR-010`                                   |
+| `PageReader<P>`         | Type       | Section 4.1                                                       | `UIKIT-FR-008`                                   |
+| `PageLinks`             | Type       | Section 4.1                                                       | `UIKIT-FR-008`, `UIKIT-INV-003`                  |
+| `PageStatus`            | Type       | Section 4.1                                                       | `UIKIT-FR-010`                                   |
+| `@maroid/ui/remote.css` | Stylesheet | Section 4.1                                                       | `UIKIT-FR-001`, `UIKIT-FR-003`                   |
 
 ### 4.4 Flow
 
@@ -236,12 +236,12 @@ stateDiagram-v2
 
 ### 4.5 Errors
 
-| Condition                                        | Behavior                                                  | Message                         |
-| ------------------------------------------------ | --------------------------------------------------------- | ------------------------------- |
-| The reader throws                                | `status` becomes `error`. `page` keeps the last page.     | The page shows its error state. |
-| The reader answers `null` after a 401            | `status` stays `loading`. `@maroid/api-client` sends the person to sign in. | None.            |
-| `next` or `previous` during a load               | The call does nothing.                                    | None.                           |
-| An answer arrives after a later request started  | The pager discards it.                                    | None.                           |
+| Condition                                       | Behavior                                                                    | Message                         |
+| ----------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------- |
+| The reader throws                               | `status` becomes `error`. `page` keeps the last page.                       | The page shows its error state. |
+| The reader answers `null` after a 401           | `status` stays `loading`. `@maroid/api-client` sends the person to sign in. | None.                           |
+| `next` or `previous` during a load              | The call does nothing.                                                      | None.                           |
+| An answer arrives after a later request started | The pager discards it.                                                      | None.                           |
 
 ## 5. Design decisions
 
@@ -455,18 +455,18 @@ variable that `libs/theme/src/*.css` defines, and `src/` for a color literal.
 
 ## 7. Build plan
 
-| #   | Step                                                                                                    | Realizes                                         | Done |
-| --- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ---- |
-| 1   | Create `libs/ui` with `package.json`, `tsconfig.json`, `svelte.config.js`. Add it to `pnpm-workspace.yaml` and to `.docker/deck/Dockerfile`. | `UIKIT-FR-012` | [x]  |
-| 2   | Record the gzip size of jasmine `dist/assets`. It was 20629 bytes.                                       | `UIKIT-NFR-002`                                  | [x]  |
-| 3   | Write `remote.css`. Add Tailwind CSS to the jasmine build. Create `src/app.css`.                         | `UIKIT-FR-001`, `UIKIT-FR-003`, `UIKIT-INV-001`  | [x]  |
-| 4   | Move the jasmine pages to the classes of section 4.1. Delete each `<style>` block.                       | `UIKIT-FR-013`                                   | [x]  |
-| 5   | Write `pager.svelte.ts` from the jasmine pager, with the changes of section 4.1.                         | `UIKIT-FR-008` to `UIKIT-FR-011`                 | [x]  |
-| 6   | Write `Pagination.svelte` and `index.ts`.                                                                | `UIKIT-FR-005` to `UIKIT-FR-007`, `UIKIT-FR-009` | [x]  |
-| 7   | Move the jasmine pages to `createPager` and `Pagination`. Delete the old pager.                          | `UIKIT-FR-012`                                   | [x]  |
-| 8   | Add the `libs/ui` row to `BLD-001`.                                                                      | `BLD-001`                                        | [x]  |
-| 9   | Run `pnpm --filter @maroid/ui lint`, `pnpm --filter @maroid/ui check`, `pnpm --filter ./plugins/jasmine/ui build`, then build the jasmine shared object. | `BLD-001`, `BLD-003` | [x]  |
-| 10  | Run `UIKIT-SC-001` to `UIKIT-SC-016`.                                                                    | Every requirement                                | [x]  |
+| #   | Step                                                                                                                                                     | Realizes                                         | Done |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | ---- |
+| 1   | Create `libs/ui` with `package.json`, `tsconfig.json`, `svelte.config.js`. Add it to `pnpm-workspace.yaml` and to `.docker/deck/Dockerfile`.             | `UIKIT-FR-012`                                   | [x]  |
+| 2   | Record the gzip size of jasmine `dist/assets`. It was 20629 bytes.                                                                                       | `UIKIT-NFR-002`                                  | [x]  |
+| 3   | Write `remote.css`. Add Tailwind CSS to the jasmine build. Create `src/app.css`.                                                                         | `UIKIT-FR-001`, `UIKIT-FR-003`, `UIKIT-INV-001`  | [x]  |
+| 4   | Move the jasmine pages to the classes of section 4.1. Delete each `<style>` block.                                                                       | `UIKIT-FR-013`                                   | [x]  |
+| 5   | Write `pager.svelte.ts` from the jasmine pager, with the changes of section 4.1.                                                                         | `UIKIT-FR-008` to `UIKIT-FR-011`                 | [x]  |
+| 6   | Write `Pagination.svelte` and `index.ts`.                                                                                                                | `UIKIT-FR-005` to `UIKIT-FR-007`, `UIKIT-FR-009` | [x]  |
+| 7   | Move the jasmine pages to `createPager` and `Pagination`. Delete the old pager.                                                                          | `UIKIT-FR-012`                                   | [x]  |
+| 8   | Add the `libs/ui` row to `BLD-001`.                                                                                                                      | `BLD-001`                                        | [x]  |
+| 9   | Run `pnpm --filter @maroid/ui lint`, `pnpm --filter @maroid/ui check`, `pnpm --filter ./plugins/jasmine/ui build`, then build the jasmine shared object. | `BLD-001`, `BLD-003`                             | [x]  |
+| 10  | Run `UIKIT-SC-001` to `UIKIT-SC-016`.                                                                                                                    | Every requirement                                | [x]  |
 
 The `BLD-001` row:
 

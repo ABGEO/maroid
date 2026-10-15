@@ -5,7 +5,19 @@ type: guideline
 status: active
 created: 2026-09-22
 updated: 2026-10-13
-scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, plugins/, libs/api-client/, libs/plugin-sdk/, apps/deck/, specs/features/*/api.yaml, specs/templates/api.yaml, specs/api/, build/openapi/]
+scope:
+  [
+    apps/hub/internal/handler/,
+    apps/hub/internal/middleware/,
+    plugins/,
+    libs/api-client/,
+    libs/plugin-sdk/,
+    apps/deck/,
+    specs/features/*/api.yaml,
+    specs/templates/api.yaml,
+    specs/api/,
+    build/openapi/
+  ]
 related: [API, ERR, SPC, DAT, EXT, SEC, OWN, UI, TG, MQT, CFG, BLD, CLI]
 ---
 
@@ -15,11 +27,11 @@ related: [API, ERR, SPC, DAT, EXT, SEC, OWN, UI, TG, MQT, CFG, BLD, CLI]
 
 The Zalando RESTful API Guidelines bind every HTTP API that Maroid designs.
 
-| Field    | Value                                                  |
-| -------- | ------------------------------------------------------ |
-| Source   | `github.com/zalando/restful-api-guidelines`            |
-| Revision | `41b74fa6`                                             |
-| Date     | 2026-07-07                                             |
+| Field    | Value                                       |
+| -------- | ------------------------------------------- |
+| Source   | `github.com/zalando/restful-api-guidelines` |
+| Revision | `41b74fa6`                                  |
+| Date     | 2026-07-07                                  |
 
 Write a Zalando rule as `Z-<number>`: `Z-118`, `Z-248`. A rule of this file wins
 over a Zalando rule only when `RES-002` names it.
@@ -40,29 +52,29 @@ publishes its first event.
 This table holds every deviation, except the derived address that `RES-004`
 registers. Every rule that neither table names binds in full.
 
-| Rule           | Deviation                                                                                                                               |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `Z-223`, `Z-224` | A hostname comes from the deployment. `Z-224` asks for one under `zalandoapis.com`, and no name resolves for every reader of Maroid. The rule binds every document at the level of a must, because `RES-007` gives each one the audience `external-public`. |
-| `Z-192`        | `RES-008` writes each document into the build tree, and a release carries it. The rule asks for the `/zalando-apis` directory of a deployment, which feeds a portal that Maroid has no equal of. It binds every document, because it exempts a component-internal API only. |
-| `Z-129`, `Z-134` | `RES-004` exempts the one address that a client derives from a standard. `.well-known` opens with a stop, which `Z-129` forbids, and `oauth-protected-resource` is singular, which `Z-134` forbids. |
-| `Z-134`        | `callback`, `schema`, `api`, `ui`, `auth`, `telegram`, `webhook`, `livez`, and `readyz` are singular, and Maroid picks each name. Each one names one thing, and none is a collection. An orchestrator reads `livez` and `readyz` by the names that Kubernetes gives its own probes. |
-| `Z-148`, `Z-149` | `GET /auth/callback` writes, and a `GET` reads. RFC 6749 section 4.1.2 makes the redirection endpoint a `GET` that carries `code` and `state` as query parameters, and the browser arrives there by redirect. Maroid picks the address of that route, and it does not pick the method. |
-| `Z-148`        | A `PUT` of a `self` resource whose state the hub derives from stored data carries no body, `PUT /connections/self` of a plugin for example. The repeat leaves the same state, as `Z-149` asks. `ADR-0018`. |
-| `Z-150`        | `ERR-003` answers 422 for a body that fails validation and for settings that fail their schema. `Z-150` marks 422 do-not-use and prefers 400. A client of Maroid branches on the problem type, and the two conditions differ from a body that does not parse, which already answers 400. |
-| `Z-150`, `Z-251` | `GET /auth/callback` answers 302. `Z-150` marks 302 do-not-use and `Z-251` advises against a redirection code. The browser arrives at that route by redirect and leaves by one, which RFC 6749 section 4.1.2 fixes. |
-| `Z-217`        | The first sentence of `Z-217` is a must, and `RES-005` meets it with an absolute address. The deviation is from the second, a should: it asks for the scheme, the host, and the port of the request. A proxy sets the `Host` header, and a caller sets it behind a proxy that passes it, so a link built from it points where the caller chose. |
-| `Z-110`        | `GET /workspaces/{workspaceId}/plugins/{id}/settings` answers a map at the top level, which `Z-110` forbids because a map grows no member. The settings of a plugin hold that shape, and an envelope changes the route and the deck together. `Z-110` binds a response body, so the request body of the `PUT` is not in scope, and that `PUT` answers 204 with no body at all. |
-| `Z-143`        | `Z-143` asks that every intermediate path resolve. `/plugins/{id}`, `/auth`, `/.well-known`, the mount prefix of `API-004`, and the asset prefix of `SEC-006` answer nothing. `/plugins/{id}` would repeat one row of the list that `/plugins` answers, and the other four name no resource of their own. A collection whose only member a client reaches is the `self` record of the acting user answers no `GET` either, `/connections` of a plugin for example. `ADR-0015`. |
-| `Z-144`        | `DAT-009` gives every row a UUID version 7, and `Z-144` discourages a UUID as the primary key of configuration data. Version 7 sorts by time, so the primary key answers the keyset page of `RES-006` at no index cost, which is the case that the hint of `Z-144` concedes. |
-| `Z-186`        | The rule asks every external partner to consent to the window before it uses the API. `RES-007` gives the audience `external-public`, so no deployment can tell whether a consumer is a partner. The condition cannot be discharged, rather than being unmet. `RES-011` publishes the window, which answers the first sentence of the rule and not the second. |
-| `Z-185`        | The rule asks for the consent of every client before a route goes. `RES-007` gives the audience `external-public`, so a deployment cannot enumerate its clients. `RES-011` publishes a window in place of the consent. |
-| `Z-188`, `Z-193` | The rules ask a producer to monitor the usage of an API and of a route that a sunset date names. Maroid collects no usage of its own, and a deployment reads its own log. |
-| `Z-135`, `Z-142` | The segment `api` that ends the mount prefix of `API-004`, and the segment `ui` of `/plugins/{id}/ui`, carry the two most general names in the tree. `API-004` makes the first prefix the base path of the API of a plugin, which is where `Z-135` reaches it. `SEC-006` gives the second. `API-004` builds the prefix from the workspace and the plugin identifier so that two plugins cannot collide, and the segment says which surface answers. |
-| `Z-156`        | No middleware of `API-002` compresses an answer. The route that would gain most serves the bundle of a plugin, and a deployment puts a proxy in front of the hub that compresses for it. |
-| `Z-102`        | Maroid publishes no user manual, so no document carries `externalDocs`. The repository holds the documentation that a reader needs. |
-| `Z-183`        | `X-Telegram-Bot-Api-Secret-Token` is not on the list of proprietary headers that the rule allows. Telegram names the header, `TG-001` records it, and `SEC-010` reads it. `X-Flow-ID` is on the list, and `ERR-006` uses it. |
-| `Z-105`        | The rule gives the pseudo permission `uid` to every endpoint that needs no permission of its own. `uid` names a user behind the call. Telegram calls `/telegram/webhook` under the secret of `SEC-010`, and a route that declares an empty requirement carries no scheme to hang a permission on, so neither carries `uid`. |
-| `Z-104`        | The rule names the `http` bearer scheme and the `oauth2` scheme. `hub.yaml` guards a route with the session cookie of `SEC-005`, which `ADR-0004` chose, and `telegram.yaml` with the header of `SEC-010`. OpenAPI describes each as `apiKey`. `mcp.yaml` uses bearer and meets the rule. Separately, these routes carry no credential, and each one must: the sign in, the sign out, the redemption of an invitation, `GET /auth/callback`, the two discovery routes, the two probe routes, and the assets of a plugin that `SEC-006` publishes. A person holds no session before a sign in, RFC 9728 asks a client that holds no account to read discovery, and an orchestrator holds no account. |
+| Rule             | Deviation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Z-223`, `Z-224` | A hostname comes from the deployment. `Z-224` asks for one under `zalandoapis.com`, and no name resolves for every reader of Maroid. The rule binds every document at the level of a must, because `RES-007` gives each one the audience `external-public`.                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `Z-192`          | `RES-008` writes each document into the build tree, and a release carries it. The rule asks for the `/zalando-apis` directory of a deployment, which feeds a portal that Maroid has no equal of. It binds every document, because it exempts a component-internal API only.                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `Z-129`, `Z-134` | `RES-004` exempts the one address that a client derives from a standard. `.well-known` opens with a stop, which `Z-129` forbids, and `oauth-protected-resource` is singular, which `Z-134` forbids.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `Z-134`          | `callback`, `schema`, `api`, `ui`, `auth`, `telegram`, `webhook`, `livez`, and `readyz` are singular, and Maroid picks each name. Each one names one thing, and none is a collection. An orchestrator reads `livez` and `readyz` by the names that Kubernetes gives its own probes.                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `Z-148`, `Z-149` | `GET /auth/callback` writes, and a `GET` reads. RFC 6749 section 4.1.2 makes the redirection endpoint a `GET` that carries `code` and `state` as query parameters, and the browser arrives there by redirect. Maroid picks the address of that route, and it does not pick the method.                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `Z-148`          | A `PUT` of a `self` resource whose state the hub derives from stored data carries no body, `PUT /connections/self` of a plugin for example. The repeat leaves the same state, as `Z-149` asks. `ADR-0018`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `Z-150`          | `ERR-003` answers 422 for a body that fails validation and for settings that fail their schema. `Z-150` marks 422 do-not-use and prefers 400. A client of Maroid branches on the problem type, and the two conditions differ from a body that does not parse, which already answers 400.                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `Z-150`, `Z-251` | `GET /auth/callback` answers 302. `Z-150` marks 302 do-not-use and `Z-251` advises against a redirection code. The browser arrives at that route by redirect and leaves by one, which RFC 6749 section 4.1.2 fixes.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `Z-217`          | The first sentence of `Z-217` is a must, and `RES-005` meets it with an absolute address. The deviation is from the second, a should: it asks for the scheme, the host, and the port of the request. A proxy sets the `Host` header, and a caller sets it behind a proxy that passes it, so a link built from it points where the caller chose.                                                                                                                                                                                                                                                                                                                                                     |
+| `Z-110`          | `GET /workspaces/{workspaceId}/plugins/{id}/settings` answers a map at the top level, which `Z-110` forbids because a map grows no member. The settings of a plugin hold that shape, and an envelope changes the route and the deck together. `Z-110` binds a response body, so the request body of the `PUT` is not in scope, and that `PUT` answers 204 with no body at all.                                                                                                                                                                                                                                                                                                                      |
+| `Z-143`          | `Z-143` asks that every intermediate path resolve. `/plugins/{id}`, `/auth`, `/.well-known`, the mount prefix of `API-004`, and the asset prefix of `SEC-006` answer nothing. `/plugins/{id}` would repeat one row of the list that `/plugins` answers, and the other four name no resource of their own. A collection whose only member a client reaches is the `self` record of the acting user answers no `GET` either, `/connections` of a plugin for example. `ADR-0015`.                                                                                                                                                                                                                      |
+| `Z-144`          | `DAT-009` gives every row a UUID version 7, and `Z-144` discourages a UUID as the primary key of configuration data. Version 7 sorts by time, so the primary key answers the keyset page of `RES-006` at no index cost, which is the case that the hint of `Z-144` concedes.                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `Z-186`          | The rule asks every external partner to consent to the window before it uses the API. `RES-007` gives the audience `external-public`, so no deployment can tell whether a consumer is a partner. The condition cannot be discharged, rather than being unmet. `RES-011` publishes the window, which answers the first sentence of the rule and not the second.                                                                                                                                                                                                                                                                                                                                      |
+| `Z-185`          | The rule asks for the consent of every client before a route goes. `RES-007` gives the audience `external-public`, so a deployment cannot enumerate its clients. `RES-011` publishes a window in place of the consent.                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `Z-188`, `Z-193` | The rules ask a producer to monitor the usage of an API and of a route that a sunset date names. Maroid collects no usage of its own, and a deployment reads its own log.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `Z-135`, `Z-142` | The segment `api` that ends the mount prefix of `API-004`, and the segment `ui` of `/plugins/{id}/ui`, carry the two most general names in the tree. `API-004` makes the first prefix the base path of the API of a plugin, which is where `Z-135` reaches it. `SEC-006` gives the second. `API-004` builds the prefix from the workspace and the plugin identifier so that two plugins cannot collide, and the segment says which surface answers.                                                                                                                                                                                                                                                 |
+| `Z-156`          | No middleware of `API-002` compresses an answer. The route that would gain most serves the bundle of a plugin, and a deployment puts a proxy in front of the hub that compresses for it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `Z-102`          | Maroid publishes no user manual, so no document carries `externalDocs`. The repository holds the documentation that a reader needs.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `Z-183`          | `X-Telegram-Bot-Api-Secret-Token` is not on the list of proprietary headers that the rule allows. Telegram names the header, `TG-001` records it, and `SEC-010` reads it. `X-Flow-ID` is on the list, and `ERR-006` uses it.                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `Z-105`          | The rule gives the pseudo permission `uid` to every endpoint that needs no permission of its own. `uid` names a user behind the call. Telegram calls `/telegram/webhook` under the secret of `SEC-010`, and a route that declares an empty requirement carries no scheme to hang a permission on, so neither carries `uid`.                                                                                                                                                                                                                                                                                                                                                                         |
+| `Z-104`          | The rule names the `http` bearer scheme and the `oauth2` scheme. `hub.yaml` guards a route with the session cookie of `SEC-005`, which `ADR-0004` chose, and `telegram.yaml` with the header of `SEC-010`. OpenAPI describes each as `apiKey`. `mcp.yaml` uses bearer and meets the rule. Separately, these routes carry no credential, and each one must: the sign in, the sign out, the redemption of an invitation, `GET /auth/callback`, the two discovery routes, the two probe routes, and the assets of a plugin that `SEC-006` publishes. A person holds no session before a sign in, RFC 9728 asks a client that holds no account to read discovery, and an orchestrator holds no account. |
 
 A rule whose condition Maroid does not meet is not a deviation, and takes no row.
 A rule that offers an optional capability waits for a client that asks for it,
@@ -78,15 +90,15 @@ every route that a plugin declares under `API-004`.
 
 It does not reach:
 
-| Surface                                                    | Governed by                    |
-| ---------------------------------------------------------- | ------------------------------ |
-| The request and the answer of a third-party service        | `EXT`                          |
-| The payload of an MQTT message that a device publishes     | `MQT`                          |
-| The transport route of MCP, `/mcp` today, and every payload it carries | The MCP schema     |
-| The payload of a Telegram update, and the answer to it     | `TG`                           |
-| A keyword of JSON Schema, `maxLength` among them           | JSON Schema                    |
-| A parameter that OAuth 2.0 or OpenID Connect names         | RFC 6749, OpenID Connect Core  |
-| The key of a JSON map, a stored settings field among them  | `Z-118` only. `Z-216`.         |
+| Surface                                                                | Governed by                   |
+| ---------------------------------------------------------------------- | ----------------------------- |
+| The request and the answer of a third-party service                    | `EXT`                         |
+| The payload of an MQTT message that a device publishes                 | `MQT`                         |
+| The transport route of MCP, `/mcp` today, and every payload it carries | The MCP schema                |
+| The payload of a Telegram update, and the answer to it                 | `TG`                          |
+| A keyword of JSON Schema, `maxLength` among them                       | JSON Schema                   |
+| A parameter that OAuth 2.0 or OpenID Connect names                     | RFC 6749, OpenID Connect Core |
+| The key of a JSON map, a stored settings field among them              | `Z-118` only. `Z-216`.        |
 
 A DTO in `plugins/*/dto/api-client.go` describes the answer of a third-party
 service. It keeps the names that the service sends.
@@ -114,9 +126,9 @@ Maroid rewrites on the way in costs one mapping and hides the source.
 A route keeps an address that breaks `Z-129` or `Z-134` when a client derives
 that address from a standard. The table holds every one.
 
-| Route                                      | Derived by                                          |
-| ------------------------------------------ | --------------------------------------------------- |
-| `/.well-known/oauth-protected-resource*`   | RFC 9728, and the IANA registry of well known URIs. |
+| Route                                    | Derived by                                          |
+| ---------------------------------------- | --------------------------------------------------- |
+| `/.well-known/oauth-protected-resource*` | RFC 9728, and the IANA registry of well known URIs. |
 
 A registered address is not a derived one. Maroid picks the address of a redirect
 and of a webhook, and gives each to the IdP and to Telegram, so either one
@@ -150,10 +162,10 @@ carry them. `Z-248` permits the omission for a plain `GET`.
 
 ```json
 {
-  "items": [],
-  "self": "https://hub.example.com/plugins?limit=20",
-  "first": "https://hub.example.com/plugins?limit=20",
-  "next": "https://hub.example.com/plugins?limit=20&cursor=b3..."
+	"items": [],
+	"self": "https://hub.example.com/plugins?limit=20",
+	"first": "https://hub.example.com/plugins?limit=20",
+	"next": "https://hub.example.com/plugins?limit=20&cursor=b3..."
 }
 ```
 
@@ -207,11 +219,11 @@ write lands between two pages.
 Maroid serves three APIs. Each one carries its own meta block. `Z-218`, `Z-116`,
 `Z-215`, `Z-219`.
 
-| Document        | Holds                                       | `x-api-id`                             | `x-audience`       |
-| --------------- | ------------------------------------------- | -------------------------------------- | ------------------ |
-| `hub.yaml`      | Every route of `API-003` that the other two do not hold | `01a0cae5-eb36-777a-824e-6e7e28d7a6b1` | `external-public`  |
-| `mcp.yaml`      | `/mcp` and `/.well-known/oauth-protected-resource*` | `01a0cae5-eb36-777a-824e-71285629ec17` | `external-public`  |
-| `telegram.yaml` | `/telegram/webhook`                         | `01a0cb39-8680-779f-bb60-05116c522d22` | `external-public`  |
+| Document        | Holds                                                   | `x-api-id`                             | `x-audience`      |
+| --------------- | ------------------------------------------------------- | -------------------------------------- | ----------------- |
+| `hub.yaml`      | Every route of `API-003` that the other two do not hold | `01a0cae5-eb36-777a-824e-6e7e28d7a6b1` | `external-public` |
+| `mcp.yaml`      | `/mcp` and `/.well-known/oauth-protected-resource*`     | `01a0cae5-eb36-777a-824e-71285629ec17` | `external-public` |
+| `telegram.yaml` | `/telegram/webhook`                                     | `01a0cb39-8680-779f-bb60-05116c522d22` | `external-public` |
 
 ```yaml
 info:
@@ -292,11 +304,11 @@ client never reads a fragment.
 
 Each document declares the scheme that guards it. `Z-104`.
 
-| Document        | Scheme                                                        | Rule      |
-| --------------- | ------------------------------------------------------------- | --------- |
-| `hub.yaml`      | `apiKey` in the session cookie that `SEC-005` gives           | `SEC-005` |
-| `mcp.yaml`      | `http` bearer, a token that the IdP issued                    | `SEC-002` |
-| `telegram.yaml` | `apiKey` in the header that `TG-001` names                    | `SEC-010` |
+| Document        | Scheme                                              | Rule      |
+| --------------- | --------------------------------------------------- | --------- |
+| `hub.yaml`      | `apiKey` in the session cookie that `SEC-005` gives | `SEC-005` |
+| `mcp.yaml`      | `http` bearer, a token that the IdP issued          | `SEC-002` |
+| `telegram.yaml` | `apiKey` in the header that `TG-001` names          | `SEC-010` |
 
 Maroid grants no scope, and a verification reads the audience of a token and
 never a scope. `SEC-002`.
@@ -324,12 +336,12 @@ The day that Maroid grants a scope, the name follows `Z-225`:
 `RES-001` binds the API that Maroid designs. These rules bind a shipped client
 instead.
 
-| Rule    | Level  | Asks a client to                                                                    |
-| ------- | ------ | ------------------------------------------------------------------------------------ |
+| Rule    | Level  | Asks a client to                                                                                                                                                                 |
+| ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Z-108` | Must   | Ignore a member it does not know, keep it in a body that it sends back, accept a new value of an open enumeration, handle a status that no operation declares, and follow a 301. |
-| `Z-190` | Should | Read the `Deprecation` and the `Sunset` header, and report what it finds.           |
-| `Z-191` | Must   | Start no call to a route that a document already marks deprecated.                 |
-| `Z-189` | Should | Stop calling a route before the `Sunset` date that its answer names. `Z-189` binds the producer that sends the date, and this row binds the client that reads it. |
+| `Z-190` | Should | Read the `Deprecation` and the `Sunset` header, and report what it finds.                                                                                                        |
+| `Z-191` | Must   | Start no call to a route that a document already marks deprecated.                                                                                                               |
+| `Z-189` | Should | Stop calling a route before the `Sunset` date that its answer names. `Z-189` binds the producer that sends the date, and this row binds the client that reads it.                |
 
 **Why:** `RES-005` lets a collection grow a member without a new version. That
 holds only while every client of Maroid ignores the member it does not know.

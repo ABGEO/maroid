@@ -317,35 +317,35 @@ A member downloads only a bill that Maroid holds for the assigned customer of th
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline         | Effect on this feature |
-| --------- | ----------------- | ---------------------- |
-| `PLG-007` | Plugin model      | The plugin reads the settings, the connection, and the database through the host. |
-| `PLG-008` | Plugin model      | The plugin imports neither the gas plugin nor the plugin of the distributor. |
-| `ARC-008` | Architecture      | The hub holds no rule that names the electricity plugin. |
+| Rule      | Guideline         | Effect on this feature                                                                          |
+| --------- | ----------------- | ----------------------------------------------------------------------------------------------- |
+| `PLG-007` | Plugin model      | The plugin reads the settings, the connection, and the database through the host.               |
+| `PLG-008` | Plugin model      | The plugin imports neither the gas plugin nor the plugin of the distributor.                    |
+| `ARC-008` | Architecture      | The hub holds no rule that names the electricity plugin.                                        |
 | `OWN-004` | Record ownership  | The connection, the assigned customer, the transactions, and the bills belong to one workspace. |
-| `DAT-001` | Data              | The transactions and the bills live in the schema of the plugin. |
-| `CFG-007` | Configuration     | No credential of a workspace stays in the configuration file. |
-| `EXT-005` | External services | A failure of the electricity service is an error, never an empty result. |
-| `LOG-008` | Logging           | No log holds a password or a session. |
-| `SEC-013` | Security          | Each route and the widget of the plugin name a permission. |
-| `UI-006`  | Web UI            | The pages import no module of the deck. |
-| `JOB-007` | Jobs              | A failed collection of one workspace does not stop the collection of another. |
-| `NTF-002` | Notifications     | The bill keeps its notification topic. The plugin names no destination. |
-| `CLI-005` | Command line      | The plugin adds the command through the command registry. |
-| `OWN-003` | Ownership         | The command takes the acting workspace from a flag, and carries no acting user. |
+| `DAT-001` | Data              | The transactions and the bills live in the schema of the plugin.                                |
+| `CFG-007` | Configuration     | No credential of a workspace stays in the configuration file.                                   |
+| `EXT-005` | External services | A failure of the electricity service is an error, never an empty result.                        |
+| `LOG-008` | Logging           | No log holds a password or a session.                                                           |
+| `SEC-013` | Security          | Each route and the widget of the plugin name a permission.                                      |
+| `UI-006`  | Web UI            | The pages import no module of the deck.                                                         |
+| `JOB-007` | Jobs              | A failed collection of one workspace does not stop the collection of another.                   |
+| `NTF-002` | Notifications     | The bill keeps its notification topic. The plugin names no destination.                         |
+| `CLI-005` | Command line      | The plugin adds the command through the command registry.                                       |
+| `OWN-003` | Ownership         | The command takes the acting workspace from a flag, and carries no acting user.                 |
 
 ## 8. Open questions
 
-| #   | Question | Owner | Answer |
-| --- | -------- | ----- | ------ |
-| 1   | What does an assignment collect? | Temuri | Nothing, changed on 2026-10-14. An administrator collects the history from the command line, and the schedule collects each month (`ELECACC-FR-048`, `ELECACC-FR-025`, `ELECACC-FR-017`). |
-| 2   | How does a member reach the document of a bill? | Temuri | Through Maroid, which signs in and fetches it (`ELECACC-FR-042`). |
-| 3   | Can one customer hold two payments on one date? `ELECACC-FR-022` merges them, because a payment holds no meter value. | Temuri | No. The rule stays. `ELECACC-FR-022`. |
-| 4   | Does the electricity service ever issue two bills for one month? The bill number names the month. | Temuri | No. One bill for each month. `ELECACC-FR-023`, `ELECACC-DD-010`. |
-| 5   | What happens to the plugin of the distributor? | Temuri | It stays. The owner removes it in a separate change. |
+| #   | Question                                                                                                              | Owner  | Answer                                                                                                                                                                                    |
+| --- | --------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | What does an assignment collect?                                                                                      | Temuri | Nothing, changed on 2026-10-14. An administrator collects the history from the command line, and the schedule collects each month (`ELECACC-FR-048`, `ELECACC-FR-025`, `ELECACC-FR-017`). |
+| 2   | How does a member reach the document of a bill?                                                                       | Temuri | Through Maroid, which signs in and fetches it (`ELECACC-FR-042`).                                                                                                                         |
+| 3   | Can one customer hold two payments on one date? `ELECACC-FR-022` merges them, because a payment holds no meter value. | Temuri | No. The rule stays. `ELECACC-FR-022`.                                                                                                                                                     |
+| 4   | Does the electricity service ever issue two bills for one month? The bill number names the month.                     | Temuri | No. One bill for each month. `ELECACC-FR-023`, `ELECACC-DD-010`.                                                                                                                          |
+| 5   | What happens to the plugin of the distributor?                                                                        | Temuri | It stays. The owner removes it in a separate change.                                                                                                                                      |
 
 ## Retired identifiers
 
-| ID               | Retired    | Reason                                                                 |
-| ---------------- | ---------- | ---------------------------------------------------------------------- |
+| ID               | Retired    | Reason                                                                   |
+| ---------------- | ---------- | ------------------------------------------------------------------------ |
 | `ELECACC-FR-016` | 2026-10-14 | An assignment collects nothing. `ELECACC-FR-048` replaces the statement. |

@@ -25,91 +25,91 @@ for one when the account holds two or more. `spec-scenarios.md` holds the scenar
 
 ## 2. Coverage
 
-| Requirement        | Where this specification realizes it                         |
-| ------------------ | ------------------------------------------------------------ |
-| `PARKACC-FR-001`   | Section 4.3, `PARKACC-DD-010`, `PARKACC-SC-001`              |
-| `PARKACC-FR-002`   | Section 4.3, `PARKACC-SC-001`                                |
-| `PARKACC-FR-003`   | Section 4.3, `PARKACC-SC-001`                                |
-| `PARKACC-FR-004`   | `api.yaml`, `PARKACC-SC-002`                                 |
-| `PARKACC-FR-005`   | `api.yaml`, `PARKACC-DD-012`, `PARKACC-DD-014`, `PARKACC-SC-003` |
-| `PARKACC-FR-006`   | `api.yaml`, `PARKACC-SC-004`                                 |
-| `PARKACC-FR-007`   | `api.yaml`, `PARKACC-SC-005`                                 |
-| `PARKACC-FR-008`   | `api.yaml`, Section 4.4, `PARKACC-DD-013`, `PARKACC-SC-006`  |
-| `PARKACC-FR-009`   | Section 4.4, `PARKACC-SC-006`                                |
-| `PARKACC-FR-010`   | Section 4.4, `PARKACC-SC-006`                                |
-| `PARKACC-FR-011`   | `api.yaml`, `PARKACC-SC-006`                                 |
-| `PARKACC-FR-012`   | `PARKACC-DD-006`, `PARKACC-SC-007`                           |
-| `PARKACC-FR-013`   | `PARKACC-DD-006`, `PARKACC-SC-008`                           |
-| `PARKACC-FR-014`   | `PARKACC-DD-001`, `PARKACC-DD-015`, `PARKACC-SC-009`, `PARKACC-SC-010`, `PARKACC-SC-030` |
-| `PARKACC-FR-015`   | `PARKACC-DD-006`, `PARKACC-SC-011`                           |
-| `PARKACC-FR-016`   | `PARKACC-DD-002`, `PARKACC-SC-012`                           |
-| `PARKACC-FR-017`   | `PARKACC-DD-007`, `PARKACC-SC-013`, `PARKACC-SC-014`         |
-| `PARKACC-FR-018`   | `api.yaml`, `PARKACC-SC-015`                                 |
-| `PARKACC-FR-019`   | `PARKACC-DD-003`, `PARKACC-SC-016`                           |
-| `PARKACC-FR-020`   | `PARKACC-DD-001`, `PARKACC-SC-017`                           |
-| `PARKACC-FR-021`   | `PARKACC-DD-004`, `PARKACC-SC-018`, `PARKACC-SC-019`, `PARKACC-SC-029` |
-| `PARKACC-FR-022`   | `PARKACC-DD-005`, `PARKACC-SC-020`, `PARKACC-SC-021`         |
-| `PARKACC-FR-023`   | Section 4.3, `PARKACC-DD-009`, `PARKACC-SC-022`              |
-| `PARKACC-FR-024`   | `PARKACC-DD-008`, `PARKACC-SC-023`                           |
-| `PARKACC-FR-025`   | `PARKACC-DD-008`, `PARKACC-SC-023`                           |
-| `PARKACC-FR-026`   | Section 4.3, `PARKACC-SC-024`                                |
-| `PARKACC-FR-027`   | `PARKACC-DD-008`, `PARKACC-SC-025`                           |
-| `PARKACC-FR-028`   | Section 4.3, `PARKACC-SC-024`                                |
-| `PARKACC-INV-001`  | `PARKACC-DD-001`, `PARKACC-SC-010`                           |
-| `PARKACC-INV-002`  | `PARKACC-DD-001`, `PARKACC-SC-026`                           |
-| `PARKACC-INV-003`  | `api.yaml`, `PARKACC-DD-011`, `PARKACC-SC-027`               |
+| Requirement       | Where this specification realizes it                                                     |
+| ----------------- | ---------------------------------------------------------------------------------------- |
+| `PARKACC-FR-001`  | Section 4.3, `PARKACC-DD-010`, `PARKACC-SC-001`                                          |
+| `PARKACC-FR-002`  | Section 4.3, `PARKACC-SC-001`                                                            |
+| `PARKACC-FR-003`  | Section 4.3, `PARKACC-SC-001`                                                            |
+| `PARKACC-FR-004`  | `api.yaml`, `PARKACC-SC-002`                                                             |
+| `PARKACC-FR-005`  | `api.yaml`, `PARKACC-DD-012`, `PARKACC-DD-014`, `PARKACC-SC-003`                         |
+| `PARKACC-FR-006`  | `api.yaml`, `PARKACC-SC-004`                                                             |
+| `PARKACC-FR-007`  | `api.yaml`, `PARKACC-SC-005`                                                             |
+| `PARKACC-FR-008`  | `api.yaml`, Section 4.4, `PARKACC-DD-013`, `PARKACC-SC-006`                              |
+| `PARKACC-FR-009`  | Section 4.4, `PARKACC-SC-006`                                                            |
+| `PARKACC-FR-010`  | Section 4.4, `PARKACC-SC-006`                                                            |
+| `PARKACC-FR-011`  | `api.yaml`, `PARKACC-SC-006`                                                             |
+| `PARKACC-FR-012`  | `PARKACC-DD-006`, `PARKACC-SC-007`                                                       |
+| `PARKACC-FR-013`  | `PARKACC-DD-006`, `PARKACC-SC-008`                                                       |
+| `PARKACC-FR-014`  | `PARKACC-DD-001`, `PARKACC-DD-015`, `PARKACC-SC-009`, `PARKACC-SC-010`, `PARKACC-SC-030` |
+| `PARKACC-FR-015`  | `PARKACC-DD-006`, `PARKACC-SC-011`                                                       |
+| `PARKACC-FR-016`  | `PARKACC-DD-002`, `PARKACC-SC-012`                                                       |
+| `PARKACC-FR-017`  | `PARKACC-DD-007`, `PARKACC-SC-013`, `PARKACC-SC-014`                                     |
+| `PARKACC-FR-018`  | `api.yaml`, `PARKACC-SC-015`                                                             |
+| `PARKACC-FR-019`  | `PARKACC-DD-003`, `PARKACC-SC-016`                                                       |
+| `PARKACC-FR-020`  | `PARKACC-DD-001`, `PARKACC-SC-017`                                                       |
+| `PARKACC-FR-021`  | `PARKACC-DD-004`, `PARKACC-SC-018`, `PARKACC-SC-019`, `PARKACC-SC-029`                   |
+| `PARKACC-FR-022`  | `PARKACC-DD-005`, `PARKACC-SC-020`, `PARKACC-SC-021`                                     |
+| `PARKACC-FR-023`  | Section 4.3, `PARKACC-DD-009`, `PARKACC-SC-022`                                          |
+| `PARKACC-FR-024`  | `PARKACC-DD-008`, `PARKACC-SC-023`                                                       |
+| `PARKACC-FR-025`  | `PARKACC-DD-008`, `PARKACC-SC-023`                                                       |
+| `PARKACC-FR-026`  | Section 4.3, `PARKACC-SC-024`                                                            |
+| `PARKACC-FR-027`  | `PARKACC-DD-008`, `PARKACC-SC-025`                                                       |
+| `PARKACC-FR-028`  | Section 4.3, `PARKACC-SC-024`                                                            |
+| `PARKACC-INV-001` | `PARKACC-DD-001`, `PARKACC-SC-010`                                                       |
+| `PARKACC-INV-002` | `PARKACC-DD-001`, `PARKACC-SC-026`                                                       |
+| `PARKACC-INV-003` | `api.yaml`, `PARKACC-DD-011`, `PARKACC-SC-027`                                           |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline         | How this specification obeys it                                                           |
-| --------- | ----------------- | ----------------------------------------------------------------------------------------- |
-| `PLG-006` | Plugin model      | The plugin adds the route, UI, and permission capabilities through the existing interfaces. |
-| `PLG-007` | Plugin model      | The plugin reads the settings, the plugin secrets, and the page address through the host. |
-| `ARC-008` | Architecture      | `PageLinker` names no plugin. Section 4.1.                                                |
-| `OWN-004` | Record ownership  | The credentials and both plugin secrets take the user scope. Section 4.2.                |
-| `CFG-007` | Configuration     | `AuthToken` and `VehicleID` leave the settings. Section 4.3.                             |
-| `EXT-001` to `EXT-007` | External services | `service/api-client.go` holds every call. Each status that is not a success is an error. Section 4.1. |
-| `LOG-008` | Logging           | No log line holds the password, the code, the token, or the identifier of a sign in.     |
-| `SEC-013` | Security          | Each route and each command names a permission. Section 4.3.                             |
-| `API-004` | HTTP API          | The routes mount under `/workspaces/{workspaceId}/plugins/dev.maroid.parking/api`.       |
-| `ERR-002` | Errors            | Each new problem type has the form `/problems/dev.maroid.parking/<slug>`. Section 4.5.    |
-| `RES-001` | REST              | `/connections/self` and `/pending-connections/self` keep the plural of `Z-134`. A start is a `POST` (`DD-013`), the balance a money object (`DD-014`). |
-| `RES-002` | REST              | `/connections` and `/pending-connections` answer no `GET`, as `ADR-0015` permits.        |
-| `GO-005`  | Go style          | Every sentinel error lives in `errs/` (`DD-016`).                                         |
-| `UI-005` to `UI-009` | Web UI | The remote exports `routes` with `/account`, and reaches the API through `host.api`.   |
-| `TG-005`  | Telegram          | `select_vehicle` is a step of `start_parking`. Section 4.4.                              |
-| `PKG-001` | Package layout    | The plugin gains `handler/`, `model/`, and `ui/`. Section 4.1.                           |
-| `BLD-003`, `BLD-004` | Build  | The build plan builds the UI before the `.so`, and rebuilds every plugin after the change of `pluginapi`. |
+| Rule                   | Guideline         | How this specification obeys it                                                                                                                        |
+| ---------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PLG-006`              | Plugin model      | The plugin adds the route, UI, and permission capabilities through the existing interfaces.                                                            |
+| `PLG-007`              | Plugin model      | The plugin reads the settings, the plugin secrets, and the page address through the host.                                                              |
+| `ARC-008`              | Architecture      | `PageLinker` names no plugin. Section 4.1.                                                                                                             |
+| `OWN-004`              | Record ownership  | The credentials and both plugin secrets take the user scope. Section 4.2.                                                                              |
+| `CFG-007`              | Configuration     | `AuthToken` and `VehicleID` leave the settings. Section 4.3.                                                                                           |
+| `EXT-001` to `EXT-007` | External services | `service/api-client.go` holds every call. Each status that is not a success is an error. Section 4.1.                                                  |
+| `LOG-008`              | Logging           | No log line holds the password, the code, the token, or the identifier of a sign in.                                                                   |
+| `SEC-013`              | Security          | Each route and each command names a permission. Section 4.3.                                                                                           |
+| `API-004`              | HTTP API          | The routes mount under `/workspaces/{workspaceId}/plugins/dev.maroid.parking/api`.                                                                     |
+| `ERR-002`              | Errors            | Each new problem type has the form `/problems/dev.maroid.parking/<slug>`. Section 4.5.                                                                 |
+| `RES-001`              | REST              | `/connections/self` and `/pending-connections/self` keep the plural of `Z-134`. A start is a `POST` (`DD-013`), the balance a money object (`DD-014`). |
+| `RES-002`              | REST              | `/connections` and `/pending-connections` answer no `GET`, as `ADR-0015` permits.                                                                      |
+| `GO-005`               | Go style          | Every sentinel error lives in `errs/` (`DD-016`).                                                                                                      |
+| `UI-005` to `UI-009`   | Web UI            | The remote exports `routes` with `/account`, and reaches the API through `host.api`.                                                                   |
+| `TG-005`               | Telegram          | `select_vehicle` is a step of `start_parking`. Section 4.4.                                                                                            |
+| `PKG-001`              | Package layout    | The plugin gains `handler/`, `model/`, and `ui/`. Section 4.1.                                                                                         |
+| `BLD-003`, `BLD-004`   | Build             | The build plan builds the UI before the `.so`, and rebuilds every plugin after the change of `pluginapi`.                                              |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                                          | Action | Holds                                                                                      |
-| ------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------ |
-| `libs/pluginapi/page.go`                                      | create | `PageLinker`, `ErrPageAddressAbsent`                                                       |
-| `libs/pluginapi/host.go`                                      | change | `Host.Pages`                                                                               |
-| `apps/hub/internal/plugin/host/page.go`                       | create | `pageLinker`, which implements `PageLinker` over `auth.deck_url`                           |
-| `apps/hub/internal/plugin/host/host.go`                       | change | `Dependencies`, which `New` takes, with the configuration first, and `Host.Pages`          |
-| `apps/hub/internal/depresolver/plugin.go`                     | change | Passes `Config()` in `pluginhost.Dependencies`                                             |
-| `plugins/parking/config/config.go`                            | change | `UserSettings` with `Username` and `Password`                                              |
-| `plugins/parking/dto/api-client.go`                           | change | `SignInData`, `SignInResult`, `CodeRequestData`, `CodeRequestResult`, `CodeSubmitData`, `CodeSubmitResult`, `Vehicle`. `StartParkingData` stays |
-| `plugins/parking/model/{doc,connection,vehicle}.go`           | create | `ConnectionState`, `Connection`, `Account`, `PendingConnection`, `Vehicle`                 |
-| `plugins/parking/dto/connection.go`                           | create | `ConnectionResponse`, `AccountResponse`, `MoneyResponse`, `PendingConnectionResponse`, `VerificationRequest` |
-| `plugins/parking/errs/errs.go`                                | create | Every sentinel error of the plugin (`GO-005`)                                              |
-| `plugins/parking/service/api-client.go`                       | change | The methods below, `StatusError`                                                           |
-| `plugins/parking/service/connection.go`                       | create | `ConnectionService`, `Connections`, `NewConnections`, `CodeWaitError`                      |
-| `plugins/parking/handler/{doc,connection,problem}.go`         | create | `ConnectionHandler`, `NewConnectionHandler`, the problem types of section 4.5              |
-| `plugins/parking/permission/permission.go`                    | change | `AccountConnect = "account.connect"`                                                       |
-| `plugins/parking/embed.go`                                    | create | `uiAssets`, the embedded `ui/dist`                                                         |
-| `plugins/parking/main.go`                                     | change | `UIManifest`, `Routes`, the third permission, `host.Secrets`, `host.Pages`                 |
-| `plugins/parking/ui/`                                         | create | `package.json`, `vite.config.ts`, `src/entry.ts`, `src/api/connection.ts`, `src/api/types.ts`, `src/pages/account/Account.svelte` |
-| `plugins/parking/telegram/command/notice.go`                  | create | `Notice`, `NewNotice`: the answer to a failure that a person can act on                    |
-| `plugins/parking/telegram/command/helpers.go`                 | change | `replyFailure`, which answers through `Notice`                                             |
-| `plugins/parking/telegram/command/{start,balance,status,stop}.go` | change | Each `Handle` returns through `replyFailure`. `start` reads the vehicles in the preflight |
-| `plugins/parking/telegram/conversation/step/select_vehicle.go` | create | `SelectVehicle`                                                                           |
-| `plugins/parking/telegram/conversation/step/{select_type,confirm,helpers}.go` | change | `select_type` routes to the vehicle, `confirm` passes the vehicle, `endWithNotice` |
-| `plugins/parking/telegram/conversation/parking.go`            | change | Registers `SelectVehicle`                                                                  |
+| Path                                                                          | Action | Holds                                                                                                                                           |
+| ----------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `libs/pluginapi/page.go`                                                      | create | `PageLinker`, `ErrPageAddressAbsent`                                                                                                            |
+| `libs/pluginapi/host.go`                                                      | change | `Host.Pages`                                                                                                                                    |
+| `apps/hub/internal/plugin/host/page.go`                                       | create | `pageLinker`, which implements `PageLinker` over `auth.deck_url`                                                                                |
+| `apps/hub/internal/plugin/host/host.go`                                       | change | `Dependencies`, which `New` takes, with the configuration first, and `Host.Pages`                                                               |
+| `apps/hub/internal/depresolver/plugin.go`                                     | change | Passes `Config()` in `pluginhost.Dependencies`                                                                                                  |
+| `plugins/parking/config/config.go`                                            | change | `UserSettings` with `Username` and `Password`                                                                                                   |
+| `plugins/parking/dto/api-client.go`                                           | change | `SignInData`, `SignInResult`, `CodeRequestData`, `CodeRequestResult`, `CodeSubmitData`, `CodeSubmitResult`, `Vehicle`. `StartParkingData` stays |
+| `plugins/parking/model/{doc,connection,vehicle}.go`                           | create | `ConnectionState`, `Connection`, `Account`, `PendingConnection`, `Vehicle`                                                                      |
+| `plugins/parking/dto/connection.go`                                           | create | `ConnectionResponse`, `AccountResponse`, `MoneyResponse`, `PendingConnectionResponse`, `VerificationRequest`                                    |
+| `plugins/parking/errs/errs.go`                                                | create | Every sentinel error of the plugin (`GO-005`)                                                                                                   |
+| `plugins/parking/service/api-client.go`                                       | change | The methods below, `StatusError`                                                                                                                |
+| `plugins/parking/service/connection.go`                                       | create | `ConnectionService`, `Connections`, `NewConnections`, `CodeWaitError`                                                                           |
+| `plugins/parking/handler/{doc,connection,problem}.go`                         | create | `ConnectionHandler`, `NewConnectionHandler`, the problem types of section 4.5                                                                   |
+| `plugins/parking/permission/permission.go`                                    | change | `AccountConnect = "account.connect"`                                                                                                            |
+| `plugins/parking/embed.go`                                                    | create | `uiAssets`, the embedded `ui/dist`                                                                                                              |
+| `plugins/parking/main.go`                                                     | change | `UIManifest`, `Routes`, the third permission, `host.Secrets`, `host.Pages`                                                                      |
+| `plugins/parking/ui/`                                                         | create | `package.json`, `vite.config.ts`, `src/entry.ts`, `src/api/connection.ts`, `src/api/types.ts`, `src/pages/account/Account.svelte`               |
+| `plugins/parking/telegram/command/notice.go`                                  | create | `Notice`, `NewNotice`: the answer to a failure that a person can act on                                                                         |
+| `plugins/parking/telegram/command/helpers.go`                                 | change | `replyFailure`, which answers through `Notice`                                                                                                  |
+| `plugins/parking/telegram/command/{start,balance,status,stop}.go`             | change | Each `Handle` returns through `replyFailure`. `start` reads the vehicles in the preflight                                                       |
+| `plugins/parking/telegram/conversation/step/select_vehicle.go`                | create | `SelectVehicle`                                                                                                                                 |
+| `plugins/parking/telegram/conversation/step/{select_type,confirm,helpers}.go` | change | `select_type` routes to the vehicle, `confirm` passes the vehicle, `endWithNotice`                                                              |
+| `plugins/parking/telegram/conversation/parking.go`                            | change | Registers `SelectVehicle`                                                                                                                       |
 
 The contract in `libs/pluginapi/page.go`:
 
@@ -153,9 +153,9 @@ Disconnect(ctx context.Context) error
 
 The feature adds no table. It writes two plugin secrets of the user scope:
 
-| Name      | Value                                              | Expiry                                   | Realizes                              |
-| --------- | -------------------------------------------------- | ---------------------------------------- | ------------------------------------- |
-| `session` | The session token, as the parking service gives it | None                                     | `PARKACC-FR-014`, `PARKACC-FR-020`    |
+| Name      | Value                                              | Expiry                                     | Realizes                           |
+| --------- | -------------------------------------------------- | ------------------------------------------ | ---------------------------------- |
+| `session` | The session token, as the parking service gives it | None                                       | `PARKACC-FR-014`, `PARKACC-FR-020` |
 | `pending` | JSON: `sign_in_id`, `phone`, `resend_at`           | 5 minutes after the last request of a code | `PARKACC-FR-016`, `PARKACC-FR-017` |
 
 ### 4.3 Declarations
@@ -163,13 +163,13 @@ The feature adds no table. It writes two plugin secrets of the user scope:
 **HTTP routes.** The prefix is `/workspaces/{workspaceId}/plugins/dev.maroid.parking/api`.
 `api.yaml` holds the bodies and the status codes.
 
-| Method   | Path                                           | Access        | Permission        | Realizes                                                   |
-| -------- | ---------------------------------------------- | ------------- | ----------------- | ---------------------------------------------------------- |
-| `GET`    | `/connections/self`                            | Authenticated | `account.connect` | `PARKACC-FR-004` to `PARKACC-FR-007`, `PARKACC-FR-019`     |
-| `DELETE` | `/connections/self`                            | Authenticated | `account.connect` | `PARKACC-FR-018`                                           |
-| `POST`   | `/pending-connections`                         | Authenticated | `account.connect` | `PARKACC-FR-007` to `PARKACC-FR-013`                       |
-| `POST`   | `/pending-connections/self/code-requests`      | Authenticated | `account.connect` | `PARKACC-FR-017`                                           |
-| `POST`   | `/pending-connections/self/verifications`      | Authenticated | `account.connect` | `PARKACC-FR-014` to `PARKACC-FR-016`                       |
+| Method   | Path                                      | Access        | Permission        | Realizes                                               |
+| -------- | ----------------------------------------- | ------------- | ----------------- | ------------------------------------------------------ |
+| `GET`    | `/connections/self`                       | Authenticated | `account.connect` | `PARKACC-FR-004` to `PARKACC-FR-007`, `PARKACC-FR-019` |
+| `DELETE` | `/connections/self`                       | Authenticated | `account.connect` | `PARKACC-FR-018`                                       |
+| `POST`   | `/pending-connections`                    | Authenticated | `account.connect` | `PARKACC-FR-007` to `PARKACC-FR-013`                   |
+| `POST`   | `/pending-connections/self/code-requests` | Authenticated | `account.connect` | `PARKACC-FR-017`                                       |
+| `POST`   | `/pending-connections/self/verifications` | Authenticated | `account.connect` | `PARKACC-FR-014` to `PARKACC-FR-016`                   |
 
 **Permissions.**
 
@@ -179,10 +179,10 @@ The feature adds no table. It writes two plugin secrets of the user scope:
 
 **Settings.** Both fields take `x-maroid-scope=user` and are required.
 
-| Field      | Kind        | Title    | Realizes                            |
-| ---------- | ----------- | -------- | ----------------------------------- |
-| `username` | free text   | Username | `PARKACC-FR-001`                    |
-| `password` | secret      | Password | `PARKACC-FR-001`, `PARKACC-FR-002`  |
+| Field      | Kind      | Title    | Realizes                           |
+| ---------- | --------- | -------- | ---------------------------------- |
+| `username` | free text | Username | `PARKACC-FR-001`                   |
+| `password` | secret    | Password | `PARKACC-FR-001`, `PARKACC-FR-002` |
 
 `authToken` and `vehicleId` leave `UserSettings` (`PARKACC-FR-003`). `PSET-FR-011`
 removes their stored values at the next save.
@@ -195,17 +195,17 @@ removes their stored values at the next save.
 
 **Telegram commands.** No command is new. Each one answers `ErrNotConnected` with the link.
 
-| Command    | Scope     | Permission       | Validates | Handles                                                       | Realizes                            |
-| ---------- | --------- | ---------------- | --------- | ------------------------------------------------------------- | ----------------------------------- |
+| Command    | Scope     | Permission       | Validates | Handles                                                                 | Realizes                           |
+| ---------- | --------- | ---------------- | --------- | ----------------------------------------------------------------------- | ---------------------------------- |
 | `/start`   | Workspace | `sessions.write` | Nothing   | Reads the person, the session, and the vehicles. Starts `start_parking` | `PARKACC-FR-021`, `PARKACC-FR-027` |
-| `/balance` | Workspace | `sessions.read`  | Nothing   | Reads the person                                              | `PARKACC-FR-021`                    |
-| `/status`  | Workspace | `sessions.read`  | Nothing   | Reads the session                                             | `PARKACC-FR-021`                    |
-| `/stop`    | Workspace | `sessions.write` | Nothing   | Stops the session                                             | `PARKACC-FR-021`                    |
+| `/balance` | Workspace | `sessions.read`  | Nothing   | Reads the person                                                        | `PARKACC-FR-021`                   |
+| `/status`  | Workspace | `sessions.read`  | Nothing   | Reads the session                                                       | `PARKACC-FR-021`                   |
+| `/stop`    | Workspace | `sessions.write` | Nothing   | Stops the session                                                       | `PARKACC-FR-021`                   |
 
 **Telegram conversation.**
 
-| Identifier      | Entry step     | Steps                                                                               | Realizes                                          |
-| --------------- | -------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Identifier      | Entry step     | Steps                                                                                 | Realizes                                               |
+| --------------- | -------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | `start_parking` | `ask_location` | `ask_location`, `select_lot`, `enter_lot`, `select_type`, `select_vehicle`, `confirm` | `PARKACC-FR-024` to `PARKACC-FR-026`, `PARKACC-FR-028` |
 
 `select_vehicle` shows one button for each vehicle, with the text `<name> (<plate>)` and the
@@ -260,17 +260,17 @@ stateDiagram-v2
 
 ### 4.5 Errors
 
-| Condition                                              | Route answer                                                       | Bot answer                                |
-| ------------------------------------------------------ | ------------------------------------------------------------------ | ----------------------------------------- |
-| No `session` secret, or the parking service answers 401 | `GET`: 200 with `state: not_connected`                            | "Not connected" with the link             |
-| The settings are absent                                | `POST`: 422 `credentials-absent`. `GET` reports `credentials_stored: false` | Not reached: commands read no setting |
-| The sign in answers 400, 401, 403, or 404              | 422 `credentials-rejected`                                         | Not reached                               |
-| The sign in asks for no code by phone                  | 422 `verification-unsupported`                                     | Not reached                               |
-| No `pending` secret, or it expired                     | 404 `/problems/http/not-found`                                     | Not reached                               |
-| A code request before `resend_at`                      | 429 `code-wait`, with `Retry-After` in seconds                     | Not reached                               |
-| The submit answers a status that is not a success, or a status other than `SUCCESS` | 422 `code-rejected`     | Not reached                               |
-| The parking service answers 5xx, or fails to answer    | 502 `service-unavailable`. The token stays                         | "The parking service is unavailable."     |
-| The page address fails with `ErrPageAddressAbsent`     | Not reached                                                        | "Not connected", and the text names the Account page of the plugin |
+| Condition                                                                           | Route answer                                                                | Bot answer                                                         |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| No `session` secret, or the parking service answers 401                             | `GET`: 200 with `state: not_connected`                                      | "Not connected" with the link                                      |
+| The settings are absent                                                             | `POST`: 422 `credentials-absent`. `GET` reports `credentials_stored: false` | Not reached: commands read no setting                              |
+| The sign in answers 400, 401, 403, or 404                                           | 422 `credentials-rejected`                                                  | Not reached                                                        |
+| The sign in asks for no code by phone                                               | 422 `verification-unsupported`                                              | Not reached                                                        |
+| No `pending` secret, or it expired                                                  | 404 `/problems/http/not-found`                                              | Not reached                                                        |
+| A code request before `resend_at`                                                   | 429 `code-wait`, with `Retry-After` in seconds                              | Not reached                                                        |
+| The submit answers a status that is not a success, or a status other than `SUCCESS` | 422 `code-rejected`                                                         | Not reached                                                        |
+| The parking service answers 5xx, or fails to answer                                 | 502 `service-unavailable`. The token stays                                  | "The parking service is unavailable."                              |
+| The page address fails with `ErrPageAddressAbsent`                                  | Not reached                                                                 | "Not connected", and the text names the Account page of the plugin |
 
 Each new type has the owner `dev.maroid.parking`. No detail names the password, the
 code, the token, or the identifier of the sign in (`PARKACC-INV-003`, `LOG-008`).
@@ -435,18 +435,18 @@ matches its sentinel through `Is`.
 
 `PSECRET` ships first. Its build plan ends before step 1.
 
-| #   | Step                                                                                         | Realizes                                         | Done |
-| --- | -------------------------------------------------------------------------------------------- | ------------------------------------------------ | ---- |
-| 1   | `pluginapi.PageLinker`, `Host.Pages`, and the hub `pageLinker`. Rebuild every plugin.        | `PARKACC-FR-022`                                 | [x]  |
-| 2   | `UserSettings`, the permission `account.connect`, and the plugin secrets in `main.go`        | `PARKACC-FR-001` to `PARKACC-FR-003`, `PARKACC-FR-023` | [x]  |
-| 3   | The DTOs, `model/`, and the API client: the token from `session`, the 401 rule, the sign in calls, the vehicles | `PARKACC-FR-009` to `PARKACC-FR-019` | [x]  |
-| 4   | `service/connection.go`                                                                      | `PARKACC-FR-004` to `PARKACC-FR-020`             | [x]  |
-| 5   | `handler/` and `api.yaml`                                                                    | `PARKACC-FR-004` to `PARKACC-FR-018`             | [x]  |
-| 6   | The bot: `replyFailure`, `endWithNotice`, the preflight, `select_vehicle`, `confirm`       | `PARKACC-FR-021`, `PARKACC-FR-024` to `PARKACC-FR-028` | [x]  |
-| 7   | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`).              | `PARKACC-FR-004` to `PARKACC-FR-018`             | [x]  |
-| 8   | `PARKACC-SC-028` against the parking service. Correct `PARKACC-DD-006` and `PARKACC-DD-007`. | `PARKACC-FR-012`, `PARKACC-FR-015`, `PARKACC-FR-017` | [x]  |
-| 9   | The tests of `spec-scenarios.md`. Lint and build the plugin and the hub.                     | Every statement                                  | [x]  |
-| 10  | The revision of 2026-10-12: `DD-013` to `DD-016`, `ADR-0015`, and `PARKACC-SC-029` and `SC-030` | `PARKACC-FR-005`, `PARKACC-FR-008`, `PARKACC-FR-014`, `PARKACC-FR-021` | [x]  |
+| #   | Step                                                                                                            | Realizes                                                               | Done |
+| --- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---- |
+| 1   | `pluginapi.PageLinker`, `Host.Pages`, and the hub `pageLinker`. Rebuild every plugin.                           | `PARKACC-FR-022`                                                       | [x]  |
+| 2   | `UserSettings`, the permission `account.connect`, and the plugin secrets in `main.go`                           | `PARKACC-FR-001` to `PARKACC-FR-003`, `PARKACC-FR-023`                 | [x]  |
+| 3   | The DTOs, `model/`, and the API client: the token from `session`, the 401 rule, the sign in calls, the vehicles | `PARKACC-FR-009` to `PARKACC-FR-019`                                   | [x]  |
+| 4   | `service/connection.go`                                                                                         | `PARKACC-FR-004` to `PARKACC-FR-020`                                   | [x]  |
+| 5   | `handler/` and `api.yaml`                                                                                       | `PARKACC-FR-004` to `PARKACC-FR-018`                                   | [x]  |
+| 6   | The bot: `replyFailure`, `endWithNotice`, the preflight, `select_vehicle`, `confirm`                            | `PARKACC-FR-021`, `PARKACC-FR-024` to `PARKACC-FR-028`                 | [x]  |
+| 7   | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`).                                  | `PARKACC-FR-004` to `PARKACC-FR-018`                                   | [x]  |
+| 8   | `PARKACC-SC-028` against the parking service. Correct `PARKACC-DD-006` and `PARKACC-DD-007`.                    | `PARKACC-FR-012`, `PARKACC-FR-015`, `PARKACC-FR-017`                   | [x]  |
+| 9   | The tests of `spec-scenarios.md`. Lint and build the plugin and the hub.                                        | Every statement                                                        | [x]  |
+| 10  | The revision of 2026-10-12: `DD-013` to `DD-016`, `ADR-0015`, and `PARKACC-SC-029` and `SC-030`                 | `PARKACC-FR-005`, `PARKACC-FR-008`, `PARKACC-FR-014`, `PARKACC-FR-021` | [x]  |
 
 ## Retired identifiers
 

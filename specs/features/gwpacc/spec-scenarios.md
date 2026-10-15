@@ -463,6 +463,6 @@ readings and `მიუწვდომელია`. The log holds a warning, an
 
 ## Retired identifiers
 
-| ID              | Retired    | Reason                                                                 |
-| --------------- | ---------- | ---------------------------------------------------------------------- |
+| ID              | Retired    | Reason                                                                |
+| --------------- | ---------- | --------------------------------------------------------------------- |
 | `GWPACC-SC-011` | 2026-10-14 | `GWPACC-FR-015` is retired. `GWPACC-SC-043` verifies `GWPACC-FR-039`. |

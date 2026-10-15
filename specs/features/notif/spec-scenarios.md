@@ -40,12 +40,12 @@ records `notification_topics` with `["reminder"]` for the plugin.
 Each case loads a plugin that declares the topics in the table. The load fails, the error
 names the plugin, and the registry holds no topic of it.
 
-| Case           | Topics                                         |
-| -------------- | ---------------------------------------------- |
-| Repeated id    | `reminder`, `reminder`                         |
-| Bad identifier | `Reminder-1`                                   |
-| Long name      | `reminder` with a name of 65 characters        |
-| Empty name     | `reminder` with the name "   "                 |
+| Case           | Topics                                  |
+| -------------- | --------------------------------------- |
+| Repeated id    | `reminder`, `reminder`                  |
+| Bad identifier | `Reminder-1`                            |
+| Long name      | `reminder` with a name of 65 characters |
+| Empty name     | `reminder` with the name " "            |
 
 ## `NOTIF-SC-003`
 
@@ -72,11 +72,11 @@ and `fields.bot_token` equal to `******`. No byte of the token or of its ciphert
 **Verifies:** `NOTIF-FR-006`
 **Layer:** integration
 
-| Case   | Name                                        | Answer | Rows |
-| ------ | ------------------------------------------- | ------ | ---- |
-| Normal | "Family bot"                                | 201    | 1    |
-| Limit  | 64 characters with a space at each end      | 201    | 1    |
-| Over   | 65 characters                               | 422, `/name` | 0 |
+| Case   | Name                                   | Answer       | Rows |
+| ------ | -------------------------------------- | ------------ | ---- |
+| Normal | "Family bot"                           | 201          | 1    |
+| Limit  | 64 characters with a space at each end | 201          | 1    |
+| Over   | 65 characters                          | 422, `/name` | 0    |
 
 **When** user A posts each body with a token to `/workspaces/A/notification-providers`.
 **Then** the table gives the answer and the count of rows of workspace A.
@@ -119,11 +119,11 @@ marks both topics unrouted.
 **Verifies:** `NOTIF-FR-011`, `NOTIF-FR-012`
 **Layer:** integration
 
-| Case                 | Body                                      | Pointers                   |
-| -------------------- | ----------------------------------------- | -------------------------- |
-| Empty token          | `fields: {}`                              | `/fields/bot_token`         |
-| Unknown field        | `fields: {bot_token: "x", proxy: "y"}`     | `/fields/proxy`            |
-| Chat id not a number | route with `destination: {chat_id: "abc"}` | `/destination/chat_id`      |
+| Case                 | Body                                       | Pointers               |
+| -------------------- | ------------------------------------------ | ---------------------- |
+| Empty token          | `fields: {}`                               | `/fields/bot_token`    |
+| Unknown field        | `fields: {bot_token: "x", proxy: "y"}`     | `/fields/proxy`        |
+| Chat id not a number | route with `destination: {chat_id: "abc"}` | `/destination/chat_id` |
 
 **Then** each answer is 422 `settings-invalid`, each names the pointers of its row, and
 no row changes.
@@ -133,11 +133,11 @@ no row changes.
 **Verifies:** `NOTIF-FR-013`
 **Layer:** integration
 
-| Case        | Stub answer to `getMe`              | Answer                        |
-| ----------- | ----------------------------------- | ----------------------------- |
-| Accepted    | `ok: true`                          | 201                           |
-| Refused     | `ok: false, description: "Unauthorized"` | 422 `delivery-refused`, detail "Unauthorized" |
-| No answer   | no answer within 10 seconds         | 502 `messaging-unreachable`   |
+| Case      | Stub answer to `getMe`                   | Answer                                        |
+| --------- | ---------------------------------------- | --------------------------------------------- |
+| Accepted  | `ok: true`                               | 201                                           |
+| Refused   | `ok: false, description: "Unauthorized"` | 422 `delivery-refused`, detail "Unauthorized" |
+| No answer | no answer within 10 seconds              | 502 `messaging-unreachable`                   |
 
 **Then** only the accepted case stores a row.
 
@@ -156,12 +156,12 @@ thread_id: "2749"}`, and `unrouted: false`. `report` holds no route, and `unrout
 **Verifies:** `NOTIF-FR-016`
 **Layer:** integration
 
-| Case                  | Body                                                    | Answer                    |
-| --------------------- | ------------------------------------------------------- | ------------------------- |
-| Normal                | `reminder`, "Family bot", chat `-100`                   | 201                       |
-| Second route          | `reminder`, "Family bot", chat `-200`                   | 201                       |
-| Plugin not enabled    | a topic of a plugin that workspace A does not enable    | 422, `/plugin_id`         |
-| Provider of B         | the identifier of a provider of workspace B             | 422, `/provider_id`       |
+| Case               | Body                                                 | Answer              |
+| ------------------ | ---------------------------------------------------- | ------------------- |
+| Normal             | `reminder`, "Family bot", chat `-100`                | 201                 |
+| Second route       | `reminder`, "Family bot", chat `-200`                | 201                 |
+| Plugin not enabled | a topic of a plugin that workspace A does not enable | 422, `/plugin_id`   |
+| Provider of B      | the identifier of a provider of workspace B          | 422, `/provider_id` |
 
 ## `NOTIF-SC-013`
 
@@ -197,10 +197,10 @@ thread_id: "2749"}`, and `unrouted: false`. `report` holds no route, and `unrout
 **Verifies:** `NOTIF-FR-021`
 **Layer:** integration
 
-| Case     | Stub answer to `sendMessage`                                   | Answer                         |
-| -------- | -------------------------------------------------------------- | ------------------------------ |
-| Accepted | `ok: true`                                                     | 204                            |
-| Refused  | `ok: false, description: "Bad Request: chat not found"`        | 422 `delivery-refused`, that detail |
+| Case     | Stub answer to `sendMessage`                            | Answer                              |
+| -------- | ------------------------------------------------------- | ----------------------------------- |
+| Accepted | `ok: true`                                              | 204                                 |
+| Refused  | `ok: false, description: "Bad Request: chat not found"` | 422 `delivery-refused`, that detail |
 
 **When** user A posts to `/notification-routes/{id}/test-messages` of a disabled route.
 **Then** the table gives the answer, and the stub records one `sendMessage`.
@@ -242,10 +242,10 @@ thread_id: "2749"}`, and `unrouted: false`. `report` holds no route, and `unrout
 **Verifies:** `NOTIF-FR-025`, `NOTIF-FR-026`, `NOTIF-FR-031`
 **Layer:** integration
 
-| Case        | Route 1 | Route 2 | `Notify` returns | Error logs |
-| ----------- | ------- | ------- | ---------------- | ---------- |
-| One fails   | refused | ok      | nil              | 1          |
-| Both fail   | refused | refused | an error         | 2          |
+| Case      | Route 1 | Route 2 | `Notify` returns | Error logs |
+| --------- | ------- | ------- | ---------------- | ---------- |
+| One fails | refused | ok      | nil              | 1          |
+| Both fail | refused | refused | an error         | 2          |
 
 **Then** the stub records a call for route 2 in both cases. Each error log carries
 `workspace_id`, `plugin`, `topic`, `route_id`, and the description of Telegram.
@@ -275,12 +275,12 @@ unrouted" carries `workspace_id`, `plugin`, and `topic`.
 **Verifies:** `NOTIF-FR-032`
 **Layer:** unit
 
-| Message                      | Stub records                                      |
-| ---------------------------- | ------------------------------------------------- |
-| No attachment                | `sendMessage` with the bold title and the body    |
-| One PNG                      | `sendPhoto` with the caption                      |
-| One PDF                      | `sendDocument` with the caption                   |
-| Two PNG files and one PDF    | `sendMessage`, then two `sendMediaGroup` calls     |
+| Message                   | Stub records                                   |
+| ------------------------- | ---------------------------------------------- |
+| No attachment             | `sendMessage` with the bold title and the body |
+| One PNG                   | `sendPhoto` with the caption                   |
+| One PDF                   | `sendDocument` with the caption                |
+| Two PNG files and one PDF | `sendMessage`, then two `sendMediaGroup` calls |
 
 **Then** each call carries `message_thread_id` when the destination holds `thread_id`.
 

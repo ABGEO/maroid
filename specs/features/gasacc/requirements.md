@@ -360,33 +360,33 @@ No answer of Maroid to a client holds the personal number of a customer or of th
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline         | Effect on this feature |
-| --------- | ----------------- | ---------------------- |
-| `PLG-007` | Plugin model      | The plugin reads the settings, the connection, and the database through the host. |
-| `ARC-008` | Architecture      | The hub holds no rule that names the gas plugin. |
+| Rule      | Guideline         | Effect on this feature                                                               |
+| --------- | ----------------- | ------------------------------------------------------------------------------------ |
+| `PLG-007` | Plugin model      | The plugin reads the settings, the connection, and the database through the host.    |
+| `ARC-008` | Architecture      | The hub holds no rule that names the gas plugin.                                     |
 | `OWN-004` | Record ownership  | The connection, the assigned customer, and the transactions belong to one workspace. |
-| `DAT-001` | Data              | The transactions live in the schema of the plugin. |
-| `CFG-007` | Configuration     | No credential of a workspace stays in the configuration file. |
-| `EXT-005` | External services | A failure of the gas service is an error, never an empty result. |
-| `LOG-008` | Logging           | No log holds a password or a session token. |
-| `SEC-013` | Security          | Each route and the widget of the plugin name a permission. |
-| `UI-006`  | Web UI            | The pages import no module of the deck. |
-| `JOB-007` | Jobs              | A failed collection of one workspace does not stop the collection of another. |
-| `NTF-002` | Notifications     | The bill keeps its notification topic. The plugin names no destination. |
-| `CLI-005` | Command line      | The plugin adds the command through the command registry. |
-| `OWN-003` | Ownership         | The command takes the acting workspace from a flag, and carries no acting user. |
+| `DAT-001` | Data              | The transactions live in the schema of the plugin.                                   |
+| `CFG-007` | Configuration     | No credential of a workspace stays in the configuration file.                        |
+| `EXT-005` | External services | A failure of the gas service is an error, never an empty result.                     |
+| `LOG-008` | Logging           | No log holds a password or a session token.                                          |
+| `SEC-013` | Security          | Each route and the widget of the plugin name a permission.                           |
+| `UI-006`  | Web UI            | The pages import no module of the deck.                                              |
+| `JOB-007` | Jobs              | A failed collection of one workspace does not stop the collection of another.        |
+| `NTF-002` | Notifications     | The bill keeps its notification topic. The plugin names no destination.              |
+| `CLI-005` | Command line      | The plugin adds the command through the command registry.                            |
+| `OWN-003` | Ownership         | The command takes the acting workspace from a flag, and carries no acting user.      |
 
 ## 8. Open questions
 
-| #   | Question | Owner | Answer |
-| --- | -------- | ----- | ------ |
-| 1   | Can one customer hold two transactions of one operation on one date, such as two payments? `GASACC-FR-021` merges them. | Temuri | No. The rule stays. `GASACC-FR-021`. |
-| 2   | Does the path of a bill or of a meter photo stay valid for months? If not, a download of an old transaction fails. | Temuri | Yes. Maroid stores each path once. |
-| 3   | Which range does a collection read? | Temuri | The previous calendar month, on the schedule (`GASACC-FR-017`). The assignment collects nothing, changed on 2026-10-14 (`GASACC-FR-043`). An administrator collects an earlier period from the command line (`GASACC-FR-023`). |
-| 4   | Does a customer ever hold two meters? The answer names no meter. | Temuri | No. One meter for each customer. The chart shows one series. |
+| #   | Question                                                                                                                | Owner  | Answer                                                                                                                                                                                                                         |
+| --- | ----------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Can one customer hold two transactions of one operation on one date, such as two payments? `GASACC-FR-021` merges them. | Temuri | No. The rule stays. `GASACC-FR-021`.                                                                                                                                                                                           |
+| 2   | Does the path of a bill or of a meter photo stay valid for months? If not, a download of an old transaction fails.      | Temuri | Yes. Maroid stores each path once.                                                                                                                                                                                             |
+| 3   | Which range does a collection read?                                                                                     | Temuri | The previous calendar month, on the schedule (`GASACC-FR-017`). The assignment collects nothing, changed on 2026-10-14 (`GASACC-FR-043`). An administrator collects an earlier period from the command line (`GASACC-FR-023`). |
+| 4   | Does a customer ever hold two meters? The answer names no meter.                                                        | Temuri | No. One meter for each customer. The chart shows one series.                                                                                                                                                                   |
 
 ## Retired identifiers
 
-| ID              | Retired    | Reason                                                                |
-| --------------- | ---------- | --------------------------------------------------------------------- |
+| ID              | Retired    | Reason                                                                  |
+| --------------- | ---------- | ----------------------------------------------------------------------- |
 | `GASACC-FR-016` | 2026-10-14 | An assignment collects nothing. `GASACC-FR-043` replaces the statement. |

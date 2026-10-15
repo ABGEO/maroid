@@ -211,25 +211,25 @@ The database holds a secret in a protected form only.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline         | Effect on this feature                                                      |
-| --------- | ----------------- | ----------------------------------------------------------------------------- |
-| `CFG-004` | Configuration     | This feature adds no file in the repository that holds a secret.            |
-| `CFG-007` | Configuration     | The value of one person leaves the configuration file.                      |
-| `PLG-006` | Plugin model      | The settings schema is a capability: an interface, a registry, a registrar. |
-| `PLG-007` | Plugin model      | A plugin reads a setting through the host.                                  |
+| Rule      | Guideline         | Effect on this feature                                                             |
+| --------- | ----------------- | ---------------------------------------------------------------------------------- |
+| `CFG-004` | Configuration     | This feature adds no file in the repository that holds a secret.                   |
+| `CFG-007` | Configuration     | The value of one person leaves the configuration file.                             |
+| `PLG-006` | Plugin model      | The settings schema is a capability: an interface, a registry, a registrar.        |
+| `PLG-007` | Plugin model      | A plugin reads a setting through the host.                                         |
 | `OWN-003` | Record ownership  | The run that reads a setting carries an acting workspace, an acting user, or both. |
-| `OWN-004` | Record ownership  | The value of a field belongs to a workspace or to a user, as the plugin declares. |
-| `OWN-006` | Record ownership  | The isolation of a setting runs in the database and fails closed.           |
-| `API-006` | The HTTP API      | A rejected save answers with a body that names each field.                  |
-| `EXT-005` | External services | A failure of the protection service is an error, never an empty result.     |
-| `PRC-002` | Process           | `PSET-FR-018` is the requirement that permits a new external service.       |
+| `OWN-004` | Record ownership  | The value of a field belongs to a workspace or to a user, as the plugin declares.  |
+| `OWN-006` | Record ownership  | The isolation of a setting runs in the database and fails closed.                  |
+| `API-006` | The HTTP API      | A rejected save answers with a body that names each field.                         |
+| `EXT-005` | External services | A failure of the protection service is an error, never an empty result.            |
+| `PRC-002` | Process           | `PSET-FR-018` is the requirement that permits a new external service.              |
 
 ## 8. Open questions
 
-| #   | Question                                                                                                 | Owner  | Answer                                                                                 |
-| --- | ---------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------- |
+| #   | Question                                                                                                                       | Owner  | Answer                                                                       |
+| --- | ------------------------------------------------------------------------------------------------------------------------------ | ------ | ---------------------------------------------------------------------------- |
 | 1   | Does an administrator destroy the protection of a workspace or a user with a command of Maroid, or with a call to the service? | Temuri | With a call to the service. `IDENT` set the precedent for the user record.   |
-| 2   | Does a plugin that declares no required field read an absent settings record as an empty one?            | Temuri | Yes. `PSET-FR-013` reports absent only when a required field holds no value. |
+| 2   | Does a plugin that declares no required field read an absent settings record as an empty one?                                  | Temuri | Yes. `PSET-FR-013` reports absent only when a required field holds no value. |
 
 ## Retired identifiers
 

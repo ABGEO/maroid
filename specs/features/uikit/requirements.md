@@ -42,12 +42,12 @@ pagination. The next plugin with a collection writes a second one.
 
 ## 4. Definitions
 
-| Term                        | Meaning                                                                                           |
-| --------------------------- | ------------------------------------------------------------------------------------------------- |
-| `GLO-component-library`     | The one shared set of components and styling that the deck and every remote import.              |
-| `GLO-component`             | One reusable control of the component library. It receives every value it shows from its caller. |
-| `GLO-theme-variant`         | One of the two forms of the theme that the deck offers: light and dark.                          |
-| `GLO-catalog`               | A page that shows each component alone, with sample values, outside the deck.                    |
+| Term                    | Meaning                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| `GLO-component-library` | The one shared set of components and styling that the deck and every remote import.              |
+| `GLO-component`         | One reusable control of the component library. It receives every value it shows from its caller. |
+| `GLO-theme-variant`     | One of the two forms of the theme that the deck offers: light and dark.                          |
+| `GLO-catalog`           | A page that shows each component alone, with sample values, outside the deck.                    |
 
 ## 5. Functional requirements
 
@@ -217,28 +217,28 @@ receives every value it needs from its caller.
 
 ## 8. Constraints from the guidelines
 
-| Rule      | Guideline         | Effect on this feature                                                                  |
-| --------- | ----------------- | --------------------------------------------------------------------------------------- |
-| `ARC-003` | Architecture      | The components use TypeScript and Svelte 5.                                             |
-| `ARC-005` | Architecture      | The component library is a shared module, the existing kind, in a package of its own.   |
-| `ARC-007` | Architecture      | A new TypeScript package joins `pnpm-workspace.yaml`.                                   |
-| `UI-002`  | Web UI            | A remote builds on its own. The styling of `UIKIT-FR-003` must reach that build.        |
-| `UI-006`  | Web UI            | The component library lives outside `apps/deck`, so a remote can import it.            |
-| `TS-001`  | Frontend style    | The package sets strict type checks.                                                    |
-| `TS-002`  | Frontend style    | Every component uses runes.                                                             |
-| `TS-005`  | Frontend style    | The styling is Tailwind CSS 4 and daisyUI. No other framework.                          |
-| `BLD-001` | Build and release | The component library gets a row: a lint command and a check command.                   |
-| `BLD-003` | Build and release | A change to the component library rebuilds each remote before its shared object.        |
-| `RES-005` | REST              | The pagination reads the `next` and `prev` links of a page.                             |
-| `RES-006` | REST              | The pagination builds no cursor.                                                        |
+| Rule      | Guideline         | Effect on this feature                                                                |
+| --------- | ----------------- | ------------------------------------------------------------------------------------- |
+| `ARC-003` | Architecture      | The components use TypeScript and Svelte 5.                                           |
+| `ARC-005` | Architecture      | The component library is a shared module, the existing kind, in a package of its own. |
+| `ARC-007` | Architecture      | A new TypeScript package joins `pnpm-workspace.yaml`.                                 |
+| `UI-002`  | Web UI            | A remote builds on its own. The styling of `UIKIT-FR-003` must reach that build.      |
+| `UI-006`  | Web UI            | The component library lives outside `apps/deck`, so a remote can import it.           |
+| `TS-001`  | Frontend style    | The package sets strict type checks.                                                  |
+| `TS-002`  | Frontend style    | Every component uses runes.                                                           |
+| `TS-005`  | Frontend style    | The styling is Tailwind CSS 4 and daisyUI. No other framework.                        |
+| `BLD-001` | Build and release | The component library gets a row: a lint command and a check command.                 |
+| `BLD-003` | Build and release | A change to the component library rebuilds each remote before its shared object.      |
+| `RES-005` | REST              | The pagination reads the `next` and `prev` links of a page.                           |
+| `RES-006` | REST              | The pagination builds no cursor.                                                      |
 
 ## 9. Open questions
 
-| #   | Question | Owner | Answer |
-| --- | -------- | ----- | ------ |
+| #   | Question                                                                                                                                                                         | Owner  | Answer                                                             |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------ |
 | 1   | `UIKIT-FR-004` makes a theme change reach an old plugin build. The alternative is that a plugin shows the theme it was built with, like its components (`UIKIT-INV-002`). Which? | Temuri | A theme change reaches an old plugin build. `UIKIT-FR-004` stands. |
-| 2   | `UIKIT-NFR-002` sets 15 kilobytes. Is the figure acceptable? | Temuri | Yes. |
-| 3   | Does the component library become its own package, or join `@maroid/theme` or `@maroid/plugin-sdk`? | Temuri | A package of its own. |
+| 2   | `UIKIT-NFR-002` sets 15 kilobytes. Is the figure acceptable?                                                                                                                     | Temuri | Yes.                                                               |
+| 3   | Does the component library become its own package, or join `@maroid/theme` or `@maroid/plugin-sdk`?                                                                              | Temuri | A package of its own.                                              |
 
 ## Retired identifiers
 

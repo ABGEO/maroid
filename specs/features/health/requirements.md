@@ -190,19 +190,19 @@ The liveness answer depends on no dependency.
 
 ## 8. Constraints from the guidelines
 
-| Rule      | Guideline        | Effect on this feature                                                        |
-| --------- | ---------------- | ----------------------------------------------------------------------------- |
-| `API-003` | HTTP API         | The two probe routes join the route table as public routes. The table changes directly. |
-| `API-007` | HTTP API         | Every answer carries `X-Flow-ID` and `Cache-Control`.                          |
-| `ERR-001` | Errors           | A failed readiness answer is a problem.                                       |
-| `ERR-003` | Errors           | The type of the failed readiness answer takes a row in a table of types.      |
-| `RES-002` | REST             | A probe route whose name departs from a Zalando rule takes a row.             |
-| `RES-007` | REST             | `hub.yaml` describes the two probe routes.                                    |
-| `LOG-008` | Logging          | The log of a failed dependency holds no secret of a connection string.        |
-| `LOG-010` | Logging          | The rule takes the exception of `HEALTH-FR-012` directly.                     |
-| `LIF-005` | Lifecycle        | The drain period comes before the HTTP server stops.                          |
-| `LIF-006` | Lifecycle        | The drain period fits inside the 10 seconds of a shutdown step.               |
-| `CFG-003` | Configuration    | The key of the drain period carries a default and a validation.               |
+| Rule      | Guideline     | Effect on this feature                                                                  |
+| --------- | ------------- | --------------------------------------------------------------------------------------- |
+| `API-003` | HTTP API      | The two probe routes join the route table as public routes. The table changes directly. |
+| `API-007` | HTTP API      | Every answer carries `X-Flow-ID` and `Cache-Control`.                                   |
+| `ERR-001` | Errors        | A failed readiness answer is a problem.                                                 |
+| `ERR-003` | Errors        | The type of the failed readiness answer takes a row in a table of types.                |
+| `RES-002` | REST          | A probe route whose name departs from a Zalando rule takes a row.                       |
+| `RES-007` | REST          | `hub.yaml` describes the two probe routes.                                              |
+| `LOG-008` | Logging       | The log of a failed dependency holds no secret of a connection string.                  |
+| `LOG-010` | Logging       | The rule takes the exception of `HEALTH-FR-012` directly.                               |
+| `LIF-005` | Lifecycle     | The drain period comes before the HTTP server stops.                                    |
+| `LIF-006` | Lifecycle     | The drain period fits inside the 10 seconds of a shutdown step.                         |
+| `CFG-003` | Configuration | The key of the drain period carries a default and a validation.                         |
 
 ## Retired identifiers
 

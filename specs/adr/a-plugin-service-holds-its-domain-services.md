@@ -35,11 +35,11 @@ service with a fake.
 
 ## Alternatives
 
-| Alternative | Why we did not select it |
-| ----------- | ------------------------ |
-| A new directory `store/` | A second home for one kind of type, and the table grows for each plugin. |
-| A transaction in each handler and widget | Each caller repeats the transaction, and a unit test needs a database. |
-| A store in `repository/` | `REP-003` forbids a repository that holds the pool. |
+| Alternative                              | Why we did not select it                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| A new directory `store/`                 | A second home for one kind of type, and the table grows for each plugin. |
+| A transaction in each handler and widget | Each caller repeats the transaction, and a unit test needs a database.   |
+| A store in `repository/`                 | `REP-003` forbids a repository that holds the pool.                      |
 
 ## Consequences
 

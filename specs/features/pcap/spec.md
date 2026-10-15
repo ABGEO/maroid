@@ -28,34 +28,34 @@ longer carries a name, and every page of the deck reads the name from the report
 
 ## 2. Coverage
 
-| Requirement      | Where this specification realizes it                      |
-| ---------------- | ---------------------------------------------------------- |
-| `PCAP-FR-001`    | `PCAP-DD-003`, section 4.3, `PCAP-SC-001`                  |
-| `PCAP-FR-002`    | `PCAP-DD-006`, `PCAP-SC-002`                               |
-| `PCAP-FR-003`    | `PCAP-DD-002`, section 4.3, `PCAP-SC-003`                  |
-| `PCAP-FR-004`    | Section 4.3, `PCAP-DD-003`, `PCAP-SC-004`                  |
-| `PCAP-FR-005`    | `PCAP-DD-005`, `PCAP-SC-005`                               |
-| `PCAP-FR-006`    | `PCAP-DD-007`, `PCAP-SC-006`                               |
-| `PCAP-FR-007`    | `PCAP-DD-004`, `PCAP-SC-007`                               |
-| `PCAP-FR-008`    | `PCAP-DD-008`, section 4.6, `PCAP-SC-009`, `PCAP-SC-010`   |
-| `PCAP-FR-009`    | `PCAP-DD-009`, section 4.6, `PCAP-SC-011`                  |
-| `PCAP-NFR-001`   | `PCAP-DD-003`, `PCAP-SC-008`                               |
-| `PCAP-INV-001`   | `PCAP-DD-001`, `PCAP-DD-006`, `PCAP-SC-002`                |
-| `PCAP-INV-002`   | `PCAP-DD-003`, `PCAP-SC-001`                               |
+| Requirement    | Where this specification realizes it                     |
+| -------------- | -------------------------------------------------------- |
+| `PCAP-FR-001`  | `PCAP-DD-003`, section 4.3, `PCAP-SC-001`                |
+| `PCAP-FR-002`  | `PCAP-DD-006`, `PCAP-SC-002`                             |
+| `PCAP-FR-003`  | `PCAP-DD-002`, section 4.3, `PCAP-SC-003`                |
+| `PCAP-FR-004`  | Section 4.3, `PCAP-DD-003`, `PCAP-SC-004`                |
+| `PCAP-FR-005`  | `PCAP-DD-005`, `PCAP-SC-005`                             |
+| `PCAP-FR-006`  | `PCAP-DD-007`, `PCAP-SC-006`                             |
+| `PCAP-FR-007`  | `PCAP-DD-004`, `PCAP-SC-007`                             |
+| `PCAP-FR-008`  | `PCAP-DD-008`, section 4.6, `PCAP-SC-009`, `PCAP-SC-010` |
+| `PCAP-FR-009`  | `PCAP-DD-009`, section 4.6, `PCAP-SC-011`                |
+| `PCAP-NFR-001` | `PCAP-DD-003`, `PCAP-SC-008`                             |
+| `PCAP-INV-001` | `PCAP-DD-001`, `PCAP-DD-006`, `PCAP-SC-002`              |
+| `PCAP-INV-002` | `PCAP-DD-003`, `PCAP-SC-001`                             |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline          | How this specification obeys it                                                                          |
-| --------- | ------------------ | ---------------------------------------------------------------------------------------------------------- |
-| `PLG-006` | Plugin model       | Each capability keeps its interface, its registry, and its registrar. This feature adds no capability and changes no registrar contract. |
-| `ARC-008` | Architecture       | A registrar records for every plugin it supports. No rule names one plugin.                               |
-| `PLG-012` | Plugin model       | The loader checks the name and the description of every plugin before any registrar runs. Section 4.6.  |
-| `API-003` | HTTP API           | `/plugins` keeps its prefix and its access. Only the body of the answer changes.                          |
-| `API-006` | HTTP API           | The body stays JSON. `PCAP-DD-001` gives its shape.                                                       |
-| `UI-001`  | Web user interface | The deck renders the capabilities. It holds no list of its own.                                           |
-| `TS-002`  | Frontend style     | The page of the plugins uses runes, as it does today.                                                     |
-| `DEP-003` | Dependency resolution | `CapabilityRegistry` joins `Container` as one more registry that a registrar writes into.              |
-| `PKG-004` | Package layout     | The registry lives under `apps/hub/internal`. Nothing new is exported from the hub.                       |
+| Rule      | Guideline             | How this specification obeys it                                                                                                          |
+| --------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `PLG-006` | Plugin model          | Each capability keeps its interface, its registry, and its registrar. This feature adds no capability and changes no registrar contract. |
+| `ARC-008` | Architecture          | A registrar records for every plugin it supports. No rule names one plugin.                                                              |
+| `PLG-012` | Plugin model          | The loader checks the name and the description of every plugin before any registrar runs. Section 4.6.                                   |
+| `API-003` | HTTP API              | `/plugins` keeps its prefix and its access. Only the body of the answer changes.                                                         |
+| `API-006` | HTTP API              | The body stays JSON. `PCAP-DD-001` gives its shape.                                                                                      |
+| `UI-001`  | Web user interface    | The deck renders the capabilities. It holds no list of its own.                                                                          |
+| `TS-002`  | Frontend style        | The page of the plugins uses runes, as it does today.                                                                                    |
+| `DEP-003` | Dependency resolution | `CapabilityRegistry` joins `Container` as one more registry that a registrar writes into.                                                |
+| `PKG-004` | Package layout        | The registry lives under `apps/hub/internal`. Nothing new is exported from the hub.                                                      |
 
 `.golangci.yaml` keeps `tagliatelle` at `json: camel`. `PCAP-DD-002` names each
 capability as a key of a Go map, which carries no struct tag, and section 4.3
@@ -66,25 +66,25 @@ meets that rule at all.
 
 ### 4.1 Components
 
-| Path                                                       | Change | Holds                                                                     |
-| ----------------------------------------------------------- | ------ | --------------------------------------------------------------------------- |
-| `apps/hub/internal/registry/capability.go`                 | Create | `Capability`, the ten names, `CapabilityRegistry`, `Record`, `Of`.         |
-| `apps/hub/internal/registry/capability_item.go`            | Create | The item of each capability. Section 4.3 gives the shapes.                |
-| `apps/hub/internal/registry/plugin_entry.go`               | Change | `PluginEntry` becomes the identifier, the version, and the capabilities.  |
-| `apps/hub/internal/plugin/registrar/registrar.go`          | Change | Nothing. The interface holds.                                             |
-| `apps/hub/internal/plugin/registrar/*.go` (ten registrars) | Change | Each records its capability. Section 4.4 gives the order.                 |
-| `apps/hub/internal/plugin/loader/loader.go`                | Change | `New` takes the capability registry and hands it to each registrar.       |
-| `apps/hub/internal/depresolver/registry.go`                | Change | `CapabilityRegistry()`.                                                   |
-| `apps/hub/internal/depresolver/plugin.go`                  | Change | `pluginRegistries` carries it, and `buildPluginLoader` passes it.         |
-| `apps/hub/internal/depresolver/resolver.go`                | Change | `Resolver` names `CapabilityRegistry()`. `DEP-002`.                       |
-| `apps/hub/internal/handler/plugin.go`                      | Change | `List` calls the new `registry.PluginEntries`.                            |
-| `apps/hub/internal/mcpserver/tools/plugins.go`             | Change | The tool calls the same function, so it needs the new arguments only.     |
-| `apps/deck/src/lib/api/types.ts`                           | Change | `Plugin` carries `capabilities`. `settings` and `ui` go.                  |
-| `apps/deck/src/lib/plugins/capabilities.ts`                | Create | `uiOf`, `hasCapability`, and the label of each capability.                |
-| `apps/deck/src/lib/components/layout/Sidebar.svelte`       | Change | Reads the manifest through `uiOf`.                                        |
-| `apps/deck/src/routes/(dashboard)/plugins/+page.svelte`    | Change | Renders one chip for each capability. `PCAP-FR-006`.                      |
-| `apps/deck/src/routes/(dashboard)/plugins/[plugin]/settings/+page.svelte` | Change | Reads the name through `uiOf`.                        |
-| `specs/features/pcap/api.yaml`                             | Create | The OpenAPI description of `GET /plugins`.                                |
+| Path                                                                      | Change | Holds                                                                    |
+| ------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------ |
+| `apps/hub/internal/registry/capability.go`                                | Create | `Capability`, the ten names, `CapabilityRegistry`, `Record`, `Of`.       |
+| `apps/hub/internal/registry/capability_item.go`                           | Create | The item of each capability. Section 4.3 gives the shapes.               |
+| `apps/hub/internal/registry/plugin_entry.go`                              | Change | `PluginEntry` becomes the identifier, the version, and the capabilities. |
+| `apps/hub/internal/plugin/registrar/registrar.go`                         | Change | Nothing. The interface holds.                                            |
+| `apps/hub/internal/plugin/registrar/*.go` (ten registrars)                | Change | Each records its capability. Section 4.4 gives the order.                |
+| `apps/hub/internal/plugin/loader/loader.go`                               | Change | `New` takes the capability registry and hands it to each registrar.      |
+| `apps/hub/internal/depresolver/registry.go`                               | Change | `CapabilityRegistry()`.                                                  |
+| `apps/hub/internal/depresolver/plugin.go`                                 | Change | `pluginRegistries` carries it, and `buildPluginLoader` passes it.        |
+| `apps/hub/internal/depresolver/resolver.go`                               | Change | `Resolver` names `CapabilityRegistry()`. `DEP-002`.                      |
+| `apps/hub/internal/handler/plugin.go`                                     | Change | `List` calls the new `registry.PluginEntries`.                           |
+| `apps/hub/internal/mcpserver/tools/plugins.go`                            | Change | The tool calls the same function, so it needs the new arguments only.    |
+| `apps/deck/src/lib/api/types.ts`                                          | Change | `Plugin` carries `capabilities`. `settings` and `ui` go.                 |
+| `apps/deck/src/lib/plugins/capabilities.ts`                               | Create | `uiOf`, `hasCapability`, and the label of each capability.               |
+| `apps/deck/src/lib/components/layout/Sidebar.svelte`                      | Change | Reads the manifest through `uiOf`.                                       |
+| `apps/deck/src/routes/(dashboard)/plugins/+page.svelte`                   | Change | Renders one chip for each capability. `PCAP-FR-006`.                     |
+| `apps/deck/src/routes/(dashboard)/plugins/[plugin]/settings/+page.svelte` | Change | Reads the name through `uiOf`.                                           |
+| `specs/features/pcap/api.yaml`                                            | Create | The OpenAPI description of `GET /plugins`.                               |
 
 ```go
 // apps/hub/internal/registry/capability.go
@@ -164,19 +164,19 @@ of `/plugins` do not change.
 
 **Capabilities.** The name, the value, and the registrar that records it.
 
-| Capability               | Value                                        | Recorded by                        | Realizes                     |
-| ------------------------ | -------------------------------------------- | ---------------------------------- | ---------------------------- |
-| `settings`               | `true`                                       | `SettingsRegistrar`                | `PCAP-FR-007`                |
-| `migrations`             | `true`                                       | `MigrationRegistrar`               | `PCAP-FR-007`                |
-| `ui`                     | `{ routes }`, the `UIManifest` with no name  | `UIRegistrar`                      | `PCAP-FR-004`, `PCAP-DD-008` |
-| `api`                    | `[{ method, path, permission }]`             | `HandlerRegistrar`                 | `PCAP-FR-004`                |
-| `cli`                    | `[{ command }]`                              | `CommandRegistrar`                 | `PCAP-FR-004`                |
-| `cron`                   | `[{ id, schedule }]`                         | `CronRegistrar`                    | `PCAP-FR-004`                |
-| `mqtt`                   | `[{ id, topic }]`                            | `MQTTSubscriberRegistrar`          | `PCAP-FR-004`                |
-| `telegramCommands`       | `[{ command, description, permission }]`     | `TelegramCommandRegistrar`         | `PCAP-FR-004`                |
-| `telegramConversations`  | `[{ id, entry }]`                            | `TelegramConversationRegistrar`    | `PCAP-FR-004`                |
-| `mcpTools`               | `[{ name, description, permission }]`        | `MCPToolRegistrar`                 | `PCAP-FR-004`                |
-| `permissions`            | `[{ name, role }]`                           | The registrar of the permission capability | `PCAP-FR-004`, `SEC-013` |
+| Capability              | Value                                       | Recorded by                                | Realizes                     |
+| ----------------------- | ------------------------------------------- | ------------------------------------------ | ---------------------------- |
+| `settings`              | `true`                                      | `SettingsRegistrar`                        | `PCAP-FR-007`                |
+| `migrations`            | `true`                                      | `MigrationRegistrar`                       | `PCAP-FR-007`                |
+| `ui`                    | `{ routes }`, the `UIManifest` with no name | `UIRegistrar`                              | `PCAP-FR-004`, `PCAP-DD-008` |
+| `api`                   | `[{ method, path, permission }]`            | `HandlerRegistrar`                         | `PCAP-FR-004`                |
+| `cli`                   | `[{ command }]`                             | `CommandRegistrar`                         | `PCAP-FR-004`                |
+| `cron`                  | `[{ id, schedule }]`                        | `CronRegistrar`                            | `PCAP-FR-004`                |
+| `mqtt`                  | `[{ id, topic }]`                           | `MQTTSubscriberRegistrar`                  | `PCAP-FR-004`                |
+| `telegramCommands`      | `[{ command, description, permission }]`    | `TelegramCommandRegistrar`                 | `PCAP-FR-004`                |
+| `telegramConversations` | `[{ id, entry }]`                           | `TelegramConversationRegistrar`            | `PCAP-FR-004`                |
+| `mcpTools`              | `[{ name, description, permission }]`       | `MCPToolRegistrar`                         | `PCAP-FR-004`                |
+| `permissions`           | `[{ name, role }]`                          | The registrar of the permission capability | `PCAP-FR-004`, `SEC-013`     |
 
 Every field name above is one word, so `tagliatelle` reads each of them as camel
 case already. See section 3.
@@ -215,28 +215,28 @@ sequenceDiagram
 
 ### 4.5 Errors
 
-| Condition                                                | Behavior                        | Message                          |
-| -------------------------------------------------------- | ------------------------------- | -------------------------------- |
-| A registrar fails for a plugin                           | The load of that plugin fails   | The failure that the registrar gives. The report then names no capability of that plugin, because the plugin is not loaded. |
-| A plugin declares a capability and holds no item for it   | The capability records `true`   | None. `PCAP-FR-007`.             |
-| A plugin is in the plugin registry and no registrar recorded a capability | The report holds an empty map | None. `PCAP-FR-001` limit case. |
+| Condition                                                                 | Behavior                      | Message                                                                                                                     |
+| ------------------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| A registrar fails for a plugin                                            | The load of that plugin fails | The failure that the registrar gives. The report then names no capability of that plugin, because the plugin is not loaded. |
+| A plugin declares a capability and holds no item for it                   | The capability records `true` | None. `PCAP-FR-007`.                                                                                                        |
+| A plugin is in the plugin registry and no registrar recorded a capability | The report holds an empty map | None. `PCAP-FR-001` limit case.                                                                                             |
 
 ### 4.6 The name and the description
 
-| Path                                                                  | Change | Holds                                                                     |
-| --------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------- |
-| `libs/pluginapi/metadata.go`                                          | Change | `Metadata.Name`, `Metadata.Description`, `MaxNameLength`, `MaxDescriptionLength` |
-| `libs/pluginapi/ui.go`                                                | Change | `UIManifest` loses `Name`                                                 |
-| `apps/hub/internal/domain/errs/errs.go`                               | Change | `ErrInvalidPluginMetadata`                                                |
-| `apps/hub/internal/plugin/loader/loader.go`                           | Change | `validatePlugin` checks the name and the description. `PLG-012`           |
-| `apps/hub/internal/registry/plugin_entry.go`                          | Change | `PluginEntry.Name`, `PluginEntry.Description`                             |
+| Path                                                                  | Change | Holds                                                                                  |
+| --------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------- |
+| `libs/pluginapi/metadata.go`                                          | Change | `Metadata.Name`, `Metadata.Description`, `MaxNameLength`, `MaxDescriptionLength`       |
+| `libs/pluginapi/ui.go`                                                | Change | `UIManifest` loses `Name`                                                              |
+| `apps/hub/internal/domain/errs/errs.go`                               | Change | `ErrInvalidPluginMetadata`                                                             |
+| `apps/hub/internal/plugin/loader/loader.go`                           | Change | `validatePlugin` checks the name and the description. `PLG-012`                        |
+| `apps/hub/internal/registry/plugin_entry.go`                          | Change | `PluginEntry.Name`, `PluginEntry.Description`                                          |
 | `specs/features/pcap/api.yaml`                                        | Change | `name` required and `description` optional on `PluginEntry`. `UIManifest` loses `name` |
-| `apps/deck/src/lib/api/types.ts`                                      | Change | `Plugin.name`, `Plugin.description`. `UIManifest` loses `name`            |
-| `apps/deck/src/lib/plugins/capabilities.ts`                           | Change | `displayNameOf` reads `plugin.name`. `PCAP-DD-009`                         |
-| `apps/deck/src/lib/components/layout/Sidebar.svelte`                  | Change | The name, the letter, and the hue of a plugin come from the entry          |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/+page.svelte` | Change | The description under the name of each plugin                             |
-| `apps/deck/src/routes/(dashboard)/admin/plugins/+page.svelte`         | Change | The description under the name of each plugin                             |
-| `plugins/*/main.go`                                                   | Change | Each plugin declares its name. Jasmine moves its name out of `UIManifest`  |
+| `apps/deck/src/lib/api/types.ts`                                      | Change | `Plugin.name`, `Plugin.description`. `UIManifest` loses `name`                         |
+| `apps/deck/src/lib/plugins/capabilities.ts`                           | Change | `displayNameOf` reads `plugin.name`. `PCAP-DD-009`                                     |
+| `apps/deck/src/lib/components/layout/Sidebar.svelte`                  | Change | The name, the letter, and the hue of a plugin come from the entry                      |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/+page.svelte` | Change | The description under the name of each plugin                                          |
+| `apps/deck/src/routes/(dashboard)/admin/plugins/+page.svelte`         | Change | The description under the name of each plugin                                          |
+| `plugins/*/main.go`                                                   | Change | Each plugin declares its name. Jasmine moves its name out of `UIManifest`              |
 
 ```go
 // libs/pluginapi/metadata.go
@@ -264,11 +264,11 @@ field. The check runs after the check of the identifier and before the check of 
 API version, so a plugin with no identifier still fails on its identifier.
 `PluginEntries` reports the trimmed values.
 
-| Condition                                                    | Behavior                      | Message                                                       |
-| ------------------------------------------------------------ | ----------------------------- | ------------------------------------------------------------- |
-| The name is empty after the trim                             | The load of the plugin fails  | `plugin: invalid metadata: plugin "<id>": the name is empty`  |
-| The name holds more than 64 characters                       | The load of the plugin fails  | `plugin: invalid metadata: plugin "<id>": the name holds <n> characters, at most 64` |
-| The description holds more than 280 characters               | The load of the plugin fails  | `plugin: invalid metadata: plugin "<id>": the description holds <n> characters, at most 280` |
+| Condition                                      | Behavior                     | Message                                                                                      |
+| ---------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------- |
+| The name is empty after the trim               | The load of the plugin fails | `plugin: invalid metadata: plugin "<id>": the name is empty`                                 |
+| The name holds more than 64 characters         | The load of the plugin fails | `plugin: invalid metadata: plugin "<id>": the name holds <n> characters, at most 64`         |
+| The description holds more than 280 characters | The load of the plugin fails | `plugin: invalid metadata: plugin "<id>": the description holds <n> characters, at most 280` |
 
 ## 5. Design decisions
 
@@ -514,7 +514,7 @@ capability is absent from the map.
 
 **Layer:** integration
 
-**Given** a loaded plugin that declares the name "  Jasmine " and a description, a
+**Given** a loaded plugin that declares the name " Jasmine " and a description, a
 user interface, and a loaded plugin that declares the name "Telasi" and no description.
 **When** a browser reads `GET /plugins` and an agent calls `list_plugins`.
 **Then** the first entry carries the name "Jasmine" and the description, and its `ui`
@@ -525,7 +525,7 @@ capability carries no name. The second entry carries the name "Telasi" and no
 
 **Layer:** unit
 
-**Given** six plugins: one with an empty name, one with the name "   ", one with a
+**Given** six plugins: one with an empty name, one with the name " ", one with a
 name of 65 letters, one with a name of 64 Georgian letters, one with a description of
 281 letters, and one with a name of 64 letters and a description of 280.
 **When** the loader validates each.
@@ -547,24 +547,24 @@ each list shows the description of Jasmine under its name. The plugins of H show
 
 ## 7. Build plan
 
-| #   | Step                                                                                    | Realizes                        | Done |
-| --- | ----------------------------------------------------------------------------------------- | ------------------------------- | ---- |
-| 1   | Create `registry.Capability`, the ten names, `Present`, and the item of each capability. | `PCAP-FR-003`, `PCAP-DD-002`    | [x]  |
-| 2   | Create `registry.CapabilityRegistry` with `Record` and `Of`.                            | `PCAP-DD-003`                   | [x]  |
-| 3   | Change `PluginEntry` and `PluginEntries` to carry the capabilities.                     | `PCAP-FR-001`, `PCAP-DD-006`    | [x]  |
-| 4   | Record in the two registrars that hold no item: settings and migrations.                | `PCAP-FR-007`, `PCAP-DD-004`    | [x]  |
-| 5   | Record in the eight registrars that hold items.                                         | `PCAP-FR-004`, `PCAP-DD-005`    | [x]  |
-| 6   | Add `CapabilityRegistry()` to `depresolver`, and pass it through the loader.             | `DEP-002`, `DEP-003`            | [x]  |
-| 7   | Change `handler.Plugin.List` and the plugin list tool to the new call.                  | `PCAP-FR-002`                   | [x]  |
-| 8   | Write `api.yaml`.                                                                        | `SPC-002`                       | [x]  |
-| 9   | Create `capabilities.ts` in the deck, and move the eleven readers of `plugin.ui` onto it. | `PCAP-DD-007`                 | [x]  |
-| 10  | Render one chip for each capability on the page that lists the plugins.                 | `PCAP-FR-006`                   | [x]  |
-| 11  | Add the capabilities to the coverage of `MCPHUB-FR-005` in `mcphub/spec.md`.             | `TRC-007`                       | [x]  |
-| 12  | Write the `{workspaceId}` prefix into the path of each `api` item, and the `permission` of each item. Record the `permissions` capability. It needs the permission capability of `SEC-013`. | `PCAP-FR-004`, `SEC-013` | [x]  |
-| 13  | Write `PCAP-SC-010`, then `Metadata.Name`, `Metadata.Description`, the limits, `ErrInvalidPluginMetadata`, and the check in `validatePlugin`. | `PCAP-FR-008`, `PLG-012` | [x]  |
-| 14  | Write `PCAP-SC-009`, then the two members of `PluginEntry`, `UIManifest` without `Name`, and `api.yaml`. | `PCAP-FR-008`, `PCAP-DD-008` | [x]  |
-| 15  | Declare the name of every plugin of the repository, and move the name of Jasmine out of its `UIManifest`. Build every plugin. | `PLG-012`, `BLD-004` | [x]  |
-| 16  | Change the types of the deck, `displayNameOf`, the sidebar, and the two lists of plugins. | `PCAP-FR-009`, `PCAP-DD-009` | [x]  |
+| #   | Step                                                                                                                                                                                        | Realizes                     | Done |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ---- |
+| 1   | Create `registry.Capability`, the ten names, `Present`, and the item of each capability.                                                                                                    | `PCAP-FR-003`, `PCAP-DD-002` | [x]  |
+| 2   | Create `registry.CapabilityRegistry` with `Record` and `Of`.                                                                                                                                | `PCAP-DD-003`                | [x]  |
+| 3   | Change `PluginEntry` and `PluginEntries` to carry the capabilities.                                                                                                                         | `PCAP-FR-001`, `PCAP-DD-006` | [x]  |
+| 4   | Record in the two registrars that hold no item: settings and migrations.                                                                                                                    | `PCAP-FR-007`, `PCAP-DD-004` | [x]  |
+| 5   | Record in the eight registrars that hold items.                                                                                                                                             | `PCAP-FR-004`, `PCAP-DD-005` | [x]  |
+| 6   | Add `CapabilityRegistry()` to `depresolver`, and pass it through the loader.                                                                                                                | `DEP-002`, `DEP-003`         | [x]  |
+| 7   | Change `handler.Plugin.List` and the plugin list tool to the new call.                                                                                                                      | `PCAP-FR-002`                | [x]  |
+| 8   | Write `api.yaml`.                                                                                                                                                                           | `SPC-002`                    | [x]  |
+| 9   | Create `capabilities.ts` in the deck, and move the eleven readers of `plugin.ui` onto it.                                                                                                   | `PCAP-DD-007`                | [x]  |
+| 10  | Render one chip for each capability on the page that lists the plugins.                                                                                                                     | `PCAP-FR-006`                | [x]  |
+| 11  | Add the capabilities to the coverage of `MCPHUB-FR-005` in `mcphub/spec.md`.                                                                                                                | `TRC-007`                    | [x]  |
+| 12  | Write the `{workspaceId}` prefix into the path of each `api` item, and the `permission` of each item. Record the `permissions` capability. It needs the permission capability of `SEC-013`. | `PCAP-FR-004`, `SEC-013`     | [x]  |
+| 13  | Write `PCAP-SC-010`, then `Metadata.Name`, `Metadata.Description`, the limits, `ErrInvalidPluginMetadata`, and the check in `validatePlugin`.                                               | `PCAP-FR-008`, `PLG-012`     | [x]  |
+| 14  | Write `PCAP-SC-009`, then the two members of `PluginEntry`, `UIManifest` without `Name`, and `api.yaml`.                                                                                    | `PCAP-FR-008`, `PCAP-DD-008` | [x]  |
+| 15  | Declare the name of every plugin of the repository, and move the name of Jasmine out of its `UIManifest`. Build every plugin.                                                               | `PLG-012`, `BLD-004`         | [x]  |
+| 16  | Change the types of the deck, `displayNameOf`, the sidebar, and the two lists of plugins.                                                                                                   | `PCAP-FR-009`, `PCAP-DD-009` | [x]  |
 
 ## 8. Out of scope for this specification
 

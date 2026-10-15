@@ -25,50 +25,50 @@ This specification succeeds `EXTID-DD-006`, which `ADR-0004` retired.
 
 ## 2. Coverage
 
-| Requirement       | Where this specification realizes it                        |
-| ----------------- | ----------------------------------------------------------- |
-| `WEBSESS-FR-001`  | Section 4.4, `WEBSESS-DD-003`, `WEBSESS-SC-001`             |
+| Requirement       | Where this specification realizes it                                                |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| `WEBSESS-FR-001`  | Section 4.4, `WEBSESS-DD-003`, `WEBSESS-SC-001`                                     |
 | `WEBSESS-FR-002`  | Section 4.1, `WEBSESS-DD-001`, `WEBSESS-DD-002`, `WEBSESS-SC-003`, `WEBSESS-SC-004` |
-| `WEBSESS-FR-003`  | `WEBSESS-DD-001`, `WEBSESS-SC-005`                          |
-| `WEBSESS-FR-004`  | `WEBSESS-DD-001`, `WEBSESS-SC-005`                          |
-| `WEBSESS-FR-005`  | Section 4.1, `WEBSESS-DD-006`, `WEBSESS-SC-006`, `WEBSESS-SC-007` |
-| `WEBSESS-FR-006`  | Section 4.3, Section 4.4, `WEBSESS-DD-005`, `WEBSESS-SC-008`, `WEBSESS-SC-009` |
-| `WEBSESS-FR-007`  | Section 4.5, `WEBSESS-DD-005`, `WEBSESS-SC-010`             |
-| `WEBSESS-FR-008`  | Section 4.1, `WEBSESS-DD-008`, `WEBSESS-SC-011`             |
-| `WEBSESS-NFR-001` | `WEBSESS-DD-005`, `WEBSESS-SC-012`                          |
-| `WEBSESS-NFR-002` | `WEBSESS-DD-002`, `WEBSESS-SC-013`                          |
-| `WEBSESS-INV-001` | `WEBSESS-DD-002`, `WEBSESS-SC-014`                          |
-| `WEBSESS-INV-002` | `WEBSESS-DD-003`, `WEBSESS-SC-015`                          |
+| `WEBSESS-FR-003`  | `WEBSESS-DD-001`, `WEBSESS-SC-005`                                                  |
+| `WEBSESS-FR-004`  | `WEBSESS-DD-001`, `WEBSESS-SC-005`                                                  |
+| `WEBSESS-FR-005`  | Section 4.1, `WEBSESS-DD-006`, `WEBSESS-SC-006`, `WEBSESS-SC-007`                   |
+| `WEBSESS-FR-006`  | Section 4.3, Section 4.4, `WEBSESS-DD-005`, `WEBSESS-SC-008`, `WEBSESS-SC-009`      |
+| `WEBSESS-FR-007`  | Section 4.5, `WEBSESS-DD-005`, `WEBSESS-SC-010`                                     |
+| `WEBSESS-FR-008`  | Section 4.1, `WEBSESS-DD-008`, `WEBSESS-SC-011`                                     |
+| `WEBSESS-NFR-001` | `WEBSESS-DD-005`, `WEBSESS-SC-012`                                                  |
+| `WEBSESS-NFR-002` | `WEBSESS-DD-002`, `WEBSESS-SC-013`                                                  |
+| `WEBSESS-INV-001` | `WEBSESS-DD-002`, `WEBSESS-SC-014`                                                  |
+| `WEBSESS-INV-002` | `WEBSESS-DD-003`, `WEBSESS-SC-015`                                                  |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline              | How this specification obeys it                                                       |
-| --------- | ---------------------- | --------------------------------------------------------------------------------------- |
-| `SEC-002` | Security               | `WEBSESS-DD-003`. The hub verifies the access token against the key set of the IdP.    |
-| `SEC-004` | Security               | Section 4.4 keeps the read of the user record on each request. A sign out changes no record. |
+| Rule      | Guideline              | How this specification obeys it                                                                |
+| --------- | ---------------------- | ---------------------------------------------------------------------------------------------- |
+| `SEC-002` | Security               | `WEBSESS-DD-003`. The hub verifies the access token against the key set of the IdP.            |
+| `SEC-004` | Security               | Section 4.4 keeps the read of the user record on each request. A sign out changes no record.   |
 | `SEC-005` | Security               | `WEBSESS-DD-003`, `WEBSESS-DD-006`. The cookie is the one path, and it holds the access token. |
-| `SEC-008` | Security               | `WEBSESS-DD-001`. One file sets every attribute, and the name is a constant.           |
-| `API-003` | The HTTP API           | Section 4.3 gives `POST /auth/logout` as public.                                       |
-| `API-005` | The HTTP API           | `Logout` returns an error, and `handler.Wrap` logs it.                                 |
-| `API-006` | The HTTP API           | Section 4.6 gives a JSON body for each failure.                                        |
-| `UI-001`  | The web user interface | `WEBSESS-DD-008`. The deck carries the control and the page that follows a sign out.   |
-| `CFG-003` | Configuration          | Section 4.3. `Auth.SessionTTL` goes, and every key that stays keeps its tags.          |
-| `TST-004` | Testing                | Section 6 gives a layer for each scenario.                                             |
+| `SEC-008` | Security               | `WEBSESS-DD-001`. One file sets every attribute, and the name is a constant.                   |
+| `API-003` | The HTTP API           | Section 4.3 gives `POST /auth/logout` as public.                                               |
+| `API-005` | The HTTP API           | `Logout` returns an error, and `handler.Wrap` logs it.                                         |
+| `API-006` | The HTTP API           | Section 4.6 gives a JSON body for each failure.                                                |
+| `UI-001`  | The web user interface | `WEBSESS-DD-008`. The deck carries the control and the page that follows a sign out.           |
+| `CFG-003` | Configuration          | Section 4.3. `Auth.SessionTTL` goes, and every key that stays keeps its tags.                  |
+| `TST-004` | Testing                | Section 6 gives a layer for each scenario.                                                     |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                                  | Change | Holds                                                             |
-| ----------------------------------------------------- | ------ | ------------------------------------------------------------------ |
-| `apps/hub/internal/auth/cookie.go`                    | Create | The name and the attributes of every cookie that the hub sets.    |
-| `apps/hub/internal/auth/middleware.go`                | Change | `tokenFromRequest` reads the session cookie alone.                |
-| `apps/hub/internal/auth/oidc_flow.go`                 | Change | `Verify` returns the access token and binds it to the identity token. |
-| `apps/hub/internal/handler/auth.go`                   | Change | The cookie helpers move to `cookie.go`. `Logout` arrives.         |
-| `apps/hub/internal/config/config.go`                  | Change | `Auth.SessionTTL` goes. See `WEBSESS-DD-004`.                     |
-| `apps/deck/src/lib/api/auth.ts`                       | Change | `logout()` calls the route.                                       |
-| `apps/deck/src/lib/components/UserDropdown.svelte`    | Change | The control calls `logout()` and then navigates.                  |
-| `apps/deck/src/routes/signed-out/+page.svelte`        | Create | The page that a sign out lands on. It loads no user.              |
+| Path                                               | Change | Holds                                                                 |
+| -------------------------------------------------- | ------ | --------------------------------------------------------------------- |
+| `apps/hub/internal/auth/cookie.go`                 | Create | The name and the attributes of every cookie that the hub sets.        |
+| `apps/hub/internal/auth/middleware.go`             | Change | `tokenFromRequest` reads the session cookie alone.                    |
+| `apps/hub/internal/auth/oidc_flow.go`              | Change | `Verify` returns the access token and binds it to the identity token. |
+| `apps/hub/internal/handler/auth.go`                | Change | The cookie helpers move to `cookie.go`. `Logout` arrives.             |
+| `apps/hub/internal/config/config.go`               | Change | `Auth.SessionTTL` goes. See `WEBSESS-DD-004`.                         |
+| `apps/deck/src/lib/api/auth.ts`                    | Change | `logout()` calls the route.                                           |
+| `apps/deck/src/lib/components/UserDropdown.svelte` | Change | The control calls `logout()` and then navigates.                      |
+| `apps/deck/src/routes/signed-out/+page.svelte`     | Create | The page that a sign out lands on. It loads no user.                  |
 
 `cookie.go` holds the names as constants and the functions that write them. It
 carries no type and no constructor, because the file holds no value that changes:
@@ -95,15 +95,15 @@ This feature adds no table and changes none. The browser holds the session, and
 
 **HTTP routes.** `api.yaml` holds the bodies and the status codes.
 
-| Method | Path           | Access | Realizes                            |
-| ------ | -------------- | ------ | ------------------------------------- |
-| `POST` | `/auth/logout` | Public | `WEBSESS-FR-006`, `WEBSESS-FR-007`  |
+| Method | Path           | Access | Realizes                           |
+| ------ | -------------- | ------ | ---------------------------------- |
+| `POST` | `/auth/logout` | Public | `WEBSESS-FR-006`, `WEBSESS-FR-007` |
 
 **Configuration scheme.**
 
-| Key                  | Type            | Default | Secret | Realizes                         |
-| -------------------- | --------------- | ------- | ------ | ---------------------------------- |
-| `auth.session_ttl`   | `time.Duration` | Removed | No     | `WEBSESS-DD-004`                 |
+| Key                | Type            | Default | Secret | Realizes         |
+| ------------------ | --------------- | ------- | ------ | ---------------- |
+| `auth.session_ttl` | `time.Duration` | Removed | No     | `WEBSESS-DD-004` |
 
 `auth.allowed_redirects` keeps its type and its meaning. `WEBSESS-FR-007` reads it.
 
@@ -149,14 +149,14 @@ that names no target takes `auth.deck_url`.
 
 ### 4.6 Errors
 
-| Condition                                     | Status | Type              | Detail                              |
-| --------------------------------------------- | ------ | ------------------- | ------------------------------------- |
-| The request carries no session cookie         | 401    | `access-denied`   | None                                |
-| The token fails the verification              | 401    | `access-denied`   | None                                |
-| The token carries no federated claims         | 401    | `access-denied`   | None                                |
-| No active user record holds the identity      | 401    | `access-denied`   | None                                |
-| The sign out names a target outside the list  | 400    | `request-invalid` | The redirect parameter is absent or not allowed |
-| The sign out carries a dead cookie or none    | 200    | None              | The target. `WEBSESS-FR-006`        |
+| Condition                                    | Status | Type              | Detail                                          |
+| -------------------------------------------- | ------ | ----------------- | ----------------------------------------------- |
+| The request carries no session cookie        | 401    | `access-denied`   | None                                            |
+| The token fails the verification             | 401    | `access-denied`   | None                                            |
+| The token carries no federated claims        | 401    | `access-denied`   | None                                            |
+| No active user record holds the identity     | 401    | `access-denied`   | None                                            |
+| The sign out names a target outside the list | 400    | `request-invalid` | The redirect parameter is absent or not allowed |
+| The sign out carries a dead cookie or none   | 200    | None              | The target. `WEBSESS-FR-006`                    |
 
 The four conditions of a 401 answer with one type and one title, so a caller learns
 nothing about which account exists. `ERR-001` gives the shape.
@@ -457,31 +457,31 @@ correction.
 
 ## 7. Build plan
 
-| #   | Step                                                                                  | Realizes                            | Done |
-| --- | --------------------------------------------------------------------------------------- | ------------------------------------- | ---- |
-| 1   | Write `auth/cookie.go` with the name constants and the cookie functions.              | `WEBSESS-FR-002` to `-004`          | [x]  |
-| 2   | Move the four cookie helpers of `handler/auth.go` into `cookie.go`.                   | `WEBSESS-FR-002` to `-004`          | [x]  |
-| 3   | Return the access token from `OIDCFlow.Verify` and check `at_hash`.                   | `WEBSESS-FR-001`, `WEBSESS-INV-002` | [x]  |
-| 4   | Set the session cookie from the access token and the expiry of the token.             | `WEBSESS-FR-001`                    | [x]  |
-| 5   | Drop `Auth.SessionTTL` from the configuration.                                        | `WEBSESS-FR-001`                    | [x]  |
-| 6   | Read the session cookie alone in `tokenFromRequest`.                                  | `WEBSESS-FR-005`                    | [x]  |
-| 7   | Add `Logout` to the handler and the public route.                                     | `WEBSESS-FR-006`, `-007`            | [x]  |
-| 8   | Add `logout()` to `apps/deck/src/lib/api/auth.ts`.                                    | `WEBSESS-FR-008`                    | [x]  |
-| 9   | Add the `/signed-out` route and wire the control in `UserDropdown.svelte`.            | `WEBSESS-FR-008`                    | [x]  |
-| 10  | Correct `features/extid/api.yaml` for the cookie name and the header.                 | `WEBSESS-FR-001`, `-005`            | [x]  |
-| 11  | Run `WEBSESS-SC-011` and `WEBSESS-SC-016` against the running hub.                    | `WEBSESS-FR-008`, `WEBSESS-FR-001`  | [ ]  |
+| #   | Step                                                                       | Realizes                            | Done |
+| --- | -------------------------------------------------------------------------- | ----------------------------------- | ---- |
+| 1   | Write `auth/cookie.go` with the name constants and the cookie functions.   | `WEBSESS-FR-002` to `-004`          | [x]  |
+| 2   | Move the four cookie helpers of `handler/auth.go` into `cookie.go`.        | `WEBSESS-FR-002` to `-004`          | [x]  |
+| 3   | Return the access token from `OIDCFlow.Verify` and check `at_hash`.        | `WEBSESS-FR-001`, `WEBSESS-INV-002` | [x]  |
+| 4   | Set the session cookie from the access token and the expiry of the token.  | `WEBSESS-FR-001`                    | [x]  |
+| 5   | Drop `Auth.SessionTTL` from the configuration.                             | `WEBSESS-FR-001`                    | [x]  |
+| 6   | Read the session cookie alone in `tokenFromRequest`.                       | `WEBSESS-FR-005`                    | [x]  |
+| 7   | Add `Logout` to the handler and the public route.                          | `WEBSESS-FR-006`, `-007`            | [x]  |
+| 8   | Add `logout()` to `apps/deck/src/lib/api/auth.ts`.                         | `WEBSESS-FR-008`                    | [x]  |
+| 9   | Add the `/signed-out` route and wire the control in `UserDropdown.svelte`. | `WEBSESS-FR-008`                    | [x]  |
+| 10  | Correct `features/extid/api.yaml` for the cookie name and the header.      | `WEBSESS-FR-001`, `-005`            | [x]  |
+| 11  | Run `WEBSESS-SC-011` and `WEBSESS-SC-016` against the running hub.         | `WEBSESS-FR-008`, `WEBSESS-FR-001`  | [ ]  |
 
 Step 6 ends every live session, so step 9 must ship with it. A person who signs
 out before step 10 reaches the loop that `WEBSESS-DD-008` describes.
 
 ## 8. Out of scope for this specification
 
-| Item                                         | Reason                                                                     |
-| -------------------------------------------- | ---------------------------------------------------------------------------- |
-| The check of the origin and a request header | The requirements put it out of scope. It returns as its own feature.        |
-| The end of the session at the IdP            | `WEBSESS-FR-006` states that the session at the IdP survives.               |
-| A store of the session in the hub            | The requirements put it out of scope. The browser holds the access token.   |
-| The lifetime that the IdP stamps             | `EXTID-NFR-002` owns it, and the setting of the IdP carries it.             |
+| Item                                         | Reason                                                                    |
+| -------------------------------------------- | ------------------------------------------------------------------------- |
+| The check of the origin and a request header | The requirements put it out of scope. It returns as its own feature.      |
+| The end of the session at the IdP            | `WEBSESS-FR-006` states that the session at the IdP survives.             |
+| A store of the session in the hub            | The requirements put it out of scope. The browser holds the access token. |
+| The lifetime that the IdP stamps             | `EXTID-NFR-002` owns it, and the setting of the IdP carries it.           |
 
 ## Retired identifiers
 

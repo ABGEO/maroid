@@ -159,13 +159,13 @@ workspace as the acting workspace, and with no acting user.
 **When** the probe writes under each name of the table.
 **Then** each write gives the answer of the table.
 
-| Name                     | Answer             |
-| ------------------------ | ------------------ |
-| `session`                | No error           |
-| 64 characters `a`        | No error           |
-| 65 characters `a`        | `ErrSecretInvalid` |
-| `Session Token`          | `ErrSecretInvalid` |
-| The empty string         | `ErrSecretInvalid` |
+| Name              | Answer             |
+| ----------------- | ------------------ |
+| `session`         | No error           |
+| 64 characters `a` | No error           |
+| 65 characters `a` | `ErrSecretInvalid` |
+| `Session Token`   | `ErrSecretInvalid` |
+| The empty string  | `ErrSecretInvalid` |
 
 ## `PSECRET-SC-016`
 
@@ -176,11 +176,11 @@ workspace as the acting workspace, and with no acting user.
 **When** the probe writes `session` with each value of the table.
 **Then** each write gives the answer of the table.
 
-| Value                         | Answer             |
-| ----------------------------- | ------------------ |
-| 16384 characters `ა`          | No error           |
-| 16385 characters `a`          | `ErrSecretInvalid` |
-| The empty string              | `ErrSecretInvalid` |
+| Value                | Answer             |
+| -------------------- | ------------------ |
+| 16384 characters `ა` | No error           |
+| 16385 characters `a` | `ErrSecretInvalid` |
+| The empty string     | `ErrSecretInvalid` |
 
 ## `PSECRET-SC-017`
 

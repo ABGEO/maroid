@@ -209,24 +209,24 @@ The database holds the value of a plugin secret in a protected form only.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline         | Effect on this feature                                                      |
-| --------- | ----------------- | --------------------------------------------------------------------------- |
-| `PLG-007` | Plugin model      | A plugin reaches a plugin secret through the host.                         |
-| `ARC-008` | Architecture      | The hub holds no rule that names one plugin or one name of a plugin secret. |
+| Rule      | Guideline         | Effect on this feature                                                       |
+| --------- | ----------------- | ---------------------------------------------------------------------------- |
+| `PLG-007` | Plugin model      | A plugin reaches a plugin secret through the host.                           |
+| `ARC-008` | Architecture      | The hub holds no rule that names one plugin or one name of a plugin secret.  |
 | `OWN-003` | Record ownership  | Each call reads the acting user or the acting workspace of its unit of work. |
-| `OWN-004` | Record ownership  | A plugin secret belongs to one user or to one workspace.                   |
-| `OWN-006` | Record ownership  | The isolation of a plugin secret runs in the database and fails closed.    |
-| `CFG-007` | Configuration     | The credential of one person stays out of the configuration file.          |
-| `EXT-005` | External services | A failure of the secret store is an error, never an absent value.          |
-| `LOG-008` | Logging           | No log holds a plugin secret.                                              |
+| `OWN-004` | Record ownership  | A plugin secret belongs to one user or to one workspace.                     |
+| `OWN-006` | Record ownership  | The isolation of a plugin secret runs in the database and fails closed.      |
+| `CFG-007` | Configuration     | The credential of one person stays out of the configuration file.            |
+| `EXT-005` | External services | A failure of the secret store is an error, never an absent value.            |
+| `LOG-008` | Logging           | No log holds a plugin secret.                                                |
 
 ## 8. Open questions
 
-| #   | Question                                                                 | Owner  | Answer                                                    |
-| --- | ------------------------------------------------------------------------ | ------ | --------------------------------------------------------- |
-| 1   | What happens to an expired plugin secret?                                | Temuri | A read reports it absent. Maroid deletes it within 24 hours. |
-| 2   | Does a workspace that disables the plugin lose its plugin secrets?       | Temuri | No. Settings and the rows of a plugin stay too.          |
-| 3   | Does a person see or delete a plugin secret outside the plugin?          | Temuri | No. The plugin offers its own disconnect.                |
+| #   | Question                                                           | Owner  | Answer                                                       |
+| --- | ------------------------------------------------------------------ | ------ | ------------------------------------------------------------ |
+| 1   | What happens to an expired plugin secret?                          | Temuri | A read reports it absent. Maroid deletes it within 24 hours. |
+| 2   | Does a workspace that disables the plugin lose its plugin secrets? | Temuri | No. Settings and the rows of a plugin stay too.              |
+| 3   | Does a person see or delete a plugin secret outside the plugin?    | Temuri | No. The plugin offers its own disconnect.                    |
 
 ## Retired identifiers
 

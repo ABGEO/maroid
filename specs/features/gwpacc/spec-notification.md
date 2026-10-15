@@ -23,36 +23,36 @@ after an assignment sends nothing. No table changes, and no change reaches the h
 
 ## 2. Guideline compliance
 
-| Rule      | Guideline | How this specification obeys it |
-| --------- | --------- | ------------------------------- |
-| `NTF-001` | Notifications | `NotificationTopics` declares `new_reading` with a name and a description. |
-| `NTF-002` | Notifications | `Notices` calls `PluginNotifier.Notify` with the topic, and names no destination. |
-| `NTF-003` | Notifications | The message holds a title and a body, and no attachment. |
-| `OWN-005` | Ownership | `OnDate` writes no filter on `workspace_id`. The policy scopes the read. |
+| Rule      | Guideline         | How this specification obeys it                                                       |
+| --------- | ----------------- | ------------------------------------------------------------------------------------- |
+| `NTF-001` | Notifications     | `NotificationTopics` declares `new_reading` with a name and a description.            |
+| `NTF-002` | Notifications     | `Notices` calls `PluginNotifier.Notify` with the topic, and names no destination.     |
+| `NTF-003` | Notifications     | The message holds a title and a body, and no attachment.                              |
+| `OWN-005` | Ownership         | `OnDate` writes no filter on `workspace_id`. The policy scopes the read.              |
 | `EXT-005` | External services | A failed read of the balance is a warning and a marked line, never a balance of zero. |
-| `LOG-008` | Logging | The warning names no token and no credential. |
-| `JOB-007` | Jobs | A failed notification fails the run of one workspace only. |
+| `LOG-008` | Logging           | The warning names no token and no credential.                                         |
+| `JOB-007` | Jobs              | A failed notification fails the run of one workspace only.                            |
 
 ## 3. Design
 
 ### 3.1 Components
 
-| Path | Action | Holds |
-| ---- | ------ | ----- |
-| `plugins/gwp/model/collection.go` | create | `Collection` with `Count int`, `CustomerNumber string`, and `NewestDate *time.Time`, the latest date of a reading that the run stored for the first time |
-| `plugins/gwp/repository/reading.go` | change | `Insert` answers `(bool, error)`, true for a row stored for the first time (`DD-016`). `OnDate(ctx, customerNumber string, date time.Time) ([]model.Reading, error)` over `withUsage`, ordered by the serial number |
-| `plugins/gwp/service/store.go` | change | `InsertReadings` answers `([]model.Reading, error)`, the readings stored for the first time. `ReadingsOn(ctx, customerNumber string, date time.Time) ([]model.Reading, error)` |
-| `plugins/gwp/service/collector.go` | change | `ReadingStore.InsertReadings` takes the new signature. `Collect` answers `(model.Collection, error)` |
-| `plugins/gwp/service/notice.go` | create | `NewReadingTopic = "new_reading"`, `Notices`, `NewNotices`, `Send(ctx, customerNumber string, date time.Time) error` |
-| `plugins/gwp/job/readings_collector.go` | change | `NoticeSender`, which the job declares. `Run` calls `Send` when `NewestDate` is set |
-| `plugins/gwp/main.go` | change | `host.Notifier`, `Notices`, and `NotificationTopics` |
+| Path                                    | Action | Holds                                                                                                                                                                                                               |
+| --------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plugins/gwp/model/collection.go`       | create | `Collection` with `Count int`, `CustomerNumber string`, and `NewestDate *time.Time`, the latest date of a reading that the run stored for the first time                                                            |
+| `plugins/gwp/repository/reading.go`     | change | `Insert` answers `(bool, error)`, true for a row stored for the first time (`DD-016`). `OnDate(ctx, customerNumber string, date time.Time) ([]model.Reading, error)` over `withUsage`, ordered by the serial number |
+| `plugins/gwp/service/store.go`          | change | `InsertReadings` answers `([]model.Reading, error)`, the readings stored for the first time. `ReadingsOn(ctx, customerNumber string, date time.Time) ([]model.Reading, error)`                                      |
+| `plugins/gwp/service/collector.go`      | change | `ReadingStore.InsertReadings` takes the new signature. `Collect` answers `(model.Collection, error)`                                                                                                                |
+| `plugins/gwp/service/notice.go`         | create | `NewReadingTopic = "new_reading"`, `Notices`, `NewNotices`, `Send(ctx, customerNumber string, date time.Time) error`                                                                                                |
+| `plugins/gwp/job/readings_collector.go` | change | `NoticeSender`, which the job declares. `Run` calls `Send` when `NewestDate` is set                                                                                                                                 |
+| `plugins/gwp/main.go`                   | change | `host.Notifier`, `Notices`, and `NotificationTopics`                                                                                                                                                                |
 
 ### 3.2 Declarations
 
 **Notification topic.**
 
-| Identifier | Name | Sent when | Realizes |
-| ---------- | ---- | --------- | -------- |
+| Identifier    | Name              | Sent when                                                    | Realizes                         |
+| ------------- | ----------------- | ------------------------------------------------------------ | -------------------------------- |
 | `new_reading` | New water reading | The scheduled collection stores a reading for the first time | `GWPACC-FR-035`, `GWPACC-FR-036` |
 
 Description: "The new readings of the water meters, with the balance of the customer."

@@ -81,14 +81,14 @@ request.
 
 ## Alternatives
 
-| Alternative                                                        | Why we did not select it                                                                                                        |
-| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| Keep the header as a second path, and rename the cookie only.      | The rename carries the security of this decision, and this alternative keeps it. It also keeps a second credential source that no client sends.   |
-| Keep the header behind a setting that names a development machine. | It keeps a branch in the middleware and a path that a deployment can switch on by mistake. Bruno reads a cookie.                 |
-| Keep the identity token in the cookie.                             | The hub keeps a credential that the IdP issued to describe a person, and the value that the IdP issued for the call reaches nothing. |
-| Hold the credential in a store of the hub, and give the browser an opaque value. | It adds a store, a deadline, and a second component on the path of every request. No statement asks for one yet.    |
-| Bind the cookie to the host in the code of the hub.                | The hub cannot see which host wrote a cookie. The browser is the only place that holds the fact.                                 |
-| Hold the cookie name in the configuration, and check it at the start. | It adds a key that no deployment changes, and a wrong value then stops the hub of a person who never asked for the knob.      |
+| Alternative                                                                      | Why we did not select it                                                                                                                        |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keep the header as a second path, and rename the cookie only.                    | The rename carries the security of this decision, and this alternative keeps it. It also keeps a second credential source that no client sends. |
+| Keep the header behind a setting that names a development machine.               | It keeps a branch in the middleware and a path that a deployment can switch on by mistake. Bruno reads a cookie.                                |
+| Keep the identity token in the cookie.                                           | The hub keeps a credential that the IdP issued to describe a person, and the value that the IdP issued for the call reaches nothing.            |
+| Hold the credential in a store of the hub, and give the browser an opaque value. | It adds a store, a deadline, and a second component on the path of every request. No statement asks for one yet.                                |
+| Bind the cookie to the host in the code of the hub.                              | The hub cannot see which host wrote a cookie. The browser is the only place that holds the fact.                                                |
+| Hold the cookie name in the configuration, and check it at the start.            | It adds a key that no deployment changes, and a wrong value then stops the hub of a person who never asked for the knob.                        |
 
 ## Consequences
 
@@ -140,11 +140,11 @@ The rule gains one sentence under the table:
 
 ### Specifications to examine
 
-| Document                        | Why                                                                                   |
-| ------------------------------- | --------------------------------------------------------------------------------------- |
-| `features/extid/spec.md`        | `EXTID-DD-006` puts the identity token in `maroid_token`. The decision supersedes it. Section 4 names the cookie. |
-| `features/mcphub/spec.md`       | `MCPHUB-DD-001` stays true. Confirm that `/mcp` reads no cookie.                       |
-| `features/websess/spec.md`      | The specification that this ADR unblocks. It names the cookie and the address of the sign out. |
+| Document                   | Why                                                                                                               |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `features/extid/spec.md`   | `EXTID-DD-006` puts the identity token in `maroid_token`. The decision supersedes it. Section 4 names the cookie. |
+| `features/mcphub/spec.md`  | `MCPHUB-DD-001` stays true. Confirm that `/mcp` reads no cookie.                                                  |
+| `features/websess/spec.md` | The specification that this ADR unblocks. It names the cookie and the address of the sign out.                    |
 
 ### Migration
 

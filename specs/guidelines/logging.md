@@ -84,25 +84,25 @@ attribute of `LOG-009` like every other:
 
 ```json
 {
-  "msg": "GET /plugins => HTTP 200 (3µs)",
-  "component": "middleware",
-  "middleware": "access",
-  "http.request.method": "GET",
-  "url.path": "/plugins",
-  "http.response.status_code": 200,
-  "event.duration": 3000,
-  "flow_id": "01a0c611-c3d9-710d-84de-7df920aa9a5f"
+	"msg": "GET /plugins => HTTP 200 (3µs)",
+	"component": "middleware",
+	"middleware": "access",
+	"http.request.method": "GET",
+	"url.path": "/plugins",
+	"http.response.status_code": 200,
+	"event.duration": 3000,
+	"flow_id": "01a0c611-c3d9-710d-84de-7df920aa9a5f"
 }
 ```
 
-| Setting              | Value        | Reason                                                     |
-| ---------------------- | -------------- | ------------------------------------------------------------ |
-| `Schema`             | `SchemaOTEL` | One name for each attribute, from the semantic conventions of OpenTelemetry. The example above uses them. |
-| `RecoverPanics`      | `false`      | It answers a bare 500, and `ERR-001` asks every failure for a problem. The recoverer of the hub answers instead. |
-| `LogRequestBody`     | Absent       | A body of the hub carries a token and a secret. `LOG-008`.  |
-| `LogResponseBody`    | Absent       | The same reason.                                            |
-| `Level`              | `Debug`      | The logger holds the level of the configuration, so this one filters nothing of its own. |
-| `Skip`               | A probe that answers 200 | An orchestrator probes every few seconds, and a success says nothing. A failed probe still writes its record. |
+| Setting           | Value                    | Reason                                                                                                           |
+| ----------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `Schema`          | `SchemaOTEL`             | One name for each attribute, from the semantic conventions of OpenTelemetry. The example above uses them.        |
+| `RecoverPanics`   | `false`                  | It answers a bare 500, and `ERR-001` asks every failure for a problem. The recoverer of the hub answers instead. |
+| `LogRequestBody`  | Absent                   | A body of the hub carries a token and a secret. `LOG-008`.                                                       |
+| `LogResponseBody` | Absent                   | The same reason.                                                                                                 |
+| `Level`           | `Debug`                  | The logger holds the level of the configuration, so this one filters nothing of its own.                         |
+| `Skip`            | A probe that answers 200 | An orchestrator probes every few seconds, and a success says nothing. A failed probe still writes its record.    |
 
 The message of this record is the one exception to `LOG-007`. `httplog` builds it
 by concatenation, as `GET /plugins => HTTP 200 (1.2ms)`, and no option changes it.

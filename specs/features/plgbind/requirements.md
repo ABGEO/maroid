@@ -173,21 +173,21 @@ hub. Section 3 excludes an attack.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline    | Effect on this feature                                                       |
-| --------- | ------------ | ---------------------------------------------------------------------------- |
-| `PLG-002` | Plugin model | The plugin exports the declared metadata as a symbol.                        |
-| `PLG-004` | Plugin model | `PLGBIND-FR-003` checks the API version before the constructor.              |
-| `PLG-012` | Plugin model | `PLGBIND-FR-003` checks the name and the description before the constructor. |
-| `PLG-013` | Plugin model | A loaded plugin is trusted. Section 3 excludes an attack.                    |
-| `PLG-003` | Plugin model | The form that `PLGBIND-FR-003` checks.                                       |
-| `PLG-007` | Plugin model | The host stays the only path from a plugin to a resource.                    |
-| `PLG-011` | Plugin model | A second plugin with a loaded identifier stays refused.                      |
-| `DAT-001` | Data         | The schema name comes from the declared metadata.                            |
-| `DAT-003` | Data         | The bound data operation keeps a plugin in its schema.                       |
-| `DAT-004` | Data         | The host gives the bound database, and no pool.                              |
-| `LOG-004` | Logging      | The hub adds the three attributes of the plugin logger.                      |
-| `ARC-008` | Architecture | The loader binds each plugin the same way, and names no plugin.              |
-| `BLD-004` | Build        | A change to `libs/pluginapi` rebuilds every plugin.                          |
+| Rule      | Guideline    | Effect on this feature                                                            |
+| --------- | ------------ | --------------------------------------------------------------------------------- |
+| `PLG-002` | Plugin model | The plugin exports the declared metadata as a symbol.                             |
+| `PLG-004` | Plugin model | `PLGBIND-FR-003` checks the API version before the constructor.                   |
+| `PLG-012` | Plugin model | `PLGBIND-FR-003` checks the name and the description before the constructor.      |
+| `PLG-013` | Plugin model | A loaded plugin is trusted. Section 3 excludes an attack.                         |
+| `PLG-003` | Plugin model | The form that `PLGBIND-FR-003` checks.                                            |
+| `PLG-007` | Plugin model | The host stays the only path from a plugin to a resource.                         |
+| `PLG-011` | Plugin model | A second plugin with a loaded identifier stays refused.                           |
+| `DAT-001` | Data         | The schema name comes from the declared metadata.                                 |
+| `DAT-003` | Data         | The bound data operation keeps a plugin in its schema.                            |
+| `DAT-004` | Data         | The host gives the bound database, and no pool.                                   |
+| `LOG-004` | Logging      | The hub adds the three attributes of the plugin logger.                           |
+| `ARC-008` | Architecture | The loader binds each plugin the same way, and names no plugin.                   |
+| `BLD-004` | Build        | A change to `libs/pluginapi` rebuilds every plugin.                               |
 | `OWN-005` | Ownership    | The data operation keeps the acting user and the acting workspace of the context. |
 
 ## 8. Open questions

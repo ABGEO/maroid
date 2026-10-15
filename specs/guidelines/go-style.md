@@ -86,10 +86,10 @@ It returns the concrete type, not an interface.
 
 Two external documents are the standard of Go code in this repository:
 
-| Standard            | Source                                                | Governs                          |
-| ------------------- | ----------------------------------------------------- | -------------------------------- |
-| Effective Go        | https://go.dev/doc/effective_go                       | The idiom of the language.       |
-| Uber Go Style Guide | https://github.com/uber-go/guide/blob/master/style.md | The style of a large code base.  |
+| Standard            | Source                                                | Governs                         |
+| ------------------- | ----------------------------------------------------- | ------------------------------- |
+| Effective Go        | https://go.dev/doc/effective_go                       | The idiom of the language.      |
+| Uber Go Style Guide | https://github.com/uber-go/guide/blob/master/style.md | The style of a large code base. |
 
 Write the code that these documents describe. A change that contradicts one of
 them is a defect.

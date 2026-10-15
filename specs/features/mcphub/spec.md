@@ -30,61 +30,61 @@ acts in a workspace.
 
 ## 2. Coverage
 
-| Requirement       | Where this specification realizes it     |
-| ------------------ | ----------------------------------------- |
-| `MCPHUB-FR-001`   | Section 4.3, `MCPHUB-DD-004`, `MCPHUB-SC-001` |
-| `MCPHUB-FR-002`   | Section 4.4, `MCPHUB-DD-001`, `MCPHUB-SC-002` |
-| `MCPHUB-FR-003`   | Section 4.4, `MCPHUB-DD-002`, `MCPHUB-SC-003` |
-| `MCPHUB-FR-004`   | Section 4.4, `MCPHUB-DD-006`, `MCPHUB-DD-008`, `MCPHUB-SC-004` |
-| `MCPHUB-FR-005`   | Section 4.3, `MCPHUB-DD-007`, `MCPHUB-DD-008`, `MCPHUB-SC-005` |
-| `MCPHUB-FR-006`   | Section 4.4, `MCPHUB-DD-008`, `MCPHUB-SC-006` |
-| `MCPHUB-FR-020`   | Section 4.3, `MCPHUB-DD-021`, `MCPHUB-SC-026` |
-| `MCPHUB-NFR-001`  | `MCPHUB-DD-001`, `MCPHUB-SC-007`          |
-| `MCPHUB-INV-001`  | `MCPHUB-DD-002`, `MCPHUB-SC-003`          |
+| Requirement      | Where this specification realizes it                           |
+| ---------------- | -------------------------------------------------------------- |
+| `MCPHUB-FR-001`  | Section 4.3, `MCPHUB-DD-004`, `MCPHUB-SC-001`                  |
+| `MCPHUB-FR-002`  | Section 4.4, `MCPHUB-DD-001`, `MCPHUB-SC-002`                  |
+| `MCPHUB-FR-003`  | Section 4.4, `MCPHUB-DD-002`, `MCPHUB-SC-003`                  |
+| `MCPHUB-FR-004`  | Section 4.4, `MCPHUB-DD-006`, `MCPHUB-DD-008`, `MCPHUB-SC-004` |
+| `MCPHUB-FR-005`  | Section 4.3, `MCPHUB-DD-007`, `MCPHUB-DD-008`, `MCPHUB-SC-005` |
+| `MCPHUB-FR-006`  | Section 4.4, `MCPHUB-DD-008`, `MCPHUB-SC-006`                  |
+| `MCPHUB-FR-020`  | Section 4.3, `MCPHUB-DD-021`, `MCPHUB-SC-026`                  |
+| `MCPHUB-NFR-001` | `MCPHUB-DD-001`, `MCPHUB-SC-007`                               |
+| `MCPHUB-INV-001` | `MCPHUB-DD-002`, `MCPHUB-SC-003`                               |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline    | How this specification obeys it                                            |
-| --------- | ------------ | ---------------------------------------------------------------------------- |
-| `ARC-010` | Architecture | The MCP server mounts on the router of `maroid serve http` only. `worker` loads no HTTP route. |
-| `ARC-008` | Architecture | The plugin list tool reads `registry.PluginRegistry`, the same source `GET /plugins` reads. It names no plugin. |
-| `API-002` | HTTP API     | `/mcp` and the discovery routes register on the same router, so every middleware that `API-002` names still applies. `API-002` names no authentication step, so it asks nothing more: `MCPHUB-DD-001` is the authentication of `/mcp`, not `auth.Middleware`. |
-| `API-003` | HTTP API     | Adds `/.well-known/oauth-protected-resource*` and `/mcp` to the fixed prefix list. |
-| `API-005` | HTTP API     | `handler.MCP` implements `handler.Handler`. |
-| `API-006` | HTTP API     | `MCPHUB-DD-003` answers every call with one JSON response. |
-| `SEC-002` | Security     | `MCPHUB-DD-001` verifies against the key set of the IdP, with the audience of the "mcp" client. |
-| `SEC-004` | Security     | `MCPHUB-DD-002` rejects a call whose identity holds no active user record. |
-| `OWN-003` | Record ownership | `MCPHUB-DD-002` resolves the acting user through the same `auth.IdentityResolver` an HTTP request uses. |
-| `OWN-007` | Record ownership | A tool that acts in a workspace receives the acting user and the acting workspace in its context, and `PluginDB.WithTx` sets both. `spec-plugin-tools.md` gives it. No tool of this file acts in a workspace. |
-| `SEC-013` | Security     | No tool of this file acts in a workspace, so each declares no permission. |
-| `LOG-003` | Logging      | The logging middleware of the MCP server adds `component=middleware`, `middleware=mcp`, both already in use. |
-| `PLG-006` | Plugin model | `MCPHUB-DD-008` builds the registry. `spec-plugin-tools.md` adds the interface and the registrar. |
-| `PKG-001` | Package layout | `mcpserver/tools/` holds one file for each tool, the layout the table already gives `telegram/command/`. |
-| `CFG-003` | Configuration | `mcp.client_id` declares its default in a `default` tag and its check in a `validate` tag. `MCPHUB-DD-001` gives the field. |
+| Rule      | Guideline        | How this specification obeys it                                                                                                                                                                                                                               |
+| --------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ARC-010` | Architecture     | The MCP server mounts on the router of `maroid serve http` only. `worker` loads no HTTP route.                                                                                                                                                                |
+| `ARC-008` | Architecture     | The plugin list tool reads `registry.PluginRegistry`, the same source `GET /plugins` reads. It names no plugin.                                                                                                                                               |
+| `API-002` | HTTP API         | `/mcp` and the discovery routes register on the same router, so every middleware that `API-002` names still applies. `API-002` names no authentication step, so it asks nothing more: `MCPHUB-DD-001` is the authentication of `/mcp`, not `auth.Middleware`. |
+| `API-003` | HTTP API         | Adds `/.well-known/oauth-protected-resource*` and `/mcp` to the fixed prefix list.                                                                                                                                                                            |
+| `API-005` | HTTP API         | `handler.MCP` implements `handler.Handler`.                                                                                                                                                                                                                   |
+| `API-006` | HTTP API         | `MCPHUB-DD-003` answers every call with one JSON response.                                                                                                                                                                                                    |
+| `SEC-002` | Security         | `MCPHUB-DD-001` verifies against the key set of the IdP, with the audience of the "mcp" client.                                                                                                                                                               |
+| `SEC-004` | Security         | `MCPHUB-DD-002` rejects a call whose identity holds no active user record.                                                                                                                                                                                    |
+| `OWN-003` | Record ownership | `MCPHUB-DD-002` resolves the acting user through the same `auth.IdentityResolver` an HTTP request uses.                                                                                                                                                       |
+| `OWN-007` | Record ownership | A tool that acts in a workspace receives the acting user and the acting workspace in its context, and `PluginDB.WithTx` sets both. `spec-plugin-tools.md` gives it. No tool of this file acts in a workspace.                                                 |
+| `SEC-013` | Security         | No tool of this file acts in a workspace, so each declares no permission.                                                                                                                                                                                     |
+| `LOG-003` | Logging          | The logging middleware of the MCP server adds `component=middleware`, `middleware=mcp`, both already in use.                                                                                                                                                  |
+| `PLG-006` | Plugin model     | `MCPHUB-DD-008` builds the registry. `spec-plugin-tools.md` adds the interface and the registrar.                                                                                                                                                             |
+| `PKG-001` | Package layout   | `mcpserver/tools/` holds one file for each tool, the layout the table already gives `telegram/command/`.                                                                                                                                                      |
+| `CFG-003` | Configuration    | `mcp.client_id` declares its default in a `default` tag and its check in a `validate` tag. `MCPHUB-DD-001` gives the field.                                                                                                                                   |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                          | Change | Holds                                                                 |
-| ---------------------------------------------- | ------ | ---------------------------------------------------------------------- |
-| `apps/hub/internal/config/config.go`          | Change | The `MCP` section, the key `mcp.client_id`, default `mcp`.            |
-| `apps/hub/internal/registry/plugin_entry.go`  | Create | `PluginEntry`, `PluginEntries`                                        |
-| `apps/hub/internal/registry/mcp_tool.go`      | Create | `MCPTool`, `MCPToolRegistry`                                          |
-| `apps/hub/internal/domain/errs/errs.go`       | Change | Adds `ErrMCPToolAlreadyRegistered`.                                    |
-| `apps/hub/internal/handler/plugin.go`         | Change | `List` calls `registry.PluginEntries`. Deletes the local `pluginEntry` type. |
-| `apps/hub/internal/mcpserver/verifier.go`     | Create | `NewTokenVerifier`, `ClaimsFromTokenInfo`. Verifies against the IdP, then resolves and rejects. |
-| `apps/hub/internal/mcpserver/server.go`       | Create | `NewServer` installs every tool of a `*registry.MCPToolRegistry`. It names no tool itself. |
-| `apps/hub/internal/mcpserver/logging.go`      | Create | `loggingMiddleware`, `component=middleware`, `middleware=mcp`.        |
-| `apps/hub/internal/mcpserver/tools/doc.go`    | Create | The package comment. `PKG-003`.                                       |
-| `apps/hub/internal/mcpserver/tools/whoami.go` | Create | `NewWhoAmI`, the identity tool.                                        |
-| `apps/hub/internal/mcpserver/tools/plugins.go` | Create | `NewListPlugins`, the plugin list tool.                               |
-| `apps/hub/internal/mcpserver/tools/ping.go`   | Create | `NewPing`, the connectivity tool.                                      |
-| `apps/hub/internal/mcpserver/tools/workspaces.go` | Create | `NewListWorkspaces`, the workspace list tool. `MCPHUB-DD-021`.     |
-| `apps/hub/internal/handler/mcp.go`            | Create | `MCP`, `NewMCP`. Takes `cfg`, `logger`, `oidcSvc`, a `resolver auth.IdentityResolver`, and a `toolRegistry *registry.MCPToolRegistry`. `StreamableHTTPOptions` sets `Stateless`, `JSONResponse`, `Logger`. |
-| `apps/hub/internal/depresolver/mcp.go`        | Create | `MCPToolRegistry()`. Builds the registry and registers each tool of `mcpserver/tools`, one constructor at a time. |
-| `apps/hub/internal/depresolver/server.go`     | Change | `buildMCPHandler` resolves `IdentityResolver` and `MCPToolRegistry()`, and passes both to `handler.NewMCP`. |
-| `specs/features/mcphub/api.yaml`              | Create | The OpenAPI description of the two routes.                            |
+| Path                                              | Change | Holds                                                                                                                                                                                                      |
+| ------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/hub/internal/config/config.go`              | Change | The `MCP` section, the key `mcp.client_id`, default `mcp`.                                                                                                                                                 |
+| `apps/hub/internal/registry/plugin_entry.go`      | Create | `PluginEntry`, `PluginEntries`                                                                                                                                                                             |
+| `apps/hub/internal/registry/mcp_tool.go`          | Create | `MCPTool`, `MCPToolRegistry`                                                                                                                                                                               |
+| `apps/hub/internal/domain/errs/errs.go`           | Change | Adds `ErrMCPToolAlreadyRegistered`.                                                                                                                                                                        |
+| `apps/hub/internal/handler/plugin.go`             | Change | `List` calls `registry.PluginEntries`. Deletes the local `pluginEntry` type.                                                                                                                               |
+| `apps/hub/internal/mcpserver/verifier.go`         | Create | `NewTokenVerifier`, `ClaimsFromTokenInfo`. Verifies against the IdP, then resolves and rejects.                                                                                                            |
+| `apps/hub/internal/mcpserver/server.go`           | Create | `NewServer` installs every tool of a `*registry.MCPToolRegistry`. It names no tool itself.                                                                                                                 |
+| `apps/hub/internal/mcpserver/logging.go`          | Create | `loggingMiddleware`, `component=middleware`, `middleware=mcp`.                                                                                                                                             |
+| `apps/hub/internal/mcpserver/tools/doc.go`        | Create | The package comment. `PKG-003`.                                                                                                                                                                            |
+| `apps/hub/internal/mcpserver/tools/whoami.go`     | Create | `NewWhoAmI`, the identity tool.                                                                                                                                                                            |
+| `apps/hub/internal/mcpserver/tools/plugins.go`    | Create | `NewListPlugins`, the plugin list tool.                                                                                                                                                                    |
+| `apps/hub/internal/mcpserver/tools/ping.go`       | Create | `NewPing`, the connectivity tool.                                                                                                                                                                          |
+| `apps/hub/internal/mcpserver/tools/workspaces.go` | Create | `NewListWorkspaces`, the workspace list tool. `MCPHUB-DD-021`.                                                                                                                                             |
+| `apps/hub/internal/handler/mcp.go`                | Create | `MCP`, `NewMCP`. Takes `cfg`, `logger`, `oidcSvc`, a `resolver auth.IdentityResolver`, and a `toolRegistry *registry.MCPToolRegistry`. `StreamableHTTPOptions` sets `Stateless`, `JSONResponse`, `Logger`. |
+| `apps/hub/internal/depresolver/mcp.go`            | Create | `MCPToolRegistry()`. Builds the registry and registers each tool of `mcpserver/tools`, one constructor at a time.                                                                                          |
+| `apps/hub/internal/depresolver/server.go`         | Change | `buildMCPHandler` resolves `IdentityResolver` and `MCPToolRegistry()`, and passes both to `handler.NewMCP`.                                                                                                |
+| `specs/features/mcphub/api.yaml`                  | Create | The OpenAPI description of the two routes.                                                                                                                                                                 |
 
 `apps/hub/internal/mcpserver/tools/` mirrors
 `apps/hub/internal/telegram/command/`: one file for each tool, and no file
@@ -215,12 +215,12 @@ and `OWN-004` through `OWN-008` govern no new surface.
 
 **HTTP routes.** `api.yaml` holds the bodies. See `SPC-002`.
 
-| Method    | Path                                          | Access                | Realizes                        |
-| --------- | ---------------------------------------------- | ---------------------- | -------------------------------- |
-| `GET`     | `/.well-known/oauth-protected-resource`       | Public                 | `MCPHUB-FR-001`                  |
-| `GET`     | `/.well-known/oauth-protected-resource/mcp`   | Public                 | `MCPHUB-FR-001`                  |
-| `POST`    | `/mcp`                                        | Bearer, MCP audience   | `MCPHUB-FR-002` through `MCPHUB-FR-006` |
-| `GET`, `DELETE` | `/mcp`                                   | Bearer, MCP audience   | Rejected. See section 4.5.       |
+| Method          | Path                                        | Access               | Realizes                                |
+| --------------- | ------------------------------------------- | -------------------- | --------------------------------------- |
+| `GET`           | `/.well-known/oauth-protected-resource`     | Public               | `MCPHUB-FR-001`                         |
+| `GET`           | `/.well-known/oauth-protected-resource/mcp` | Public               | `MCPHUB-FR-001`                         |
+| `POST`          | `/mcp`                                      | Bearer, MCP audience | `MCPHUB-FR-002` through `MCPHUB-FR-006` |
+| `GET`, `DELETE` | `/mcp`                                      | Bearer, MCP audience | Rejected. See section 4.5.              |
 
 **MCP tools.** `SPC-003` gives the columns.
 
@@ -276,7 +276,7 @@ Every failure of the transport answers with a problem, and a JSON-RPC error insi
 tool call does not. `ERR-001` gives both.
 
 | Condition                                                 | Status | Type                 |
-| --------------------------------------------------------- | ------ | ---------------------- |
+| --------------------------------------------------------- | ------ | -------------------- |
 | No bearer token                                           | 401    | `access-denied`      |
 | The token fails verification                              | 401    | `access-denied`      |
 | The identity behind the token holds no active user record | 401    | `access-denied`      |
@@ -562,21 +562,21 @@ name the third.
 
 ## 7. Build plan
 
-| #   | Step                                                                 | Realizes                         | Done |
-| --- | ----------------------------------------------------------------------- | ------------------------------------ | ---- |
-| 1   | Create `registry.PluginEntry` and `registry.PluginEntries`.         | `MCPHUB-FR-005`, `MCPHUB-DD-007`  | [x]  |
-| 2   | Change `handler.Plugin.List` to call `registry.PluginEntries`. Delete the local `pluginEntry` type. | `MCPHUB-FR-005` | [x]  |
-| 3   | Create `registry.MCPTool` and `registry.MCPToolRegistry`. Add `errs.ErrMCPToolAlreadyRegistered`. | `MCPHUB-DD-008` | [x]  |
-| 4   | Add `github.com/modelcontextprotocol/go-sdk` to `apps/hub/go.mod`. Add `auth.OIDCService.VerifierForClient` and the `MCP` configuration section. | `MCPHUB-DD-001` | [x]  |
-| 5   | Create `mcpserver.NewTokenVerifier`: verifies against the IdP, resolves the acting user, rejects an inactive one. | `MCPHUB-FR-002`, `MCPHUB-FR-003`, `MCPHUB-DD-001`, `MCPHUB-DD-002` | [x]  |
-| 6   | Create `loggingMiddleware` in `mcpserver/logging.go`, with `component=middleware`, `middleware=mcp`. | `LOG-003` | [x]  |
-| 7   | Create `mcpserver/tools/whoami.go`, `plugins.go`, and `ping.go`, each with its own `New<Tool>` constructor, and `tools/doc.go`. | `MCPHUB-FR-004`, `MCPHUB-FR-005`, `MCPHUB-FR-006`, `MCPHUB-DD-006`, `MCPHUB-DD-008` | [x]  |
-| 8   | Create `mcpserver.NewServer`, installing every tool of a `*registry.MCPToolRegistry`. | `MCPHUB-DD-008` | [x]  |
-| 9   | Create `handler.MCP`: the discovery route at both paths, and `/mcp` with `Stateless`, `JSONResponse`, and `Logger` set. | `MCPHUB-FR-001`, `MCPHUB-DD-003`, `MCPHUB-DD-004`, `MCPHUB-DD-005` | [x]  |
-| 10  | Create `depresolver.MCPToolRegistry()`. Change `depresolver.buildMCPHandler` to resolve `IdentityResolver` and `MCPToolRegistry()`, and pass both to `handler.NewMCP`. | `MCPHUB-DD-002`, `MCPHUB-DD-008` | [x]  |
-| 11  | Write `api.yaml`.                                                    | `SPC-002`                        | [x]  |
-| 12  | Add the MCP flow to `ident/spec.md` section 4.4, and raise the entry point counts in `ident/spec.md` and `extid/spec.md`. | `ADR-0003` | [x]  |
-| 13  | Write `MCPHUB-SC-026`, then create `tools/workspaces.go` and register it. It needs the table of `OWN-011`. | `MCPHUB-FR-020`, `MCPHUB-DD-021` | [x]  |
+| #   | Step                                                                                                                                                                   | Realizes                                                                            | Done |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---- |
+| 1   | Create `registry.PluginEntry` and `registry.PluginEntries`.                                                                                                            | `MCPHUB-FR-005`, `MCPHUB-DD-007`                                                    | [x]  |
+| 2   | Change `handler.Plugin.List` to call `registry.PluginEntries`. Delete the local `pluginEntry` type.                                                                    | `MCPHUB-FR-005`                                                                     | [x]  |
+| 3   | Create `registry.MCPTool` and `registry.MCPToolRegistry`. Add `errs.ErrMCPToolAlreadyRegistered`.                                                                      | `MCPHUB-DD-008`                                                                     | [x]  |
+| 4   | Add `github.com/modelcontextprotocol/go-sdk` to `apps/hub/go.mod`. Add `auth.OIDCService.VerifierForClient` and the `MCP` configuration section.                       | `MCPHUB-DD-001`                                                                     | [x]  |
+| 5   | Create `mcpserver.NewTokenVerifier`: verifies against the IdP, resolves the acting user, rejects an inactive one.                                                      | `MCPHUB-FR-002`, `MCPHUB-FR-003`, `MCPHUB-DD-001`, `MCPHUB-DD-002`                  | [x]  |
+| 6   | Create `loggingMiddleware` in `mcpserver/logging.go`, with `component=middleware`, `middleware=mcp`.                                                                   | `LOG-003`                                                                           | [x]  |
+| 7   | Create `mcpserver/tools/whoami.go`, `plugins.go`, and `ping.go`, each with its own `New<Tool>` constructor, and `tools/doc.go`.                                        | `MCPHUB-FR-004`, `MCPHUB-FR-005`, `MCPHUB-FR-006`, `MCPHUB-DD-006`, `MCPHUB-DD-008` | [x]  |
+| 8   | Create `mcpserver.NewServer`, installing every tool of a `*registry.MCPToolRegistry`.                                                                                  | `MCPHUB-DD-008`                                                                     | [x]  |
+| 9   | Create `handler.MCP`: the discovery route at both paths, and `/mcp` with `Stateless`, `JSONResponse`, and `Logger` set.                                                | `MCPHUB-FR-001`, `MCPHUB-DD-003`, `MCPHUB-DD-004`, `MCPHUB-DD-005`                  | [x]  |
+| 10  | Create `depresolver.MCPToolRegistry()`. Change `depresolver.buildMCPHandler` to resolve `IdentityResolver` and `MCPToolRegistry()`, and pass both to `handler.NewMCP`. | `MCPHUB-DD-002`, `MCPHUB-DD-008`                                                    | [x]  |
+| 11  | Write `api.yaml`.                                                                                                                                                      | `SPC-002`                                                                           | [x]  |
+| 12  | Add the MCP flow to `ident/spec.md` section 4.4, and raise the entry point counts in `ident/spec.md` and `extid/spec.md`.                                              | `ADR-0003`                                                                          | [x]  |
+| 13  | Write `MCPHUB-SC-026`, then create `tools/workspaces.go` and register it. It needs the table of `OWN-011`.                                                             | `MCPHUB-FR-020`, `MCPHUB-DD-021`                                                    | [x]  |
 
 ## 8. Out of scope for this specification
 

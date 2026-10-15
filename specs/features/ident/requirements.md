@@ -57,7 +57,6 @@ in the web shell and in the bot.
 A scoped record that a user creates must belong to the acting workspace, and to no other
 workspace.
 
-
 ### `IDENT-FR-004`
 
 A user must read only the records of the acting workspace, and the shared records.
@@ -135,23 +134,23 @@ its scope names.
 
 ## 7. Constraints from the guidelines
 
-| Rule      | Guideline        | Effect on this feature                                              |
-| --------- | ---------------- | ------------------------------------------------------------------- |
-| `OWN-002` | Record ownership | An administrator creates the record. It is active or blocked.       |
+| Rule      | Guideline        | Effect on this feature                                                  |
+| --------- | ---------------- | ----------------------------------------------------------------------- |
+| `OWN-002` | Record ownership | An administrator creates the record. It is active or blocked.           |
 | `OWN-003` | Record ownership | Each unit of work carries an acting workspace, an acting user, or both. |
-| `OWN-006` | Record ownership | The isolation runs in the database and fails closed.                |
-| `SEC-003` | Security         | The token names an identity. The hub maps it to the record.         |
-| `SEC-004` | Security         | The user record is the allowlist. The configuration loses its list. |
+| `OWN-006` | Record ownership | The isolation runs in the database and fails closed.                    |
+| `SEC-003` | Security         | The token names an identity. The hub maps it to the record.             |
+| `SEC-004` | Security         | The user record is the allowlist. The configuration loses its list.     |
 
 ## 8. Open questions
 
-| #   | Question                                                                                                 | Owner  | Answer                                                                                                                                                      |
-| --- | -------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Which user owns the rows that the utility jobs collect, given that the credentials are global?           | Temuri | Nobody. Those records stay shared. A later feature moves the configuration of a plugin to the database, and then a job runs once for each workspace that enables the plugin. `ADR-0008`. |
-| 2   | Does an administrator create a user record with a command of the hub, or with a statement against the database? | Temuri | With a statement against the database. `EXTID-FR-010` adds the command later, because the first identity needs an invitation.                               |
+| #   | Question                                                                                                        | Owner  | Answer                                                                                                                                                                                   |
+| --- | --------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Which user owns the rows that the utility jobs collect, given that the credentials are global?                  | Temuri | Nobody. Those records stay shared. A later feature moves the configuration of a plugin to the database, and then a job runs once for each workspace that enables the plugin. `ADR-0008`. |
+| 2   | Does an administrator create a user record with a command of the hub, or with a statement against the database? | Temuri | With a statement against the database. `EXTID-FR-010` adds the command later, because the first identity needs an invitation.                                                            |
 
 ## Retired identifiers
 
-| ID              | Retired    | Reason                                                                                         |
-| --------------- | ---------- | ------------------------------------------------------------------------------------------------ |
-| `IDENT-INV-003` | 2026-09-15 | `ADR-0002` took the Telegram identifier off `public.users`. `EXTID-INV-001` succeeds it.       |
+| ID              | Retired    | Reason                                                                                   |
+| --------------- | ---------- | ---------------------------------------------------------------------------------------- |
+| `IDENT-INV-003` | 2026-09-15 | `ADR-0002` took the Telegram identifier off `public.users`. `EXTID-INV-001` succeeds it. |

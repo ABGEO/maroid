@@ -28,81 +28,81 @@ names `Allow`.
 
 ## 2. Coverage
 
-| Statement       | Section                       |
-| --------------- | ------------------------------ |
-| `APIFMT-FR-011` | 4.3, `APIFMT-DD-009`          |
-| `APIFMT-FR-012` | 4.3, `APIFMT-DD-009`          |
-| `APIFMT-FR-013` | 4.2, `APIFMT-DD-008`          |
-| `APIFMT-FR-014` | 4.4, `APIFMT-DD-010`          |
-| `APIFMT-FR-015` | `APIFMT-DD-011`               |
-| `APIFMT-FR-016` | `APIFMT-DD-012`               |
-| `APIFMT-FR-017` | `APIFMT-DD-012`               |
-| `APIFMT-FR-018` | 4.5, `APIFMT-DD-013`          |
+| Statement       | Section                               |
+| --------------- | ------------------------------------- |
+| `APIFMT-FR-011` | 4.3, `APIFMT-DD-009`                  |
+| `APIFMT-FR-012` | 4.3, `APIFMT-DD-009`                  |
+| `APIFMT-FR-013` | 4.2, `APIFMT-DD-008`                  |
+| `APIFMT-FR-014` | 4.4, `APIFMT-DD-010`                  |
+| `APIFMT-FR-015` | `APIFMT-DD-011`                       |
+| `APIFMT-FR-016` | `APIFMT-DD-012`                       |
+| `APIFMT-FR-017` | `APIFMT-DD-012`                       |
+| `APIFMT-FR-018` | 4.5, `APIFMT-DD-013`                  |
 | `APIFMT-FR-019` | 4.5, `APIFMT-DD-014`, `APIFMT-DD-017` |
-| `APIFMT-FR-020` | 4.4, 4.5, `APIFMT-DD-015`     |
-| `APIFMT-FR-021` | 4.5, `APIFMT-DD-016`          |
-| `APIFMT-FR-022` | 4.1, `APIFMT-DD-018`          |
+| `APIFMT-FR-020` | 4.4, 4.5, `APIFMT-DD-015`             |
+| `APIFMT-FR-021` | 4.5, `APIFMT-DD-016`                  |
+| `APIFMT-FR-022` | 4.1, `APIFMT-DD-018`                  |
 
 ## 3. Guideline compliance
 
-| Rule      | How this design obeys it                                                   |
-| --------- | ---------------------------------------------------------------------------- |
-| `API-003` | Section 4.3 answers every row of the table, and adds no route of its own.  |
-| `API-007` | Section 4.5 builds `Allow`, and gives `WWW-Authenticate` to `/mcp` alone.  |
+| Rule      | How this design obeys it                                                    |
+| --------- | --------------------------------------------------------------------------- |
+| `API-003` | Section 4.3 answers every row of the table, and adds no route of its own.   |
+| `API-007` | Section 4.5 builds `Allow`, and gives `WWW-Authenticate` to `/mcp` alone.   |
 | `RES-001` | `Z-227` gives the cache default, `Z-230` the key cache, `Z-182` the `ETag`. |
-| `RES-004` | Only the discovery route keeps a derived address.                          |
-| `RES-007` | The build writes the meta block of each of the three documents.            |
-| `RES-008` | `pnpm api:build` and `pnpm api:lint` carry the merge and the check.        |
-| `RES-011` | Every route that goes here goes under the exemption of `APIFMT-FR-012`.    |
-| `ERR-006` | The middleware reads `X-Flow-ID`, bounds it, and answers it.               |
-| `DAT-010` | The trigger assigns `now()`, and every column stays `TIMESTAMPTZ`.         |
-| `DAT-011` | The migrator runs the core target first.                                   |
-| `CFG-003` | `external_url` carries a `validate` tag, and the hub stops without it.     |
-| `CLI-001` | The merge is a command of `tools/`, and joins no command tree of the hub.  |
-| `LOG-009` | The access record reads the flow identifier from the context.              |
-| `OWN-006` | A route that answers the rows of one person forbids a shared cache.        |
-| `UI-006`  | A plugin form reaches the write intent through `@maroid/plugin-sdk`.       |
+| `RES-004` | Only the discovery route keeps a derived address.                           |
+| `RES-007` | The build writes the meta block of each of the three documents.             |
+| `RES-008` | `pnpm api:build` and `pnpm api:lint` carry the merge and the check.         |
+| `RES-011` | Every route that goes here goes under the exemption of `APIFMT-FR-012`.     |
+| `ERR-006` | The middleware reads `X-Flow-ID`, bounds it, and answers it.                |
+| `DAT-010` | The trigger assigns `now()`, and every column stays `TIMESTAMPTZ`.          |
+| `DAT-011` | The migrator runs the core target first.                                    |
+| `CFG-003` | `external_url` carries a `validate` tag, and the hub stops without it.      |
+| `CLI-001` | The merge is a command of `tools/`, and joins no command tree of the hub.   |
+| `LOG-009` | The access record reads the flow identifier from the context.               |
+| `OWN-006` | A route that answers the rows of one person forbids a shared cache.         |
+| `UI-006`  | A plugin form reaches the write intent through `@maroid/plugin-sdk`.        |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| File                                          | Change | Holds                                                    |
-| --------------------------------------------- | ------ | ----------------------------------------------------------- |
-| `apps/hub/internal/config/config.go`          | change | `ExternalURL` replaces `Hostname`.                       |
-| `apps/hub/internal/handler/auth.go`           | change | The routes of `API-003`. The three starts answer 202.    |
-| `apps/hub/internal/handler/ping.go`           | delete | Nothing. `APIFMT-FR-012`.                                |
-| `apps/hub/internal/handler/mcp.go`            | change | The origin reads `ExternalURL`. `resourceScheme` goes.   |
-| `apps/hub/internal/telegram/handler.go`       | change | The webhook address reads `ExternalURL`.                 |
-| `apps/hub/internal/migrator/migrator.go`      | change | `buildMigrationPlan` orders the core first.              |
-| `apps/hub/internal/server/http.go`            | change | `flow.Middleware`, `cache.Middleware`, `address.Middleware` and `precondition.IfMatch` join the chain. |
-| `apps/hub/internal/server/problem.go`         | change | A 405 names the methods of the route in `Allow`.         |
-| `apps/hub/internal/idempotency/store.go`      | create | The store of a repeated write.                           |
-| `apps/hub/internal/idempotency/sweep.go`      | create | The job that removes a row the cache outlived.           |
-| `apps/hub/internal/depresolver/cron.go`       | change | `CronRegistry` holds the jobs of the hub.                |
-| `libs/rest/flow/flow.go`                      | rename | `Middleware`, `IDFromContext`, `Instance`. From `request.go`. |
-| `libs/rest/precondition/precondition.go`      | create | `ETag`, the `IfMatch` middleware, `ErrModified`.         |
-| `libs/rest/cache/cache.go`                    | create | `NoStore`, `Immutable`, `Revalidate`, and the middleware that sets the first. |
-| `libs/rest/address/address.go`                | create | The middleware that carries `external_url`, and its reader. |
-| `libs/rest/idempotency/idempotency.go`        | create | The middleware and the `Store` interface.                |
-| `tools/apibuild/main.go`                      | create | The merge of `APIFMT-DD-012`.                            |
-| `specs/api/components.yaml`                   | change | The five headers of section 4.5, and `PreconditionFailed`. |
-| `specs/api/vacuum-ruleset.yaml`               | exists | The ruleset for `hub.yaml`.                              |
-| `package.json`                                | change | `api:build` and `api:lint`.                              |
-| `libs/api-client/src/client.ts`               | change | The new paths, `X-Flow-ID`, `If-Match`.                  |
-| `apps/deck/src/lib/api/`                      | change | The three starts read a 202 and navigate.                |
-| `libs/api-client/src/intent.ts`               | create | `createWriteIntent`, `WriteIntent`.                      |
-| `libs/api-client/src/types.ts`                | change | `idempotencyKey` joins `RequestOptions`.                 |
-| `libs/api-client/src/client.ts`               | change | `post` sends `Idempotency-Key` when a caller names one.  |
-| `libs/plugin-sdk/src/index.ts`                | change | Exports `createWriteIntent` and `WriteIntent`.           |
-| `plugins/jasmine/ui/src/api/`                 | change | Each `create` takes `RequestOptions`.                    |
-| `plugins/jasmine/ui/src/pages/environments/Add.svelte` | change | Holds one intent, and sends its key on each submit. |
+| File                                                   | Change | Holds                                                                                                  |
+| ------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------ |
+| `apps/hub/internal/config/config.go`                   | change | `ExternalURL` replaces `Hostname`.                                                                     |
+| `apps/hub/internal/handler/auth.go`                    | change | The routes of `API-003`. The three starts answer 202.                                                  |
+| `apps/hub/internal/handler/ping.go`                    | delete | Nothing. `APIFMT-FR-012`.                                                                              |
+| `apps/hub/internal/handler/mcp.go`                     | change | The origin reads `ExternalURL`. `resourceScheme` goes.                                                 |
+| `apps/hub/internal/telegram/handler.go`                | change | The webhook address reads `ExternalURL`.                                                               |
+| `apps/hub/internal/migrator/migrator.go`               | change | `buildMigrationPlan` orders the core first.                                                            |
+| `apps/hub/internal/server/http.go`                     | change | `flow.Middleware`, `cache.Middleware`, `address.Middleware` and `precondition.IfMatch` join the chain. |
+| `apps/hub/internal/server/problem.go`                  | change | A 405 names the methods of the route in `Allow`.                                                       |
+| `apps/hub/internal/idempotency/store.go`               | create | The store of a repeated write.                                                                         |
+| `apps/hub/internal/idempotency/sweep.go`               | create | The job that removes a row the cache outlived.                                                         |
+| `apps/hub/internal/depresolver/cron.go`                | change | `CronRegistry` holds the jobs of the hub.                                                              |
+| `libs/rest/flow/flow.go`                               | rename | `Middleware`, `IDFromContext`, `Instance`. From `request.go`.                                          |
+| `libs/rest/precondition/precondition.go`               | create | `ETag`, the `IfMatch` middleware, `ErrModified`.                                                       |
+| `libs/rest/cache/cache.go`                             | create | `NoStore`, `Immutable`, `Revalidate`, and the middleware that sets the first.                          |
+| `libs/rest/address/address.go`                         | create | The middleware that carries `external_url`, and its reader.                                            |
+| `libs/rest/idempotency/idempotency.go`                 | create | The middleware and the `Store` interface.                                                              |
+| `tools/apibuild/main.go`                               | create | The merge of `APIFMT-DD-012`.                                                                          |
+| `specs/api/components.yaml`                            | change | The five headers of section 4.5, and `PreconditionFailed`.                                             |
+| `specs/api/vacuum-ruleset.yaml`                        | exists | The ruleset for `hub.yaml`.                                                                            |
+| `package.json`                                         | change | `api:build` and `api:lint`.                                                                            |
+| `libs/api-client/src/client.ts`                        | change | The new paths, `X-Flow-ID`, `If-Match`.                                                                |
+| `apps/deck/src/lib/api/`                               | change | The three starts read a 202 and navigate.                                                              |
+| `libs/api-client/src/intent.ts`                        | create | `createWriteIntent`, `WriteIntent`.                                                                    |
+| `libs/api-client/src/types.ts`                         | change | `idempotencyKey` joins `RequestOptions`.                                                               |
+| `libs/api-client/src/client.ts`                        | change | `post` sends `Idempotency-Key` when a caller names one.                                                |
+| `libs/plugin-sdk/src/index.ts`                         | change | Exports `createWriteIntent` and `WriteIntent`.                                                         |
+| `plugins/jasmine/ui/src/api/`                          | change | Each `create` takes `RequestOptions`.                                                                  |
+| `plugins/jasmine/ui/src/pages/environments/Add.svelte` | change | Holds one intent, and sends its key on each submit.                                                    |
 
 ### 4.2 Configuration
 
-| Key                   | Type     | Default | Validation           | Realizes        |
-| --------------------- | -------- | ------- | -------------------- | --------------- |
-| `server.external_url` | `string` | none    | `required,http_url`  | `APIFMT-FR-013` |
+| Key                   | Type     | Default | Validation          | Realizes        |
+| --------------------- | -------- | ------- | ------------------- | --------------- |
+| `server.external_url` | `string` | none    | `required,http_url` | `APIFMT-FR-013` |
 
 `server.hostname` goes. `validate:"http_url"` demands `http` or `https` and a host, which
 `fqdn` did not. `url` alone reads `localhost:8000` as a scheme and a path.
@@ -117,17 +117,17 @@ own, and it never holds the `Host` header that `RES-005` forbids.
 
 ### 4.3 Declarations
 
-| Method and path                     | Change | Was                              | Realizes        |
-| ----------------------------------- | ------ | --------------------------------- | --------------- |
-| `POST /auth/sessions`               | rename | `GET /auth`                       | `APIFMT-FR-011` |
-| `GET /auth/sessions/self`           | rename | `GET /auth/me`                    | `APIFMT-FR-011` |
-| `DELETE /auth/sessions/self`        | rename | `POST /auth/logout`               | `APIFMT-FR-011` |
-| `POST /auth/invitation-redemptions` | rename | `GET /auth/invite`                | `APIFMT-FR-011` |
-| `POST /auth/identities`             | rename | `GET /auth/link`                  | `APIFMT-FR-011` |
-| `GET /auth/callback`                | keep   | The same                          | `APIFMT-FR-011` |
-| `GET /auth/identities`              | keep   | The same                          | `APIFMT-FR-011` |
-| `DELETE /auth/identities/{provider}` | keep  | The same                          | `APIFMT-FR-011` |
-| `GET /ping`                         | delete | The same                          | `APIFMT-FR-012` |
+| Method and path                      | Change | Was                 | Realizes        |
+| ------------------------------------ | ------ | ------------------- | --------------- |
+| `POST /auth/sessions`                | rename | `GET /auth`         | `APIFMT-FR-011` |
+| `GET /auth/sessions/self`            | rename | `GET /auth/me`      | `APIFMT-FR-011` |
+| `DELETE /auth/sessions/self`         | rename | `POST /auth/logout` | `APIFMT-FR-011` |
+| `POST /auth/invitation-redemptions`  | rename | `GET /auth/invite`  | `APIFMT-FR-011` |
+| `POST /auth/identities`              | rename | `GET /auth/link`    | `APIFMT-FR-011` |
+| `GET /auth/callback`                 | keep   | The same            | `APIFMT-FR-011` |
+| `GET /auth/identities`               | keep   | The same            | `APIFMT-FR-011` |
+| `DELETE /auth/identities/{provider}` | keep   | The same            | `APIFMT-FR-011` |
+| `GET /ping`                          | delete | The same            | `APIFMT-FR-012` |
 
 The three renamed starts answer 202 with the address of the IdP in the body, and
 the deck navigates there. `API-003` gives the reason: each one mints a binding
@@ -138,9 +138,9 @@ version of a document reaches a reader, and `ADR-0006` names them.
 
 ### 4.4 Data model
 
-| Table               | Schema   | Holds                                          | Realizes        |
-| ------------------- | -------- | ----------------------------------------------- | --------------- |
-| `idempotency_keys`  | `public` | The answer of a write that a client may repeat. | `APIFMT-FR-020` |
+| Table              | Schema   | Holds                                           | Realizes        |
+| ------------------ | -------- | ----------------------------------------------- | --------------- |
+| `idempotency_keys` | `public` | The answer of a write that a client may repeat. | `APIFMT-FR-020` |
 
 ```sql
 CREATE TABLE public.idempotency_keys (
@@ -189,20 +189,20 @@ function. `APIFMT-FR-014`.
 
 ### 4.5 Headers
 
-| Header              | On                                    | Value                                   | Realizes        |
-| ------------------- | ------------------------------------- | ---------------------------------------- | --------------- |
-| `X-Flow-ID`         | Every answer                          | The flow identifier, bare                | `APIFMT-FR-018` |
-| `ETag`              | A single record that a client writes  | `"<updated_at in unix nanoseconds>"`     | `APIFMT-FR-019` |
-| `If-Match`          | Read once by the chain, for every route | The value of an earlier `ETag`          | `APIFMT-FR-019` |
-| `Idempotency-Key`   | Read from a write that creates        | A value that the client picks            | `APIFMT-FR-020` |
-| `Cache-Control`     | Every answer                          | See below                                | `APIFMT-FR-021` |
-| `Allow`             | Every 405                             | The methods of the route                 | `API-007`       |
+| Header            | On                                      | Value                                | Realizes        |
+| ----------------- | --------------------------------------- | ------------------------------------ | --------------- |
+| `X-Flow-ID`       | Every answer                            | The flow identifier, bare            | `APIFMT-FR-018` |
+| `ETag`            | A single record that a client writes    | `"<updated_at in unix nanoseconds>"` | `APIFMT-FR-019` |
+| `If-Match`        | Read once by the chain, for every route | The value of an earlier `ETag`       | `APIFMT-FR-019` |
+| `Idempotency-Key` | Read from a write that creates          | A value that the client picks        | `APIFMT-FR-020` |
+| `Cache-Control`   | Every answer                            | See below                            | `APIFMT-FR-021` |
+| `Allow`           | Every 405                               | The methods of the route             | `API-007`       |
 
-| Route class                         | `Cache-Control`                              |
-| ----------------------------------- | --------------------------------------------- |
-| Every route, by default             | `no-cache, no-store, must-revalidate, max-age=0` |
-| `/plugins/{id}/ui/assets/*`         | `public, max-age=31536000, immutable`         |
-| Every other `/plugins/{id}/ui/*`    | `public, no-cache`                            |
+| Route class                      | `Cache-Control`                                  |
+| -------------------------------- | ------------------------------------------------ |
+| Every route, by default          | `no-cache, no-store, must-revalidate, max-age=0` |
+| `/plugins/{id}/ui/assets/*`      | `public, max-age=31536000, immutable`            |
+| Every other `/plugins/{id}/ui/*` | `public, no-cache`                               |
 
 `Z-227` gives the default string and asks every deviation to carry a reason.
 `/plugins/{id}/ui/*` is the one deviation. `SEC-006` makes it public. The bundler
@@ -613,23 +613,23 @@ and `remoteEntry.js` carries `no-cache`.
 
 ## 7. Build plan
 
-| #   | Step                                                                   | Realizes                         | Done |
-| --- | ------------------------------------------------------------------------ | -------------------------------- | ---- |
-| 1   | Correct the trigger with one migration.                                 | `APIFMT-FR-014`                  | [x]  |
-| 2   | Order the migration plan.                                               | `APIFMT-FR-015`                  | [x]  |
-| 3   | Replace `Hostname` with `ExternalURL`, and change the three readers.    | `APIFMT-FR-013`                  | [x]  |
+| #   | Step                                                                                | Realizes                         | Done |
+| --- | ----------------------------------------------------------------------------------- | -------------------------------- | ---- |
+| 1   | Correct the trigger with one migration.                                             | `APIFMT-FR-014`                  | [x]  |
+| 2   | Order the migration plan.                                                           | `APIFMT-FR-015`                  | [x]  |
+| 3   | Replace `Hostname` with `ExternalURL`, and change the three readers.                | `APIFMT-FR-013`                  | [x]  |
 | 4   | Replace `RequestID` with `flow.Middleware`, read the header, and change `Instance`. | `APIFMT-FR-018`                  | [x]  |
-| 5   | Rename the routes, delete `/ping`, and answer 202 from the three starts. | `APIFMT-FR-011`, `APIFMT-FR-012` | [x]  |
-| 6   | Change the deck and `libs/api-client` to the new routes.                | `APIFMT-FR-011`                  | [x]  |
-| 7   | Add the `precondition` package, and take `If-Match` in each write.      | `APIFMT-FR-019`                  | [x]  |
-| 8   | Add the table, the store, and the idempotency middleware.               | `APIFMT-FR-020`                  | [x]  |
-| 8a  | Add the job that removes a row the cache outlived.                     | `APIFMT-FR-020`                  | [x]  |
-| 9   | Add the `cache` package, the middleware, and the override on the asset route. | `APIFMT-FR-021`                  | [x]  |
-| 10  | Write `tools/apibuild`, and add `api:build` and `api:lint`.             | `APIFMT-FR-016`, `APIFMT-FR-017` | [ ]  |
-| 11  | Add the five headers and `PreconditionFailed` to `components.yaml`.     | `SPC-002`                        | [x]  |
-| 12  | Change `extid/api.yaml` and `websess/api.yaml` to the renamed routes.   | `SPC-002`                        | [x]  |
-| 13  | Add the two commands to `BLD-001`.                                      | `RES-008`                        | [ ]  |
-| 14  | Add the write intent, send its key from `post`, and hold one in the form. | `APIFMT-FR-022`                | [x]  |
+| 5   | Rename the routes, delete `/ping`, and answer 202 from the three starts.            | `APIFMT-FR-011`, `APIFMT-FR-012` | [x]  |
+| 6   | Change the deck and `libs/api-client` to the new routes.                            | `APIFMT-FR-011`                  | [x]  |
+| 7   | Add the `precondition` package, and take `If-Match` in each write.                  | `APIFMT-FR-019`                  | [x]  |
+| 8   | Add the table, the store, and the idempotency middleware.                           | `APIFMT-FR-020`                  | [x]  |
+| 8a  | Add the job that removes a row the cache outlived.                                  | `APIFMT-FR-020`                  | [x]  |
+| 9   | Add the `cache` package, the middleware, and the override on the asset route.       | `APIFMT-FR-021`                  | [x]  |
+| 10  | Write `tools/apibuild`, and add `api:build` and `api:lint`.                         | `APIFMT-FR-016`, `APIFMT-FR-017` | [ ]  |
+| 11  | Add the five headers and `PreconditionFailed` to `components.yaml`.                 | `SPC-002`                        | [x]  |
+| 12  | Change `extid/api.yaml` and `websess/api.yaml` to the renamed routes.               | `SPC-002`                        | [x]  |
+| 13  | Add the two commands to `BLD-001`.                                                  | `RES-008`                        | [ ]  |
+| 14  | Add the write intent, send its key from `post`, and hold one in the form.           | `APIFMT-FR-022`                  | [x]  |
 
 Step 1 and step 2 land before any other, because a deployment that starts on the
 wrong order stores the wrong instant.

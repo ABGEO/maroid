@@ -18,13 +18,13 @@ This guideline gives the files that carry the contract and the shape of each dec
 
 A feature directory holds these files and no other:
 
-| File                        | Holds                                         | Present when                                      |
-| --------------------------- | --------------------------------------------- | ------------------------------------------------- |
-| `requirements.md`           | Stage 1                                       | Always                                            |
-| `requirements-<subject>.md` | One subject of the requirements               | `requirements.md` passes the target of `LNG-013`  |
-| `spec.md`                   | Stage 2                                       | Always                                            |
-| `spec-<subject>.md`         | One subject of the specification              | `spec.md` passes the target of `LNG-013`          |
-| `api.yaml`                  | The OpenAPI description of the routes it adds | The feature adds or changes an HTTP route         |
+| File                        | Holds                                         | Present when                                     |
+| --------------------------- | --------------------------------------------- | ------------------------------------------------ |
+| `requirements.md`           | Stage 1                                       | Always                                           |
+| `requirements-<subject>.md` | One subject of the requirements               | `requirements.md` passes the target of `LNG-013` |
+| `spec.md`                   | Stage 2                                       | Always                                           |
+| `spec-<subject>.md`         | One subject of the specification              | `spec.md` passes the target of `LNG-013`         |
+| `api.yaml`                  | The OpenAPI description of the routes it adds | The feature adds or changes an HTTP route        |
 
 `api.yaml` carries the key `x-maroid-document` at the top level. Its value is
 `hub`, `mcp`, or `telegram`, and it names the document of `RES-007` that holds
@@ -55,12 +55,12 @@ is one.
 
 `specs/api/` holds the artifacts that no feature owns:
 
-| File                            | Holds                                         |
-| ------------------------------- | --------------------------------------------- |
-| `components.yaml`               | Every component that two fragments need.      |
-| `telegram.yaml`                 | The document that no fragment feeds.          |
-| `vacuum-ruleset.yaml`           | The ruleset for `hub.yaml`.                   |
-| `vacuum-ruleset-transport.yaml` | The ruleset for the two transport documents.  |
+| File                            | Holds                                        |
+| ------------------------------- | -------------------------------------------- |
+| `components.yaml`               | Every component that two fragments need.     |
+| `telegram.yaml`                 | The document that no fragment feeds.         |
+| `vacuum-ruleset.yaml`           | The ruleset for `hub.yaml`.                  |
+| `vacuum-ruleset-transport.yaml` | The ruleset for the two transport documents. |
 
 `RES-008` holds the linter.
 
@@ -74,19 +74,19 @@ A specification declares each contract surface that the feature adds.
 Section 4.2 holds the data model. Section 4.3 holds every other surface.
 One table for each surface. These columns are the minimum:
 
-| Surface               | Columns                                            | Governed by                     |
-| --------------------- | -------------------------------------------------- | ------------------------------- |
-| Data model            | Table, Schema, Scope, Migration, Realizes          | `DAT-001`, `DAT-005`, `OWN-004` |
-| HTTP route            | Method, Path, Access, Permission, Realizes         | `API-003`, `API-004`, `SEC-013` |
-| MQTT subscriber       | Identifier, Relative topic, QoS, Handles, Realizes | `MQT-001`, `MQT-003`            |
-| Cron job              | Identifier, Schedule, Runs in, Behavior, Realizes  | `JOB-005`, `OWN-009`            |
-| Background worker     | Name, Prepare verifies, Start runs, Realizes       | `JOB-001`                       |
-| Telegram command      | Command, Scope, Permission, Validates, Handles, Realizes | `TG-003`, `TG-004`, `SEC-013` |
-| Telegram conversation | Identifier, Entry step, Steps, Realizes            | `TG-005`                        |
-| CLI command           | Command, Flags, Does, Realizes                     | `CLI-001`                       |
-| Notification topic    | Identifier, Name, Sent when, Realizes              | `NTF-001`, `NTF-002`            |
-| Configuration scheme  | Key, Type, Default, Secret, Realizes               | `CFG-003`, `CFG-006`            |
-| MCP tool              | Tool, Declared by, Annotations, Permission, Realizes | `PLG-006`, `PLG-011`, `SEC-013` |
+| Surface               | Columns                                                  | Governed by                     |
+| --------------------- | -------------------------------------------------------- | ------------------------------- |
+| Data model            | Table, Schema, Scope, Migration, Realizes                | `DAT-001`, `DAT-005`, `OWN-004` |
+| HTTP route            | Method, Path, Access, Permission, Realizes               | `API-003`, `API-004`, `SEC-013` |
+| MQTT subscriber       | Identifier, Relative topic, QoS, Handles, Realizes       | `MQT-001`, `MQT-003`            |
+| Cron job              | Identifier, Schedule, Runs in, Behavior, Realizes        | `JOB-005`, `OWN-009`            |
+| Background worker     | Name, Prepare verifies, Start runs, Realizes             | `JOB-001`                       |
+| Telegram command      | Command, Scope, Permission, Validates, Handles, Realizes | `TG-003`, `TG-004`, `SEC-013`   |
+| Telegram conversation | Identifier, Entry step, Steps, Realizes                  | `TG-005`                        |
+| CLI command           | Command, Flags, Does, Realizes                           | `CLI-001`                       |
+| Notification topic    | Identifier, Name, Sent when, Realizes                    | `NTF-001`, `NTF-002`            |
+| Configuration scheme  | Key, Type, Default, Secret, Realizes                     | `CFG-003`, `CFG-006`            |
+| MCP tool              | Tool, Declared by, Annotations, Permission, Realizes     | `PLG-006`, `PLG-011`, `SEC-013` |
 
 The Permission column holds "none" for a surface that acts in no workspace.
 

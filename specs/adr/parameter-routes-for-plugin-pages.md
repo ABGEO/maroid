@@ -38,11 +38,11 @@ each segment.
 
 ## Alternatives
 
-| Alternative | Why we did not select it |
-| ----------- | ------------------------ |
-| A query parameter, `/plants?plant=<id>` | The deck matches the path alone, so it needs the same change in the loader, and the trail still cannot tell the page apart from the list. |
-| A catch-all route that parses the rest itself | Every plugin repeats the parsing, and the deck cannot build a trail or mark the navigation for a path it does not understand. |
-| A page title that the deck reads from the record | The deck knows no resource of a plugin, and `ARC-008` forbids a rule that names one. |
+| Alternative                                      | Why we did not select it                                                                                                                  |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| A query parameter, `/plants?plant=<id>`          | The deck matches the path alone, so it needs the same change in the loader, and the trail still cannot tell the page apart from the list. |
+| A catch-all route that parses the rest itself    | Every plugin repeats the parsing, and the deck cannot build a trail or mark the navigation for a path it does not understand.             |
+| A page title that the deck reads from the record | The deck knows no resource of a plugin, and `ARC-008` forbids a rule that names one.                                                      |
 
 ## Consequences
 

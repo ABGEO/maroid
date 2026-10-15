@@ -36,13 +36,13 @@ Every unit of work carries one acting user, one acting workspace, or both. Work
 without an acting workspace reaches no table that a workspace scopes. Work without
 an acting user reaches no table that a user scopes.
 
-| Entry point       | Acting user                                                | Acting workspace                         |
-| ----------------- | ---------------------------------------------------------- | ---------------------------------------- |
-| An HTTP request   | The identity that `federated_claims` names. See `SEC-003`. | The `{workspaceId}` segment of the path. |
-| A Telegram update | The identity of the Telegram connector for the sender.     | The workspace that the chat selected.    |
-| An MCP tool call  | The identity that `federated_claims` names. See `SEC-002`. | The `workspace` argument of the call.    |
-| A cron job        | The user of the run, for a job for each user. See `OWN-009`. | The workspace of the run, for a job for each workspace. See `OWN-009`. |
-| A command of a plugin | None. | The `--workspace` flag of the command, when the command reaches a table that a workspace scopes. |
+| Entry point           | Acting user                                                  | Acting workspace                                                                                 |
+| --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| An HTTP request       | The identity that `federated_claims` names. See `SEC-003`.   | The `{workspaceId}` segment of the path.                                                         |
+| A Telegram update     | The identity of the Telegram connector for the sender.       | The workspace that the chat selected.                                                            |
+| An MCP tool call      | The identity that `federated_claims` names. See `SEC-002`.   | The `workspace` argument of the call.                                                            |
+| A cron job            | The user of the run, for a job for each user. See `OWN-009`. | The workspace of the run, for a job for each workspace. See `OWN-009`.                           |
+| A command of a plugin | None.                                                        | The `--workspace` flag of the command, when the command reaches a table that a workspace scopes. |
 
 When a unit of work carries both, the hub checks that the acting user is a member
 of the acting workspace before it sets the workspace. A user who is not a member
@@ -108,10 +108,10 @@ reuses the connection.
 
 Two functions set them, and no other place does:
 
-| Function                | Sets them for                                    |
-| ----------------------- | ------------------------------------------------ |
-| `database.WithScopeTx`  | The hub, on a table that `public` holds.         |
-| `PluginDB.WithTx`       | A plugin, with the search path. See `DAT-004`.   |
+| Function               | Sets them for                                  |
+| ---------------------- | ---------------------------------------------- |
+| `database.WithScopeTx` | The hub, on a table that `public` holds.       |
+| `PluginDB.WithTx`      | A plugin, with the search path. See `DAT-004`. |
 
 ## OWN-008
 

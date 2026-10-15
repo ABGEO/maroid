@@ -5,7 +5,14 @@ type: guideline
 status: active
 created: 2026-09-21
 updated: 2026-10-12
-scope: [apps/hub/internal/handler/, apps/hub/internal/middleware/, libs/rest/, libs/api-client/, plugins/]
+scope:
+  [
+    apps/hub/internal/handler/,
+    apps/hub/internal/middleware/,
+    libs/rest/,
+    libs/api-client/,
+    plugins/
+  ]
 related: [API, DAT, LOG, OWN, PLG, RES, UI]
 ---
 
@@ -16,21 +23,21 @@ related: [API, DAT, LOG, OWN, PLG, RES, UI]
 An error response carries the media type `application/problem+json` and a body that
 obeys RFC 9457. The body holds these members:
 
-| Member     | Required | Holds                                                          |
-| ---------- | -------- | -------------------------------------------------------------- |
-| `type`     | Yes      | The type of the problem. `ERR-002` gives the grammar.          |
-| `title`    | Yes      | A short sentence in English. It is constant for the type.      |
-| `status`   | Yes      | The HTTP status of the response. The same number.              |
-| `detail`   | No       | One sentence about this occurrence. `ERR-005` bounds it.       |
-| `instance` | No       | A URI reference that names it. `ERR-006` gives the form.       |
+| Member     | Required | Holds                                                     |
+| ---------- | -------- | --------------------------------------------------------- |
+| `type`     | Yes      | The type of the problem. `ERR-002` gives the grammar.     |
+| `title`    | Yes      | A short sentence in English. It is constant for the type. |
+| `status`   | Yes      | The HTTP status of the response. The same number.         |
+| `detail`   | No       | One sentence about this occurrence. `ERR-005` bounds it.  |
+| `instance` | No       | A URI reference that names it. `ERR-006` gives the form.  |
 
 ```json
 {
-  "type": "/problems/http/request-invalid",
-  "title": "The request is not valid.",
-  "status": 400,
-  "detail": "The redirect parameter is absent.",
-  "instance": "/flows/0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77"
+	"type": "/problems/http/request-invalid",
+	"title": "The request is not valid.",
+	"status": 400,
+	"detail": "The redirect parameter is absent.",
+	"instance": "/flows/0199c5e2-8f3a-7c21-9b4e-2f6a1d0c5e77"
 }
 ```
 
@@ -55,7 +62,7 @@ The owner names who defines the failure, not who answers it. The slug holds
 lowercase letters, digits, and a hyphen.
 
 | Owner       | Defines                                                          |
-| ------------- | ------------------------------------------------------------------ |
+| ----------- | ---------------------------------------------------------------- |
 | `http`      | A failure of the protocol. Any component answers one. `ERR-003`. |
 | `hub`       | A failure of a domain of the hub. `ERR-003`.                     |
 | A plugin id | A failure of the domain of that plugin.                          |
@@ -87,21 +94,21 @@ the type of a stale cursor lives in the library.
 
 `libs/rest` holds these, under `/problems/http/`.
 
-| Slug                     | Status | Title                                               |
-| ------------------------ | ------ | ----------------------------------------------------- |
-| `request-invalid`        | 400    | The request is not valid.                           |
-| `body-invalid`           | 400    | The body is not a JSON object.                      |
-| `member-unknown`         | 400    | The body carries a member that the schema does not declare. |
-| `cursor-stale`           | 400    | The cursor does not match this request.             |
-| `access-denied`          | 401    | The request carries no active user record.          |
-| `permission-denied`      | 403    | The workspace role does not hold the permission.    |
-| `not-found`              | 404    | The resource does not exist.                        |
-| `method-not-allowed`     | 405    | The method does not reach this resource.            |
-| `request-in-progress`    | 409    | An earlier request under this key is still running. |
-| `precondition-failed`    | 412    | The record changed after the client read it.        |
-| `content-too-large`      | 413    | The body is larger than the route takes.            |
-| `validation-failed`      | 422    | The body failed validation.                         |
-| `internal`               | 500    | The request failed.                                 |
+| Slug                  | Status | Title                                                       |
+| --------------------- | ------ | ----------------------------------------------------------- |
+| `request-invalid`     | 400    | The request is not valid.                                   |
+| `body-invalid`        | 400    | The body is not a JSON object.                              |
+| `member-unknown`      | 400    | The body carries a member that the schema does not declare. |
+| `cursor-stale`        | 400    | The cursor does not match this request.                     |
+| `access-denied`       | 401    | The request carries no active user record.                  |
+| `permission-denied`   | 403    | The workspace role does not hold the permission.            |
+| `not-found`           | 404    | The resource does not exist.                                |
+| `method-not-allowed`  | 405    | The method does not reach this resource.                    |
+| `request-in-progress` | 409    | An earlier request under this key is still running.         |
+| `precondition-failed` | 412    | The record changed after the client read it.                |
+| `content-too-large`   | 413    | The body is larger than the route takes.                    |
+| `validation-failed`   | 422    | The body failed validation.                                 |
+| `internal`            | 500    | The request failed.                                         |
 
 The title of `access-denied` says how Maroid reads the condition. The condition is
 the one that HTTP gives every 401, so the type is of the first kind.
@@ -124,26 +131,26 @@ as the reason the registry exists.
 Each names a mechanism that Maroid runs: an allowlist, a settings schema, an
 identity, the secret of the bot.
 
-| Slug                     | Status | Title                                               |
-| ------------------------ | ------ | ----------------------------------------------------- |
-| `network-not-allowed`    | 403    | The caller is not on the network allowlist.         |
-| `settings-absent`        | 404    | The plugin declares no settings.                    |
-| `identity-last`          | 409    | The last external account cannot be detached.       |
-| `member-exists`          | 409    | The user record is already a member of the workspace. |
-| `manager-last`           | 409    | The change leaves the workspace with no manager.    |
-| `administrator-last`     | 409    | The change leaves the instance with no active administrator. |
-| `administrator-allowlist` | 409   | An administrator turns on every plugin and holds no allowlist. |
-| `provider-exists`        | 409    | The identity provider holds a provider with this identifier. |
-| `provider-static`        | 409    | The configuration of the identity provider holds the provider. |
-| `local-account-exists`   | 409    | Another local account holds the email address.      |
-| `local-provider-absent`  | 409    | The instance holds no local provider.               |
-| `webhook-secret-invalid` | 401    | The update carries no valid secret of the bot.      |
-| `settings-invalid`       | 422    | The settings do not match the schema.               |
-| `notification-route-exists` | 409 | Another notification route holds the same topic, provider, and destination. |
-| `delivery-refused`       | 422    | The external messaging service refused the call.    |
-| `messaging-unreachable`  | 502    | The external messaging service did not answer.      |
-| `not-ready`              | 503    | The hub cannot serve a request.                     |
-| `widget-timeout`         | 504    | The plugin did not answer the widget in time.       |
+| Slug                        | Status | Title                                                                       |
+| --------------------------- | ------ | --------------------------------------------------------------------------- |
+| `network-not-allowed`       | 403    | The caller is not on the network allowlist.                                 |
+| `settings-absent`           | 404    | The plugin declares no settings.                                            |
+| `identity-last`             | 409    | The last external account cannot be detached.                               |
+| `member-exists`             | 409    | The user record is already a member of the workspace.                       |
+| `manager-last`              | 409    | The change leaves the workspace with no manager.                            |
+| `administrator-last`        | 409    | The change leaves the instance with no active administrator.                |
+| `administrator-allowlist`   | 409    | An administrator turns on every plugin and holds no allowlist.              |
+| `provider-exists`           | 409    | The identity provider holds a provider with this identifier.                |
+| `provider-static`           | 409    | The configuration of the identity provider holds the provider.              |
+| `local-account-exists`      | 409    | Another local account holds the email address.                              |
+| `local-provider-absent`     | 409    | The instance holds no local provider.                                       |
+| `webhook-secret-invalid`    | 401    | The update carries no valid secret of the bot.                              |
+| `settings-invalid`          | 422    | The settings do not match the schema.                                       |
+| `notification-route-exists` | 409    | Another notification route holds the same topic, provider, and destination. |
+| `delivery-refused`          | 422    | The external messaging service refused the call.                            |
+| `messaging-unreachable`     | 502    | The external messaging service did not answer.                              |
+| `not-ready`                 | 503    | The hub cannot serve a request.                                             |
+| `widget-timeout`            | 504    | The plugin did not answer the widget in time.                               |
 
 A body that carries a member which the schema does not declare answers
 `member-unknown`. `Z-109` and `Z-111` ask a document to say how a route handles an
@@ -168,10 +175,10 @@ starts with `#` and it reaches a field at any depth.
 
 ```json
 {
-  "type": "/problems/http/validation-failed",
-  "title": "The body failed validation.",
-  "status": 422,
-  "errors": [{ "detail": "is required", "pointer": "#/address/city" }]
+	"type": "/problems/http/validation-failed",
+	"title": "The body failed validation.",
+	"status": 422,
+	"errors": [{ "detail": "is required", "pointer": "#/address/city" }]
 }
 ```
 
