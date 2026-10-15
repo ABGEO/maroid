@@ -296,6 +296,7 @@ Add a row before you create the file or the directory.
 | `GASACC`   | `features/gasacc/`   | The gas account of a workspace: the connection, the customer, and the transactions.                    | Approved |
 | `ELECACC`  | `features/elecacc/`  | The electricity account of a workspace: the connection, the customer, the transactions, and the bills. | Approved |
 | `PLGBIND`  | `features/plgbind/`  | The host services bound to one plugin.                                                                 | Approved |
+| `PLGINFO`  | `features/plginfo/`  | The detail page of a plugin in a workspace.                                                            | Approved |
 
 ## Retired identifiers
 

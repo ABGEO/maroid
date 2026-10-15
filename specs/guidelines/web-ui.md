@@ -4,7 +4,7 @@ title: The web user interface
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-11
+updated: 2026-10-16
 scope: [apps/deck/, plugins/*/ui/, libs/plugin-sdk/, libs/api-client/]
 related: [ARC, PLG, TS, BLD, API]
 ---
@@ -44,6 +44,8 @@ A segment of the form `:name` is a parameter segment. It matches one non-empty
 segment of the address, and the page receives the value under `name`.
 `UIManifest.Routes` lists the navigation entries. An entry holds no parameter
 segment, and the hub refuses a plugin whose entry holds one. `ADR-0012`.
+An entry is not at the root of the address of the plugin, where the deck serves the
+plugin detail page. The hub refuses a plugin whose entry is `/` or empty. `ADR-0020`.
 
 ## UI-006
 

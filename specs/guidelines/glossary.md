@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-10-15
+updated: 2026-10-16
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -117,6 +117,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-trail`                      | trail                      | The line of links above a page that names each level from the hub to the page.                                                                                                                                                                         |
 | `GLO-page-title`                 | page title                 | The name that a page gives itself for the last link of the trail.                                                                                                                                                                                      |
 | `GLO-home-page`                  | home page                  | The page of a workspace that the deck opens first for that workspace.                                                                                                                                                                                  |
+| `GLO-plugin-detail-page`         | plugin detail page         | The page of a workspace that shows the report of one plugin and its state in the workspace.                                                                                                                                                            |
 | `GLO-widget`                     | widget                     | One card on the home page. A plugin declares it and answers its data.                                                                                                                                                                                  |
 | `GLO-widget-key`                 | widget key                 | The name of a widget, unique within its plugin.                                                                                                                                                                                                        |
 | `GLO-widget-kind`                | widget kind                | The shape of the data of a widget: `stat` or `list`.                                                                                                                                                                                                   |
