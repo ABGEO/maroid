@@ -1,4 +1,4 @@
-package pluginapi_test
+package host_test
 
 import (
 	"context"
@@ -9,6 +9,8 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/testdb"
 )
@@ -48,7 +50,7 @@ CREATE TABLE dev_maroid_jasmine.plants (
 // workspaces.
 type scope struct {
 	instance   *testdb.Instance
-	notes      *pluginapi.PluginDB
+	notes      pluginapi.PluginDB
 	workspaceA string
 	workspaceB string
 }
@@ -63,10 +65,23 @@ func newScope(t *testing.T) *scope {
 
 	return &scope{
 		instance:   instance,
-		notes:      pluginapi.NewPluginDB(instance.DB, pluginapi.ParsePluginID("test.scope")),
+		notes:      databaseOf(t, instance, "test.scope"),
 		workspaceA: addWorkspace(t, instance, "A"),
 		workspaceB: addWorkspace(t, instance, "B"),
 	}
+}
+
+// databaseOf answers the database of the bound host of the plugin.
+func databaseOf(t *testing.T, instance *testdb.Instance, pluginID string) pluginapi.PluginDB {
+	t.Helper()
+
+	binder, err := host.New(host.Dependencies{Config: &config.Config{}, Database: instance.DB})
+	require.NoError(t, err)
+
+	database, err := binder.Bind(metadataOf(pluginID)).Database()
+	require.NoError(t, err)
+
+	return database
 }
 
 func addWorkspace(t *testing.T, instance *testdb.Instance, name string) string {
@@ -257,14 +272,12 @@ func TestNoActingWorkspaceReachesNoScopedRecord(t *testing.T) {
 
 // IDENT-SC-010: A table from before this feature answers every workspace with every
 // row.
+// PLGBIND-SC-010: A table with no schema resolves in the schema of the bound plugin.
 func TestATableFromBeforeThisFeatureStaysShared(t *testing.T) {
 	t.Parallel()
 
 	scoped := newScope(t)
-	shared := pluginapi.NewPluginDB(
-		scoped.instance.DB,
-		pluginapi.ParsePluginID("dev.maroid.jasmine"),
-	)
+	shared := databaseOf(t, scoped.instance, "dev.maroid.jasmine")
 
 	_, err := scoped.instance.DB.ExecContext(
 		t.Context(),

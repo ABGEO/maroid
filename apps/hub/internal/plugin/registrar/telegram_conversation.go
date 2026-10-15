@@ -33,17 +33,17 @@ func (r *TelegramConversationRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *TelegramConversationRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.TelegramConversationPlugin)
+func (r *TelegramConversationRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.TelegramConversationPlugin)
 
 	return ok
 }
 
 // Register handles the registration of a plugin capability.
-func (r *TelegramConversationRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *TelegramConversationRegistrar) Register(plugin registry.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	telegramConversationPlugin, ok := plugin.(pluginapi.TelegramConversationPlugin)
+	telegramConversationPlugin, ok := plugin.Instance.(pluginapi.TelegramConversationPlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support Telegram Conversation capability: %w",

@@ -33,7 +33,7 @@ func (c *Catalog) Entries() []PluginEntry {
 	entries := make([]PluginEntry, 0, len(plugins))
 
 	for _, plg := range plugins {
-		entries = append(entries, c.entryOf(plg.Meta()))
+		entries = append(entries, c.entryOf(plg.Meta))
 	}
 
 	return entries
@@ -43,8 +43,8 @@ func (c *Catalog) Entries() []PluginEntry {
 // load it.
 func (c *Catalog) Entry(pluginID string) (PluginEntry, bool) {
 	for _, plg := range c.plugins.All() {
-		if plg.Meta().ID.String() == pluginID {
-			return c.entryOf(plg.Meta()), true
+		if plg.Meta.ID.String() == pluginID {
+			return c.entryOf(plg.Meta), true
 		}
 	}
 

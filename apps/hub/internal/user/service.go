@@ -12,7 +12,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
-	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // Change holds the members of a merge patch of a user record. A nil member changes
@@ -70,10 +69,10 @@ type Inviter interface {
 	) (*auth.InviteResult, error)
 }
 
-// PluginCatalog lists the plugins that the hub loaded. registry.PluginRegistry
+// PluginCatalog answers whether the hub loaded a plugin. registry.PluginRegistry
 // satisfies it.
 type PluginCatalog interface {
-	All() []pluginapi.Plugin
+	Has(pluginID string) bool
 }
 
 // Manager is the implementation of Service over the repositories of the hub.
@@ -343,13 +342,7 @@ func (m *Manager) holdsAllowlist(ctx context.Context, userID string) error {
 }
 
 func (m *Manager) loaded(pluginID string) bool {
-	for _, plugin := range m.plugins.All() {
-		if plugin.Meta().ID.String() == pluginID {
-			return true
-		}
-	}
-
-	return false
+	return m.plugins.Has(pluginID)
 }
 
 // NotLoadedError reports a plugin of the allowlist of a new record that the hub did not

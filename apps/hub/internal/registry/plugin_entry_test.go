@@ -24,8 +24,8 @@ type stubPlugin struct {
 
 var _ pluginapi.Plugin = (*stubPlugin)(nil)
 
-func (p *stubPlugin) Meta() pluginapi.Metadata {
-	return p.meta
+func (p *stubPlugin) loaded() registry.LoadedPlugin {
+	return registry.LoadedPlugin{Meta: p.meta, Instance: p}
 }
 
 func newStubPlugin(id string, version string) *stubPlugin {
@@ -49,8 +49,8 @@ func TestPluginEntriesReportEveryLoadedPlugin(t *testing.T) {
 
 	pluginRegistry := registry.NewPluginRegistry()
 	require.NoError(t, pluginRegistry.Register(
-		newStubPlugin(probeID, "1.0.0"),
-		newStubPlugin(beaconID, "2.3.4"),
+		newStubPlugin(probeID, "1.0.0").loaded(),
+		newStubPlugin(beaconID, "2.3.4").loaded(),
 	))
 
 	manifest := &pluginapi.UIManifest{
@@ -104,7 +104,7 @@ func TestTheCatalogAnswersTheEntryOfOnePlugin(t *testing.T) {
 	t.Parallel()
 
 	pluginRegistry := registry.NewPluginRegistry()
-	require.NoError(t, pluginRegistry.Register(newStubPlugin(probeID, "1.0.0")))
+	require.NoError(t, pluginRegistry.Register(newStubPlugin(probeID, "1.0.0").loaded()))
 
 	catalog := registry.NewCatalog(pluginRegistry, registry.NewCapabilityRegistry())
 
@@ -126,8 +126,8 @@ func TestTheEntryCarriesTheNameAndTheDescription(t *testing.T) {
 
 	pluginRegistry := registry.NewPluginRegistry()
 	require.NoError(t, pluginRegistry.Register(
-		newStubPlugin(probeID, "1.0.0").named("  Probe ", "Watches the probe."),
-		newStubPlugin(beaconID, "2.3.4").named("Beacon", ""),
+		newStubPlugin(probeID, "1.0.0").named("  Probe ", "Watches the probe.").loaded(),
+		newStubPlugin(beaconID, "2.3.4").named("Beacon", "").loaded(),
 	))
 
 	capabilities := registry.NewCapabilityRegistry()

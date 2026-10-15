@@ -8,7 +8,6 @@ import (
 
 // MCPToolPlugin is a plugin that exposes a function over the Model Context Protocol.
 type MCPToolPlugin interface {
-	Plugin
 	MCPTools() ([]MCPTool, error)
 }
 

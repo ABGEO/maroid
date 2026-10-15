@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
-	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // PluginRegistrar is responsible for registering plugins in the plugin registry.
@@ -27,15 +26,15 @@ func (r *PluginRegistrar) Name() string {
 }
 
 // Supports always returns true since this registrar is responsible for registering all plugins.
-func (r *PluginRegistrar) Supports(_ pluginapi.Plugin) bool {
+func (r *PluginRegistrar) Supports(_ registry.LoadedPlugin) bool {
 	return true
 }
 
 // Register registers the plugin in the plugin registry.
-func (r *PluginRegistrar) Register(plugin pluginapi.Plugin) error {
+func (r *PluginRegistrar) Register(plugin registry.LoadedPlugin) error {
 	err := r.registry.Register(plugin)
 	if err != nil {
-		return fmt.Errorf("registering plugin %s: %w", plugin.Meta().ID, err)
+		return fmt.Errorf("registering plugin %s: %w", plugin.Meta.ID, err)
 	}
 
 	return nil

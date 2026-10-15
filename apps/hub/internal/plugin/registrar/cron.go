@@ -33,17 +33,17 @@ func (r *CronRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *CronRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.CronPlugin)
+func (r *CronRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.CronPlugin)
 
 	return ok
 }
 
 // Register handles the registration of a plugin capability.
-func (r *CronRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *CronRegistrar) Register(plugin registry.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	cronPlugin, ok := plugin.(pluginapi.CronPlugin)
+	cronPlugin, ok := plugin.Instance.(pluginapi.CronPlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support Cron capability: %w",

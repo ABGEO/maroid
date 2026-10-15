@@ -33,17 +33,17 @@ func (r *MigrationRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *MigrationRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.MigrationPlugin)
+func (r *MigrationRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.MigrationPlugin)
 
 	return ok
 }
 
 // Register handles the registration of a plugin capability.
-func (r *MigrationRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *MigrationRegistrar) Register(plugin registry.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	migrationPlugin, ok := plugin.(pluginapi.MigrationPlugin)
+	migrationPlugin, ok := plugin.Instance.(pluginapi.MigrationPlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support Migration capability: %w",
@@ -57,7 +57,7 @@ func (r *MigrationRegistrar) Register(plugin pluginapi.Plugin) error {
 		return fmt.Errorf("retrieving migrations for plugin %s: %w", id, err)
 	}
 
-	err = r.registry.Register(plugin.Meta().ID.String(), migrations)
+	err = r.registry.Register(plugin.Meta.ID.String(), migrations)
 	if err != nil {
 		return fmt.Errorf("registering migrations for plugin %s: %w", id, err)
 	}

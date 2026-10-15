@@ -4,7 +4,6 @@ import "context"
 
 // WidgetPlugin is a plugin that shows widgets on the home page of a workspace.
 type WidgetPlugin interface {
-	Plugin
 	Widgets() ([]Widget, error)
 }
 

@@ -38,17 +38,17 @@ func (r *MCPToolRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *MCPToolRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.MCPToolPlugin)
+func (r *MCPToolRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.MCPToolPlugin)
 
 	return ok
 }
 
 // Register adapts each tool of a plugin and registers it.
-func (r *MCPToolRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *MCPToolRegistrar) Register(plugin registry.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	toolPlugin, ok := plugin.(pluginapi.MCPToolPlugin)
+	toolPlugin, ok := plugin.Instance.(pluginapi.MCPToolPlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support MCP Tool capability: %w",

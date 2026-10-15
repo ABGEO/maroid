@@ -41,17 +41,17 @@ func (r *NotificationTopicRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *NotificationTopicRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.NotifyingPlugin)
+func (r *NotificationTopicRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.NotifyingPlugin)
 
 	return ok
 }
 
 // Register stores every notification topic of the plugin, after it trims each name.
-func (r *NotificationTopicRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *NotificationTopicRegistrar) Register(plugin registry.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	notifying, ok := plugin.(pluginapi.NotifyingPlugin)
+	notifying, ok := plugin.Instance.(pluginapi.NotifyingPlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support NotificationTopic capability: %w",

@@ -56,7 +56,7 @@ func TestNotificationTopicRegistrarStoresTheTopics(t *testing.T) {
 		{ID: reminderID, Name: reminderName},
 	}}
 
-	require.NoError(t, reg.Register(plugin))
+	require.NoError(t, reg.Register(loaded(plugin)))
 
 	entries := topics.Of("dev.maroid.probe")
 	require.Len(t, entries, 1)
@@ -116,7 +116,7 @@ func TestNotificationTopicRegistrarRefusesAnInvalidDeclaration(t *testing.T) {
 
 			reg, topics, _ := newTopicRegistrar()
 
-			err := reg.Register(&notifyingProbe{topics: tc.topics})
+			err := reg.Register(loaded(&notifyingProbe{topics: tc.topics}))
 
 			require.ErrorIs(t, err, tc.want)
 			require.ErrorContains(t, err, "dev.maroid.probe")

@@ -16,32 +16,25 @@ const (
 	fieldDescription = "description"
 )
 
-type metadataPlugin struct {
-	meta pluginapi.Metadata
-}
-
-func (p metadataPlugin) Meta() pluginapi.Metadata {
-	return p.meta
-}
-
-func pluginWith(name string, description string) metadataPlugin {
-	return metadataPlugin{meta: pluginapi.Metadata{
+func pluginWith(name string, description string) *pluginapi.Metadata {
+	return &pluginapi.Metadata{
 		ID:          pluginapi.ParsePluginID("dev.maroid.probe"),
 		Name:        name,
 		Description: description,
 		Version:     "1.0.0",
 		APIVersion:  pluginapi.APIVersion,
-	}}
+	}
 }
 
 // PCAP-SC-010: The loader refuses a name or a description that breaks a limit of
 // PLG-012, counts characters and not bytes, and names the plugin and the field.
+// PLGBIND-SC-005: The constructor of a refused plugin does not run.
 func TestValidatePluginChecksTheNameAndTheDescription(t *testing.T) {
 	t.Parallel()
 
 	refused := []struct {
 		label string
-		plg   metadataPlugin
+		plg   *pluginapi.Metadata
 		field string
 	}{
 		{"an empty name", pluginWith("", ""), fieldName},
@@ -58,9 +51,11 @@ func TestValidatePluginChecksTheNameAndTheDescription(t *testing.T) {
 		t.Run(tc.label, func(t *testing.T) {
 			t.Parallel()
 
-			err := validatePlugin(tc.plg)
+			built := &spy{}
+			err := newHarness(t).loader.load(probePath, tc.plg, built.constructor(), nil)
 
 			require.ErrorIs(t, err, errs.ErrInvalidPluginMetadata)
+			assert.Zero(t, built.calls)
 			assert.Contains(t, err.Error(), "dev.maroid.probe")
 			assert.Contains(t, err.Error(), "the "+tc.field)
 		})
@@ -68,7 +63,7 @@ func TestValidatePluginChecksTheNameAndTheDescription(t *testing.T) {
 
 	accepted := []struct {
 		label string
-		plg   metadataPlugin
+		plg   *pluginapi.Metadata
 	}{
 		{"a name of 64 Georgian letters", pluginWith(strings.Repeat("ა", 64), "")},
 		{
@@ -81,7 +76,10 @@ func TestValidatePluginChecksTheNameAndTheDescription(t *testing.T) {
 		t.Run(tc.label, func(t *testing.T) {
 			t.Parallel()
 
-			require.NoError(t, validatePlugin(tc.plg))
+			require.NoError(
+				t,
+				newHarness(t).loader.load(probePath, tc.plg, (&spy{}).constructor(), nil),
+			)
 		})
 	}
 }

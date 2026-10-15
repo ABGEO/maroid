@@ -44,18 +44,18 @@ func (r *WidgetRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *WidgetRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.WidgetPlugin)
+func (r *WidgetRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.WidgetPlugin)
 
 	return ok
 }
 
 // Register checks every widget of the plugin before it stores any, so a plugin
 // with one broken widget loads none.
-func (r *WidgetRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *WidgetRegistrar) Register(plugin registry.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	widgetPlugin, ok := plugin.(pluginapi.WidgetPlugin)
+	widgetPlugin, ok := plugin.Instance.(pluginapi.WidgetPlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support Widget capability: %w",

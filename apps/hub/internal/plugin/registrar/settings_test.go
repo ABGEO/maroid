@@ -42,7 +42,7 @@ func TestRegisterRejectsAModelThatIsNotAStruct(t *testing.T) {
 	reg := registry.NewSettingsRegistry()
 	settingsRegistrar := registrar.NewSettingsRegistrar(reg, registry.NewCapabilityRegistry())
 
-	err := settingsRegistrar.Register(&configurable{id: probeID, model: "not a struct"})
+	err := settingsRegistrar.Register(loaded(&configurable{id: probeID, model: "not a struct"}))
 
 	require.ErrorContains(t, err, "settings model")
 
@@ -58,8 +58,8 @@ func TestRegisterHoldsTheSchemaOfThePlugin(t *testing.T) {
 	settingsRegistrar := registrar.NewSettingsRegistrar(reg, registry.NewCapabilityRegistry())
 	plugin := &configurable{id: probeID, model: &probeModel{}}
 
-	require.True(t, settingsRegistrar.Supports(plugin))
-	require.NoError(t, settingsRegistrar.Register(plugin))
+	require.True(t, settingsRegistrar.Supports(loaded(plugin)))
+	require.NoError(t, settingsRegistrar.Register(loaded(plugin)))
 
 	schema, found := reg.Get(probeID)
 	require.True(t, found)
@@ -74,6 +74,6 @@ func TestRegisterRejectsASecondSchemaForOnePlugin(t *testing.T) {
 	settingsRegistrar := registrar.NewSettingsRegistrar(reg, registry.NewCapabilityRegistry())
 	plugin := &configurable{id: probeID, model: &probeModel{}}
 
-	require.NoError(t, settingsRegistrar.Register(plugin))
-	require.ErrorContains(t, settingsRegistrar.Register(plugin), "already registered")
+	require.NoError(t, settingsRegistrar.Register(loaded(plugin)))
+	require.ErrorContains(t, settingsRegistrar.Register(loaded(plugin)), "already registered")
 }

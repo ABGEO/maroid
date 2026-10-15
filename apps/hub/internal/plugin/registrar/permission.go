@@ -32,17 +32,17 @@ func (r *PermissionRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *PermissionRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.PermissionPlugin)
+func (r *PermissionRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.PermissionPlugin)
 
 	return ok
 }
 
 // Register stores every permission of the plugin under the prefix of the plugin.
-func (r *PermissionRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *PermissionRegistrar) Register(plugin registry.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	permissionPlugin, ok := plugin.(pluginapi.PermissionPlugin)
+	permissionPlugin, ok := plugin.Instance.(pluginapi.PermissionPlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support Permission capability: %w",

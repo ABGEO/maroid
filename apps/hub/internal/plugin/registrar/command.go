@@ -35,18 +35,18 @@ func (r *CommandRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *CommandRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.CommandPlugin)
+func (r *CommandRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.CommandPlugin)
 
 	return ok
 }
 
 // Register handles the registration of a plugin capability.
-func (r *CommandRegistrar) Register(plugin pluginapi.Plugin) error {
-	meta := plugin.Meta()
+func (r *CommandRegistrar) Register(plugin registry.LoadedPlugin) error {
+	meta := plugin.Meta
 	id := meta.ID
 
-	commandPlugin, ok := plugin.(pluginapi.CommandPlugin)
+	commandPlugin, ok := plugin.Instance.(pluginapi.CommandPlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support Command capability: %w",

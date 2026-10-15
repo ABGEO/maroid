@@ -55,17 +55,17 @@ func (r *HandlerRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *HandlerRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.RoutePlugin)
+func (r *HandlerRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.RoutePlugin)
 
 	return ok
 }
 
 // Register handles the registration of plugin HTTP routes.
-func (r *HandlerRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *HandlerRegistrar) Register(plugin registry.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	routePlugin, ok := plugin.(pluginapi.RoutePlugin)
+	routePlugin, ok := plugin.Instance.(pluginapi.RoutePlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support Route capability: %w",

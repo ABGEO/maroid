@@ -34,17 +34,17 @@ func (r *UIRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *UIRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.UIPlugin)
+func (r *UIRegistrar) Supports(plugin pluginui.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.UIPlugin)
 
 	return ok
 }
 
 // Register handles the registration of a plugin UI manifest and assets.
-func (r *UIRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *UIRegistrar) Register(plugin pluginui.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	uiPlugin, ok := plugin.(pluginapi.UIPlugin)
+	uiPlugin, ok := plugin.Instance.(pluginapi.UIPlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support UI capability: %w",

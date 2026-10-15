@@ -26,7 +26,6 @@ type CronJobMeta struct {
 
 // CronPlugin is a plugin that can register scheduled cron jobs.
 type CronPlugin interface {
-	Plugin
 	CronJobs() ([]CronJob, error)
 }
 

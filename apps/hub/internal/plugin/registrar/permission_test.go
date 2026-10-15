@@ -147,13 +147,13 @@ func newRegistrars() *registrars {
 
 // load runs every registrar that supports the plugin, as the loader does, and stops
 // at the first failure.
-func (set *registrars) load(plugin pluginapi.Plugin) error {
+func (set *registrars) load(plugin declaring) error {
 	for _, one := range set.list {
-		if !one.Supports(plugin) {
+		if !one.Supports(loaded(plugin)) {
 			continue
 		}
 
-		if err := one.Register(plugin); err != nil {
+		if err := one.Register(loaded(plugin)); err != nil {
 			return err //nolint:wrapcheck // the test reads the error as it is.
 		}
 	}

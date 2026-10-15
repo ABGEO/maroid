@@ -3,20 +3,18 @@ package pluginapi
 import (
 	"log/slog"
 
-	"github.com/jmoiron/sqlx"
-
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
 
 // Host represents the environment provided to a plugin by the host application.
-// It allows plugins to access host-level resources.
+// The hub builds one Host for each plugin, and each service acts for that plugin alone.
 type Host interface {
 	Logger() *slog.Logger
-	Database() (*sqlx.DB, error)
-	Notifier() (NotificationSender, error)
+	Database() (PluginDB, error)
+	Notifier() (PluginNotifier, error)
 	TelegramBot() (TelegramBot, error)
 	TelegramConversationEngine() conversation.Engine
-	Settings() (SettingsProvider, error)
-	Secrets() (SecretProvider, error)
-	Pages() (PageLinker, error)
+	Settings() (PluginSettings, error)
+	Secrets() (PluginSecrets, error)
+	Pages() (PluginPages, error)
 }

@@ -173,7 +173,7 @@ func TestTheWidgetRegistrarChecksEachRuleOfAWidget(t *testing.T) {
 			tc.change(&meta)
 
 			err := reg.Register(
-				&widgetPlugin{id: widgetPluginID, metas: []pluginapi.WidgetMeta{meta}},
+				loaded(&widgetPlugin{id: widgetPluginID, metas: []pluginapi.WidgetMeta{meta}}),
 			)
 
 			if tc.wantErr == nil {
@@ -201,10 +201,10 @@ func TestTheWidgetRegistrarRefusesTwoWidgetsOfOnePluginUnderOneKey(t *testing.T)
 
 	reg, widgets, _ := newWidgetRegistrar(t)
 
-	err := reg.Register(&widgetPlugin{
+	err := reg.Register(loaded(&widgetPlugin{
 		id:    widgetPluginID,
 		metas: []pluginapi.WidgetMeta{balanceMeta(), balanceMeta()},
-	})
+	}))
 
 	require.ErrorIs(t, err, errs.ErrWidgetAlreadyRegistered)
 	require.Empty(t, widgets.Of(widgetPluginID))
@@ -220,11 +220,15 @@ func TestTheWidgetRegistrarKeepsOneKeyInTwoPlugins(t *testing.T) {
 
 	require.NoError(
 		t,
-		reg.Register(&widgetPlugin{id: widgetPluginID, metas: []pluginapi.WidgetMeta{summary}}),
+		reg.Register(
+			loaded(&widgetPlugin{id: widgetPluginID, metas: []pluginapi.WidgetMeta{summary}}),
+		),
 	)
 	require.NoError(
 		t,
-		reg.Register(&widgetPlugin{id: otherPluginID, metas: []pluginapi.WidgetMeta{summary}}),
+		reg.Register(
+			loaded(&widgetPlugin{id: otherPluginID, metas: []pluginapi.WidgetMeta{summary}}),
+		),
 	)
 
 	_, inP := widgets.Get(widgetPluginID, "summary")
@@ -246,7 +250,9 @@ func TestTheWidgetRegistrarAcceptsAListAtTheSmallestSize(t *testing.T) {
 
 	require.NoError(
 		t,
-		reg.Register(&widgetPlugin{id: widgetPluginID, metas: []pluginapi.WidgetMeta{meta}}),
+		reg.Register(
+			loaded(&widgetPlugin{id: widgetPluginID, metas: []pluginapi.WidgetMeta{meta}}),
+		),
 	)
 }
 
@@ -265,10 +271,10 @@ func TestTheWidgetRegistrarRecordsTheWidgetsInTheOrderOfTheDeclaration(t *testin
 	first.Kind = pluginapi.WidgetKindList
 	first.Size = pluginapi.WidgetSizeM
 
-	require.NoError(t, reg.Register(&widgetPlugin{
+	require.NoError(t, reg.Register(loaded(&widgetPlugin{
 		id:    widgetPluginID,
 		metas: []pluginapi.WidgetMeta{second, first},
-	}))
+	})))
 
 	permission := widgetPluginID + ":" + thingsRead
 
@@ -306,6 +312,6 @@ func TestTheWidgetRegistrarSkipsAPluginThatDeclaresNoWidget(t *testing.T) {
 
 	reg, _, _ := newWidgetRegistrar(t)
 
-	require.False(t, reg.Supports(&plainPlugin{}))
-	require.True(t, reg.Supports(&widgetPlugin{id: widgetPluginID}))
+	require.False(t, reg.Supports(loaded(&plainPlugin{})))
+	require.True(t, reg.Supports(loaded(&widgetPlugin{id: widgetPluginID})))
 }

@@ -34,17 +34,17 @@ func (r *SettingsRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *SettingsRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.ConfigurablePlugin)
+func (r *SettingsRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.ConfigurablePlugin)
 
 	return ok
 }
 
 // Register infers the settings schema of a plugin and registers it.
-func (r *SettingsRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *SettingsRegistrar) Register(plugin registry.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	configurable, ok := plugin.(pluginapi.ConfigurablePlugin)
+	configurable, ok := plugin.Instance.(pluginapi.ConfigurablePlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support Settings capability: %w",

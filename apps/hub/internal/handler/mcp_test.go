@@ -109,7 +109,9 @@ type stubPlugin struct {
 
 var _ pluginapi.Plugin = (*stubPlugin)(nil)
 
-func (p *stubPlugin) Meta() pluginapi.Metadata { return p.meta }
+func (p *stubPlugin) loaded() registry.LoadedPlugin {
+	return registry.LoadedPlugin{Meta: p.meta, Instance: p}
+}
 
 func newStubPlugin(id string, version string) *stubPlugin {
 	return &stubPlugin{
@@ -195,8 +197,8 @@ func hubAt(
 
 	pluginRegistry := registry.NewPluginRegistry()
 	require.NoError(t, pluginRegistry.Register(
-		newStubPlugin(probeID, "1.0.0").named("Probe", "Watches the probe."),
-		newStubPlugin(beaconID, "2.3.4").named("Beacon", ""),
+		newStubPlugin(probeID, "1.0.0").named("Probe", "Watches the probe.").loaded(),
+		newStubPlugin(beaconID, "2.3.4").named("Beacon", "").loaded(),
 	))
 
 	// PCAP-SC-001: A registrar records what the hub loaded, so the report names

@@ -66,7 +66,7 @@ type Resolver interface {
 	SettingsService() (settings.Service, error)
 	IdempotencyStore() (idempotency.Store, error)
 	Migrator() (*migrator.Migrator, error)
-	PluginHost() (*pluginhost.Host, error)
+	PluginBinder() (*pluginhost.Binder, error)
 	PluginLoader() (*pluginloader.Loader, error)
 	TokenVerifier() (auth.TokenVerifier, error)
 	OIDCService() (*auth.OIDCService, error)
@@ -225,10 +225,10 @@ type Container struct {
 		instance *http.Server
 	}
 
-	pluginHost struct {
+	pluginBinder struct {
 		mu       sync.Mutex
 		once     sync.Once
-		instance *pluginhost.Host
+		instance *pluginhost.Binder
 	}
 
 	pluginLoader struct {

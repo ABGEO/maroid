@@ -295,7 +295,10 @@ func usersOf(
 	plugins := registry.NewPluginRegistry()
 	require.NoError(
 		t,
-		plugins.Register(newStubPlugin(pluginP, "1.0.0"), newStubPlugin(pluginQ, "1.0.0")),
+		plugins.Register(
+			newStubPlugin(pluginP, "1.0.0").loaded(),
+			newStubPlugin(pluginQ, "1.0.0").loaded(),
+		),
 	)
 
 	return user.NewManager(
@@ -336,9 +339,9 @@ func loadedPlugins(t *testing.T) *registry.PluginRegistry {
 
 	plugins := registry.NewPluginRegistry()
 	require.NoError(t, plugins.Register(
-		newStubPlugin(pluginP, "1.0.0"),
-		newStubPlugin(pluginQ, "1.0.0"),
-		newStubPlugin(probePluginID, "1.0.0"),
+		newStubPlugin(pluginP, "1.0.0").loaded(),
+		newStubPlugin(pluginQ, "1.0.0").loaded(),
+		newStubPlugin(probePluginID, "1.0.0").loaded(),
 	))
 
 	return plugins

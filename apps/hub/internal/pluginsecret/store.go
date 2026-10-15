@@ -21,8 +21,6 @@ type Store struct {
 	cipher secret.Cipher
 }
 
-var _ pluginapi.SecretProvider = (*Store)(nil)
-
 // NewStore creates a new Store instance.
 func NewStore(db *sqlx.DB, cipher secret.Cipher) *Store {
 	return &Store{

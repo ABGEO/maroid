@@ -11,7 +11,6 @@ type MQTTSubscriberMeta struct {
 
 // MQTTSubscriberPlugin is a plugin that can register MQTT topic subscribers.
 type MQTTSubscriberPlugin interface {
-	Plugin
 	MQTTSubscribers() ([]MQTTSubscriber, error)
 }
 

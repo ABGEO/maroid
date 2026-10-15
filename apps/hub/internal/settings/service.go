@@ -54,10 +54,7 @@ type Manager struct {
 	cipher  secret.Cipher
 }
 
-var (
-	_ Service                    = (*Manager)(nil)
-	_ pluginapi.SettingsProvider = (*Manager)(nil)
-)
+var _ Service = (*Manager)(nil)
 
 // NewManager creates a new Manager instance.
 func NewManager(db *sqlx.DB, schemas SchemaSource, cipher secret.Cipher) *Manager {

@@ -4,7 +4,6 @@ import "io/fs"
 
 // UIPlugin is a plugin that provides a web UI.
 type UIPlugin interface {
-	Plugin
 	UIManifest() (*UIManifest, error)
 }
 

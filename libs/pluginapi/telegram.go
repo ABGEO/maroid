@@ -11,13 +11,11 @@ import (
 
 // TelegramCommandPlugin is a plugin that can provide Telegram commands.
 type TelegramCommandPlugin interface {
-	Plugin
 	TelegramCommands() ([]TelegramCommand, error)
 }
 
 // TelegramConversationPlugin is a plugin that can provide Telegram conversations.
 type TelegramConversationPlugin interface {
-	Plugin
 	TelegramConversations() ([]telegramconversationapi.Conversation, error)
 }
 

@@ -31,17 +31,17 @@ func (r *MQTTSubscriberRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *MQTTSubscriberRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.MQTTSubscriberPlugin)
+func (r *MQTTSubscriberRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.MQTTSubscriberPlugin)
 
 	return ok
 }
 
 // Register handles the registration of a plugin's MQTT subscribers.
-func (r *MQTTSubscriberRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *MQTTSubscriberRegistrar) Register(plugin registry.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	mqttPlugin, ok := plugin.(pluginapi.MQTTSubscriberPlugin)
+	mqttPlugin, ok := plugin.Instance.(pluginapi.MQTTSubscriberPlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support MQTTSubscriber capability: %w",

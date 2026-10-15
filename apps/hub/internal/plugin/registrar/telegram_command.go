@@ -40,17 +40,17 @@ func (r *TelegramCommandRegistrar) Name() string {
 }
 
 // Supports indicates whether the registrar can handle the given plugin.
-func (r *TelegramCommandRegistrar) Supports(plugin pluginapi.Plugin) bool {
-	_, ok := plugin.(pluginapi.TelegramCommandPlugin)
+func (r *TelegramCommandRegistrar) Supports(plugin registry.LoadedPlugin) bool {
+	_, ok := plugin.Instance.(pluginapi.TelegramCommandPlugin)
 
 	return ok
 }
 
 // Register handles the registration of a plugin capability.
-func (r *TelegramCommandRegistrar) Register(plugin pluginapi.Plugin) error {
-	id := plugin.Meta().ID
+func (r *TelegramCommandRegistrar) Register(plugin registry.LoadedPlugin) error {
+	id := plugin.Meta.ID
 
-	telegramPlugin, ok := plugin.(pluginapi.TelegramCommandPlugin)
+	telegramPlugin, ok := plugin.Instance.(pluginapi.TelegramCommandPlugin)
 	if !ok {
 		return fmt.Errorf(
 			"plugin %s does not support Telegram Command capability: %w",

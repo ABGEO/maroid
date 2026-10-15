@@ -4,7 +4,6 @@ import "net/http"
 
 // RoutePlugin is a plugin that can register HTTP routes.
 type RoutePlugin interface {
-	Plugin
 	Routes() ([]Route, error)
 }
 

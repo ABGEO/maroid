@@ -46,7 +46,7 @@ func TestANavigationEntryWithAParameterFailsTheLoad(t *testing.T) {
 		{Path: "/plants/:id", Label: "Plant"},
 	}}
 
-	err := uiRegistrar.Register(refused)
+	err := uiRegistrar.Register(loaded(refused))
 	require.ErrorIs(t, err, errs.ErrInvalidUIRoute)
 	require.ErrorContains(t, err, "/plants/:id")
 
@@ -57,7 +57,7 @@ func TestANavigationEntryWithAParameterFailsTheLoad(t *testing.T) {
 		{Path: "/plants", Label: "Plants"},
 	}}
 
-	require.NoError(t, uiRegistrar.Register(accepted))
+	require.NoError(t, uiRegistrar.Register(loaded(accepted)))
 
 	_, held = manifests.Get("dev.maroid.other")
 	assert.True(t, held)

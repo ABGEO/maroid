@@ -35,6 +35,5 @@ type Permission struct {
 
 // PermissionPlugin is a plugin that declares the permissions that its actions name.
 type PermissionPlugin interface {
-	Plugin
 	Permissions() ([]Permission, error)
 }

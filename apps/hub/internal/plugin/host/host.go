@@ -1,5 +1,5 @@
 // Package host provides the plugin host for the application.
-// It gives encapsulated plugins access to shared dependencies.
+// It gives each encapsulated plugin the shared dependencies, bound to that plugin.
 package host
 
 import (
@@ -13,60 +13,85 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
 
-// Host represents a plugin host that provides plugins with access
-// to application dependencies.
-type Host struct {
-	logger                     *slog.Logger
-	database                   *sqlx.DB
-	notifier                   pluginapi.NotificationSender
-	telegramBot                *telego.Bot
-	telegramConversationEngine conversation.Engine
-	settings                   pluginapi.SettingsProvider
-	secrets                    pluginapi.SecretProvider
-	pages                      *pageLinker
-}
-
-var _ pluginapi.Host = (*Host)(nil)
-
 // Dependencies holds what the host hands to a plugin. Config comes first, because
 // the host reads its own settings from it.
 type Dependencies struct {
 	Config                     *config.Config
 	Logger                     *slog.Logger
 	Database                   *sqlx.DB
-	Notifier                   pluginapi.NotificationSender
+	Notifier                   NotificationSender
 	TelegramBot                *telego.Bot
 	TelegramConversationEngine conversation.Engine
-	Settings                   pluginapi.SettingsProvider
-	Secrets                    pluginapi.SecretProvider
+	Settings                   SettingsReader
+	Secrets                    SecretStore
 }
 
-// New creates and returns a new Host instance over the given dependencies.
-func New(deps Dependencies) (*Host, error) {
+// Binder builds the host of each plugin over the shared dependencies.
+type Binder struct {
+	deps Dependencies
+}
+
+// New creates a Binder over the given dependencies.
+func New(deps Dependencies) (*Binder, error) {
+	if deps.Logger == nil {
+		deps.Logger = slog.New(slog.DiscardHandler)
+	}
+
+	return &Binder{deps: deps}, nil
+}
+
+// Bind answers a new host whose every service acts for the plugin of the metadata.
+func (b *Binder) Bind(meta pluginapi.Metadata) *Host {
+	pluginID := *meta.ID
+
 	return &Host{
-		logger:                     deps.Logger,
-		database:                   deps.Database,
-		notifier:                   deps.Notifier,
-		telegramBot:                deps.TelegramBot,
-		telegramConversationEngine: deps.TelegramConversationEngine,
-		settings:                   deps.Settings,
-		secrets:                    deps.Secrets,
-		pages:                      &pageLinker{deckURL: deps.Config.Auth.DeckURL},
-	}, nil
+		logger: b.deps.Logger.With(
+			slog.String("plugin", pluginID.String()),
+			slog.String("plugin_version", meta.Version),
+			slog.String("plugin_api_version", meta.APIVersion),
+		),
+		database: &boundDB{
+			pool:   b.deps.Database,
+			schema: pluginID.ToSafeName("_"),
+		},
+		notifier:                   &boundNotifier{sender: b.deps.Notifier, pluginID: &pluginID},
+		telegramBot:                b.deps.TelegramBot,
+		telegramConversationEngine: b.deps.TelegramConversationEngine,
+		settings:                   &boundSettings{reader: b.deps.Settings, pluginID: &pluginID},
+		secrets:                    &boundSecrets{store: b.deps.Secrets, pluginID: &pluginID},
+		pages: &boundPages{
+			deckURL:  b.deps.Config.Auth.DeckURL,
+			pluginID: &pluginID,
+		},
+	}
 }
 
-// Logger returns the slog.Logger instance from the dependency container.
+// Host is the host of one plugin.
+type Host struct {
+	logger                     *slog.Logger
+	database                   *boundDB
+	notifier                   *boundNotifier
+	telegramBot                *telego.Bot
+	telegramConversationEngine conversation.Engine
+	settings                   *boundSettings
+	secrets                    *boundSecrets
+	pages                      *boundPages
+}
+
+var _ pluginapi.Host = (*Host)(nil)
+
+// Logger returns the logger of the plugin.
 func (h *Host) Logger() *slog.Logger {
 	return h.logger
 }
 
-// Database returns the database instance from the dependency container.
-func (h *Host) Database() (*sqlx.DB, error) {
+// Database returns the database of the plugin.
+func (h *Host) Database() (pluginapi.PluginDB, error) {
 	return h.database, nil
 }
 
-// Notifier returns the notification sender from the dependency container.
-func (h *Host) Notifier() (pluginapi.NotificationSender, error) {
+// Notifier returns the notifier of the plugin.
+func (h *Host) Notifier() (pluginapi.PluginNotifier, error) {
 	return h.notifier, nil
 }
 
@@ -82,17 +107,17 @@ func (h *Host) TelegramConversationEngine() conversation.Engine {
 	return h.telegramConversationEngine
 }
 
-// Settings returns the settings provider from the dependency container.
-func (h *Host) Settings() (pluginapi.SettingsProvider, error) {
+// Settings returns the settings of the plugin.
+func (h *Host) Settings() (pluginapi.PluginSettings, error) {
 	return h.settings, nil
 }
 
-// Secrets returns the plugin secret store from the dependency container.
-func (h *Host) Secrets() (pluginapi.SecretProvider, error) {
+// Secrets returns the plugin secrets of the plugin.
+func (h *Host) Secrets() (pluginapi.PluginSecrets, error) {
 	return h.secrets, nil
 }
 
-// Pages returns the builder of the deck address of a page of a plugin.
-func (h *Host) Pages() (pluginapi.PageLinker, error) {
+// Pages returns the builder of the deck address of a page of the plugin.
+func (h *Host) Pages() (pluginapi.PluginPages, error) {
 	return h.pages, nil
 }

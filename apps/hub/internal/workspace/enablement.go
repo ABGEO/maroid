@@ -36,10 +36,10 @@ type EnablementChecker interface {
 	IsEnabled(ctx context.Context, workspaceID string, pluginID string) (bool, error)
 }
 
-// PluginCatalog lists the plugins that the hub loaded. registry.PluginRegistry
+// PluginCatalog answers whether the hub loaded a plugin. registry.PluginRegistry
 // satisfies it.
 type PluginCatalog interface {
-	All() []pluginapi.Plugin
+	Has(pluginID string) bool
 }
 
 // Enablements is the implementation of EnablementService over the repositories of the hub.
@@ -203,9 +203,7 @@ func (e *Enablements) requireAllowed(ctx context.Context, tx *sqlx.Tx, pluginID 
 }
 
 func (e *Enablements) loaded(pluginID string) bool {
-	return slices.ContainsFunc(e.plugins.All(), func(plugin pluginapi.Plugin) bool {
-		return plugin.Meta().ID.String() == pluginID
-	})
+	return e.plugins.Has(pluginID)
 }
 
 // RequireEnabled answers not-found unless the acting workspace enables the plugin, as

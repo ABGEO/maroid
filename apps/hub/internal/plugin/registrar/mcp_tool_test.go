@@ -98,8 +98,8 @@ func TestTheRegistrarPutsEveryToolOfAPluginIntoTheRegistry(t *testing.T) {
 
 	plugin := &toolPlugin{names: []string{getCodeName, "get_qr"}}
 
-	require.True(t, reg.Supports(plugin))
-	require.NoError(t, reg.Register(plugin))
+	require.True(t, reg.Supports(loaded(plugin)))
+	require.NoError(t, reg.Register(loaded(plugin)))
 
 	names := make([]string, 0, 2)
 	for _, entry := range toolRegistry.All() {
@@ -124,7 +124,7 @@ func TestTheRegistrarSkipsAPluginThatDeclaresNoTool(t *testing.T) {
 		registry.NewPermissionRegistry(),
 	)
 
-	require.False(t, reg.Supports(&plainPlugin{}))
+	require.False(t, reg.Supports(loaded(&plainPlugin{})))
 }
 
 // MCPHUB-SC-009: One plugin that declares two tools under one name fails the
@@ -136,7 +136,7 @@ func TestTheRegistrarRefusesTwoToolsOfOnePluginUnderOneName(t *testing.T) {
 	capabilities := registry.NewCapabilityRegistry()
 	reg := registrar.NewMCPToolRegistrar(toolRegistry, capabilities, codePermissions(t))
 
-	err := reg.Register(&toolPlugin{names: []string{getCodeName, getCodeName}})
+	err := reg.Register(loaded(&toolPlugin{names: []string{getCodeName, getCodeName}}))
 
 	require.Error(t, err)
 }

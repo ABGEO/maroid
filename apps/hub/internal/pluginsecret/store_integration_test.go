@@ -13,7 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/db"
+	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/database"
+	"github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	"github.com/abgeo/maroid/apps/hub/internal/pluginsecret"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
@@ -36,7 +38,7 @@ const (
 type world struct {
 	instance   *testdb.Instance
 	store      *pluginsecret.Store
-	secrets    *pluginapi.PluginSecrets
+	secrets    pluginapi.PluginSecrets
 	userA      string
 	userB      string
 	workspaceA string
@@ -79,8 +81,11 @@ func discardLogger() *slog.Logger {
 	return slog.New(slog.DiscardHandler)
 }
 
-func (w *world) pluginSecrets(pluginID string) *pluginapi.PluginSecrets {
-	return pluginapi.NewPluginSecrets(w.store, pluginapi.ParsePluginID(pluginID))
+func (w *world) pluginSecrets(pluginID string) pluginapi.PluginSecrets {
+	binder, _ := host.New(host.Dependencies{Config: &config.Config{}, Secrets: w.store})
+	secrets, _ := binder.Bind(pluginapi.Metadata{ID: pluginapi.ParsePluginID(pluginID)}).Secrets()
+
+	return secrets
 }
 
 func (w *world) addUser(t *testing.T, firstName string) string {

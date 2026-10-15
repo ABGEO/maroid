@@ -20,27 +20,27 @@ func (c *Container) PluginRegistry() *registry.PluginRegistry {
 	return c.pluginRegistry.instance
 }
 
-// PluginHost initializes and returns the plugin host instance.
-func (c *Container) PluginHost() (*pluginhost.Host, error) {
-	c.pluginHost.mu.Lock()
-	defer c.pluginHost.mu.Unlock()
+// PluginBinder initializes and returns the binder of the plugin hosts.
+func (c *Container) PluginBinder() (*pluginhost.Binder, error) {
+	c.pluginBinder.mu.Lock()
+	defer c.pluginBinder.mu.Unlock()
 
 	var err error
 
-	c.pluginHost.once.Do(func() {
-		c.pluginHost.instance, err = c.newPluginHost()
+	c.pluginBinder.once.Do(func() {
+		c.pluginBinder.instance, err = c.newPluginBinder()
 	})
 
 	if err != nil {
-		c.pluginHost.once = sync.Once{}
+		c.pluginBinder.once = sync.Once{}
 
-		return nil, fmt.Errorf("initializing plugin host: %w", err)
+		return nil, fmt.Errorf("initializing plugin binder: %w", err)
 	}
 
-	return c.pluginHost.instance, nil
+	return c.pluginBinder.instance, nil
 }
 
-func (c *Container) newPluginHost() (*pluginhost.Host, error) {
+func (c *Container) newPluginBinder() (*pluginhost.Binder, error) {
 	db, err := c.Database()
 	if err != nil {
 		return nil, err
@@ -71,7 +71,7 @@ func (c *Container) newPluginHost() (*pluginhost.Host, error) {
 		return nil, err
 	}
 
-	host, err := pluginhost.New(pluginhost.Dependencies{
+	binder, err := pluginhost.New(pluginhost.Dependencies{
 		Config:                     c.Config(),
 		Logger:                     c.Logger(),
 		Database:                   db,
@@ -82,10 +82,10 @@ func (c *Container) newPluginHost() (*pluginhost.Host, error) {
 		Secrets:                    secretStore,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("building the plugin host: %w", err)
+		return nil, fmt.Errorf("building the plugin binder: %w", err)
 	}
 
-	return host, nil
+	return binder, nil
 }
 
 // PluginLoader initializes and returns the plugin loader instance.
@@ -109,7 +109,7 @@ func (c *Container) PluginLoader() (*pluginloader.Loader, error) {
 }
 
 func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
-	pluginHost, err := c.PluginHost()
+	pluginBinder, err := c.PluginBinder()
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,8 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 	}
 
 	return pluginloader.New(
-		pluginHost,
+		pluginBinder,
+		c.Logger(),
 		verifier,
 		identityResolver,
 		idempotencyStore,

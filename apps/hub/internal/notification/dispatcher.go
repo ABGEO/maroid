@@ -33,8 +33,6 @@ type Dispatcher struct {
 	cipher secret.Cipher
 }
 
-var _ pluginapi.NotificationSender = (*Dispatcher)(nil)
-
 // NewDispatcher creates a new Dispatcher.
 func NewDispatcher(
 	logger *slog.Logger,
