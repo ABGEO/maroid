@@ -62,7 +62,7 @@ type APIClientService interface {
 
 // APIClient implements APIClientService.
 type APIClient struct {
-	secrets *pluginapi.PluginSecrets
+	secrets pluginapi.PluginSecrets
 	client  *resty.Client
 }
 
@@ -70,7 +70,7 @@ var _ APIClientService = (*APIClient)(nil)
 
 // NewAPIClient creates a new APIClient. It reads the session token of the acting
 // user from the plugin secrets.
-func NewAPIClient(cfg *config.Config, secrets *pluginapi.PluginSecrets) *APIClient {
+func NewAPIClient(cfg *config.Config, secrets pluginapi.PluginSecrets) *APIClient {
 	client := resty.New().
 		SetBaseURL(cfg.BaseURL).
 		SetError(map[string]any{}).

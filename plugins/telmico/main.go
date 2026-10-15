@@ -22,10 +22,16 @@ import (
 	"github.com/abgeo/maroid/plugins/telmico/widget"
 )
 
-// pluginID names the plugin. The constructor needs it before Meta exists.
+// Meta names the plugin. The hub reads it before it calls New.
 //
-//nolint:gochecknoglobals // the constructor reads it before the plugin exists.
-var pluginID = pluginapi.ParsePluginID("dev.maroid.telmico")
+//nolint:gochecknoglobals // the loader of the hub looks up the symbol Meta.
+var Meta = pluginapi.Metadata{
+	ID:          pluginapi.ParsePluginID("dev.maroid.telmico"),
+	Name:        "Telmico",
+	Description: "Electricity bills and usage from Telmico.",
+	Version:     "0.1.0",
+	APIVersion:  pluginapi.APIVersion,
+}
 
 // TelmicoPlugin connects the electricity account of a workspace, collects its
 // transactions and its bills, and sends the bill.
@@ -40,7 +46,6 @@ type TelmicoPlugin struct {
 }
 
 var (
-	_ pluginapi.Plugin             = (*TelmicoPlugin)(nil)
 	_ pluginapi.ConfigurablePlugin = (*TelmicoPlugin)(nil)
 	_ pluginapi.CommandPlugin      = (*TelmicoPlugin)(nil)
 	_ pluginapi.CronPlugin         = (*TelmicoPlugin)(nil)
@@ -66,57 +71,36 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host database instance: %w", err)
 	}
 
-	sender, err := host.Notifier()
+	notifier, err := host.Notifier()
 	if err != nil {
 		return nil, fmt.Errorf("getting host notifier instance: %w", err)
 	}
 
-	settingsProvider, err := host.Settings()
+	settings, err := host.Settings()
 	if err != nil {
-		return nil, fmt.Errorf("getting host settings provider: %w", err)
+		return nil, fmt.Errorf("getting host settings: %w", err)
 	}
 
-	secretProvider, err := host.Secrets()
+	secrets, err := host.Secrets()
 	if err != nil {
-		return nil, fmt.Errorf("getting host secret provider: %w", err)
+		return nil, fmt.Errorf("getting host secrets: %w", err)
 	}
 
 	var (
-		store    = service.NewStore(pluginapi.NewPluginDB(database, pluginID))
-		client   = service.NewAPIClient(pluginConfig)
-		settings = pluginapi.NewPluginSettings(settingsProvider, pluginID)
-		secrets  = pluginapi.NewPluginSecrets(secretProvider, pluginID)
-		notifier = pluginapi.NewPluginNotifier(sender, pluginID)
+		store  = service.NewStore(database)
+		client = service.NewAPIClient(pluginConfig)
+		logger = host.Logger()
 	)
 
-	plg := &TelmicoPlugin{
-		config:    pluginConfig,
-		store:     store,
-		collector: service.NewCollector(client, settings, secrets, store),
-		documents: service.NewDocuments(client, settings, secrets, store),
-	}
-
-	plg.logger = host.Logger().With(
-		slog.String("plugin", plg.Meta().ID.String()),
-		slog.String("plugin_version", plg.Meta().Version),
-		slog.String("plugin_api_version", plg.Meta().APIVersion),
-	)
-
-	plg.bills = service.NewBills(plg.logger, client, settings, secrets, store, notifier)
-	plg.connections = service.NewConnections(client, settings, secrets, store)
-
-	return plg, nil
-}
-
-// Meta returns the plugin metadata.
-func (p *TelmicoPlugin) Meta() pluginapi.Metadata {
-	return pluginapi.Metadata{
-		ID:          pluginID,
-		Name:        "Telmico",
-		Description: "Electricity bills and usage from Telmico.",
-		Version:     "0.1.0",
-		APIVersion:  pluginapi.APIVersion,
-	}
+	return &TelmicoPlugin{
+		config:      pluginConfig,
+		logger:      logger,
+		store:       store,
+		collector:   service.NewCollector(client, settings, secrets, store),
+		bills:       service.NewBills(logger, client, settings, secrets, store, notifier),
+		documents:   service.NewDocuments(client, settings, secrets, store),
+		connections: service.NewConnections(client, settings, secrets, store),
+	}, nil
 }
 
 // SettingsModel declares the Telmico account that a workspace stores.

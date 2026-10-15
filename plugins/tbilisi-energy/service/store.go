@@ -16,11 +16,11 @@ import (
 // Store runs each operation on the assignment and the transactions of the acting
 // workspace in a transaction of its own, and creates each repository inside it.
 type Store struct {
-	db *pluginapi.PluginDB
+	db pluginapi.PluginDB
 }
 
 // NewStore creates a new Store over the database of the plugin.
-func NewStore(db *pluginapi.PluginDB) *Store {
+func NewStore(db pluginapi.PluginDB) *Store {
 	return &Store{db: db}
 }
 

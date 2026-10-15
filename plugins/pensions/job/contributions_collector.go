@@ -21,8 +21,8 @@ import (
 type ContributionsCollector struct {
 	config       *config.Config
 	logger       *slog.Logger
-	db           *pluginapi.PluginDB
-	settings     *pluginapi.PluginSettings
+	db           pluginapi.PluginDB
+	settings     pluginapi.PluginSettings
 	apiClientSvc service.APIClientService
 }
 
@@ -32,8 +32,8 @@ var _ pluginapi.CronJob = (*ContributionsCollector)(nil)
 func NewContributionsCollector(
 	config *config.Config,
 	logger *slog.Logger,
-	db *pluginapi.PluginDB,
-	settings *pluginapi.PluginSettings,
+	db pluginapi.PluginDB,
+	settings pluginapi.PluginSettings,
 	apiClientSvc service.APIClientService,
 ) *ContributionsCollector {
 	instance := &ContributionsCollector{

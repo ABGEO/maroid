@@ -15,7 +15,7 @@ import (
 
 // NewAttention builds the widget of the plants that need care: each care interval
 // of the attention list, in its order.
-func NewAttention(db *pluginapi.PluginDB) *pluginapi.FuncWidget {
+func NewAttention(db pluginapi.PluginDB) *pluginapi.FuncWidget {
 	return pluginapi.NewWidget(
 		pluginapi.WidgetMeta{
 			Key:        "attention",

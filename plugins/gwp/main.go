@@ -18,10 +18,16 @@ import (
 	"github.com/abgeo/maroid/plugins/gwp/widget"
 )
 
-// pluginID names the plugin. The constructor needs it before Meta exists.
+// Meta names the plugin. The hub reads it before it calls New.
 //
 //nolint:gochecknoglobals
-var pluginID = pluginapi.ParsePluginID("dev.maroid.gwp")
+var Meta = pluginapi.Metadata{
+	ID:          pluginapi.ParsePluginID("dev.maroid.gwp"),
+	Name:        "GWP",
+	Description: "Water bills and usage from Georgian Water and Power.",
+	Version:     "0.2.0",
+	APIVersion:  pluginapi.APIVersion,
+}
 
 // GWPPlugin connects the water account of a workspace and collects its readings.
 type GWPPlugin struct {
@@ -34,7 +40,6 @@ type GWPPlugin struct {
 }
 
 var (
-	_ pluginapi.Plugin             = (*GWPPlugin)(nil)
 	_ pluginapi.ConfigurablePlugin = (*GWPPlugin)(nil)
 	_ pluginapi.MigrationPlugin    = (*GWPPlugin)(nil)
 	_ pluginapi.PermissionPlugin   = (*GWPPlugin)(nil)
@@ -59,63 +64,35 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host database: %w", err)
 	}
 
-	settingsProvider, err := host.Settings()
+	settings, err := host.Settings()
 	if err != nil {
-		return nil, fmt.Errorf("getting host settings provider: %w", err)
+		return nil, fmt.Errorf("getting host settings: %w", err)
 	}
 
-	secretProvider, err := host.Secrets()
+	secrets, err := host.Secrets()
 	if err != nil {
-		return nil, fmt.Errorf("getting host secret provider: %w", err)
+		return nil, fmt.Errorf("getting host secrets: %w", err)
 	}
 
-	sender, err := host.Notifier()
+	notifier, err := host.Notifier()
 	if err != nil {
 		return nil, fmt.Errorf("getting host notifier: %w", err)
 	}
 
 	var (
-		store    = service.NewStore(pluginapi.NewPluginDB(database, pluginID))
-		client   = service.NewAPIClient(pluginConfig)
-		settings = pluginapi.NewPluginSettings(settingsProvider, pluginID)
-		secrets  = pluginapi.NewPluginSecrets(secretProvider, pluginID)
+		store  = service.NewStore(database)
+		client = service.NewAPIClient(pluginConfig)
+		logger = host.Logger()
 	)
 
-	plg := &GWPPlugin{
-		config:    pluginConfig,
-		store:     store,
-		collector: service.NewCollector(client, settings, secrets, store),
-	}
-
-	plg.logger = host.Logger().With(
-		slog.String("plugin", plg.Meta().ID.String()),
-		slog.String("plugin_version", plg.Meta().Version),
-		slog.String("plugin_api_version", plg.Meta().APIVersion),
-	)
-
-	plg.notices = service.NewNotices(
-		plg.logger,
-		client,
-		settings,
-		secrets,
-		pluginapi.NewPluginNotifier(sender, pluginID),
-		store,
-	)
-
-	plg.connections = service.NewConnections(client, settings, secrets, store)
-
-	return plg, nil
-}
-
-// Meta returns the plugin metadata.
-func (p *GWPPlugin) Meta() pluginapi.Metadata {
-	return pluginapi.Metadata{
-		ID:          pluginID,
-		Name:        "GWP",
-		Description: "Water bills and usage from Georgian Water and Power.",
-		Version:     "0.2.0",
-		APIVersion:  pluginapi.APIVersion,
-	}
+	return &GWPPlugin{
+		config:      pluginConfig,
+		logger:      logger,
+		store:       store,
+		collector:   service.NewCollector(client, settings, secrets, store),
+		notices:     service.NewNotices(logger, client, settings, secrets, notifier, store),
+		connections: service.NewConnections(client, settings, secrets, store),
+	}, nil
 }
 
 // SettingsModel declares the GWP account that a workspace stores.

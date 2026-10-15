@@ -25,14 +25,14 @@ type fakePages struct {
 	path    string
 }
 
-func (p *fakePages) PageURL(_ context.Context, _ *pluginapi.PluginID, path string) (string, error) {
+func (p *fakePages) PageURL(_ context.Context, path string) (string, error) {
 	p.path = path
 
 	return p.address, p.err
 }
 
 func noticeOf(pages *fakePages) *command.Notice {
-	return command.NewNotice(pages, pluginapi.ParsePluginID("dev.maroid.parking"))
+	return command.NewNotice(pages)
 }
 
 // PARKACC-SC-018: The answer to a user with no connection says so and links to the

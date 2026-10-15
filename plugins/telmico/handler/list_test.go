@@ -85,7 +85,7 @@ func listsUnderTest(t *testing.T) (*service.Store, http.Handler) {
 	identifier := pluginapi.ParsePluginID("dev.maroid.telmico")
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	store := service.NewStore(pluginapi.NewPluginDB(instance.DB, identifier))
+	store := service.NewStore(testdb.PluginDB(instance, identifier))
 	logger := slog.New(slog.DiscardHandler)
 
 	routes := slices.Concat(

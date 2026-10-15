@@ -24,8 +24,8 @@ type Documents struct {
 // NewDocuments creates a new Documents.
 func NewDocuments(
 	client APIClientService,
-	settings *pluginapi.PluginSettings,
-	secrets *pluginapi.PluginSecrets,
+	settings pluginapi.PluginSettings,
+	secrets pluginapi.PluginSecrets,
 	store DocumentStore,
 ) *Documents {
 	return &Documents{

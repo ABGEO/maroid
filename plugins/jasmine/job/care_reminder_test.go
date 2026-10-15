@@ -103,11 +103,10 @@ type sender struct {
 	topics   []string
 }
 
-var _ pluginapi.NotificationSender = (*sender)(nil)
+var _ pluginapi.PluginNotifier = (*sender)(nil)
 
-func (d *sender) Send(
+func (d *sender) Notify(
 	_ context.Context,
-	_ *pluginapi.PluginID,
 	topicID string,
 	msg pluginapi.Message,
 ) error {
@@ -130,7 +129,7 @@ func (d *sender) Send(
 
 // gardenUnderTest starts a database, applies the migrations of the plugin, and
 // runs the seed of each workspace in that workspace.
-func gardenUnderTest(t *testing.T, seeds map[string]string) *pluginapi.PluginDB {
+func gardenUnderTest(t *testing.T, seeds map[string]string) pluginapi.PluginDB {
 	t.Helper()
 
 	instance := testdb.Start(t)
@@ -144,7 +143,7 @@ func gardenUnderTest(t *testing.T, seeds map[string]string) *pluginapi.PluginDB 
 	identifier := pluginapi.ParsePluginID(pluginID)
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	database := pluginapi.NewPluginDB(instance.DB, identifier)
+	database := testdb.PluginDB(instance, identifier)
 
 	for workspace, seed := range seeds {
 		require.NoError(t, database.WithTx(actingIn(workspace), func(tx *sqlx.Tx) error {
@@ -161,11 +160,11 @@ func actingIn(workspace string) context.Context {
 	return pluginapi.ContextWithActingWorkspace(context.Background(), workspace)
 }
 
-func reminderUnderTest(database *pluginapi.PluginDB, sink *sender) *job.CareReminder {
+func reminderUnderTest(database pluginapi.PluginDB, sink *sender) *job.CareReminder {
 	settings := &config.Config{
 		CronSchedule: config.CronSchedule{CareReminder: "0 9 * * *"},
 	}
-	notifier := pluginapi.NewPluginNotifier(sink, pluginapi.ParsePluginID(pluginID))
+	notifier := sink
 
 	return job.NewCareReminder(settings, slog.New(slog.DiscardHandler), database, notifier)
 }

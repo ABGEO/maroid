@@ -31,7 +31,7 @@ type secretEntry struct {
 	expiresAt time.Time
 }
 
-// fakeSecrets is a SecretProvider in memory, keyed by the acting user and the name.
+// fakeSecrets is a PluginSecrets in memory, keyed by the acting user and the name.
 type fakeSecrets struct {
 	mu      sync.Mutex
 	entries map[string]secretEntry
@@ -45,9 +45,8 @@ func secretKey(ctx context.Context, name string) string {
 	return pluginapi.ActingUserFromContext(ctx) + "/" + name
 }
 
-func (f *fakeSecrets) ReadSecret(
+func (f *fakeSecrets) Get(
 	ctx context.Context,
-	_ *pluginapi.PluginID,
 	_ pluginapi.SecretScope,
 	name string,
 ) (string, error) {
@@ -62,9 +61,17 @@ func (f *fakeSecrets) ReadSecret(
 	return entry.value, nil
 }
 
-func (f *fakeSecrets) WriteSecret(
+func (f *fakeSecrets) Put(
 	ctx context.Context,
-	_ *pluginapi.PluginID,
+	scope pluginapi.SecretScope,
+	name string,
+	value string,
+) error {
+	return f.PutUntil(ctx, scope, name, value, time.Time{})
+}
+
+func (f *fakeSecrets) PutUntil(
+	ctx context.Context,
 	_ pluginapi.SecretScope,
 	name string,
 	value string,
@@ -78,9 +85,8 @@ func (f *fakeSecrets) WriteSecret(
 	return nil
 }
 
-func (f *fakeSecrets) DeleteSecret(
+func (f *fakeSecrets) Delete(
 	ctx context.Context,
-	_ *pluginapi.PluginID,
 	_ pluginapi.SecretScope,
 	name string,
 ) error {
@@ -114,7 +120,7 @@ type fakeSettings struct {
 	values map[string]any
 }
 
-func (f *fakeSettings) Settings(context.Context, *pluginapi.PluginID) (map[string]any, error) {
+func (f *fakeSettings) Get(context.Context) (map[string]any, error) {
 	if f.values == nil {
 		return nil, pluginapi.ErrSettingsAbsent
 	}

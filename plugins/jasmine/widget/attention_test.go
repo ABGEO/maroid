@@ -65,7 +65,7 @@ SELECT id, 'watering', now() FROM plants;`
 
 // gardenUnderTest starts a database, applies the migrations of the plugin, and runs
 // the seed in workspace W.
-func gardenUnderTest(t *testing.T, seed string) *pluginapi.PluginDB {
+func gardenUnderTest(t *testing.T, seed string) pluginapi.PluginDB {
 	t.Helper()
 
 	instance := testdb.Start(t)
@@ -79,7 +79,7 @@ func gardenUnderTest(t *testing.T, seed string) *pluginapi.PluginDB {
 	identifier := pluginapi.ParsePluginID(pluginID)
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	database := pluginapi.NewPluginDB(instance.DB, identifier)
+	database := testdb.PluginDB(instance, identifier)
 
 	require.NoError(t, database.WithTx(actingInW(t), func(tx *sqlx.Tx) error {
 		_, err := tx.Exec(seed)
@@ -96,7 +96,7 @@ func actingInW(t *testing.T) context.Context {
 	return pluginapi.ContextWithActingWorkspace(t.Context(), workspaceW)
 }
 
-func plantIDOf(t *testing.T, database *pluginapi.PluginDB, number int) string {
+func plantIDOf(t *testing.T, database pluginapi.PluginDB, number int) string {
 	t.Helper()
 
 	var id string

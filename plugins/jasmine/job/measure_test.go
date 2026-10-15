@@ -59,11 +59,10 @@ type slowSender struct {
 	lastSent time.Time
 }
 
-var _ pluginapi.NotificationSender = (*slowSender)(nil)
+var _ pluginapi.PluginNotifier = (*slowSender)(nil)
 
-func (d *slowSender) Send(
+func (d *slowSender) Notify(
 	_ context.Context,
-	_ *pluginapi.PluginID,
 	_ string,
 	_ pluginapi.Message,
 ) error {
@@ -125,7 +124,7 @@ func TestTheRemindersOfFiftyWorkspacesEndWithinOneMinute(t *testing.T) {
 	settings := &config.Config{
 		CronSchedule: config.CronSchedule{CareReminder: "0 9 * * *"},
 	}
-	notifier := pluginapi.NewPluginNotifier(sink, pluginapi.ParsePluginID(pluginID))
+	notifier := sink
 	reminder := job.NewCareReminder(settings, slog.New(slog.DiscardHandler), database, notifier)
 
 	start := time.Now()

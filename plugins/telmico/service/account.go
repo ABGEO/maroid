@@ -19,8 +19,8 @@ const SecretSession = "session"
 // The connection service, the collector, the bills, and the documents share it.
 type account struct {
 	client   APIClientService
-	settings *pluginapi.PluginSettings
-	secrets  *pluginapi.PluginSecrets
+	settings pluginapi.PluginSettings
+	secrets  pluginapi.PluginSecrets
 }
 
 func (a *account) credentials(ctx context.Context) (*config.WorkspaceSettings, error) {

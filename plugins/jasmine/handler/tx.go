@@ -13,7 +13,7 @@ import (
 // The action names the operation and gives the error its context.
 func fetchInTx[T any](
 	ctx context.Context,
-	db *pluginapi.PluginDB,
+	db pluginapi.PluginDB,
 	action string,
 	load func(context.Context, *sqlx.Tx) (T, error),
 ) (T, error) {
@@ -37,7 +37,7 @@ func fetchInTx[T any](
 // The action names the operation and gives the error its context.
 func execInTx(
 	ctx context.Context,
-	db *pluginapi.PluginDB,
+	db pluginapi.PluginDB,
 	action string,
 	write func(context.Context, *sqlx.Tx) error,
 ) error {

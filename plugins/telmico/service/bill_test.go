@@ -24,9 +24,8 @@ type fakeSender struct {
 	messages []pluginapi.Message
 }
 
-func (f *fakeSender) Send(
+func (f *fakeSender) Notify(
 	_ context.Context,
-	_ *pluginapi.PluginID,
 	topicID string,
 	msg pluginapi.Message,
 ) error {
@@ -51,17 +50,16 @@ func billsOf(
 	secrets *memorySecrets,
 	store *memoryStore,
 ) (*service.Bills, *fakeSender, *bytes.Buffer) {
-	identifier := pluginapi.ParsePluginID(pluginID)
 	sender := new(fakeSender)
 	logs := new(bytes.Buffer)
 
 	bills := service.NewBills(
 		slog.New(slog.NewTextHandler(logs, nil)),
 		portal,
-		pluginapi.NewPluginSettings(storedCredentials{}, identifier),
-		pluginapi.NewPluginSecrets(secrets, identifier),
+		storedCredentials{},
+		secrets,
 		store,
-		pluginapi.NewPluginNotifier(sender, identifier),
+		sender,
 	)
 
 	return bills, sender, logs

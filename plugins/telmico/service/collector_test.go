@@ -26,7 +26,7 @@ const (
 //nolint:gochecknoglobals // a fixed month that every test of the file reads, never writes.
 var september = model.Month{Year: 2026, Month: time.September}
 
-// memorySecrets is a SecretProvider in memory, keyed by the acting workspace and the name.
+// memorySecrets is a PluginSecrets in memory, keyed by the acting workspace and the name.
 type memorySecrets struct {
 	mu      sync.Mutex
 	entries map[string]string
@@ -43,9 +43,8 @@ func secretsHolding(session *model.Session) *memorySecrets {
 	return secrets
 }
 
-func (m *memorySecrets) ReadSecret(
+func (m *memorySecrets) Get(
 	ctx context.Context,
-	_ *pluginapi.PluginID,
 	_ pluginapi.SecretScope,
 	name string,
 ) (string, error) {
@@ -60,9 +59,17 @@ func (m *memorySecrets) ReadSecret(
 	return value, nil
 }
 
-func (m *memorySecrets) WriteSecret(
+func (m *memorySecrets) Put(
 	ctx context.Context,
-	_ *pluginapi.PluginID,
+	scope pluginapi.SecretScope,
+	name string,
+	value string,
+) error {
+	return m.PutUntil(ctx, scope, name, value, time.Time{})
+}
+
+func (m *memorySecrets) PutUntil(
+	ctx context.Context,
 	_ pluginapi.SecretScope,
 	name string,
 	value string,
@@ -76,9 +83,8 @@ func (m *memorySecrets) WriteSecret(
 	return nil
 }
 
-func (m *memorySecrets) DeleteSecret(
+func (m *memorySecrets) Delete(
 	ctx context.Context,
-	_ *pluginapi.PluginID,
 	_ pluginapi.SecretScope,
 	name string,
 ) error {
@@ -111,7 +117,7 @@ func (m *memorySecrets) session(t *testing.T) (model.Session, bool) {
 // storedCredentials answers the username and the password of the workspace.
 type storedCredentials struct{}
 
-func (storedCredentials) Settings(context.Context, *pluginapi.PluginID) (map[string]any, error) {
+func (storedCredentials) Get(context.Context) (map[string]any, error) {
 	return map[string]any{"username": username, "password": password}, nil
 }
 
@@ -383,12 +389,10 @@ func collectorOf(
 	secrets *memorySecrets,
 	store *memoryStore,
 ) *service.Collector {
-	identifier := pluginapi.ParsePluginID(pluginID)
-
 	return service.NewCollector(
 		portal,
-		pluginapi.NewPluginSettings(storedCredentials{}, identifier),
-		pluginapi.NewPluginSecrets(secrets, identifier),
+		storedCredentials{},
+		secrets,
 		store,
 	)
 }

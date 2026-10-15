@@ -37,13 +37,13 @@ const (
 // MaintenanceEntryHandler provides HTTP handlers for the maintenance log.
 type MaintenanceEntryHandler struct {
 	logger *slog.Logger
-	db     *pluginapi.PluginDB
+	db     pluginapi.PluginDB
 }
 
 // NewMaintenanceEntryHandler creates a new MaintenanceEntryHandler.
 func NewMaintenanceEntryHandler(
 	logger *slog.Logger,
-	db *pluginapi.PluginDB,
+	db pluginapi.PluginDB,
 ) *MaintenanceEntryHandler {
 	return &MaintenanceEntryHandler{logger: logger, db: db}
 }

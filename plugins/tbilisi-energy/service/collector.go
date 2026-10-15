@@ -29,8 +29,8 @@ type Collector struct {
 // NewCollector creates a new Collector.
 func NewCollector(
 	client APIClientService,
-	settings *pluginapi.PluginSettings,
-	secrets *pluginapi.PluginSecrets,
+	settings pluginapi.PluginSettings,
+	secrets pluginapi.PluginSecrets,
 	store TransactionStore,
 ) *Collector {
 	return &Collector{

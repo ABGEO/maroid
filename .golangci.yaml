@@ -41,7 +41,6 @@ linters:
         - stdlib
         - generic
         - pluginapi.Plugin
-        - pluginapi.NotificationSender
         - notification.Service
         - pluginapi.TelegramBot
         - paho.mqtt.golang.Client
@@ -57,9 +56,6 @@ linters:
         - repository.WorkspaceMemberRepository
         - authz.Authorizer
         - user.Service
-        - pluginapi.SettingsProvider
-        - pluginapi.SecretProvider
-        - pluginapi.PageLinker
 
     tagliatelle:
       case:

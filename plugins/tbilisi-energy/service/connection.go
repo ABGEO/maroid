@@ -31,8 +31,8 @@ type Connections struct {
 // NewConnections creates a new Connections instance.
 func NewConnections(
 	client APIClientService,
-	settings *pluginapi.PluginSettings,
-	secrets *pluginapi.PluginSecrets,
+	settings pluginapi.PluginSettings,
+	secrets pluginapi.PluginSecrets,
 	store AssignmentStore,
 ) *Connections {
 	return &Connections{

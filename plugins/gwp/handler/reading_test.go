@@ -60,7 +60,7 @@ func readingsUnderTest(t *testing.T) (*service.Store, http.Handler) {
 	identifier := pluginapi.ParsePluginID("dev.maroid.gwp")
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	store := service.NewStore(pluginapi.NewPluginDB(instance.DB, identifier))
+	store := service.NewStore(testdb.PluginDB(instance, identifier))
 	routes := handler.NewReadingHandler(slog.New(slog.DiscardHandler), store).Routes()
 	require.Len(t, routes, 1)
 

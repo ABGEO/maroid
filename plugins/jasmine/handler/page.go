@@ -20,7 +20,7 @@ func listPage[T any, R any](
 	w http.ResponseWriter,
 	r *http.Request,
 	logger *slog.Logger,
-	db *pluginapi.PluginDB,
+	db pluginapi.PluginDB,
 	action string,
 	options page.Options,
 	read func(ctx context.Context, tx *sqlx.Tx, seek page.Seek, asked page.Request) ([]T, error),

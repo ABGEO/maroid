@@ -40,11 +40,11 @@ const (
 // state.
 type CareIntervalHandler struct {
 	logger *slog.Logger
-	db     *pluginapi.PluginDB
+	db     pluginapi.PluginDB
 }
 
 // NewCareIntervalHandler creates a new CareIntervalHandler.
-func NewCareIntervalHandler(logger *slog.Logger, db *pluginapi.PluginDB) *CareIntervalHandler {
+func NewCareIntervalHandler(logger *slog.Logger, db pluginapi.PluginDB) *CareIntervalHandler {
 	return &CareIntervalHandler{logger: logger, db: db}
 }
 

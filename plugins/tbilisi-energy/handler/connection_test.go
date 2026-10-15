@@ -97,9 +97,7 @@ func newRig(t *testing.T, settings *fakeSettings) *rig {
 	secrets := newFakeSecrets()
 	store := &fakeStore{}
 	sender := &fakeSender{}
-	identifier := pluginapi.ParsePluginID("dev.maroid.tbilisi-energy")
-	pluginSettings := pluginapi.NewPluginSettings(settings, identifier)
-	pluginSecrets := pluginapi.NewPluginSecrets(secrets, identifier)
+	pluginSecrets := secrets
 	client := service.NewAPIClient(
 		&config.Config{BaseURL: gas.server.URL, RequestTimeout: time.Second},
 	)
@@ -107,7 +105,7 @@ func newRig(t *testing.T, settings *fakeSettings) *rig {
 	logs := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	connections := service.NewConnections(client, pluginSettings, pluginSecrets, store)
+	connections := service.NewConnections(client, settings, pluginSecrets, store)
 
 	return &rig{
 		service: gas,

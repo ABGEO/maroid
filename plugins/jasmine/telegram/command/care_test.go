@@ -130,7 +130,7 @@ func (b *bot) EditMessageText(
 
 // gardenUnderTest starts a database, applies the migrations of the plugin, and
 // runs the seed of each workspace in that workspace.
-func gardenUnderTest(t *testing.T, seeds map[string]string) *pluginapi.PluginDB {
+func gardenUnderTest(t *testing.T, seeds map[string]string) pluginapi.PluginDB {
 	t.Helper()
 
 	instance := testdb.Start(t)
@@ -144,7 +144,7 @@ func gardenUnderTest(t *testing.T, seeds map[string]string) *pluginapi.PluginDB 
 	identifier := pluginapi.ParsePluginID(pluginID)
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	database := pluginapi.NewPluginDB(instance.DB, identifier)
+	database := testdb.PluginDB(instance, identifier)
 
 	for workspace, seed := range seeds {
 		require.NoError(t, database.WithTx(actingIn(t, workspace), func(tx *sqlx.Tx) error {
@@ -166,9 +166,9 @@ func actingIn(t *testing.T, workspace string) context.Context {
 // pages answers the address of a page of the plugin.
 type pages struct{}
 
-var _ pluginapi.PageLinker = pages{}
+var _ pluginapi.PluginPages = pages{}
 
-func (pages) PageURL(_ context.Context, _ *pluginapi.PluginID, path string) (string, error) {
+func (pages) PageURL(_ context.Context, path string) (string, error) {
 	return "https://deck.test/p/jasmine" + path, nil
 }
 
@@ -186,7 +186,7 @@ func TestTheCareCommandAnswersTheAttentionList(t *testing.T) {
 
 	require.NoError(
 		t,
-		command.NewCare(database, sink, pages{}, pluginapi.ParsePluginID(pluginID)).
+		command.NewCare(database, sink, pages{}).
 			Reply(actingIn(t, workspaceH), commandMessage()),
 	)
 
@@ -210,7 +210,7 @@ func TestTheCareCommandSaysWhenNoPlantNeedsCare(t *testing.T) {
 
 	require.NoError(
 		t,
-		command.NewCare(database, sink, pages{}, pluginapi.ParsePluginID(pluginID)).
+		command.NewCare(database, sink, pages{}).
 			Reply(actingIn(t, workspaceH), commandMessage()),
 	)
 

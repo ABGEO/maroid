@@ -14,21 +14,26 @@ import (
 	"github.com/abgeo/maroid/plugins/pensions/service"
 )
 
-// pluginID names the plugin. The constructor needs it before Meta exists.
+// Meta names the plugin. The hub reads it before it calls New.
 //
 //nolint:gochecknoglobals
-var pluginID = pluginapi.ParsePluginID("dev.maroid.pensions")
+var Meta = pluginapi.Metadata{
+	ID:          pluginapi.ParsePluginID("dev.maroid.pensions"),
+	Name:        "Pensions",
+	Description: "Contributions and balance from the pension agency.",
+	Version:     "0.1.0",
+	APIVersion:  pluginapi.APIVersion,
+}
 
 type PensionsPlugin struct {
 	config       *config.Config
 	logger       *slog.Logger
-	db           *pluginapi.PluginDB
-	settings     *pluginapi.PluginSettings
+	db           pluginapi.PluginDB
+	settings     pluginapi.PluginSettings
 	apiClientSvc service.APIClientService
 }
 
 var (
-	_ pluginapi.Plugin             = (*PensionsPlugin)(nil)
 	_ pluginapi.ConfigurablePlugin = (*PensionsPlugin)(nil)
 	_ pluginapi.CronPlugin         = (*PensionsPlugin)(nil)
 	_ pluginapi.MigrationPlugin    = (*PensionsPlugin)(nil)
@@ -48,35 +53,18 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host database instance: %w", err)
 	}
 
-	settingsProvider, err := host.Settings()
+	settings, err := host.Settings()
 	if err != nil {
-		return nil, fmt.Errorf("getting host settings provider: %w", err)
+		return nil, fmt.Errorf("getting host settings: %w", err)
 	}
 
-	plg := &PensionsPlugin{
+	return &PensionsPlugin{
 		config:       pluginConfig,
-		db:           pluginapi.NewPluginDB(database, pluginID),
-		settings:     pluginapi.NewPluginSettings(settingsProvider, pluginID),
+		logger:       host.Logger(),
+		db:           database,
+		settings:     settings,
 		apiClientSvc: service.NewAPIClient(pluginConfig),
-	}
-
-	plg.logger = host.Logger().With(
-		slog.String("plugin", plg.Meta().ID.String()),
-		slog.String("plugin_version", plg.Meta().Version),
-		slog.String("plugin_api_version", plg.Meta().APIVersion),
-	)
-
-	return plg, nil
-}
-
-func (p *PensionsPlugin) Meta() pluginapi.Metadata {
-	return pluginapi.Metadata{
-		ID:          pluginID,
-		Name:        "Pensions",
-		Description: "Contributions and balance from the pension agency.",
-		Version:     "0.1.0",
-		APIVersion:  pluginapi.APIVersion,
-	}
+	}, nil
 }
 
 // SettingsModel declares the pension account that one person stores.

@@ -47,7 +47,7 @@ INSERT INTO public.workspaces (id) VALUES ('` + workspaceH + `'), ('` + workspac
 
 // garden is a migrated database that holds the workspaces H and G.
 type garden struct {
-	db *pluginapi.PluginDB
+	db pluginapi.PluginDB
 }
 
 // gardenUnderTest starts a database and applies the migrations of the plugin.
@@ -65,7 +65,7 @@ func gardenUnderTest(t *testing.T) *garden {
 	identifier := pluginapi.ParsePluginID(pluginID)
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	return &garden{db: pluginapi.NewPluginDB(instance.DB, identifier)}
+	return &garden{db: testdb.PluginDB(instance, identifier)}
 }
 
 // router mounts the routes of the plugin, acting in the workspace, as the hub

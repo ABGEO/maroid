@@ -30,11 +30,11 @@ const (
 // EnvironmentHandler provides HTTP handlers for environment CRUD.
 type EnvironmentHandler struct {
 	logger *slog.Logger
-	db     *pluginapi.PluginDB
+	db     pluginapi.PluginDB
 }
 
 // NewEnvironmentHandler creates a new EnvironmentHandler.
-func NewEnvironmentHandler(logger *slog.Logger, db *pluginapi.PluginDB) *EnvironmentHandler {
+func NewEnvironmentHandler(logger *slog.Logger, db pluginapi.PluginDB) *EnvironmentHandler {
 	return &EnvironmentHandler{logger: logger, db: db}
 }
 

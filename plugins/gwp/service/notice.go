@@ -34,7 +34,7 @@ type Notices struct {
 	logger   *slog.Logger
 	account  *account
 	client   APIClientService
-	notifier *pluginapi.PluginNotifier
+	notifier pluginapi.PluginNotifier
 	store    DatedReadingStore
 }
 
@@ -42,9 +42,9 @@ type Notices struct {
 func NewNotices(
 	logger *slog.Logger,
 	client APIClientService,
-	settings *pluginapi.PluginSettings,
-	secrets *pluginapi.PluginSecrets,
-	notifier *pluginapi.PluginNotifier,
+	settings pluginapi.PluginSettings,
+	secrets pluginapi.PluginSecrets,
+	notifier pluginapi.PluginNotifier,
 	store DatedReadingStore,
 ) *Notices {
 	return &Notices{

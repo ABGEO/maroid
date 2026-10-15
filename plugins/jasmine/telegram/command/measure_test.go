@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/jasmine/telegram/command"
 )
 
@@ -77,7 +76,7 @@ func TestTheCareCommandAnswersWithinTwoSeconds(t *testing.T) {
 
 		require.NoError(
 			t,
-			command.NewCare(database, sink, pages{}, pluginapi.ParsePluginID(pluginID)).
+			command.NewCare(database, sink, pages{}).
 				Reply(actingIn(t, workspaceH), commandMessage()),
 		)
 

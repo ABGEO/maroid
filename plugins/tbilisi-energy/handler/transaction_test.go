@@ -74,7 +74,7 @@ func transactionsUnderTest(t *testing.T) (*service.Store, http.Handler) {
 	identifier := pluginapi.ParsePluginID("dev.maroid.tbilisi-energy")
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	store := service.NewStore(pluginapi.NewPluginDB(instance.DB, identifier))
+	store := service.NewStore(testdb.PluginDB(instance, identifier))
 	routes := handler.NewTransactionHandler(slog.New(slog.DiscardHandler), store, fileBase).Routes()
 	require.Len(t, routes, 1)
 

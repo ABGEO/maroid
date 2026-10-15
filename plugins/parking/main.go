@@ -19,10 +19,16 @@ import (
 	"github.com/abgeo/maroid/plugins/parking/widget"
 )
 
-// pluginID names the plugin. The constructor needs it before Meta exists.
+// Meta names the plugin. The hub reads it before it calls New.
 //
 //nolint:gochecknoglobals
-var pluginID = pluginapi.ParsePluginID("dev.maroid.parking")
+var Meta = pluginapi.Metadata{
+	ID:          pluginapi.ParsePluginID("dev.maroid.parking"),
+	Name:        "Tbilisi Parking",
+	Description: "Start and stop parking sessions, and check the balance.",
+	Version:     "0.1.0",
+	APIVersion:  pluginapi.APIVersion,
+}
 
 type ParkingPlugin struct {
 	config                     *config.Config
@@ -35,7 +41,6 @@ type ParkingPlugin struct {
 }
 
 var (
-	_ pluginapi.Plugin                     = (*ParkingPlugin)(nil)
 	_ pluginapi.ConfigurablePlugin         = (*ParkingPlugin)(nil)
 	_ pluginapi.TelegramCommandPlugin      = (*ParkingPlugin)(nil)
 	_ pluginapi.TelegramConversationPlugin = (*ParkingPlugin)(nil)
@@ -59,9 +64,9 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host telegram bot instance: %w", err)
 	}
 
-	settingsProvider, err := host.Settings()
+	settings, err := host.Settings()
 	if err != nil {
-		return nil, fmt.Errorf("getting host settings provider: %w", err)
+		return nil, fmt.Errorf("getting host settings: %w", err)
 	}
 
 	pages, err := host.Pages()
@@ -69,41 +74,22 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host page linker: %w", err)
 	}
 
-	secretProvider, err := host.Secrets()
+	secrets, err := host.Secrets()
 	if err != nil {
-		return nil, fmt.Errorf("getting host secret provider: %w", err)
+		return nil, fmt.Errorf("getting host secrets: %w", err)
 	}
 
-	settings := pluginapi.NewPluginSettings(settingsProvider, pluginID)
-	secrets := pluginapi.NewPluginSecrets(secretProvider, pluginID)
 	apiClient := service.NewAPIClient(pluginConfig, secrets)
 
-	plg := &ParkingPlugin{
+	return &ParkingPlugin{
 		config:                     pluginConfig,
+		logger:                     host.Logger(),
 		telegramBot:                telegramBot,
 		telegramConversationEngine: host.TelegramConversationEngine(),
 		apiClientSvc:               apiClient,
 		connections:                service.NewConnections(apiClient, settings, secrets),
-		answers:                    command.NewNotice(pages, pluginID),
-	}
-
-	plg.logger = host.Logger().With(
-		slog.String("plugin", plg.Meta().ID.String()),
-		slog.String("plugin_version", plg.Meta().Version),
-		slog.String("plugin_api_version", plg.Meta().APIVersion),
-	)
-
-	return plg, nil
-}
-
-func (p *ParkingPlugin) Meta() pluginapi.Metadata {
-	return pluginapi.Metadata{
-		ID:          pluginID,
-		Name:        "Tbilisi Parking",
-		Description: "Start and stop parking sessions, and check the balance.",
-		Version:     "0.1.0",
-		APIVersion:  pluginapi.APIVersion,
-	}
+		answers:                    command.NewNotice(pages),
+	}, nil
 }
 
 func (p *ParkingPlugin) SettingsModel() (any, error) {

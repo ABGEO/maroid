@@ -467,8 +467,8 @@ copy is three lines, and `PLGBIND-SC-010` checks the version of the hub.
 | 5   | The registrars, the enablements, the user manager.                                           | FR-005                                     | [x]  |
 | 6   | The loader: `openSymbols`, `load`, the checks. `PLGBIND-SC-001` to `PLGBIND-SC-006`, `PLGBIND-SC-008`, `PLGBIND-SC-009`. | FR-001 to FR-003, FR-005, INV-001, INV-002 | [x]  |
 | 7   | `depresolver`: the binder and the logger of the loader. Delete the provider assertions.      | FR-004                                     | [x]  |
-| 8   | Each of the seven plugins: `Meta`, the constructor, the field types, the fakes, the tests.  | FR-001, FR-011                             | [ ]  |
-| 9   | Lint and build the hub, `libs/pluginapi`, `libs/testdb`, and every plugin (`BLD-001`, `BLD-004`). `PLGBIND-SC-017`. | All                | [ ]  |
+| 8   | Each of the seven plugins: `Meta`, the constructor, the field types, the fakes, the tests.  | FR-001, FR-011                             | [x]  |
+| 9   | Lint and build the hub, `libs/pluginapi`, `libs/testdb`, and every plugin (`BLD-001`, `BLD-004`). `PLGBIND-SC-017`. | All                | [x]  |
 
 The hub and the plugins do not build between step 1 and step 8. One branch holds the
 whole plan.

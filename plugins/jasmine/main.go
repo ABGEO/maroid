@@ -1,4 +1,4 @@
-// Plugin for working with e-garden.
+	// Plugin for working with e-garden.
 package main
 
 import (
@@ -19,19 +19,29 @@ import (
 	"github.com/abgeo/maroid/plugins/jasmine/widget"
 )
 
+// Meta names the plugin. The hub reads it before it calls New.
+//
+//nolint:gochecknoglobals
+var Meta = pluginapi.Metadata{
+	ID:          pluginapi.ParsePluginID("dev.maroid.jasmine"),
+	Name:        "Jasmine",
+	Description: "Plants, their environments, and their care.",
+	Version:     "0.1.0",
+	APIVersion:  pluginapi.APIVersion,
+}
+
 // JasminePlugin keeps the plants of each workspace, their environments, and
 // their care.
 type JasminePlugin struct {
 	config      *config.Config
 	logger      *slog.Logger
-	db          *pluginapi.PluginDB
-	notifier    *pluginapi.PluginNotifier
+	db          pluginapi.PluginDB
+	notifier    pluginapi.PluginNotifier
 	telegramBot pluginapi.TelegramBot
-	pages       pluginapi.PageLinker
+	pages       pluginapi.PluginPages
 }
 
 var (
-	_ pluginapi.Plugin                = (*JasminePlugin)(nil)
 	_ pluginapi.MQTTSubscriberPlugin  = (*JasminePlugin)(nil)
 	_ pluginapi.MigrationPlugin       = (*JasminePlugin)(nil)
 	_ pluginapi.UIPlugin              = (*JasminePlugin)(nil)
@@ -57,7 +67,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host database instance: %w", err)
 	}
 
-	sender, err := host.Notifier()
+	notifier, err := host.Notifier()
 	if err != nil {
 		return nil, fmt.Errorf("getting host notifier instance: %w", err)
 	}
@@ -72,29 +82,14 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host page linker: %w", err)
 	}
 
-	plg := &JasminePlugin{config: pluginConfig, telegramBot: telegramBot, pages: pages}
-
-	plg.db = pluginapi.NewPluginDB(database, plg.Meta().ID)
-	plg.notifier = pluginapi.NewPluginNotifier(sender, plg.Meta().ID)
-
-	plg.logger = host.Logger().With(
-		slog.String("plugin", plg.Meta().ID.String()),
-		slog.String("plugin_version", plg.Meta().Version),
-		slog.String("plugin_api_version", plg.Meta().APIVersion),
-	)
-
-	return plg, nil
-}
-
-// Meta returns the identity of the plugin.
-func (p *JasminePlugin) Meta() pluginapi.Metadata {
-	return pluginapi.Metadata{
-		ID:          pluginapi.ParsePluginID("dev.maroid.jasmine"),
-		Name:        "Jasmine",
-		Description: "Plants, their environments, and their care.",
-		Version:     "0.1.0",
-		APIVersion:  pluginapi.APIVersion,
-	}
+	return &JasminePlugin{
+		config:      pluginConfig,
+		logger:      host.Logger(),
+		db:          database,
+		notifier:    notifier,
+		telegramBot: telegramBot,
+		pages:       pages,
+	}, nil
 }
 
 // CronJobs returns the reminder.
@@ -123,7 +118,7 @@ func (p *JasminePlugin) Widgets() ([]pluginapi.Widget, error) {
 // TelegramCommands returns the command that answers the plants that need care.
 func (p *JasminePlugin) TelegramCommands() ([]pluginapi.TelegramCommand, error) {
 	return []pluginapi.TelegramCommand{
-		command.NewCare(p.db, p.telegramBot, p.pages, p.Meta().ID),
+		command.NewCare(p.db, p.telegramBot, p.pages),
 	}, nil
 }
 

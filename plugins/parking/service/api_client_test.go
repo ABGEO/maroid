@@ -27,8 +27,8 @@ type memorySecrets struct {
 	values map[string]string
 }
 
-func (m *memorySecrets) ReadSecret(
-	ctx context.Context, _ *pluginapi.PluginID, _ pluginapi.SecretScope, name string,
+func (m *memorySecrets) Get(
+	ctx context.Context, _ pluginapi.SecretScope, name string,
 ) (string, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -41,9 +41,17 @@ func (m *memorySecrets) ReadSecret(
 	return value, nil
 }
 
-func (m *memorySecrets) WriteSecret(
+func (m *memorySecrets) Put(
 	ctx context.Context,
-	_ *pluginapi.PluginID,
+	scope pluginapi.SecretScope,
+	name string,
+	value string,
+) error {
+	return m.PutUntil(ctx, scope, name, value, time.Time{})
+}
+
+func (m *memorySecrets) PutUntil(
+	ctx context.Context,
 	_ pluginapi.SecretScope,
 	name, value string,
 	_ time.Time,
@@ -56,8 +64,8 @@ func (m *memorySecrets) WriteSecret(
 	return nil
 }
 
-func (m *memorySecrets) DeleteSecret(
-	ctx context.Context, _ *pluginapi.PluginID, _ pluginapi.SecretScope, name string,
+func (m *memorySecrets) Delete(
+	ctx context.Context, _ pluginapi.SecretScope, name string,
 ) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -92,11 +100,7 @@ func newFixture(t *testing.T, status int, body string) *fixture {
 	}))
 	t.Cleanup(server.Close)
 
-	secrets := pluginapi.NewPluginSecrets(
-		created.secrets,
-		pluginapi.ParsePluginID("dev.maroid.parking"),
-	)
-	created.client = service.NewAPIClient(&config.Config{BaseURL: server.URL}, secrets)
+	created.client = service.NewAPIClient(&config.Config{BaseURL: server.URL}, created.secrets)
 
 	return created
 }

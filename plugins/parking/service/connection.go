@@ -52,8 +52,8 @@ type ConnectionService interface {
 // the plugin secrets.
 type Connections struct {
 	client   APIClientService
-	settings *pluginapi.PluginSettings
-	secrets  *pluginapi.PluginSecrets
+	settings pluginapi.PluginSettings
+	secrets  pluginapi.PluginSecrets
 }
 
 var _ ConnectionService = (*Connections)(nil)
@@ -69,8 +69,8 @@ type pendingRecord struct {
 // NewConnections creates a new Connections instance.
 func NewConnections(
 	client APIClientService,
-	settings *pluginapi.PluginSettings,
-	secrets *pluginapi.PluginSecrets,
+	settings pluginapi.PluginSettings,
+	secrets pluginapi.PluginSecrets,
 ) *Connections {
 	return &Connections{
 		client:   client,

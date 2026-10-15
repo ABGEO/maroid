@@ -33,7 +33,7 @@ INSERT INTO public.workspaces (id) VALUES ('` + workspaceW + `'), ('` + workspac
 
 // storeUnderTest starts a database, applies the migrations of the plugin, and
 // returns the store and the handle that reads behind it.
-func storeUnderTest(t *testing.T) (*service.Store, *pluginapi.PluginDB) {
+func storeUnderTest(t *testing.T) (*service.Store, pluginapi.PluginDB) {
 	t.Helper()
 
 	instance := testdb.Start(t)
@@ -47,7 +47,7 @@ func storeUnderTest(t *testing.T) (*service.Store, *pluginapi.PluginDB) {
 	identifier := pluginapi.ParsePluginID(pluginID)
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	database := pluginapi.NewPluginDB(instance.DB, identifier)
+	database := testdb.PluginDB(instance, identifier)
 
 	return service.NewStore(database), database
 }
@@ -223,7 +223,7 @@ func normalized(readings []model.Reading) []model.Reading {
 	return readings
 }
 
-func countOf(ctx context.Context, t *testing.T, database *pluginapi.PluginDB, table string) int {
+func countOf(ctx context.Context, t *testing.T, database pluginapi.PluginDB, table string) int {
 	t.Helper()
 
 	var count int

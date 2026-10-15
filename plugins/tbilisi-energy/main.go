@@ -22,10 +22,16 @@ import (
 	"github.com/abgeo/maroid/plugins/tbilisi-energy/widget"
 )
 
-// pluginID names the plugin. The constructor needs it before Meta exists.
+// Meta names the plugin. The hub reads it before it calls New.
 //
 //nolint:gochecknoglobals
-var pluginID = pluginapi.ParsePluginID("dev.maroid.tbilisi-energy")
+var Meta = pluginapi.Metadata{
+	ID:          pluginapi.ParsePluginID("dev.maroid.tbilisi-energy"),
+	Name:        "Tbilisi Energy",
+	Description: "Gas bills and usage from Tbilisi Energy.",
+	Version:     "0.2.0",
+	APIVersion:  pluginapi.APIVersion,
+}
 
 // TbilisiEnergyPlugin connects the gas account of a workspace, collects its
 // transactions, and sends the bill.
@@ -39,7 +45,6 @@ type TbilisiEnergyPlugin struct {
 }
 
 var (
-	_ pluginapi.Plugin             = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.ConfigurablePlugin = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.CommandPlugin      = (*TbilisiEnergyPlugin)(nil)
 	_ pluginapi.CronPlugin         = (*TbilisiEnergyPlugin)(nil)
@@ -65,56 +70,35 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host database instance: %w", err)
 	}
 
-	sender, err := host.Notifier()
+	notifier, err := host.Notifier()
 	if err != nil {
 		return nil, fmt.Errorf("getting host notifier instance: %w", err)
 	}
 
-	settingsProvider, err := host.Settings()
+	settings, err := host.Settings()
 	if err != nil {
-		return nil, fmt.Errorf("getting host settings provider: %w", err)
+		return nil, fmt.Errorf("getting host settings: %w", err)
 	}
 
-	secretProvider, err := host.Secrets()
+	secrets, err := host.Secrets()
 	if err != nil {
-		return nil, fmt.Errorf("getting host secret provider: %w", err)
+		return nil, fmt.Errorf("getting host secrets: %w", err)
 	}
 
 	var (
-		store    = service.NewStore(pluginapi.NewPluginDB(database, pluginID))
-		client   = service.NewAPIClient(pluginConfig)
-		settings = pluginapi.NewPluginSettings(settingsProvider, pluginID)
-		secrets  = pluginapi.NewPluginSecrets(secretProvider, pluginID)
-		notifier = pluginapi.NewPluginNotifier(sender, pluginID)
+		store  = service.NewStore(database)
+		client = service.NewAPIClient(pluginConfig)
+		logger = host.Logger()
 	)
 
-	plg := &TbilisiEnergyPlugin{
-		config:    pluginConfig,
-		store:     store,
-		collector: service.NewCollector(client, settings, secrets, store),
-	}
-
-	plg.logger = host.Logger().With(
-		slog.String("plugin", plg.Meta().ID.String()),
-		slog.String("plugin_version", plg.Meta().Version),
-		slog.String("plugin_api_version", plg.Meta().APIVersion),
-	)
-
-	plg.bills = service.NewBills(plg.logger, client, settings, secrets, notifier)
-	plg.connections = service.NewConnections(client, settings, secrets, store)
-
-	return plg, nil
-}
-
-// Meta returns the plugin metadata.
-func (p *TbilisiEnergyPlugin) Meta() pluginapi.Metadata {
-	return pluginapi.Metadata{
-		ID:          pluginID,
-		Name:        "Tbilisi Energy",
-		Description: "Gas bills and usage from Tbilisi Energy.",
-		Version:     "0.2.0",
-		APIVersion:  pluginapi.APIVersion,
-	}
+	return &TbilisiEnergyPlugin{
+		config:      pluginConfig,
+		logger:      logger,
+		store:       store,
+		collector:   service.NewCollector(client, settings, secrets, store),
+		bills:       service.NewBills(logger, client, settings, secrets, notifier),
+		connections: service.NewConnections(client, settings, secrets, store),
+	}, nil
 }
 
 // SettingsModel declares the Tbilisi Energy account that a workspace stores.

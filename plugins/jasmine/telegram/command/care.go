@@ -31,22 +31,20 @@ const (
 
 // Care is a Telegram command that answers the attention list of the acting workspace.
 type Care struct {
-	db       *pluginapi.PluginDB
-	bot      pluginapi.TelegramBot
-	pages    pluginapi.PageLinker
-	pluginID *pluginapi.PluginID
+	db    pluginapi.PluginDB
+	bot   pluginapi.TelegramBot
+	pages pluginapi.PluginPages
 }
 
 var _ pluginapi.TelegramCommand = (*Care)(nil)
 
 // NewCare creates a new Care.
 func NewCare(
-	db *pluginapi.PluginDB,
+	db pluginapi.PluginDB,
 	bot pluginapi.TelegramBot,
-	pages pluginapi.PageLinker,
-	pluginID *pluginapi.PluginID,
+	pages pluginapi.PluginPages,
 ) *Care {
-	return &Care{db: db, bot: bot, pages: pages, pluginID: pluginID}
+	return &Care{db: db, bot: bot, pages: pages}
 }
 
 // Meta returns the metadata for the command.
@@ -105,7 +103,7 @@ func (c *Care) Reply(ctx context.Context, message *telego.Message) error {
 // which shows every line. A host that cannot build the address gets the name of the
 // page, so the answer still tells the person where to go.
 func (c *Care) more(ctx context.Context) func(left int) string {
-	address, err := c.pages.PageURL(ctx, c.pluginID, attentionPath)
+	address, err := c.pages.PageURL(ctx, attentionPath)
 
 	return func(left int) string {
 		count := fmt.Sprintf("And %d more lines.", left)

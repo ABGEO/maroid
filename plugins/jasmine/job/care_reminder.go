@@ -22,8 +22,8 @@ const CareReminderTopic = "care_reminder"
 type CareReminder struct {
 	config   *config.Config
 	logger   *slog.Logger
-	db       *pluginapi.PluginDB
-	notifier *pluginapi.PluginNotifier
+	db       pluginapi.PluginDB
+	notifier pluginapi.PluginNotifier
 }
 
 var _ pluginapi.CronJob = (*CareReminder)(nil)
@@ -32,8 +32,8 @@ var _ pluginapi.CronJob = (*CareReminder)(nil)
 func NewCareReminder(
 	config *config.Config,
 	logger *slog.Logger,
-	db *pluginapi.PluginDB,
-	notifier *pluginapi.PluginNotifier,
+	db pluginapi.PluginDB,
+	notifier pluginapi.PluginNotifier,
 ) *CareReminder {
 	instance := &CareReminder{
 		config:   config,

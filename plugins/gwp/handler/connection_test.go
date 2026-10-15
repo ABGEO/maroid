@@ -71,9 +71,6 @@ func newRigWithTimeout(t *testing.T, settings *fakeSettings, timeout time.Durati
 	water := newFakeService(t)
 	secrets := newFakeSecrets()
 	store := &fakeStore{}
-	identifier := pluginapi.ParsePluginID("dev.maroid.gwp")
-	pluginSettings := pluginapi.NewPluginSettings(settings, identifier)
-	pluginSecrets := pluginapi.NewPluginSecrets(secrets, identifier)
 	client := service.NewAPIClient(
 		&config.Config{BaseURL: water.server.URL, RequestTimeout: timeout},
 	)
@@ -81,7 +78,7 @@ func newRigWithTimeout(t *testing.T, settings *fakeSettings, timeout time.Durati
 	logs := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	connections := service.NewConnections(client, pluginSettings, pluginSecrets, store)
+	connections := service.NewConnections(client, settings, secrets, store)
 
 	return &rig{
 		service: water,

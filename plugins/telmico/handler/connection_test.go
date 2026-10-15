@@ -68,18 +68,16 @@ func newRig(
 	store *fakeStore,
 ) *rig {
 	sender := &fakeSender{}
-	identifier := pluginapi.ParsePluginID("dev.maroid.telmico")
-	pluginSettings := pluginapi.NewPluginSettings(settings, identifier)
-	pluginSecrets := pluginapi.NewPluginSecrets(secrets, identifier)
+	pluginSecrets := secrets
 
 	logs := &bytes.Buffer{}
 	logger := slog.New(slog.NewTextHandler(logs, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
-	connections := service.NewConnections(portal, pluginSettings, pluginSecrets, store)
-	collector := service.NewCollector(portal, pluginSettings, pluginSecrets, store)
+	connections := service.NewConnections(portal, settings, pluginSecrets, store)
+	collector := service.NewCollector(portal, settings, pluginSecrets, store)
 	bills := service.NewBills(
-		logger, portal, pluginSettings, pluginSecrets, store,
-		pluginapi.NewPluginNotifier(sender, identifier),
+		logger, portal, settings, pluginSecrets, store,
+		sender,
 	)
 
 	return &rig{

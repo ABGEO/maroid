@@ -28,11 +28,10 @@ func documentRoute(
 ) http.Handler {
 	t.Helper()
 
-	identifier := pluginapi.ParsePluginID("dev.maroid.telmico")
 	documents := service.NewDocuments(
 		portal,
-		pluginapi.NewPluginSettings(storedCredentials(), identifier),
-		pluginapi.NewPluginSecrets(secrets, identifier),
+		storedCredentials(),
+		secrets,
 		store,
 	)
 

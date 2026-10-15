@@ -14,22 +14,27 @@ import (
 	"github.com/abgeo/maroid/plugins/telasi/service"
 )
 
-// pluginID names the plugin. The constructor needs it before Meta exists.
+// Meta names the plugin. The hub reads it before it calls New.
 //
 //nolint:gochecknoglobals
-var pluginID = pluginapi.ParsePluginID("dev.maroid.telasi")
+var Meta = pluginapi.Metadata{
+	ID:          pluginapi.ParsePluginID("dev.maroid.telasi"),
+	Name:        "Telasi",
+	Description: "Electricity bills and usage from Telasi.",
+	Version:     "0.1.0",
+	APIVersion:  pluginapi.APIVersion,
+}
 
 type TelasiPlugin struct {
 	config       *config.Config
 	logger       *slog.Logger
-	db           *pluginapi.PluginDB
-	settings     *pluginapi.PluginSettings
-	notifier     *pluginapi.PluginNotifier
+	db           pluginapi.PluginDB
+	settings     pluginapi.PluginSettings
+	notifier     pluginapi.PluginNotifier
 	apiClientSvc service.APIClientService
 }
 
 var (
-	_ pluginapi.Plugin             = (*TelasiPlugin)(nil)
 	_ pluginapi.ConfigurablePlugin = (*TelasiPlugin)(nil)
 	_ pluginapi.CronPlugin         = (*TelasiPlugin)(nil)
 	_ pluginapi.MigrationPlugin    = (*TelasiPlugin)(nil)
@@ -50,41 +55,24 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host database instance: %w", err)
 	}
 
-	sender, err := host.Notifier()
+	notifier, err := host.Notifier()
 	if err != nil {
 		return nil, fmt.Errorf("getting host notifier instance: %w", err)
 	}
 
-	settingsProvider, err := host.Settings()
+	settings, err := host.Settings()
 	if err != nil {
-		return nil, fmt.Errorf("getting host settings provider: %w", err)
+		return nil, fmt.Errorf("getting host settings: %w", err)
 	}
 
-	plg := &TelasiPlugin{
+	return &TelasiPlugin{
 		config:       pluginConfig,
-		db:           pluginapi.NewPluginDB(database, pluginID),
-		settings:     pluginapi.NewPluginSettings(settingsProvider, pluginID),
-		notifier:     pluginapi.NewPluginNotifier(sender, pluginID),
+		logger:       host.Logger(),
+		db:           database,
+		settings:     settings,
+		notifier:     notifier,
 		apiClientSvc: service.NewAPIClient(pluginConfig),
-	}
-
-	plg.logger = host.Logger().With(
-		slog.String("plugin", plg.Meta().ID.String()),
-		slog.String("plugin_version", plg.Meta().Version),
-		slog.String("plugin_api_version", plg.Meta().APIVersion),
-	)
-
-	return plg, nil
-}
-
-func (p *TelasiPlugin) Meta() pluginapi.Metadata {
-	return pluginapi.Metadata{
-		ID:          pluginID,
-		Name:        "Telasi",
-		Description: "Electricity bills and usage from Telasi.",
-		Version:     "0.1.0",
-		APIVersion:  pluginapi.APIVersion,
-	}
+	}, nil
 }
 
 // SettingsModel declares the Telasi account that a workspace stores.

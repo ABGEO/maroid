@@ -55,15 +55,13 @@ func newRig(t *testing.T, settings *fakeSettings) *rig {
 
 	service := newFakeService(t)
 	secrets := newFakeSecrets()
-	parking := pluginapi.ParsePluginID("dev.maroid.parking")
-	pluginSecrets := pluginapi.NewPluginSecrets(secrets, parking)
 
 	client := parkingservice.NewAPIClient(
 		&config.Config{BaseURL: service.server.URL},
-		pluginSecrets,
+		secrets,
 	)
 	connections := parkingservice.NewConnections(
-		client, pluginapi.NewPluginSettings(settings, parking), pluginSecrets,
+		client, settings, secrets,
 	)
 
 	logs := &bytes.Buffer{}

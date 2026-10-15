@@ -44,8 +44,8 @@ type memorySecrets struct {
 	values map[string]string
 }
 
-func (m *memorySecrets) ReadSecret(
-	ctx context.Context, _ *pluginapi.PluginID, _ pluginapi.SecretScope, name string,
+func (m *memorySecrets) Get(
+	ctx context.Context, _ pluginapi.SecretScope, name string,
 ) (string, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -58,9 +58,17 @@ func (m *memorySecrets) ReadSecret(
 	return value, nil
 }
 
-func (m *memorySecrets) WriteSecret(
+func (m *memorySecrets) Put(
 	ctx context.Context,
-	_ *pluginapi.PluginID,
+	scope pluginapi.SecretScope,
+	name string,
+	value string,
+) error {
+	return m.PutUntil(ctx, scope, name, value, time.Time{})
+}
+
+func (m *memorySecrets) PutUntil(
+	ctx context.Context,
 	_ pluginapi.SecretScope,
 	name, value string,
 	_ time.Time,
@@ -73,8 +81,8 @@ func (m *memorySecrets) WriteSecret(
 	return nil
 }
 
-func (m *memorySecrets) DeleteSecret(
-	ctx context.Context, _ *pluginapi.PluginID, _ pluginapi.SecretScope, name string,
+func (m *memorySecrets) Delete(
+	ctx context.Context, _ pluginapi.SecretScope, name string,
 ) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -94,7 +102,7 @@ func (m *memorySecrets) token() string {
 // storedCredentials answers the settings of the workspace.
 type storedCredentials struct{}
 
-func (storedCredentials) Settings(context.Context, *pluginapi.PluginID) (map[string]any, error) {
+func (storedCredentials) Get(context.Context) (map[string]any, error) {
 	return map[string]any{"username": username, "password": password}, nil
 }
 
@@ -193,9 +201,8 @@ type fakeSender struct {
 	messages []pluginapi.Message
 }
 
-func (f *fakeSender) Send(
+func (f *fakeSender) Notify(
 	_ context.Context,
-	_ *pluginapi.PluginID,
 	topicID string,
 	msg pluginapi.Message,
 ) error {
@@ -333,23 +340,21 @@ func newRig(t *testing.T, water *fakeWaterService, store *fakeStore, token strin
 		secrets.values[workspaceW+"/token"] = token
 	}
 
-	identifier := pluginapi.ParsePluginID(pluginID)
 	cfg := &config.Config{BaseURL: server.URL}
 	logs := new(bytes.Buffer)
 
 	client := service.NewAPIClient(cfg)
-	settings := pluginapi.NewPluginSettings(storedCredentials{}, identifier)
-	pluginSecrets := pluginapi.NewPluginSecrets(secrets, identifier)
+	settings := storedCredentials{}
 	logger := slog.New(slog.NewTextHandler(logs, nil))
 	sender := &fakeSender{}
 
-	collector := service.NewCollector(client, settings, pluginSecrets, store)
+	collector := service.NewCollector(client, settings, secrets, store)
 	notices := service.NewNotices(
 		logger,
 		client,
 		settings,
-		pluginSecrets,
-		pluginapi.NewPluginNotifier(sender, identifier),
+		secrets,
+		sender,
 		store,
 	)
 

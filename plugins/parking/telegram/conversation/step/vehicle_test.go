@@ -7,7 +7,6 @@ import (
 	"github.com/mymmrac/telego"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/dto"
 	"github.com/abgeo/maroid/plugins/parking/errs"
@@ -79,12 +78,12 @@ func (c *fakeClient) StartParking(
 // fakePages answers one address for every page.
 type fakePages struct{}
 
-func (fakePages) PageURL(context.Context, *pluginapi.PluginID, string) (string, error) {
+func (fakePages) PageURL(context.Context, string) (string, error) {
 	return accountURL, nil
 }
 
 func newNotice() *command.Notice {
-	return command.NewNotice(fakePages{}, pluginapi.ParsePluginID("dev.maroid.parking"))
+	return command.NewNotice(fakePages{})
 }
 
 func newContext() *conversationapi.Context {

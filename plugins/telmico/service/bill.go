@@ -28,17 +28,17 @@ type Bills struct {
 	account  *account
 	client   APIClientService
 	store    BillLookup
-	notifier *pluginapi.PluginNotifier
+	notifier pluginapi.PluginNotifier
 }
 
 // NewBills creates a new Bills.
 func NewBills(
 	logger *slog.Logger,
 	client APIClientService,
-	settings *pluginapi.PluginSettings,
-	secrets *pluginapi.PluginSecrets,
+	settings pluginapi.PluginSettings,
+	secrets pluginapi.PluginSecrets,
 	store BillLookup,
-	notifier *pluginapi.PluginNotifier,
+	notifier pluginapi.PluginNotifier,
 ) *Bills {
 	return &Bills{
 		logger:   logger.With(slog.String("component", "service"), slog.String("service", "bills")),

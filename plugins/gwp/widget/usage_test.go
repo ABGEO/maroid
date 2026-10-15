@@ -43,7 +43,7 @@ func storeUnderTest(t *testing.T) *service.Store {
 	identifier := pluginapi.ParsePluginID(pluginID)
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	return service.NewStore(pluginapi.NewPluginDB(instance.DB, identifier))
+	return service.NewStore(testdb.PluginDB(instance, identifier))
 }
 
 func actingInW(t *testing.T) context.Context {

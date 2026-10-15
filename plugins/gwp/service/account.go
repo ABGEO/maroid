@@ -18,8 +18,8 @@ const SecretToken = "token"
 // The connection service and the collector share it.
 type account struct {
 	client   APIClientService
-	settings *pluginapi.PluginSettings
-	secrets  *pluginapi.PluginSecrets
+	settings pluginapi.PluginSettings
+	secrets  pluginapi.PluginSecrets
 }
 
 func (a *account) credentials(ctx context.Context) (*config.WorkspaceSettings, error) {

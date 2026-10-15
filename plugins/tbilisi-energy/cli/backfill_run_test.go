@@ -33,8 +33,8 @@ type memorySecrets struct {
 	values map[string]string
 }
 
-func (m *memorySecrets) ReadSecret(
-	ctx context.Context, _ *pluginapi.PluginID, _ pluginapi.SecretScope, name string,
+func (m *memorySecrets) Get(
+	ctx context.Context, _ pluginapi.SecretScope, name string,
 ) (string, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -47,9 +47,17 @@ func (m *memorySecrets) ReadSecret(
 	return value, nil
 }
 
-func (m *memorySecrets) WriteSecret(
+func (m *memorySecrets) Put(
 	ctx context.Context,
-	_ *pluginapi.PluginID,
+	scope pluginapi.SecretScope,
+	name string,
+	value string,
+) error {
+	return m.PutUntil(ctx, scope, name, value, time.Time{})
+}
+
+func (m *memorySecrets) PutUntil(
+	ctx context.Context,
 	_ pluginapi.SecretScope,
 	name, value string,
 	_ time.Time,
@@ -62,8 +70,8 @@ func (m *memorySecrets) WriteSecret(
 	return nil
 }
 
-func (m *memorySecrets) DeleteSecret(
-	ctx context.Context, _ *pluginapi.PluginID, _ pluginapi.SecretScope, name string,
+func (m *memorySecrets) Delete(
+	ctx context.Context, _ pluginapi.SecretScope, name string,
 ) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -77,7 +85,7 @@ func (m *memorySecrets) DeleteSecret(
 // the run never signs in.
 type noSettings struct{}
 
-func (noSettings) Settings(context.Context, *pluginapi.PluginID) (map[string]any, error) {
+func (noSettings) Get(context.Context) (map[string]any, error) {
 	return nil, pluginapi.ErrSettingsAbsent
 }
 
@@ -155,14 +163,13 @@ func TestTheBackfillStoresEachMonthOfTheGasService(t *testing.T) {
 	t.Parallel()
 
 	server, requested := monthlyGasService(t)
-	identifier := pluginapi.ParsePluginID("dev.maroid.tbilisi-energy")
 	secrets := &memorySecrets{values: map[string]string{workspaceW + "/token": tokenT1}}
 	store := &countingStore{workspaces: map[string]bool{}, users: map[string]bool{}}
 
 	collector := service.NewCollector(
 		service.NewAPIClient(&config.Config{BaseURL: server.URL, RequestTimeout: time.Second}),
-		pluginapi.NewPluginSettings(noSettings{}, identifier),
-		pluginapi.NewPluginSecrets(secrets, identifier),
+		noSettings{},
+		secrets,
 		store,
 	)
 

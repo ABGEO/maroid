@@ -23,13 +23,13 @@ type sensorReading struct {
 // MeasurementSubscriber handles measurement messages published by flora-node devices.
 type MeasurementSubscriber struct {
 	logger *slog.Logger
-	db     *pluginapi.PluginDB
+	db     pluginapi.PluginDB
 }
 
 var _ pluginapi.MQTTSubscriber = (*MeasurementSubscriber)(nil)
 
 // NewMeasurementSubscriber creates a new MeasurementSubscriber.
-func NewMeasurementSubscriber(logger *slog.Logger, db *pluginapi.PluginDB) *MeasurementSubscriber {
+func NewMeasurementSubscriber(logger *slog.Logger, db pluginapi.PluginDB) *MeasurementSubscriber {
 	return &MeasurementSubscriber{
 		logger: logger.With(slog.String("subscriber", "measurement")),
 		db:     db,

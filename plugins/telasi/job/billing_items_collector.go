@@ -25,9 +25,9 @@ const MonthlyBillTopic = "monthly_bill"
 type BillingItemsCollector struct {
 	config       *config.Config
 	logger       *slog.Logger
-	db           *pluginapi.PluginDB
-	settings     *pluginapi.PluginSettings
-	notifier     *pluginapi.PluginNotifier
+	db           pluginapi.PluginDB
+	settings     pluginapi.PluginSettings
+	notifier     pluginapi.PluginNotifier
 	apiClientSvc service.APIClientService
 }
 
@@ -44,9 +44,9 @@ var _ pluginapi.CronJob = (*BillingItemsCollector)(nil)
 func NewBillingItemsCollector(
 	config *config.Config,
 	logger *slog.Logger,
-	db *pluginapi.PluginDB,
-	settings *pluginapi.PluginSettings,
-	notifier *pluginapi.PluginNotifier,
+	db pluginapi.PluginDB,
+	settings pluginapi.PluginSettings,
+	notifier pluginapi.PluginNotifier,
 	apiClientSvc service.APIClientService,
 ) *BillingItemsCollector {
 	instance := &BillingItemsCollector{

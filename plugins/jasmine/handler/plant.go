@@ -31,11 +31,11 @@ const (
 // PlantHandler provides HTTP handlers for plant CRUD.
 type PlantHandler struct {
 	logger *slog.Logger
-	db     *pluginapi.PluginDB
+	db     pluginapi.PluginDB
 }
 
 // NewPlantHandler creates a new PlantHandler.
-func NewPlantHandler(logger *slog.Logger, db *pluginapi.PluginDB) *PlantHandler {
+func NewPlantHandler(logger *slog.Logger, db pluginapi.PluginDB) *PlantHandler {
 	return &PlantHandler{logger: logger, db: db}
 }
 

@@ -20,16 +20,12 @@ const (
 // Notice builds the answer of the bot to a failure that a person can act on. The
 // commands and the conversation steps share it.
 type Notice struct {
-	pages    pluginapi.PageLinker
-	pluginID *pluginapi.PluginID
+	pages pluginapi.PluginPages
 }
 
 // NewNotice creates a new Notice.
-func NewNotice(pages pluginapi.PageLinker, pluginID *pluginapi.PluginID) *Notice {
-	return &Notice{
-		pages:    pages,
-		pluginID: pluginID,
-	}
+func NewNotice(pages pluginapi.PluginPages) *Notice {
+	return &Notice{pages: pages}
 }
 
 // Text answers the HTML message for a failure that a person can act on: no
@@ -48,7 +44,7 @@ func (n *Notice) Text(ctx context.Context, err error) (string, bool) {
 // notConnected links to the account page. A host that cannot build the address gets
 // the name of the page, so the answer still tells the person where to go.
 func (n *Notice) notConnected(ctx context.Context) string {
-	address, err := n.pages.PageURL(ctx, n.pluginID, accountPath)
+	address, err := n.pages.PageURL(ctx, accountPath)
 	if err != nil {
 		return noLinkText
 	}
