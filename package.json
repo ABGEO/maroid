@@ -1,14 +1,32 @@
 {
-  "name": "maroid",
-  "private": true,
-  "scripts": {
-    "deck:dev": "pnpm --filter @maroid/deck dev",
-    "deck:build": "pnpm --filter @maroid/deck build",
-    "deck:plugins:build": "pnpm --filter './plugins/*/ui' build",
-    "dex-ui:build": "pnpm --filter @maroid/dex-ui build",
-    "hub:serve": "go run ./apps/hub/cmd serve http",
-    "hub:migrate": "go run ./apps/hub/cmd migrate up",
-    "hub:worker": "go run ./apps/hub/cmd worker",
-    "hub:plugin:build": "sh -c 'go build -buildmode=plugin -o build/plugins/$1.so ./plugins/$1' --"
-  }
+	"name": "maroid",
+	"private": true,
+	"type": "module",
+	"packageManager": "pnpm@12.11.2",
+	"engines": {
+		"node": ">=24"
+	},
+	"scripts": {
+		"prepare": "husky",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"deck:dev": "pnpm --filter @maroid/deck dev",
+		"deck:build": "pnpm --filter @maroid/deck build",
+		"deck:plugins:build": "pnpm --filter './plugins/*/ui' build",
+		"dex-ui:build": "pnpm --filter @maroid/dex-ui build",
+		"hub:serve": "go run ./apps/hub/cmd serve http",
+		"hub:migrate": "go run ./apps/hub/cmd migrate up",
+		"hub:worker": "go run ./apps/hub/cmd worker",
+		"hub:plugin:build": "sh -c 'go build -buildmode=plugin -o build/plugins/$1.so ./plugins/$1' --"
+	},
+	"devDependencies": {
+		"@commitlint/cli": "^21.2.3",
+		"@commitlint/config-conventional": "^21.2.3",
+		"@commitlint/types": "^21.2.3",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.6.0",
+		"prettier": "^3.8.1",
+		"prettier-plugin-svelte": "^3.5.1",
+		"prettier-plugin-tailwindcss": "^0.7.2"
+	}
 }
