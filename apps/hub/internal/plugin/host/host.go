@@ -9,6 +9,7 @@ import (
 	"github.com/mymmrac/telego"
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
@@ -33,6 +34,10 @@ type Binder struct {
 
 // New creates a Binder over the given dependencies.
 func New(deps Dependencies) (*Binder, error) {
+	if deps.Config == nil {
+		return nil, errs.ErrPluginHostConfigAbsent
+	}
+
 	if deps.Logger == nil {
 		deps.Logger = slog.New(slog.DiscardHandler)
 	}

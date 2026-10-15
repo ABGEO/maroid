@@ -1,9 +1,11 @@
 package loader
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io/fs"
+	"log/slog"
 	"plugin"
 	"testing"
 	"testing/fstest"
@@ -62,6 +64,7 @@ func (s *spy) constructor() pluginapi.Constructor {
 }
 
 type harness struct {
+	logs       *bytes.Buffer
 	loader     *Loader
 	plugins    *registry.PluginRegistry
 	migrations *registry.MigrationRegistry
@@ -70,8 +73,11 @@ type harness struct {
 func newHarness(t *testing.T) *harness {
 	t.Helper()
 
+	logs := new(bytes.Buffer)
+
 	binder, err := host.New(host.Dependencies{
 		Config: &config.Config{Auth: config.Auth{DeckURL: testDeckURL}},
+		Logger: slog.New(slog.NewTextHandler(logs, nil)),
 	})
 	require.NoError(t, err)
 
@@ -79,6 +85,7 @@ func newHarness(t *testing.T) *harness {
 	migrations := registry.NewMigrationRegistry()
 
 	return &harness{
+		logs: logs,
 		loader: &Loader{
 			binder:  binder,
 			plugins: plugins,
@@ -237,7 +244,7 @@ func TestTheMigrationsRegisterUnderTheDeclaredIdentifier(t *testing.T) {
 }
 
 // PLGBIND-SC-009: A later write to the metadata that the plugin exports reaches neither
-// the plugin registry nor the bound host.
+// the plugin registry, nor the bound host, nor its logger.
 func TestALaterWriteToTheMetadataDoesNotReachTheHub(t *testing.T) {
 	t.Parallel()
 
@@ -254,4 +261,8 @@ func TestALaterWriteToTheMetadataDoesNotReachTheHub(t *testing.T) {
 	assert.False(t, scene.plugins.Has("dev.maroid.telasi"))
 	assert.Equal(t, "Probe", scene.plugins.All()[0].Meta.Name)
 	assert.Contains(t, pageOf(t, built.host), "/plugins/dev.maroid.gwp/")
+
+	built.host.Logger().Info("collected")
+	assert.Contains(t, scene.logs.String(), "plugin=dev.maroid.gwp ")
+	assert.NotContains(t, scene.logs.String(), "telasi")
 }

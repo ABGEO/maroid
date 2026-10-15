@@ -1,4 +1,4 @@
-	// Plugin for working with e-garden.
+// Plugin for working with e-garden.
 package main
 
 import (
@@ -21,7 +21,7 @@ import (
 
 // Meta names the plugin. The hub reads it before it calls New.
 //
-//nolint:gochecknoglobals
+//nolint:gochecknoglobals // the loader of the hub looks up the symbol Meta.
 var Meta = pluginapi.Metadata{
 	ID:          pluginapi.ParsePluginID("dev.maroid.jasmine"),
 	Name:        "Jasmine",

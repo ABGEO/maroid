@@ -16,7 +16,7 @@ import (
 
 // Meta names the plugin. The hub reads it before it calls New.
 //
-//nolint:gochecknoglobals
+//nolint:gochecknoglobals // the loader of the hub looks up the symbol Meta.
 var Meta = pluginapi.Metadata{
 	ID:          pluginapi.ParsePluginID("dev.maroid.pensions"),
 	Name:        "Pensions",

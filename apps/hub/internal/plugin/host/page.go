@@ -13,6 +13,8 @@ type boundPages struct {
 	pluginID *pluginapi.PluginID
 }
 
+var _ pluginapi.PluginPages = (*boundPages)(nil)
+
 // PageURL answers <deck>/w/<acting workspace>/plugins/<plugin>/<path>, the address
 // that the deck opens for a page route of a remote.
 func (l *boundPages) PageURL(ctx context.Context, path string) (string, error) {

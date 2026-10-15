@@ -23,6 +23,8 @@ type boundNotifier struct {
 	pluginID *pluginapi.PluginID
 }
 
+var _ pluginapi.PluginNotifier = (*boundNotifier)(nil)
+
 func (n *boundNotifier) Notify(ctx context.Context, topicID string, msg pluginapi.Message) error {
 	if err := n.sender.Send(ctx, n.pluginID, topicID, msg); err != nil {
 		return fmt.Errorf("sending the notification %q: %w", topicID, err)

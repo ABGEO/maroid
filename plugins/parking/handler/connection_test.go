@@ -28,7 +28,7 @@ const (
 	pathSend    = "/um/v3/user/two-Fa/send"
 	pathSubmit  = "/um/v3/user/two-Fa/submit"
 	pathPerson  = "/parking/person/check"
-	sessionT1   = "T1"
+	sessionT1   = "session-t1"
 	tokenHeader = "session-token"
 	codeCorrect = "0118"
 

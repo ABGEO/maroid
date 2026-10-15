@@ -17,6 +17,8 @@ type boundSettings struct {
 	pluginID *pluginapi.PluginID
 }
 
+var _ pluginapi.PluginSettings = (*boundSettings)(nil)
+
 func (s *boundSettings) Get(ctx context.Context) (map[string]any, error) {
 	values, err := s.reader.Settings(ctx, s.pluginID)
 	if err != nil {

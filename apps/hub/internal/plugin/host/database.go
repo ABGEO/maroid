@@ -14,6 +14,8 @@ type boundDB struct {
 	schema string
 }
 
+var _ pluginapi.PluginDB = (*boundDB)(nil)
+
 func (d *boundDB) WithTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	tx, err := d.pool.BeginTxx(ctx, nil)
 	if err != nil {

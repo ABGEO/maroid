@@ -16,6 +16,8 @@ type pluginDB struct {
 	schema string
 }
 
+var _ pluginapi.PluginDB = (*pluginDB)(nil)
+
 // PluginDB returns a pluginapi.PluginDB over the pool of the instance, with the
 // search_path and the scope that the hub sets for the plugin.
 func PluginDB(instance *Instance, pluginID *pluginapi.PluginID) pluginapi.PluginDB {

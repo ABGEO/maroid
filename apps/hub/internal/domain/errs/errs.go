@@ -11,6 +11,8 @@ var (
 	ErrPluginAlreadyRegistered = errors.New("plugin: already registered")
 	// ErrPluginCapabilityNotSupported indicates that a plugin capability is not supported.
 	ErrPluginCapabilityNotSupported = errors.New("plugin: capability not supported")
+	// ErrPluginHostConfigAbsent indicates a plugin host built with no configuration.
+	ErrPluginHostConfigAbsent = errors.New("plugin host: no configuration")
 	// ErrInvalidPluginID indicates that a plugin configuration is missing its required ID, or it is not valid.
 	ErrInvalidPluginID = errors.New("plugin: ID is missing or invalid")
 	// ErrInvalidPluginMetadata indicates that the name or the description of a plugin

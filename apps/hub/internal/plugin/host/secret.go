@@ -38,6 +38,8 @@ type boundSecrets struct {
 	pluginID *pluginapi.PluginID
 }
 
+var _ pluginapi.PluginSecrets = (*boundSecrets)(nil)
+
 func (s *boundSecrets) Get(
 	ctx context.Context,
 	scope pluginapi.SecretScope,
