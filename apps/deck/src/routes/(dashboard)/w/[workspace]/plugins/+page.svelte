@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	import { ApiError, PROBLEM_TYPE, api, type EnabledPlugin, type Plugin } from '$lib/api';
+	import { api, type EnabledPlugin, type Plugin } from '$lib/api';
 	import PluginSummary from '$lib/components/plugins/PluginSummary.svelte';
 	import Alert from '$lib/components/ui/Alert.svelte';
 	import Section from '$lib/components/ui/Section.svelte';
 	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
 	import { PERMISSION, holds } from '$lib/permissions';
 	import { displayNameOf, hasCapability } from '$lib/plugins/capabilities';
+	import { switchPlugin } from '$lib/plugins/switch';
 	import { fieldsOf, missingFields } from '$lib/settings/schema';
 	import { loadEnabled, pluginState } from '$lib/state/plugins.svelte';
 	import { isMember } from '$lib/state/workspaces.svelte';
@@ -50,18 +51,6 @@
 		return readsSettings && plugin !== undefined && hasCapability(plugin, 'settings');
 	}
 
-	function failureMessage(error: unknown, fallback: string): string {
-		if (error instanceof ApiError && error.problem !== null) {
-			if (error.is(PROBLEM_TYPE.permissionDenied) && error.problem.detail) {
-				return error.problem.detail;
-			}
-
-			return error.problem.errors?.[0]?.detail ?? error.problem.title;
-		}
-
-		return fallback;
-	}
-
 	async function check(workspace: string, plugin: Plugin): Promise<void> {
 		try {
 			const [schema, values] = await Promise.all([
@@ -100,19 +89,9 @@
 	async function toggle(pluginId: string, on: boolean): Promise<void> {
 		busy = pluginId;
 		banner = null;
-
-		try {
-			if (on) {
-				await api.enablements.enable(workspaceId, pluginId);
-			} else {
-				await api.enablements.disable(workspaceId, pluginId);
-			}
-		} catch (error) {
-			banner = failureMessage(error, 'The plugin stays as it was. Try again.');
-		} finally {
-			busy = null;
-			await Promise.all([load(), loadEnabled(workspaceId, true)]);
-		}
+		banner = await switchPlugin(workspaceId, pluginId, on);
+		busy = null;
+		await Promise.all([load(), loadEnabled(workspaceId, true)]);
 	}
 
 	$effect(() => {

@@ -57,26 +57,27 @@ of the address of a plugin stops the load. No HTTP route changes.
 
 ### 4.1 Components
 
-| Path                                                                           | Action | Holds                                                                                                                                                     |
-| ------------------------------------------------------------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `specs/adr/the-root-of-a-plugin-address.md`                                    | create | `ADR-0020`.                                                                                                                                               |
-| `specs/guidelines/web-ui.md`                                                   | change | `UI-005`: an entry of `UIManifest.Routes` is not at the root, and the hub refuses a plugin whose entry is.                                                |
-| `libs/pluginapi/ui.go`                                                         | change | The documentation of `UIRoute`: its path is not the root.                                                                                                 |
-| `apps/hub/internal/domain/errs/errs.go`                                        | change | `ErrRootUIRoute = errors.New("ui manifest: navigation entry at the root of the plugin")`.                                                                 |
-| `apps/hub/internal/plugin/registrar/ui.go`                                     | change | `Register` refuses a route for which `isRoot(path)` holds. `isRoot` reports `strings.Trim(path, "/") == ""`.                                              |
-| `apps/hub/internal/plugin/registrar/ui_test.go`                                | change | `PLGINFO-SC-012`.                                                                                                                                         |
-| `apps/deck/src/lib/api/enablements.ts`                                         | change | `get(workspaceId, pluginId): Promise<EnabledPlugin \| null>`, a `GET` of the route that `PLUGACC` already serves.                                         |
-| `apps/deck/src/lib/state/plugins.svelte.ts`                                    | change | `loadPlugins` keeps the promise of the request in flight and answers it to a second caller, so a caller can await the list.                               |
-| `apps/deck/src/lib/plugins/capabilities.ts`                                    | change | `Column`, `COLUMNS`, `columnsOf(name)`, `itemsOf(plugin, name)`. `PLGINFO-DD-003`.                                                                        |
-| `apps/deck/src/lib/plugins/switch.ts`                                          | create | `switchPlugin(workspaceId, pluginId, on): Promise<string \| null>`. Answers the message of a refusal, or null. Holds `failureMessage` from the list page. |
-| `apps/deck/src/lib/components/plugins/PluginSummary.svelte`                    | change | Takes `href?: ResolvedPathname`. With it, the name is a link.                                                                                             |
-| `apps/deck/src/lib/components/plugins/CapabilityPanel.svelte`                  | create | Props `plugin`, `name`, `entryHref?: (path: string) => ResolvedPathname`. Renders one capability. Section 4.3.                                            |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/[plugin]/+page.ts`     | create | The load of section 4.4. Answers `{ pluginId, enablement }`. Declares `depends('app:plugin-detail')`.                                                     |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/[plugin]/+page.svelte` | create | The page of section 4.3.                                                                                                                                  |
-| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/+page.svelte`          | change | Passes `href` of the detail page to each `PluginSummary` of both lists. `toggle` calls `switchPlugin`.                                                    |
-| `apps/deck/src/lib/navigation/breadcrumbs.ts`                                  | change | A case for the new route. `pluginCrumb` links to the detail page. `needsPlugins` names the new route. `PLGINFO-DD-006`.                                   |
-| `apps/deck/src/lib/components/layout/Breadcrumbs.svelte`                       | change | Passes `[...enabledState.plugins, ...pluginState.plugins]`, so a plugin that the workspace does not use still has its name.                               |
-| `apps/deck/src/lib/components/layout/Sidebar.svelte`                           | change | The item "Plugins" marks itself active on the new route.                                                                                                  |
+| Path                                                                           | Action | Holds                                                                                                                                                        |
+| ------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `specs/adr/the-root-of-a-plugin-address.md`                                    | create | `ADR-0020`.                                                                                                                                                  |
+| `specs/guidelines/web-ui.md`                                                   | change | `UI-005`: an entry of `UIManifest.Routes` is not at the root, and the hub refuses a plugin whose entry is.                                                   |
+| `libs/pluginapi/ui.go`                                                         | change | The documentation of `UIRoute`: its path is not the root.                                                                                                    |
+| `apps/hub/internal/domain/errs/errs.go`                                        | change | `ErrRootUIRoute = errors.New("ui manifest: navigation entry at the root of the plugin")`.                                                                    |
+| `apps/hub/internal/plugin/registrar/ui.go`                                     | change | `Register` refuses a route for which `isRoot(path)` holds. `isRoot` reports `strings.Trim(path, "/") == ""`.                                                 |
+| `apps/hub/internal/plugin/registrar/ui_test.go`                                | change | `PLGINFO-SC-012`.                                                                                                                                            |
+| `apps/deck/src/lib/api/types.ts`                                               | change | `APIRoute`, `TelegramCommand`, and `MCPTool` gain `permission`. `Permission{name, role}`. `Capabilities` gains `permissions`, as `PCAP` `api.yaml` gives it. |
+| `apps/deck/src/lib/api/enablements.ts`                                         | change | `get(workspaceId, pluginId): Promise<EnabledPlugin \| null>`, a `GET` of the route that `PLUGACC` already serves.                                            |
+| `apps/deck/src/lib/state/plugins.svelte.ts`                                    | change | `loadPlugins` keeps the promise of the request in flight and answers it to a second caller, so a caller can await the list.                                  |
+| `apps/deck/src/lib/plugins/capabilities.ts`                                    | change | `Column`, `COLUMNS`, `columnsOf(name)`, `itemsOf(plugin, name)`. `PLGINFO-DD-003`.                                                                           |
+| `apps/deck/src/lib/plugins/switch.ts`                                          | create | `switchPlugin(workspaceId, pluginId, on): Promise<string \| null>`. Answers the message of a refusal, or null. Holds `failureMessage` from the list page.    |
+| `apps/deck/src/lib/components/plugins/PluginSummary.svelte`                    | change | Takes `href?: ResolvedPathname`. With it, the name is a link.                                                                                                |
+| `apps/deck/src/lib/components/plugins/CapabilityPanel.svelte`                  | create | Props `plugin`, `name`, `entryHref?: (path: string) => ResolvedPathname`. Renders one capability. Section 4.3.                                               |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/[plugin]/+page.ts`     | create | The load of section 4.4. Answers `{ pluginId, enablement }`. Declares `depends('app:plugin-detail')`.                                                        |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/[plugin]/+page.svelte` | create | The page of section 4.3.                                                                                                                                     |
+| `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/+page.svelte`          | change | Passes `href` of the detail page to each `PluginSummary` of both lists. `toggle` calls `switchPlugin`.                                                       |
+| `apps/deck/src/lib/navigation/breadcrumbs.ts`                                  | change | A case for the new route. `pluginCrumb` links to the detail page. `needsPlugins` names the new route. `PLGINFO-DD-006`.                                      |
+| `apps/deck/src/lib/components/layout/Breadcrumbs.svelte`                       | change | Passes `[...enabledState.plugins, ...pluginState.plugins]`, so a plugin that the workspace does not use still has its name.                                  |
+| `apps/deck/src/lib/components/layout/Sidebar.svelte`                           | change | The item "Plugins" marks itself active on the new route.                                                                                                     |
 
 ### 4.2 Data model
 
@@ -104,6 +105,8 @@ This feature adds no table.
 | Every other capability   | A table with the columns of `columnsOf(name)`, one row for each item of `itemsOf`, in the order of the report. | `PLGINFO-FR-005`                   |
 
 The page passes `entryHref` only when `inUse`.
+
+The panels sit one to a row. A long value breaks after `/`, `.`, or `:`.
 
 `COLUMNS` holds, for each capability with items, the fields of `PCAP` `api.yaml` in
 its order:
@@ -329,9 +332,9 @@ a viewer of H.
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---- |
 | 1   | Accept `ADR-0020`. Change `UI-005`. Add the row to the index of `specs/adr/`.                                                                 | `PLGINFO-FR-012`                                                         | [x]  |
 | 2   | Write `PLGINFO-SC-012`. Add `ErrRootUIRoute` and the check. Change the documentation of `UIRoute`. Lint and build the hub, then every plugin. | `PLGINFO-FR-012`                                                         | [x]  |
-| 3   | `enablements.get`, the awaitable `loadPlugins`, and `switchPlugin`. Move the list page onto `switchPlugin`.                                   | `PLGINFO-FR-008`, `PLGINFO-NFR-001`                                      | [ ]  |
-| 4   | `COLUMNS`, `columnsOf`, `itemsOf`, and `CapabilityPanel`.                                                                                     | `PLGINFO-FR-004`, `PLGINFO-FR-005`, `PLGINFO-FR-006`                     | [ ]  |
-| 5   | The load and the page.                                                                                                                        | `PLGINFO-FR-002`, `PLGINFO-FR-003`, `PLGINFO-FR-007` to `PLGINFO-FR-011` | [ ]  |
+| 3   | `enablements.get`, the awaitable `loadPlugins`, and `switchPlugin`. Move the list page onto `switchPlugin`.                                   | `PLGINFO-FR-008`, `PLGINFO-NFR-001`                                      | [x]  |
+| 4   | `COLUMNS`, `columnsOf`, `itemsOf`, and `CapabilityPanel`.                                                                                     | `PLGINFO-FR-004`, `PLGINFO-FR-005`, `PLGINFO-FR-006`                     | [x]  |
+| 5   | The load and the page.                                                                                                                        | `PLGINFO-FR-002`, `PLGINFO-FR-003`, `PLGINFO-FR-007` to `PLGINFO-FR-011` | [x]  |
 | 6   | The link on each row of the list, the trail, and the active item of the sidebar. Lint and check the deck.                                     | `PLGINFO-FR-001`                                                         | [ ]  |
 | 7   | Run `PLGINFO-SC-001` to `PLGINFO-SC-013`, except `PLGINFO-SC-012`.                                                                            | Every statement                                                          | [ ]  |
 

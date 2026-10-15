@@ -127,18 +127,27 @@ export interface UIManifest {
 export interface APIRoute {
 	method: string;
 	path: string;
+	permission: string;
 }
 
 /** One bot command that a plugin answers, with the prefix of the plugin. */
 export interface TelegramCommand {
 	command: string;
 	description: string;
+	permission: string;
 }
 
 /** One tool that a plugin exposes over the Model Context Protocol. */
 export interface MCPTool {
 	name: string;
 	description: string;
+	permission: string;
+}
+
+/** One permission that a plugin declares, with the lowest workspace role that holds it. */
+export interface Permission {
+	name: string;
+	role: 'manager' | 'editor' | 'viewer';
 }
 
 /** One job that a plugin runs on a schedule. */
@@ -181,6 +190,7 @@ export interface Capabilities {
 	telegram_conversations?: TelegramConversation[];
 	mcp_tools?: MCPTool[];
 	widgets?: Widget[];
+	permissions?: Permission[];
 }
 
 export type WidgetKind = 'stat' | 'list';

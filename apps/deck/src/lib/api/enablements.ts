@@ -13,6 +13,9 @@ export const enablements = {
 	list: (workspaceId: string): Promise<EnabledPlugin[] | null> =>
 		client.get<Page<EnabledPlugin>>(path(workspaceId)).then((page) => page?.items ?? null),
 
+	get: (workspaceId: string, pluginId: string): Promise<EnabledPlugin | null> =>
+		client.get<EnabledPlugin>(path(workspaceId, pluginId)),
+
 	enable: (workspaceId: string, pluginId: string): Promise<EnabledPlugin | null> =>
 		client.put<EnabledPlugin>(path(workspaceId, pluginId)),
 

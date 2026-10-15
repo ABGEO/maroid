@@ -7,11 +7,19 @@ export const pluginState = $state<{ status: PluginStatus; plugins: Plugin[] }>({
 	plugins: []
 });
 
-export async function loadPlugins(): Promise<void> {
-	if (pluginState.status !== 'idle') {
-		return;
-	}
+let pending: Promise<void> | null = null;
 
+/**
+ * Loads the plugins that the person can turn on, once for the session. A second
+ * caller awaits the same request.
+ */
+export function loadPlugins(): Promise<void> {
+	pending ??= fetchPlugins();
+
+	return pending;
+}
+
+async function fetchPlugins(): Promise<void> {
 	pluginState.status = 'loading';
 
 	try {

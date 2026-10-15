@@ -17,6 +17,7 @@ const LABELS: Record<CapabilityName, string> = {
 	cron: 'Scheduled jobs',
 	mqtt: 'MQTT',
 	cli: 'CLI',
+	permissions: 'Permissions',
 	migrations: 'Migrations'
 };
 
@@ -58,4 +59,85 @@ export function countOf(plugin: Plugin, name: CapabilityName): number {
 /** Every capability of a plugin, in the order that LABELS gives. */
 export function capabilitiesOf(plugin: Plugin): CapabilityName[] {
 	return ORDER.filter((name) => hasCapability(plugin, name));
+}
+
+/** One column of the table of a capability: a field of its items, and its heading. */
+export interface Column {
+	field: string;
+	label: string;
+	mono: boolean;
+}
+
+type ItemCapability = Exclude<CapabilityName, 'settings' | 'migrations' | 'ui'>;
+
+const COLUMNS: Record<ItemCapability, Column[]> = {
+	api: [
+		{ field: 'method', label: 'Method', mono: true },
+		{ field: 'path', label: 'Path', mono: true },
+		{ field: 'permission', label: 'Permission', mono: true }
+	],
+	cli: [{ field: 'command', label: 'Command', mono: true }],
+	cron: [
+		{ field: 'id', label: 'Job', mono: true },
+		{ field: 'schedule', label: 'Schedule', mono: true }
+	],
+	mqtt: [
+		{ field: 'id', label: 'Subscriber', mono: true },
+		{ field: 'topic', label: 'Topic', mono: true }
+	],
+	telegram_commands: [
+		{ field: 'command', label: 'Command', mono: true },
+		{ field: 'description', label: 'Description', mono: false },
+		{ field: 'permission', label: 'Permission', mono: true }
+	],
+	telegram_conversations: [
+		{ field: 'id', label: 'Conversation', mono: true },
+		{ field: 'entry', label: 'Entry', mono: true }
+	],
+	mcp_tools: [
+		{ field: 'name', label: 'Tool', mono: true },
+		{ field: 'description', label: 'Description', mono: false },
+		{ field: 'permission', label: 'Permission', mono: true }
+	],
+	widgets: [
+		{ field: 'key', label: 'Key', mono: true },
+		{ field: 'title', label: 'Title', mono: false },
+		{ field: 'kind', label: 'Kind', mono: true },
+		{ field: 'size', label: 'Size', mono: true },
+		{ field: 'permission', label: 'Permission', mono: true }
+	],
+	permissions: [
+		{ field: 'name', label: 'Permission', mono: true },
+		{ field: 'role', label: 'Lowest role', mono: true }
+	]
+};
+
+/**
+ * The places where a long value may break: after each `/`, `.`, and `:`, so a
+ * path or a permission wraps between its parts and never inside a word.
+ */
+export function partsOf(value: string): string[] {
+	return value.split(/(?<=[/.:])/);
+}
+
+/**
+ * The columns of the table of a capability. A capability that holds no item, and
+ * the user interface, which lists its navigation entries, answer none.
+ */
+export function columnsOf(name: CapabilityName): Column[] {
+	return name in COLUMNS ? COLUMNS[name as ItemCapability] : [];
+}
+
+/** The items of a capability, in the order of the report. */
+export function itemsOf(plugin: Plugin, name: CapabilityName): object[] {
+	const value = plugin.capabilities?.[name];
+
+	return Array.isArray(value) ? value : [];
+}
+
+/** The value of one field of an item, as the report states it. */
+export function cellOf(item: object, field: string): string {
+	const value: unknown = (item as Record<string, unknown>)[field];
+
+	return value === undefined || value === null ? '' : String(value);
 }
