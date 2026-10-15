@@ -18,6 +18,7 @@ const LABELS: Record<CapabilityName, string> = {
 	mqtt: 'MQTT',
 	cli: 'CLI',
 	permissions: 'Permissions',
+	notification_topics: 'Notification topics',
 	migrations: 'Migrations'
 };
 
@@ -61,9 +62,12 @@ export function capabilitiesOf(plugin: Plugin): CapabilityName[] {
 	return ORDER.filter((name) => hasCapability(plugin, name));
 }
 
-/** One column of the table of a capability: a field of its items, and its heading. */
+/**
+ * One column of the table of a capability: a field of its items, and its heading.
+ * With no field, the item is a plain value and the column shows it.
+ */
 export interface Column {
-	field: string;
+	field?: string;
 	label: string;
 	mono: boolean;
 }
@@ -109,7 +113,8 @@ const COLUMNS: Record<ItemCapability, Column[]> = {
 	permissions: [
 		{ field: 'name', label: 'Permission', mono: true },
 		{ field: 'role', label: 'Lowest role', mono: true }
-	]
+	],
+	notification_topics: [{ label: 'Topic', mono: true }]
 };
 
 /**
@@ -129,15 +134,16 @@ export function columnsOf(name: CapabilityName): Column[] {
 }
 
 /** The items of a capability, in the order of the report. */
-export function itemsOf(plugin: Plugin, name: CapabilityName): object[] {
+export function itemsOf(plugin: Plugin, name: CapabilityName): unknown[] {
 	const value = plugin.capabilities?.[name];
 
 	return Array.isArray(value) ? value : [];
 }
 
 /** The value of one field of an item, as the report states it. */
-export function cellOf(item: object, field: string): string {
-	const value: unknown = (item as Record<string, unknown>)[field];
+export function cellOf(item: unknown, field: string | undefined): string {
+	const value: unknown =
+		field === undefined ? item : (item as Record<string, unknown> | null)?.[field];
 
 	return value === undefined || value === null ? '' : String(value);
 }

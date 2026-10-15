@@ -191,6 +191,7 @@ export interface Capabilities {
 	mcp_tools?: MCPTool[];
 	widgets?: Widget[];
 	permissions?: Permission[];
+	notification_topics?: string[];
 }
 
 export type WidgetKind = 'stat' | 'list';

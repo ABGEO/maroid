@@ -48,6 +48,7 @@ const PROVIDERS: Crumb = { label: 'Sign-in providers', href: resolve('/admin/pro
  */
 export function needsPlugins(routeId: RouteId | null): boolean {
 	return (
+		routeId === '/(dashboard)/w/[workspace]/plugins/[plugin]' ||
 		routeId === '/(dashboard)/w/[workspace]/plugins/[plugin]/settings' ||
 		routeId === '/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]'
 	);
@@ -168,6 +169,16 @@ export function crumbsFor(
 		case '/(dashboard)/profile':
 			return [HUB, { label: 'Profile', href: resolve('/profile') }];
 
+		case '/(dashboard)/w/[workspace]/plugins/[plugin]': {
+			const workspaceId = params.workspace ?? '';
+
+			return [
+				HUB,
+				workspaceCrumb(workspaceId, workspaces),
+				pluginCrumb(workspaceId, params.plugin ?? '', plugins)
+			];
+		}
+
 		case '/(dashboard)/w/[workspace]/plugins/[plugin]/settings': {
 			const workspaceId = params.workspace ?? '';
 			const pluginId = params.plugin ?? '';
@@ -175,7 +186,7 @@ export function crumbsFor(
 			return [
 				HUB,
 				workspaceCrumb(workspaceId, workspaces),
-				pluginCrumb(pluginId, plugins),
+				pluginCrumb(workspaceId, pluginId, plugins),
 				{
 					label: 'Settings',
 					href: resolve('/(dashboard)/w/[workspace]/plugins/[plugin]/settings', {
@@ -193,7 +204,7 @@ export function crumbsFor(
 			return [
 				HUB,
 				workspaceCrumb(workspaceId, workspaces),
-				pluginCrumb(pluginId, plugins),
+				pluginCrumb(workspaceId, pluginId, plugins),
 				...routeCrumbs(workspaceId, pluginId, params.path ?? '', plugins, pageState)
 			];
 		}
@@ -213,9 +224,15 @@ function workspaceCrumb(workspaceId: string, workspaces: Workspace[]): Crumb {
 	};
 }
 
-/** The plugin itself. The hub serves no page for it, so the crumb carries no target. */
-function pluginCrumb(pluginId: string, plugins: Plugin[]): Crumb {
-	return { label: displayNameOf(find(plugins, pluginId), pluginId) };
+/** The plugin itself, which links to its detail page. */
+function pluginCrumb(workspaceId: string, pluginId: string, plugins: Plugin[]): Crumb {
+	return {
+		label: displayNameOf(find(plugins, pluginId), pluginId),
+		href: resolve('/(dashboard)/w/[workspace]/plugins/[plugin]', {
+			workspace: workspaceId,
+			plugin: pluginId
+		})
+	};
 }
 
 /**

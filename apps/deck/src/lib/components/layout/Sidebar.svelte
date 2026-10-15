@@ -76,6 +76,7 @@
 						href: resolve('/(dashboard)/w/[workspace]/plugins', { workspace: workspaceId }),
 						routes: [
 							'/(dashboard)/w/[workspace]/plugins',
+							'/(dashboard)/w/[workspace]/plugins/[plugin]',
 							'/(dashboard)/w/[workspace]/plugins/[plugin]/settings'
 						]
 					},

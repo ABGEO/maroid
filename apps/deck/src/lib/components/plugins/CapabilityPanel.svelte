@@ -66,7 +66,7 @@
 			<table class="table-sm table">
 				<thead>
 					<tr>
-						{#each columns as column (column.field)}
+						{#each columns as column (column.label)}
 							<th>{column.label}</th>
 						{/each}
 					</tr>
@@ -74,7 +74,7 @@
 				<tbody>
 					{#each items as item, index (index)}
 						<tr>
-							{#each columns as column (column.field)}
+							{#each columns as column (column.label)}
 								<td class={['wrap-break-word', column.mono && 'font-mono']}>
 									{@render breakable(cellOf(item, column.field))}
 								</td>

@@ -4,7 +4,7 @@
 	import type { Workspace } from '$lib/api';
 	import { crumbsFor, needsPlugins } from '$lib/navigation/breadcrumbs';
 	import type { PluginRoute } from '$lib/plugins/loader';
-	import { enabledState } from '$lib/state/plugins.svelte';
+	import { enabledState, pluginState } from '$lib/state/plugins.svelte';
 	import { pageTitle } from '$lib/state/title.svelte';
 	import { workspaceState } from '$lib/state/workspaces.svelte';
 
@@ -19,9 +19,12 @@
 			? [...workspaceState.workspaces, loaded]
 			: workspaceState.workspaces
 	);
+	// A plugin that the workspace does not use still has a name, from the plugins
+	// that the person can turn on.
+	const knownPlugins = $derived([...enabledState.plugins, ...pluginState.plugins]);
 	const route = $derived(page.data.route as PluginRoute | null | undefined);
 	const crumbs = $derived(
-		crumbsFor(page.route.id, page.params, enabledState.plugins, workspaces, {
+		crumbsFor(page.route.id, page.params, knownPlugins, workspaces, {
 			title: pageTitle.value,
 			parameterized: route?.parameterized === true
 		})

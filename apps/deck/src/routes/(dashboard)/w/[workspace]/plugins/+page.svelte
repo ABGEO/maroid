@@ -47,6 +47,13 @@
 		canSwitch && (pluginState.status === 'idle' || pluginState.status === 'loading')
 	);
 
+	function detailOf(pluginId: string) {
+		return resolve('/(dashboard)/w/[workspace]/plugins/[plugin]', {
+			workspace: workspaceId,
+			plugin: pluginId
+		});
+	}
+
 	function configurable(plugin: Plugin | undefined): plugin is Plugin {
 		return readsSettings && plugin !== undefined && hasCapability(plugin, 'settings');
 	}
@@ -139,7 +146,7 @@
 				<ul class="list panel">
 					{#each inUse as row (row.id)}
 						<li class="list-row flex items-center gap-4">
-							<PluginSummary id={row.id} plugin={row.plugin} detailed>
+							<PluginSummary id={row.id} plugin={row.plugin} href={detailOf(row.id)} detailed>
 								{#snippet badges()}
 									{#if readsSettings && incomplete[row.id]}
 										<span class="badge badge-warning badge-xs">Needs attention</span>
@@ -191,7 +198,7 @@
 					<ul class="list panel">
 						{#each toTurnOn as plugin (plugin.id)}
 							<li class="list-row flex items-center justify-between gap-3">
-								<PluginSummary id={plugin.id} {plugin} />
+								<PluginSummary id={plugin.id} {plugin} href={detailOf(plugin.id)} />
 								<input
 									type="checkbox"
 									class="toggle toggle-primary toggle-sm"
