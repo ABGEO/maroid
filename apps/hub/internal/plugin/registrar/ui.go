@@ -60,13 +60,8 @@ func (r *UIRegistrar) Register(plugin pluginui.LoadedPlugin) error {
 
 	if manifest != nil {
 		for _, route := range manifest.Routes {
-			if hasParameterSegment(route.Path) {
-				return fmt.Errorf(
-					"checking the route %s of plugin %s: %w",
-					route.Path,
-					id,
-					errs.ErrInvalidUIRoute,
-				)
+			if err := checkNavigationEntry(route.Path); err != nil {
+				return fmt.Errorf("checking the route %s of plugin %s: %w", route.Path, id, err)
 			}
 		}
 	}
@@ -75,6 +70,23 @@ func (r *UIRegistrar) Register(plugin pluginui.LoadedPlugin) error {
 	r.capabilities.Record(id, pluginui.CapUI, manifest)
 
 	return nil
+}
+
+func checkNavigationEntry(path string) error {
+	switch {
+	case isRoot(path):
+		return errs.ErrRootUIRoute
+	case hasParameterSegment(path):
+		return errs.ErrInvalidUIRoute
+	default:
+		return nil
+	}
+}
+
+// isRoot reports whether the path names the root of the plugin, which the deck
+// keeps for the plugin detail page.
+func isRoot(path string) bool {
+	return strings.Trim(path, "/") == ""
 }
 
 // hasParameterSegment reports whether a segment of the path takes a value, which

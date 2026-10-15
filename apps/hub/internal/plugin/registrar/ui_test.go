@@ -62,3 +62,40 @@ func TestANavigationEntryWithAParameterFailsTheLoad(t *testing.T) {
 	_, held = manifests.Get("dev.maroid.other")
 	assert.True(t, held)
 }
+
+// PLGINFO-SC-012: A navigation entry at the root of the plugin stops the load,
+// and an entry below the root registers.
+func TestANavigationEntryAtTheRootFailsTheLoad(t *testing.T) {
+	t.Parallel()
+
+	for _, path := range []string{"/", ""} {
+		t.Run("path "+path, func(t *testing.T) {
+			t.Parallel()
+
+			manifests := registry.NewUIRegistry()
+			uiRegistrar := registrar.NewUIRegistrar(manifests, registry.NewCapabilityRegistry())
+
+			refused := &pages{id: "dev.maroid.probe", routes: []pluginapi.UIRoute{
+				{Path: path, Label: "Overview"},
+			}}
+
+			err := uiRegistrar.Register(loaded(refused))
+			require.ErrorIs(t, err, errs.ErrRootUIRoute)
+
+			_, held := manifests.Get("dev.maroid.probe")
+			assert.False(t, held, "a refused plugin leaves no manifest")
+		})
+	}
+
+	manifests := registry.NewUIRegistry()
+	uiRegistrar := registrar.NewUIRegistrar(manifests, registry.NewCapabilityRegistry())
+
+	accepted := &pages{id: "dev.maroid.other", routes: []pluginapi.UIRoute{
+		{Path: "/overview", Label: "Overview"},
+	}}
+
+	require.NoError(t, uiRegistrar.Register(loaded(accepted)))
+
+	_, held := manifests.Get("dev.maroid.other")
+	assert.True(t, held)
+}

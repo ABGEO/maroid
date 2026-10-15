@@ -16,8 +16,9 @@ type UIManifest struct {
 }
 
 // UIRoute is one navigation entry of the plugin UI. Its path holds no parameter
-// segment, because the navigation opens the page with no value, and the hub refuses
-// a plugin whose entry holds one.
+// segment, because the navigation opens the page with no value, and it is not the
+// root, where the deck serves the plugin detail page. The hub refuses a plugin whose
+// entry breaks either rule.
 type UIRoute struct {
 	Path  string `json:"path"`
 	Label string `json:"label"`

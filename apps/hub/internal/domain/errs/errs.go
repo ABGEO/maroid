@@ -45,6 +45,9 @@ var (
 	// ErrInvalidUIRoute indicates a navigation entry of a UI manifest that holds a
 	// parameter segment, which no entry of the navigation can open.
 	ErrInvalidUIRoute = errors.New("ui manifest: navigation entry with a parameter segment")
+	// ErrRootUIRoute indicates a navigation entry of a UI manifest at the root of the
+	// plugin, where the deck serves the plugin detail page.
+	ErrRootUIRoute = errors.New("ui manifest: navigation entry at the root of the plugin")
 	// ErrMQTTBrokerNotConfigured indicates that MQTT subscribers are registered but no broker is configured.
 	ErrMQTTBrokerNotConfigured = errors.New("mqtt: broker not configured")
 	// ErrUnknownWorkerType indicates that a requested worker type is not registered.
