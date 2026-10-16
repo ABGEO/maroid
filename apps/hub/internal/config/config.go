@@ -132,6 +132,7 @@ type OpenBao struct {
 	RoleID       string `mapstructure:"role_id"   validate:"required"`
 	SecretID     string `mapstructure:"secret_id" validate:"required"`
 	TransitMount string `default:"transit"        mapstructure:"transit_mount"`
+	Namespace    string `default:""               mapstructure:"namespace"`
 }
 
 // Telegram defines Telegram integration configuration parameters.

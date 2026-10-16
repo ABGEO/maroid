@@ -4,9 +4,9 @@ title: The access of Maroid to the secret store
 type: requirements
 status: approved
 created: 2026-10-07
-updated: 2026-10-07
+updated: 2026-10-17
 approved_by: Temuri
-approved_on: 2026-10-07
+approved_on: 2026-10-17
 constrained_by: [LOG, LIF]
 ---
 
@@ -23,6 +23,9 @@ The readiness report counts the store as up during the failure. `HEALTH-FR-006` 
 the state of the store, not the access of Maroid. `PSET-FR-018` proves the access at
 the start only.
 
+A store that several systems share gives Maroid a store namespace of its own. Maroid
+acts in the root namespace of the store only, so it cannot use a shared store.
+
 ## 2. Users
 
 | Person                      | Needs                                                                  |
@@ -30,6 +33,7 @@ the start only.
 | A household member          | A saved secret and a plugin run that work on any day, with no restart. |
 | A person who deploys Maroid | No restart to cure an ended access, and the cause when access fails.   |
 | An orchestrator             | A readiness answer that fails while Maroid cannot use the store.       |
+| A person who runs the store | One store namespace for Maroid, apart from the other systems.          |
 
 ## 3. Out of scope
 
@@ -42,7 +46,8 @@ the start only.
 
 ## 4. Definitions
 
-`GLO-secret-store`, `GLO-store-access`, and `GLO-readiness` give the terms of this feature.
+`GLO-secret-store`, `GLO-store-access`, `GLO-store-namespace`, and `GLO-readiness` give the
+terms of this feature.
 
 ## 5. Functional requirements
 
@@ -119,6 +124,24 @@ for the hub.
 - Unwanted case: the store access of the hub ended, the hub cannot gain a new one, and
   the secret store counts as up.
 
+### `SSACCESS-FR-007`
+
+Maroid must act in the store namespace that its configuration names: the login, each
+save and each read of a secret, and the readiness answer. With no store namespace
+named, Maroid must act in the root namespace.
+
+**Why:** A shared store holds the logins, the policies, and the keys of Maroid inside
+its store namespace. The store refuses each of them in another namespace.
+
+**Examples:**
+
+- Normal case: the configuration names `maroid`. Maroid logs in inside `maroid`, a
+  member saves a secret, a plugin reads it, and the secret store counts as up.
+- Normal case: the configuration names no store namespace. Maroid acts as it did
+  before this requirement.
+- Unwanted case: the configuration names a store namespace that the store does not
+  hold. The first login fails, and Maroid does not start, as `PSET-FR-018` gives.
+
 ## 6. Non-functional requirements
 
 ### `SSACCESS-NFR-001`
@@ -139,10 +162,11 @@ the secret store as up.
 
 ## 8. Open questions
 
-| #   | Question                                                                  | Owner  | Answer                                                       |
-| --- | ------------------------------------------------------------------------- | ------ | ------------------------------------------------------------ |
-| 1   | Does Maroid stop when it cannot gain a store access after the start?      | Temuri | No. It keeps running and tries again. See `SSACCESS-FR-003`. |
-| 2   | Does this feature or `HEALTH` own the readiness answer for a lost access? | Temuri | This feature. `SSACCESS-FR-006`. `HEALTH` stays unchanged.   |
+| #   | Question                                                                                 | Owner  | Answer                                                              |
+| --- | ---------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------- |
+| 1   | Does Maroid stop when it cannot gain a store access after the start?                     | Temuri | No. It keeps running and tries again. See `SSACCESS-FR-003`.        |
+| 2   | Does this feature or `HEALTH` own the readiness answer for a lost access?                | Temuri | This feature. `SSACCESS-FR-006`. `HEALTH` stays unchanged.          |
+| 3   | Does the configuration or an environment variable of the store name the store namespace? | Temuri | The configuration of Maroid, beside the address. `SSACCESS-FR-007`. |
 
 ## Retired identifiers
 

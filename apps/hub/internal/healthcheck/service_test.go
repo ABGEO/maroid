@@ -23,12 +23,25 @@ const (
 	healthPath    = "/v1/sys/health"
 	lookupPath    = "/v1/auth/token/lookup-self"
 	unsealed      = `{"initialized": true, "sealed": false}`
+	storeNS       = "maroid"
 	hangTime      = 10 * time.Second
 )
 
 // newService builds a Service whose database refuses every connection, and whose
 // IdP and secret store are the given test servers.
 func newService(t *testing.T, idp, secretStore *httptest.Server) *healthcheck.Service {
+	t.Helper()
+
+	return newServiceIn(t, idp, secretStore, "")
+}
+
+// newServiceIn builds a Service as newService does, with a client of the secret store
+// in the store namespace.
+func newServiceIn(
+	t *testing.T,
+	idp, secretStore *httptest.Server,
+	namespace string,
+) *healthcheck.Service {
 	t.Helper()
 
 	cfg := &config.Config{}
@@ -43,6 +56,10 @@ func newService(t *testing.T, idp, secretStore *httptest.Server) *healthcheck.Se
 
 	store, err := api.NewClient(storeConfig)
 	require.NoError(t, err)
+
+	if namespace != "" {
+		store.SetNamespace(namespace)
+	}
 
 	service, err := healthcheck.New(cfg, db, store, idp.Client())
 	require.NoError(t, err)
@@ -85,6 +102,36 @@ func secretStore(t *testing.T, healthBody string, lookupStatus int) *httptest.Se
 		case lookupPath:
 			w.WriteHeader(lookupStatus)
 			_, _ = w.Write([]byte(`{"data": {}}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(server.Close)
+
+	return server
+}
+
+// namespacedStore returns a test server that answers the health of the store in the
+// root namespace alone, as OpenBao does, and the lookup of the token in storeNS alone.
+func namespacedStore(t *testing.T) *httptest.Server {
+	t.Helper()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		namespace := r.Header.Get(api.NamespaceHeaderName)
+
+		switch {
+		case r.URL.Path == healthPath && namespace == "":
+			_, _ = w.Write([]byte(unsealed))
+		case r.URL.Path == healthPath:
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(`{"errors": ["operation unavailable in namespaces"]}`))
+		case r.URL.Path == lookupPath && namespace == storeNS:
+			_, _ = w.Write([]byte(`{"data": {}}`))
+		case r.URL.Path == lookupPath:
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte(`{"errors": ["permission denied"]}`))
 		default:
 			http.NotFound(w, r)
 		}
@@ -255,6 +302,19 @@ func TestTheSecretStoreIsUpWhenItAcceptsTheToken(t *testing.T) {
 	store := secretStore(t, unsealed, http.StatusOK)
 
 	check := newService(t, idp, store).Readiness(t.Context())
+
+	assert.NotContains(t, check.Failures, "secret-store")
+}
+
+// SSACCESS-SC-013: A client in a store namespace reads the health of the store in the
+// root namespace and looks up its token in the store namespace, so the store counts as up.
+func TestTheSecretStoreIsUpInAStoreNamespace(t *testing.T) {
+	t.Parallel()
+
+	idp := identityProvider(t, http.StatusOK)
+	store := namespacedStore(t)
+
+	check := newServiceIn(t, idp, store, storeNS).Readiness(t.Context())
 
 	assert.NotContains(t, check.Failures, "secret-store")
 }

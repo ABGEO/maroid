@@ -20,7 +20,8 @@ var (
 // that it accepts the token of the hub.
 func secretStoreCheck(client *api.Client) health.Config {
 	return limited("secret-store", func(ctx context.Context) error {
-		status, err := client.Sys().HealthWithContext(ctx)
+		// OpenBao answers its health in the root namespace alone.
+		status, err := client.WithNamespace("").Sys().HealthWithContext(ctx)
 		if err != nil {
 			return fmt.Errorf("reading the openbao health: %w", err)
 		}

@@ -45,6 +45,13 @@ func New(ctx context.Context, cfg *config.OpenBao, logger *slog.Logger) (*Sessio
 		return nil, fmt.Errorf("building the OpenBao client: %w", err)
 	}
 
+	// NewClient reads BAO_NAMESPACE, and the configuration of Maroid is the one source.
+	if cfg.Namespace == "" {
+		client.ClearNamespace()
+	} else {
+		client.SetNamespace(cfg.Namespace)
+	}
+
 	login, err := approle.NewAppRoleAuth(
 		cfg.RoleID,
 		&approle.SecretID{FromString: cfg.SecretID},
@@ -59,6 +66,7 @@ func New(ctx context.Context, cfg *config.OpenBao, logger *slog.Logger) (*Sessio
 		logger: logger.With(
 			slog.String("component", "secret-store"),
 			slog.String("address", cfg.Address),
+			slog.String("namespace", cfg.Namespace),
 		),
 		stop: make(chan struct{}),
 		done: make(chan struct{}),

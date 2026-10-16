@@ -25,6 +25,8 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/openbao"
+	"github.com/abgeo/maroid/apps/hub/internal/secret"
+	"github.com/abgeo/maroid/apps/hub/internal/testbao"
 )
 
 const (
@@ -522,4 +524,54 @@ func TestSessionRegainsAccessWithinOneMinute(t *testing.T) {
 		return err == nil
 	}, 60*time.Second, 500*time.Millisecond)
 	t.Logf("regained the access %s after the restore", time.Since(restored).Round(time.Second))
+}
+
+// SSACCESS-SC-012: A session in a store namespace logs in, encrypts, and decrypts
+// inside it, while the root namespace holds neither the role nor the engine.
+func TestSessionActsInTheStoreNamespace(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping the integration test, it needs Docker")
+	}
+
+	server := testbao.StartIn(t, "maroid")
+	key := secret.UserKey("11111111-1111-1111-1111-111111111111")
+	server.CreateKeys(t, key)
+
+	session, err := openbao.New(t.Context(), server.Config(t), slog.New(slog.DiscardHandler))
+	require.NoError(t, err)
+
+	cipher := secret.NewTransit(session.Client(), testbao.TransitMount)
+	ciphertext, err := cipher.Encrypt(t.Context(), key, "a password")
+	require.NoError(t, err)
+
+	plaintext, err := cipher.Decrypt(t.Context(), key, ciphertext)
+	require.NoError(t, err)
+
+	assert.Equal(t, "a password", plaintext)
+	assert.Equal(t, "maroid", session.Client().Namespace())
+}
+
+// SSACCESS-SC-014: A session with no store namespace in its configuration acts in the
+// root namespace, whatever BAO_NAMESPACE holds.
+func TestSessionIgnoresTheNamespaceOfTheEnvironment(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping the integration test, it needs Docker")
+	}
+
+	server := testbao.Start(t)
+	key := secret.UserKey("11111111-1111-1111-1111-111111111111")
+	server.CreateKeys(t, key)
+
+	t.Setenv("BAO_NAMESPACE", "absent")
+
+	session, err := openbao.New(t.Context(), server.Config(t), slog.New(slog.DiscardHandler))
+	require.NoError(t, err)
+
+	_, err = secret.NewTransit(session.Client(), testbao.TransitMount).
+		Encrypt(t.Context(), key, "a password")
+	require.NoError(t, err)
+
+	assert.Empty(t, session.Client().Namespace())
 }

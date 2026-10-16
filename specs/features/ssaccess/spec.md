@@ -4,10 +4,10 @@ title: The access of Maroid to the secret store
 type: spec
 status: approved
 created: 2026-10-07
-updated: 2026-10-08
+updated: 2026-10-17
 approved_by: Temuri
-approved_on: 2026-10-07
-constrained_by: [LIF, LOG, DEP, JOB, TST, EXT]
+approved_on: 2026-10-17
+constrained_by: [LIF, LOG, DEP, JOB, TST, EXT, CFG]
 requirements: features/ssaccess/requirements.md
 ---
 
@@ -19,7 +19,8 @@ requirements: features/ssaccess/requirements.md
 method keeps the token alive with the lifetime watcher of the OpenBao API, and it logs
 in again when the token reaches its end. The commands `serve http` and `worker` run it
 in their errgroup. The readiness check of the secret store also asks OpenBao whether the
-token of the hub still works.
+token of the hub still works. `openbao.namespace` names the store namespace that the
+shared client acts in.
 
 ## 2. Coverage
 
@@ -31,6 +32,7 @@ token of the hub still works.
 | `SSACCESS-FR-004`  | `SSACCESS-DD-003`, `SSACCESS-SC-003`                                                                       |
 | `SSACCESS-FR-005`  | Section 4.5, `SSACCESS-DD-006`, `SSACCESS-SC-005`, `SSACCESS-SC-006`                                       |
 | `SSACCESS-FR-006`  | `SSACCESS-DD-005`, `SSACCESS-SC-007`, `SSACCESS-SC-008`                                                    |
+| `SSACCESS-FR-007`  | Section 4.3, `SSACCESS-DD-007`, `SSACCESS-DD-008`, `SSACCESS-SC-012` to `SSACCESS-SC-014`                  |
 | `SSACCESS-NFR-001` | `SSACCESS-DD-003`, `SSACCESS-SC-009`                                                                       |
 
 ## 3. Guideline compliance
@@ -41,7 +43,7 @@ token of the hub still works.
 | `LIF-004` | Lifecycle         | `SSACCESS-DD-004`. Each command runs `Session.Run` in its errgroup.                          |
 | `LIF-005` | Lifecycle         | `SSACCESS-DD-004`. The session starts first, so its stop is the last step.                   |
 | `LIF-006` | Lifecycle         | `Session.Stop` takes the shutdown context with its 10 seconds. `SSACCESS-SC-010`.            |
-| `LOG-003` | Logging           | The logger of the session carries `component` and `address`.                                 |
+| `LOG-003` | Logging           | The logger of the session carries `component`, `address`, and `namespace`.                   |
 | `LOG-005` | Logging           | Each failure goes to `slog.Any("error", err)`.                                               |
 | `LOG-008` | Logging           | `SSACCESS-DD-006`. No record holds the token or the secret ID. `SSACCESS-SC-005`.            |
 | `DEP-003` | Dependencies      | `openBaoSession` replaces the field `openBaoClient`.                                         |
@@ -49,28 +51,32 @@ token of the hub still works.
 | `DEP-008` | Dependencies      | The session holds no resource that `Close` frees. The command stops the loop.                |
 | `JOB-001` | Jobs              | `SSACCESS-DD-004`. The session is not a `worker.Worker`, so `--workers` cannot leave it out. |
 | `EXT-005` | External services | A refused lookup of the token is a failed check, never an up.                                |
+| `CFG-002` | Configuration     | `MAROID_OPENBAO_NAMESPACE` overrides the key. `SSACCESS-DD-007` ignores `BAO_NAMESPACE`.     |
+| `CFG-003` | Configuration     | `openbao.namespace` declares its default, the empty string, in a `default` tag.              |
 | `TST-004` | Testing           | Section 6 gives each scenario a layer. `SSACCESS-SC-009` measures the 60 seconds.            |
 
 ## 4. Design
 
 ### 4.1 Components
 
-| Path                                            | Action | Content                                                                                 |
-| ----------------------------------------------- | ------ | --------------------------------------------------------------------------------------- |
-| `apps/hub/internal/openbao/client.go`           | delete | Its login moves into `session.go`.                                                      |
-| `apps/hub/internal/openbao/session.go`          | create | `Session`, `New`, `Client`, `Run`, `Stop`                                               |
-| `apps/hub/internal/openbao/doc.go`              | change | The package keeps the access of the hub to OpenBao.                                     |
-| `apps/hub/internal/openbao/session_test.go`     | create | `SSACCESS-SC-001` to `SSACCESS-SC-006`, `SSACCESS-SC-009` to `SSACCESS-SC-011`          |
-| `apps/hub/internal/depresolver/secret.go`       | change | `OpenBaoSession` replaces `OpenBaoClient`. `SecretCipher` takes `Client()`.             |
-| `apps/hub/internal/depresolver/health.go`       | change | `HealthService` takes `OpenBaoSession().Client()`.                                      |
-| `apps/hub/internal/depresolver/resolver.go`     | change | `Resolver` lists `OpenBaoSession`. The field `openBaoSession` replaces `openBaoClient`. |
-| `apps/hub/internal/command/serve/http.go`       | change | Runs the session in the errgroup. Stops it in the last shutdown step.                   |
-| `apps/hub/internal/command/worker.go`           | change | Runs the session in the errgroup. Stops it after every worker.                          |
-| `apps/hub/internal/healthcheck/openbao.go`      | change | `secretStoreCheck` looks up the token after the health of the store.                    |
-| `apps/hub/internal/healthcheck/service_test.go` | change | The fake store answers `lookup-self`. `SSACCESS-SC-007`, `SSACCESS-SC-008`.             |
-| `apps/hub/internal/secret/transit_test.go`      | change | Builds the cipher from `openbao.New(...).Client()`.                                     |
-| `apps/hub/internal/settings/manager_test.go`    | change | Builds the cipher from `openbao.New(...).Client()`.                                     |
-| `specs/features/pset/spec.md`                   | change | Section 4 names `openbao.New` with its new result.                                      |
+| Path                                            | Action | Content                                                                                                                            |
+| ----------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/hub/internal/openbao/client.go`           | delete | Its login moves into `session.go`.                                                                                                 |
+| `apps/hub/internal/openbao/session.go`          | create | `Session`, `New`, `Client`, `Run`, `Stop`. `New` sets the store namespace of the client, `SSACCESS-DD-007`                         |
+| `apps/hub/internal/openbao/doc.go`              | change | The package keeps the access of the hub to OpenBao.                                                                                |
+| `apps/hub/internal/openbao/session_test.go`     | create | `SSACCESS-SC-001` to `SSACCESS-SC-006`, `SSACCESS-SC-009` to `SSACCESS-SC-012`, `SSACCESS-SC-014`                                  |
+| `apps/hub/internal/depresolver/secret.go`       | change | `OpenBaoSession` replaces `OpenBaoClient`. `SecretCipher` takes `Client()`.                                                        |
+| `apps/hub/internal/depresolver/health.go`       | change | `HealthService` takes `OpenBaoSession().Client()`.                                                                                 |
+| `apps/hub/internal/depresolver/resolver.go`     | change | `Resolver` lists `OpenBaoSession`. The field `openBaoSession` replaces `openBaoClient`.                                            |
+| `apps/hub/internal/command/serve/http.go`       | change | Runs the session in the errgroup. Stops it in the last shutdown step.                                                              |
+| `apps/hub/internal/command/worker.go`           | change | Runs the session in the errgroup. Stops it after every worker.                                                                     |
+| `apps/hub/internal/healthcheck/openbao.go`      | change | `secretStoreCheck` looks up the token after the health of the store, and reads the health in the root namespace, `SSACCESS-DD-008` |
+| `apps/hub/internal/healthcheck/service_test.go` | change | The fake store answers `lookup-self`. `SSACCESS-SC-007`, `SSACCESS-SC-008`, `SSACCESS-SC-013`                                      |
+| `apps/hub/internal/secret/transit_test.go`      | change | Builds the cipher from `openbao.New(...).Client()`.                                                                                |
+| `apps/hub/internal/settings/manager_test.go`    | change | Builds the cipher from `openbao.New(...).Client()`.                                                                                |
+| `specs/features/pset/spec.md`                   | change | Section 4 names `openbao.New` with its new result.                                                                                 |
+| `apps/hub/internal/config/config.go`            | change | `OpenBao.Namespace`. `SSACCESS-DD-007`.                                                                                            |
+| `apps/hub/internal/testbao/testbao.go`          | change | `StartIn` holds the role and the transit engine in a store namespace.                                                              |
 
 ```go
 // apps/hub/internal/openbao/session.go
@@ -109,8 +115,15 @@ The constants of `session.go`:
 
 ### 4.3 Declarations
 
-This feature adds no route, no table, no job, no worker, and no configuration key.
-`openbao.address`, `openbao.role_id`, and `openbao.secret_id` from `PSET` keep their meaning.
+This feature adds no route, no table, no job, and no worker. It adds one configuration
+key. `openbao.address`, `openbao.role_id`, `openbao.secret_id`, and
+`openbao.transit_mount` from `PSET` keep their meaning, and `transit_mount` names a path
+inside the store namespace.
+
+| Key                 | Type   | Default            | Secret | Realizes          |
+| ------------------- | ------ | ------------------ | ------ | ----------------- |
+| `openbao.namespace` | string | `""`, the root one | no     | `SSACCESS-FR-007` |
+
 The AppRole role must accept the secret ID at every login. `secret_id_num_uses` is `0`,
 and `secret_id_ttl` is `0` or longer than the process runs.
 
@@ -145,6 +158,7 @@ sequenceDiagram
 | Condition                                   | Behavior                                                               | Log record                                                         |
 | ------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | The first login fails                       | `New` returns the error. The process stops.                            | None. `PSET` gives the message.                                    |
+| The store holds no such store namespace     | The first login fails, as the row above gives                          | None. `PSET` gives the message.                                    |
 | A renewal fails                             | The watcher tries again until the lease ends, then ends with the error | Warn, `renewing the openbao token failed`, at the end of the watch |
 | A login after the start fails               | Wait, then try again. Run keeps running.                               | Error, `logging in to openbao failed`, with `retry_in`             |
 | A login after the start succeeds            | Watch the new secret                                                   | Info, `logged in to openbao`                                       |
@@ -226,6 +240,36 @@ attribute is the error of the OpenBao API.
 **Rationale:** The API error holds the URL and the errors that the store returned, not
 the request body, so it names a refusal or an unanswered address and holds no secret ID.
 **Alternatives:** A message of our own for each cause. It hides the reason of the store.
+
+### `SSACCESS-DD-007`
+
+**Realizes:** `SSACCESS-FR-007`
+**Decision:** `config.OpenBao` gains `Namespace`, under the key `openbao.namespace`.
+`openbao.New` calls `client.SetNamespace` with a value that is not empty, and
+`client.ClearNamespace` with an empty one. The logger of the session carries
+`namespace`.
+**Rationale:** The client sends the namespace in the header `X-Vault-Namespace` with
+every request, so the login, the renewal, the lookup, and each transit call reach the
+same store namespace with one setting. `ClearNamespace` drops the value that the API
+reads from `BAO_NAMESPACE` when it builds the client, so the configuration of Maroid
+stays the one source, as `CFG-002` gives.
+**Alternatives:** `BAO_NAMESPACE` alone. It needs no code, but the API reads it in
+silence, outside the prefix of `CFG-002`. Open question 3 of the requirements rejects
+it. A store namespace in each path, such as `maroid/transit`. The AppRole login of the
+API builds `auth/<mount>/login`, so it cannot reach `maroid/auth/approle/login`, and the
+store namespace would live in two keys.
+
+### `SSACCESS-DD-008`
+
+**Realizes:** `SSACCESS-FR-006`, `SSACCESS-FR-007`
+**Decision:** `secretStoreCheck` reads `sys/health` through
+`client.WithNamespace("")`, and looks up the token through the client itself.
+**Rationale:** OpenBao answers `sys/health` in the root namespace only. Inside a store
+namespace it answers 400, `operation unavailable in namespaces`. The health is a state of
+the whole store. The token lives in the store namespace, so its lookup stays there.
+`WithNamespace` returns a copy, so the shared client keeps its store namespace.
+**Alternatives:** A second client for the root namespace. It needs its own address and
+its own build, for one request that needs no token.
 
 ## 6. Scenarios
 
@@ -341,6 +385,39 @@ restore. The waits double past 60 seconds inside the outage, so a wait with no
 **When** the test cancels the context, and 3 seconds pass.
 **Then** `Run` has not returned. It returns after `Stop`.
 
+### `SSACCESS-SC-012`
+
+**Verifies:** `SSACCESS-FR-007`, `SSACCESS-DD-007`
+**Layer:** integration
+
+**Given** OpenBao with the store namespace `maroid`, which holds the role and the transit
+engine, and nothing of either in the root namespace.
+**When** a session starts with `openbao.namespace` `maroid`, and the test encrypts and
+decrypts through `Client()`.
+**Then** the session starts, the decrypt returns the plaintext, and `Client().Namespace()`
+is `maroid`.
+
+### `SSACCESS-SC-013`
+
+**Verifies:** `SSACCESS-FR-007`, `SSACCESS-DD-008`
+**Layer:** unit
+
+**Given** a fake store that answers `sys/health` with 400 when the request names a store
+namespace, and `auth/token/lookup-self` with 200 only when it names `maroid`.
+**When** the readiness runs with a client in the store namespace `maroid`.
+**Then** the secret store counts as up.
+
+### `SSACCESS-SC-014`
+
+**Verifies:** `SSACCESS-FR-007`, `SSACCESS-DD-007`
+**Layer:** integration
+
+**Given** OpenBao that holds the role and the transit engine in the root namespace, and
+`BAO_NAMESPACE` set to `absent`.
+**When** a session starts with no `openbao.namespace`, and the test encrypts through
+`Client()`.
+**Then** the session starts, the encrypt succeeds, and `Client().Namespace()` is empty.
+
 ## 7. Build plan
 
 | #   | Step                                                                                         | Realizes                               | Done |
@@ -352,6 +429,9 @@ restore. The waits double past 60 seconds inside the outage, so a wait with no
 | 5   | Add `lookup-self` to the fake store. Write `SC-007` and `SC-008`, then the check.            | `SSACCESS-FR-006`                      | [x]  |
 | 6   | Write `SSACCESS-SC-009`.                                                                     | `SSACCESS-NFR-001`                     | [x]  |
 | 7   | Name the new result of `openbao.New` in section 4 of `specs/features/pset/spec.md`.          | `SSACCESS-FR-001`                      | [x]  |
+| 8   | Add `StartIn` to `testbao`. Write `SSACCESS-SC-012` and `SC-014`. Watch them fail.           | `SSACCESS-FR-007`                      | [x]  |
+| 9   | Add `OpenBao.Namespace`, and set the store namespace in `openbao.New`.                       | `SSACCESS-FR-007`                      | [x]  |
+| 10  | Write `SSACCESS-SC-013`, then read `sys/health` in the root namespace.                       | `SSACCESS-FR-006`, `SSACCESS-FR-007`   | [x]  |
 
 ## Retired identifiers
 

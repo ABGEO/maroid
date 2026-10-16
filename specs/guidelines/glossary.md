@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-10-16
+updated: 2026-10-17
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -111,6 +111,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-secret-store`               | secret store               | The service that gives each secret its protection. OpenBao is the secret store today.                                                                                                                                                                  |
 | `GLO-drain-period`               | drain period               | The time from the start of a shutdown to the close of the listener.                                                                                                                                                                                    |
 | `GLO-store-access`               | store access               | The permission that the secret store grants to Maroid at a login. The store sets its end.                                                                                                                                                              |
+| `GLO-store-namespace`            | store namespace            | A part of the secret store with its own logins, policies, and keys, apart from every other part. With no store namespace named, Maroid acts in the root namespace of the store.                                                                        |
 | `GLO-page-route`                 | page route                 | A path that a remote declares, and the page that the deck opens for it.                                                                                                                                                                                |
 | `GLO-parameter-segment`          | parameter segment          | A segment of a page route that takes any one value, and gives the page that value by a name.                                                                                                                                                           |
 | `GLO-navigation-entry`           | navigation entry           | A page route that the deck lists under the plugin in the navigation of the workspace.                                                                                                                                                                  |

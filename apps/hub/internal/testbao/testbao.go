@@ -38,13 +38,22 @@ path "transit/decrypt/maroid-workspace-*" { capabilities = ["update"] }
 
 // Server is a running OpenBao that one test owns.
 type Server struct {
-	// Root holds the root token. The test creates the keys with it.
+	// Root holds the root token, in the store namespace of the server. The test creates
+	// the keys with it.
 	Root *api.Client
 }
 
 // Start launches OpenBao in a container, mounts the transit engine, and creates the
-// role that Maroid logs in with.
+// role that Maroid logs in with, in the root namespace.
 func Start(t *testing.T) *Server {
+	t.Helper()
+
+	return StartIn(t, "")
+}
+
+// StartIn launches OpenBao as Start does, and holds the transit engine and the role in
+// the store namespace. An empty namespace is the root one.
+func StartIn(t *testing.T, namespace string) *Server {
 	t.Helper()
 
 	ctx, cancel := context.WithTimeout(context.Background(), startTimeout)
@@ -77,6 +86,14 @@ func Start(t *testing.T) *Server {
 	root, err := api.NewClient(clientConfig)
 	require.NoError(t, err)
 	root.SetToken(rootToken)
+	root.ClearNamespace()
+
+	if namespace != "" {
+		_, err = root.Logical().WriteWithContext(t.Context(), "sys/namespaces/"+namespace, nil)
+		require.NoError(t, err)
+
+		root.SetNamespace(namespace)
+	}
 
 	require.NoError(t, root.Sys().MountWithContext(
 		t.Context(), TransitMount, &api.MountInput{Type: "transit"},
@@ -104,16 +121,24 @@ func (s *Server) CreateKeys(t *testing.T, keys ...secret.Key) {
 	}
 }
 
-// Cipher logs in as Maroid does, and returns the cipher over that session.
-func (s *Server) Cipher(t *testing.T) *secret.Transit {
+// Config returns the configuration that Maroid logs in with, with a new secret ID.
+func (s *Server) Config(t *testing.T) *config.OpenBao {
 	t.Helper()
 
-	session, err := openbao.New(t.Context(), &config.OpenBao{
+	return &config.OpenBao{
 		Address:      s.Root.Address(),
 		RoleID:       s.readRoleID(t),
 		SecretID:     s.generateSecretID(t),
 		TransitMount: TransitMount,
-	}, slog.New(slog.DiscardHandler))
+		Namespace:    s.Root.Namespace(),
+	}
+}
+
+// Cipher logs in as Maroid does, and returns the cipher over that session.
+func (s *Server) Cipher(t *testing.T) *secret.Transit {
+	t.Helper()
+
+	session, err := openbao.New(t.Context(), s.Config(t), slog.New(slog.DiscardHandler))
 	require.NoError(t, err)
 
 	return secret.NewTransit(session.Client(), TransitMount)
