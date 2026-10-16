@@ -80,7 +80,7 @@ func (r *TelegramCommandRegistrar) Register(plugin registry.LoadedPlugin) error 
 			return permissionErr
 		}
 
-		wrapped := tgcommand.NewWrapper(cmd, id, r.checks)
+		wrapped := tgcommand.NewWrapper(cmd, plugin.Meta, r.checks)
 		meta := wrapped.Meta()
 
 		wrappedCommands = append(wrappedCommands, wrapped)

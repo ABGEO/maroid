@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
@@ -22,6 +23,8 @@ import (
 const (
 	workspaceH    = "01998aa0-1111-7000-8000-0000000000aa"
 	probePluginID = "dev.maroid.probe"
+	probeName     = "Probe"
+	workspaceName = "Garden"
 	notesWrite    = "notes.write"
 )
 
@@ -62,6 +65,13 @@ func (r *recorder) Reply(_ *th.Context, _ telego.Update, text string) error {
 	r.replies = append(r.replies, text)
 
 	return nil
+}
+
+// actingWorkspace answers the acting workspace of the context with a fixed name.
+type actingWorkspace struct{}
+
+func (actingWorkspace) Get(ctx context.Context) (*model.Workspace, error) {
+	return &model.Workspace{ID: pluginapi.ActingWorkspaceFromContext(ctx), Name: workspaceName}, nil
 }
 
 // probeAuthorizer holds the permissions of the hub and notes.write of the probe at editor.
@@ -125,10 +135,13 @@ func wrappedIn(
 ) *command.Wrapper {
 	t.Helper()
 
-	return command.NewWrapper(inner, pluginapi.ParsePluginID(probePluginID), command.Checks{
+	meta := pluginapi.Metadata{ID: pluginapi.ParsePluginID(probePluginID), Name: probeName}
+
+	return command.NewWrapper(inner, meta, command.Checks{
 		Logger:      logger,
 		Prompter:    answers,
 		Replier:     answers,
+		Workspaces:  actingWorkspace{},
 		Enablements: enabled,
 		Authorizer:  probeAuthorizer(t),
 	})
@@ -196,10 +209,11 @@ func TestACommandOfARoleBelowItsPermissionRunsNothing(t *testing.T) {
 	assert.Contains(t, answers.replies[0], "editor")
 }
 
-// PLUGACC-SC-014: A command of a plugin that the acting workspace does not enable sends
-// nothing, runs zero times, and writes one line at the level info. A viewer meets the
-// drop before the permission, so the answer names no role.
-func TestACommandOfADisabledPluginSendsNothing(t *testing.T) {
+// PLUGACC-SC-032: A command of a plugin that the acting workspace does not enable
+// answers one message that names the plugin, the workspace, and the role manager, runs
+// zero times, and writes one line at the level info. A viewer meets the check before
+// the permission, so the message names no permission.
+func TestACommandOfADisabledPluginNamesThePluginAndTheWorkspace(t *testing.T) {
 	t.Parallel()
 
 	for _, role := range []pluginapi.Role{pluginapi.RoleEditor, pluginapi.RoleViewer} {
@@ -213,7 +227,10 @@ func TestACommandOfADisabledPluginSendsNothing(t *testing.T) {
 
 		assert.Zero(t, inner.runs, role)
 		assert.Empty(t, answers.prompts, role)
-		assert.Empty(t, answers.replies, role)
+		assert.Equal(t, []string{
+			"The plugin `Probe` is not enabled in the workspace `Garden`. A manager can enable it",
+		}, answers.replies, role)
+		assert.NotContains(t, answers.replies[0], notesWrite, role)
 		require.Len(t, log.records, 1, role)
 		assert.Equal(t, slog.LevelInfo, log.records[0].Level, role)
 	}

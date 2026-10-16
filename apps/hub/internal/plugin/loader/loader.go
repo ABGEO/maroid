@@ -15,6 +15,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/registrar"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	tgcommand "github.com/abgeo/maroid/apps/hub/internal/telegram/command"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
 )
@@ -113,6 +114,7 @@ func telegramChecks(
 		Logger:      logger,
 		Prompter:    prompter,
 		Replier:     tgcommand.TextReply{},
+		Workspaces:  workspace.NewManager(access.DB),
 		Enablements: access.Enablements,
 		Authorizer:  access.Authorizer,
 	}

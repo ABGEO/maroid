@@ -4,9 +4,9 @@ title: The administrator, the plugin allowlist, and the enablement of a plugin
 type: requirements
 status: approved
 created: 2026-10-02
-updated: 2026-10-05
+updated: 2026-10-16
 approved_by: Temuri
-approved_on: 2026-10-05
+approved_on: 2026-10-16
 constrained_by: [SEC, OWN, ERR, EXT, TG, JOB, ARC, CLI]
 ---
 
@@ -231,13 +231,24 @@ workspace does not enable exactly as it answers one that does not exist.
 
 **Why:** A different answer tells the caller that the plugin serves another workspace.
 
-### `PLUGACC-FR-019`
+### `PLUGACC-FR-038`
 
-Maroid must drop a command of the bot of a plugin that the selected workspace does not
-enable, with no answer, and run nothing.
+Maroid must answer a command of the bot of a plugin that the selected workspace does
+not enable with one message, and run nothing. The message names the plugin, the
+workspace, and the role that enables a plugin.
 
-**Why:** The bot already drops an update from a sender with no user record in silence.
-`SEC-012` makes the command absent, and an absent command answers nothing.
+**Why:** A command with no answer looks like a fault of the bot, and a command that
+does not exist already answers. The menu and the help of the bot name the command of
+every plugin, so the message tells the person nothing that the bot did not show.
+
+**Examples:**
+
+- Normal case: the chat of Gio selected the garden workspace, which does not enable
+  the parking plugin. Gio sends a command of the parking plugin. The bot answers
+  "The plugin `Parking` is not enabled in the workspace `Garden`. A manager can
+  enable it", and runs nothing.
+- Edge case: a viewer sends the same command. The bot answers the same message and
+  names no permission.
 
 ### `PLUGACC-FR-031`
 
@@ -245,7 +256,7 @@ The menu of commands of a chat must name no command of a plugin that its selecte
 workspace does not enable.
 
 **Why:** `SEC-012` removes the command from the chat, so the menu offers nothing that
-the bot drops.
+the bot refuses.
 
 **Examples:**
 
@@ -363,7 +374,7 @@ Maroid must send the new menu of a chat to Telegram within 10 seconds of the cha
 its selection or of an enablement of its workspace. Measure at the hub, from the
 response to the change to the answer of Telegram to the menu.
 
-**Why:** The menu of a chat that lags shows a command that the bot drops.
+**Why:** The menu of a chat that lags shows a command that the bot refuses.
 
 ## 6. Invariants
 
@@ -399,7 +410,7 @@ An instance that holds an administrator holds at least one active administrator.
 | --- | ---------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
 | 1   | What do the workspaces and the users that exist before this feature receive?       | Temuri | Nothing. `PLUGACC-FR-026`.                                                                                   |
 | 2   | How does a user become an administrator?                                           | Temuri | The command line makes the first one, `PLUGACC-FR-001`. An administrator marks the others, `PLUGACC-FR-029`. |
-| 3   | Does a command of the bot of a disabled plugin leave the menu?                     | Temuri | Yes, as `SEC-012` gives. A use of it gets no answer.                                                         |
+| 3   | Does a command of the bot of a disabled plugin leave the menu?                     | Temuri | Yes, as `SEC-012` gives. A use of it answers that the workspace does not enable it. `PLUGACC-FR-038`.        |
 | 4   | Does a member use a plugin that their own allowlist does not hold?                 | Temuri | Yes. The workspace acts on its enabled plugins, whoever enabled them. `PLUGACC-FR-017`.                      |
 | 5   | Does a removal from an allowlist disable the plugin where the person turned it on? | Temuri | No. The plugin stays on, and an administrator disables it by hand. `PLUGACC-FR-016`, `PLUGACC-FR-027`.       |
 | 6   | Does an administrator keep the members and the plugins of any workspace?           | Temuri | Yes. `PLUGACC-FR-010`, `PLUGACC-FR-013`, `PLUGACC-FR-027`.                                                   |
@@ -408,4 +419,6 @@ Answer every question before the approval. An open question blocks stage 2.
 
 ## Retired identifiers
 
-This file has no retired identifier.
+| ID               | Retired    | Reason                                                                                               |
+| ---------------- | ---------- | ---------------------------------------------------------------------------------------------------- |
+| `PLUGACC-FR-019` | 2026-10-16 | A command of a disabled plugin answers in place of silence. `PLUGACC-FR-038` replaces the statement. |

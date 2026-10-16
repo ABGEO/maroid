@@ -4,9 +4,9 @@ title: The administrator, the plugin allowlist, and the enablement of a plugin
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-09
+updated: 2026-10-16
 approved_by: Temuri
-approved_on: 2026-10-05
+approved_on: 2026-10-16
 constrained_by: [SEC, OWN, ERR, API, RES, DAT, REP, JOB, TG, CLI, UI, ARC, TST, SPC, LNG]
 requirements: features/plugacc/requirements.md
 ---
@@ -49,7 +49,6 @@ answers a disabled plugin as absent.
 | `PLUGACC-FR-016`  | Section 4.2, `PLUGACC-SC-012`                                     |
 | `PLUGACC-FR-017`  | Section 4.3, `PLUGACC-DD-009`, `PLUGACC-SC-009`, `PLUGACC-SC-024` |
 | `PLUGACC-FR-018`  | Section 4.4, `PLUGACC-DD-001`, `PLUGACC-SC-013`, `PLUGACC-SC-028` |
-| `PLUGACC-FR-019`  | `spec-clients.md` section 2, `PLUGACC-SC-014`                     |
 | `PLUGACC-FR-020`  | `spec-clients.md` section 3, `PLUGACC-SC-016`                     |
 | `PLUGACC-FR-021`  | Section 4.3, `PLUGACC-SC-017`, `PLUGACC-SC-029`                   |
 | `PLUGACC-FR-022`  | Section 4.5, `PLUGACC-DD-003`, `PLUGACC-SC-018`                   |
@@ -68,6 +67,7 @@ answers a disabled plugin as absent.
 | `PLUGACC-FR-035`  | Section 4.5, `PLUGACC-SC-027`                                     |
 | `PLUGACC-FR-036`  | `spec-clients.md` section 4, `PLUGACC-SC-030`                     |
 | `PLUGACC-FR-037`  | `spec-clients.md` section 4, `PLUGACC-SC-031`                     |
+| `PLUGACC-FR-038`  | `spec-clients.md` section 2, `PLUGACC-SC-032`                     |
 | `PLUGACC-NFR-001` | `PLUGACC-DD-001`, `PLUGACC-SC-020`                                |
 | `PLUGACC-NFR-002` | Postponed. Section 8                                              |
 | `PLUGACC-INV-001` | Section 4.4, `PLUGACC-DD-001`, `PLUGACC-SC-013`                   |
@@ -470,31 +470,32 @@ plugin after the creation. A failure in the middle leaves a partial allowlist.
 
 ## 7. Build plan
 
-| #   | Step                                                                                                                                                                                         | Realizes                                                                                   | Done |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---- |
-| 1   | Add `NewAdministratorLast` to the hub. `ERR-003` holds its row.                                                                                                                              | `ERR-003`                                                                                  | [x]  |
-| 2   | Write `PLUGACC-SC-019`, then the three migrations.                                                                                                                                           | `PLUGACC-FR-011`, `PLUGACC-FR-026`                                                         | [x]  |
-| 3   | Write the models and the three repositories, and the mark in every query of a user.                                                                                                          | `PLUGACC-FR-002`, `PLUGACC-FR-008`                                                         | [x]  |
-| 4   | Write `PLUGACC-SC-005` and `PLUGACC-SC-018`, then the mark in the context, `auth.RequireAdministrator`, and the lock.                                                                        | `PLUGACC-FR-007`, `PLUGACC-FR-022`                                                         | [x]  |
-| 5   | Write `PLUGACC-SC-002` to `PLUGACC-SC-007`, then `user.Service`, the routes of `/users`, and `scope=all`.                                                                                    | `PLUGACC-FR-002` to `PLUGACC-FR-009`, `PLUGACC-FR-029`, `PLUGACC-FR-030`                   | [x]  |
-| 6   | Write `PLUGACC-SC-008` to `PLUGACC-SC-013` and `PLUGACC-SC-020`, then the enablement service, its routes, `RequireEnabled`, and the admission of an administrator.                           | `PLUGACC-FR-010` to `PLUGACC-FR-018`, `PLUGACC-FR-027`, `PLUGACC-NFR-001`                  | [x]  |
-| 7   | Write `PLUGACC-SC-017`, then the filter of `GET /plugins`.                                                                                                                                   | `PLUGACC-FR-021`, `PLUGACC-FR-028`                                                         | [x]  |
-| 8   | Carry out `spec-clients.md`: the command line, the bot, the scheduler, and the deck.                                                                                                         | `PLUGACC-FR-001`, `PLUGACC-FR-019`, `PLUGACC-FR-020`, `PLUGACC-FR-023` to `PLUGACC-FR-025` | [x]  |
-| 9   | Write `PLUGACC-SC-024`, then `plugin` in the answer of an enablement.                                                                                                                        | `PLUGACC-FR-017`                                                                           | [x]  |
-| 10  | Write `PLUGACC-SC-023`, then `allowed_plugins` at the creation of a user.                                                                                                                    | `PLUGACC-FR-032`                                                                           | [x]  |
-| 11  | Carry out section 4 of `spec-clients.md` again: the navigation from the enablements, the allowlist in the form of a new user, and no page of a plugin for an administrator who is no member. | `PLUGACC-FR-017`, `PLUGACC-FR-025`, `PLUGACC-FR-032`, `PLUGACC-FR-033`                     | [x]  |
-| 12  | Write `PLUGACC-SC-026`, then the names in `PATCH /users/{userId}` and on the page of one user.                                                                                               | `PLUGACC-FR-034`                                                                           | [x]  |
-| 13  | Write `PLUGACC-SC-027`, then `administrator-allowlist` at the routes of an allowlist and at the creation, and the disabled allowlist in the deck.                                            | `PLUGACC-FR-035`                                                                           | [x]  |
-| 14  | Write `PLUGACC-SC-028` and `PLUGACC-SC-029`, then the enablement in the MCP settings tools, the allowlist in `list_plugins`, and the mark of an administrator over MCP.                      | `PLUGACC-FR-018`, `PLUGACC-FR-021`, `PLUGACC-FR-028`                                       | [x]  |
-| 15  | Carry out section 4 of `spec-clients.md` again: the two lists of the plugins of a workspace, the page `/admin/plugins`, the removal of `/plugins`, and the links of the sidebar.             | `PLUGACC-FR-036`, `PLUGACC-FR-037`                                                         | [x]  |
+| #   | Step                                                                                                                                                                                         | Realizes                                                                  | Done |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ---- |
+| 1   | Add `NewAdministratorLast` to the hub. `ERR-003` holds its row.                                                                                                                              | `ERR-003`                                                                 | [x]  |
+| 2   | Write `PLUGACC-SC-019`, then the three migrations.                                                                                                                                           | `PLUGACC-FR-011`, `PLUGACC-FR-026`                                        | [x]  |
+| 3   | Write the models and the three repositories, and the mark in every query of a user.                                                                                                          | `PLUGACC-FR-002`, `PLUGACC-FR-008`                                        | [x]  |
+| 4   | Write `PLUGACC-SC-005` and `PLUGACC-SC-018`, then the mark in the context, `auth.RequireAdministrator`, and the lock.                                                                        | `PLUGACC-FR-007`, `PLUGACC-FR-022`                                        | [x]  |
+| 5   | Write `PLUGACC-SC-002` to `PLUGACC-SC-007`, then `user.Service`, the routes of `/users`, and `scope=all`.                                                                                    | `PLUGACC-FR-002` to `PLUGACC-FR-009`, `PLUGACC-FR-029`, `PLUGACC-FR-030`  | [x]  |
+| 6   | Write `PLUGACC-SC-008` to `PLUGACC-SC-013` and `PLUGACC-SC-020`, then the enablement service, its routes, `RequireEnabled`, and the admission of an administrator.                           | `PLUGACC-FR-010` to `PLUGACC-FR-018`, `PLUGACC-FR-027`, `PLUGACC-NFR-001` | [x]  |
+| 7   | Write `PLUGACC-SC-017`, then the filter of `GET /plugins`.                                                                                                                                   | `PLUGACC-FR-021`, `PLUGACC-FR-028`                                        | [x]  |
+| 8   | Carry out `spec-clients.md`: the command line, the bot, the scheduler, and the deck.                                                                                                         | `PLUGACC-FR-001`, `PLUGACC-FR-020`, `PLUGACC-FR-023` to `PLUGACC-FR-025`  | [x]  |
+| 9   | Write `PLUGACC-SC-024`, then `plugin` in the answer of an enablement.                                                                                                                        | `PLUGACC-FR-017`                                                          | [x]  |
+| 10  | Write `PLUGACC-SC-023`, then `allowed_plugins` at the creation of a user.                                                                                                                    | `PLUGACC-FR-032`                                                          | [x]  |
+| 11  | Carry out section 4 of `spec-clients.md` again: the navigation from the enablements, the allowlist in the form of a new user, and no page of a plugin for an administrator who is no member. | `PLUGACC-FR-017`, `PLUGACC-FR-025`, `PLUGACC-FR-032`, `PLUGACC-FR-033`    | [x]  |
+| 12  | Write `PLUGACC-SC-026`, then the names in `PATCH /users/{userId}` and on the page of one user.                                                                                               | `PLUGACC-FR-034`                                                          | [x]  |
+| 13  | Write `PLUGACC-SC-027`, then `administrator-allowlist` at the routes of an allowlist and at the creation, and the disabled allowlist in the deck.                                            | `PLUGACC-FR-035`                                                          | [x]  |
+| 14  | Write `PLUGACC-SC-028` and `PLUGACC-SC-029`, then the enablement in the MCP settings tools, the allowlist in `list_plugins`, and the mark of an administrator over MCP.                      | `PLUGACC-FR-018`, `PLUGACC-FR-021`, `PLUGACC-FR-028`                      | [x]  |
+| 15  | Carry out section 4 of `spec-clients.md` again: the two lists of the plugins of a workspace, the page `/admin/plugins`, the removal of `/plugins`, and the links of the sidebar.             | `PLUGACC-FR-036`, `PLUGACC-FR-037`                                        | [x]  |
+| 16  | Write `PLUGACC-SC-032`, then the answer of `Wrapper.Handle` to a command of a disabled plugin.                                                                                               | `PLUGACC-FR-038`                                                          | [x]  |
 
 ## 8. Out of scope for this specification
 
-| Postponed                                                      | Reason and the condition that brings it back                                                                                                                                                   |
-| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A job of a plugin that still declares `CronScopeShared`.       | Its plugin reads shared tables today, as `OWN-009` lets it. The feature that moves the plugin to the workspace moves the job to `CronScopePerWorkspace`, and `PLUGACC-FR-020` then reaches it. |
-| A history of the changes to an allowlist or an enablement.     | The requirements put it out of scope.                                                                                                                                                          |
-| The menu of each chat, `PLUGACC-FR-031` and `PLUGACC-NFR-002`. | The owner postponed it on 2026-10-04. The menu keeps every command, and the drop of `PLUGACC-FR-019` answers nothing for a disabled plugin. A later specification of the menu brings it back.  |
+| Postponed                                                      | Reason and the condition that brings it back                                                                                                                                                                             |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A job of a plugin that still declares `CronScopeShared`.       | Its plugin reads shared tables today, as `OWN-009` lets it. The feature that moves the plugin to the workspace moves the job to `CronScopePerWorkspace`, and `PLUGACC-FR-020` then reaches it.                           |
+| A history of the changes to an allowlist or an enablement.     | The requirements put it out of scope.                                                                                                                                                                                    |
+| The menu of each chat, `PLUGACC-FR-031` and `PLUGACC-NFR-002`. | The owner postponed it on 2026-10-04. The menu keeps every command, and the answer of `PLUGACC-FR-038` tells the person that the workspace does not enable the plugin. A later specification of the menu brings it back. |
 
 ## Retired identifiers
 

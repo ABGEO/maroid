@@ -4,9 +4,9 @@ title: The administrator and the enablement in the command line, the bot, the sc
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-14
+updated: 2026-10-16
 approved_by: Temuri
-approved_on: 2026-10-05
+approved_on: 2026-10-16
 constrained_by: [SEC, OWN, TG, JOB, CLI, UI, TS, SPC, LNG]
 requirements: features/plugacc/requirements.md
 ---
@@ -28,15 +28,27 @@ because the command exists.
 
 ## 2. The bot
 
-| Path                                            | Action | Holds                                                                                                          |
-| ----------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
-| `apps/hub/internal/telegram/command/wrapper.go` | change | `Wrapper.Handle` drops a command of a disabled plugin before the permission. `command.Checks` holds its checks |
+| Path                                                     | Action | Holds                                                                                                            |
+| -------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
+| `apps/hub/internal/telegram/command/wrapper.go`          | change | `Wrapper.Handle` refuses a command of a disabled plugin before the permission. `command.Checks` holds its checks |
+| `apps/hub/internal/plugin/registrar/telegram_command.go` | change | `NewWrapper` receives the name of the plugin from its metadata                                                   |
+| `apps/hub/internal/plugin/loader/loader.go`              | change | `telegramChecks` sets `Checks.Workspaces` to `workspace.Manager`                                                 |
 
-**The drop.** `Wrapper.Handle` reads the acting workspace from the context and asks
-`EnablementChecker.IsEnabled`. For a plugin that the workspace does not enable it
-returns `nil`, writes one line at the level `info`, and sends nothing, which realizes
-`PLUGACC-FR-019`. The check runs before the permission of `PERMS`, so a disabled plugin
-answers nothing and never names a role.
+**The refusal.** `Wrapper.Handle` reads the acting workspace from the context and asks
+`EnablementChecker.IsEnabled`. For a plugin that the workspace does not enable it reads
+the acting workspace through `Checks.Workspaces`, sends one message through
+`Checks.Replier`, writes one line at the level `info`, and runs nothing, which realizes
+`PLUGACC-FR-038`. The check runs before the permission of `PERMS`, so the message
+never names a permission.
+
+The message is one line:
+
+```text
+The plugin `<plugin>` is not enabled in the workspace `<workspace>`. A manager can enable it
+```
+
+`<plugin>` is `Metadata.Name` of the plugin, and `<workspace>` is the name of the acting
+workspace. A failed read of the workspace returns its error and sends nothing.
 
 The menu keeps every command, as `TG-004` gives it. Section 8 of `spec.md` postpones
 the menu of each chat.

@@ -4,9 +4,9 @@ title: The scenarios of the administrator, the allowlist, and the enablement
 type: spec
 status: approved
 created: 2026-10-02
-updated: 2026-10-05
+updated: 2026-10-16
 approved_by: Temuri
-approved_on: 2026-10-05
+approved_on: 2026-10-16
 constrained_by: [TST, OWN, TRC]
 requirements: features/plugacc/requirements.md
 ---
@@ -159,15 +159,17 @@ route that no plugin declares.
 **Then** the two routes answer the same 404 as the route that no plugin declares, and
 the tool answers the protocol error of an unknown tool. P runs zero times.
 
-## `PLUGACC-SC-014`
+## `PLUGACC-SC-032`
 
-**Verifies:** `PLUGACC-FR-019`
+**Verifies:** `PLUGACC-FR-038`
 **Layer:** unit
 
-**Given** the chat of Gio selected H, and H does not enable P.
+**Given** the chat of Gio selected H, H does not enable P, and Gio is an editor or a
+viewer of H.
 **When** Gio sends the command of P.
-**Then** the bot sends nothing, the command runs zero times, and the log holds one line
-at the level `info`.
+**Then** the bot sends one message that names P, names H, and names the role
+`manager`. The message names no permission. The command runs zero times, and the log
+holds one line at the level `info`.
 
 ## `PLUGACC-SC-016`
 
@@ -341,4 +343,5 @@ H.
 
 | ID             | Retired    | Reason                                                                                                                   |
 | -------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| PLUGACC-SC-014 | 2026-10-16 | `PLUGACC-FR-019` is retired. `PLUGACC-SC-032` verifies `PLUGACC-FR-038`.                                                 |
 | PLUGACC-SC-015 | 2026-10-04 | The owner postponed the menu of each chat (`PLUGACC-FR-031`, `PLUGACC-NFR-002`). Its later design takes new identifiers. |
