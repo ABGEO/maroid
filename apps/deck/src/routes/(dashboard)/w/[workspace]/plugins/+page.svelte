@@ -133,9 +133,7 @@
 	{#if status === 'loading'}
 		<SkeletonList row="h-16" />
 	{:else if status === 'error'}
-		<Alert kind="error" class="mb-6"
-			><span>The hub answered no plugin. Reload the page.</span></Alert
-		>
+		<Alert kind="error" class="mb-6"><span>The plugins did not load. Reload the page.</span></Alert>
 	{:else}
 		<Section title="In use">
 			{#if inUse.length === 0}
@@ -188,7 +186,7 @@
 					<SkeletonList count={1} />
 				{:else if pluginState.status === 'error'}
 					<Alert kind="error">
-						<span>The hub answered no plugin to turn on. Reload the page.</span>
+						<span>The plugins to turn on did not load. Reload the page.</span>
 					</Alert>
 				{:else if toTurnOn.length === 0}
 					<div class="empty-state">

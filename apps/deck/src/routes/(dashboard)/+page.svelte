@@ -34,7 +34,7 @@
 	</div>
 {:else if workspaceState.status === 'error'}
 	<div role="alert" class="alert alert-error alert-soft max-w-2xl">
-		<span>The hub answered no workspace. Reload the page.</span>
+		<span>The workspaces did not load. Reload the page.</span>
 	</div>
 {:else}
 	<div class="flex items-center justify-center py-20" role="status" aria-label="Loading">

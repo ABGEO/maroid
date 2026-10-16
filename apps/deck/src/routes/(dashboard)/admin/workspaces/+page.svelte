@@ -44,7 +44,7 @@
 	{#if status === 'loading'}
 		<SkeletonList row="h-16" />
 	{:else if status === 'error'}
-		<Alert kind="error"><span>The hub answered no workspace. Reload the page.</span></Alert>
+		<Alert kind="error"><span>The workspaces did not load. Reload the page.</span></Alert>
 	{:else if workspaces.length === 0}
 		<div class="empty-state">This instance holds no workspace.</div>
 	{:else}

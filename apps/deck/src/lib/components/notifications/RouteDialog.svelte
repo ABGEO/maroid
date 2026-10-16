@@ -61,7 +61,7 @@
 
 	function reasonOf(error: unknown): string {
 		if (!(error instanceof ApiError) || error.problem === null) {
-			return 'The hub stored nothing. Try again.';
+			return 'Saving failed. Try again.';
 		}
 
 		if (error.is(PROBLEM_TYPE.notificationRouteExists)) {

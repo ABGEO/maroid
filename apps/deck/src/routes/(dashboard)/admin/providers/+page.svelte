@@ -65,7 +65,7 @@
 			<SkeletonList />
 		{:else if status === 'error'}
 			<Alert kind="error" class="mb-6">
-				<span>The hub answered no provider. Reload the page.</span>
+				<span>The providers did not load. Reload the page.</span>
 			</Alert>
 		{:else}
 			<ProviderList {providers} />

@@ -41,7 +41,7 @@ export const load: PageLoad = async ({ params, parent, depends }) => {
 
 	const found = await canTurnOn(pluginId);
 	if (pluginState.status === 'error') {
-		throw new Error('The hub answered no plugin');
+		throw new Error('The plugin did not load');
 	}
 
 	if (!found) {

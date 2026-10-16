@@ -124,7 +124,7 @@
 	{#if status === 'loading'}
 		<SkeletonList row="h-14" />
 	{:else if status === 'error'}
-		<Alert kind="error"><span>The hub answered no member. Reload the page.</span></Alert>
+		<Alert kind="error"><span>The members did not load. Reload the page.</span></Alert>
 	{:else}
 		<ul class="list panel">
 			{#each members as member (member.user_id)}
@@ -142,7 +142,7 @@
 		{#if canManage}
 			<Section title="Add a member">
 				{#if candidates.length === 0}
-					<div class="empty-state">Every person on this hub is a member.</div>
+					<div class="empty-state">Every user is already a member.</div>
 				{:else}
 					<AddMemberForm {workspaceId} {candidates} onadded={load} />
 				{/if}

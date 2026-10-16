@@ -85,7 +85,7 @@
 				failure = 'These settings changed elsewhere. The form now shows the stored values.';
 			} else {
 				console.error('Failed to save the settings', error);
-				failure = reasonOf(error, 'The hub stored nothing. Try again.');
+				failure = reasonOf(error, 'Saving failed. Try again.');
 			}
 		} finally {
 			saving = false;

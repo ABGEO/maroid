@@ -62,7 +62,7 @@
 			inviteIntent.settle();
 			invitation = { name: personName(user), invitation: issued };
 		} catch (error) {
-			banner = userFailureMessage(error, 'The hub issued no invitation. Try again.');
+			banner = userFailureMessage(error, 'Creating the invitation failed. Try again.');
 		} finally {
 			busy = false;
 		}
@@ -122,7 +122,7 @@
 			<SkeletonList />
 		{:else if status === 'error'}
 			<Alert kind="error" class="mb-6">
-				<span>The hub answered no user. Reload the page.</span>
+				<span>The users did not load. Reload the page.</span>
 			</Alert>
 		{:else}
 			<ul class="list panel">

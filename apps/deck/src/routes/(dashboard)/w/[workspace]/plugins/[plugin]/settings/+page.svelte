@@ -18,7 +18,7 @@
 			<p class="meta mt-1 font-mono">{data.pluginId}</p>
 			<p class="page-lead">
 				These values belong to this workspace. A field marked personal belongs to you alone, and its
-				value serves every workspace of yours. A secret never leaves the hub once you store it.
+				value serves every workspace of yours. Once stored, a secret is never shown again.
 			</p>
 		</div>
 	</header>

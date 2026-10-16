@@ -115,7 +115,7 @@
 			</div>
 		</header>
 	{:else if status === 'error'}
-		<Alert kind="error"><span>The hub answered no user. Reload the page.</span></Alert>
+		<Alert kind="error"><span>The user did not load. Reload the page.</span></Alert>
 	{:else if user}
 		<header class="page-header">
 			<div>

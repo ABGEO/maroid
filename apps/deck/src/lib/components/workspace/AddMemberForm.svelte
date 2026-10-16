@@ -35,7 +35,7 @@
 			return error.problem.errors?.[0]?.detail ?? error.problem.title;
 		}
 
-		return 'The hub added nobody. Try again.';
+		return 'Adding the member failed. Try again.';
 	}
 
 	async function submit(event: SubmitEvent): Promise<void> {

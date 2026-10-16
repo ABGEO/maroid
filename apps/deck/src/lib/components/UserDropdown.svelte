@@ -51,7 +51,7 @@
 		</div>
 		<div class="hidden pr-1 text-left leading-tight sm:block">
 			<div class="text-[12px] font-semibold">{name}</div>
-			<div class="text-base-content/50 font-mono text-[10px]">self-hosted · home.hub</div>
+			<div class="text-base-content/50 font-mono text-[10px]">self-hosted · maroid.local</div>
 		</div>
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
@@ -123,7 +123,7 @@
 						<path d="M4 4h16v4H4zM4 12h16v8H4z" />
 						<path d="M8 6h.01M8 14h.01" />
 					</svg>
-					Hub settings
+					Settings
 				</a>
 			</li>
 		</ul>

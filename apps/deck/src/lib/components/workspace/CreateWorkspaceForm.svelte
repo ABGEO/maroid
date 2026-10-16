@@ -21,7 +21,7 @@
 			return error.body.errors?.[0]?.detail ?? error.body.title;
 		}
 
-		return 'The hub created no workspace. Try again.';
+		return 'Creating the workspace failed. Try again.';
 	}
 
 	async function submit(event: SubmitEvent): Promise<void> {

@@ -111,7 +111,7 @@
 
 	{#if inUse && !entry}
 		<Alert kind="info" class="mb-6">
-			<span>The hub did not load this plugin. Its records and its settings stay.</span>
+			<span>This plugin is not installed. Its records and its settings stay.</span>
 		</Alert>
 	{/if}
 

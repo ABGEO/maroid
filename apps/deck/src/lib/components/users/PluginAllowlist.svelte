@@ -47,7 +47,7 @@
 
 <Panel>
 	{#if pluginState.plugins.length === 0}
-		<span class="label whitespace-normal">The hub loaded no plugin.</span>
+		<span class="label whitespace-normal">No plugin is installed.</span>
 	{:else}
 		{#if failure}
 			<Alert kind="error"><span class="text-sm">{failure}</span></Alert>

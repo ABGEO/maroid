@@ -431,7 +431,7 @@ expected answer an error.
 **Realizes:** `IDPROV-FR-005`
 **Decision:** The client identifier of the Telegram preset is optional. An absent one
 takes the prefix of `telegram.token`, and the answer shows it. The deck shows the
-field empty, with the hint "Leave empty to use the bot of this hub".
+field empty, with the hint "Leave empty to use the default bot".
 **Rationale:** `telegram.token` is required by the configuration, so the default always
 exists. A route that only serves a default is a surface with no other use.
 **Alternatives:** A collection of presets with their defaults, which adds a route.

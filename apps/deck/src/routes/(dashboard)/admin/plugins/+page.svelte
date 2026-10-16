@@ -40,18 +40,16 @@
 	<header class="page-header">
 		<div>
 			<h1 class="page-title">Plugins</h1>
-			<p class="page-lead">
-				Every plugin that the hub loaded, and the workspaces that use each one.
-			</p>
+			<p class="page-lead">Every installed plugin, and the workspaces that use each one.</p>
 		</div>
 	</header>
 
 	{#if status === 'loading' || pluginState.status === 'idle' || pluginState.status === 'loading'}
 		<SkeletonList row="h-16" />
 	{:else if status === 'error' || pluginState.status === 'error'}
-		<Alert kind="error"><span>The hub answered no plugin. Reload the page.</span></Alert>
+		<Alert kind="error"><span>The plugins did not load. Reload the page.</span></Alert>
 	{:else if pluginState.plugins.length === 0}
-		<div class="empty-state">The hub loaded no plugin.</div>
+		<div class="empty-state">No plugin is installed.</div>
 	{:else}
 		<ul class="list panel">
 			{#each pluginState.plugins as plugin (plugin.id)}

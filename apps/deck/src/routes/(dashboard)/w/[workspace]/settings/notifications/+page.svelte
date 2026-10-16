@@ -127,7 +127,7 @@
 		const count = routeCountOf(provider.id);
 		const routes = count === 1 ? '1 route' : `${count} routes`;
 		const confirmed = await confirm?.ask(
-			`The hub removes ${provider.name}, its credential, and its ${routes}. Each topic it served becomes unrouted.`,
+			`Maroid removes ${provider.name}, its credential, and its ${routes}. Each topic it served becomes unrouted.`,
 			{ title: 'Remove the provider?', confirmLabel: 'Remove' }
 		);
 
@@ -177,7 +177,7 @@
 			outcomes[route.id] = { kind: 'success', text: 'Sent. Check the destination.' };
 		} catch (error) {
 			const service = kindOf(providerOf(route.provider_id)?.kind ?? '')?.name ?? 'The service';
-			let text = reasonOf(error, 'The hub sent nothing. Try again.');
+			let text = reasonOf(error, 'Sending failed. Try again.');
 
 			if (error instanceof ApiError && error.is(PROBLEM_TYPE.deliveryRefused)) {
 				text = `${service} refused it: ${error.problem?.detail ?? ''}`;
@@ -215,7 +215,7 @@
 		<SkeletonList />
 	{:else if status === 'error'}
 		<Alert kind="error" class="mb-6">
-			<span>The hub answered no notification settings.</span>
+			<span>The notification settings did not load.</span>
 			<button type="button" class="btn btn-sm" onclick={() => void load()}>Retry</button>
 		</Alert>
 	{:else}

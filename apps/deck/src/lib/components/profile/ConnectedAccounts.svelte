@@ -30,7 +30,7 @@
 			}
 		}
 
-		return 'The hub kept the account connected. Try again.';
+		return 'Disconnecting the account failed. Try again.';
 	}
 
 	async function detach(provider: string): Promise<void> {

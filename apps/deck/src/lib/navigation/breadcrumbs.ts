@@ -34,7 +34,7 @@ export interface CrumbParams {
 	workspace?: string;
 }
 
-const HUB: Crumb = { label: 'hub', href: resolve('/') };
+const HOME: Crumb = { label: 'Home', href: resolve('/') };
 
 const ADMINISTRATION: Crumb = { label: 'Administration' };
 
@@ -55,8 +55,8 @@ export function needsPlugins(routeId: RouteId | null): boolean {
 }
 
 /**
- * The trail for one location. The hub opens every trail, and the last crumb is
- * the current page. An unknown route answers the hub alone.
+ * The trail for one location. The home crumb opens every trail, and the last crumb is
+ * the current page. An unknown route answers the home crumb alone.
  */
 export function crumbsFor(
 	routeId: RouteId | null,
@@ -67,16 +67,16 @@ export function crumbsFor(
 ): Crumb[] {
 	switch (routeId) {
 		case '/(dashboard)/workspaces/new':
-			return [HUB, { label: 'New workspace', href: resolve('/workspaces/new') }];
+			return [HOME, { label: 'New workspace', href: resolve('/workspaces/new') }];
 
 		case '/(dashboard)/w/[workspace]':
-			return [HUB, workspaceCrumb(params.workspace ?? '', workspaces)];
+			return [HOME, workspaceCrumb(params.workspace ?? '', workspaces)];
 
 		case '/(dashboard)/w/[workspace]/members': {
 			const workspaceId = params.workspace ?? '';
 
 			return [
-				HUB,
+				HOME,
 				workspaceCrumb(workspaceId, workspaces),
 				{
 					label: 'Members',
@@ -89,7 +89,7 @@ export function crumbsFor(
 			const workspaceId = params.workspace ?? '';
 
 			return [
-				HUB,
+				HOME,
 				workspaceCrumb(workspaceId, workspaces),
 				{
 					label: 'Plugins',
@@ -99,11 +99,11 @@ export function crumbsFor(
 		}
 
 		case '/(dashboard)/admin/users':
-			return [HUB, ADMINISTRATION, USERS];
+			return [HOME, ADMINISTRATION, USERS];
 
 		case '/(dashboard)/admin/users/[user]':
 			return [
-				HUB,
+				HOME,
 				ADMINISTRATION,
 				USERS,
 				{
@@ -113,17 +113,17 @@ export function crumbsFor(
 			];
 
 		case '/(dashboard)/admin/workspaces':
-			return [HUB, ADMINISTRATION, { label: 'Workspaces', href: resolve('/admin/workspaces') }];
+			return [HOME, ADMINISTRATION, { label: 'Workspaces', href: resolve('/admin/workspaces') }];
 
 		case '/(dashboard)/admin/plugins':
-			return [HUB, ADMINISTRATION, { label: 'Plugins', href: resolve('/admin/plugins') }];
+			return [HOME, ADMINISTRATION, { label: 'Plugins', href: resolve('/admin/plugins') }];
 
 		case '/(dashboard)/admin/providers':
-			return [HUB, ADMINISTRATION, PROVIDERS];
+			return [HOME, ADMINISTRATION, PROVIDERS];
 
 		case '/(dashboard)/admin/providers/[provider]':
 			return [
-				HUB,
+				HOME,
 				ADMINISTRATION,
 				PROVIDERS,
 				{
@@ -138,7 +138,7 @@ export function crumbsFor(
 			const workspaceId = params.workspace ?? '';
 
 			return [
-				HUB,
+				HOME,
 				workspaceCrumb(workspaceId, workspaces),
 				{
 					label: 'Settings',
@@ -151,7 +151,7 @@ export function crumbsFor(
 			const workspaceId = params.workspace ?? '';
 
 			return [
-				HUB,
+				HOME,
 				workspaceCrumb(workspaceId, workspaces),
 				{
 					label: 'Settings',
@@ -167,13 +167,13 @@ export function crumbsFor(
 		}
 
 		case '/(dashboard)/profile':
-			return [HUB, { label: 'Profile', href: resolve('/profile') }];
+			return [HOME, { label: 'Profile', href: resolve('/profile') }];
 
 		case '/(dashboard)/w/[workspace]/plugins/[plugin]': {
 			const workspaceId = params.workspace ?? '';
 
 			return [
-				HUB,
+				HOME,
 				workspaceCrumb(workspaceId, workspaces),
 				pluginCrumb(workspaceId, params.plugin ?? '', plugins)
 			];
@@ -184,7 +184,7 @@ export function crumbsFor(
 			const pluginId = params.plugin ?? '';
 
 			return [
-				HUB,
+				HOME,
 				workspaceCrumb(workspaceId, workspaces),
 				pluginCrumb(workspaceId, pluginId, plugins),
 				{
@@ -202,7 +202,7 @@ export function crumbsFor(
 			const pluginId = params.plugin ?? '';
 
 			return [
-				HUB,
+				HOME,
 				workspaceCrumb(workspaceId, workspaces),
 				pluginCrumb(workspaceId, pluginId, plugins),
 				...routeCrumbs(workspaceId, pluginId, params.path ?? '', plugins, pageState)
@@ -210,7 +210,7 @@ export function crumbsFor(
 		}
 
 		default:
-			return [HUB];
+			return [HOME];
 	}
 }
 

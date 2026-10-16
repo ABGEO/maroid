@@ -62,7 +62,7 @@
 
 	function reasonOf(error: unknown): string {
 		if (!(error instanceof ApiError) || error.problem === null) {
-			return 'The hub stored nothing. Try again.';
+			return 'Saving failed. Try again.';
 		}
 
 		if (error.is(PROBLEM_TYPE.deliveryRefused)) {
@@ -153,8 +153,8 @@
 			{editing === null ? 'Add a notification provider' : `Change ${editing.name}`}
 		</h3>
 		<p class="meta mt-1">
-			The hub checks the credential with the service before it stores it. A secret never leaves the
-			hub once you store it.
+			Maroid checks the credential with the service before it stores it. Once stored, a secret is
+			never shown again.
 		</p>
 
 		<div class="mt-4 flex flex-col gap-3">

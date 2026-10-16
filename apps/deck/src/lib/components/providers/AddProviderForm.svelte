@@ -173,11 +173,11 @@
 					<input
 						class="input input-sm w-full font-mono"
 						bind:value={clientId}
-						placeholder={preset === 'telegram' ? 'The bot of this hub' : ''}
+						placeholder={preset === 'telegram' ? 'The default bot' : ''}
 						required={preset === 'oidc'}
 					/>
 					{#if preset === 'telegram'}
-						<span class="label whitespace-normal">Leave empty to use the bot of this hub.</span>
+						<span class="label whitespace-normal">Leave empty to use the default bot.</span>
 					{/if}
 					<FieldError {errors} pointer="/client_id" />
 				</label>

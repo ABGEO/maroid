@@ -68,7 +68,7 @@
 			</div>
 		</header>
 	{:else if status === 'error'}
-		<Alert kind="error"><span>The hub answered no provider. Reload the page.</span></Alert>
+		<Alert kind="error"><span>The provider did not load. Reload the page.</span></Alert>
 	{:else if provider}
 		<header class="page-header">
 			<div>

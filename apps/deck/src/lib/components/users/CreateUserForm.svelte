@@ -51,7 +51,7 @@
 			allowedPlugins = [];
 			await oncreated(created);
 		} catch (error) {
-			failure = userFailureMessage(error, 'The hub created nobody. Try again.');
+			failure = userFailureMessage(error, 'Creating the user failed. Try again.');
 		} finally {
 			busy = false;
 		}

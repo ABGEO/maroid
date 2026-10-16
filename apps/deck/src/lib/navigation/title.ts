@@ -8,7 +8,7 @@ export function documentTitle(name?: string): string {
 }
 
 /**
- * The browser title for a trail: the name of its last crumb. The hub alone and a
+ * The browser title for a trail: the name of its last crumb. The home crumb alone and a
  * page that has not named itself yet read as the brand alone.
  */
 export function trailTitle(crumbs: Crumb[]): string {

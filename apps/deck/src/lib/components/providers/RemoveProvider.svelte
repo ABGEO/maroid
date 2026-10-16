@@ -55,7 +55,7 @@
 
 			current = tagged.value;
 		} catch (error) {
-			failure = failureMessage(error, 'The hub answered no report. Try again.');
+			failure = failureMessage(error, 'The removal report did not load. Try again.');
 
 			return;
 		}

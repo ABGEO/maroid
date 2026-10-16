@@ -28,7 +28,7 @@ export function signedOutUrl(): string {
 async function startFlow(path: string, params: Record<string, string>): Promise<string> {
 	const handoff = await client.post<Handoff>(path, undefined, { params });
 	if (!handoff) {
-		throw new Error('the hub named no authorization address');
+		throw new Error('the server named no authorization address');
 	}
 
 	return handoff.authorization_url;
