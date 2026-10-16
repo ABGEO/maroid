@@ -4,7 +4,7 @@ title: The scenarios of the plants, their environments, and their care
 type: spec
 status: approved
 created: 2026-10-10
-updated: 2026-10-14
+updated: 2026-10-16
 approved_by: Temuri
 approved_on: 2026-10-10
 constrained_by: [TST, OWN, TRC]
@@ -428,6 +428,70 @@ that records each text. The wrapper of the hub is not part of it.
 **Given** the blocks of `GARDEN-SC-039`, and a `more` that answers `And <left> more lines.`
 **When** `pack` runs with the limit 1000 and at most 3 messages, then with the limit 4096 and at most 2 messages.
 **Then** the first run answers 3 messages, each of at most 1000 units. The third ends with `And <left> more lines.`, and `left` plus the lines of the 3 messages is 80. The second run answers the 2 messages of `GARDEN-SC-039`, with no count.
+
+## The care of the next three days
+
+### `GARDEN-SC-043`
+
+**Verifies:** `GARDEN-FR-039`
+**Layer:** integration
+
+**Given** five care intervals of watering every 7 days: `P001` with the latest 6 days ago, `P002` 4 days ago, `P003` 3 days ago, `P004` 7 days ago, and the inactive `P005` 6 days ago.
+**When** a client reads `/care-intervals?due_within=3`.
+**Then** the page holds `P001` with `due_in` 1 and `P002` with `due_in` 3, and no other item. A read with no filter answers `due_in` 4 for `P003` and 0 for `P004`.
+
+### `GARDEN-SC-044`
+
+**Verifies:** `GARDEN-FR-039`, `GARDEN-FR-020`
+**Layer:** integration
+
+**Given** `P001` with no entry, and fertilizing every 3 days with `set_at` 2 days ago.
+**When** a client reads `/care-intervals?due_within=3`, then `/care-intervals?state=due&due_within=3`.
+**Then** the first page holds fertilizing of `P001` with `due_in` 1. The second page is empty.
+
+### `GARDEN-SC-045`
+
+**Verifies:** `GARDEN-FR-039`
+**Layer:** integration
+
+**When** a client reads `/care-intervals` with `due_within` of `0`, `366`, `-1`, `3.5`, `abc`, and an empty value.
+**Then** each answers 400 with `/problems/http/request-invalid` and the detail "The parameter due_within must be an integer from 1 to 365." A cursor of a read with `due_within=3` is stale on a read with `due_within=2`.
+
+### `GARDEN-SC-046`
+
+**Verifies:** `GARDEN-NFR-004`
+**Layer:** integration
+
+**Given** H with the data of `GARDEN-SC-032`.
+**When** a client reads `/care-intervals?due_within=3&limit=100` 20 times, and the test keeps the slowest call.
+**Then** the slowest call answers in less than 1 second, from the call of the handler to the last byte.
+
+### `GARDEN-SC-047`
+
+**Verifies:** `GARDEN-FR-040`, `GARDEN-FR-041`
+**Layer:** manual
+
+**Given** `E001` holds `P009`, due for watering tomorrow, `P003` in 2 days, and `P001` in 3 days. `E002` holds `P004`, due for watering and misting tomorrow, and `P007`, due for watering tomorrow.
+**When** the owner opens Needs attention.
+**Then** "Next 3 days" lists `P009`, `P004` watering, `P004` misting, `P007`, all "tomorrow", then `P003` "in 2 days", then `P001` "in 3 days".
+
+### `GARDEN-SC-048`
+
+**Verifies:** `GARDEN-FR-042`, `GARDEN-FR-043`
+**Layer:** manual
+
+**Given** an editor, a due plant, and a plant due tomorrow.
+**When** the editor opens Needs attention, presses "Done" on the due line, then removes the care interval of the plant due tomorrow.
+**Then** the line of tomorrow shows no button. After "Done", the due line leaves the attention list. After the removal, "Next 3 days" shows "No care in the next 3 days."
+
+### `GARDEN-SC-049`
+
+**Verifies:** `GARDEN-FR-044`
+**Layer:** manual
+
+**Given** the data of `GARDEN-SC-047`, and `P008` due for watering.
+**When** the owner opens Needs attention, follows the name `P008` in the attention list, goes back, then follows the name `P009` in "Next 3 days".
+**Then** each link opens the plant page of its plant. The back button of the browser returns to Needs attention. A click on "Done" records the entry and opens no page.
 
 ## Retired identifiers
 

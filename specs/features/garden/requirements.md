@@ -4,7 +4,7 @@ title: The plants of a workspace, their environments, and their care
 type: requirements
 status: approved
 created: 2026-10-10
-updated: 2026-10-14
+updated: 2026-10-16
 approved_by: Temuri
 approved_on: 2026-10-10
 constrained_by: [OWN, DAT, SEC, NTF, JOB, CFG, RES, TG]
@@ -33,6 +33,7 @@ every plant. It holds no care history and no schedule.
 - An import of records from another system.
 - A notification preference for each workspace or each person.
 - A link between two plants: a parent, a cutting, or a merge.
+- The upcoming list in the reminder, the bot command, or the widget.
 
 ## 4. Definitions
 
@@ -203,6 +204,9 @@ Maroid must give each care interval of an active plant one care state:
 - Limit case: every 1 day, the latest 1 day ago. Due. At 2 days, overdue.
 
 ### Display
+
+`requirements-upcoming.md` holds `GARDEN-FR-039` to `GARDEN-FR-044` and `GARDEN-NFR-004`:
+the care of the next three days, and the links of the view of the attention list.
 
 ### `GARDEN-FR-022`
 

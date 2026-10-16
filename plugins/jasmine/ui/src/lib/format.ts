@@ -25,3 +25,8 @@ export function localNow(): string {
 export function formatDays(count: number): string {
 	return count === 1 ? '1 day' : `${count} days`;
 }
+
+/** The days until a care interval becomes due: "tomorrow" for one, else "in N days". */
+export function dueLabel(dueIn: number): string {
+	return dueIn === 1 ? 'tomorrow' : `in ${dueIn} days`;
+}

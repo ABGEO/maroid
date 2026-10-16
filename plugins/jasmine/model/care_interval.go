@@ -41,6 +41,7 @@ type CareInterval struct {
 	LastPerformedAt *time.Time      `db:"last_performed_at"`
 	CountedFrom     time.Time       `db:"counted_from"`
 	DaysSince       int             `db:"days_since"`
+	DueIn           int             `db:"due_in"`
 	State           *CareState      `db:"state"`
 	UpdatedAt       time.Time       `db:"updated_at"`
 }

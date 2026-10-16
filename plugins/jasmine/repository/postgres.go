@@ -51,3 +51,12 @@ func nullable(value string) any {
 
 	return value
 }
+
+// positive answers nil for zero or less, so an absent filter binds SQL NULL.
+func positive(value int) any {
+	if value <= 0 {
+		return nil
+	}
+
+	return value
+}

@@ -82,3 +82,44 @@ func TestTheAttentionListAnswersWithinOneSecond(t *testing.T) {
 	t.Logf("the slowest of 20 reads took %s", slowest)
 	assert.Less(t, slowest, time.Second)
 }
+
+// GARDEN-SC-046: The upcoming list of a workspace with 500 plants, 4000 care
+// intervals, and 100000 entries answers in less than 1 second, from the call of
+// the handler to the last byte.
+//
+//nolint:paralleltest // a measurement runs alone, so no other test takes its time
+func TestTheUpcomingListAnswersWithinOneSecond(t *testing.T) {
+	fixture := gardenUnderTest(t)
+	router := fixture.router(workspaceH)
+
+	require.NoError(t, fixture.inHome(t, func(tx *sqlx.Tx) error {
+		if _, err := tx.Exec(measuredGarden); err != nil {
+			return fmt.Errorf("seeding the measured garden: %w", err)
+		}
+
+		return nil
+	}))
+
+	var slowest time.Duration
+
+	for range 20 {
+		start := time.Now()
+		recorder := send(
+			t,
+			router,
+			http.MethodGet,
+			"/care-intervals?due_within=3&limit=100",
+			"",
+			"",
+		)
+		elapsed := time.Since(start)
+
+		require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+		require.NotEmpty(t, decode[carePage](t, recorder).Items, "the read answers upcoming care")
+
+		slowest = max(slowest, elapsed)
+	}
+
+	t.Logf("the slowest of 20 reads took %s", slowest)
+	assert.Less(t, slowest, time.Second)
+}

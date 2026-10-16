@@ -472,9 +472,10 @@ paths:
       operationId: listCareIntervals
       summary: List the care intervals of the acting workspace, with their state.
       description: >
-        Realizes `GARDEN-FR-021`, `GARDEN-FR-022`, and `GARDEN-FR-023`. The page
-        holds the rows of the acting workspace alone, sorted by `id`. A care
-        interval of an inactive plant has no state, so a `state` filter omits it.
+        Realizes `GARDEN-FR-021`, `GARDEN-FR-022`, `GARDEN-FR-023`, and
+        `GARDEN-FR-039`. The page holds the rows of the acting workspace alone,
+        sorted by `id`. A care interval of an inactive plant has no state, so a
+        `state` filter and a `due_within` filter omit it. Both filters apply together.
         The permission is `plants.read`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/Limit"
@@ -501,6 +502,20 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: due_within
+          in: query
+          required: false
+          description: >
+            Keep the care intervals of active plants whose `due_in` is from 1 to this
+            value. Another value answers `request-invalid`. `GARDEN-DD-015`.
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 365
+          examples:
+            upcoming:
+              value: 3
       responses:
         "200":
           description: One page of care intervals.
@@ -884,7 +899,7 @@ components:
 
     CareInterval:
       type: object
-      required: [id, plant, type, days, set_at, counted_from, days_since, updated_at]
+      required: [id, plant, type, days, set_at, counted_from, days_since, due_in, updated_at]
       properties:
         id:
           type: string
@@ -912,6 +927,12 @@ components:
           type: integer
           format: int32
           minimum: 0
+        due_in:
+          type: integer
+          format: int32
+          description: >
+            The UTC days until the care interval becomes due: `days` minus
+            `days_since`. 0 on the day it becomes due, negative after.
         state:
           $ref: "#/components/schemas/CareState"
           description: Absent when the plant is inactive.

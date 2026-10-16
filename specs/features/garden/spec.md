@@ -4,7 +4,7 @@ title: The plants of a workspace, their environments, and their care
 type: spec
 status: approved
 created: 2026-10-10
-updated: 2026-10-14
+updated: 2026-10-16
 approved_by: Temuri
 approved_on: 2026-10-10
 constrained_by: [OWN, DAT, REP, SEC, RES, API, ERR, NTF, JOB, CFG, PKG, UI, TS, TST, TG]
@@ -14,7 +14,8 @@ requirements: features/garden/requirements.md
 # Specification: The plants of a workspace, their environments, and their care
 
 `spec-scenarios.md` holds the scenarios. `api.yaml` holds the bodies and the status
-codes of every route. `spec-command.md` holds the bot command.
+codes of every route. `spec-command.md` holds the bot command. `spec-upcoming.md`
+holds the care of the next three days.
 
 ## 1. Summary
 
@@ -26,49 +27,56 @@ answers the same list. The remote gets four pages.
 
 ## 2. Coverage
 
-| Requirement      | Where this specification realizes it                                          |
-| ---------------- | ----------------------------------------------------------------------------- |
-| `GARDEN-FR-001`  | Section 4.3, `GARDEN-SC-001`                                                  |
-| `GARDEN-FR-002`  | Section 4.2, 4.5, `GARDEN-DD-004`, `GARDEN-SC-002`                            |
-| `GARDEN-FR-003`  | Section 4.3, `GARDEN-DD-007`, `GARDEN-SC-003`, `GARDEN-SC-004`                |
-| `GARDEN-FR-004`  | Section 4.3, `GARDEN-SC-005`                                                  |
-| `GARDEN-FR-005`  | Section 4.2, `GARDEN-SC-006`                                                  |
-| `GARDEN-FR-006`  | Section 4.2, `GARDEN-SC-007`                                                  |
-| `GARDEN-FR-007`  | Section 4.2, `GARDEN-DD-002`, `GARDEN-SC-008`, `GARDEN-SC-009`                |
-| `GARDEN-FR-008`  | `GARDEN-DD-002`, `GARDEN-SC-010`                                              |
-| `GARDEN-FR-009`  | `GARDEN-DD-003`, `GARDEN-SC-011`                                              |
-| `GARDEN-FR-010`  | Section 4.3, 4.6, `GARDEN-SC-031`                                             |
-| `GARDEN-FR-011`  | Section 4.2, `GARDEN-SC-012`                                                  |
-| `GARDEN-FR-012`  | Section 4.3, `GARDEN-DD-006`, `GARDEN-SC-013`, `GARDEN-SC-014`                |
-| `GARDEN-FR-013`  | `GARDEN-DD-006`, `GARDEN-SC-015`, `GARDEN-SC-016`                             |
-| `GARDEN-FR-014`  | Section 4.6, `GARDEN-SC-017`                                                  |
-| `GARDEN-FR-015`  | Section 4.3, `GARDEN-SC-018`                                                  |
-| `GARDEN-FR-016`  | Section 4.3, `GARDEN-SC-018`                                                  |
-| `GARDEN-FR-017`  | `GARDEN-SC-019`                                                               |
-| `GARDEN-FR-018`  | Section 4.3, `GARDEN-SC-020`                                                  |
-| `GARDEN-FR-019`  | `GARDEN-DD-005`, `GARDEN-SC-021`                                              |
-| `GARDEN-FR-020`  | `GARDEN-DD-005`, `GARDEN-SC-022`                                              |
-| `GARDEN-FR-021`  | `GARDEN-DD-005`, `GARDEN-SC-023`, `GARDEN-SC-024`                             |
-| `GARDEN-FR-022`  | Section 4.3, 4.6, `GARDEN-DD-008`, `GARDEN-SC-025`, `GARDEN-SC-031`           |
-| `GARDEN-FR-023`  | Section 4.3, `GARDEN-SC-026`                                                  |
-| `GARDEN-FR-024`  | Section 4.6, `GARDEN-SC-031`                                                  |
-| `GARDEN-FR-025`  | Section 4.3                                                                   |
-| `GARDEN-FR-033`  | Section 4.3, `GARDEN-SC-034`                                                  |
-| `GARDEN-FR-026`  | Section 4.3, 4.4, `GARDEN-SC-027`, `GARDEN-SC-028`                            |
-| `GARDEN-FR-028`  | Section 4.4, `GARDEN-SC-029`                                                  |
-| `GARDEN-FR-031`  | Section 4.2, `GARDEN-DD-001`                                                  |
-| `GARDEN-FR-034`  | `spec-command.md` 3.2, 3.3, `GARDEN-SC-036`, `GARDEN-SC-037`, `GARDEN-SC-041` |
-| `GARDEN-FR-035`  | `spec-command.md` 3.3, `GARDEN-DD-012`, `GARDEN-SC-036`                       |
-| `GARDEN-FR-036`  | `spec-command.md` 3.3, `GARDEN-SC-038`                                        |
-| `GARDEN-FR-037`  | `spec-command.md` 3.3, `GARDEN-DD-013`, `GARDEN-SC-039`                       |
-| `GARDEN-FR-038`  | `spec-command.md` 3.3, `GARDEN-DD-014`, `GARDEN-SC-042`                       |
-| `GARDEN-FR-032`  | Section 4.4, `GARDEN-SC-027`, `GARDEN-SC-035`                                 |
-| `GARDEN-NFR-001` | Section 4.2, `GARDEN-SC-032`                                                  |
-| `GARDEN-NFR-002` | `GARDEN-SC-033`                                                               |
-| `GARDEN-NFR-003` | `GARDEN-SC-040`                                                               |
-| `GARDEN-INV-001` | Section 4.2, `GARDEN-DD-002`, `GARDEN-SC-010`                                 |
-| `GARDEN-INV-002` | Section 4.2, `GARDEN-DD-004`, `GARDEN-SC-030`                                 |
-| `GARDEN-INV-003` | Section 4.2, `GARDEN-SC-020`                                                  |
+| Requirement      | Where this specification realizes it                                             |
+| ---------------- | -------------------------------------------------------------------------------- |
+| `GARDEN-FR-001`  | Section 4.3, `GARDEN-SC-001`                                                     |
+| `GARDEN-FR-002`  | Section 4.2, 4.5, `GARDEN-DD-004`, `GARDEN-SC-002`                               |
+| `GARDEN-FR-003`  | Section 4.3, `GARDEN-DD-007`, `GARDEN-SC-003`, `GARDEN-SC-004`                   |
+| `GARDEN-FR-004`  | Section 4.3, `GARDEN-SC-005`                                                     |
+| `GARDEN-FR-005`  | Section 4.2, `GARDEN-SC-006`                                                     |
+| `GARDEN-FR-006`  | Section 4.2, `GARDEN-SC-007`                                                     |
+| `GARDEN-FR-007`  | Section 4.2, `GARDEN-DD-002`, `GARDEN-SC-008`, `GARDEN-SC-009`                   |
+| `GARDEN-FR-008`  | `GARDEN-DD-002`, `GARDEN-SC-010`                                                 |
+| `GARDEN-FR-009`  | `GARDEN-DD-003`, `GARDEN-SC-011`                                                 |
+| `GARDEN-FR-010`  | Section 4.3, 4.6, `GARDEN-SC-031`                                                |
+| `GARDEN-FR-011`  | Section 4.2, `GARDEN-SC-012`                                                     |
+| `GARDEN-FR-012`  | Section 4.3, `GARDEN-DD-006`, `GARDEN-SC-013`, `GARDEN-SC-014`                   |
+| `GARDEN-FR-013`  | `GARDEN-DD-006`, `GARDEN-SC-015`, `GARDEN-SC-016`                                |
+| `GARDEN-FR-014`  | Section 4.6, `GARDEN-SC-017`                                                     |
+| `GARDEN-FR-015`  | Section 4.3, `GARDEN-SC-018`                                                     |
+| `GARDEN-FR-016`  | Section 4.3, `GARDEN-SC-018`                                                     |
+| `GARDEN-FR-017`  | `GARDEN-SC-019`                                                                  |
+| `GARDEN-FR-018`  | Section 4.3, `GARDEN-SC-020`                                                     |
+| `GARDEN-FR-019`  | `GARDEN-DD-005`, `GARDEN-SC-021`                                                 |
+| `GARDEN-FR-020`  | `GARDEN-DD-005`, `GARDEN-SC-022`                                                 |
+| `GARDEN-FR-021`  | `GARDEN-DD-005`, `GARDEN-SC-023`, `GARDEN-SC-024`                                |
+| `GARDEN-FR-022`  | Section 4.3, 4.6, `GARDEN-DD-008`, `GARDEN-SC-025`, `GARDEN-SC-031`              |
+| `GARDEN-FR-023`  | Section 4.3, `GARDEN-SC-026`                                                     |
+| `GARDEN-FR-024`  | Section 4.6, `GARDEN-SC-031`                                                     |
+| `GARDEN-FR-025`  | Section 4.3                                                                      |
+| `GARDEN-FR-033`  | Section 4.3, `GARDEN-SC-034`                                                     |
+| `GARDEN-FR-026`  | Section 4.3, 4.4, `GARDEN-SC-027`, `GARDEN-SC-028`                               |
+| `GARDEN-FR-028`  | Section 4.4, `GARDEN-SC-029`                                                     |
+| `GARDEN-FR-031`  | Section 4.2, `GARDEN-DD-001`                                                     |
+| `GARDEN-FR-034`  | `spec-command.md` 3.2, 3.3, `GARDEN-SC-036`, `GARDEN-SC-037`, `GARDEN-SC-041`    |
+| `GARDEN-FR-035`  | `spec-command.md` 3.3, `GARDEN-DD-012`, `GARDEN-SC-036`                          |
+| `GARDEN-FR-036`  | `spec-command.md` 3.3, `GARDEN-SC-038`                                           |
+| `GARDEN-FR-037`  | `spec-command.md` 3.3, `GARDEN-DD-013`, `GARDEN-SC-039`                          |
+| `GARDEN-FR-038`  | `spec-command.md` 3.3, `GARDEN-DD-014`, `GARDEN-SC-042`                          |
+| `GARDEN-FR-032`  | Section 4.4, `GARDEN-SC-027`, `GARDEN-SC-035`                                    |
+| `GARDEN-FR-039`  | `spec-upcoming.md` 3.2, 3.3, `GARDEN-DD-015`, `GARDEN-SC-043` to `GARDEN-SC-045` |
+| `GARDEN-FR-040`  | `spec-upcoming.md` 3.4, `GARDEN-DD-016`, `GARDEN-SC-047`                         |
+| `GARDEN-FR-041`  | `spec-upcoming.md` 3.4, `GARDEN-DD-016`, `GARDEN-SC-047`                         |
+| `GARDEN-FR-042`  | `spec-upcoming.md` 3.4, `GARDEN-SC-048`                                          |
+| `GARDEN-FR-043`  | `spec-upcoming.md` 3.4, `GARDEN-SC-048`                                          |
+| `GARDEN-FR-044`  | `spec-upcoming.md` 3.4, `GARDEN-DD-011`, `GARDEN-SC-049`                         |
+| `GARDEN-NFR-001` | Section 4.2, `GARDEN-SC-032`                                                     |
+| `GARDEN-NFR-002` | `GARDEN-SC-033`                                                                  |
+| `GARDEN-NFR-003` | `GARDEN-SC-040`                                                                  |
+| `GARDEN-NFR-004` | `spec-upcoming.md` 3.3, `GARDEN-DD-015`, `GARDEN-SC-046`                         |
+| `GARDEN-INV-001` | Section 4.2, `GARDEN-DD-002`, `GARDEN-SC-010`                                    |
+| `GARDEN-INV-002` | Section 4.2, `GARDEN-DD-004`, `GARDEN-SC-030`                                    |
+| `GARDEN-INV-003` | Section 4.2, `GARDEN-SC-020`                                                     |
 
 ## 3. Guideline compliance
 
@@ -413,19 +421,22 @@ shows a control that writes only when `host.can` holds its permission.
 
 ## 7. Build plan
 
-| #   | Step                                                                                                              | Realizes                                                             | Done |
-| --- | ----------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ---- |
-| 1   | The migration pair, and the integration test of every constraint.                                                 | `GARDEN-FR-031`, `GARDEN-INV-001` to `GARDEN-INV-003`                | [x]  |
-| 2   | `model/`, `errs/`, `permission/`, `config/`.                                                                      | `GARDEN-FR-011`, `GARDEN-FR-025`                                     | [x]  |
-| 3   | `repository/counter.go`, `environment.go`, `plant.go`, with their tests.                                          | `GARDEN-FR-001` to `GARDEN-FR-009`                                   | [x]  |
-| 4   | `repository/care_interval.go`, `maintenance_entry.go`, with the state tests.                                      | `GARDEN-FR-012` to `GARDEN-FR-021`                                   | [x]  |
-| 5   | `handler/body.go`, the DTOs, and the handlers. `api.yaml` matches.                                                | `GARDEN-FR-001` to `GARDEN-FR-023`                                   | [x]  |
-| 6   | `job/`, and the wiring in `main.go`.                                                                              | `GARDEN-FR-025`, `GARDEN-FR-026`, `GARDEN-FR-028`, `GARDEN-FR-032`   | [x]  |
-| 7   | The remote: the API clients and the four pages. Build it before the `.so`. `BLD-003`.                             | `GARDEN-FR-010`, `GARDEN-FR-014`, `GARDEN-FR-022` to `GARDEN-FR-024` | [x]  |
-| 8   | The two measurements of `GARDEN-NFR-001` and `GARDEN-NFR-002`.                                                    | `GARDEN-NFR-001`, `GARDEN-NFR-002`                                   | [x]  |
-| 9   | `digest/`, the move of `job/digest.go`, and the row of `PKG-001`. `GARDEN-SC-027` and `GARDEN-SC-035` still pass. | `GARDEN-FR-032`, `GARDEN-FR-035`                                     | [x]  |
-| 10  | `telegram/command/`, with `pack`, and the wiring in `main.go`.                                                    | `GARDEN-FR-034` to `GARDEN-FR-037`                                   | [x]  |
-| 11  | The cap of 3 messages, the measurement of `GARDEN-NFR-003`, and the manual check `GARDEN-SC-041`.                 | `GARDEN-FR-038`, `GARDEN-NFR-003`, `GARDEN-FR-034`                   | [x]  |
+| #   | Step                                                                                                                   | Realizes                                                             | Done |
+| --- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ---- |
+| 1   | The migration pair, and the integration test of every constraint.                                                      | `GARDEN-FR-031`, `GARDEN-INV-001` to `GARDEN-INV-003`                | [x]  |
+| 2   | `model/`, `errs/`, `permission/`, `config/`.                                                                           | `GARDEN-FR-011`, `GARDEN-FR-025`                                     | [x]  |
+| 3   | `repository/counter.go`, `environment.go`, `plant.go`, with their tests.                                               | `GARDEN-FR-001` to `GARDEN-FR-009`                                   | [x]  |
+| 4   | `repository/care_interval.go`, `maintenance_entry.go`, with the state tests.                                           | `GARDEN-FR-012` to `GARDEN-FR-021`                                   | [x]  |
+| 5   | `handler/body.go`, the DTOs, and the handlers. `api.yaml` matches.                                                     | `GARDEN-FR-001` to `GARDEN-FR-023`                                   | [x]  |
+| 6   | `job/`, and the wiring in `main.go`.                                                                                   | `GARDEN-FR-025`, `GARDEN-FR-026`, `GARDEN-FR-028`, `GARDEN-FR-032`   | [x]  |
+| 7   | The remote: the API clients and the four pages. Build it before the `.so`. `BLD-003`.                                  | `GARDEN-FR-010`, `GARDEN-FR-014`, `GARDEN-FR-022` to `GARDEN-FR-024` | [x]  |
+| 8   | The two measurements of `GARDEN-NFR-001` and `GARDEN-NFR-002`.                                                         | `GARDEN-NFR-001`, `GARDEN-NFR-002`                                   | [x]  |
+| 9   | `digest/`, the move of `job/digest.go`, and the row of `PKG-001`. `GARDEN-SC-027` and `GARDEN-SC-035` still pass.      | `GARDEN-FR-032`, `GARDEN-FR-035`                                     | [x]  |
+| 10  | `telegram/command/`, with `pack`, and the wiring in `main.go`.                                                         | `GARDEN-FR-034` to `GARDEN-FR-037`                                   | [x]  |
+| 11  | The cap of 3 messages, the measurement of `GARDEN-NFR-003`, and the manual check `GARDEN-SC-041`.                      | `GARDEN-FR-038`, `GARDEN-NFR-003`, `GARDEN-FR-034`                   | [x]  |
+| 12  | `due_in`, the filter `due_within`, and `api.yaml`, with `GARDEN-SC-043` to `GARDEN-SC-046`.                            | `GARDEN-FR-039`, `GARDEN-NFR-004`                                    | [x]  |
+| 13  | The API client and the section "Next 3 days" of `/attention`, then the manual checks `GARDEN-SC-047`, `GARDEN-SC-048`. | `GARDEN-FR-040` to `GARDEN-FR-043`                                   | [ ]  |
+| 14  | The link to the plant page on each line of `/attention`, then the manual check `GARDEN-SC-049`.                        | `GARDEN-FR-044`                                                      | [ ]  |
 
 ## 8. Out of scope for this specification
 

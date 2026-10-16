@@ -15,7 +15,8 @@ export function createCareIntervalsApi(api: ApiClient) {
 				: api.get<Page<CareInterval>>('/care-intervals', {
 						params: {
 							state: filter.state?.join(','),
-							environment_id: filter.environment_id
+							environment_id: filter.environment_id,
+							due_within: filter.due_within
 						}
 					}),
 		listForPlant: (plantId: string) =>

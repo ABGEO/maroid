@@ -3,7 +3,7 @@
 
 	import '../../app.css';
 	import { createJasmineApi, type CareInterval, type EnvironmentReference } from '../../api';
-	import { formatDays } from '../../lib/format';
+	import { dueLabel, formatDays } from '../../lib/format';
 	import { MAINTENANCE_TYPES, STATE_BADGE, typeLabel } from '../../lib/maintenance';
 	import { readAll } from '../../lib/pages';
 
@@ -18,12 +18,20 @@
 	const canLog = $derived(host.can('maintenance.write'));
 	const intent = createWriteIntent();
 
+	const UPCOMING_DAYS = 3;
+
 	let lines = $state<CareInterval[]>([]);
+	let upcoming = $state<CareInterval[]>([]);
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let pending = $state<string | null>(null);
 	let failure = $state<string | null>(null);
 
 	const groups = $derived(group(lines));
+	const nextDays = $derived(byDueDate(upcoming));
+
+	function plantHref(care: CareInterval): string {
+		return host.href(`/plants/${care.plant.id}`);
+	}
 
 	function displayNumber(displayId: string): number {
 		return Number(displayId.slice(1));
@@ -61,11 +69,27 @@
 		return groups;
 	}
 
+	/**
+	 * The upcoming lines by the day they become due, then in the order of the
+	 * attention list: the environment number, the plant number, the type.
+	 */
+	function byDueDate(items: CareInterval[]): CareInterval[] {
+		return [...items].sort(
+			(a, b) =>
+				a.due_in - b.due_in ||
+				displayNumber(a.plant.environment.display_id) -
+					displayNumber(b.plant.environment.display_id) ||
+				displayNumber(a.plant.display_id) - displayNumber(b.plant.display_id) ||
+				typeOrder(a) - typeOrder(b)
+		);
+	}
+
 	async function load(): Promise<void> {
 		try {
-			lines = await readAll((link?: string) =>
-				api.careIntervals.list({ state: ['due', 'overdue'] }, link)
-			);
+			[lines, upcoming] = await Promise.all([
+				readAll((link?: string) => api.careIntervals.list({ state: ['due', 'overdue'] }, link)),
+				readAll((link?: string) => api.careIntervals.list({ due_within: UPCOMING_DAYS }, link))
+			]);
 			status = 'ready';
 		} catch (error) {
 			console.error('Failed to load the attention list', error);
@@ -102,7 +126,9 @@
 	<header class="page-header">
 		<div>
 			<h1 class="page-title">Needs attention</h1>
-			<p class="page-lead">The care that is due or overdue, by environment.</p>
+			<p class="page-lead">
+				The care that is due or overdue, by environment, then the care of the next 3 days.
+			</p>
 		</div>
 	</header>
 
@@ -123,46 +149,74 @@
 			<span>Failed to load the attention list.</span>
 			<button type="button" class="btn btn-sm" onclick={() => load()}>Retry</button>
 		</div>
-	{:else if groups.length === 0}
-		<div class="empty-state">Every plant is on schedule.</div>
 	{:else}
-		{#each groups as { environment, lines: group } (environment.id)}
-			<section class="section">
-				<h2 class="section-title">
-					<span class="meta">{environment.display_id}</span>
-					{environment.name}
-				</h2>
+		{#if groups.length === 0}
+			<div class="empty-state">Every plant is on schedule.</div>
+		{:else}
+			{#each groups as { environment, lines: group } (environment.id)}
+				<section class="section">
+					<h2 class="section-title">
+						<span class="meta">{environment.display_id}</span>
+						{environment.name}
+					</h2>
+					<ul class="list panel">
+						{#each group as care (care.id)}
+							<li class="list-row items-center">
+								<span class="meta">{care.plant.display_id}</span>
+								<span class="list-col-grow">
+									<a class="link link-hover font-medium" href={plantHref(care)}
+										>{care.plant.common_name}</a
+									>
+									<span class="meta ml-2">
+										{typeLabel(care.type)}, {formatDays(care.days_since)}, every {formatDays(
+											care.days
+										)}
+									</span>
+								</span>
+								{#if care.state}
+									<span class="badge badge-sm badge-soft {STATE_BADGE[care.state].tone}">
+										{STATE_BADGE[care.state].label}
+									</span>
+								{/if}
+								{#if canLog}
+									<button
+										class="btn btn-primary btn-sm"
+										type="button"
+										disabled={pending !== null}
+										onclick={() => done(care)}
+									>
+										{pending === care.id ? 'Saving…' : 'Done'}
+									</button>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				</section>
+			{/each}
+		{/if}
+
+		<section class="section">
+			<h2 class="section-title">Next 3 days</h2>
+			{#if nextDays.length === 0}
+				<div class="empty-state">No care in the next 3 days.</div>
+			{:else}
 				<ul class="list panel">
-					{#each group as care (care.id)}
+					{#each nextDays as care (care.id)}
 						<li class="list-row items-center">
 							<span class="meta">{care.plant.display_id}</span>
 							<span class="list-col-grow">
-								<span class="font-medium">{care.plant.common_name}</span>
+								<a class="link link-hover font-medium" href={plantHref(care)}
+									>{care.plant.common_name}</a
+								>
 								<span class="meta ml-2">
-									{typeLabel(care.type)}, {formatDays(care.days_since)}, every {formatDays(
-										care.days
-									)}
+									{typeLabel(care.type)}, every {formatDays(care.days)}
 								</span>
 							</span>
-							{#if care.state}
-								<span class="badge badge-sm badge-soft {STATE_BADGE[care.state].tone}">
-									{STATE_BADGE[care.state].label}
-								</span>
-							{/if}
-							{#if canLog}
-								<button
-									class="btn btn-primary btn-sm"
-									type="button"
-									disabled={pending !== null}
-									onclick={() => done(care)}
-								>
-									{pending === care.id ? 'Saving…' : 'Done'}
-								</button>
-							{/if}
+							<span class="badge badge-sm badge-ghost">{dueLabel(care.due_in)}</span>
 						</li>
 					{/each}
 				</ul>
-			</section>
-		{/each}
+			{/if}
+		</section>
 	{/if}
 </div>

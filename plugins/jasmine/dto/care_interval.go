@@ -33,6 +33,7 @@ type CareIntervalResponse struct {
 	LastPerformedAt *string        `json:"last_performed_at,omitempty"`
 	CountedFrom     string         `json:"counted_from"`
 	DaysSince       int            `json:"days_since"`
+	DueIn           int            `json:"due_in"`
 	State           *string        `json:"state,omitempty"`
 	UpdatedAt       string         `json:"updated_at"`
 }
@@ -48,6 +49,7 @@ func NewCareIntervalResponse(care *model.CareInterval) CareIntervalResponse {
 		SetAt:       care.SetAt.UTC().Format(time.RFC3339),
 		CountedFrom: care.CountedFrom.Format(time.DateOnly),
 		DaysSince:   care.DaysSince,
+		DueIn:       care.DueIn,
 		UpdatedAt:   care.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 

@@ -1,6 +1,7 @@
 package handler_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -35,6 +36,7 @@ type careAnswer struct {
 	LastPerformedAt *string        `json:"last_performed_at"`
 	CountedFrom     string         `json:"counted_from"`
 	DaysSince       int            `json:"days_since"`
+	DueIn           int            `json:"due_in"`
 	State           *string        `json:"state"`
 }
 
@@ -151,6 +153,18 @@ func moveSetAt(t *testing.T, fixture *garden, plantID string, kind string, days 
 
 func daysAgo(days int) time.Time {
 	return time.Now().UTC().AddDate(0, 0, -days)
+}
+
+func problemDetailOf(t *testing.T, recorder *httptest.ResponseRecorder) string {
+	t.Helper()
+
+	var answered struct {
+		Detail string `json:"detail"`
+	}
+
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &answered))
+
+	return answered.Detail
 }
 
 func stateOf(care careAnswer) string {
@@ -464,4 +478,106 @@ func TestTheCareIntervalListFilters(t *testing.T) {
 		recorder := send(t, router, http.MethodGet, pathCareIntervals+"?"+query, "", "")
 		assert.Equal(t, http.StatusBadRequest, recorder.Code, query+": "+recorder.Body.String())
 	}
+}
+
+// GARDEN-SC-043: The filter due_within keeps the care intervals of active plants
+// that become due from 1 to 3 days after today.
+func TestTheUpcomingListKeepsTheCareOfTheNextThreeDays(t *testing.T) {
+	t.Parallel()
+
+	router := routerUnderTest(t)
+
+	office := makeEnvironment(t, router, "Office")
+
+	plants := make(map[int]plantAnswer)
+
+	for _, days := range []int{6, 4, 3, 7, 6} {
+		plant := makePlant(t, router, "Rose", office.ID)
+		setInterval(t, router, plant.ID, typeWatering, 7)
+		recordEntry(t, router, typeWatering, daysAgo(days), plant.ID)
+		plants[len(plants)+1] = plant
+	}
+
+	inactive := replacePlant(t, router, plants[5], map[string]any{memberStatus: statusInactive})
+	require.Equal(t, http.StatusOK, inactive.Code, inactive.Body.String())
+
+	upcoming := readEvery[careAnswer](t, router, externalURL+pathCareIntervals+"?due_within=3")
+
+	dueIn := make(map[string]int)
+	for _, care := range upcoming {
+		dueIn[care.Plant.DisplayID] = care.DueIn
+	}
+
+	assert.Equal(t, map[string]int{"P001": 1, "P002": 3}, dueIn)
+	assert.Equal(t, 4, careOfType(t, router, plants[3].ID, typeWatering).DueIn)
+	assert.Equal(t, 0, careOfType(t, router, plants[4].ID, typeWatering).DueIn)
+}
+
+// GARDEN-SC-044: With no entry, due_in counts from the moment the days last
+// changed. The filter state applies together with due_within.
+func TestTheUpcomingListCountsFromTheIntervalWhenNoEntryExists(t *testing.T) {
+	t.Parallel()
+
+	fixture := gardenUnderTest(t)
+	router := fixture.router(workspaceH)
+
+	plant := makePlant(t, router, "Rose", makeEnvironment(t, router, "Office").ID)
+	setInterval(t, router, plant.ID, typeFertilizing, 3)
+	moveSetAt(t, fixture, plant.ID, typeFertilizing, 2)
+
+	upcoming := readEvery[careAnswer](t, router, externalURL+pathCareIntervals+"?due_within=3")
+	require.Len(t, upcoming, 1)
+	assert.Equal(t, plant.ID, upcoming[0].Plant.ID)
+	assert.Equal(t, typeFertilizing, upcoming[0].Type)
+	assert.Equal(t, 1, upcoming[0].DueIn)
+
+	assert.Empty(t, readEvery[careAnswer](
+		t,
+		router,
+		externalURL+pathCareIntervals+"?state=due&due_within=3",
+	))
+}
+
+// GARDEN-SC-045: The filter due_within refuses a value that is not an integer from
+// 1 to 365, and a cursor of one value is stale on another.
+func TestTheUpcomingListRefusesAnInvalidWindow(t *testing.T) {
+	t.Parallel()
+
+	router := routerUnderTest(t)
+
+	for _, value := range []string{"0", "366", "-1", "3.5", "abc", ""} {
+		recorder := send(t, router, http.MethodGet, pathCareIntervals+"?due_within="+value, "", "")
+		require.Equal(t, http.StatusBadRequest, recorder.Code, value+": "+recorder.Body.String())
+		assert.Equal(t, problem.TypeRequestInvalid, problemTypeOf(t, recorder), value)
+		assert.Equal(
+			t,
+			"The parameter due_within must be an integer from 1 to 365.",
+			problemDetailOf(t, recorder),
+			value,
+		)
+	}
+
+	office := makeEnvironment(t, router, "Office")
+	for range 2 {
+		plant := makePlant(t, router, "Rose", office.ID)
+		setInterval(t, router, plant.ID, typeWatering, 7)
+		recordEntry(t, router, typeWatering, daysAgo(6), plant.ID)
+	}
+
+	first := send(t, router, http.MethodGet, pathCareIntervals+"?due_within=3&limit=1", "", "")
+	require.Equal(t, http.StatusOK, first.Code, first.Body.String())
+
+	next := decode[carePage](t, first).Next
+	require.NotEmpty(t, next)
+
+	stale := send(
+		t,
+		router,
+		http.MethodGet,
+		strings.Replace(strings.TrimPrefix(next, externalURL), "due_within=3", "due_within=2", 1),
+		"",
+		"",
+	)
+	require.Equal(t, http.StatusBadRequest, stale.Code, stale.Body.String())
+	assert.Equal(t, problem.TypeCursorStale, problemTypeOf(t, stale))
 }

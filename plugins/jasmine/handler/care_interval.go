@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -33,7 +34,10 @@ const (
 	paramPlantID = "plantId"
 	paramType    = "type"
 
-	filterState = "state"
+	filterState     = "state"
+	filterDueWithin = "due_within"
+
+	maxDueWithin = 365
 )
 
 // CareIntervalHandler provides HTTP handlers for the care intervals and their
@@ -86,7 +90,7 @@ func (h *CareIntervalHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	options := page.Options{Filters: []string{filterState, filterEnvironmentID}}
+	options := page.Options{Filters: []string{filterState, filterEnvironmentID, filterDueWithin}}
 
 	listPage(
 		w,
@@ -266,6 +270,14 @@ func checkCareFilters(r *http.Request) *problem.Problem {
 		}
 	}
 
+	if query.Has(filterDueWithin) {
+		if _, ok := parseDueWithin(query.Get(filterDueWithin)); !ok {
+			return problem.NewRequestInvalid().WithDetail(
+				"The parameter due_within must be an integer from 1 to 365.",
+			)
+		}
+	}
+
 	value := query.Get(filterState)
 	if value == "" {
 		return nil
@@ -299,5 +311,20 @@ func careFilter(filters map[string]string) repository.CareIntervalFilter {
 		}
 	}
 
+	if value, ok := filters[filterDueWithin]; ok {
+		filter.DueWithin, _ = parseDueWithin(value)
+	}
+
 	return filter
+}
+
+// parseDueWithin answers the count of days of the filter due_within, and false for
+// a value that is not an integer from 1 to maxDueWithin.
+func parseDueWithin(value string) (int, bool) {
+	days, err := strconv.Atoi(value)
+	if err != nil || days < 1 || days > maxDueWithin {
+		return 0, false
+	}
+
+	return days, true
 }

@@ -30,7 +30,7 @@ const (
 	       e.id AS "plant.environment.id", e.number AS "plant.environment.number",
 	       e.name AS "plant.environment.name",
 	       latest.performed_at AS last_performed_at,
-	       counted.counted_from, counted.days_since, standing.state
+	       counted.counted_from, counted.days_since, upcoming.due_in, standing.state
 	FROM care_intervals ci
 	JOIN plants p ON p.id = ci.plant_id
 	JOIN environments e ON e.id = p.environment_id
@@ -48,6 +48,9 @@ const (
 	           CAST(now() AT TIME ZONE 'UTC' AS date) - start.counted_from AS days_since
 	) counted
 	CROSS JOIN LATERAL (
+	    SELECT ci.days - counted.days_since AS due_in
+	) upcoming
+	CROSS JOIN LATERAL (
 	    SELECT CASE
 	             WHEN p.status <> 'active' THEN NULL
 	             WHEN 2 * counted.days_since > 3 * ci.days THEN 'overdue'
@@ -59,10 +62,13 @@ const (
 
 // CareIntervalFilter narrows a list of care intervals. An empty EnvironmentID
 // keeps every environment, and empty States keeps every care interval, also the
-// ones of an inactive plant, which have no state.
+// ones of an inactive plant, which have no state. A positive DueWithin keeps the
+// care intervals of active plants that become due from 1 to DueWithin days after
+// today, and zero keeps every one.
 type CareIntervalFilter struct {
 	EnvironmentID string
 	States        []model.CareState
+	DueWithin     int
 }
 
 // CareIntervalRepository defines the data access contract for CareInterval
@@ -220,6 +226,9 @@ func (r *CareInterval) List(
 		       OR p.environment_id = CAST(:environment_id AS uuid))
 		  AND (CAST(:states AS text) IS NULL
 		       OR standing.state = ANY(string_to_array(CAST(:states AS text), ',')))
+		  AND (CAST(:due_within AS integer) IS NULL
+		       OR (standing.state IS NOT NULL
+		           AND upcoming.due_in BETWEEN 1 AND CAST(:due_within AS integer)))
 		ORDER BY ` + order + `
 		LIMIT :limit;`
 
@@ -232,6 +241,7 @@ func (r *CareInterval) List(
 		paramBoundary:      nullable(seek.Boundary),
 		paramEnvironmentID: nullable(filter.EnvironmentID),
 		"states":           nullable(strings.Join(states, ",")),
+		"due_within":       positive(filter.DueWithin),
 		paramLimit:         seek.Limit,
 	})
 	if err != nil {

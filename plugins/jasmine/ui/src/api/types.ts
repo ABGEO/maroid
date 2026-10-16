@@ -99,6 +99,7 @@ export interface CareInterval {
 	last_performed_at?: string;
 	counted_from: string;
 	days_since: number;
+	due_in: number;
 	state?: CareState;
 	updated_at: string;
 }
@@ -110,4 +111,5 @@ export interface CareIntervalPayload {
 export interface CareIntervalFilter {
 	state?: CareState[];
 	environment_id?: string;
+	due_within?: number;
 }
