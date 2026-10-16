@@ -3,6 +3,7 @@
 
 	import type { Workspace } from '$lib/api';
 	import { crumbsFor, needsPlugins } from '$lib/navigation/breadcrumbs';
+	import { documentTitle, trailTitle } from '$lib/navigation/title';
 	import type { PluginRoute } from '$lib/plugins/loader';
 	import { enabledState, pluginState } from '$lib/state/plugins.svelte';
 	import { pageTitle } from '$lib/state/title.svelte';
@@ -29,7 +30,10 @@
 			parameterized: route?.parameterized === true
 		})
 	);
+	const title = $derived(pending ? documentTitle() : trailTitle(crumbs));
 </script>
+
+<svelte:head><title>{title}</title></svelte:head>
 
 {#if pending}
 	<div class="flex h-4 items-center">

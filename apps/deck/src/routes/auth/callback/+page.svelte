@@ -7,6 +7,7 @@
 
 	import { startSignIn } from '$lib/api/client';
 	import { authFailureMessage } from '$lib/auth/messages';
+	import { documentTitle } from '$lib/navigation/title';
 
 	const reason = page.url.searchParams.get('error');
 	const message = reason ? authFailureMessage(reason) : '';
@@ -19,6 +20,8 @@
 		}
 	});
 </script>
+
+<svelte:head><title>{documentTitle('Sign in')}</title></svelte:head>
 
 {#if reason}
 	<div class="bg-base-200 flex min-h-screen items-center justify-center">

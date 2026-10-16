@@ -4,6 +4,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { startInvitationRedemption } from '$lib/api/client';
+	import { documentTitle } from '$lib/navigation/title';
 
 	onMount(() => {
 		const token = page.url.searchParams.get('token');
@@ -20,3 +21,5 @@
 			.catch(() => goto(resolve('/auth/callback?error=invitation_invalid')));
 	});
 </script>
+
+<svelte:head><title>{documentTitle('Invitation')}</title></svelte:head>

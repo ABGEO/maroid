@@ -2,6 +2,8 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 
+	import { documentTitle } from '$lib/navigation/title';
+
 	const notFound = $derived(page.status === 404);
 	const title = $derived(notFound ? 'Not found' : 'Something went wrong');
 	// The router answers an address that matches no route with the bare title, which
@@ -17,6 +19,8 @@
 			: (page.error?.message ?? '')
 	);
 </script>
+
+<svelte:head><title>{documentTitle(title)}</title></svelte:head>
 
 <div class="bg-base-200 flex min-h-screen items-center justify-center p-4">
 	<div class="card panel w-full max-w-sm">

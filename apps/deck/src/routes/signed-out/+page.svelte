@@ -1,6 +1,9 @@
 <script lang="ts">
 	import { startSignIn } from '$lib/api/client';
+	import { documentTitle } from '$lib/navigation/title';
 </script>
+
+<svelte:head><title>{documentTitle('Signed out')}</title></svelte:head>
 
 <div class="bg-base-200 flex min-h-screen items-center justify-center p-4">
 	<div class="card panel w-full max-w-sm">
