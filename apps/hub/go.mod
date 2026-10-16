@@ -3,10 +3,10 @@ module github.com/abgeo/maroid/apps/hub
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261013200123-2035d78fd0e8
-	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261013200123-2035d78fd0e8
-	github.com/abgeo/maroid/libs/rest v0.0.0-20261013200123-2035d78fd0e8
-	github.com/abgeo/maroid/libs/testdb v0.0.0-20261013200123-2035d78fd0e8
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261016171242-e2784f6350a1
+	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261016171242-e2784f6350a1
+	github.com/abgeo/maroid/libs/rest v0.0.0-20261016171242-e2784f6350a1
+	github.com/abgeo/maroid/libs/testdb v0.0.0-20261015212041-8f74caa1097b
 	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/dexidp/dex/api/v2 v2.4.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
@@ -44,7 +44,7 @@ require (
 require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20261013165250-51075c6ea6bc // indirect
-	github.com/Microsoft/go-winio v0.6.3 // indirect
+	github.com/Microsoft/go-winio v0.6.4 // indirect
 	github.com/ajg/form v1.7.1 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.2 // indirect
@@ -96,7 +96,7 @@ require (
 	github.com/jackc/pgtype v1.14.4 // indirect
 	github.com/jackc/pgx/v4 v4.18.3 // indirect
 	github.com/klauspost/compress v1.20.3 // indirect
-	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
+	github.com/klauspost/cpuid/v2 v2.4.1 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/lib/pq v1.12.3 // indirect
 	github.com/lufia/plan9stats v0.0.0-20260802145828-341c2f0c90b5 // indirect
