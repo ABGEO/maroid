@@ -2,8 +2,8 @@
 
 ARG HUB_VERSION=latest
 ARG COMPILER_VERSION=${HUB_VERSION}
-ARG NODE_VERSION=24.15.0
-ARG PNPM_VERSION=11.25.0
+ARG NODE_VERSION=24.21.0
+ARG PNPM_VERSION=12.11.2
 
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS ui
 
@@ -17,7 +17,7 @@ RUN pnpm fetch --store-dir /pnpm/store
 
 COPY . .
 RUN pnpm install --store-dir /pnpm/store --offline --frozen-lockfile --filter '{./plugins/*/ui}...' \
-  && pnpm --filter './plugins/*/ui' build \
+  && pnpm --config.verify-deps-before-run=false --filter './plugins/*/ui' build \
   && mkdir /out \
   && for dist in plugins/*/ui/dist; do mkdir -p "/out/${dist%/dist}" && cp -R "$dist" "/out/$dist"; done
 

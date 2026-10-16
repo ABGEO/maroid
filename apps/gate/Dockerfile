@@ -16,7 +16,7 @@ RUN pnpm fetch --store-dir /pnpm/store
 
 COPY . .
 RUN pnpm install --store-dir /pnpm/store --offline --frozen-lockfile --filter @maroid/gate... \
-  && pnpm --filter @maroid/gate build
+  && pnpm --config.verify-deps-before-run=false --filter @maroid/gate build
 
 FROM ${DEX_BASE_IMAGE} AS runtime
 

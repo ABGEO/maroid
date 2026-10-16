@@ -18,7 +18,7 @@ RUN pnpm fetch --store-dir /pnpm/store
 
 COPY . .
 RUN pnpm install --store-dir /pnpm/store --offline --frozen-lockfile --filter @maroid/deck... \
-  && pnpm --filter @maroid/deck build
+  && pnpm --config.verify-deps-before-run=false --filter @maroid/deck build
 
 RUN mkdir /out \
   && cp -R apps/deck/build /out/build \
