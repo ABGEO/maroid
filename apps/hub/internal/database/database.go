@@ -4,11 +4,20 @@ package database
 
 import (
 	"fmt"
+	"time"
 
 	_ "github.com/jackc/pgx/stdlib" // The PostgreSQL driver for sqlx
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
+)
+
+// The pgx v3 driver answers "conn is dead" for a connection that the server or the
+// network closed while it sat idle, and database/sql does not retry on that error.
+// The limits close a connection before an idle timeout outside the hub can.
+const (
+	connMaxIdleTime = 5 * time.Minute
+	connMaxLifetime = 30 * time.Minute
 )
 
 // New creates and returns a new PostgreSQL connection using the provided configuration.
@@ -18,6 +27,9 @@ func New(cfg *config.Config) (*sqlx.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("connecting to database: %w", err)
 	}
+
+	db.SetConnMaxIdleTime(connMaxIdleTime)
+	db.SetConnMaxLifetime(connMaxLifetime)
 
 	return db, nil
 }
