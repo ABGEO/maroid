@@ -3,7 +3,7 @@ package repository
 import (
 	"errors"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/abgeo/maroid/libs/rest/page"
 )
@@ -21,7 +21,7 @@ const (
 // isForeignKeyViolation reports whether err is the foreign key violation of the
 // constraint.
 func isForeignKeyViolation(err error, constraint string) bool {
-	var pgErr pgx.PgError
+	var pgErr *pgconn.PgError
 	if !errors.As(err, &pgErr) {
 		return false
 	}

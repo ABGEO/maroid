@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
@@ -350,7 +350,7 @@ func (r *Identity) refuseDetach(
 func isUniqueViolation(err error, constraint string) bool {
 	const uniqueViolation = "23505"
 
-	var pgErr pgx.PgError
+	var pgErr *pgconn.PgError
 	if !errors.As(err, &pgErr) {
 		return false
 	}

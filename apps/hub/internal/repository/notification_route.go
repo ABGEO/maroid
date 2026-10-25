@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
@@ -181,7 +181,7 @@ func routeFailure(err error) error {
 		return fmt.Errorf("%w: %w", errs.ErrNotificationRouteExists, err)
 	}
 
-	var pgErr pgx.PgError
+	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == foreignKeyViolation &&
 		pgErr.ConstraintName == notificationRouteProviderKey {
 		return fmt.Errorf("%w: %w", errs.ErrNotificationProviderNotFound, err)

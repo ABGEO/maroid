@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/pgx" // The PostgreSQL driver for migrate
+	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5" // The PostgreSQL driver for migrate
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/stretchr/testify/require"
 
@@ -35,7 +35,7 @@ func newMigrator(t *testing.T, instance *testdb.Instance) *migrate.Migrate {
 	migrator, err := migrate.NewWithSourceInstance("iofs", source, fmt.Sprintf(
 		`%s&x-migrations-table-quoted=true&x-migrations-table="public"."schema_migrations"`+
 			`&options=-csearch_path%%3Dpublic`,
-		instance.DSN,
+		instance.MigrationDSN,
 	))
 	require.NoError(t, err)
 

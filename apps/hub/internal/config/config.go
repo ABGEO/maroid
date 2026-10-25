@@ -35,10 +35,21 @@ type Database struct {
 	Database string `validate:"required"`
 }
 
-// DSN builds and returns the connection string for the database.
+// DSN builds and returns the connection string for the database driver.
 func (c *Database) DSN() string {
+	return c.url("postgres")
+}
+
+// MigrationDSN builds and returns the connection string for the migrator. The
+// scheme selects the pgx v5 driver of golang-migrate.
+func (c *Database) MigrationDSN() string {
+	return c.url("pgx5")
+}
+
+func (c *Database) url(scheme string) string {
 	return fmt.Sprintf(
-		"pgx://%s:%s@%s/%s",
+		"%s://%s:%s@%s/%s",
+		scheme,
 		c.User,
 		c.Password,
 		net.JoinHostPort(c.Host, c.Port),

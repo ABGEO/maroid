@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/pgx" // The PostgreSQL driver for migrate
+	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5" // The PostgreSQL driver for migrate
 	"github.com/golang-migrate/migrate/v4/source/iofs"
-	_ "github.com/jackc/pgx/stdlib" // The PostgreSQL driver for sqlx
+	_ "github.com/jackc/pgx/v5/stdlib" // The PostgreSQL driver for sqlx
 	"github.com/jmoiron/sqlx"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
@@ -34,6 +34,9 @@ const (
 	readyOccurs    = 2
 	connectRetries = 30
 	retryInterval  = time.Second
+
+	driverScheme    = "postgres"
+	migrationScheme = "pgx5"
 )
 
 // Instance is a running PostgreSQL that one test owns.
@@ -42,6 +45,8 @@ type Instance struct {
 	DB *sqlx.DB
 	// DSN is the connection string that DB uses.
 	DSN string
+	// MigrationDSN is the connection string for golang-migrate.
+	MigrationDSN string
 }
 
 // Start launches PostgreSQL in a container and returns a handle that connects as
@@ -89,8 +94,9 @@ func Start(t *testing.T) *Instance {
 	createRole(t, endpoint)
 
 	return &Instance{
-		DB:  connect(t, endpoint, Role, Database),
-		DSN: DSN(endpoint, Role, Database),
+		DB:           connect(t, endpoint, Role, Database),
+		DSN:          DSN(endpoint, Role, Database),
+		MigrationDSN: dsn(migrationScheme, endpoint, Role, Database),
 	}
 }
 
@@ -131,14 +137,25 @@ func (i *Instance) Migrate(t *testing.T, schema string, filesystem fs.FS) {
 
 // DSN builds the connection string of the endpoint, for the given role.
 func DSN(endpoint string, role string, database string) string {
-	return fmt.Sprintf("pgx://%s:%s@%s/%s?sslmode=disable", role, password, endpoint, database)
+	return dsn(driverScheme, endpoint, role, database)
+}
+
+func dsn(scheme string, endpoint string, role string, database string) string {
+	return fmt.Sprintf(
+		"%s://%s:%s@%s/%s?sslmode=disable",
+		scheme,
+		role,
+		password,
+		endpoint,
+		database,
+	)
 }
 
 func (i *Instance) migrationDSN(schema string) string {
 	return fmt.Sprintf(
 		`%s&x-migrations-table-quoted=true&x-migrations-table="%s"."schema_migrations"`+
 			`&options=-csearch_path%%3D%s,public`,
-		i.DSN,
+		i.MigrationDSN,
 		schema,
 		schema,
 	)

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/jackc/pgx/stdlib" // The PostgreSQL driver for sqlx
+	_ "github.com/jackc/pgx/v5/stdlib" // The PostgreSQL driver for sqlx
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 

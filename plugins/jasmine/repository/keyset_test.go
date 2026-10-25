@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/pgx" // The PostgreSQL driver for migrate
+	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5" // The PostgreSQL driver for migrate
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -53,7 +53,7 @@ func plantsUnderTest(t *testing.T, count int) (*sqlx.DB, []string) {
 	source, err := iofs.New(migrations, ".")
 	require.NoError(t, err)
 
-	migrator, err := migrate.NewWithSourceInstance("iofs", source, instance.DSN)
+	migrator, err := migrate.NewWithSourceInstance("iofs", source, instance.MigrationDSN)
 	require.NoError(t, err)
 
 	t.Cleanup(func() { _, _ = migrator.Close() })

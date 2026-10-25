@@ -12,7 +12,7 @@ import (
 	"slices"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/pgx" // The PostgreSQL driver for migrate
+	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5" // The PostgreSQL driver for migrate
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jmoiron/sqlx"
 
@@ -158,7 +158,7 @@ func (m *Migrator) newMigrateInstance(
 
 	dsn := fmt.Sprintf(
 		`%s?x-migrations-table-quoted=true&x-migrations-table="%s"."schema_migrations"&options=-csearch_path%%3D%s,public`,
-		m.config.Database.DSN(),
+		m.config.Database.MigrationDSN(),
 		schema,
 		schema,
 	)
