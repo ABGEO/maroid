@@ -190,6 +190,7 @@ export interface Capabilities {
 	telegram_conversations?: TelegramConversation[];
 	mcp_tools?: MCPTool[];
 	widgets?: Widget[];
+	files?: FileKind[];
 	permissions?: Permission[];
 	notification_topics?: string[];
 }
@@ -199,6 +200,17 @@ export type WidgetSize = 'xs' | 's' | 'm' | 'l';
 export type WidgetState = 'ready' | 'empty' | 'not_set_up';
 
 /** One widget that a plugin shows on the home page. */
+/** One file kind that a plugin accepts. */
+export interface FileKind {
+	plugin_id: string;
+	key: string;
+	scope: 'workspace' | 'user';
+	media_types: string[];
+	max_size: number;
+	image: boolean;
+	permission: string;
+}
+
 export interface Widget {
 	plugin_id: string;
 	key: string;

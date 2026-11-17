@@ -167,6 +167,7 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		registries.permission,
 		c.NotificationTopicRegistry(),
 		c.WidgetRegistry(),
+		c.FileKindRegistry(),
 	), nil
 }
 

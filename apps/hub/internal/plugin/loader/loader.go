@@ -40,6 +40,8 @@ type symbolLookup interface {
 }
 
 // New creates a new Loader.
+//
+//nolint:funlen // one argument and one registrar for each capability
 func New(
 	binder *host.Binder,
 	logger *slog.Logger,
@@ -63,6 +65,7 @@ func New(
 	permissionRegistry *registry.PermissionRegistry,
 	notificationTopicRegistry *registry.NotificationTopicRegistry,
 	widgetRegistry *registry.WidgetRegistry,
+	fileKinds *registry.FileKindRegistry,
 ) *Loader {
 	return &Loader{
 		binder:  binder,
@@ -70,6 +73,7 @@ func New(
 		registrars: []registrar.Registrar{
 			registrar.NewPluginRegistrar(pluginRegistry),
 			registrar.NewPermissionRegistrar(permissionRegistry, capabilityRegistry),
+			registrar.NewFileKindRegistrar(fileKinds, capabilityRegistry, permissionRegistry),
 			registrar.NewCommandRegistrar(commandRegistry, capabilityRegistry),
 			registrar.NewCronRegistrar(cronRegistry, capabilityRegistry),
 			registrar.NewHandlerRegistrar(

@@ -9,6 +9,7 @@ export type CapabilityName = keyof Capabilities;
 const LABELS: Record<CapabilityName, string> = {
 	ui: 'UI',
 	widgets: 'Widgets',
+	files: 'Files',
 	settings: 'Settings',
 	api: 'API',
 	telegram_commands: 'Bot commands',
@@ -108,6 +109,12 @@ const COLUMNS: Record<ItemCapability, Column[]> = {
 		{ field: 'title', label: 'Title', mono: false },
 		{ field: 'kind', label: 'Kind', mono: true },
 		{ field: 'size', label: 'Size', mono: true },
+		{ field: 'permission', label: 'Permission', mono: true }
+	],
+	files: [
+		{ field: 'key', label: 'Key', mono: true },
+		{ field: 'scope', label: 'Scope', mono: true },
+		{ field: 'media_types', label: 'Media types', mono: true },
 		{ field: 'permission', label: 'Permission', mono: true }
 	],
 	permissions: [

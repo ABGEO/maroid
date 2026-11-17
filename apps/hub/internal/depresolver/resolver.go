@@ -87,6 +87,7 @@ type Resolver interface {
 	Cron() *cron.Cron
 	NotificationTopicRegistry() *registry.NotificationTopicRegistry
 	WidgetRegistry() *registry.WidgetRegistry
+	FileKindRegistry() *registry.FileKindRegistry
 	NotificationKinds() (*notification.KindRegistry, error)
 	NotificationDispatcher() (*notification.Dispatcher, error)
 	NotificationService() (notification.Service, error)
@@ -330,6 +331,11 @@ type Container struct {
 	widgetRegistry struct {
 		once     sync.Once
 		instance *registry.WidgetRegistry
+	}
+
+	fileKindRegistry struct {
+		once     sync.Once
+		instance *registry.FileKindRegistry
 	}
 
 	notificationKinds struct {

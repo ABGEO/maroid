@@ -24,6 +24,7 @@ const (
 	CapPermissions           Capability = "permissions"
 	CapNotificationTopics    Capability = "notification_topics"
 	CapWidgets               Capability = "widgets"
+	CapFiles                 Capability = "files"
 )
 
 // Present is the value of a capability that a plugin declares and that holds no
