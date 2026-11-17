@@ -375,7 +375,7 @@ No error, no log line, and no `last_error` holds an address or a key (`LOG-008`)
 | 3   | Add `libs/pluginapi/file.go` and `Host.Files`.                                                              | `FILES-FR-001`, `-018` to `-023`                | [x]  |
 | 4   | Add `FileKindRegistry`, `FileKindRegistrar`, and `CapFiles`.                                                | `FILES-FR-001`, `FILES-FR-002`                  | [x]  |
 | 5   | Write the three migrations.                                                                                 | `FILES-INV-003`, `FILES-INV-005`                | [x]  |
-| 6   | Add `model.File`, `repository.File`, and `repository.FileTask`.                                             | `FILES-FR-018` to `-022`                        | [ ]  |
+| 6   | Add `model.File`, `repository.File`, and `repository.FileTask`.                                             | `FILES-FR-018` to `-022`                        | [x]  |
 | 7   | Add `config.Files`, `filestore`, and `teststore`.                                                           | `FILES-FR-006`, `-007`, `FILES-NFR-003`         | [ ]  |
 | 8   | Add the check `file-store` to the readiness.                                                                | `FILES-FR-025`                                  | [ ]  |
 | 9   | Add `file.Store` and `handler.File`. Check the routes against `api.yaml`.                                   | `FILES-FR-003` to `-005`, `-008`, `-024`        | [ ]  |

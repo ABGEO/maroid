@@ -156,9 +156,9 @@ func (r *PluginSecret) DeleteExpired(
 func secretTableOf(scope pluginapi.SecretScope) (scopedTable, error) {
 	switch scope {
 	case pluginapi.SecretScopeUser:
-		return scopedTable{name: "public.plugin_user_secrets", owner: "user_id"}, nil
+		return scopedTable{name: "public.plugin_user_secrets", owner: userOwner}, nil
 	case pluginapi.SecretScopeWorkspace:
-		return scopedTable{name: "public.plugin_workspace_secrets", owner: "workspace_id"}, nil
+		return scopedTable{name: "public.plugin_workspace_secrets", owner: workspaceOwner}, nil
 	default:
 		return scopedTable{}, fmt.Errorf("%w: %q", errs.ErrUnknownSecretScope, scope)
 	}
