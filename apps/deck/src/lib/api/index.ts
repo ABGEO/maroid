@@ -18,7 +18,7 @@ export {
 } from '@maroid/api-client';
 export type { ApiClient, FieldFailure, Problem, RequestOptions } from '@maroid/api-client';
 export { createWriteIntent } from '@maroid/api-client';
-export { createPluginClient, signedOutUrl, startSignIn } from './client';
+export { createFileClient, createPluginClient, signedOutUrl, startSignIn } from './client';
 export { SECRET_MASK } from './types';
 export type {
 	User,

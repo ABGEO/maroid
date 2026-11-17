@@ -383,7 +383,7 @@ No error, no log line, and no `last_error` holds an address or a key (`LOG-008`)
 | 10  | Add `boundFiles` and wire `Container.Files`.                                                                | `FILES-FR-018` to `-023`, `FILES-INV-002`       | [x]  |
 | 11  | Add `sniff`, `orient`, and `deriveVariants`.                                                                | `FILES-FR-010` to `-017`, `FILES-INV-004`       | [x]  |
 | 12  | Add `file.Worker`, its tasks, and the worker `files`.                                                       | `FILES-FR-009`, `-016`, `-019`, `FILES-NFR-005` | [x]  |
-| 13  | Add `FileClient` to `@maroid/plugin-sdk`, and `createFileClient` to the deck.                               | `FILES-FR-026`                                  | [ ]  |
+| 13  | Add `FileClient` to `@maroid/plugin-sdk`, and `createFileClient` to the deck.                               | `FILES-FR-026`                                  | [x]  |
 | 14  | Add `FileUpload` to `@maroid/ui`.                                                                           | `FILES-FR-026` to `-028`                        | [ ]  |
 | 15  | Add RustFS to `docker-compose.yaml` with the bucket, its CORS rule for the deck, and the policy of the key. | `FILES-INV-001`                                 | [ ]  |
 | 16  | Rebuild and load every plugin (`BLD-004`).                                                                  | `FILES-FR-001`                                  | [ ]  |
