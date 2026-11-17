@@ -92,6 +92,7 @@ type Resolver interface {
 	FileKindRegistry() *registry.FileKindRegistry
 	FileStore() *filestore.Client
 	Files() (*file.Store, error)
+	FileWorker() (*file.Worker, error)
 	NotificationKinds() (*notification.KindRegistry, error)
 	NotificationDispatcher() (*notification.Dispatcher, error)
 	NotificationService() (notification.Service, error)
@@ -351,6 +352,12 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *file.Store
+	}
+
+	fileWorker struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *file.Worker
 	}
 
 	notificationKinds struct {

@@ -263,3 +263,28 @@ func TestPingFailsWithinTheLimitWhenTheFileStoreStops(t *testing.T) {
 	require.Error(t, client.Ping(context.Background()))
 	require.Less(t, time.Since(started), filestore.PingLimit+time.Second)
 }
+
+// LOG-008: An error of an unreachable file store names no key, so neither a log
+// record nor the error of a task holds one.
+func TestAnErrorOfTheFileStoreNamesNoKey(t *testing.T) {
+	t.Parallel()
+
+	client, server := startClient(t)
+	server.Stop(t)
+
+	key := fileKey + "a-key-that-must-not-leak"
+
+	_, headErr := client.Head(t.Context(), key)
+	_, readErr := client.ReadRange(t.Context(), key, 3072)
+
+	for _, err := range []error{
+		headErr,
+		readErr,
+		client.Write(t.Context(), key, []byte("x"), webpType),
+		client.DeletePrefix(t.Context(), fileKey),
+	} {
+		require.ErrorIs(t, err, filestore.ErrUnreachable)
+		require.NotContains(t, err.Error(), "a-key-that-must-not-leak")
+		require.NotContains(t, err.Error(), fileKey)
+	}
+}

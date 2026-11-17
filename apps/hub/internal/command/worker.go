@@ -59,7 +59,7 @@ func (c *WorkerCommand) Command() *cobra.Command {
 		"workers",
 		"w",
 		[]string{"all"},
-		"Worker types to run, comma-separated (e.g. --workers cron,mqtt) or 'all' to run all workers",
+		"Worker types to run, comma-separated (e.g. --workers cron,mqtt,files) or 'all' to run all workers",
 	)
 
 	return cmd
@@ -122,9 +122,15 @@ func (c *WorkerCommand) getWorkers() ([]worker.Worker, error) {
 		return nil, fmt.Errorf("resolving enablement service: %w", err)
 	}
 
+	files, err := c.depResolver.FileWorker()
+	if err != nil {
+		return nil, fmt.Errorf("resolving the files worker: %w", err)
+	}
+
 	return []worker.Worker{
 		worker.NewCronWorker(c.logger, cronScheduler, cronRegistry, users, enablements),
 		worker.NewMQTTWorker(c.logger, cfg, mqttSubscriberRegistry),
+		files,
 	}, nil
 }
 

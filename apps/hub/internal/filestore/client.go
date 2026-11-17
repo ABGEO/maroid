@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -21,8 +23,12 @@ import (
 // as not ready.
 const PingLimit = time.Second
 
-// ErrObjectAbsent reports that the bucket holds no object under the key.
-var ErrObjectAbsent = errors.New("filestore: absent")
+var (
+	// ErrObjectAbsent reports that the bucket holds no object under the key.
+	ErrObjectAbsent = errors.New("filestore: absent")
+	// ErrUnreachable reports a request that reached no answer of the file store.
+	ErrUnreachable = errors.New("filestore: unreachable")
+)
 
 // Object holds the facts of one object that the bucket answers.
 type Object struct {
@@ -95,7 +101,7 @@ func (c *Client) Ping(ctx context.Context) error {
 	defer cancel()
 
 	if _, err := c.internal.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: &c.bucket}); err != nil {
-		return fmt.Errorf("reaching the bucket: %w", err)
+		return fmt.Errorf("reaching the bucket: %w", storeError(err))
 	}
 
 	return nil
@@ -105,7 +111,7 @@ func (c *Client) Ping(ctx context.Context) error {
 func (c *Client) Head(ctx context.Context, key string) (Object, error) {
 	out, err := c.internal.HeadObject(ctx, &s3.HeadObjectInput{Bucket: &c.bucket, Key: &key})
 	if err != nil {
-		return Object{}, fmt.Errorf("reading the facts of an object: %w", absentOr(err))
+		return Object{}, fmt.Errorf("reading the facts of an object: %w", storeError(err))
 	}
 
 	return Object{
@@ -122,7 +128,7 @@ func (c *Client) ReadRange(ctx context.Context, key string, limit int64) ([]byte
 		Range:  aws.String(fmt.Sprintf("bytes=0-%d", limit-1)),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("reading the start of an object: %w", absentOr(err))
+		return nil, fmt.Errorf("reading the start of an object: %w", storeError(err))
 	}
 
 	defer func() { _ = out.Body.Close() }()
@@ -139,7 +145,7 @@ func (c *Client) ReadRange(ctx context.Context, key string, limit int64) ([]byte
 func (c *Client) Read(ctx context.Context, key string) (io.ReadCloser, error) {
 	out, err := c.internal.GetObject(ctx, &s3.GetObjectInput{Bucket: &c.bucket, Key: &key})
 	if err != nil {
-		return nil, fmt.Errorf("reading an object: %w", absentOr(err))
+		return nil, fmt.Errorf("reading an object: %w", storeError(err))
 	}
 
 	return out.Body, nil
@@ -155,7 +161,7 @@ func (c *Client) Write(ctx context.Context, key string, data []byte, contentType
 		ContentType:   &contentType,
 	})
 	if err != nil {
-		return fmt.Errorf("writing an object: %w", err)
+		return fmt.Errorf("writing an object: %w", storeError(err))
 	}
 
 	return nil
@@ -167,7 +173,7 @@ func (c *Client) Delete(ctx context.Context, key string) error {
 		ctx,
 		&s3.DeleteObjectInput{Bucket: &c.bucket, Key: &key},
 	); err != nil {
-		return fmt.Errorf("deleting an object: %w", err)
+		return fmt.Errorf("deleting an object: %w", storeError(err))
 	}
 
 	return nil
@@ -185,7 +191,7 @@ func (c *Client) DeletePrefix(ctx context.Context, prefix string) error {
 	for pages.HasMorePages() {
 		page, err := pages.NextPage(ctx)
 		if err != nil {
-			return fmt.Errorf("listing the objects of a prefix: %w", err)
+			return fmt.Errorf("listing the objects of a prefix: %w", storeError(err))
 		}
 
 		for _, object := range page.Contents {
@@ -198,18 +204,23 @@ func (c *Client) DeletePrefix(ctx context.Context, prefix string) error {
 	return nil
 }
 
-func absentOr(err error) error {
+// storeError answers ErrObjectAbsent for an absent object. Any other error drops its
+// request, because the address of a request names the key of a file.
+func storeError(err error) error {
 	var (
 		notFound *types.NotFound
 		noKey    *types.NoSuchKey
 		response *smithyhttp.ResponseError
+		request  *url.Error
 	)
 
 	switch {
 	case errors.As(err, &notFound), errors.As(err, &noKey):
 		return ErrObjectAbsent
-	case errors.As(err, &response) && response.HTTPStatusCode() == 404:
+	case errors.As(err, &response) && response.HTTPStatusCode() == http.StatusNotFound:
 		return ErrObjectAbsent
+	case errors.As(err, &request):
+		return fmt.Errorf("%w: %w", ErrUnreachable, request.Err)
 	default:
 		return err
 	}

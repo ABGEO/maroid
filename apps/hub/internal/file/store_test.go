@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"testing"
 
@@ -23,14 +24,15 @@ import (
 )
 
 const (
-	probePlugin  = "dev.maroid.probe"
-	secondPlugin = "dev.maroid.second"
-	photoKind    = "photo"
-	paperKind    = "paper"
-	jpegType     = "image/jpeg"
-	pdfType      = "application/pdf"
-	webpType     = "image/webp"
-	photoSize    = 3 << 20
+	probePlugin   = "dev.maroid.probe"
+	secondPlugin  = "dev.maroid.second"
+	photoKind     = "photo"
+	heicPhotoKind = "phone-photo"
+	paperKind     = "paper"
+	jpegType      = "image/jpeg"
+	pdfType       = "application/pdf"
+	webpType      = "image/webp"
+	photoSize     = 3 << 20
 )
 
 // storeBench holds a Store over a real database and the RustFS of the test, and a
@@ -38,6 +40,8 @@ const (
 type storeBench struct {
 	store   *file.Store
 	objects *filestore.Client
+	server  *teststore.Server
+	worker  *file.Worker
 	db      *sqlx.DB
 	user    string
 	space   string
@@ -70,6 +74,7 @@ func kindsUnderTest(t *testing.T) *registry.FileKindRegistry {
 
 	declare(probePlugin, photoKind, pluginapi.FileScopeWorkspace, jpegType, true)
 	declare(probePlugin, paperKind, pluginapi.FileScopeUser, pdfType, false)
+	declare(probePlugin, heicPhotoKind, pluginapi.FileScopeWorkspace, heicType, true)
 	declare(secondPlugin, photoKind, pluginapi.FileScopeWorkspace, jpegType, true)
 
 	return kinds
@@ -103,9 +108,13 @@ func storeUnderTest(t *testing.T) *storeBench {
 	cfg := server.Config()
 	objects := filestore.New(cfg)
 
+	kinds := kindsUnderTest(t)
+
 	return &storeBench{
-		store:   file.NewStore(instance.DB, objects, kindsUnderTest(t), cfg.UploadTTL),
+		store:   file.NewStore(instance.DB, objects, kinds, cfg.UploadTTL),
 		objects: objects,
+		server:  server,
+		worker:  file.NewWorker(slog.New(slog.DiscardHandler), instance.DB, objects, kinds, cfg),
 		db:      instance.DB,
 		user:    user,
 		space:   workspace,
