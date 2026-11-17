@@ -18,6 +18,7 @@ RUN --mount=type=bind,target=. \
   --mount=type=cache,target=/go/pkg/mod \
   --mount=type=cache,target=/root/.cache \
   CGO_ENABLED=1 go build \
+    -tags nodynamic \
     -ldflags="-s -w" \
     -trimpath \
     -o /usr/bin/hub \

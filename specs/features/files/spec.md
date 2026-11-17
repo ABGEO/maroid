@@ -381,7 +381,7 @@ No error, no log line, and no `last_error` holds an address or a key (`LOG-008`)
 | 8   | Add the check `file-store` to the readiness.                                                                | `FILES-FR-025`                                  | [x]  |
 | 9   | Add `file.Store` and `handler.File`. Check the routes against `api.yaml`.                                   | `FILES-FR-003` to `-005`, `-008`, `-024`        | [x]  |
 | 10  | Add `boundFiles` and wire `Container.Files`.                                                                | `FILES-FR-018` to `-023`, `FILES-INV-002`       | [x]  |
-| 11  | Add `sniff`, `orient`, and `deriveVariants`.                                                                | `FILES-FR-010` to `-017`, `FILES-INV-004`       | [ ]  |
+| 11  | Add `sniff`, `orient`, and `deriveVariants`.                                                                | `FILES-FR-010` to `-017`, `FILES-INV-004`       | [x]  |
 | 12  | Add `file.Worker`, its tasks, and the worker `files`.                                                       | `FILES-FR-009`, `-016`, `-019`, `FILES-NFR-005` | [ ]  |
 | 13  | Add `FileClient` to `@maroid/plugin-sdk`, and `createFileClient` to the deck.                               | `FILES-FR-026`                                  | [ ]  |
 | 14  | Add `FileUpload` to `@maroid/ui`.                                                                           | `FILES-FR-026` to `-028`                        | [ ]  |

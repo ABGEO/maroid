@@ -14,6 +14,9 @@ require (
 	github.com/coreos/go-oidc/v3 v3.20.0
 	github.com/dexidp/dex/api/v2 v2.4.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
+	github.com/gabriel-vasile/mimetype v1.4.15
+	github.com/gen2brain/h265 v0.2.4
+	github.com/gen2brain/webp v0.6.4
 	github.com/go-chi/chi/v5 v5.3.0
 	github.com/go-chi/cors v1.2.2
 	github.com/go-chi/httplog/v3 v3.5.0
@@ -39,6 +42,7 @@ require (
 	github.com/stretchr/testify v1.12.1
 	github.com/testcontainers/testcontainers-go v0.44.0
 	golang.org/x/crypto v0.58.0
+	golang.org/x/image v0.47.0
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.24.0
 	golang.org/x/term v0.47.0
@@ -78,7 +82,6 @@ require (
 	github.com/ebitengine/purego v0.11.1 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
-	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
