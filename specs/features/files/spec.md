@@ -370,11 +370,11 @@ No error, no log line, and no `last_error` holds an address or a key (`LOG-008`)
 
 | #   | Step                                                                                                        | Realizes                                        | Done |
 | --- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | ---- |
-| 1   | Time the pipeline of `FILES-DD-007` on a 12 MB HEIC of 48 megapixels. Stop and report if it fails.          | `FILES-NFR-001`, `FILES-NFR-002`                | [ ]  |
-| 2   | Write the ADR of the `files` worker (`ARC-010`, `OWN-003`) and the ADR of the reference (`DAT-003`).        | `FILES-DD-005`, `FILES-DD-009`                  | [ ]  |
-| 3   | Add `libs/pluginapi/file.go` and `Host.Files`.                                                              | `FILES-FR-001`, `-018` to `-023`                | [ ]  |
-| 4   | Add `FileKindRegistry`, `FileKindRegistrar`, and `CapFiles`.                                                | `FILES-FR-001`, `FILES-FR-002`                  | [ ]  |
-| 5   | Write the three migrations.                                                                                 | `FILES-INV-003`, `FILES-INV-005`                | [ ]  |
+| 1   | Time the pipeline of `FILES-DD-007` on a 12 MB HEIC of 48 megapixels. Stop and report if it fails.          | `FILES-NFR-001`, `FILES-NFR-002`                | [x]  |
+| 2   | Write the ADR of the `files` worker (`ARC-010`, `OWN-003`) and the ADR of the reference (`DAT-003`).        | `FILES-DD-005`, `FILES-DD-009`                  | [x]  |
+| 3   | Add `libs/pluginapi/file.go` and `Host.Files`.                                                              | `FILES-FR-001`, `-018` to `-023`                | [x]  |
+| 4   | Add `FileKindRegistry`, `FileKindRegistrar`, and `CapFiles`.                                                | `FILES-FR-001`, `FILES-FR-002`                  | [x]  |
+| 5   | Write the three migrations.                                                                                 | `FILES-INV-003`, `FILES-INV-005`                | [x]  |
 | 6   | Add `model.File`, `repository.File`, and `repository.FileTask`.                                             | `FILES-FR-018` to `-022`                        | [ ]  |
 | 7   | Add `config.Files`, `filestore`, and `teststore`.                                                           | `FILES-FR-006`, `-007`, `FILES-NFR-003`         | [ ]  |
 | 8   | Add the check `file-store` to the readiness.                                                                | `FILES-FR-025`                                  | [ ]  |
