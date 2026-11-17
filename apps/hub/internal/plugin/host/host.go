@@ -25,6 +25,7 @@ type Dependencies struct {
 	TelegramConversationEngine conversation.Engine
 	Settings                   SettingsReader
 	Secrets                    SecretStore
+	Files                      FileStore
 }
 
 // Binder builds the host of each plugin over the shared dependencies.
@@ -64,6 +65,7 @@ func (b *Binder) Bind(meta pluginapi.Metadata) *Host {
 		telegramConversationEngine: b.deps.TelegramConversationEngine,
 		settings:                   &boundSettings{reader: b.deps.Settings, pluginID: &pluginID},
 		secrets:                    &boundSecrets{store: b.deps.Secrets, pluginID: &pluginID},
+		files:                      &boundFiles{store: b.deps.Files, pluginID: &pluginID},
 		pages: &boundPages{
 			deckURL:  b.deps.Config.Auth.DeckURL,
 			pluginID: &pluginID,
@@ -81,6 +83,7 @@ type Host struct {
 	settings                   *boundSettings
 	secrets                    *boundSecrets
 	pages                      *boundPages
+	files                      *boundFiles
 }
 
 var _ pluginapi.Host = (*Host)(nil)
@@ -125,4 +128,9 @@ func (h *Host) Secrets() (pluginapi.PluginSecrets, error) {
 // Pages returns the builder of the deck address of a page of the plugin.
 func (h *Host) Pages() (pluginapi.PluginPages, error) {
 	return h.pages, nil
+}
+
+// Files returns the files of the plugin.
+func (h *Host) Files() (pluginapi.PluginFiles, error) {
+	return h.files, nil
 }
