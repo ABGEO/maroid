@@ -1,6 +1,7 @@
 package healthcheck_test
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -27,6 +28,15 @@ const (
 	hangTime      = 10 * time.Second
 )
 
+// pinger is a file store that answers each ping with its error.
+type pinger struct {
+	err error
+}
+
+func (p pinger) Ping(context.Context) error {
+	return p.err
+}
+
 // newService builds a Service whose database refuses every connection, and whose
 // IdP and secret store are the given test servers.
 func newService(t *testing.T, idp, secretStore *httptest.Server) *healthcheck.Service {
@@ -36,11 +46,23 @@ func newService(t *testing.T, idp, secretStore *httptest.Server) *healthcheck.Se
 }
 
 // newServiceIn builds a Service as newService does, with a client of the secret store
-// in the store namespace.
+// in the store namespace, and a file store that answers.
 func newServiceIn(
 	t *testing.T,
 	idp, secretStore *httptest.Server,
 	namespace string,
+) *healthcheck.Service {
+	t.Helper()
+
+	return newServiceWith(t, idp, secretStore, namespace, pinger{})
+}
+
+// newServiceWith builds a Service as newServiceIn does, over the given file store.
+func newServiceWith(
+	t *testing.T,
+	idp, secretStore *httptest.Server,
+	namespace string,
+	fileStore healthcheck.Pinger,
 ) *healthcheck.Service {
 	t.Helper()
 
@@ -61,7 +83,7 @@ func newServiceIn(
 		store.SetNamespace(namespace)
 	}
 
-	service, err := healthcheck.New(cfg, db, store, idp.Client())
+	service, err := healthcheck.New(cfg, db, store, fileStore, idp.Client())
 	require.NoError(t, err)
 
 	return service

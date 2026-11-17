@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -263,7 +264,7 @@ func TestLivenessAnswersInTime(t *testing.T) {
 	store, err := api.NewClient(storeConfig)
 	require.NoError(t, err)
 
-	service, err := healthcheck.New(cfg, db, store, http.DefaultClient)
+	service, err := healthcheck.New(cfg, db, store, downFileStore{}, http.DefaultClient)
 	require.NoError(t, err)
 
 	for range 100 {
@@ -303,4 +304,14 @@ func TestEachFailedCheckWritesOneRecord(t *testing.T) {
 	_, drained := probe(t, checker, "/readyz")
 
 	assert.Empty(t, drained)
+}
+
+// errFileStoreDown is the answer of a file store that never answers.
+var errFileStoreDown = errors.New("the file store does not answer")
+
+// downFileStore is a file store that never answers.
+type downFileStore struct{}
+
+func (downFileStore) Ping(context.Context) error {
+	return errFileStoreDown
 }

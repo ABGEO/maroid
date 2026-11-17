@@ -126,6 +126,7 @@ scenarios.
 | `apps/hub/internal/handler/file.go`                                                      | create         | `File` handler: `Start`, `Read`, `Complete`                                                                         |
 | `apps/hub/internal/healthcheck/filestore.go`                                             | create         | `fileStoreCheck`                                                                                                    |
 | `apps/hub/internal/healthcheck/service.go`                                               | change         | `New` takes a `filestore.Client` and adds the check                                                                 |
+| `specs/features/health/api.yaml`                                                         | change         | `file-store` in the dependencies of the problem of a hub that is not ready                                          |
 | `apps/hub/internal/config/config.go`                                                     | change         | `Files` and `Config.Files`                                                                                          |
 | `apps/hub/internal/depresolver/{file,resolver,plugin}.go`                                | create, change | `Container.FileStore`, `Container.Files`, `Container.FileWorker`                                                    |
 | `apps/hub/internal/command/worker.go`                                                    | change         | `getWorkers` adds `files`                                                                                           |
@@ -377,7 +378,7 @@ No error, no log line, and no `last_error` holds an address or a key (`LOG-008`)
 | 5   | Write the three migrations.                                                                                 | `FILES-INV-003`, `FILES-INV-005`                | [x]  |
 | 6   | Add `model.File`, `repository.File`, and `repository.FileTask`.                                             | `FILES-FR-018` to `-022`                        | [x]  |
 | 7   | Add `config.Files`, `filestore`, and `teststore`.                                                           | `FILES-FR-006`, `-007`, `FILES-NFR-003`         | [x]  |
-| 8   | Add the check `file-store` to the readiness.                                                                | `FILES-FR-025`                                  | [ ]  |
+| 8   | Add the check `file-store` to the readiness.                                                                | `FILES-FR-025`                                  | [x]  |
 | 9   | Add `file.Store` and `handler.File`. Check the routes against `api.yaml`.                                   | `FILES-FR-003` to `-005`, `-008`, `-024`        | [ ]  |
 | 10  | Add `boundFiles` and wire `Container.Files`.                                                                | `FILES-FR-018` to `-023`, `FILES-INV-002`       | [ ]  |
 | 11  | Add `sniff`, `orient`, and `deriveVariants`.                                                                | `FILES-FR-010` to `-017`, `FILES-INV-004`       | [ ]  |
