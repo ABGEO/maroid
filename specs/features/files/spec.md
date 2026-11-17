@@ -379,7 +379,7 @@ No error, no log line, and no `last_error` holds an address or a key (`LOG-008`)
 | 6   | Add `model.File`, `repository.File`, and `repository.FileTask`.                                             | `FILES-FR-018` to `-022`                        | [x]  |
 | 7   | Add `config.Files`, `filestore`, and `teststore`.                                                           | `FILES-FR-006`, `-007`, `FILES-NFR-003`         | [x]  |
 | 8   | Add the check `file-store` to the readiness.                                                                | `FILES-FR-025`                                  | [x]  |
-| 9   | Add `file.Store` and `handler.File`. Check the routes against `api.yaml`.                                   | `FILES-FR-003` to `-005`, `-008`, `-024`        | [ ]  |
+| 9   | Add `file.Store` and `handler.File`. Check the routes against `api.yaml`.                                   | `FILES-FR-003` to `-005`, `-008`, `-024`        | [x]  |
 | 10  | Add `boundFiles` and wire `Container.Files`.                                                                | `FILES-FR-018` to `-023`, `FILES-INV-002`       | [ ]  |
 | 11  | Add `sniff`, `orient`, and `deriveVariants`.                                                                | `FILES-FR-010` to `-017`, `FILES-INV-004`       | [ ]  |
 | 12  | Add `file.Worker`, its tasks, and the worker `files`.                                                       | `FILES-FR-009`, `-016`, `-019`, `FILES-NFR-005` | [ ]  |

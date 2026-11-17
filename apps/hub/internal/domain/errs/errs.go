@@ -170,6 +170,8 @@ var (
 	// ErrInvalidMCPToolModel indicates that a plugin declared an input or an output
 	// model that the hub cannot reflect into a JSON schema.
 	ErrInvalidMCPToolModel = errors.New("mcp tool model: invalid")
+	// ErrFileStoreUnavailable indicates a file store that did not answer before an upload.
+	ErrFileStoreUnavailable = errors.New("file store: unavailable")
 	// ErrUnknownFileScope indicates a scope of a file that the hub holds no table for.
 	ErrUnknownFileScope = errors.New("file: unknown scope")
 	// ErrFileKindAlreadyRegistered indicates a file kind key that the registry already
