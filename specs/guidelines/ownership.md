@@ -4,7 +4,7 @@ title: Record ownership
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-13
+updated: 2026-11-18
 scope: [apps/hub/, libs/pluginapi/, plugins/*/db/, plugins/*/repository/]
 related: [DAT, SEC, REP, TG, JOB, PLG]
 ---
@@ -43,6 +43,10 @@ an acting user reaches no table that a user scopes.
 | An MCP tool call      | The identity that `federated_claims` names. See `SEC-002`.   | The `workspace` argument of the call.                                                            |
 | A cron job            | The user of the run, for a job for each user. See `OWN-009`. | The workspace of the run, for a job for each workspace. See `OWN-009`.                           |
 | A command of a plugin | None.                                                        | The `--workspace` flag of the command, when the command reaches a table that a workspace scopes. |
+| A task of the outbox  | The owner of the task, when a user owns its file.            | The owner of the task, when a workspace owns its file.                                           |
+
+A task of the outbox names its owner. The worker sets it with `OWN-007` before the
+first statement of the task.
 
 When a unit of work carries both, the hub checks that the acting user is a member
 of the acting workspace before it sets the workspace. A user who is not a member
@@ -57,6 +61,8 @@ the records of a personal account that a plugin collects. A shared table holds a
 row that belongs to nobody: `public.users`, a reference table, `schema_migrations`.
 A new table of a plugin is scoped to a workspace, unless each row belongs to one
 person. A table that a user scopes, and a shared table, give the reason in a comment.
+A queue of the hub is a shared table too. Its row names an owner and holds no content,
+and the work that it starts runs in the scope of that owner. See `OWN-003`.
 
 ## OWN-005
 
