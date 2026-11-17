@@ -69,33 +69,33 @@ scenarios.
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline        | How this specification obeys it                                                                                                                      |
-| --------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ARC-008` | Architecture     | The hub reads the file kind from the registry, and names no plugin and no kind. Section 4.1.                                                         |
-| `ARC-010` | Architecture     | `maroid worker` runs the tasks of the outbox, which `ADR-0021` adds to the rule. `FILES-DD-005`.                                                     |
-| `PLG-006` | Plugin model     | `FilePlugin`, `FileKindRegistry`, and `FileKindRegistrar`. Section 4.1.                                                                              |
-| `PLG-007` | Plugin model     | A plugin reaches a file through `Host.Files`. Section 4.1.                                                                                           |
-| `PLG-011` | Plugin model     | The registry refuses a second kind under one key of one plugin. Section 4.1.                                                                         |
-| `DAT-003` | Data             | A plugin table references `public.workspace_files` or `public.user_files` with a foreign key. The rule forbids it. **ADR to write.** `FILES-DD-009`. |
-| `DAT-005` | Data             | Each migration has an up file and a down file. Section 4.2.                                                                                          |
-| `DAT-009` | Data             | Each `id` declares `DEFAULT uuidv7()`. Section 4.2.                                                                                                  |
-| `DAT-010` | Data             | Each point in time is `TIMESTAMPTZ`, and `updated_at` takes its trigger. Section 4.2.                                                                |
-| `OWN-003` | Record ownership | A task of the outbox sets the owner of its file as the acting scope, as `ADR-0021` gives. `FILES-DD-005`.                                            |
-| `OWN-004` | Record ownership | Two scoped tables, and `public.file_tasks` as a queue of the hub that `ADR-0021` makes a shared table. Each migration states its scope. Section 4.2. |
-| `OWN-005` | Record ownership | Each scope column, and `uploaded_by`, takes its value from the session. No insert names it. Section 4.2.                                             |
-| `OWN-006` | Record ownership | Both file tables force their policy. Section 4.2.                                                                                                    |
-| `OWN-008` | Record ownership | `repository.File` filters by `plugin_id` and never by a scope column. Section 4.1.                                                                   |
-| `SEC-012` | Security         | The three routes run behind `workspace.RequireEnabledOf`. Section 4.3.                                                                               |
-| `SEC-013` | Security         | Each route checks the permission of the file kind, as `handler.Widget.Read` checks a widget. Section 4.3.                                            |
-| `API-004` | HTTP API         | The routes live beside `/api`, under `/workspaces/{workspaceId}/plugins/{id}`, as the widget routes do. Section 4.3.                                 |
-| `API-006` | HTTP API         | The start reads `Idempotency-Key`. `api.yaml`.                                                                                                       |
-| `CFG-003` | Configuration    | `config.Files` declares each default and each check in its tags. Section 4.3.                                                                        |
-| `CFG-004` | Configuration    | The access key and the secret key of the file store stay out of the repository. Section 4.3.                                                         |
-| `JOB-001` | Jobs             | `file.Worker` implements `worker.Worker`. Section 4.3.                                                                                               |
-| `LOG-008` | Logging          | No log line holds an upload address, a read address, or a key of the file store. Section 4.5.                                                        |
-| `UI-006`  | Web UI           | A plugin page reaches the upload through `PluginHost.files` and `@maroid/ui`. Section 4.1.                                                           |
-| `PKG-005` | Package layout   | `file` names `GLO-file`, and `filestore` names `GLO-file-store`. Section 4.1.                                                                        |
-| `BLD-004` | Build            | `Host` changes, so the build plan rebuilds and loads every plugin. Section 7.                                                                        |
+| Rule      | Guideline        | How this specification obeys it                                                                                                                               |
+| --------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ARC-008` | Architecture     | The hub reads the file kind from the registry, and names no plugin and no kind. Section 4.1.                                                                  |
+| `ARC-010` | Architecture     | `maroid worker` runs the tasks of the outbox, which `ADR-0021` adds to the rule. `FILES-DD-005`.                                                              |
+| `PLG-006` | Plugin model     | `FilePlugin`, `FileKindRegistry`, and `FileKindRegistrar`. Section 4.1.                                                                                       |
+| `PLG-007` | Plugin model     | A plugin reaches a file through `Host.Files`. Section 4.1.                                                                                                    |
+| `PLG-011` | Plugin model     | The registry refuses a second kind under one key of one plugin. Section 4.1.                                                                                  |
+| `DAT-003` | Data             | A plugin table references `public.workspace_files` or `public.user_files` with a foreign key and `ON DELETE RESTRICT`, as `ADR-0022` permits. `FILES-DD-009`. |
+| `DAT-005` | Data             | Each migration has an up file and a down file. Section 4.2.                                                                                                   |
+| `DAT-009` | Data             | Each `id` declares `DEFAULT uuidv7()`. Section 4.2.                                                                                                           |
+| `DAT-010` | Data             | Each point in time is `TIMESTAMPTZ`, and `updated_at` takes its trigger. Section 4.2.                                                                         |
+| `OWN-003` | Record ownership | A task of the outbox sets the owner of its file as the acting scope, as `ADR-0021` gives. `FILES-DD-005`.                                                     |
+| `OWN-004` | Record ownership | Two scoped tables, and `public.file_tasks` as a queue of the hub that `ADR-0021` makes a shared table. Each migration states its scope. Section 4.2.          |
+| `OWN-005` | Record ownership | Each scope column, and `uploaded_by`, takes its value from the session. No insert names it. Section 4.2.                                                      |
+| `OWN-006` | Record ownership | Both file tables force their policy. Section 4.2.                                                                                                             |
+| `OWN-008` | Record ownership | `repository.File` filters by `plugin_id` and never by a scope column. Section 4.1.                                                                            |
+| `SEC-012` | Security         | The three routes run behind `workspace.RequireEnabledOf`. Section 4.3.                                                                                        |
+| `SEC-013` | Security         | Each route checks the permission of the file kind, as `handler.Widget.Read` checks a widget. Section 4.3.                                                     |
+| `API-004` | HTTP API         | The routes live beside `/api`, under `/workspaces/{workspaceId}/plugins/{id}`, as the widget routes do. Section 4.3.                                          |
+| `API-006` | HTTP API         | The start reads `Idempotency-Key`. `api.yaml`.                                                                                                                |
+| `CFG-003` | Configuration    | `config.Files` declares each default and each check in its tags. Section 4.3.                                                                                 |
+| `CFG-004` | Configuration    | The access key and the secret key of the file store stay out of the repository. Section 4.3.                                                                  |
+| `JOB-001` | Jobs             | `file.Worker` implements `worker.Worker`. Section 4.3.                                                                                                        |
+| `LOG-008` | Logging          | No log line holds an upload address, a read address, or a key of the file store. Section 4.5.                                                                 |
+| `UI-006`  | Web UI           | A plugin page reaches the upload through `PluginHost.files` and `@maroid/ui`. Section 4.1.                                                                    |
+| `PKG-005` | Package layout   | `file` names `GLO-file`, and `filestore` names `GLO-file-store`. Section 4.1.                                                                                 |
+| `BLD-004` | Build            | `Host` changes, so the build plan rebuilds and loads every plugin. Section 7.                                                                                 |
 
 ## 4. Design
 
