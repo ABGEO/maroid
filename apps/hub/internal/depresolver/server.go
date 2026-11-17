@@ -144,6 +144,7 @@ func (c *Container) registerHandlers(reg *handler.Registry) error {
 		{"provider", func() (handler.Handler, error) { return c.buildProviderHandler() }},
 		{"notification", func() (handler.Handler, error) { return c.buildNotificationHandler() }},
 		{"widget", func() (handler.Handler, error) { return c.buildWidgetHandler() }},
+		{"file", func() (handler.Handler, error) { return c.buildFileHandler() }},
 	}
 
 	for _, builder := range builders {

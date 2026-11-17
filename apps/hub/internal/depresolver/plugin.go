@@ -71,6 +71,11 @@ func (c *Container) newPluginBinder() (*pluginhost.Binder, error) {
 		return nil, err
 	}
 
+	files, err := c.Files()
+	if err != nil {
+		return nil, err
+	}
+
 	binder, err := pluginhost.New(pluginhost.Dependencies{
 		Config:                     c.Config(),
 		Logger:                     c.Logger(),
@@ -80,6 +85,7 @@ func (c *Container) newPluginBinder() (*pluginhost.Binder, error) {
 		TelegramConversationEngine: telegramConversationEngine,
 		Settings:                   settingsService,
 		Secrets:                    secretStore,
+		Files:                      files,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("building the plugin binder: %w", err)

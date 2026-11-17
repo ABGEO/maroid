@@ -18,6 +18,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/dex"
+	"github.com/abgeo/maroid/apps/hub/internal/file"
 	"github.com/abgeo/maroid/apps/hub/internal/filestore"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/healthcheck"
@@ -90,6 +91,7 @@ type Resolver interface {
 	WidgetRegistry() *registry.WidgetRegistry
 	FileKindRegistry() *registry.FileKindRegistry
 	FileStore() *filestore.Client
+	Files() (*file.Store, error)
 	NotificationKinds() (*notification.KindRegistry, error)
 	NotificationDispatcher() (*notification.Dispatcher, error)
 	NotificationService() (notification.Service, error)
@@ -343,6 +345,12 @@ type Container struct {
 	fileStore struct {
 		once     sync.Once
 		instance *filestore.Client
+	}
+
+	files struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *file.Store
 	}
 
 	notificationKinds struct {
