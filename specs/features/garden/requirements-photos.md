@@ -90,7 +90,7 @@ Maroid must refuse a moment while one of its photos is not ready.
 
 - Normal case: both photos are ready. Maroid adds the moment.
 - Unwanted case: one photo is still processing. Maroid refuses the moment, and the editor saves it about 2 seconds later.
-- Unwanted case: one photo failed, because its content is a PDF. The form shows the reason. The editor removes the photo and saves the moment with the others.
+- Unwanted case: one photo failed, because its content is a PDF. The form shows the reason, and the editor saves the moment with the others, without the failed photo.
 
 ### `GARDEN-FR-049`
 

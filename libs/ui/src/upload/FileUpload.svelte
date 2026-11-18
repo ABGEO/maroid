@@ -21,6 +21,8 @@
 		onuploaded?: (file: FileRecord) => void;
 		/** Called once the file is ready or failed. */
 		onsettled?: (file: FileRecord) => void;
+		/** True while a file uploads or processes, so the page waits before it saves. */
+		busy?: boolean;
 	}
 
 	let {
@@ -31,7 +33,8 @@
 		maxFiles,
 		label = 'Drop files here or choose them',
 		onuploaded,
-		onsettled
+		onsettled,
+		busy = $bindable(false)
 	}: Props = $props();
 
 	const MEGABYTE = 1024 * 1024;
@@ -63,6 +66,12 @@
 	});
 
 	$effect(() => uploader.restrict());
+
+	$effect(() => {
+		busy = uploader.entries.some(
+			(entry) => entry.phase === 'uploading' || entry.phase === 'processing'
+		);
+	});
 
 	onDestroy(() => uploader.destroy());
 

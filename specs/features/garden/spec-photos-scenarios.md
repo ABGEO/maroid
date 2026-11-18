@@ -220,8 +220,8 @@ lacks.
 **Layer:** manual
 
 **Given** an editor on the plant page, a photo that the phone took 3 days ago, and a PDF renamed `leaf.jpg`.
-**When** the editor opens "Add a moment", drops both files, waits, removes the failed file, sets the day to 3 days ago, and saves.
-**Then** the day starts at today, and no later day is offered. "Add moment" stays disabled while a file uploads or processes. The PDF shows "The content is not a type that this field accepts." The moment shows one photo on its day.
+**When** the editor opens "Add a moment", drops both files, waits, sets the day to 3 days ago, and saves.
+**Then** the day starts at today, and no later day is offered. "Add moment" stays disabled while a file uploads or processes. The PDF shows "The content is not a type that this field accepts.", and the save leaves it out. The moment shows one photo on its day.
 
 ### `GARDEN-SC-072`
 

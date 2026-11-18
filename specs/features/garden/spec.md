@@ -446,7 +446,7 @@ shows a control that writes only when `host.can` holds its permission.
 | 17  | `model/moment.go`, `errs/`, `repository/moment.go`, `repository/photo.go`, and the change of `repository/plant.go`.                                          | `GARDEN-FR-045`, `GARDEN-FR-049` to `GARDEN-FR-054`, `GARDEN-FR-063`                     | [x]  |
 | 18  | `FileKinds`, the DTOs, `handler/photo_file.go`, the handlers, and `main.go`. `api.yaml` matches. `GARDEN-SC-050` to `GARDEN-SC-067`.                         | `GARDEN-FR-045` to `GARDEN-FR-055`, `GARDEN-FR-061` to `GARDEN-FR-065`, `GARDEN-INV-004` | [x]  |
 | 19  | The measurements `GARDEN-SC-069` and `GARDEN-SC-070`.                                                                                                        | `GARDEN-NFR-005`, `GARDEN-NFR-006`                                                       | [x]  |
-| 20  | The remote: the API clients and the components of `spec-photos.md` 4.6, without the preview data. Then the manual checks `GARDEN-SC-071` to `GARDEN-SC-075`. | `GARDEN-FR-046`, `GARDEN-FR-048`, `GARDEN-FR-056` to `GARDEN-FR-060`, `GARDEN-FR-065`    | [ ]  |
+| 20  | The remote: the API clients and the components of `spec-photos.md` 4.6, without the preview data. Then the manual checks `GARDEN-SC-071` to `GARDEN-SC-075`. | `GARDEN-FR-046`, `GARDEN-FR-048`, `GARDEN-FR-056` to `GARDEN-FR-060`, `GARDEN-FR-065`    | [x]  |
 
 ## 8. Out of scope for this specification
 

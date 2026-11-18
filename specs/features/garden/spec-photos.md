@@ -110,6 +110,7 @@ Every path is under `plugins/jasmine/`, except `api.yaml`. `ADR-0023` and the ch
 | `ui/src/lib/photo.ts`                                      | create | `PHOTO_KIND`, `PHOTO_TYPES`, `PHOTO_MAX_SIZE`, equal to the kind of `GARDEN-DD-023`.                                                                                                                        |
 | `ui/src/lib/galleryPreview.svelte.ts`                      | delete | The preview data.                                                                                                                                                                                           |
 | `ui/src/pages/plants/*.svelte`                             | change | `PlantGallery`, `MomentDialog`, `PhotoViewer`, `PlantAvatar`, `PlantView`, `PlantList`. Section 4.6.                                                                                                        |
+| `libs/ui/src/upload/FileUpload.svelte`                     | change | `busy`, bindable: true while a file uploads or processes.                                                                                                                                                   |
 | `specs/features/garden/api.yaml`                           | change | The seven routes, `Plant.profile_photo`, and the new schemas.                                                                                                                                               |
 
 ### 4.2 Data model
@@ -253,27 +254,30 @@ sets the column to null when its photo goes, in the same statement.
 
 ### 4.6 The pages
 
-`PlantGallery` takes the plant and `canWrite`, which `host.can('plants.write')` gives.
+`PlantGallery` takes the plant, `canWrite`, which `host.can('plants.write')` gives, and
+`onchanged`, which it calls after each write that can move the profile picture.
 It reads every page of `moments.list` with `readAll` and `limit` 100. A failure shows
 "Failed to load the photos." with a retry. The markup of the approved preview stays: the
 timeline, the day with `ageOf`, the note, the grid of thumbnails, the menus, and
 `ConfirmDialog`. The badge "Preview" goes. An `error` event of an image loads the
-moments again once, because an address expires after `files.read_ttl`.
+moments again, at most once a minute, because an address expires after `files.read_ttl`.
 
 `MomentDialog` holds `FileUpload` of `@maroid/ui` with `client` `host.files`, `kind`
 `PHOTO_KIND`, `accept` `PHOTO_TYPES`, and `maxSize` `PHOTO_MAX_SIZE`. `onuploaded` keeps
-the identifier, and `onsettled` keeps the state. The day starts at `today()` with `max`
-`today()`. "Add moment" stays disabled while a photo is uploading or processing, or while
-no photo is ready. A save sends the ready files in the order of the upload. In the edit
-mode, the dialog sends `PUT`, then `POST .../photos` when it holds a ready file.
+the identifier, `onsettled` keeps the state, and `bind:busy` tells that a photo is
+uploading or processing. The day starts at `today()` with `max` `today()`. "Add moment"
+stays disabled while a photo is uploading or processing, or while no photo is ready. A
+save sends the ready files in the order of the upload. In the edit mode, the dialog sends
+`PUT`, then `POST .../photos` when it holds a ready file.
 
 `PhotoViewer` shows `display.url` and keeps its controls. "Set as profile picture" calls
-`plants.setProfilePhoto` and replaces the plant of the page with the answer.
+`plants.setProfilePhoto`, and `PlantView` then reads the plant again, because the answer
+carries the `ETag` in a header that `put` does not answer.
 
 `PlantAvatar` takes `ProfilePhoto` and shows `thumbnail.url`, or the initial when the
 plant holds no profile picture or no ready thumbnail. `PlantList` reads it from each
 plant of the page. `PlantView` reads the plant again after an add or a delete in the
-gallery, so its avatar and its `ETag` follow the profile picture.
+gallery or a change of the profile picture, so its avatar and its `ETag` follow it.
 
 ## 5. Design decisions
 

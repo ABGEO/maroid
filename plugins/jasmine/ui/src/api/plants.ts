@@ -13,6 +13,8 @@ export function createPlantsApi(api: ApiClient) {
 			api.post<Plant>('/plants', payload, options),
 		update: (id: string, payload: PlantUpdatePayload, ifMatch?: string) =>
 			api.put<Plant>(`/plants/${id}`, payload, { ifMatch }),
-		remove: (id: string, ifMatch?: string) => api.del<null>(`/plants/${id}`, { ifMatch })
+		remove: (id: string, ifMatch?: string) => api.del<null>(`/plants/${id}`, { ifMatch }),
+		setProfilePhoto: (id: string, photoId: string) =>
+			api.put<Plant>(`/plants/${id}/profile-photo`, { photo_id: photoId })
 	};
 }

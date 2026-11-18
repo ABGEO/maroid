@@ -28,8 +28,52 @@ export interface Plant extends PlantReference {
 	acquired_on?: string;
 	care_notes?: string;
 	status: PlantStatus;
+	profile_photo?: ProfilePhoto;
 	created_at: string;
 	updated_at: string;
+}
+
+/** A signed address of one variant of a photo, and the time it stops working. */
+export interface ReadAddress {
+	url: string;
+	expires_at: string;
+}
+
+/** The profile picture of a plant. The thumbnail is absent while the file is not ready. */
+export interface ProfilePhoto {
+	id: string;
+	thumbnail?: ReadAddress;
+}
+
+/** One photo of a moment. The addresses are absent while the file is not ready. */
+export interface Photo {
+	id: string;
+	width: number;
+	height: number;
+	thumbnail?: ReadAddress;
+	display?: ReadAddress;
+}
+
+/** One day in the life of a plant, with a note and one or more photos. */
+export interface Moment {
+	id: string;
+	plant_id: string;
+	taken_on: string;
+	note?: string;
+	photos: Photo[];
+	created_at: string;
+	updated_at: string;
+}
+
+export interface MomentInput {
+	taken_on: string;
+	note?: string;
+	file_ids: string[];
+}
+
+export interface MomentUpdate {
+	taken_on: string;
+	note?: string;
 }
 
 export interface PlantPayload {

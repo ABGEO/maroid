@@ -6,8 +6,10 @@
 	import { formatMoment } from '../../lib/format';
 	import CareIntervals from './CareIntervals.svelte';
 	import LogForm from './LogForm.svelte';
+	import PlantAvatar from './PlantAvatar.svelte';
 	import PlantEntries from './PlantEntries.svelte';
 	import PlantForm from './PlantForm.svelte';
+	import PlantGallery from './PlantGallery.svelte';
 
 	interface Props {
 		host: PluginHost;
@@ -75,7 +77,7 @@
 
 	async function remove(): Promise<void> {
 		const proceed = await confirmDialog?.ask(
-			`${plant?.display_id} ${plant?.common_name} goes, with its care intervals and every maintenance entry.`,
+			`${plant?.display_id} ${plant?.common_name} goes, with its care intervals, every maintenance entry, and every photo.`,
 			{ title: 'Delete this plant?', confirmLabel: 'Delete' }
 		);
 		if (!proceed) {
@@ -118,18 +120,26 @@
 		</div>
 	{:else}
 		<header class="page-header">
-			<div>
-				<h1 class="page-title">
-					<span class="meta">{plant.display_id}</span>
-					{plant.common_name}
-				</h1>
-				<p class="page-lead">
-					{plant.environment.display_id}
-					{plant.environment.name}
-					{#if plant.status === 'inactive'}
-						<span class="badge badge-sm badge-ghost ml-2">Inactive</span>
-					{/if}
-				</p>
+			<div class="flex items-center gap-4">
+				<PlantAvatar
+					name={plant.common_name}
+					photo={plant.profile_photo}
+					size="size-16"
+					textSize="text-2xl"
+				/>
+				<div>
+					<h1 class="page-title">
+						<span class="meta">{plant.display_id}</span>
+						{plant.common_name}
+					</h1>
+					<p class="page-lead">
+						{plant.environment.display_id}
+						{plant.environment.name}
+						{#if plant.status === 'inactive'}
+							<span class="badge badge-sm badge-ghost ml-2">Inactive</span>
+						{/if}
+					</p>
+				</div>
 			</div>
 			{#if canWritePlants && !editing}
 				<div class="flex gap-2">
@@ -166,6 +176,8 @@
 				<dd class="whitespace-pre-line">{plant.care_notes ?? 'Not set'}</dd>
 			</dl>
 		{/if}
+
+		<PlantGallery {host} {api} {plant} canWrite={canWritePlants} onchanged={() => load()} />
 
 		<CareIntervals {api} {plantId} canWrite={canWritePlants} {revision} />
 
