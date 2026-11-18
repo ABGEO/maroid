@@ -20,7 +20,10 @@ workspaces H and G. A plugin test cannot import the hub (`PLG-007`), so a stand-
 deletes them: `Delete` removes the row through the transaction of the plugin and
 records a purge, as the hub does. `FILES-SC-045` and `FILES-SC-046` verify the hub. A
 ready photo is a row of the stand-in of jasmine, kind `plant-photo`, state `ready`, that
-the setup inserts. Today is the UTC date of the run. Plant `P001` of H is active.
+the setup inserts. Today is the UTC date of the run. Plant `P001` of H is active. A
+viewer holds `plants.read` alone: for `GARDEN-SC-063` the router stands in for the
+permission check of the hub and answers 403 for a route whose permission the viewer
+lacks.
 
 ### `GARDEN-SC-050`
 

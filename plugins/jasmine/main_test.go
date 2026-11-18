@@ -47,3 +47,19 @@ func TestThePluginDeclaresTheCareCommand(t *testing.T) {
 	assert.Equal(t, "Plants that need care", commands[0].Meta().Description)
 	assert.Equal(t, "plants.read", commands[0].Meta().Permission)
 }
+
+// GARDEN-SC-054: The plugin declares one file kind, the photo of a plant.
+func TestThePluginDeclaresThePlantPhoto(t *testing.T) {
+	t.Parallel()
+
+	kinds, err := (&JasminePlugin{}).FileKinds()
+	require.NoError(t, err)
+	assert.Equal(t, []pluginapi.FileKind{{
+		Key:        "plant-photo",
+		Scope:      pluginapi.FileScopeWorkspace,
+		MediaTypes: []string{"image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"},
+		MaxSize:    pluginapi.MaxFileSize,
+		Permission: "plants.write",
+		Image:      true,
+	}}, kinds)
+}

@@ -29,7 +29,7 @@ func readRecord[T any, R any](
 	action string,
 	read func(ctx context.Context, tx *sqlx.Tx) (T, error),
 	moment func(T) time.Time,
-	present func(T) R,
+	present func(context.Context, T) R,
 ) {
 	row, err := fetchInTx(r.Context(), db, action, read)
 
@@ -47,7 +47,7 @@ func readRecord[T any, R any](
 
 	w.Header().Set(precondition.ETagHeader, precondition.ETag(moment(row)))
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, present(row))
+	render.JSON(w, r, present(r.Context(), row))
 }
 
 // replacer reads one record and writes its values back under a validator.
@@ -68,7 +68,7 @@ func replaceRecord[T any, R any](
 	open func(tx *sqlx.Tx) replacer[T],
 	apply func(*T),
 	moment func(*T) time.Time,
-	present func(*T) R,
+	present func(context.Context, *T) R,
 ) {
 	ifMatch := precondition.IfMatchFromContext(r.Context())
 
@@ -101,5 +101,10 @@ func replaceRecord[T any, R any](
 
 	w.Header().Set(precondition.ETagHeader, precondition.ETag(moment(record)))
 	render.Status(r, http.StatusOK)
-	render.JSON(w, r, present(record))
+	render.JSON(w, r, present(r.Context(), record))
+}
+
+// plain adapts a presenter that needs no context to the helpers of this file.
+func plain[T any, R any](present func(T) R) func(context.Context, T) R {
+	return func(_ context.Context, row T) R { return present(row) }
 }

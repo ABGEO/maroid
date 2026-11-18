@@ -30,6 +30,10 @@ func failWrite(
 		problem.Write(w, r, problem.NewNotFound())
 	case errors.Is(err, errs.ErrEnvironmentUnknown):
 		writeFieldProblem(w, r, "environment_id", "names no environment of the workspace")
+	case errors.Is(err, errs.ErrFileTaken):
+		writeFieldProblem(w, r, "file_ids", "The file is already a photo of a moment.")
+	case errors.Is(err, errs.ErrPhotoForeign):
+		writeFieldProblem(w, r, "photo_id", "The photo is not a photo of this plant.")
 	default:
 		logger.ErrorContext(r.Context(), message, slog.Any("error", err))
 		problem.Write(w, r, problem.NewInternal())

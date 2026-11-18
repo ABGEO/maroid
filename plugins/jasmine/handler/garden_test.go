@@ -48,6 +48,7 @@ type plantAnswer struct {
 	AcquiredOn     *string   `json:"acquired_on"`
 	CareNotes      *string   `json:"care_notes"`
 	Status         string    `json:"status"`
+	ProfilePhoto   *profile  `json:"profile_photo"`
 }
 
 func decode[T any](t *testing.T, recorder *httptest.ResponseRecorder) T {

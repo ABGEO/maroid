@@ -103,7 +103,7 @@ func (h *CareIntervalHandler) List(w http.ResponseWriter, r *http.Request) {
 			return repository.NewCareInterval(tx).List(ctx, seek, careFilter(asked.Filters))
 		},
 		func(row model.CareInterval) string { return row.ID },
-		dto.NewCareIntervalResponseList,
+		plain(dto.NewCareIntervalResponseList),
 	)
 }
 

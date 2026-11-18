@@ -33,7 +33,8 @@ const (
 
 // hubFixtures stands in for the core migrations of the hub, which a plugin test
 // does not own: the trigger function, the workspaces that a scoped table
-// references, and the files of a workspace that a photo references.
+// references, the files of a workspace that a photo references, and the purges of
+// their bytes.
 const hubFixtures = `
 CREATE OR REPLACE FUNCTION set_updated_at() RETURNS TRIGGER AS $$
 BEGIN
@@ -46,13 +47,20 @@ CREATE TABLE public.workspaces (id UUID NOT NULL PRIMARY KEY);
 INSERT INTO public.workspaces (id) VALUES ('` + workspaceH + `'), ('` + workspaceG + `');
 
 CREATE TABLE public.workspace_files (
-    id           UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
-    workspace_id UUID NOT NULL REFERENCES public.workspaces (id)
-);`
+    id           UUID    NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    workspace_id UUID    NOT NULL REFERENCES public.workspaces (id),
+    plugin_id    TEXT    NOT NULL DEFAULT '` + pluginID + `',
+    kind         TEXT    NOT NULL DEFAULT 'plant-photo',
+    state        TEXT    NOT NULL DEFAULT 'ready',
+    claimed      BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE public.file_purges (file_id UUID NOT NULL);`
 
 // garden is a migrated database that holds the workspaces H and G.
 type garden struct {
-	db pluginapi.PluginDB
+	db    pluginapi.PluginDB
+	files *fakeFiles
 }
 
 // gardenUnderTest starts a database and applies the migrations of the plugin.
@@ -70,17 +78,26 @@ func gardenUnderTest(t *testing.T) *garden {
 	identifier := pluginapi.ParsePluginID(pluginID)
 	instance.Migrate(t, identifier.ToSafeName("_"), migrations)
 
-	return &garden{db: testdb.PluginDB(instance, identifier)}
+	database := testdb.PluginDB(instance, identifier)
+
+	return &garden{db: database, files: &fakeFiles{db: database}}
 }
 
 // router mounts the routes of the plugin, acting in the workspace, as the hub
-// mounts them.
+// mounts them. The actor holds every permission.
 func (g *garden) router(workspace string) http.Handler {
+	return g.routerAs(workspace, nil)
+}
+
+// routerAs mounts the routes as router does. A non-nil granted stands in for the
+// permission check of the hub: a route whose permission it lacks answers 403.
+func (g *garden) routerAs(workspace string, granted []string) http.Handler {
 	logger := slog.New(slog.DiscardHandler)
 
 	routes := slices.Concat(
 		handler.NewEnvironmentHandler(logger, g.db).Routes(),
-		handler.NewPlantHandler(logger, g.db).Routes(),
+		handler.NewPlantHandler(logger, g.db, g.files).Routes(),
+		handler.NewMomentHandler(logger, g.db, g.files).Routes(),
 		handler.NewMaintenanceEntryHandler(logger, g.db).Routes(),
 		handler.NewCareIntervalHandler(logger, g.db).Routes(),
 	)
@@ -99,10 +116,20 @@ func (g *garden) router(workspace string) http.Handler {
 	})
 
 	for _, route := range routes {
-		router.Method(route.Method, route.Pattern, route.Handler)
+		router.Method(route.Method, route.Pattern, permitted(route, granted))
 	}
 
 	return router
+}
+
+func permitted(route pluginapi.Route, granted []string) http.HandlerFunc {
+	if granted == nil || slices.Contains(granted, route.Permission) {
+		return route.Handler
+	}
+
+	return func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+	}
 }
 
 // inHome runs fn in a transaction that acts in the workspace H.

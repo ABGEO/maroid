@@ -9,16 +9,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// insertFile stands in for an upload: it gives the workspace a file and answers it.
+// insertFile stands in for an upload: it gives the workspace a ready plant photo
+// and answers it.
 func insertFile(t *testing.T, fixture *garden, workspace string) string {
+	t.Helper()
+
+	return insertFileOf(t, fixture, workspace, pluginID, "plant-photo", "ready")
+}
+
+// insertFileOf stands in for an upload of a file of the plugin, the kind, and the
+// state.
+func insertFileOf(t *testing.T, fixture *garden, workspace, plugin, kind, state string) string {
 	t.Helper()
 
 	var id string
 
 	require.NoError(t, fixture.in(t, workspace, func(tx *sqlx.Tx) error {
-		if err := tx.Get(&id,
-			`INSERT INTO public.workspace_files (workspace_id) VALUES ($1) RETURNING id`,
+		if err := tx.Get(
+			&id,
+			`INSERT INTO public.workspace_files (workspace_id, plugin_id, kind, state)
+			VALUES ($1, $2, $3, $4) RETURNING id`,
 			workspace,
+			plugin,
+			kind,
+			state,
 		); err != nil {
 			return fmt.Errorf("inserting a file: %w", err)
 		}

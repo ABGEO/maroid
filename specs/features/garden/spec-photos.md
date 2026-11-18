@@ -249,6 +249,7 @@ sets the column to null when its photo goes, in the same statement.
 | `photo_id` names no photo, or `ErrPhotoForeign`                      | 422, `photo_id`                                     | "The photo is not a photo of this plant."          |
 | `If-Match` names an older version                                    | 412                                                 | As `spec.md` section 4.5                           |
 | `Get` or `Files.Delete` fails, `ErrFileReferenced` included          | 500, the transaction rolls back                     | None. The log holds the cause.                     |
+| `Get` fails while an answer reads its addresses                      | The answer carries no address                       | None. The log holds the cause at `ERROR`.          |
 
 ### 4.6 The pages
 
