@@ -110,7 +110,7 @@ scenarios.
 | `apps/hub/db/migrations/20261118100200_table_file_tasks_create.{up,down}.sql`            | create         | `public.file_tasks`                                                                                                 |
 | `apps/hub/internal/model/file.go`                                                        | create         | `File`, `FileTask`, `FileTaskAction`                                                                                |
 | `apps/hub/internal/repository/file.go`                                                   | create         | `FileRepository`, `File`, `NewFile`. One type over both scoped tables, as `repository.PluginSecret` does            |
-| `apps/hub/internal/repository/file_task.go`                                              | create         | `FileTaskRepository`, `FileTask`, `NewFileTask`: `Enqueue`, `Lease`, `Done`, `Retry`                                |
+| `apps/hub/internal/repository/file_task.go`                                              | create         | `FileTaskRepository`, `FileTask`, `NewFileTask`: `Enqueue`, `EnqueueOnce`, `Lease`, `Done`, `Retry`                 |
 | `apps/hub/internal/registry/file_kind.go`                                                | create         | `FileKindRegistry`, `FileKind`. `Get(pluginID, key)`                                                                |
 | `apps/hub/internal/registry/capability.go`                                               | change         | `CapFiles Capability = "files"`                                                                                     |
 | `apps/hub/internal/registry/capability_item.go`                                          | change         | `FileKindItem`, the item of the capability report                                                                   |
@@ -120,7 +120,7 @@ scenarios.
 | `apps/hub/internal/filestore/{doc,client,presign}.go`                                    | create         | `Client`, `New`, `Head`, `ReadRange`, `Read`, `Write`, `Delete`, `DeletePrefix`, `Ping`, `PresignPut`, `PresignGet` |
 | `apps/hub/internal/file/{doc,store,key}.go`                                              | create         | `Store`, `NewStore`: `Start`, `Complete`, `Get`, `Claim`, `Delete`. `objectKey`                                     |
 | `apps/hub/internal/file/{worker,task}.go`                                                | create         | `Worker`, `NewWorker`, and one function for each `model.FileTaskAction`                                             |
-| `apps/hub/internal/file/{image,orient,sniff}.go`                                         | create         | `deriveVariants`, `orient`, `sniff`. `FILES-DD-007`, `FILES-DD-008`                                                 |
+| `apps/hub/internal/file/{image,orient,sniff}.go`                                         | create         | `variantsOf`, `deriveVariants`, `orient`, `sniff`. `FILES-DD-007`, `FILES-DD-008`                                   |
 | `apps/hub/internal/plugin/host/file.go`                                                  | create         | `FileStore` interface, `boundFiles`                                                                                 |
 | `apps/hub/internal/plugin/host/host.go`                                                  | change         | `Dependencies.Files`, the `files` field, `Host.Files`                                                               |
 | `apps/hub/internal/handler/file.go`                                                      | create         | `File` handler: `Start`, `Read`, `Complete`                                                                         |
@@ -130,7 +130,7 @@ scenarios.
 | `apps/hub/internal/config/config.go`                                                     | change         | `Files` and `Config.Files`                                                                                          |
 | `apps/hub/internal/depresolver/{file,resolver,plugin}.go`                                | create, change | `Container.FileStore`, `Container.Files`, `Container.FileWorker`                                                    |
 | `apps/hub/internal/command/worker.go`                                                    | change         | `getWorkers` adds `files`                                                                                           |
-| `apps/hub/internal/domain/errs/errs.go`                                                  | change         | `ErrInvalidFileKind`, `ErrFileKindAlreadyRegistered`, `ErrUnknownFileKind`                                          |
+| `apps/hub/internal/domain/errs/errs.go`                                                  | change         | `ErrInvalidFileKind`, `ErrFileKindAlreadyRegistered`, `ErrUnknownFileScope`, `ErrFileStoreUnavailable`              |
 | `apps/hub/internal/teststore/teststore.go`                                               | create         | `Start`: a RustFS container that one integration test owns, as `testbao` does                                       |
 | `libs/plugin-sdk/src/{types,files}.ts`                                                   | change, create | `FileClient`, `FileRecord`, `UploadTicket`, `PluginHost.files`                                                      |
 | `apps/deck/src/lib/api/client.ts`                                                        | change         | `createFileClient(workspaceId, pluginId)`                                                                           |
@@ -138,7 +138,7 @@ scenarios.
 | `apps/deck/src/routes/(dashboard)/w/[workspace]/plugins/[plugin]/[...path]/+page.svelte` | change         | Passes `files` in the host                                                                                          |
 | `libs/ui/src/upload/{FileUpload.svelte,uploader.svelte.ts}`                              | create         | The upload control. `FILES-DD-013`                                                                                  |
 | `libs/ui/src/index.ts`, `libs/ui/package.json`                                           | change         | Exports `FileUpload`. Adds `@uppy/core`, `@uppy/aws-s3`, `@uppy/svelte`                                             |
-| `docker-compose.yaml`, `config.yaml.example`, `chart/values.yaml`                        | change         | A RustFS service for development, and the `files` keys                                                              |
+| `docker-compose.yaml`                                                                    | change         | A RustFS service for development, with its bucket, its CORS rule, and the policy of the key                         |
 
 The contract in `libs/pluginapi/file.go`:
 
@@ -201,12 +201,17 @@ var (
     ErrFileAbsent      = errors.New("file: absent")
     ErrFileReferenced  = errors.New("file: a row references it")
     ErrFileScopeAbsent = errors.New("file: the unit of work carries no owner of the scope")
+    ErrTooManyFiles    = errors.New("file: too many identifiers")
 )
+
+// MaxFilesPerGet is the most identifiers that one call of Get takes.
+const MaxFilesPerGet = 100
 
 // PluginFiles reads, claims, and deletes the files of one plugin in the acting scope.
 type PluginFiles interface {
     // Get answers the files under the identifiers. It omits an identifier that the
-    // plugin and the acting scope do not hold.
+    // plugin and the acting scope do not hold. It answers ErrTooManyFiles past
+    // MaxFilesPerGet identifiers.
     Get(ctx context.Context, ids ...string) ([]File, error)
     Claim(ctx context.Context, id string) error
     Delete(ctx context.Context, id string) error
@@ -343,18 +348,22 @@ read address for each variant of each ready file.
 
 ### 4.5 Errors
 
-| Condition                                                  | Behavior                                                     | Message                                           |
-| ---------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------- |
-| The body names a kind that the plugin never declared       | 422, `/problems/http/validation`, field `kind`               | "The plugin accepts no file of this kind."        |
-| The media type is absent from the kind                     | 422, field `media_type`                                      | "The file kind does not accept this media type."  |
-| The size is 0, or passes `MaxSize` of the kind             | 422, field `size`                                            | "The file is larger than the file kind accepts."  |
-| The name holds 0 or more than 255 characters               | 422, field `name`                                            | "The name of the file holds 1 to 255 characters." |
-| The role does not hold the permission of the kind          | 403, `permission-denied`                                     | The permission and the lowest role                |
-| `Ping` fails or passes 1 second                            | 503, `/problems/hub/not-ready`, `file-store`                 | The dependency                                    |
-| The file is absent, of another plugin, or of another scope | 404, `not-found`; `ErrFileAbsent` on the host                | None                                              |
-| A completion of a file that is not `pending`               | 202, no task                                                 | None                                              |
-| `Delete` of a file that a row references                   | `ErrFileReferenced` (SQLSTATE `23503`)                       | None                                              |
-| A task fails with an error of the file store               | `Retry` after 2 s times 2 to the attempts, at most 5 minutes | `last_error` holds the error, without an address  |
+| Condition                                                  | Behavior                                                                | Message                                           |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------- |
+| The body names a kind that the plugin never declared       | 422, `/problems/http/validation`, field `kind`                          | "The plugin accepts no file of this kind."        |
+| The media type is absent from the kind                     | 422, field `media_type`                                                 | "The file kind does not accept this media type."  |
+| The size is 0                                              | 422, field `size`                                                       | "The file holds no byte."                         |
+| The size passes `MaxSize` of the kind                      | 422, field `size`                                                       | "The file is larger than the file kind accepts."  |
+| The name holds 0 or more than 255 characters               | 422, field `name`                                                       | "The name of the file holds 1 to 255 characters." |
+| The role does not hold the permission of the kind          | 403, `permission-denied`                                                | The permission and the lowest role                |
+| `Ping` fails or passes 1 second                            | 503, `/problems/hub/not-ready`, `file-store`                            | The dependency                                    |
+| The file is absent, of another plugin, or of another scope | 404, `not-found`; `ErrFileAbsent` on the host                           | None                                              |
+| A completion of a file that is not `pending`               | 202, no task                                                            | None                                              |
+| `Delete` of a file that a row references                   | `ErrFileReferenced` (SQLSTATE `23503`)                                  | None                                              |
+| `Get` with more than `MaxFilesPerGet` identifiers          | `ErrTooManyFiles` on the host                                           | None                                              |
+| A task fails with an error of the file store               | `Retry` after 2 s times 2 to the attempts, at most 5 minutes            | `last_error` holds the error, without an address  |
+| A task passes 4 minutes                                    | The task stops, and `Retry` as above                                    | `last_error` holds the deadline                   |
+| A task panics                                              | A `process` task fails the file with `damaged`. Any other takes `Retry` | The worker logs the panic at `ERROR`              |
 
 No error, no log line, and no `last_error` holds an address or a key (`LOG-008`).
 `filestore` wraps every error of the S3 client without its request.
@@ -387,7 +396,7 @@ No error, no log line, and no `last_error` holds an address or a key (`LOG-008`)
 | 14  | Add `FileUpload` to `@maroid/ui`.                                                                           | `FILES-FR-026` to `-028`                        | [x]  |
 | 15  | Add RustFS to `docker-compose.yaml` with the bucket, its CORS rule for the deck, and the policy of the key. | `FILES-INV-001`                                 | [x]  |
 | 16  | Rebuild and load every plugin (`BLD-004`).                                                                  | `FILES-FR-001`                                  | [x]  |
-| 17  | Run the manual scenarios against the running hub.                                                           | `FILES-SC-009`, `-033`, `-034`, `-040`          | [x]  |
+| 17  | Run the manual scenarios against the running hub.                                                           | `FILES-SC-009`, `-032` to `-034`, `-040`        | [x]  |
 
 ## 8. Out of scope for this specification
 

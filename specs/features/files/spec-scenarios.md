@@ -46,8 +46,9 @@ kind, and `max_size`.
 **Verifies:** `FILES-FR-002`
 **Layer:** unit
 
-**Given** three probes: one declares no media type, one names an undeclared permission,
-and one declares an image kind with `application/pdf`.
+**Given** four probes: one declares no media type, one names an undeclared permission,
+one declares an image kind with `application/pdf`, and one declares a kind that is not
+an image with `image/jpeg`.
 **When** the registrar loads each one.
 **Then** each load fails with `ErrInvalidFileKind`, and no kind of any of them reaches
 the registry.
@@ -154,7 +155,7 @@ one never received bytes.
 **Layer:** unit
 
 **Given** an image of 8000 by 6000 pixels.
-**When** `deriveVariants` runs.
+**When** `variantsOf` runs.
 **Then** the thumbnail is 480 by 360 pixels and the display image is 2048 by 1536 pixels.
 
 ## `FILES-SC-015`
@@ -163,7 +164,7 @@ one never received bytes.
 **Layer:** unit
 
 **Given** `small.png`, 300 by 200 pixels.
-**When** `deriveVariants` runs.
+**When** `variantsOf` runs.
 **Then** both variants are 300 by 200 pixels.
 
 ## `FILES-SC-016`
@@ -172,7 +173,7 @@ one never received bytes.
 **Layer:** unit
 
 **Given** `portrait.jpg`, stored 4000 by 3000 with EXIF orientation 6.
-**When** `deriveVariants` runs.
+**When** `variantsOf` runs.
 **Then** the display image is 1536 by 2048 pixels, and its top row matches the left
 column of the stored pixels.
 
@@ -321,9 +322,9 @@ seconds, and writes no row.
 ## `FILES-SC-032`
 
 **Verifies:** `FILES-FR-026`
-**Layer:** unit
+**Layer:** manual
 
-**Given** a page that mounts `FileUpload` with a fake `FileClient`.
+**Given** the page of a probe plugin that mounts `FileUpload` with `host.files`.
 **When** a person drops one file on it.
 **Then** the control calls `start` with the kind, the name, the type, and the size, and
 the page holds no code of its own for the upload.
@@ -363,7 +364,7 @@ measures from each completion to the state `ready`.
 **Layer:** unit
 
 **Given** `phone.heic`, `portrait.jpg`, and `small.png`.
-**When** `deriveVariants` runs on each one.
+**When** `variantsOf` runs on each one.
 **Then** each thumbnail holds at most 100 KB.
 
 ## `FILES-SC-037`

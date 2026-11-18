@@ -19,10 +19,12 @@ requirements: features/files/requirements.md
 **Decision:** `FilePlugin.FileKinds` declares the kinds. `FileKindRegistrar` refuses
 the plugin when a key fails `^[a-z0-9-]{1,64}$`, the scope is unknown, the list of media
 types is empty or holds a type that `mime.ParseMediaType` refuses, `MaxSize` is not in
-1 to `MaxFileSize`, an image kind holds a type outside the five image types, or the
-permission is absent from the declared permissions (`permissionOf`, as for a widget).
+1 to `MaxFileSize`, an image kind holds a type outside the five image types, a kind that
+is not an image holds one of the five image types, or the permission is absent from the
+declared permissions (`permissionOf`, as for a widget).
 **Rationale:** The registrar of the widgets already checks a permission at the load.
-One broken kind fails the load of the plugin, so no person meets it.
+One broken kind fails the load of the plugin, so no person meets it. A photo in a kind
+that is not an image stays as uploaded, with its EXIF, and breaks `FILES-INV-004`.
 **Alternatives:** A kind in the call of each upload. The hub then checks nothing before
 the first person uploads.
 
@@ -66,13 +68,16 @@ holds 2 GB until the worker runs.
 **Realizes:** `FILES-FR-009`, `FILES-NFR-001`, `FILES-NFR-005`
 **Decision:** An outbox. Each change of a file and the next task of that file commit
 in one transaction. The `files` worker of `maroid worker` leases due tasks every
-`files.poll_interval` with `FOR UPDATE SKIP LOCKED`, sets `locked_until` to 5 minutes
-ahead, runs the task in a transaction that `database.WithScopeTx` scopes to the owner
-of the task, and deletes the task in that transaction.
+`files.poll_interval` with `FOR UPDATE SKIP LOCKED`, and leases again at once when a
+lease filled every slot of `files.concurrency`. It sets `locked_until` to 5 minutes
+ahead, and gives each task 4 minutes. Each step of a task writes in its own transaction
+that `database.WithScopeTx` scopes to the owner of the task, and the task goes away in
+a later transaction. A task therefore runs at least once, and every task is idempotent.
 **Rationale:** A task cannot exist without its change, and a change cannot lose its
-task. Two workers never run one task. A poll of 2 seconds leaves 28 seconds of the
-30 seconds of `FILES-NFR-001` to the image work. A purge runs at once, inside the hour
-of `FILES-NFR-005`.
+task. Two workers never run one task while the lease holds. No transaction stays open
+across a read of the file store or the decode of an image. A poll of 2 seconds leaves
+28 seconds of the 30 seconds of `FILES-NFR-001` to the image work. A purge runs at
+once, inside the hour of `FILES-NFR-005`.
 **Alternatives:** A cron job each minute. It waits up to 60 seconds. An event of the
 bucket. It binds the hub to the event setup of a server that other projects share.
 
@@ -83,7 +88,10 @@ bucket. It binds the hub to the event setup of a server that other projects shar
 `expire` task at 24 hours. `Complete` writes a `process` task at once. `check` writes a
 `process` task when the upload exists and the file is `pending`, sets `bytes_absent`
 when it does not, and writes `discard_upload` when an image file is `ready` and an upload
-exists. `process` ends with `ready` and a `discard_upload` task in one transaction.
+exists. `Complete` and `check` write no `process` task while one waits for the file.
+`process` ends with `ready` and a `discard_upload` task in one transaction. A `process`
+task whose kind the plugin declares no more waits for a load of the plugin, and fails
+the file with `media_type` once the file is 24 hours old.
 **Rationale:** A browser that closes after the PUT and before the completion leaves no
 file in `pending` forever. A PUT that the browser repeats after the worker ran leaves
 no upload behind.
@@ -94,10 +102,10 @@ no upload behind.
 **Realizes:** `FILES-FR-012` to `-015`, `FILES-FR-017`, `FILES-NFR-001`, `FILES-INV-004`
 **Decision:** A pipeline in Go with no cgo. `image/jpeg`, `image/png`, and
 `golang.org/x/image/webp` decode the common types. `github.com/gen2brain/h265/heic`
-decodes HEIC and HEIF. `orient` applies the EXIF orientation of a JPEG and the `irot`
-and `imir` properties of a HEIF that the decoder does not apply. `golang.org/x/image/draw`
-resizes with `CatmullRom` to a long edge of at most 480 and 2048 pixels, and never
-enlarges. `github.com/gen2brain/webp`, built with the tag `nodynamic`, encodes each
+decodes HEIC and HEIF, and applies their `irot` and `imir` properties. `orient` applies
+the EXIF orientation of a JPEG, of the `eXIf` chunk of a PNG, and of the `EXIF` chunk of
+a WebP. `golang.org/x/image/draw` resizes with `CatmullRom` to a long edge of at most
+480 and 2048 pixels, and never enlarges. `github.com/gen2brain/webp`, built with the tag `nodynamic`, encodes each
 variant from the pixels, so no variant carries a metadata block. A file whose
 `image.DecodeConfig` passes 100 megapixels is `damaged`. A file of a kind that is not
 an image stays as `upload` and gets the variant `original`.
@@ -139,7 +147,8 @@ and the reference in two transactions, and the hub cannot see a row that points 
 **Realizes:** `FILES-FR-023`, `FILES-NFR-004`
 **Decision:** `Store.Get` signs a `GET` against `files.public_endpoint` for each variant
 of a ready file, with `files.read_ttl`. The address of an original carries
-`response-content-disposition=attachment` with the name of the file.
+`response-content-disposition=attachment` with the name of the file. `Get` takes at
+most `MaxFilesPerGet` (100) identifiers, which bounds the query and the signatures.
 **Rationale:** A signature costs one HMAC and no call to the file store, so a page of 24
 photos signs 48 addresses in less than 1 millisecond. A file that is not an image
 downloads under its own name and never renders in the page of the deck.
