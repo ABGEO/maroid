@@ -10,12 +10,17 @@ import (
 
 const (
 	foreignKeyViolation = "23503"
+	uniqueViolation     = "23505"
 
 	// paramBoundary and paramLimit name the parameters of every keyset read.
 	paramBoundary = "boundary"
 	paramLimit    = "limit"
 
 	paramEnvironmentID = "environment_id"
+	paramPlantID       = "plant_id"
+
+	// everyRow is the condition of a keyset read from the start of the collection.
+	everyRow = "TRUE"
 )
 
 // isForeignKeyViolation reports whether err is the foreign key violation of the
@@ -29,6 +34,16 @@ func isForeignKeyViolation(err error, constraint string) bool {
 	return pgErr.Code == foreignKeyViolation && pgErr.ConstraintName == constraint
 }
 
+// isUniqueViolation reports whether err is the unique violation of the constraint.
+func isUniqueViolation(err error, constraint string) bool {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return false
+	}
+
+	return pgErr.Code == uniqueViolation && pgErr.ConstraintName == constraint
+}
+
 // keyset answers the condition and the order of a keyset read over the identifier
 // column, with the parameter :boundary. A forward read from the start of the
 // collection carries no boundary, and its condition holds for every row.
@@ -37,7 +52,7 @@ func keyset(seek page.Seek, column string) (string, string) {
 	case seek.Direction == page.DirectionBackward:
 		return column + " < CAST(:boundary AS uuid)", column + " DESC"
 	case seek.Boundary == "":
-		return "TRUE", column
+		return everyRow, column
 	default:
 		return column + " > CAST(:boundary AS uuid)", column
 	}

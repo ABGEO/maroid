@@ -12,6 +12,8 @@ type Plant struct {
 	AcquiredOn     *time.Time           `db:"acquired_on"`
 	CareNotes      *string              `db:"care_notes"`
 	Status         PlantStatus          `db:"status"`
+	ProfilePhotoID *string              `db:"profile_photo_id"`
+	ProfileFileID  *string              `db:"profile_file_id"`
 	CreatedAt      time.Time            `db:"created_at"`
 	UpdatedAt      time.Time            `db:"updated_at"`
 }

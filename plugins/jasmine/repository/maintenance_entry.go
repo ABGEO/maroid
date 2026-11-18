@@ -160,7 +160,7 @@ func (r *MaintenanceEntry) List(
 
 	query, args, err := sqlx.Named(query, map[string]any{
 		paramBoundary: nullable(seek.Boundary),
-		"plant_id":    nullable(filter.PlantID),
+		paramPlantID:  nullable(filter.PlantID),
 		"type":        nullable(string(filter.Type)),
 		paramLimit:    seek.Limit,
 	})
@@ -296,7 +296,7 @@ func entryKeyset(seek page.Seek, order SortOrder) (string, string) {
 	sorting := "m.performed_at " + direction + ", m.id " + direction
 
 	if seek.Boundary == "" {
-		return "TRUE", sorting
+		return everyRow, sorting
 	}
 
 	condition := "(m.performed_at, m.id) " + operator + ` (
