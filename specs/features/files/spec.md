@@ -385,9 +385,9 @@ No error, no log line, and no `last_error` holds an address or a key (`LOG-008`)
 | 12  | Add `file.Worker`, its tasks, and the worker `files`.                                                       | `FILES-FR-009`, `-016`, `-019`, `FILES-NFR-005` | [x]  |
 | 13  | Add `FileClient` to `@maroid/plugin-sdk`, and `createFileClient` to the deck.                               | `FILES-FR-026`                                  | [x]  |
 | 14  | Add `FileUpload` to `@maroid/ui`.                                                                           | `FILES-FR-026` to `-028`                        | [x]  |
-| 15  | Add RustFS to `docker-compose.yaml` with the bucket, its CORS rule for the deck, and the policy of the key. | `FILES-INV-001`                                 | [ ]  |
-| 16  | Rebuild and load every plugin (`BLD-004`).                                                                  | `FILES-FR-001`                                  | [ ]  |
-| 17  | Run the manual scenarios against the running hub.                                                           | `FILES-SC-009`, `-033`, `-034`, `-040`          | [ ]  |
+| 15  | Add RustFS to `docker-compose.yaml` with the bucket, its CORS rule for the deck, and the policy of the key. | `FILES-INV-001`                                 | [x]  |
+| 16  | Rebuild and load every plugin (`BLD-004`).                                                                  | `FILES-FR-001`                                  | [x]  |
+| 17  | Run the manual scenarios against the running hub.                                                           | `FILES-SC-009`, `-033`, `-034`, `-040`          | [x]  |
 
 ## 8. Out of scope for this specification
 
