@@ -15,6 +15,12 @@ import (
 
 const pluginSettingsColumns = `id, plugin_id, fields, created_at, updated_at`
 
+// The columns that hold the owner of a row of a scoped table.
+const (
+	workspaceOwner = "workspace_id"
+	userOwner      = "user_id"
+)
+
 // scopedTable names the table of one scope and the column that holds its owner.
 type scopedTable struct {
 	name  string
@@ -132,9 +138,9 @@ func (r *PluginSettings) get(
 func tableOf(scope model.SettingScope) (scopedTable, error) {
 	switch scope {
 	case model.SettingScopeWorkspace:
-		return scopedTable{name: "public.plugin_workspace_settings", owner: "workspace_id"}, nil
+		return scopedTable{name: "public.plugin_workspace_settings", owner: workspaceOwner}, nil
 	case model.SettingScopeUser:
-		return scopedTable{name: "public.plugin_user_settings", owner: "user_id"}, nil
+		return scopedTable{name: "public.plugin_user_settings", owner: userOwner}, nil
 	default:
 		return scopedTable{}, fmt.Errorf("%w: %q", errs.ErrUnknownSettingScope, scope)
 	}

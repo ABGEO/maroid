@@ -4,7 +4,7 @@ title: Data
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-15
+updated: 2026-11-18
 scope: [apps/hub/db/, apps/hub/internal/migrator/, plugins/*/db/, plugins/*/repository/]
 related: [ARC, PLG, OWN, RES]
 ---
@@ -31,6 +31,14 @@ The hub owns the schema `public`.
 
 A plugin does not read a table and does not write a table in a different schema.
 A plugin gets data from another component through `pluginapi.Host`.
+
+A table of a plugin references a table of `public` with a foreign key in two cases
+only: a scope column, which `OWN-005` gives, and a column that names a file, on
+`public.workspace_files (id)` or `public.user_files (id)` with `ON DELETE RESTRICT`.
+The plugin claims the file through `Host.Files` before it trusts the identifier.
+
+**Why:** A foreign key reads and writes nothing for the plugin. It lets the database
+refuse the delete of a file that a row of a plugin still names.
 
 ## DAT-004
 

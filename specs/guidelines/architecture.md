@@ -4,7 +4,7 @@ title: Architecture
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-11-18
 scope: [apps/, libs/, plugins/, chart/]
 related: [PLG, DAT, UI, BLD, JOB, API]
 ---
@@ -75,10 +75,10 @@ The deployment unit is a container image. The Helm chart in `chart/` deploys it.
 
 The hub runs as two processes from one binary:
 
-| Command             | Runs                                    |
-| ------------------- | --------------------------------------- |
-| `maroid serve http` | The HTTP API and the Telegram webhook.  |
-| `maroid worker`     | The cron jobs and the MQTT subscribers. |
+| Command             | Runs                                                              |
+| ------------------- | ----------------------------------------------------------------- |
+| `maroid serve http` | The HTTP API and the Telegram webhook.                            |
+| `maroid worker`     | The cron jobs, the MQTT subscribers, and the tasks of the outbox. |
 
 Both processes load the same plugins. The chart deploys them separately.
 

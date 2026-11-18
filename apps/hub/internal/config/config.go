@@ -146,6 +146,21 @@ type OpenBao struct {
 	Namespace    string `default:""               mapstructure:"namespace"`
 }
 
+// Files defines the file store and the worker of the files. The access key and the
+// secret key reach the bucket alone.
+type Files struct {
+	Endpoint       string        `validate:"required,url"`
+	PublicEndpoint string        `mapstructure:"public_endpoint" validate:"required,url"`
+	Region         string        `default:"us-east-1"`
+	Bucket         string        `validate:"required"`
+	AccessKey      string        `mapstructure:"access_key"      validate:"required"`
+	SecretKey      string        `mapstructure:"secret_key"      validate:"required"`
+	UploadTTL      time.Duration `default:"15m"                  mapstructure:"upload_ttl"    validate:"gt=0,lte=15m"`
+	ReadTTL        time.Duration `default:"1h"                   mapstructure:"read_ttl"      validate:"gt=0,lte=1h"`
+	PollInterval   time.Duration `default:"2s"                   mapstructure:"poll_interval" validate:"gt=0"`
+	Concurrency    int           `default:"2"                    validate:"gte=1"`
+}
+
 // Telegram defines Telegram integration configuration parameters.
 type Telegram struct {
 	Token   string `validate:"required"`
@@ -171,6 +186,7 @@ type Config struct {
 	MCP      MCP
 	MQTT     MQTT
 	OpenBao  OpenBao
+	Files    Files
 	Telegram Telegram
 	Plugins  []pluginconfig.Config
 }

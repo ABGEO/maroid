@@ -43,12 +43,13 @@ type Service struct {
 
 var _ Checker = (*Service)(nil)
 
-// New creates a Service whose readiness checks the database, the IdP, and the
-// secret store.
+// New creates a Service whose readiness checks the database, the IdP, the secret
+// store, and the file store.
 func New(
 	cfg *config.Config,
 	db *sqlx.DB,
 	secretStore *api.Client,
+	fileStore Pinger,
 	httpClient *http.Client,
 ) (*Service, error) {
 	withComponent := health.WithComponent(health.Component{Name: component, Version: version})
@@ -62,6 +63,7 @@ func New(
 		databaseCheck(db),
 		idpCheck(httpClient, cfg.OIDC.Issuer),
 		secretStoreCheck(secretStore),
+		fileStoreCheck(fileStore),
 	}
 
 	readiness, err := health.New(

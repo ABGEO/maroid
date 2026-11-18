@@ -62,3 +62,14 @@ type PermissionItem struct {
 	Name string         `json:"name"`
 	Role pluginapi.Role `json:"role"`
 }
+
+// FileKindItem is one file kind that a plugin accepts.
+type FileKindItem struct {
+	PluginID   string   `json:"plugin_id"`
+	Key        string   `json:"key"`
+	Scope      string   `json:"scope"`
+	MediaTypes []string `json:"media_types"`
+	MaxSize    int64    `json:"max_size"`
+	Image      bool     `json:"image"`
+	Permission string   `json:"permission"`
+}

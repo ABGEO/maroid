@@ -15,7 +15,11 @@
 		"lint": "prettier --check ."
 	},
 	"dependencies": {
+		"@maroid/plugin-sdk": "workspace:*",
 		"@maroid/theme": "workspace:*",
+		"@uppy/aws-s3": "6.3.1",
+		"@uppy/core": "6.3.1",
+		"@uppy/svelte": "6.0.1",
 		"d3-scale": "4.0.2",
 		"d3-shape": "3.2.0",
 		"daisyui": "^5.5.19"

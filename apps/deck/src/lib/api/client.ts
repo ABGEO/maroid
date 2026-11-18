@@ -1,6 +1,7 @@
 import { env } from '$env/dynamic/public';
 
 import { createClient, type ApiClient } from '@maroid/api-client';
+import type { FileClient, FileRecord, UploadTicket } from '@maroid/plugin-sdk';
 
 import type { Handoff } from './types';
 
@@ -63,7 +64,37 @@ export const client: ApiClient = createClient({
 });
 
 export function createPluginClient(workspaceId: string, pluginId: string): ApiClient {
-	return client.scope(
-		`/workspaces/${encodeURIComponent(workspaceId)}/plugins/${encodeURIComponent(pluginId)}/api`
-	);
+	return client.scope(`${pluginPrefix(workspaceId, pluginId)}/api`);
+}
+
+function pluginPrefix(workspaceId: string, pluginId: string): string {
+	return `/workspaces/${encodeURIComponent(workspaceId)}/plugins/${encodeURIComponent(pluginId)}`;
+}
+
+export function createFileClient(workspaceId: string, pluginId: string): FileClient {
+	const plugin = client.scope(pluginPrefix(workspaceId, pluginId));
+
+	return {
+		async start(input) {
+			const ticket = await plugin.post<UploadTicket>('/files', input);
+			if (!ticket) {
+				throw new Error('the hub answered no upload address');
+			}
+
+			return ticket;
+		},
+
+		async complete(id) {
+			await plugin.post(`/files/${encodeURIComponent(id)}/completions`);
+		},
+
+		async get(id) {
+			const file = await plugin.get<FileRecord>(`/files/${encodeURIComponent(id)}`);
+			if (!file) {
+				throw new Error('the hub answered no file');
+			}
+
+			return file;
+		}
+	};
 }

@@ -17,4 +17,5 @@ type Host interface {
 	Settings() (PluginSettings, error)
 	Secrets() (PluginSecrets, error)
 	Pages() (PluginPages, error)
+	Files() (PluginFiles, error)
 }

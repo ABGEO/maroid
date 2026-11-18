@@ -1,5 +1,15 @@
 export type { User, PluginHost, RouteCleanup, RouteMounter, RouteParams } from './types';
 export type {
+	FileClient,
+	FileFailure,
+	FileRecord,
+	FileStart,
+	FileState,
+	FileVariant,
+	ReadAddress,
+	UploadTicket
+} from './files';
+export type {
 	ApiClient,
 	FieldFailure,
 	LinkOptions,

@@ -119,7 +119,7 @@ components:
                 hub is shutting down, because no dependency failed.
               items:
                 type: string
-                enum: [database, idp, secret-store]
+                enum: [database, file-store, idp, secret-store]
       examples:
         - type: /problems/hub/not-ready
           title: The hub cannot serve a request.

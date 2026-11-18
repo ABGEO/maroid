@@ -1,0 +1,273 @@
+# The routes that FILES adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The files of the hub and of a plugin
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/plugins/{pluginId}/files:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/PluginId"
+    post:
+      operationId: startFileUpload
+      summary: Start the upload of one file of a file kind of the plugin.
+      description: >
+        Realizes `FILES-FR-003` to `FILES-FR-005`, `FILES-FR-008`, and `FILES-FR-024`.
+        The permission is the one that the file kind declares. The hub writes the file
+        in `pending`, and answers its identifier with an upload address. The file kind
+        names the scope of the file. A plugin that the acting workspace does not enable
+        answers `not-found`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileStart"
+      responses:
+        "201":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            Location:
+              description: The address of the file.
+              schema:
+                type: string
+          description: The file in `pending`, and the upload address.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileUploadTicket"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+        "503":
+          $ref: "#/components/responses/FileStoreUnavailable"
+        default:
+          $ref: "../../api/components.yaml#/components/responses/Default"
+
+  /workspaces/{workspaceId}/plugins/{pluginId}/files/{fileId}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/PluginId"
+      - $ref: "#/components/parameters/FileId"
+    get:
+      operationId: readFile
+      summary: Read the facts of one file, and its read addresses when it is ready.
+      description: >
+        Realizes `FILES-FR-018`, `FILES-FR-023`, and `FILES-FR-028`. The permission is
+        the one that the file kind declares. A file of another plugin or of another
+        scope answers `not-found`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "200":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The file.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        default:
+          $ref: "../../api/components.yaml#/components/responses/Default"
+
+  /workspaces/{workspaceId}/plugins/{pluginId}/files/{fileId}/completions:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/PluginId"
+      - $ref: "#/components/parameters/FileId"
+    post:
+      operationId: completeFileUpload
+      summary: Report that the bytes of one file reached the file store.
+      description: >
+        Realizes `FILES-FR-009`. The permission is the one that the file kind declares.
+        The hub queues the file for the worker and answers at once. A file that is not
+        `pending` answers 202 and queues nothing, so a repeat is safe. The request
+        carries no body.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "202":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The worker takes the file.
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        default:
+          $ref: "../../api/components.yaml#/components/responses/Default"
+
+components:
+  parameters:
+    FileId:
+      name: fileId
+      in: path
+      required: true
+      description: The identifier of the file.
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    FileStoreUnavailable:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      description: >
+        The file store did not answer within 1 second. The type is
+        `/problems/hub/not-ready` with the dependency `file-store`, and the hub wrote
+        nothing. `FILES-FR-024`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+
+  schemas:
+    FileStart:
+      type: object
+      additionalProperties: false
+      required: [kind, name, media_type, size]
+      properties:
+        kind:
+          type: string
+          pattern: "^[a-z0-9-]{1,64}$"
+          description: The key of a file kind of the plugin.
+          examples: [plant-photo]
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: The name of the file on the device of the person.
+          examples: [IMG_0042.heic]
+        media_type:
+          type: string
+          description: The media type that the browser reports. The worker checks the content.
+          examples: [image/heic]
+        size:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 26214400
+          description: The size in bytes. The upload address accepts this size alone.
+
+    FileUploadTicket:
+      type: object
+      required: [file, upload]
+      properties:
+        file:
+          $ref: "#/components/schemas/File"
+        upload:
+          type: object
+          required: [url, method, headers, expires_at]
+          description: The upload address. `FILES-NFR-003`.
+          properties:
+            url:
+              type: string
+              format: uri
+            method:
+              type: string
+              const: PUT
+            headers:
+              type: object
+              description: The headers that the PUT must carry, as the hub signed them.
+              additionalProperties:
+                type: string
+              examples:
+                - Content-Type: image/heic
+            expires_at:
+              type: string
+              format: date-time
+
+    File:
+      type: object
+      required: [id, kind, state, name, media_type, size, uploaded_by, uploaded_at, claimed]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+        state:
+          type: string
+          enum: [pending, processing, ready, failed]
+        failure:
+          type: string
+          enum: [media_type, damaged, bytes_absent]
+          description: Present when the state is `failed`. `FILES-FR-011`.
+        name:
+          type: string
+        media_type:
+          type: string
+          description: The declared type until the worker runs, then the detected type.
+        size:
+          type: integer
+          format: int64
+        width:
+          type: integer
+          description: Present for a ready image, after the orientation.
+        height:
+          type: integer
+          description: Present for a ready image, after the orientation.
+        uploaded_by:
+          type: string
+          format: uuid
+        uploaded_at:
+          type: string
+          format: date-time
+        claimed:
+          type: boolean
+        addresses:
+          type: object
+          description: >
+            Present when the state is `ready`. An image holds `thumbnail` and
+            `display`. Any other file holds `original`. `FILES-NFR-004`.
+          properties:
+            original:
+              $ref: "#/components/schemas/ReadAddress"
+            thumbnail:
+              $ref: "#/components/schemas/ReadAddress"
+            display:
+              $ref: "#/components/schemas/ReadAddress"
+
+    ReadAddress:
+      type: object
+      required: [url, expires_at]
+      properties:
+        url:
+          type: string
+          format: uri
+        expires_at:
+          type: string
+          format: date-time

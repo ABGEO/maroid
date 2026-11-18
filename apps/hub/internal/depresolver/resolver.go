@@ -18,6 +18,8 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/dex"
+	"github.com/abgeo/maroid/apps/hub/internal/file"
+	"github.com/abgeo/maroid/apps/hub/internal/filestore"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/healthcheck"
 	"github.com/abgeo/maroid/apps/hub/internal/logger"
@@ -87,6 +89,10 @@ type Resolver interface {
 	Cron() *cron.Cron
 	NotificationTopicRegistry() *registry.NotificationTopicRegistry
 	WidgetRegistry() *registry.WidgetRegistry
+	FileKindRegistry() *registry.FileKindRegistry
+	FileStore() *filestore.Client
+	Files() (*file.Store, error)
+	FileWorker() (*file.Worker, error)
 	NotificationKinds() (*notification.KindRegistry, error)
 	NotificationDispatcher() (*notification.Dispatcher, error)
 	NotificationService() (notification.Service, error)
@@ -330,6 +336,28 @@ type Container struct {
 	widgetRegistry struct {
 		once     sync.Once
 		instance *registry.WidgetRegistry
+	}
+
+	fileKindRegistry struct {
+		once     sync.Once
+		instance *registry.FileKindRegistry
+	}
+
+	fileStore struct {
+		once     sync.Once
+		instance *filestore.Client
+	}
+
+	files struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *file.Store
+	}
+
+	fileWorker struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *file.Worker
 	}
 
 	notificationKinds struct {

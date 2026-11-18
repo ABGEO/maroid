@@ -297,6 +297,7 @@ Add a row before you create the file or the directory.
 | `ELECACC`  | `features/elecacc/`  | The electricity account of a workspace: the connection, the customer, the transactions, and the bills. | Approved |
 | `PLGBIND`  | `features/plgbind/`  | The host services bound to one plugin.                                                                 | Approved |
 | `PLGINFO`  | `features/plginfo/`  | The detail page of a plugin in a workspace.                                                            | Approved |
+| `FILES`    | `features/files/`    | The files that a person uploads for the hub or a plugin, and the images that Maroid derives from them. | Approved |
 
 ## Retired identifiers
 

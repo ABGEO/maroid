@@ -5,7 +5,7 @@
 	import type { PluginHost } from '@maroid/plugin-sdk';
 
 	import type { PageProps } from './$types';
-	import { createPluginClient } from '$lib/api';
+	import { createFileClient, createPluginClient } from '$lib/api';
 	import { pluginCan } from '$lib/permissions';
 	import { uiOf } from '$lib/plugins/capabilities';
 	import { knownPlugin } from '$lib/state/plugins.svelte';
@@ -24,6 +24,7 @@
 	let target: HTMLElement | undefined = $state();
 
 	const api = $derived(createPluginClient(data.workspace.id, data.pluginId));
+	const files = $derived(createFileClient(data.workspace.id, data.pluginId));
 	const firstEntry = $derived(uiOf(knownPlugin(data.pluginId))?.routes[0]);
 
 	const host: PluginHost = {
@@ -34,6 +35,9 @@
 		},
 		get api() {
 			return api;
+		},
+		get files() {
+			return files;
 		},
 		can: (permission) => pluginCan(data.workspace, data.pluginId, permission),
 		href: (path) => pluginPath(path),

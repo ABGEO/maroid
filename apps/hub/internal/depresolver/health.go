@@ -34,6 +34,7 @@ func (c *Container) HealthService() (*healthcheck.Service, error) {
 			c.Config(),
 			db,
 			openBaoSession.Client(),
+			c.FileStore(),
 			http.DefaultClient,
 		)
 	})
