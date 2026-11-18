@@ -28,8 +28,8 @@ import (
 
 const (
 	uploadObject    = "upload"
-	thumbnailObject = "thumbnail.webp"
-	displayObject   = "display.webp"
+	thumbnailObject = "thumbnail.jpg"
+	displayObject   = "display.jpg"
 )
 
 // textured paints a pattern that a JPEG cannot squeeze into a few bytes.

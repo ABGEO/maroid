@@ -20,10 +20,9 @@ import (
 const (
 	megabyte   = 1 << 20
 	jpegType   = "image/jpeg"
-	webpType   = "image/webp"
 	fileKey    = "plugins/dev.maroid.probe/workspaces/w1/f1/"
 	uploadKey  = fileKey + "upload"
-	displayKey = fileKey + "display.webp"
+	displayKey = fileKey + "display.jpg"
 )
 
 func startClient(t *testing.T, opts ...filestore.Option) (*filestore.Client, *teststore.Server) {
@@ -147,16 +146,16 @@ func TestAReadAddressAnswersTheObject(t *testing.T) {
 	t.Parallel()
 
 	client, _ := startClient(t)
-	content := []byte("RIFF....WEBP")
+	content := []byte("\xff\xd8\xff\xe0")
 
-	require.NoError(t, client.Write(t.Context(), displayKey, content, webpType))
+	require.NoError(t, client.Write(t.Context(), displayKey, content, jpegType))
 
 	address, err := client.PresignGet(t.Context(), displayKey, "")
 	require.NoError(t, err)
 
 	response := send(t, http.MethodGet, address.URL, nil, nil)
 	require.Equal(t, http.StatusOK, response.status)
-	require.Equal(t, webpType, response.header.Get("Content-Type"))
+	require.Equal(t, jpegType, response.header.Get("Content-Type"))
 
 	require.Equal(t, content, response.body)
 }
@@ -188,7 +187,7 @@ func TestTheFileStoreRefusesAnUnsignedRequest(t *testing.T) {
 
 	client, server := startClient(t)
 
-	require.NoError(t, client.Write(t.Context(), displayKey, []byte("RIFF"), webpType))
+	require.NoError(t, client.Write(t.Context(), displayKey, []byte("\xff\xd8"), jpegType))
 
 	address := server.Endpoint + "/" + teststore.Bucket + "/" + displayKey
 
@@ -200,7 +199,7 @@ func TestTheFileStoreRefusesAnUnsignedRequest(t *testing.T) {
 			t,
 			http.MethodPut,
 			address,
-			map[string]string{"Content-Type": webpType},
+			map[string]string{"Content-Type": jpegType},
 			[]byte("RIFF"),
 		).status,
 	)
@@ -212,15 +211,15 @@ func TestDeletePrefixRemovesEveryObjectOfAFile(t *testing.T) {
 	t.Parallel()
 
 	client, _ := startClient(t)
-	other := "plugins/dev.maroid.probe/workspaces/w1/f2/display.webp"
+	other := "plugins/dev.maroid.probe/workspaces/w1/f2/display.jpg"
 
-	for _, key := range []string{uploadKey, displayKey, fileKey + "thumbnail.webp", other} {
-		require.NoError(t, client.Write(t.Context(), key, []byte("x"), webpType))
+	for _, key := range []string{uploadKey, displayKey, fileKey + "thumbnail.jpg", other} {
+		require.NoError(t, client.Write(t.Context(), key, []byte("x"), jpegType))
 	}
 
 	require.NoError(t, client.DeletePrefix(t.Context(), fileKey))
 
-	for _, key := range []string{uploadKey, displayKey, fileKey + "thumbnail.webp"} {
+	for _, key := range []string{uploadKey, displayKey, fileKey + "thumbnail.jpg"} {
 		_, err := client.Head(t.Context(), key)
 		require.ErrorIs(t, err, filestore.ErrObjectAbsent)
 	}
@@ -280,7 +279,7 @@ func TestAnErrorOfTheFileStoreNamesNoKey(t *testing.T) {
 	for _, err := range []error{
 		headErr,
 		readErr,
-		client.Write(t.Context(), key, []byte("x"), webpType),
+		client.Write(t.Context(), key, []byte("x"), jpegType),
 		client.DeletePrefix(t.Context(), fileKey),
 	} {
 		require.ErrorIs(t, err, filestore.ErrUnreachable)

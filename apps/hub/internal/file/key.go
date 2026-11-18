@@ -5,8 +5,8 @@ import "github.com/abgeo/maroid/libs/pluginapi"
 // The objects of one file under its key.
 const (
 	uploadObject    = "upload"
-	thumbnailObject = "thumbnail.webp"
-	displayObject   = "display.webp"
+	thumbnailObject = "thumbnail.jpg"
+	displayObject   = "display.jpg"
 )
 
 // objectKey answers the prefix of every object of one file. The prefix of the plugin

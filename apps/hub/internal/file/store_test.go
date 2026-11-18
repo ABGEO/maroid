@@ -253,8 +253,8 @@ func TestAReadyImageAnswersItsVariants(t *testing.T) {
 		pluginapi.FileScopeWorkspace,
 		bench.space,
 	)
-	for _, object := range []string{"thumbnail.webp", "display.webp"} {
-		require.NoError(t, bench.objects.Write(t.Context(), key+object, []byte(object), webpType))
+	for _, object := range []string{"thumbnail.jpg", "display.jpg"} {
+		require.NoError(t, bench.objects.Write(t.Context(), key+object, []byte(object), jpegType))
 	}
 
 	got := bench.get(t, probePlugin, held.ID)
@@ -264,12 +264,12 @@ func TestAReadyImageAnswersItsVariants(t *testing.T) {
 	require.Len(t, got.Addresses, 2)
 
 	for variant, object := range map[pluginapi.FileVariant]string{
-		pluginapi.FileVariantThumbnail: "thumbnail.webp",
-		pluginapi.FileVariantDisplay:   "display.webp",
+		pluginapi.FileVariantThumbnail: "thumbnail.jpg",
+		pluginapi.FileVariantDisplay:   "display.jpg",
 	} {
 		answer := read(t, got.Addresses[variant].URL)
 		require.Equal(t, http.StatusOK, answer.status, variant)
-		require.Equal(t, webpType, answer.contentType)
+		require.Equal(t, jpegType, answer.contentType)
 		require.Equal(t, []byte(object), answer.body)
 	}
 }

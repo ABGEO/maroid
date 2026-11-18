@@ -116,7 +116,7 @@ func (w *Worker) processImage(
 		thumbnailObject: variants.thumbnail,
 		displayObject:   variants.display,
 	} {
-		if err = w.objects.Write(ctx, key+object, content, webpType); err != nil {
+		if err = w.objects.Write(ctx, key+object, content, jpegType); err != nil {
 			return fmt.Errorf("writing a variant: %w", err)
 		}
 	}

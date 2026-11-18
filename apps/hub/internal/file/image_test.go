@@ -8,12 +8,12 @@ import (
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"os"
 	"slices"
 	"testing"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/gen2brain/h265/heic"
-	"github.com/gen2brain/webp"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/file"
@@ -111,14 +111,13 @@ func pngWith(t *testing.T, img image.Image, orientation uint16) []byte {
 	return slices.Concat(data[:afterHeader], chunk, data[afterHeader:])
 }
 
-// webpWith encodes the image as an extended WebP whose EXIF chunk holds the
-// orientation.
-func webpWith(t *testing.T, img image.Image, orientation uint16) []byte {
+// webpWith wraps the WebP fixture of 400 by 300 pixels as an extended WebP whose EXIF
+// chunk holds the orientation. The hub decodes a WebP, and encodes none.
+func webpWith(t *testing.T, orientation uint16) []byte {
 	t.Helper()
 
-	var encoded bytes.Buffer
-
-	require.NoError(t, webp.Encode(&encoded, img))
+	encoded, err := os.ReadFile("testdata/textured.webp")
+	require.NoError(t, err)
 
 	const riffHeader, extendedSize, exifFlag = 12, 10, 0x08
 
@@ -127,7 +126,7 @@ func webpWith(t *testing.T, img image.Image, orientation uint16) []byte {
 		return []byte{byte(value), byte(value >> 8), byte(value >> 16)}
 	}
 
-	bounds := img.Bounds()
+	bounds := image.Rect(0, 0, 400, 300)
 	extended := binary.LittleEndian.AppendUint32([]byte("VP8X"), extendedSize)
 	extended = append(extended, exifFlag, 0, 0, 0)
 	extended = append(extended, littleEndian24(bounds.Dx()-1)...)
@@ -142,7 +141,7 @@ func webpWith(t *testing.T, img image.Image, orientation uint16) []byte {
 		exif = append(exif, 0)
 	}
 
-	body := slices.Concat([]byte("WEBP"), extended, encoded.Bytes()[riffHeader:], exif)
+	body := slices.Concat([]byte("WEBP"), extended, encoded[riffHeader:], exif)
 	//nolint:gosec // a test image holds far less than 4 GB
 	riff := binary.LittleEndian.AppendUint32([]byte("RIFF"), uint32(len(body)))
 
@@ -152,7 +151,7 @@ func webpWith(t *testing.T, img image.Image, orientation uint16) []byte {
 func sizeOf(t *testing.T, encoded []byte) (int, int) {
 	t.Helper()
 
-	config, err := webp.DecodeConfig(bytes.NewReader(encoded))
+	config, err := jpeg.DecodeConfig(bytes.NewReader(encoded))
 	require.NoError(t, err)
 
 	return config.Width, config.Height
@@ -223,7 +222,7 @@ func TestAJPEGStandsAsItsOrientationSays(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, [2]int{3000, 4000}, [2]int{variants.Width, variants.Height})
 
-	display, err := webp.Decode(bytes.NewReader(variants.Display))
+	display, err := jpeg.Decode(bytes.NewReader(variants.Display))
 	require.NoError(t, err)
 	require.Equal(t, image.Rect(0, 0, 1536, 2048), display.Bounds())
 
@@ -240,7 +239,7 @@ func TestAPNGAndAWebPStandAsTheirOrientationSays(t *testing.T) {
 
 	for mediaType, data := range map[string][]byte{
 		pngType:  pngWith(t, stored, file.OrientationRotate90),
-		webpType: webpWith(t, stored, file.OrientationRotate90),
+		webpType: webpWith(t, file.OrientationRotate90),
 	} {
 		variants, err := file.VariantsOf(data, mediaType)
 		require.NoError(t, err, mediaType)
@@ -249,6 +248,25 @@ func TestAPNGAndAWebPStandAsTheirOrientationSays(t *testing.T) {
 		width, height := sizeOf(t, variants.Display)
 		require.Equal(t, [2]int{300, 400}, [2]int{width, height}, mediaType)
 	}
+}
+
+// FILES-DD-007: A transparent pixel lands on white, since a JPEG holds no
+// transparency.
+func TestATransparentImageLandsOnWhite(t *testing.T) {
+	t.Parallel()
+
+	var encoded bytes.Buffer
+
+	require.NoError(t, png.Encode(&encoded, filled(64, 48, func(int, int) color.NRGBA {
+		return color.NRGBA{}
+	})))
+
+	variants, err := file.VariantsOf(encoded.Bytes(), pngType)
+	require.NoError(t, err)
+
+	display, err := jpeg.Decode(bytes.NewReader(variants.Display))
+	require.NoError(t, err)
+	requireNear(t, color.NRGBA{R: 255, G: 255, B: 255, A: 255}, display.At(32, 24), "the center")
 }
 
 // FILES-SC-036: The thumbnail of a phone photo, of a portrait, and of a small PNG
@@ -306,8 +324,8 @@ func TestEachOrientationPlacesTheCorner(t *testing.T) {
 	}
 }
 
-// FILES-SC-018: The variants of a HEIC photo are WebP.
-func TestTheVariantsOfAHEICAreWebP(t *testing.T) {
+// FILES-SC-018: The variants of a HEIC photo are JPEG.
+func TestTheVariantsOfAHEICAreJPEG(t *testing.T) {
 	t.Parallel()
 
 	var encoded bytes.Buffer
@@ -319,7 +337,7 @@ func TestTheVariantsOfAHEICAreWebP(t *testing.T) {
 	require.Equal(t, [2]int{640, 480}, [2]int{variants.Width, variants.Height})
 
 	for _, variant := range [][]byte{variants.Thumbnail, variants.Display} {
-		require.Equal(t, webpType, mimetype.Detect(variant).String())
+		require.Equal(t, jpegType, mimetype.Detect(variant).String())
 	}
 }
 

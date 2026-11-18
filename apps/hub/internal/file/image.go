@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	"image/color"
 	"image/jpeg"
 	"image/png"
 	"io"
 
 	"github.com/gen2brain/h265/heic"
-	"github.com/gen2brain/webp"
 	"golang.org/x/image/draw"
 	xwebp "golang.org/x/image/webp"
 )
@@ -19,7 +19,7 @@ const (
 	thumbnailEdge    = 480
 	displayEdge      = 2048
 	thumbnailQuality = 75
-	displayQuality   = 82
+	displayQuality   = 80
 	// maxPixels refuses a header that would make the decode hold more memory than a
 	// photo of a phone needs.
 	maxPixels = 100_000_000
@@ -32,7 +32,7 @@ var (
 	errNotImage = errors.New("file: the media type is not an image")
 )
 
-// imageVariants holds the WebP variants of one image, and its size after the
+// imageVariants holds the JPEG variants of one image, and its size after the
 // orientation.
 type imageVariants struct {
 	thumbnail []byte
@@ -99,10 +99,10 @@ func decoderOf(mediaType string) (
 
 // deriveVariants writes the display image at a long edge of at most 2048 pixels and
 // the thumbnail at 480 pixels, and never enlarges. It turns the display image after
-// the resize, because the long edge does not change with a quarter turn. Each WebP
+// the resize, because the long edge does not change with a quarter turn. Each JPEG
 // comes from the pixels alone, so it carries no metadata of the upload.
 func deriveVariants(decoded image.Image, orientation int) (imageVariants, error) {
-	display := orient(fit(decoded, displayEdge), orientation)
+	display := onWhite(orient(fit(decoded, displayEdge), orientation))
 	thumbnail := fit(display, thumbnailEdge)
 
 	width, height := decoded.Bounds().Dx(), decoded.Bounds().Dy()
@@ -110,12 +110,12 @@ func deriveVariants(decoded image.Image, orientation int) (imageVariants, error)
 		width, height = height, width
 	}
 
-	displayBytes, err := encodeWebP(display, displayQuality)
+	displayBytes, err := encodeJPEG(display, displayQuality)
 	if err != nil {
 		return imageVariants{}, err
 	}
 
-	thumbnailBytes, err := encodeWebP(thumbnail, thumbnailQuality)
+	thumbnailBytes, err := encodeJPEG(thumbnail, thumbnailQuality)
 	if err != nil {
 		return imageVariants{}, err
 	}
@@ -151,11 +151,20 @@ func fit(src image.Image, edge int) *image.NRGBA {
 	return dst
 }
 
-func encodeWebP(img image.Image, quality int) ([]byte, error) {
+// onWhite lays the pixels over white, since a JPEG holds no transparency.
+func onWhite(src *image.NRGBA) *image.NRGBA {
+	dst := image.NewNRGBA(src.Bounds())
+	draw.Draw(dst, dst.Bounds(), image.NewUniform(color.White), image.Point{}, draw.Src)
+	draw.Draw(dst, dst.Bounds(), src, src.Bounds().Min, draw.Over)
+
+	return dst
+}
+
+func encodeJPEG(img image.Image, quality int) ([]byte, error) {
 	var buffer bytes.Buffer
 
-	if err := webp.Encode(&buffer, img, webp.Options{Quality: quality}); err != nil {
-		return nil, fmt.Errorf("encoding a WebP variant: %w", err)
+	if err := jpeg.Encode(&buffer, img, &jpeg.Options{Quality: quality}); err != nil {
+		return nil, fmt.Errorf("encoding a JPEG variant: %w", err)
 	}
 
 	return buffer.Bytes(), nil
