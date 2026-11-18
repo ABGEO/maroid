@@ -2,18 +2,27 @@ package file_test
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"image"
 	"image/color"
+	"io"
+	"log/slog"
 	"net/http"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/gen2brain/h265/heic"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/apps/hub/internal/config"
+	"github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/file"
 	"github.com/abgeo/maroid/apps/hub/internal/filestore"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -376,4 +385,226 @@ func TestPrepareChecksTheFileStoreAndTheCodecs(t *testing.T) {
 
 	bench.server.Stop(t)
 	require.Error(t, bench.worker.Prepare())
+}
+
+// hostileObjects is the file store of the test, whose full read and purge panic as a
+// decoder may on hostile bytes.
+type hostileObjects struct{ *filestore.Client }
+
+func (hostileObjects) Read(context.Context, string) (io.ReadCloser, error) {
+	panic("a hostile upload")
+}
+
+func (hostileObjects) DeletePrefix(context.Context, string) error {
+	panic("a hostile purge")
+}
+
+// stallingObjects is the file store of the test, whose full read never answers.
+type stallingObjects struct{ *filestore.Client }
+
+func (stallingObjects) Read(ctx context.Context, _ string) (io.ReadCloser, error) {
+	<-ctx.Done()
+
+	return nil, fmt.Errorf("stalling: %w", ctx.Err())
+}
+
+func (b *storeBench) workerOver(
+	objects file.Objects,
+	kinds *registry.FileKindRegistry,
+	cfg config.Files,
+) *file.Worker {
+	return file.NewWorker(slog.New(slog.DiscardHandler), b.db, objects, kinds, cfg)
+}
+
+func (b *storeBench) taskOf(
+	t *testing.T,
+	fileID string,
+	action model.FileTaskAction,
+) model.FileTask {
+	t.Helper()
+
+	var task model.FileTask
+
+	require.NoError(t, b.db.Get(&task, `SELECT id, file_id, scope, owner_id, object_key,
+		action, run_after, locked_until, attempts, last_error, created_at
+		FROM public.file_tasks WHERE file_id = $1 AND action = $2;`, fileID, action))
+
+	return task
+}
+
+// FILES-DD-005: A panic of a process task fails the file as damaged, and a panic of
+// any other task leaves it for a retry. The worker goes on.
+func TestAPanicOfATaskStaysInTheTask(t *testing.T) {
+	t.Parallel()
+
+	bench := storeUnderTest(t)
+	worker := bench.workerOver(
+		hostileObjects{bench.objects},
+		kindsUnderTest(t),
+		bench.server.Config(),
+	)
+
+	held := bench.uploaded(t, photoKind, "cat.jpg", jpegType, jpegWith(t, textured(640, 480), 1))
+	require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, held.ID))
+	require.NoError(t, worker.Cycle(t.Context()))
+
+	state, failure, _ := bench.failure(t, held.ID)
+	require.Equal(t, pluginapi.FileStateFailed, state)
+	require.Equal(t, pluginapi.FileFailureDamaged, failure)
+
+	require.NoError(t, bench.store.Delete(bench.in(t), probePlugin, held.ID))
+	require.NoError(t, worker.Cycle(t.Context()))
+
+	purge := bench.taskOf(t, held.ID, model.FileTaskPurge)
+	require.Equal(t, 1, purge.Attempts)
+	require.Nil(t, purge.LockedUntil)
+	require.NotNil(t, purge.LastError)
+	require.Contains(t, *purge.LastError, "panicked")
+}
+
+// FILES-DD-005: A task that passes its deadline stops, and waits for a retry before
+// its lease lapses.
+func TestATaskStopsAtItsDeadline(t *testing.T) {
+	t.Parallel()
+
+	bench := storeUnderTest(t)
+	worker := bench.workerOver(
+		stallingObjects{bench.objects},
+		kindsUnderTest(t),
+		bench.server.Config(),
+	)
+	worker.SetTaskTimeout(200 * time.Millisecond)
+
+	held := bench.uploaded(t, photoKind, "cat.jpg", jpegType, jpegWith(t, textured(640, 480), 1))
+	require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, held.ID))
+
+	began := time.Now()
+
+	require.NoError(t, worker.Cycle(t.Context()))
+	require.Less(t, time.Since(began), 5*time.Second)
+
+	task := bench.taskOf(t, held.ID, model.FileTaskProcess)
+	require.Equal(t, 1, task.Attempts)
+	require.Nil(t, task.LockedUntil)
+	require.NotNil(t, task.LastError)
+	require.Contains(t, *task.LastError, "deadline")
+}
+
+// FILES-DD-005: A lease that fills every slot leases again at once, so a queue longer
+// than the concurrency never waits for the next poll.
+func TestAFullLeaseLeasesAgainAtOnce(t *testing.T) {
+	t.Parallel()
+
+	bench := storeUnderTest(t)
+	cfg := bench.server.Config()
+	cfg.PollInterval = time.Hour
+	cfg.Concurrency = 1
+
+	content := []byte("%PDF-1.7\n%\xe2\xe3\xcf\xd3\n1 0 obj\n")
+	ids := make([]string, 0, 3)
+
+	for range 3 {
+		held := bench.uploaded(t, paperKind, "paper.pdf", pdfType, content)
+		require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, held.ID))
+		ids = append(ids, held.ID)
+	}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	worker := bench.workerOver(bench.objects, kindsUnderTest(t), cfg)
+	stopped := make(chan error, 1)
+
+	go func() { stopped <- worker.Start(ctx) }()
+
+	require.Eventually(t, func() bool {
+		for _, id := range ids {
+			if bench.get(t, probePlugin, id).State != pluginapi.FileStateReady {
+				return false
+			}
+		}
+
+		return true
+	}, 10*time.Second, 100*time.Millisecond)
+
+	cancel()
+	require.NoError(t, <-stopped)
+}
+
+// FILES-DD-006: A file whose kind the plugin declares no more waits for a load of the
+// plugin, and fails with media_type once it is 24 hours old.
+func TestAFileOfAnAbsentKindFailsAtTheExpiry(t *testing.T) {
+	t.Parallel()
+
+	bench := storeUnderTest(t)
+	worker := bench.workerOver(bench.objects, registry.NewFileKindRegistry(), bench.server.Config())
+
+	held := bench.uploaded(t, photoKind, "cat.jpg", jpegType, jpegWith(t, textured(640, 480), 1))
+	require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, held.ID))
+	require.NoError(t, worker.Cycle(t.Context()))
+
+	require.Equal(t, pluginapi.FileStatePending, bench.get(t, probePlugin, held.ID).State)
+	require.Equal(t, 1, bench.taskOf(t, held.ID, model.FileTaskProcess).Attempts)
+
+	require.NoError(t, database.WithScopeTx(bench.in(t), bench.db, func(tx *sqlx.Tx) error {
+		_, err := tx.ExecContext(t.Context(), `UPDATE public.workspace_files
+			SET created_at = now() - interval '25 hours' WHERE id = $1;`, held.ID)
+		require.NoError(t, err)
+
+		return nil
+	}))
+
+	bench.due(t, held.ID, model.FileTaskProcess)
+	require.NoError(t, worker.Cycle(t.Context()))
+
+	state, failure, _ := bench.failure(t, held.ID)
+	require.Equal(t, pluginapi.FileStateFailed, state)
+	require.Equal(t, pluginapi.FileFailureMediaType, failure)
+}
+
+// FILES-SC-035: Twenty phone photos, one after the other, each reach ready within 30
+// seconds of the completion at the 95th percentile, with concurrency 2 and a poll of
+// 2 seconds.
+func TestTwentyPhonePhotosReachReadyInTime(t *testing.T) {
+	t.Parallel()
+
+	const (
+		uploads    = 20
+		percentile = 95
+		limit      = 30 * time.Second
+	)
+
+	bench := storeUnderTest(t)
+	cfg := bench.server.Config()
+	require.Equal(t, 2, cfg.Concurrency)
+	require.Equal(t, 2*time.Second, cfg.PollInterval)
+
+	var photo bytes.Buffer
+
+	require.NoError(t, heic.Encode(&photo, textured(4032, 3024)))
+
+	ctx, cancel := context.WithCancel(t.Context())
+	worker := bench.workerOver(bench.objects, kindsUnderTest(t), cfg)
+	stopped := make(chan error, 1)
+
+	go func() { stopped <- worker.Start(ctx) }()
+
+	waits := make([]time.Duration, 0, uploads)
+
+	for range uploads {
+		held := bench.uploaded(t, heicPhotoKind, "phone.heic", heicType, photo.Bytes())
+		require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, held.ID))
+
+		completed := time.Now()
+
+		require.Eventually(t, func() bool {
+			return bench.get(t, probePlugin, held.ID).State == pluginapi.FileStateReady
+		}, 2*limit, 50*time.Millisecond)
+
+		waits = append(waits, time.Since(completed))
+	}
+
+	cancel()
+	require.NoError(t, <-stopped)
+
+	slices.Sort(waits)
+	require.Less(t, waits[uploads*percentile/100-1], limit, "the waits: %v", waits)
 }

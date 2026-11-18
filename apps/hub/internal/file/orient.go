@@ -33,6 +33,21 @@ const (
 	ifdValueOffset    = 8
 )
 
+// The chunk layouts of PNG and of RIFF, which holds a WebP.
+const (
+	pngSignature    = "\x89PNG\r\n\x1a\n"
+	pngLengthSize   = 4
+	pngChunkHeader  = 8
+	pngCRCSize      = 4
+	pngExifChunk    = "eXIf"
+	pngEnd          = "IEND"
+	riffHeaderSize  = 12
+	riffFourCCSize  = 4
+	riffChunkHeader = 8
+	riffWordSize    = 2
+	webpExifChunk   = "EXIF"
+)
+
 // orient turns the pixels so they stand as the EXIF orientation says. A value outside
 // 2 to 8 leaves them as they are.
 func orient(src *image.NRGBA, orientation int) *image.NRGBA {
@@ -81,19 +96,80 @@ func placeOf(orientation, column, row, width, height int) (int, int) {
 	}
 }
 
-// jpegOrientation reads the EXIF orientation of a JPEG. A JPEG with no EXIF, or with
-// an EXIF that does not parse, stands as stored.
-func jpegOrientation(data []byte) int {
-	tiff := exifOf(data)
+// orientationOf reads the EXIF orientation of a JPEG, a PNG, or a WebP. An image with
+// no EXIF, or with an EXIF that does not parse, stands as stored. A HEIF decode applies
+// its own orientation.
+func orientationOf(data []byte, mediaType string) int {
+	var tiff []byte
+
+	switch mediaType {
+	case jpegType:
+		tiff = jpegExif(data)
+	case pngType:
+		tiff = pngExif(data)
+	case webpType:
+		tiff = webpExif(data)
+	}
+
 	if tiff == nil {
 		return orientationNormal
 	}
 
-	return tiffOrientation(tiff)
+	return tiffOrientation(bytes.TrimPrefix(tiff, []byte(exifPrefix)))
 }
 
-// exifOf answers the TIFF payload of the EXIF segment of a JPEG, or nil.
-func exifOf(data []byte) []byte {
+// pngExif answers the TIFF payload of the eXIf chunk of a PNG, or nil.
+func pngExif(data []byte) []byte {
+	if !bytes.HasPrefix(data, []byte(pngSignature)) {
+		return nil
+	}
+
+	for at := len(pngSignature); at+pngChunkHeader <= len(data); {
+		length := int(binary.BigEndian.Uint32(data[at:]))
+		kind := string(data[at+pngLengthSize : at+pngChunkHeader])
+		start := at + pngChunkHeader
+
+		if start+length+pngCRCSize > len(data) || kind == pngEnd {
+			return nil
+		}
+
+		if kind == pngExifChunk {
+			return data[start : start+length]
+		}
+
+		at = start + length + pngCRCSize
+	}
+
+	return nil
+}
+
+// webpExif answers the TIFF payload of the EXIF chunk of a WebP, or nil.
+func webpExif(data []byte) []byte {
+	if len(data) < riffHeaderSize || string(data[:4]) != "RIFF" || string(data[8:12]) != "WEBP" {
+		return nil
+	}
+
+	for at := riffHeaderSize; at+riffChunkHeader <= len(data); {
+		kind := string(data[at : at+riffFourCCSize])
+		length := int(binary.LittleEndian.Uint32(data[at+riffFourCCSize:]))
+		start := at + riffChunkHeader
+
+		if start+length > len(data) {
+			return nil
+		}
+
+		if kind == webpExifChunk {
+			return data[start : start+length]
+		}
+
+		at = start + length + length%riffWordSize
+	}
+
+	return nil
+}
+
+// jpegExif answers the TIFF payload of the EXIF segment of a JPEG, or nil.
+func jpegExif(data []byte) []byte {
 	if !bytes.HasPrefix(data, []byte{0xFF, markerStart}) {
 		return nil
 	}

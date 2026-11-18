@@ -142,7 +142,7 @@ func (h *File) Start(w http.ResponseWriter, r *http.Request) error {
 			URL:       started.Upload.URL,
 			Method:    started.Upload.Method,
 			Headers:   started.Upload.Headers,
-			ExpiresAt: started.Upload.ExpiresAt,
+			ExpiresAt: started.Upload.ExpiresAt.UTC(),
 		},
 	})
 
@@ -306,14 +306,17 @@ func fileBodyOf(held pluginapi.File) fileBody {
 		Width:      held.Width,
 		Height:     held.Height,
 		UploadedBy: held.UploadedBy,
-		UploadedAt: held.UploadedAt,
+		UploadedAt: held.UploadedAt.UTC(),
 		Claimed:    held.Claimed,
 	}
 
 	if len(held.Addresses) > 0 {
 		body.Addresses = make(map[string]fileAddressBody, len(held.Addresses))
 		for variant, read := range held.Addresses {
-			body.Addresses[string(variant)] = fileAddressBody(read)
+			body.Addresses[string(variant)] = fileAddressBody{
+				URL:       read.URL,
+				ExpiresAt: read.ExpiresAt.UTC(),
+			}
 		}
 	}
 

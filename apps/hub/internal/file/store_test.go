@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
@@ -293,4 +294,50 @@ func TestAReadyDocumentAnswersItsOriginal(t *testing.T) {
 	answer := read(t, got.Addresses[pluginapi.FileVariantOriginal].URL)
 	require.Equal(t, http.StatusOK, answer.status)
 	require.Equal(t, content, answer.body)
+}
+
+// FILES-DD-010: Get takes at most MaxFilesPerGet identifiers.
+func TestGetTakesAtMostOneHundredIdentifiers(t *testing.T) {
+	t.Parallel()
+
+	bench := storeUnderTest(t)
+	ids := make([]string, pluginapi.MaxFilesPerGet+1)
+
+	for index := range ids {
+		ids[index] = uuid.NewString()
+	}
+
+	_, err := bench.store.Get(bench.in(t), probePlugin, ids...)
+	require.ErrorIs(t, err, pluginapi.ErrTooManyFiles)
+
+	listed, err := bench.store.Get(bench.in(t), probePlugin, ids[1:]...)
+	require.NoError(t, err)
+	require.Empty(t, listed)
+}
+
+// FILES-DD-006: A repeated completion and a check of a pending file queue one process
+// task between them.
+func TestAPendingFileHoldsOneProcessTask(t *testing.T) {
+	t.Parallel()
+
+	bench := storeUnderTest(t)
+	held := bench.uploaded(t, photoKind, "cat.jpg", jpegType, jpegWith(t, textured(640, 480), 1))
+
+	require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, held.ID))
+	require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, held.ID))
+	require.Equal(t, []string{string(model.FileTaskProcess)}, bench.actionsOf(t, held.ID))
+
+	_, err := bench.db.ExecContext(t.Context(),
+		`UPDATE public.file_tasks SET run_after = now() + interval '1 hour'
+		WHERE file_id = $1 AND action = 'process';`, held.ID)
+	require.NoError(t, err)
+
+	bench.due(t, held.ID, model.FileTaskCheck)
+	bench.cycle(t)
+
+	var count int
+
+	require.NoError(t, bench.db.Get(&count, `SELECT count(*) FROM public.file_tasks
+		WHERE file_id = $1 AND action = 'process';`, held.ID))
+	require.Equal(t, 1, count)
 }

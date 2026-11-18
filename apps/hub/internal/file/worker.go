@@ -9,6 +9,7 @@ import (
 	"image/png"
 	"io"
 	"log/slog"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/worker"
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 const (
@@ -28,6 +30,9 @@ const (
 	// leaseLength holds a task away from another worker while one runs it. It passes
 	// the longest processing of an image many times over.
 	leaseLength = 5 * time.Minute
+	// taskTimeout ends a task before its lease lapses, so no other worker takes it
+	// while it still runs.
+	taskTimeout = 4 * time.Minute
 	retryBase   = 2 * time.Second
 	retryLimit  = 5 * time.Minute
 	fixtureEdge = 16
@@ -54,6 +59,7 @@ type Worker struct {
 	kinds        *registry.FileKindRegistry
 	pollInterval time.Duration
 	concurrency  int
+	taskTimeout  time.Duration
 	cycles       sync.WaitGroup
 }
 
@@ -77,6 +83,7 @@ func NewWorker(
 		kinds:        kinds,
 		pollInterval: cfg.PollInterval,
 		concurrency:  cfg.Concurrency,
+		taskTimeout:  taskTimeout,
 	}
 }
 
@@ -97,14 +104,20 @@ func (w *Worker) Prepare() error {
 	return nil
 }
 
-// Start runs a cycle at each poll interval until the context ends.
+// Start runs a cycle at each poll interval until the context ends. A cycle that
+// filled every slot runs the next one at once, since more tasks may wait.
 func (w *Worker) Start(ctx context.Context) error {
 	ticker := time.NewTicker(w.pollInterval)
 	defer ticker.Stop()
 
 	for {
-		if err := w.Cycle(ctx); err != nil {
+		full, err := w.cycle(ctx)
+		if err != nil {
 			w.logger.ErrorContext(ctx, "leasing the tasks of the files", slog.Any("error", err))
+		}
+
+		if full && ctx.Err() == nil {
+			continue
 		}
 
 		select {
@@ -136,6 +149,13 @@ func (w *Worker) Stop(ctx context.Context) error {
 // returns when each one ends. A task ends its work after a shutdown starts, so the
 // lease of a task never lapses in the middle.
 func (w *Worker) Cycle(ctx context.Context) error {
+	_, err := w.cycle(ctx)
+
+	return err
+}
+
+// cycle runs one Cycle, and reports whether the lease filled every slot.
+func (w *Worker) cycle(ctx context.Context) (bool, error) {
 	w.cycles.Add(1)
 	defer w.cycles.Done()
 
@@ -152,7 +172,7 @@ func (w *Worker) Cycle(ctx context.Context) error {
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("leasing the tasks of the files: %w", err)
+		return false, fmt.Errorf("leasing the tasks of the files: %w", err)
 	}
 
 	running := context.WithoutCancel(ctx)
@@ -165,7 +185,7 @@ func (w *Worker) Cycle(ctx context.Context) error {
 
 	tasks.Wait()
 
-	return nil
+	return len(leased) == w.concurrency, nil
 }
 
 // run performs one task, then removes it or releases it for a retry.
@@ -177,7 +197,7 @@ func (w *Worker) run(ctx context.Context, task model.FileTask) {
 		slog.Int("attempts", task.Attempts),
 	)
 
-	err := w.perform(ctx, task)
+	err := w.attempt(ctx, logger, task)
 	if err == nil {
 		if doneErr := w.inTx(ctx, func(tx *sqlx.Tx) error {
 			return repository.NewFileTask(tx).Done(ctx, task.ID)
@@ -202,6 +222,38 @@ func (w *Worker) run(ctx context.Context, task model.FileTask) {
 	}); retryErr != nil {
 		logger.ErrorContext(ctx, "releasing a failed task", slog.Any("error", retryErr))
 	}
+}
+
+// attempt performs the task within its deadline. A panic, as a decoder may raise on
+// hostile bytes, fails the file of a process task and releases any other task.
+func (w *Worker) attempt(
+	ctx context.Context,
+	logger *slog.Logger,
+	task model.FileTask,
+) (err error) {
+	bounded, cancel := context.WithTimeout(ctx, w.taskTimeout)
+	defer cancel()
+
+	defer func() {
+		recovered := recover()
+		if recovered == nil {
+			return
+		}
+
+		logger.ErrorContext(
+			ctx,
+			"a task of a file panicked",
+			slog.Any("panic", recovered),
+			slog.String("stack", string(debug.Stack())),
+		)
+
+		err = fmt.Errorf("%w: %v", errPanicked, recovered)
+		if task.Action == model.FileTaskProcess {
+			err = w.fail(scopeOf(ctx, task), task, pluginapi.FileFailureDamaged, "")
+		}
+	}()
+
+	return w.perform(bounded, task)
 }
 
 func (w *Worker) perform(ctx context.Context, task model.FileTask) error {
@@ -280,4 +332,7 @@ func checkCodecs() error {
 	return nil
 }
 
-var errUnknownAction = errors.New("file: unknown task action")
+var (
+	errUnknownAction = errors.New("file: unknown task action")
+	errPanicked      = errors.New("file: the task panicked")
+)

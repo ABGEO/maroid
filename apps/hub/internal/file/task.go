@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 
@@ -17,7 +18,7 @@ import (
 )
 
 // errKindAbsent reports a file whose plugin declares its kind no more. The task waits
-// for a load of the plugin, so the file loses nothing.
+// for a load of the plugin until the file is as old as an unclaimed file can be.
 var errKindAbsent = errors.New("file: the file kind is not registered")
 
 // scopeOf answers a context that acts as the owner of the file of the task, so the
@@ -40,7 +41,7 @@ func (w *Worker) process(ctx context.Context, task model.FileTask) error {
 
 	held, found := w.kinds.Get(file.PluginID, file.Kind)
 	if !found {
-		return fmt.Errorf("%w: %s", errKindAbsent, file.Kind)
+		return w.kindAbsent(ctx, task, file)
 	}
 
 	if err = w.startProcessing(ctx, task); err != nil {
@@ -66,6 +67,16 @@ func (w *Worker) process(ctx context.Context, task model.FileTask) error {
 	}
 
 	return w.processImage(ctx, task, file, held, mediaType)
+}
+
+// kindAbsent leaves the task for a retry while a load of the plugin may still declare
+// the kind, and fails the file once it is as old as an unclaimed file can be.
+func (w *Worker) kindAbsent(ctx context.Context, task model.FileTask, file *model.File) error {
+	if time.Since(file.CreatedAt) < unclaimedLife {
+		return fmt.Errorf("%w: %s", errKindAbsent, file.Kind)
+	}
+
+	return w.fail(ctx, task, pluginapi.FileFailureMediaType, "")
 }
 
 func (w *Worker) startProcessing(ctx context.Context, task model.FileTask) error {
@@ -163,7 +174,13 @@ func (w *Worker) checkPending(ctx context.Context, task model.FileTask) error {
 		return w.fail(ctx, task, pluginapi.FileFailureBytesAbsent, "")
 	}
 
-	return w.enqueue(ctx, draftOf(task, model.FileTaskProcess))
+	return w.inScope(ctx, func(_ *repository.File, tasks *repository.FileTask) error {
+		if err := tasks.EnqueueOnce(ctx, draftOf(task, model.FileTaskProcess)); err != nil {
+			return fmt.Errorf("queuing the processing: %w", err)
+		}
+
+		return nil
+	})
 }
 
 func (w *Worker) checkReady(ctx context.Context, task model.FileTask, file *model.File) error {

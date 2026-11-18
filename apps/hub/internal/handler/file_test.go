@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -248,6 +249,42 @@ func TestAnEditorStartsAnUpload(t *testing.T) {
 
 	assert.Equal(t, 1, bench.countFiles(t, bench.beka, bench.h))
 	assert.Equal(t, []string{taskCheck, taskExpire}, bench.actionsOf(t, id))
+}
+
+// RES-001: Every time of a file answers in UTC, as Zalando Z-169 demands.
+func TestTheTimesOfAFileAnswerInUTC(t *testing.T) {
+	t.Parallel()
+
+	bench := filesUnderTest(t)
+
+	response := bench.start(t, bench.beka, bench.h, paperKind, "lease.pdf", pdfType, 1<<20)
+	require.Equal(t, http.StatusCreated, response.Code, response.Body.String())
+
+	answer := decode(t, response)
+	held, ok := answer[memberFile].(map[string]any)
+	require.True(t, ok)
+
+	upload, ok := answer[memberUpload].(map[string]any)
+	require.True(t, ok)
+	assert.True(t, strings.HasSuffix(stringOf(t, held["uploaded_at"]), "Z"))
+	assert.True(t, strings.HasSuffix(stringOf(t, upload["expires_at"]), "Z"))
+
+	id := stringOf(t, held[memberID])
+	bench.inScope(t, bench.beka, bench.h, func(tx *sqlx.Tx) {
+		_, err := tx.ExecContext(t.Context(),
+			`UPDATE public.user_files SET state = 'ready' WHERE id = $1;`, id)
+		require.NoError(t, err)
+	})
+
+	response = bench.call(t, bench.beka, http.MethodGet, bench.filesOf(bench.h)+"/"+id, nil, "")
+	require.Equal(t, http.StatusOK, response.Code, response.Body.String())
+
+	addresses, ok := decode(t, response)["addresses"].(map[string]any)
+	require.True(t, ok)
+
+	original, ok := addresses["original"].(map[string]any)
+	require.True(t, ok)
+	assert.True(t, strings.HasSuffix(stringOf(t, original["expires_at"]), "Z"))
 }
 
 // FILES-SC-005: A viewer does not hold the permission of the file kind, so the hub

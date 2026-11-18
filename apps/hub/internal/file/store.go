@@ -137,7 +137,7 @@ func (s *Store) Start(ctx context.Context, pluginID string, input StartInput) (S
 }
 
 // Complete queues the processing of a pending file of the plugin. A file in any other
-// state takes no task, so a repeat is safe.
+// state, or one whose processing waits, takes no task, so a repeat is safe.
 func (s *Store) Complete(ctx context.Context, pluginID string, id string) error {
 	if !isUUID(id) {
 		return pluginapi.ErrFileAbsent
@@ -157,7 +157,8 @@ func (s *Store) Complete(ctx context.Context, pluginID string, id string) error 
 			return nil
 		}
 
-		return repository.NewFileTask(tx).Enqueue(ctx, taskOf(&listed[0], model.FileTaskProcess, 0))
+		return repository.NewFileTask(tx).
+			EnqueueOnce(ctx, taskOf(&listed[0], model.FileTaskProcess, 0))
 	})
 	if err != nil {
 		return fmt.Errorf("completing an upload: %w", err)
@@ -168,8 +169,13 @@ func (s *Store) Complete(ctx context.Context, pluginID string, id string) error 
 
 // Get answers the files of the plugin under the identifiers, with a read address for
 // each variant of a ready file. It omits an identifier that the plugin and the acting
-// scope do not hold.
+// scope do not hold, and answers pluginapi.ErrTooManyFiles past
+// pluginapi.MaxFilesPerGet identifiers.
 func (s *Store) Get(ctx context.Context, pluginID string, ids ...string) ([]pluginapi.File, error) {
+	if len(ids) > pluginapi.MaxFilesPerGet {
+		return nil, pluginapi.ErrTooManyFiles
+	}
+
 	valid := slices.DeleteFunc(slices.Clone(ids), func(id string) bool { return !isUUID(id) })
 
 	var listed []model.File

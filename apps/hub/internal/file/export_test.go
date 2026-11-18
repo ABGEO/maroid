@@ -1,6 +1,9 @@
 package file
 
-import "image"
+import (
+	"image"
+	"time"
+)
 
 // The tests of package file_test reach the unexported functions through these.
 
@@ -46,4 +49,9 @@ func Sniff(head []byte, accepted []string) (string, bool) {
 
 func ErrDamaged() error {
 	return errDamaged
+}
+
+// SetTaskTimeout shortens the deadline of each task, so a test meets it at once.
+func (w *Worker) SetTaskTimeout(timeout time.Duration) {
+	w.taskTimeout = timeout
 }

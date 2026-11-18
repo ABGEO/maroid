@@ -48,12 +48,7 @@ func variantsOf(data []byte, mediaType string) (imageVariants, error) {
 		return imageVariants{}, err
 	}
 
-	orientation := orientationNormal
-	if mediaType == jpegType {
-		orientation = jpegOrientation(data)
-	}
-
-	return deriveVariants(decoded, orientation)
+	return deriveVariants(decoded, orientationOf(data, mediaType))
 }
 
 // decodeImage checks the size that the header declares, then decodes the pixels. A

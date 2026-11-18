@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"slices"
 	"testing"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -86,6 +87,66 @@ func jpegWith(t *testing.T, img image.Image, orientation uint16) []byte {
 	data := encoded.Bytes()
 
 	return append(append(append([]byte{}, data[:2]...), segment...), data[2:]...)
+}
+
+// pngWith encodes the image as a PNG with an eXIf chunk after the header, which holds
+// the orientation.
+func pngWith(t *testing.T, img image.Image, orientation uint16) []byte {
+	t.Helper()
+
+	var encoded bytes.Buffer
+
+	require.NoError(t, png.Encode(&encoded, img))
+
+	const afterHeader = 8 + 8 + 13 + 4
+
+	body := append([]byte("eXIf"), tiffWith(orientation)...)
+	//nolint:gosec // the payload holds a few dozen bytes
+	chunk := binary.BigEndian.AppendUint32(nil, uint32(len(body)-4))
+	chunk = append(chunk, body...)
+	chunk = binary.BigEndian.AppendUint32(chunk, crc32.ChecksumIEEE(body))
+
+	data := encoded.Bytes()
+
+	return slices.Concat(data[:afterHeader], chunk, data[afterHeader:])
+}
+
+// webpWith encodes the image as an extended WebP whose EXIF chunk holds the
+// orientation.
+func webpWith(t *testing.T, img image.Image, orientation uint16) []byte {
+	t.Helper()
+
+	var encoded bytes.Buffer
+
+	require.NoError(t, webp.Encode(&encoded, img))
+
+	const riffHeader, extendedSize, exifFlag = 12, 10, 0x08
+
+	littleEndian24 := func(value int) []byte {
+		//nolint:gosec // each byte keeps 8 bits of the edge on purpose
+		return []byte{byte(value), byte(value >> 8), byte(value >> 16)}
+	}
+
+	bounds := img.Bounds()
+	extended := binary.LittleEndian.AppendUint32([]byte("VP8X"), extendedSize)
+	extended = append(extended, exifFlag, 0, 0, 0)
+	extended = append(extended, littleEndian24(bounds.Dx()-1)...)
+	extended = append(extended, littleEndian24(bounds.Dy()-1)...)
+
+	tiff := tiffWith(orientation)
+	//nolint:gosec // the payload holds a few dozen bytes
+	exif := binary.LittleEndian.AppendUint32([]byte("EXIF"), uint32(len(tiff)))
+	exif = append(exif, tiff...)
+
+	if len(tiff)%2 == 1 {
+		exif = append(exif, 0)
+	}
+
+	body := slices.Concat([]byte("WEBP"), extended, encoded.Bytes()[riffHeader:], exif)
+	//nolint:gosec // a test image holds far less than 4 GB
+	riff := binary.LittleEndian.AppendUint32([]byte("RIFF"), uint32(len(body)))
+
+	return append(riff, body...)
 }
 
 func sizeOf(t *testing.T, encoded []byte) (int, int) {
@@ -169,6 +230,53 @@ func TestAJPEGStandsAsItsOrientationSays(t *testing.T) {
 	requireNear(t, green(), display.At(20, 20), "the left of the top row")
 	requireNear(t, red(), display.At(1515, 20), "the right of the top row")
 	requireNear(t, blue(), display.At(768, 2028), "the bottom")
+}
+
+// FILES-DD-007: The EXIF orientation of a PNG and of a WebP turns their variants too.
+func TestAPNGAndAWebPStandAsTheirOrientationSays(t *testing.T) {
+	t.Parallel()
+
+	stored := textured(400, 300)
+
+	for mediaType, data := range map[string][]byte{
+		pngType:  pngWith(t, stored, file.OrientationRotate90),
+		webpType: webpWith(t, stored, file.OrientationRotate90),
+	} {
+		variants, err := file.VariantsOf(data, mediaType)
+		require.NoError(t, err, mediaType)
+		require.Equal(t, [2]int{300, 400}, [2]int{variants.Width, variants.Height}, mediaType)
+
+		width, height := sizeOf(t, variants.Display)
+		require.Equal(t, [2]int{300, 400}, [2]int{width, height}, mediaType)
+	}
+}
+
+// FILES-SC-036: The thumbnail of a phone photo, of a portrait, and of a small PNG
+// holds at most 100 KB.
+func TestEachThumbnailHoldsAtMost100KB(t *testing.T) {
+	t.Parallel()
+
+	const thumbnailLimit = 100 << 10
+
+	var phone, small bytes.Buffer
+
+	require.NoError(t, heic.Encode(&phone, textured(4032, 3024)))
+	require.NoError(t, png.Encode(&small, textured(300, 200)))
+
+	uploads := map[string]struct {
+		data      []byte
+		mediaType string
+	}{
+		"phone.heic":   {phone.Bytes(), heicType},
+		"portrait.jpg": {jpegWith(t, textured(3000, 4000), file.OrientationNormal), jpegType},
+		"small.png":    {small.Bytes(), pngType},
+	}
+
+	for name, upload := range uploads {
+		variants, err := file.VariantsOf(upload.data, upload.mediaType)
+		require.NoError(t, err, name)
+		require.LessOrEqual(t, len(variants.Thumbnail), thumbnailLimit, name)
+	}
 }
 
 // FILES-DD-007: Each EXIF orientation from 1 to 8 places a pixel where TIFF 6.0 says.

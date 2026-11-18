@@ -191,6 +191,12 @@ func fileKindCases() map[string]fileKindCase {
 			},
 			wantErr: errs.ErrInvalidFileKind, suffix: "image",
 		},
+		"a kind that is not an image and accepts a photo": {
+			change: func(k *pluginapi.FileKind) {
+				k.MediaTypes = []string{pdfType, jpegType}
+			},
+			wantErr: errs.ErrInvalidFileKind, suffix: "image",
+		},
 		"a limit of zero": {
 			change:  func(k *pluginapi.FileKind) { k.MaxSize = 0 },
 			wantErr: errs.ErrInvalidFileKind, suffix: "max_size",
@@ -215,8 +221,8 @@ func fileKindCases() map[string]fileKindCase {
 }
 
 // FILES-SC-003: The registrar refuses a kind with no media type, with a permission
-// that the plugin does not declare, or with an image flag over a document type, and
-// stores no kind of that plugin.
+// that the plugin does not declare, with an image flag over a document type, or with a
+// photo type in a kind that is not an image, and stores no kind of that plugin.
 func TestTheFileKindRegistrarChecksEachRuleOfAKind(t *testing.T) {
 	t.Parallel()
 

@@ -120,7 +120,7 @@ func validateFileKind(id *pluginapi.PluginID, kind pluginapi.FileKind) error {
 		rule = "media_types"
 	case kind.MaxSize < 1 || kind.MaxSize > pluginapi.MaxFileSize:
 		rule = "max_size"
-	case kind.Image && slices.ContainsFunc(kind.MediaTypes, notImageMediaType):
+	case mixesImageTypes(kind):
 		rule = "image"
 	default:
 		return nil
@@ -147,12 +147,27 @@ func knownFileScope(scope pluginapi.FileScope) bool {
 	return scope == pluginapi.FileScopeWorkspace || scope == pluginapi.FileScopeUser
 }
 
-// notImageMediaType refuses all but the media types that the hub derives the variants from.
-func notImageMediaType(value string) bool {
+// isImageMediaType reports a media type that the hub derives the variants from. A kind
+// that is not an image keeps its upload with the metadata, so it takes none of them.
+func isImageMediaType(value string) bool {
 	switch value {
 	case "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif":
-		return false
-	default:
 		return true
+	default:
+		return false
 	}
+}
+
+func notImageMediaType(value string) bool {
+	return !isImageMediaType(value)
+}
+
+// mixesImageTypes reports an image kind with a type that is not an image, or a kind
+// that is not an image with an image type.
+func mixesImageTypes(kind pluginapi.FileKind) bool {
+	if kind.Image {
+		return slices.ContainsFunc(kind.MediaTypes, notImageMediaType)
+	}
+
+	return slices.ContainsFunc(kind.MediaTypes, isImageMediaType)
 }

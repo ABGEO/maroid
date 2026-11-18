@@ -17,6 +17,7 @@ const fileTaskColumns = `id, file_id, scope, owner_id, object_key, action, run_a
 // The table is shared, so a transaction of any scope reaches every task.
 type FileTaskRepository interface {
 	Enqueue(ctx context.Context, drafts ...model.FileTaskDraft) error
+	EnqueueOnce(ctx context.Context, draft model.FileTaskDraft) error
 	Lease(ctx context.Context, limit int, lease time.Duration) ([]model.FileTask, error)
 	Done(ctx context.Context, id string) error
 	Retry(ctx context.Context, id string, delay time.Duration, lastError string) error
@@ -46,6 +47,25 @@ func (r *FileTask) Enqueue(ctx context.Context, drafts ...model.FileTaskDraft) e
 		if err != nil {
 			return fmt.Errorf("enqueuing a FileTask %s: %w", draft.Action, err)
 		}
+	}
+
+	return nil
+}
+
+// EnqueueOnce writes the task unless a task of the same action already waits for the
+// file.
+func (r *FileTask) EnqueueOnce(ctx context.Context, draft model.FileTaskDraft) error {
+	_, err := r.tx.ExecContext(ctx, `
+		INSERT INTO public.file_tasks (file_id, scope, owner_id, object_key, action, run_after)
+		SELECT $1::uuid, $2::text, $3::uuid, $4::text, $5::text, now() + make_interval(secs => $6)
+		WHERE NOT EXISTS (
+			SELECT 1 FROM public.file_tasks WHERE file_id = $1::uuid AND action = $5::text
+		);`,
+		draft.FileID, draft.Scope, draft.OwnerID, draft.ObjectKey, draft.Action,
+		draft.Delay.Seconds(),
+	)
+	if err != nil {
+		return fmt.Errorf("enqueuing a FileTask %s once: %w", draft.Action, err)
 	}
 
 	return nil
