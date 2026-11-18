@@ -26,6 +26,7 @@ type MomentRepository interface {
 	List(ctx context.Context, plantID string, seek page.Seek) ([]model.Moment, error)
 	Update(ctx context.Context, entity *model.Moment, ifMatch *time.Time) error
 	Delete(ctx context.Context, plantID, id string, ifMatch *time.Time) error
+	LockForUpdate(ctx context.Context, plantID, id string) error
 }
 
 // Moment is a SQL-based implementation of MomentRepository.
@@ -64,8 +65,8 @@ func (r *Moment) Insert(ctx context.Context, entity *model.Moment) error {
 func (r *Moment) GetByID(ctx context.Context, plantID, id string) (*model.Moment, error) {
 	var entity model.Moment
 
-	query := selectMoments + " WHERE m.plant_id = $1 AND m.id = $2;"
-	if err := r.tx.GetContext(ctx, &entity, query, plantID, id); err != nil {
+	query := selectMoments + " WHERE m.plant_id = :plant_id AND m.id = :id;"
+	if err := getNamed(ctx, r.tx, &entity, query, momentKey(plantID, id)); err != nil {
 		return nil, fmt.Errorf("getting Moment by ID: %w", err)
 	}
 
@@ -152,10 +153,17 @@ func (r *Moment) Update(ctx context.Context, entity *model.Moment, ifMatch *time
 // removes only the record that still carries that moment, and a record that moved
 // or does not exist answers precondition.ErrModified.
 func (r *Moment) Delete(ctx context.Context, plantID, id string, ifMatch *time.Time) error {
-	result, err := r.tx.ExecContext(ctx, `
+	args := momentKey(plantID, id)
+	args["if_match"] = ifMatch
+
+	result, err := r.tx.NamedExecContext(ctx, `
 		DELETE FROM moments
-		WHERE id = $1 AND plant_id = $2 AND ($3::timestamptz IS NULL OR updated_at = $3);`,
-		id, plantID, ifMatch)
+		WHERE id = :id
+		  AND plant_id = :plant_id
+		  AND (
+		    CAST(:if_match AS TIMESTAMPTZ) IS NULL
+		    OR updated_at = CAST(:if_match AS TIMESTAMPTZ)
+		  );`, args)
 	if err != nil {
 		return fmt.Errorf("deleting Moment: %w", err)
 	}
@@ -171,6 +179,20 @@ func (r *Moment) Delete(ctx context.Context, plantID, id string, ifMatch *time.T
 
 	if affected == 0 {
 		return precondition.ErrModified
+	}
+
+	return nil
+}
+
+// LockForUpdate locks the Moment record of the plant until the transaction ends. The
+// key of a new photo waits on the lock, so a delete reads every photo that the moment
+// will ever hold. A moment that is absent answers sql.ErrNoRows.
+func (r *Moment) LockForUpdate(ctx context.Context, plantID, id string) error {
+	var locked string
+	if err := getNamed(ctx, r.tx, &locked,
+		`SELECT id FROM moments WHERE plant_id = :plant_id AND id = :id FOR UPDATE;`,
+		momentKey(plantID, id)); err != nil {
+		return fmt.Errorf("locking Moment: %w", err)
 	}
 
 	return nil
@@ -232,6 +254,10 @@ func momentKeyset(seek page.Seek) (string, string) {
 		WHERE b.id = CAST(:boundary AS uuid))`
 
 	return condition, sorting
+}
+
+func momentKey(plantID, id string) map[string]any {
+	return map[string]any{paramPlantID: plantID, "id": id}
 }
 
 // momentArguments binds the values of a moment that a person writes. The day travels

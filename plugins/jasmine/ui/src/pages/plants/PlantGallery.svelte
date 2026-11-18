@@ -245,7 +245,8 @@
 												onerror={expired}
 											/>
 										{:else}
-											<span class="loading loading-spinner loading-sm"></span>
+											<span class="meta flex size-full items-center justify-center">No preview</span
+											>
 										{/if}
 									</button>
 

@@ -205,12 +205,17 @@ func (h *PlantHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		h.db,
 		"deleting the plant "+id,
 		func(ctx context.Context, tx *sqlx.Tx) error {
+			plants := repository.NewPlant(tx)
+			if txErr := plants.LockForUpdate(ctx, id); txErr != nil {
+				return fmt.Errorf("locking the plant: %w", txErr)
+			}
+
 			fileIDs, txErr := repository.NewPhoto(tx).FileIDsOfPlant(ctx, id)
 			if txErr != nil {
 				return fmt.Errorf("reading the files of the photos: %w", txErr)
 			}
 
-			if txErr = repository.NewPlant(tx).Delete(ctx, id, ifMatch); txErr != nil {
+			if txErr = plants.Delete(ctx, id, ifMatch); txErr != nil {
 				return fmt.Errorf("deleting the plant: %w", txErr)
 			}
 

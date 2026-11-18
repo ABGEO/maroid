@@ -41,8 +41,8 @@ type readAddress struct {
 
 type photoAnswer struct {
 	ID        string       `json:"id"`
-	Width     int          `json:"width"`
-	Height    int          `json:"height"`
+	Width     *int         `json:"width"`
+	Height    *int         `json:"height"`
 	Thumbnail *readAddress `json:"thumbnail"`
 	Display   *readAddress `json:"display"`
 }
@@ -233,9 +233,17 @@ func TestAMomentHoldsItsPhotosInOrder(t *testing.T) {
 	)
 	assert.Equal(t, "Repotted into a 14 cm pot", *created.Note)
 	require.Len(t, created.Photos, 2)
-	assert.Equal(t, filesURL+first+"/thumbnail", created.Photos[0].Thumbnail.URL)
-	assert.Equal(t, filesURL+second+"/display", created.Photos[1].Display.URL)
-	assert.Equal(t, photoWidth, created.Photos[0].Width)
+
+	for i, file := range []string{first, second} {
+		photo := created.Photos[i]
+		require.NotNil(t, photo.Thumbnail)
+		require.NotNil(t, photo.Display)
+		assert.Equal(t, filesURL+file+"/thumbnail", photo.Thumbnail.URL)
+		assert.Equal(t, filesURL+file+"/display", photo.Display.URL)
+		assert.Equal(t, photoWidth, *photo.Width)
+		assert.Equal(t, photoHeight, *photo.Height)
+	}
+
 	assert.Equal(t, 2, claimed(t, fixture, first, second))
 	assert.Equal(t, created.Photos[0].ID, profileOf(t, router, plant.ID).ID)
 }
@@ -438,31 +446,30 @@ func TestPhotosJoinAMomentInOrder(t *testing.T) {
 	assert.Len(t, decode[momentAnswer](t, readMoment(t, router, plant.ID, moment.ID)).Photos, 3)
 }
 
-// GARDEN-SC-058: The delete of the last photo of a moment deletes the moment, so no
-// moment holds no photo.
+// GARDEN-SC-058: The delete of a photo deletes its file and purges the bytes. The
+// delete of the last photo of a moment deletes the moment, so no moment holds no photo.
 func TestTheLastPhotoTakesItsMoment(t *testing.T) {
 	t.Parallel()
 
 	fixture := gardenUnderTest(t)
 	router := fixture.router(workspaceH)
 	plant := makePlant(t, router, nameFern, makeEnvironment(t, router, "Office").ID)
-	full := makeMoment(
-		t,
-		router,
-		plant.ID,
-		day(0),
-		insertFile(
-			t,
-			fixture,
-			workspaceH,
-		),
+	files := []string{
 		insertFile(t, fixture, workspaceH),
 		insertFile(t, fixture, workspaceH),
-	)
-	single := makeMoment(t, router, plant.ID, day(0), insertFile(t, fixture, workspaceH))
+		insertFile(t, fixture, workspaceH),
+		insertFile(t, fixture, workspaceH),
+	}
+	full := makeMoment(t, router, plant.ID, day(0), files[0], files[1], files[2])
+	single := makeMoment(t, router, plant.ID, day(0), files[3])
 
 	deletePhoto(t, router, full, full.Photos[1].ID)
 	deletePhoto(t, router, single, single.Photos[0].ID)
+
+	gone, err := fixture.files.Get(homeContext(), files[1], files[3])
+	require.NoError(t, err)
+	assert.Empty(t, gone)
+	assert.Equal(t, 2, purgesOf(t, fixture, files...))
 
 	assert.Len(t, decode[momentAnswer](t, readMoment(t, router, plant.ID, full.ID)).Photos, 2)
 	assert.Equal(t, http.StatusNotFound, readMoment(t, router, plant.ID, single.ID).Code)

@@ -84,12 +84,12 @@ type ReadAddressResponse struct {
 	ExpiresAt string `json:"expires_at"`
 }
 
-// PhotoResponse represents one photo of a moment. The addresses are absent while
-// the file is not ready.
+// PhotoResponse represents one photo of a moment. The size and the addresses are
+// absent when the hub did not answer the ready file.
 type PhotoResponse struct {
 	ID        string               `json:"id"`
-	Width     int                  `json:"width"`
-	Height    int                  `json:"height"`
+	Width     *int                 `json:"width,omitempty"`
+	Height    *int                 `json:"height,omitempty"`
 	Thumbnail *ReadAddressResponse `json:"thumbnail,omitempty"`
 	Display   *ReadAddressResponse `json:"display,omitempty"`
 }
@@ -117,13 +117,17 @@ func NewMomentResponse(moment *model.Moment, files map[string]pluginapi.File) Mo
 	photos := make([]PhotoResponse, 0, len(moment.Photos))
 	for _, photo := range moment.Photos {
 		file := files[photo.FileID]
-		photos = append(photos, PhotoResponse{
+		response := PhotoResponse{
 			ID:        photo.ID,
-			Width:     file.Width,
-			Height:    file.Height,
 			Thumbnail: addressOf(file, pluginapi.FileVariantThumbnail),
 			Display:   addressOf(file, pluginapi.FileVariantDisplay),
-		})
+		}
+
+		if file.State == pluginapi.FileStateReady {
+			response.Width, response.Height = &file.Width, &file.Height
+		}
+
+		photos = append(photos, response)
 	}
 
 	return MomentResponse{

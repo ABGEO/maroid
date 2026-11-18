@@ -263,17 +263,20 @@ func (h *MomentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		"deleting the moment "+id,
 		func(ctx context.Context, tx *sqlx.Tx) error {
 			moments := repository.NewMoment(tx)
+			if txErr := moments.LockForUpdate(ctx, plantID, id); txErr != nil {
+				return fmt.Errorf("locking the moment: %w", txErr)
+			}
 
-			moment, txErr := moments.GetByID(ctx, plantID, id)
+			fileIDs, txErr := repository.NewPhoto(tx).FileIDsOfMoment(ctx, id)
 			if txErr != nil {
-				return fmt.Errorf("reading the moment: %w", txErr)
+				return fmt.Errorf("reading the files of the photos: %w", txErr)
 			}
 
 			if txErr = moments.Delete(ctx, plantID, id, ifMatch); txErr != nil {
 				return fmt.Errorf("deleting the moment: %w", txErr)
 			}
 
-			return h.deleteFiles(ctx, tx, fileIDsOf(moment.Photos))
+			return h.deleteFiles(ctx, tx, fileIDs)
 		},
 	)
 	if err != nil {
@@ -350,14 +353,18 @@ func (h *MomentHandler) DeletePhoto(w http.ResponseWriter, r *http.Request) {
 		h.db,
 		"deleting the photo "+id,
 		func(ctx context.Context, tx *sqlx.Tx) error {
+			moments := repository.NewMoment(tx)
+			if txErr := moments.LockForUpdate(ctx, plantID, momentID); txErr != nil {
+				return fmt.Errorf("locking the moment: %w", txErr)
+			}
+
 			photo, remaining, txErr := repository.NewPhoto(tx).Delete(ctx, plantID, momentID, id)
 			if txErr != nil {
 				return fmt.Errorf("deleting the photo: %w", txErr)
 			}
 
 			if remaining == 0 {
-				if txErr = repository.NewMoment(tx).
-					Delete(ctx, plantID, momentID, nil); txErr != nil {
+				if txErr = moments.Delete(ctx, plantID, momentID, nil); txErr != nil {
 					return fmt.Errorf("deleting the empty moment: %w", txErr)
 				}
 			}

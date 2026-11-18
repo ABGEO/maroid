@@ -1,9 +1,12 @@
 package repository
 
 import (
+	"context"
 	"errors"
+	"fmt"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/libs/rest/page"
 )
@@ -18,6 +21,7 @@ const (
 
 	paramEnvironmentID = "environment_id"
 	paramPlantID       = "plant_id"
+	paramMomentID      = "moment_id"
 
 	// everyRow is the condition of a keyset read from the start of the collection.
 	everyRow = "TRUE"
@@ -74,4 +78,43 @@ func positive(value int) any {
 	}
 
 	return value
+}
+
+// getNamed reads one row of a query with named parameters into dest.
+func getNamed(ctx context.Context, tx *sqlx.Tx, dest any, query string, args map[string]any) error {
+	bound, values, err := sqlx.Named(query, args)
+	if err != nil {
+		return fmt.Errorf("binding the arguments: %w", err)
+	}
+
+	if err = tx.GetContext(ctx, dest, tx.Rebind(bound), values...); err != nil {
+		return fmt.Errorf("reading the row: %w", err)
+	}
+
+	return nil
+}
+
+// selectNamed reads the rows of a query with named parameters into dest. A slice
+// argument expands into the list of an IN.
+func selectNamed(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	dest any,
+	query string,
+	args map[string]any,
+) error {
+	bound, values, err := sqlx.Named(query, args)
+	if err != nil {
+		return fmt.Errorf("binding the arguments: %w", err)
+	}
+
+	if bound, values, err = sqlx.In(bound, values...); err != nil {
+		return fmt.Errorf("expanding the arguments: %w", err)
+	}
+
+	if err = tx.SelectContext(ctx, dest, tx.Rebind(bound), values...); err != nil {
+		return fmt.Errorf("reading the rows: %w", err)
+	}
+
+	return nil
 }

@@ -99,12 +99,12 @@ lacks.
 
 ### `GARDEN-SC-058`
 
-**Verifies:** `GARDEN-FR-051`, `GARDEN-INV-004`
+**Verifies:** `GARDEN-FR-051`, `GARDEN-FR-053`, `GARDEN-INV-004`
 **Layer:** integration
 
 **Given** a moment M1 with three photos and a moment M2 with one photo.
 **When** the editor deletes one photo of M1, then the photo of M2.
-**Then** each answer is 204. M1 holds two photos. A read of M2 answers 404, and no moment of the plant holds no photo.
+**Then** each answer is 204. M1 holds two photos. A read of M2 answers 404, and no moment of the plant holds no photo. `Get` answers neither file of the deleted photos, and the fake records a purge for each.
 
 ### `GARDEN-SC-059`
 
@@ -195,6 +195,15 @@ lacks.
 **Given** a moment M of `P001` in H, a photo X of `P002`, and the migrations applied.
 **When** the test inserts, as H, a photo of `P002` in M, then sets the profile picture of `P001` to X, then inserts, as G, a moment of `P001`.
 **Then** each statement fails with SQLSTATE `23503`.
+
+### `GARDEN-SC-076`
+
+**Verifies:** `GARDEN-FR-053`
+**Layer:** integration
+
+**Given** a moment M of `P001` with one photo, and a new file F.
+**When** one transaction locks M with `Moment.LockForUpdate`, a second transaction inserts a photo of F in M, and then the first deletes M and commits.
+**Then** the insert waits for the lock, and fails with SQLSTATE `23503` once the first transaction commits. The same holds for `Plant.LockForUpdate`, the delete of `P001`, and an insert of a moment of `P001`.
 
 ### `GARDEN-SC-069`
 

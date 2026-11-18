@@ -42,6 +42,7 @@ type PlantRepository interface {
 	Lock(ctx context.Context, ids []string) ([]string, error)
 	SetProfilePhoto(ctx context.Context, plantID, photoID string) (*model.Plant, error)
 	FillProfilePhoto(ctx context.Context, plantID, photoID string) error
+	LockForUpdate(ctx context.Context, id string) error
 }
 
 // Plant is a SQL-based implementation of PlantRepository.
@@ -242,8 +243,9 @@ func (r *Plant) SetProfilePhoto(
 ) (*model.Plant, error) {
 	var id string
 
-	err := r.tx.GetContext(ctx, &id,
-		`UPDATE plants SET profile_photo_id = $2 WHERE id = $1 RETURNING id;`, plantID, photoID)
+	err := getNamed(ctx, r.tx, &id,
+		`UPDATE plants SET profile_photo_id = :photo_id WHERE id = :id RETURNING id;`,
+		profileArguments(plantID, photoID))
 
 	switch {
 	case isForeignKeyViolation(err, plantProfilePhotoConstraint):
@@ -258,13 +260,30 @@ func (r *Plant) SetProfilePhoto(
 // FillProfilePhoto makes the photo the profile picture of the plant when the plant
 // has none.
 func (r *Plant) FillProfilePhoto(ctx context.Context, plantID, photoID string) error {
-	if _, err := r.tx.ExecContext(ctx, `
-		UPDATE plants SET profile_photo_id = $2
-		WHERE id = $1 AND profile_photo_id IS NULL;`, plantID, photoID); err != nil {
+	if _, err := r.tx.NamedExecContext(ctx, `
+		UPDATE plants SET profile_photo_id = :photo_id
+		WHERE id = :id AND profile_photo_id IS NULL;`, profileArguments(plantID, photoID)); err != nil {
 		return fmt.Errorf("filling the profile picture of Plant: %w", err)
 	}
 
 	return nil
+}
+
+// LockForUpdate locks the Plant record until the transaction ends. The key of a new
+// moment waits on the lock, so a delete reads every photo that the plant will ever
+// hold. A plant that is absent answers sql.ErrNoRows.
+func (r *Plant) LockForUpdate(ctx context.Context, id string) error {
+	var locked string
+	if err := getNamed(ctx, r.tx, &locked,
+		`SELECT id FROM plants WHERE id = :id FOR UPDATE;`, map[string]any{"id": id}); err != nil {
+		return fmt.Errorf("locking Plant: %w", err)
+	}
+
+	return nil
+}
+
+func profileArguments(plantID, photoID string) map[string]any {
+	return map[string]any{"id": plantID, "photo_id": photoID}
 }
 
 // refresh reads the stored values of the Plant, with its environment, into entity.

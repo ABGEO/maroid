@@ -2,9 +2,11 @@ package repository_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
@@ -136,4 +138,81 @@ func TestTheProfilePictureIsAPhotoOfThePlant(t *testing.T) {
 
 	_, err = repo.SetProfilePhoto(ctx, plants[0], foreign.Photos[0].ID)
 	require.ErrorIs(t, err, errs.ErrPhotoForeign)
+}
+
+// waitForBlock is how long an insert must stay blocked to count as waiting on a lock.
+const waitForBlock = 300 * time.Millisecond
+
+// requireHeldBack runs insert while the holder holds its lock. The insert waits, then
+// remove deletes the row and the holder commits, and the insert fails on its key.
+func requireHeldBack(t *testing.T, holder *sqlx.Tx, remove func() error, insert func() error) {
+	t.Helper()
+
+	done := make(chan error, 1)
+
+	go func() { done <- insert() }()
+
+	select {
+	case err := <-done:
+		require.Failf(t, "the insert did not wait for the lock", "it answered %v", err)
+	case <-time.After(waitForBlock):
+	}
+
+	require.NoError(t, remove())
+	require.NoError(t, holder.Commit())
+
+	var pgErr *pgconn.PgError
+
+	select {
+	case err := <-done:
+		require.ErrorAs(t, err, &pgErr)
+		require.Equal(t, "23503", pgErr.Code)
+	case <-time.After(time.Minute):
+		require.Fail(t, "the insert never ended")
+	}
+}
+
+// GARDEN-SC-076: A delete locks the moment or the plant before it reads the files, so
+// a photo or a moment that arrives between the read and the delete waits and then
+// fails, and the cascade removes no photo that the read missed.
+func TestADeleteHoldsBackANewPhoto(t *testing.T) {
+	t.Parallel()
+
+	database, plants := plantsUnderTest(t, 1)
+	ctx := t.Context()
+
+	setup := begin(t, database)
+	moment := addMoment(t, setup, plants[0], "2026-06-01")
+	file := newFile(t, setup)
+	require.NoError(t, setup.Commit())
+
+	holder := begin(t, database)
+	moments := repository.NewMoment(holder)
+	require.NoError(t, moments.LockForUpdate(ctx, plants[0], moment.ID))
+
+	intruder := begin(t, database)
+	requireHeldBack(t, holder,
+		func() error { return moments.Delete(ctx, plants[0], moment.ID, nil) },
+		func() error {
+			if _, err := repository.NewPhoto(intruder).
+				InsertMany(ctx, plants[0], moment.ID, []string{file}); err != nil {
+				return fmt.Errorf("inserting the photo: %w", err)
+			}
+
+			return nil
+		})
+
+	holder = begin(t, database)
+	plantRows := repository.NewPlant(holder)
+	require.NoError(t, plantRows.LockForUpdate(ctx, plants[0]))
+
+	intruder = begin(t, database)
+	requireHeldBack(t, holder,
+		func() error { return plantRows.Delete(ctx, plants[0], nil) },
+		func() error {
+			takenOn := time.Date(2026, time.June, 2, 0, 0, 0, 0, time.UTC)
+
+			return repository.NewMoment(intruder).
+				Insert(ctx, &model.Moment{PlantID: plants[0], TakenOn: takenOn})
+		})
 }

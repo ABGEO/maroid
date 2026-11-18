@@ -1039,7 +1039,6 @@ components:
 
     EnvironmentInput:
       type: object
-      additionalProperties: false
       required: [name]
       properties:
         name:
@@ -1091,7 +1090,6 @@ components:
 
     PlantInput:
       type: object
-      additionalProperties: false
       required: [common_name, environment_id]
       properties:
         common_name:
@@ -1202,7 +1200,6 @@ components:
 
     MomentInput:
       type: object
-      additionalProperties: false
       required: [taken_on, file_ids]
       properties:
         taken_on:
@@ -1218,7 +1215,6 @@ components:
 
     MomentUpdate:
       type: object
-      additionalProperties: false
       required: [taken_on]
       properties:
         taken_on:
@@ -1232,7 +1228,6 @@ components:
 
     PhotoInput:
       type: object
-      additionalProperties: false
       required: [file_ids]
       properties:
         file_ids:
@@ -1240,7 +1235,6 @@ components:
 
     ProfilePhotoInput:
       type: object
-      additionalProperties: false
       required: [photo_id]
       properties:
         photo_id:
@@ -1250,15 +1244,20 @@ components:
 
     Photo:
       type: object
-      required: [id, width, height]
+      description: >
+        `width`, `height`, `thumbnail`, and `display` are absent when the hub did not
+        answer the ready file. `spec-photos.md` section 4.5.
+      required: [id]
       properties:
         id:
           type: string
           format: uuid
         width:
           type: integer
+          minimum: 1
         height:
           type: integer
+          minimum: 1
         thumbnail:
           $ref: "#/components/schemas/ReadAddress"
         display:
@@ -1317,7 +1316,6 @@ components:
 
     CareIntervalInput:
       type: object
-      additionalProperties: false
       required: [days]
       properties:
         days:
@@ -1381,7 +1379,6 @@ components:
 
     MaintenanceEntryBatchInput:
       type: object
-      additionalProperties: false
       required: [plant_ids, type]
       properties:
         plant_ids:
@@ -1405,7 +1402,6 @@ components:
 
     MaintenanceEntryInput:
       type: object
-      additionalProperties: false
       required: [type, performed_at]
       properties:
         type:

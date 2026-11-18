@@ -45,11 +45,11 @@ export interface ProfilePhoto {
 	thumbnail?: ReadAddress;
 }
 
-/** One photo of a moment. The addresses are absent while the file is not ready. */
+/** One photo of a moment. The size and the addresses are absent when the hub did not answer the file. */
 export interface Photo {
 	id: string;
-	width: number;
-	height: number;
+	width?: number;
+	height?: number;
 	thumbnail?: ReadAddress;
 	display?: ReadAddress;
 }

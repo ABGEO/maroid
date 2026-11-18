@@ -57,35 +57,46 @@
 		}
 	}
 
-	async function write(): Promise<void> {
+	/**
+	 * Writes the moment and answers the reason of a failure, or null. An edit writes the
+	 * day and the note before the photos, so a failed second write says that the first
+	 * one landed.
+	 */
+	async function write(): Promise<string | null> {
 		const values = { taken_on: takenOn, note: note.trim() || undefined };
 
-		if (editing === null) {
-			await api.moments.create(plantId, { ...values, file_ids: ready });
-
-			return;
+		try {
+			if (editing === null) {
+				await api.moments.create(plantId, { ...values, file_ids: ready });
+			} else {
+				await api.moments.update(plantId, editing.id, values);
+			}
+		} catch (error) {
+			return failureMessage(error, 'The moment stays as it was. Try again.');
 		}
 
-		await api.moments.update(plantId, editing.id, values);
+		if (editing === null || ready.length === 0) {
+			return null;
+		}
 
-		if (ready.length > 0) {
+		try {
 			await api.moments.addPhotos(plantId, editing.id, ready);
+		} catch (error) {
+			return `The day and the note are saved. ${failureMessage(error, 'The photos did not join. Try again.')}`;
 		}
+
+		return null;
 	}
 
 	async function save(event: SubmitEvent): Promise<void> {
 		event.preventDefault();
 		saving = true;
-		failure = null;
+		failure = await write();
+		saving = false;
 
-		try {
-			await write();
+		if (failure === null) {
 			dialog?.close();
 			onsaved();
-		} catch (error) {
-			failure = failureMessage(error, 'The moment stays as it was. Try again.');
-		} finally {
-			saving = false;
 		}
 	}
 </script>

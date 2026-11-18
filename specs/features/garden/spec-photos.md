@@ -30,35 +30,35 @@ the profile picture.
 
 ## 2. Coverage
 
-| Requirement      | Where this file realizes it                                        |
-| ---------------- | ------------------------------------------------------------------ |
-| `GARDEN-FR-045`  | 4.3, 4.5, `GARDEN-DD-022`, `GARDEN-SC-050` to `GARDEN-SC-052`      |
-| `GARDEN-FR-046`  | 4.6, `GARDEN-DD-022`, `GARDEN-SC-071`                              |
-| `GARDEN-FR-047`  | 4.3, `GARDEN-DD-023`, `GARDEN-SC-054`                              |
-| `GARDEN-FR-048`  | 4.4, 4.5, `GARDEN-DD-019`, `GARDEN-SC-053`, `GARDEN-SC-071`        |
-| `GARDEN-FR-049`  | 4.3, `GARDEN-SC-056`                                               |
-| `GARDEN-FR-050`  | 4.3, `GARDEN-DD-018`, `GARDEN-SC-057`                              |
-| `GARDEN-FR-051`  | 4.4, `GARDEN-SC-058`                                               |
-| `GARDEN-FR-052`  | 4.4, `GARDEN-SC-059`                                               |
-| `GARDEN-FR-053`  | 4.4, `GARDEN-DD-019`, `ADR-0023`, `GARDEN-SC-059`, `GARDEN-SC-060` |
-| `GARDEN-FR-054`  | 4.2, 4.4, `GARDEN-SC-060`                                          |
-| `GARDEN-FR-055`  | 4.3, `GARDEN-SC-061`                                               |
-| `GARDEN-FR-056`  | 4.3, 4.6, `GARDEN-DD-020`, `GARDEN-SC-062`, `GARDEN-SC-072`        |
-| `GARDEN-FR-057`  | 4.6, `GARDEN-DD-020`, `GARDEN-SC-062`, `GARDEN-SC-072`             |
-| `GARDEN-FR-058`  | 4.6, `GARDEN-SC-072`                                               |
-| `GARDEN-FR-059`  | 4.6, `GARDEN-SC-073`                                               |
-| `GARDEN-FR-060`  | 4.6, `GARDEN-SC-073`                                               |
-| `GARDEN-FR-061`  | 4.3, 4.6, `GARDEN-SC-063`, `GARDEN-SC-074`                         |
-| `GARDEN-FR-062`  | 4.3, `GARDEN-DD-018`, `GARDEN-SC-064`                              |
-| `GARDEN-FR-063`  | 4.4, `GARDEN-SC-065`                                               |
-| `GARDEN-FR-064`  | 4.2, `GARDEN-DD-017`, `GARDEN-SC-066`                              |
-| `GARDEN-FR-065`  | 4.3, 4.6, `GARDEN-DD-021`, `GARDEN-SC-067`, `GARDEN-SC-075`        |
-| `GARDEN-NFR-005` | `GARDEN-DD-021`, `GARDEN-SC-069`                                   |
-| `GARDEN-NFR-006` | `GARDEN-DD-021`, `GARDEN-SC-070`                                   |
-| `GARDEN-INV-004` | 4.4, `GARDEN-SC-058`                                               |
-| `GARDEN-INV-005` | 4.2, `GARDEN-SC-055`                                               |
-| `GARDEN-INV-006` | 4.2, `GARDEN-DD-017`, `GARDEN-SC-068`                              |
-| `GARDEN-INV-007` | 4.2, `GARDEN-DD-017`, `GARDEN-SC-068`                              |
+| Requirement      | Where this file realizes it                                                           |
+| ---------------- | ------------------------------------------------------------------------------------- |
+| `GARDEN-FR-045`  | 4.3, 4.5, `GARDEN-DD-022`, `GARDEN-SC-050` to `GARDEN-SC-052`                         |
+| `GARDEN-FR-046`  | 4.6, `GARDEN-DD-022`, `GARDEN-SC-071`                                                 |
+| `GARDEN-FR-047`  | 4.3, `GARDEN-DD-023`, `GARDEN-SC-054`                                                 |
+| `GARDEN-FR-048`  | 4.4, 4.5, `GARDEN-DD-019`, `GARDEN-SC-053`, `GARDEN-SC-071`                           |
+| `GARDEN-FR-049`  | 4.3, `GARDEN-SC-056`                                                                  |
+| `GARDEN-FR-050`  | 4.3, `GARDEN-DD-018`, `GARDEN-SC-057`                                                 |
+| `GARDEN-FR-051`  | 4.4, `GARDEN-SC-058`                                                                  |
+| `GARDEN-FR-052`  | 4.4, `GARDEN-SC-059`                                                                  |
+| `GARDEN-FR-053`  | 4.4, `GARDEN-DD-019`, `ADR-0023`, `GARDEN-SC-058` to `GARDEN-SC-060`, `GARDEN-SC-076` |
+| `GARDEN-FR-054`  | 4.2, 4.4, `GARDEN-SC-060`                                                             |
+| `GARDEN-FR-055`  | 4.3, `GARDEN-SC-061`                                                                  |
+| `GARDEN-FR-056`  | 4.3, 4.6, `GARDEN-DD-020`, `GARDEN-SC-062`, `GARDEN-SC-072`                           |
+| `GARDEN-FR-057`  | 4.6, `GARDEN-DD-020`, `GARDEN-SC-062`, `GARDEN-SC-072`                                |
+| `GARDEN-FR-058`  | 4.6, `GARDEN-SC-072`                                                                  |
+| `GARDEN-FR-059`  | 4.6, `GARDEN-SC-073`                                                                  |
+| `GARDEN-FR-060`  | 4.6, `GARDEN-SC-073`                                                                  |
+| `GARDEN-FR-061`  | 4.3, 4.6, `GARDEN-SC-063`, `GARDEN-SC-074`                                            |
+| `GARDEN-FR-062`  | 4.3, `GARDEN-DD-018`, `GARDEN-SC-064`                                                 |
+| `GARDEN-FR-063`  | 4.4, `GARDEN-SC-065`                                                                  |
+| `GARDEN-FR-064`  | 4.2, `GARDEN-DD-017`, `GARDEN-SC-066`                                                 |
+| `GARDEN-FR-065`  | 4.3, 4.6, `GARDEN-DD-021`, `GARDEN-SC-067`, `GARDEN-SC-075`                           |
+| `GARDEN-NFR-005` | `GARDEN-DD-021`, `GARDEN-SC-069`                                                      |
+| `GARDEN-NFR-006` | `GARDEN-DD-021`, `GARDEN-SC-070`                                                      |
+| `GARDEN-INV-004` | 4.4, `GARDEN-SC-058`                                                                  |
+| `GARDEN-INV-005` | 4.2, `GARDEN-SC-055`                                                                  |
+| `GARDEN-INV-006` | 4.2, `GARDEN-DD-017`, `GARDEN-SC-068`                                                 |
+| `GARDEN-INV-007` | 4.2, `GARDEN-DD-017`, `GARDEN-SC-068`                                                 |
 
 ## 3. Guideline compliance
 
@@ -81,37 +81,42 @@ the profile picture.
 
 ### 4.1 Components
 
-Every path is under `plugins/jasmine/`, except `api.yaml`. `ADR-0023` and the change of
+Every path is under `plugins/jasmine/`, except the last two rows. `ADR-0023` and the change of
 `FILES` that follows it own the hub side of `PluginFiles.Delete`.
 
-| Path                                                       | Action | Holds                                                                                                                                                                                                       |
-| ---------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `db/migrations/20261118120000_tables_garden_photos.up.sql` | create | Section 4.2. The down migration drops the column of `plants`, then `photos`, then `moments`.                                                                                                                |
-| `model/moment.go`                                          | create | `Moment{ID, PlantID, TakenOn time.Time, Note *string, Photos []Photo, CreatedAt, UpdatedAt}`. `Photo{ID, MomentID, FileID, CreatedAt}`. `const PhotoKind = "plant-photo"`.                                  |
-| `model/plant.go`                                           | change | `ProfilePhotoID *string` (`db:"profile_photo_id"`), `ProfileFileID *string` (`db:"profile_file_id"`).                                                                                                       |
-| `repository/moment.go`                                     | create | `Insert`, `GetByID(ctx, plantID, id)`, `List(ctx, plantID, seek)`, `Update(ctx, entity, ifMatch)`, `Delete(ctx, plantID, id, ifMatch)`. `GetByID` and `List` fill `Photos`.                                 |
-| `repository/photo.go`                                      | create | `InsertMany(ctx, plantID, momentID, fileIDs) ([]model.Photo, error)`, `ListOfMoments(ctx, momentIDs)`, `Delete(ctx, plantID, momentID, id) (model.Photo, int, error)`, `FileIDsOfMoment`, `FileIDsOfPlant`. |
-| `repository/plant.go`                                      | change | `selectPlants` gains `LEFT JOIN photos pp ON pp.id = p.profile_photo_id` and `pp.file_id AS profile_file_id`. `SetProfilePhoto(ctx, plantID, photoID)`, `FillProfilePhoto(ctx, plantID, photoID)`.          |
-| `errs/errs.go`                                             | change | `ErrFileTaken` (SQLSTATE `23505` on `photos_file_id_key`), `ErrPhotoForeign` (SQLSTATE `23503` on `plants_profile_photo_fkey`).                                                                             |
-| `dto/moment.go`                                            | create | `MomentRequest`, `MomentUpdateRequest`, `PhotosRequest`, `ProfilePhotoRequest`, `MomentResponse`, `PhotoResponse`, `ReadAddressResponse`. Section 4.3.                                                      |
-| `dto/plant.go`                                             | change | `PlantResponse.ProfilePhoto *ProfilePhotoResponse` (`json:"profile_photo,omitempty"`). `NewPlantResponse` and `NewPlantResponseList` take `map[string]pluginapi.File`.                                      |
-| `handler/moment.go`                                        | create | `MomentHandler` with the six moment and photo routes of section 4.3.                                                                                                                                        |
-| `handler/photo_file.go`                                    | create | `checkPhotoFiles(ctx, files, ids)`, `readFiles(ctx, files, ids)` in groups of `pluginapi.MaxFilesPerGet`, `claimAfterCommit(ctx, files, logger, ids)`.                                                      |
-| `handler/plant.go`                                         | change | `PlantHandler` takes `pluginapi.PluginFiles`. `List`, `GetByID`, `Update` answer the profile picture. `Delete` deletes the files. `SetProfilePhoto` handles the new route.                                  |
-| `handler/problem.go`                                       | change | `writePhotoNotReady(w, r, count int)`.                                                                                                                                                                      |
-| `handler/photo_test.go`                                    | create | `GARDEN-SC-050` to `GARDEN-SC-053`, `GARDEN-SC-055` to `GARDEN-SC-068`.                                                                                                                                     |
-| `handler/setup_test.go`                                    | change | The stand-in `public.workspace_files`, and a fake `PluginFiles` over it.                                                                                                                                    |
-| `handler/measure_test.go`                                  | change | `GARDEN-SC-069`, `GARDEN-SC-070`.                                                                                                                                                                           |
-| `main.go`                                                  | change | `host.Files()`, `var _ pluginapi.FilePlugin = (*Plugin)(nil)`, `FileKinds()`, the routes of `MomentHandler`.                                                                                                |
-| `main_test.go`                                             | change | `GARDEN-SC-054`.                                                                                                                                                                                            |
-| `ui/src/api/types.ts`                                      | change | `Moment`, `Photo`, `ReadAddress`, `MomentInput`, `MomentUpdate`, `ProfilePhoto`. `Plant.profile_photo?`.                                                                                                    |
-| `ui/src/api/moments.ts`                                    | create | `list`, `create`, `update`, `remove`, `addPhotos`, `removePhoto`.                                                                                                                                           |
-| `ui/src/api/plants.ts`, `ui/src/api/index.ts`              | change | `setProfilePhoto`. `createJasmineApi` gains `moments`.                                                                                                                                                      |
-| `ui/src/lib/photo.ts`                                      | create | `PHOTO_KIND`, `PHOTO_TYPES`, `PHOTO_MAX_SIZE`, equal to the kind of `GARDEN-DD-023`.                                                                                                                        |
-| `ui/src/lib/galleryPreview.svelte.ts`                      | delete | The preview data.                                                                                                                                                                                           |
-| `ui/src/pages/plants/*.svelte`                             | change | `PlantGallery`, `MomentDialog`, `PhotoViewer`, `PlantAvatar`, `PlantView`, `PlantList`. Section 4.6.                                                                                                        |
-| `libs/ui/src/upload/FileUpload.svelte`                     | change | `busy`, bindable: true while a file uploads or processes.                                                                                                                                                   |
-| `specs/features/garden/api.yaml`                           | change | The seven routes, `Plant.profile_photo`, and the new schemas.                                                                                                                                               |
+| Path                                                       | Action | Holds                                                                                                                                                                                                                        |
+| ---------------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db/migrations/20261118120000_tables_garden_photos.up.sql` | create | Section 4.2. The down migration drops the column of `plants`, then `photos`, then `moments`.                                                                                                                                 |
+| `model/moment.go`                                          | create | `Moment{ID, PlantID, TakenOn time.Time, Note *string, Photos []Photo, CreatedAt, UpdatedAt}`. `Photo{ID, MomentID, FileID, CreatedAt}`. `const PhotoKind = "plant-photo"`.                                                   |
+| `model/plant.go`                                           | change | `ProfilePhotoID *string` (`db:"profile_photo_id"`), `ProfileFileID *string` (`db:"profile_file_id"`).                                                                                                                        |
+| `repository/moment.go`                                     | create | `Insert`, `GetByID(ctx, plantID, id)`, `List(ctx, plantID, seek)`, `Update(ctx, entity, ifMatch)`, `Delete(ctx, plantID, id, ifMatch)`, `LockForUpdate(ctx, plantID, id)`. `GetByID` and `List` fill `Photos`.               |
+| `repository/photo.go`                                      | create | `InsertMany(ctx, plantID, momentID, fileIDs) ([]model.Photo, error)`, `ListOfMoments(ctx, momentIDs)`, `Delete(ctx, plantID, momentID, id) (model.Photo, int, error)`, `FileIDsOfMoment`, `FileIDsOfPlant`.                  |
+| `repository/plant.go`                                      | change | `selectPlants` gains `LEFT JOIN photos pp ON pp.id = p.profile_photo_id` and `pp.file_id AS profile_file_id`. `SetProfilePhoto(ctx, plantID, photoID)`, `FillProfilePhoto(ctx, plantID, photoID)`, `LockForUpdate(ctx, id)`. |
+| `repository/postgres.go`                                   | change | `isUniqueViolation`, and the named reads `getNamed` and `selectNamed`.                                                                                                                                                       |
+| `errs/errs.go`                                             | change | `ErrFileTaken` (SQLSTATE `23505` on `photos_file_id_key`), `ErrPhotoForeign` (SQLSTATE `23503` on `plants_profile_photo_fkey`).                                                                                              |
+| `dto/moment.go`                                            | create | `MomentRequest`, `MomentUpdateRequest`, `PhotosRequest`, `ProfilePhotoRequest`, `MomentResponse`, `PhotoResponse`, `ProfilePhotoResponse`, `ReadAddressResponse`. Section 4.3.                                               |
+| `dto/plant.go`                                             | change | `PlantResponse.ProfilePhoto *ProfilePhotoResponse` (`json:"profile_photo,omitempty"`). `NewPlantResponse` and `NewPlantResponseList` take `map[string]pluginapi.File`.                                                       |
+| `handler/moment.go`                                        | create | `MomentHandler` with the seven moment and photo routes of section 4.3.                                                                                                                                                       |
+| `handler/photo_file.go`                                    | create | `acceptPhotoFiles(w, r, logger, files, ids)`, `readFiles(ctx, files, ids)` in groups of `pluginapi.MaxFilesPerGet`, `addressesOf(ctx, logger, files, ids)`, `claimAfterCommit(ctx, logger, files, ids)`.                     |
+| `handler/plant.go`                                         | change | `PlantHandler` takes `pluginapi.PluginFiles`. `List`, `GetByID`, `Update` answer the profile picture. `Delete` deletes the files. `SetProfilePhoto` handles the new route.                                                   |
+| `handler/problem.go`, `handler/failure.go`                 | change | `writePhotoNotReady(w, r, count int)`. `failWrite` answers `ErrFileTaken` and `ErrPhotoForeign` as section 4.5 gives.                                                                                                        |
+| `handler/record.go`, `handler/page.go`                     | change | A presenter takes the context of the request, and `plain` adapts one that needs none. `environment.go`, `maintenance_entry.go`, and `care_interval.go` use `plain`.                                                          |
+| `handler/gallery_test.go`                                  | create | `GARDEN-SC-050` to `GARDEN-SC-053`, `GARDEN-SC-055` to `GARDEN-SC-067`.                                                                                                                                                      |
+| `handler/photo_test.go`                                    | create | `GARDEN-SC-068`.                                                                                                                                                                                                             |
+| `repository/moment_test.go`                                | create | `GARDEN-SC-076`, and the keyset and the keys of the photos.                                                                                                                                                                  |
+| `handler/files_test.go`                                    | create | A fake `PluginFiles` over the stand-in tables.                                                                                                                                                                               |
+| `handler/setup_test.go`                                    | change | The stand-ins `public.workspace_files` and `public.file_purges`, and the stand-in of the permission check.                                                                                                                   |
+| `handler/measure_test.go`                                  | change | `GARDEN-SC-069`, `GARDEN-SC-070`.                                                                                                                                                                                            |
+| `main.go`                                                  | change | `host.Files()`, `var _ pluginapi.FilePlugin = (*JasminePlugin)(nil)`, `FileKinds()`, the routes of `MomentHandler`.                                                                                                          |
+| `main_test.go`                                             | change | `GARDEN-SC-054`.                                                                                                                                                                                                             |
+| `ui/src/api/types.ts`                                      | change | `Moment`, `Photo`, `ReadAddress`, `MomentInput`, `MomentUpdate`, `ProfilePhoto`. `Plant.profile_photo?`.                                                                                                                     |
+| `ui/src/api/moments.ts`                                    | create | `list`, `create`, `update`, `remove`, `addPhotos`, `removePhoto`.                                                                                                                                                            |
+| `ui/src/api/plants.ts`, `ui/src/api/index.ts`              | change | `setProfilePhoto`. `createJasmineApi` gains `moments`.                                                                                                                                                                       |
+| `ui/src/lib/photo.ts`                                      | create | `PHOTO_KIND`, `PHOTO_TYPES`, `PHOTO_MAX_SIZE`, equal to the kind of `GARDEN-DD-023`.                                                                                                                                         |
+| `ui/src/lib/galleryPreview.svelte.ts`                      | delete | The preview data.                                                                                                                                                                                                            |
+| `ui/src/pages/plants/*.svelte`                             | change | `PlantGallery`, `MomentDialog`, `PhotoViewer`, `PlantAvatar`, `PlantView`, `PlantList`. Section 4.6.                                                                                                                         |
+| `libs/ui/src/upload/FileUpload.svelte`                     | change | `busy`, bindable: true while a file uploads or processes.                                                                                                                                                                    |
+| `specs/features/garden/api.yaml`                           | change | The eight routes, `Plant.profile_photo`, and the new schemas.                                                                                                                                                                |
 
 ### 4.2 Data model
 
@@ -176,16 +181,16 @@ erDiagram
 `DELETE /plants/{id}` deletes the files of the plant. No route checks the status of the
 plant, so an inactive plant takes every write (`GARDEN-FR-055`).
 
-| Body                | Members                                                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `MomentInput`       | `taken_on` (date, `not_after_tomorrow`), `note` (1 to 1000), `file_ids` (1 to 100 distinct UUIDs, the order kept)  |
-| `MomentUpdate`      | `taken_on`, `note`. An omitted `note` becomes null.                                                                |
-| `PhotoInput`        | `file_ids`, with the rules of `MomentInput`                                                                        |
-| `ProfilePhotoInput` | `photo_id` (UUID)                                                                                                  |
-| `Moment`            | `id`, `plant_id`, `taken_on`, `note` when set, `photos`, `created_at`, `updated_at`                                |
-| `Photo`             | `id`, `width`, `height`, and `thumbnail` and `display` as `ReadAddress` when the file is ready. The order of `id`. |
-| `ProfilePhoto`      | `id`, and `thumbnail` as `ReadAddress` when the file is ready                                                      |
-| `ReadAddress`       | `url`, `expires_at`                                                                                                |
+| Body                | Members                                                                                                           |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `MomentInput`       | `taken_on` (date, `not_after_tomorrow`), `note` (1 to 1000), `file_ids` (1 to 100 distinct UUIDs, the order kept) |
+| `MomentUpdate`      | `taken_on`, `note`. An omitted `note` becomes null.                                                               |
+| `PhotoInput`        | `file_ids`, with the rules of `MomentInput`                                                                       |
+| `ProfilePhotoInput` | `photo_id` (UUID)                                                                                                 |
+| `Moment`            | `id`, `plant_id`, `taken_on`, `note` when set, `photos`, `created_at`, `updated_at`                               |
+| `Photo`             | `id`. `width`, `height`, `thumbnail`, and `display` when the hub answers the ready file. The order of `id`.       |
+| `ProfilePhoto`      | `id`, and `thumbnail` as `ReadAddress` when the file is ready                                                     |
+| `ReadAddress`       | `url`, `expires_at`                                                                                               |
 
 **File kind.**
 
@@ -222,13 +227,16 @@ the file.
 `UPDATE plants SET profile_photo_id = :photo WHERE id = :plant AND profile_photo_id IS NULL`
 with the first photo (`GARDEN-FR-063`). `POST .../photos` never fills it.
 
-A delete runs in one transaction:
+A delete runs in one transaction. It first locks the row that holds the photos with
+`FOR UPDATE`. A key of a new moment or a new photo takes `FOR KEY SHARE` on that row, so
+an insert waits for the delete and then fails on its key. Without the lock, the cascade
+removes a photo that arrived after the read, and its claimed file never goes.
 
-| Route                     | Reads first             | Deletes                                                                      | Then                        |
-| ------------------------- | ----------------------- | ---------------------------------------------------------------------------- | --------------------------- |
-| `DELETE .../photos/{id}`  | nothing                 | the photo. When the moment holds no other, the moment too. `GARDEN-INV-004`. | `Files.Delete` of its file  |
-| `DELETE .../moments/{id}` | `Photo.FileIDsOfMoment` | the moment, and the photos by the cascade                                    | `Files.Delete` of each file |
-| `DELETE /plants/{id}`     | `Photo.FileIDsOfPlant`  | the plant, and its moments and photos by the cascade                         | `Files.Delete` of each file |
+| Route                     | Locks                  | Reads first             | Deletes                                                                      | Then                        |
+| ------------------------- | ---------------------- | ----------------------- | ---------------------------------------------------------------------------- | --------------------------- |
+| `DELETE .../photos/{id}`  | `Moment.LockForUpdate` | nothing                 | the photo. When the moment holds no other, the moment too. `GARDEN-INV-004`. | `Files.Delete` of its file  |
+| `DELETE .../moments/{id}` | `Moment.LockForUpdate` | `Photo.FileIDsOfMoment` | the moment, and the photos by the cascade                                    | `Files.Delete` of each file |
+| `DELETE /plants/{id}`     | `Plant.LockForUpdate`  | `Photo.FileIDsOfPlant`  | the plant, and its moments and photos by the cascade                         | `Files.Delete` of each file |
 
 `Files.Delete` takes the transaction of the delete and runs after the rows go
 (`ADR-0023`). A refused `If-Match` or any later failure rolls back the files with the
@@ -237,20 +245,20 @@ sets the column to null when its photo goes, in the same statement.
 
 ### 4.5 Errors
 
-| Condition                                                            | Answer                                              | Detail                                             |
-| -------------------------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------- |
-| The plant, the moment, or the photo is absent, or of another parent  | 404, `not-found`                                    | None                                               |
-| `taken_on` is absent, not a date, or after tomorrow in UTC           | 422, `/problems/http/validation`, `taken_on`        | The text of `TagNotAfterTomorrow`                  |
-| `note` holds 0 or more than 1000 characters                          | 422, `note`                                         | The text of the bound                              |
-| `file_ids` is empty, holds more than 100, a duplicate, or a non UUID | 422, `file_ids`                                     | The text of the rule                               |
-| `Get` omits a file, or answers a kind other than `plant-photo`       | 422, `file_ids`                                     | "The file is not a plant photo of this workspace." |
-| `Get` answers a `failed` file                                        | 422, `file_ids`                                     | "The photo failed. Remove it and upload it again." |
-| `Get` answers a `pending` or `processing` file                       | 409, `/problems/dev.maroid.jasmine/photo-not-ready` | "2 photos are not ready yet." with the count       |
-| `ErrFileTaken`                                                       | 422, `file_ids`                                     | "The file is already a photo of a moment."         |
-| `photo_id` names no photo, or `ErrPhotoForeign`                      | 422, `photo_id`                                     | "The photo is not a photo of this plant."          |
-| `If-Match` names an older version                                    | 412                                                 | As `spec.md` section 4.5                           |
-| `Get` or `Files.Delete` fails, `ErrFileReferenced` included          | 500, the transaction rolls back                     | None. The log holds the cause.                     |
-| `Get` fails while an answer reads its addresses                      | The answer carries no address                       | None. The log holds the cause at `ERROR`.          |
+| Condition                                                            | Answer                                               | Detail                                             |
+| -------------------------------------------------------------------- | ---------------------------------------------------- | -------------------------------------------------- |
+| The plant, the moment, or the photo is absent, or of another parent  | 404, `not-found`                                     | None                                               |
+| `taken_on` is absent, not a date, or after tomorrow in UTC           | 422, `/problems/http/validation`, `taken_on`         | The text of `TagNotAfterTomorrow`                  |
+| `note` holds 0 or more than 1000 characters                          | 422, `note`                                          | The text of the bound                              |
+| `file_ids` is empty, holds more than 100, a duplicate, or a non UUID | 422, `file_ids`                                      | The text of the rule                               |
+| `Get` omits a file, or answers a kind other than `plant-photo`       | 422, `file_ids`                                      | "The file is not a plant photo of this workspace." |
+| `Get` answers a `failed` file                                        | 422, `file_ids`                                      | "The photo failed. Remove it and upload it again." |
+| `Get` answers a `pending` or `processing` file                       | 409, `/problems/dev.maroid.jasmine/photo-not-ready`  | "2 photos are not ready yet." with the count       |
+| `ErrFileTaken`                                                       | 422, `file_ids`                                      | "The file is already a photo of a moment."         |
+| `photo_id` names no photo, or `ErrPhotoForeign`                      | 422, `photo_id`                                      | "The photo is not a photo of this plant."          |
+| `If-Match` names an older version                                    | 412                                                  | As `spec.md` section 4.5                           |
+| `Get` or `Files.Delete` fails, `ErrFileReferenced` included          | 500, the transaction rolls back                      | None. The log holds the cause.                     |
+| `Get` fails while an answer reads its addresses                      | The answer carries no address and no size of a photo | None. The log holds the cause at `ERROR`.          |
 
 ### 4.6 The pages
 
@@ -261,6 +269,7 @@ It reads every page of `moments.list` with `readAll` and `limit` 100. A failure 
 timeline, the day with `ageOf`, the note, the grid of thumbnails, the menus, and
 `ConfirmDialog`. The badge "Preview" goes. An `error` event of an image loads the
 moments again, at most once a minute, because an address expires after `files.read_ttl`.
+A photo with no `thumbnail` shows "No preview" in its square.
 
 `MomentDialog` holds `FileUpload` of `@maroid/ui` with `client` `host.files`, `kind`
 `PHOTO_KIND`, `accept` `PHOTO_TYPES`, and `maxSize` `PHOTO_MAX_SIZE`. `onuploaded` keeps
@@ -268,7 +277,9 @@ the identifier, `onsettled` keeps the state, and `bind:busy` tells that a photo 
 uploading or processing. The day starts at `today()` with `max` `today()`. "Add moment"
 stays disabled while a photo is uploading or processing, or while no photo is ready. A
 save sends the ready files in the order of the upload. In the edit mode, the dialog sends
-`PUT`, then `POST .../photos` when it holds a ready file.
+`PUT`, then `POST .../photos` when it holds a ready file. When the `PUT` lands and the
+`POST` fails, the dialog stays open and says that the day and the note are saved, so a
+second save sends both again.
 
 `PhotoViewer` shows `display.url` and keeps its controls. "Set as profile picture" calls
 `plants.setProfilePhoto`, and `PlantView` then reads the plant again, because the answer

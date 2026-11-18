@@ -56,9 +56,14 @@ func (r *Photo) InsertMany(
 	for _, fileID := range fileIDs {
 		var photo model.Photo
 
-		err := r.tx.GetContext(ctx, &photo, `
-			INSERT INTO photos (plant_id, moment_id, file_id) VALUES ($1, $2, $3)
-			RETURNING `+photoColumns+`;`, plantID, momentID, fileID)
+		err := getNamed(ctx, r.tx, &photo, `
+			INSERT INTO photos (plant_id, moment_id, file_id)
+			VALUES (:plant_id, :moment_id, :file_id)
+			RETURNING `+photoColumns+`;`, map[string]any{
+			paramPlantID:  plantID,
+			paramMomentID: momentID,
+			"file_id":     fileID,
+		})
 
 		switch {
 		case isUniqueViolation(err, photoFileConstraint):
@@ -80,14 +85,10 @@ func (r *Photo) ListOfMoments(ctx context.Context, momentIDs []string) ([]model.
 		return nil, nil
 	}
 
-	query, args, err := sqlx.In(`SELECT `+photoColumns+` FROM photos
-		WHERE moment_id IN (?) ORDER BY moment_id, id;`, momentIDs)
-	if err != nil {
-		return nil, fmt.Errorf("binding Photo list arguments: %w", err)
-	}
-
 	var photos []model.Photo
-	if err = r.tx.SelectContext(ctx, &photos, r.tx.Rebind(query), args...); err != nil {
+	if err := selectNamed(ctx, r.tx, &photos, `SELECT `+photoColumns+` FROM photos
+		WHERE moment_id IN (:moment_ids) ORDER BY moment_id, id;`,
+		map[string]any{"moment_ids": momentIDs}); err != nil {
 		return nil, fmt.Errorf("listing Photos: %w", err)
 	}
 
@@ -101,17 +102,19 @@ func (r *Photo) Delete(
 	ctx context.Context,
 	plantID, momentID, id string,
 ) (model.Photo, int, error) {
+	args := map[string]any{"id": id, paramMomentID: momentID, paramPlantID: plantID}
+
 	var photo model.Photo
 
-	if err := r.tx.GetContext(ctx, &photo, `
-		DELETE FROM photos WHERE id = $1 AND moment_id = $2 AND plant_id = $3
-		RETURNING `+photoColumns+`;`, id, momentID, plantID); err != nil {
+	if err := getNamed(ctx, r.tx, &photo, `
+		DELETE FROM photos WHERE id = :id AND moment_id = :moment_id AND plant_id = :plant_id
+		RETURNING `+photoColumns+`;`, args); err != nil {
 		return model.Photo{}, 0, fmt.Errorf("deleting Photo: %w", err)
 	}
 
 	var remaining int
-	if err := r.tx.GetContext(ctx, &remaining,
-		`SELECT count(*) FROM photos WHERE moment_id = $1;`, momentID); err != nil {
+	if err := getNamed(ctx, r.tx, &remaining,
+		`SELECT count(*) FROM photos WHERE moment_id = :moment_id;`, args); err != nil {
 		return model.Photo{}, 0, fmt.Errorf("counting the Photos of a moment: %w", err)
 	}
 
@@ -121,8 +124,9 @@ func (r *Photo) Delete(
 // FileIDsOfMoment answers the files of the photos of the moment.
 func (r *Photo) FileIDsOfMoment(ctx context.Context, momentID string) ([]string, error) {
 	var ids []string
-	if err := r.tx.SelectContext(ctx, &ids,
-		`SELECT file_id FROM photos WHERE moment_id = $1 ORDER BY id;`, momentID); err != nil {
+	if err := selectNamed(ctx, r.tx, &ids,
+		`SELECT file_id FROM photos WHERE moment_id = :moment_id ORDER BY id;`,
+		map[string]any{paramMomentID: momentID}); err != nil {
 		return nil, fmt.Errorf("listing the files of a moment: %w", err)
 	}
 
@@ -132,8 +136,9 @@ func (r *Photo) FileIDsOfMoment(ctx context.Context, momentID string) ([]string,
 // FileIDsOfPlant answers the files of the photos of every moment of the plant.
 func (r *Photo) FileIDsOfPlant(ctx context.Context, plantID string) ([]string, error) {
 	var ids []string
-	if err := r.tx.SelectContext(ctx, &ids,
-		`SELECT file_id FROM photos WHERE plant_id = $1 ORDER BY id;`, plantID); err != nil {
+	if err := selectNamed(ctx, r.tx, &ids,
+		`SELECT file_id FROM photos WHERE plant_id = :plant_id ORDER BY id;`,
+		map[string]any{paramPlantID: plantID}); err != nil {
 		return nil, fmt.Errorf("listing the files of a plant: %w", err)
 	}
 
