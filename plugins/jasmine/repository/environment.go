@@ -23,7 +23,8 @@ const (
 		        WHERE p.environment_id = e.id AND p.status = 'active') AS active_plant_count
 		FROM environments e`
 
-	plantEnvironmentConstraint = "plants_environment_fkey"
+	plantEnvironmentConstraint  = "plants_environment_fkey"
+	plantProfilePhotoConstraint = "plants_profile_photo_fkey"
 )
 
 // EnvironmentRepository defines the data access contract for Environment entities.

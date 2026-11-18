@@ -35,7 +35,8 @@ A plugin gets data from another component through `pluginapi.Host`.
 A table of a plugin references a table of `public` with a foreign key in two cases
 only: a scope column, which `OWN-005` gives, and a column that names a file, on
 `public.workspace_files (id)` or `public.user_files (id)` with `ON DELETE RESTRICT`.
-The plugin claims the file through `Host.Files` before it trusts the identifier.
+The plugin claims the file through `Host.Files` before it trusts the identifier, and
+deletes the file through `Host.Files` in the transaction that removes the reference.
 
 **Why:** A foreign key reads and writes nothing for the plugin. It lets the database
 refuse the delete of a file that a row of a plugin still names.

@@ -35,7 +35,7 @@ func TestAPlantAnswersEveryMomentInUTC(t *testing.T) {
 		Environment: model.EnvironmentReference{ID: "01a0cae5-eb36-777a-824e-71285629ec17"},
 		CreatedAt:   moment(),
 		UpdatedAt:   moment(),
-	})
+	}, nil)
 
 	for name, value := range map[string]string{
 		"created_at": answer.CreatedAt,

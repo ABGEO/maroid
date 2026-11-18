@@ -19,9 +19,11 @@ import (
 const selectPlants = `
 	SELECT p.id, p.number, p.common_name, p.scientific_name,
 	       e.id AS "environment.id", e.number AS "environment.number", e.name AS "environment.name",
-	       p.acquired_on, p.care_notes, p.status, p.created_at, p.updated_at
+	       p.acquired_on, p.care_notes, p.status, p.profile_photo_id,
+	       pp.file_id AS profile_file_id, p.created_at, p.updated_at
 	FROM plants p
-	JOIN environments e ON e.id = p.environment_id`
+	JOIN environments e ON e.id = p.environment_id
+	LEFT JOIN photos pp ON pp.id = p.profile_photo_id`
 
 // PlantFilter narrows a list of plants. An empty EnvironmentID keeps every
 // environment.
@@ -38,6 +40,9 @@ type PlantRepository interface {
 	Update(ctx context.Context, entity *model.Plant, ifMatch *time.Time) error
 	Delete(ctx context.Context, id string, ifMatch *time.Time) error
 	Lock(ctx context.Context, ids []string) ([]string, error)
+	SetProfilePhoto(ctx context.Context, plantID, photoID string) (*model.Plant, error)
+	FillProfilePhoto(ctx context.Context, plantID, photoID string) error
+	LockForUpdate(ctx context.Context, id string) error
 }
 
 // Plant is a SQL-based implementation of PlantRepository.
@@ -227,6 +232,58 @@ func (r *Plant) Lock(ctx context.Context, ids []string) ([]string, error) {
 	}
 
 	return locked, nil
+}
+
+// SetProfilePhoto makes the photo the profile picture of the plant, and answers the
+// plant. A plant that is absent answers sql.ErrNoRows, and a photo of no moment of the
+// plant answers errs.ErrPhotoForeign.
+func (r *Plant) SetProfilePhoto(
+	ctx context.Context,
+	plantID, photoID string,
+) (*model.Plant, error) {
+	var id string
+
+	err := getNamed(ctx, r.tx, &id,
+		`UPDATE plants SET profile_photo_id = :photo_id WHERE id = :id RETURNING id;`,
+		profileArguments(plantID, photoID))
+
+	switch {
+	case isForeignKeyViolation(err, plantProfilePhotoConstraint):
+		return nil, fmt.Errorf("setting the profile picture of Plant: %w", errs.ErrPhotoForeign)
+	case err != nil:
+		return nil, fmt.Errorf("setting the profile picture of Plant: %w", err)
+	}
+
+	return r.GetByID(ctx, id)
+}
+
+// FillProfilePhoto makes the photo the profile picture of the plant when the plant
+// has none.
+func (r *Plant) FillProfilePhoto(ctx context.Context, plantID, photoID string) error {
+	if _, err := r.tx.NamedExecContext(ctx, `
+		UPDATE plants SET profile_photo_id = :photo_id
+		WHERE id = :id AND profile_photo_id IS NULL;`, profileArguments(plantID, photoID)); err != nil {
+		return fmt.Errorf("filling the profile picture of Plant: %w", err)
+	}
+
+	return nil
+}
+
+// LockForUpdate locks the Plant record until the transaction ends. The key of a new
+// moment waits on the lock, so a delete reads every photo that the plant will ever
+// hold. A plant that is absent answers sql.ErrNoRows.
+func (r *Plant) LockForUpdate(ctx context.Context, id string) error {
+	var locked string
+	if err := getNamed(ctx, r.tx, &locked,
+		`SELECT id FROM plants WHERE id = :id FOR UPDATE;`, map[string]any{"id": id}); err != nil {
+		return fmt.Errorf("locking Plant: %w", err)
+	}
+
+	return nil
+}
+
+func profileArguments(plantID, photoID string) map[string]any {
+	return map[string]any{"id": plantID, "photo_id": photoID}
 }
 
 // refresh reads the stored values of the Plant, with its environment, into entity.

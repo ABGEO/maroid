@@ -2,6 +2,7 @@
 	import { createPager, Pagination } from '@maroid/ui';
 
 	import type { JasmineApi, Plant, PlantFilter } from '../../api';
+	import PlantAvatar from './PlantAvatar.svelte';
 
 	interface Props {
 		api: JasmineApi;
@@ -66,14 +67,19 @@
 						{/if}
 						<td class="meta">{plant.display_id}</td>
 						<td>
-							<a
-								class="link link-hover font-medium"
-								href={hrefOf(plant)}
-								onclick={(event) => event.stopPropagation()}>{plant.common_name}</a
-							>
-							{#if plant.scientific_name}<span class="meta ml-1 italic"
-									>{plant.scientific_name}</span
-								>{/if}
+							<div class="flex items-center gap-3">
+								<PlantAvatar name={plant.common_name} photo={plant.profile_photo} />
+								<div>
+									<a
+										class="link link-hover font-medium"
+										href={hrefOf(plant)}
+										onclick={(event) => event.stopPropagation()}>{plant.common_name}</a
+									>
+									{#if plant.scientific_name}<span class="meta ml-1 italic"
+											>{plant.scientific_name}</span
+										>{/if}
+								</div>
+							</div>
 						</td>
 						<td>{plant.environment.display_id} {plant.environment.name}</td>
 						<td>

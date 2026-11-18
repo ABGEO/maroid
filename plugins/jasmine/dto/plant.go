@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 )
 
@@ -85,16 +86,18 @@ func NewPlantReference(ref *model.PlantReference) PlantReference {
 type PlantResponse struct {
 	PlantReference
 
-	ScientificName *string `json:"scientific_name,omitempty"`
-	AcquiredOn     *string `json:"acquired_on,omitempty"`
-	CareNotes      *string `json:"care_notes,omitempty"`
-	Status         string  `json:"status"`
-	CreatedAt      string  `json:"created_at"`
-	UpdatedAt      string  `json:"updated_at"`
+	ScientificName *string               `json:"scientific_name,omitempty"`
+	AcquiredOn     *string               `json:"acquired_on,omitempty"`
+	CareNotes      *string               `json:"care_notes,omitempty"`
+	Status         string                `json:"status"`
+	ProfilePhoto   *ProfilePhotoResponse `json:"profile_photo,omitempty"`
+	CreatedAt      string                `json:"created_at"`
+	UpdatedAt      string                `json:"updated_at"`
 }
 
-// NewPlantResponse maps a plant model to its response representation.
-func NewPlantResponse(plant *model.Plant) PlantResponse {
+// NewPlantResponse maps a plant model to its response representation, with the
+// address of its profile picture that files holds.
+func NewPlantResponse(plant *model.Plant, files map[string]pluginapi.File) PlantResponse {
 	var acquiredOn *string
 
 	if plant.AcquiredOn != nil {
@@ -113,16 +116,17 @@ func NewPlantResponse(plant *model.Plant) PlantResponse {
 		AcquiredOn:     acquiredOn,
 		CareNotes:      plant.CareNotes,
 		Status:         string(plant.Status),
+		ProfilePhoto:   newProfilePhotoResponse(plant, files),
 		CreatedAt:      plant.CreatedAt.UTC().Format(time.RFC3339),
 		UpdatedAt:      plant.UpdatedAt.UTC().Format(time.RFC3339),
 	}
 }
 
 // NewPlantResponseList maps plant models to their response representation.
-func NewPlantResponseList(plants []model.Plant) []PlantResponse {
+func NewPlantResponseList(plants []model.Plant, files map[string]pluginapi.File) []PlantResponse {
 	result := make([]PlantResponse, 0, len(plants))
 	for i := range plants {
-		result = append(result, NewPlantResponse(&plants[i]))
+		result = append(result, NewPlantResponse(&plants[i], files))
 	}
 
 	return result

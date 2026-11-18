@@ -34,7 +34,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TABLE public.workspaces (id UUID NOT NULL PRIMARY KEY);
-INSERT INTO public.workspaces (id) VALUES ('` + workspace + `');`
+INSERT INTO public.workspaces (id) VALUES ('` + workspace + `');
+CREATE TABLE public.workspace_files (id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7());`
 
 // plantsUnderTest returns a database that holds one environment and count plants,
 // and the identifiers of the plants in the order that they were made, which is

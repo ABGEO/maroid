@@ -14,7 +14,10 @@ import (
 	"github.com/abgeo/maroid/plugins/jasmine/model"
 )
 
-const typeEnvironmentOccupied = "/problems/dev.maroid.jasmine/environment-occupied"
+const (
+	typeEnvironmentOccupied = "/problems/dev.maroid.jasmine/environment-occupied"
+	typePhotoNotReady       = "/problems/dev.maroid.jasmine/photo-not-ready"
+)
 
 // indexToPointer turns the name that the validator gives an item of a list,
 // plant_ids[3], into the segments of a JSON pointer, plant_ids/3.
@@ -69,6 +72,22 @@ func writeEnvironmentOccupied(w http.ResponseWriter, r *http.Request, plants int
 	problem.Write(w, r, &problem.Problem{
 		Type:   typeEnvironmentOccupied,
 		Title:  "The environment holds a plant.",
+		Status: http.StatusConflict,
+		Detail: detail,
+	})
+}
+
+// writePhotoNotReady answers a write that names files that are still pending or
+// processing.
+func writePhotoNotReady(w http.ResponseWriter, r *http.Request, count int) {
+	detail := "1 photo is not ready yet."
+	if count > 1 {
+		detail = fmt.Sprintf("%d photos are not ready yet.", count)
+	}
+
+	problem.Write(w, r, &problem.Problem{
+		Type:   typePhotoNotReady,
+		Title:  "A photo is not ready yet.",
 		Status: http.StatusConflict,
 		Detail: detail,
 	})

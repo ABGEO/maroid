@@ -87,7 +87,7 @@ func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 			return repository.NewEnvironment(tx).List(ctx, seek)
 		},
 		func(row model.Environment) string { return row.ID },
-		dto.NewEnvironmentResponseList,
+		plain(dto.NewEnvironmentResponseList),
 	)
 }
 
@@ -104,7 +104,7 @@ func (h *EnvironmentHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 			return repository.NewEnvironment(tx).GetByID(ctx, id)
 		},
 		func(row *model.Environment) time.Time { return row.UpdatedAt },
-		dto.NewEnvironmentResponse,
+		plain(dto.NewEnvironmentResponse),
 	)
 }
 
@@ -163,7 +163,7 @@ func (h *EnvironmentHandler) Update(w http.ResponseWriter, r *http.Request) {
 		func(tx *sqlx.Tx) replacer[model.Environment] { return repository.NewEnvironment(tx) },
 		func(existing *model.Environment) { existing.Name = req.Name },
 		func(row *model.Environment) time.Time { return row.UpdatedAt },
-		dto.NewEnvironmentResponse,
+		plain(dto.NewEnvironmentResponse),
 	)
 }
 

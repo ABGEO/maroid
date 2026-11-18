@@ -25,7 +25,7 @@ func listPage[T any, R any](
 	options page.Options,
 	read func(ctx context.Context, tx *sqlx.Tx, seek page.Seek, asked page.Request) ([]T, error),
 	identify func(T) string,
-	present func([]T) []R,
+	present func(context.Context, []T) []R,
 ) {
 	asked, failure := page.ReadRequest(r, options)
 	if failure != nil {
@@ -51,7 +51,7 @@ func listPage[T any, R any](
 		return
 	}
 
-	answered, err := page.New(r, present(window.Items), window.Next, window.Prev)
+	answered, err := page.New(r, present(r.Context(), window.Items), window.Next, window.Prev)
 	if err != nil {
 		logger.ErrorContext(r.Context(), action, slog.Any("error", err))
 		problem.Write(w, r, problem.NewInternal())

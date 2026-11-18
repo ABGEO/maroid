@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -15,7 +17,12 @@ type FileStore interface {
 		ids ...string,
 	) ([]pluginapi.File, error)
 	ClaimFile(ctx context.Context, pluginID *pluginapi.PluginID, id string) error
-	DeleteFile(ctx context.Context, pluginID *pluginapi.PluginID, id string) error
+	DeleteFiles(
+		ctx context.Context,
+		tx *sqlx.Tx,
+		pluginID *pluginapi.PluginID,
+		ids ...string,
+	) error
 }
 
 type boundFiles struct {
@@ -42,9 +49,9 @@ func (f *boundFiles) Claim(ctx context.Context, id string) error {
 	return nil
 }
 
-func (f *boundFiles) Delete(ctx context.Context, id string) error {
-	if err := f.store.DeleteFile(ctx, f.pluginID, id); err != nil {
-		return fmt.Errorf("deleting the file %q: %w", id, err)
+func (f *boundFiles) Delete(ctx context.Context, tx *sqlx.Tx, ids ...string) error {
+	if err := f.store.DeleteFiles(ctx, tx, f.pluginID, ids...); err != nil {
+		return fmt.Errorf("deleting the files: %w", err)
 	}
 
 	return nil

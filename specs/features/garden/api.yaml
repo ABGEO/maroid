@@ -333,8 +333,10 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/Invalid"
     delete:
       operationId: deletePlant
-      summary: Delete a plant, its care intervals, and its maintenance entries.
-      description: Realizes `GARDEN-FR-006`. The permission is `plants.write`.
+      summary: Delete a plant, its care intervals, its maintenance entries, and its photos.
+      description: >
+        Realizes `GARDEN-FR-006`, `GARDEN-FR-053`, and `GARDEN-FR-054`. The files of
+        the photos go in the same transaction. The permission is `plants.write`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
       responses:
@@ -704,6 +706,284 @@ paths:
         "412":
           $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
 
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/plants/{plantId}/moments:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/PlantId"
+    get:
+      operationId: listMoments
+      summary: List the moments of a plant.
+      description: >
+        Realizes `GARDEN-FR-056`, `GARDEN-FR-057`, and `GARDEN-FR-061`. The page is
+        sorted by `taken_on`, the latest first, then by `id`, the latest first. The
+        route takes no `sort`. `GARDEN-DD-020`. The permission is `plants.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: One page of moments, each with its photos.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MomentPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    post:
+      operationId: createMoment
+      summary: Add a moment with its photos to a plant.
+      description: >
+        Realizes `GARDEN-FR-045`, `GARDEN-FR-048`, `GARDEN-FR-055`, and
+        `GARDEN-FR-063`. Every file is a ready file of the kind `plant-photo` in the
+        acting workspace. When the plant has no profile picture, the first photo
+        becomes it. The permission is `plants.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MomentInput"
+      responses:
+        "201":
+          description: The created moment.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+            Location:
+              description: The address of the new moment.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Moment"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/PhotoNotReady"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/plants/{plantId}/moments/{id}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/PlantId"
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getMoment
+      summary: Read one moment of a plant.
+      description: Realizes `GARDEN-FR-061`. The permission is `plants.read`.
+      responses:
+        "200":
+          description: The moment.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Moment"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    put:
+      operationId: replaceMoment
+      summary: Change the day and the note of a moment.
+      description: >
+        Realizes `GARDEN-FR-049`. An omitted `note` becomes null. The photos stay.
+        The permission is `plants.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MomentUpdate"
+      responses:
+        "200":
+          description: The changed moment.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Moment"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+    delete:
+      operationId: deleteMoment
+      summary: Delete a moment, its photos, and their files.
+      description: >
+        Realizes `GARDEN-FR-052` and `GARDEN-FR-053`. When a photo of the moment is
+        the profile picture, the plant has none after. The permission is
+        `plants.write`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: The moment is gone.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/plants/{plantId}/moments/{momentId}/photos:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/PlantId"
+      - $ref: "#/components/parameters/MomentId"
+    post:
+      operationId: addPhotos
+      summary: Add photos to a moment.
+      description: >
+        Realizes `GARDEN-FR-050`. The rules of `createMoment` hold for the files.
+        Every photo lands, or none. The profile picture stays as it is. The
+        permission is `plants.write`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhotoInput"
+      responses:
+        "201":
+          description: The moment with every photo, the new ones last.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Moment"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/PhotoNotReady"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/plants/{plantId}/moments/{momentId}/photos/{id}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/PlantId"
+      - $ref: "#/components/parameters/MomentId"
+      - $ref: "#/components/parameters/Id"
+    delete:
+      operationId: deletePhoto
+      summary: Delete one photo and its file.
+      description: >
+        Realizes `GARDEN-FR-051`, `GARDEN-FR-053`, and `GARDEN-FR-064`. When the
+        photo is the last of its moment, the moment goes too. When it is the
+        profile picture, the plant has none after. The permission is `plants.write`.
+      responses:
+        "204":
+          description: The photo is gone.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.jasmine/api/plants/{plantId}/profile-photo:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/PlantId"
+    put:
+      operationId: setProfilePhoto
+      summary: Set a photo of the gallery as the profile picture of its plant.
+      description: >
+        Realizes `GARDEN-FR-062` and `GARDEN-FR-055`. The photo stays in its moment.
+        The permission is `plants.write`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfilePhotoInput"
+      responses:
+        "200":
+          description: The plant with its new profile picture.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Plant"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
 components:
   parameters:
     Id:
@@ -719,6 +999,14 @@ components:
       in: path
       required: true
       description: The internal identifier of the plant.
+      schema:
+        type: string
+        format: uuid
+    MomentId:
+      name: momentId
+      in: path
+      required: true
+      description: The internal identifier of the moment.
       schema:
         type: string
         format: uuid
@@ -751,7 +1039,6 @@ components:
 
     EnvironmentInput:
       type: object
-      additionalProperties: false
       required: [name]
       properties:
         name:
@@ -803,7 +1090,6 @@ components:
 
     PlantInput:
       type: object
-      additionalProperties: false
       required: [common_name, environment_id]
       properties:
         common_name:
@@ -867,6 +1153,8 @@ components:
               type: string
             status:
               $ref: "#/components/schemas/PlantStatus"
+            profile_photo:
+              $ref: "#/components/schemas/ProfilePhoto"
             created_at:
               type: string
               format: date-time
@@ -886,9 +1174,148 @@ components:
               items:
                 $ref: "#/components/schemas/Plant"
 
+    ReadAddress:
+      type: object
+      description: A signed address of one variant. It stops working at `expires_at`.
+      required: [url, expires_at]
+      properties:
+        url:
+          type: string
+          format: uri
+        expires_at:
+          type: string
+          format: date-time
+
+    FileIds:
+      type: array
+      description: >
+        The files of the kind `plant-photo`, in the order of the photos. Each one is
+        ready and is the photo of no moment. `GARDEN-FR-048`, `GARDEN-INV-005`.
+      minItems: 1
+      maxItems: 100
+      uniqueItems: true
+      items:
+        type: string
+        format: uuid
+
+    MomentInput:
+      type: object
+      required: [taken_on, file_ids]
+      properties:
+        taken_on:
+          type: string
+          format: date
+          description: At most the day after the current UTC date. `GARDEN-DD-022`.
+        note:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        file_ids:
+          $ref: "#/components/schemas/FileIds"
+
+    MomentUpdate:
+      type: object
+      required: [taken_on]
+      properties:
+        taken_on:
+          type: string
+          format: date
+          description: At most the day after the current UTC date. `GARDEN-DD-022`.
+        note:
+          type: string
+          minLength: 1
+          maxLength: 1000
+
+    PhotoInput:
+      type: object
+      required: [file_ids]
+      properties:
+        file_ids:
+          $ref: "#/components/schemas/FileIds"
+
+    ProfilePhotoInput:
+      type: object
+      required: [photo_id]
+      properties:
+        photo_id:
+          type: string
+          format: uuid
+          description: A photo of a moment of the same plant. `GARDEN-INV-006`.
+
+    Photo:
+      type: object
+      description: >
+        `width`, `height`, `thumbnail`, and `display` are absent when the hub did not
+        answer the ready file. `spec-photos.md` section 4.5.
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        width:
+          type: integer
+          minimum: 1
+        height:
+          type: integer
+          minimum: 1
+        thumbnail:
+          $ref: "#/components/schemas/ReadAddress"
+        display:
+          $ref: "#/components/schemas/ReadAddress"
+
+    Moment:
+      type: object
+      required: [id, plant_id, taken_on, photos, created_at, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        plant_id:
+          type: string
+          format: uuid
+        taken_on:
+          type: string
+          format: date
+        note:
+          type: string
+        photos:
+          type: array
+          description: Every photo of the moment, in the order of `id`. At least one.
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/Photo"
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    MomentPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Moment"
+
+    ProfilePhoto:
+      type: object
+      description: The profile picture of a plant. `GARDEN-FR-065`.
+      required: [id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        thumbnail:
+          $ref: "#/components/schemas/ReadAddress"
+
     CareIntervalInput:
       type: object
-      additionalProperties: false
       required: [days]
       properties:
         days:
@@ -952,7 +1379,6 @@ components:
 
     MaintenanceEntryBatchInput:
       type: object
-      additionalProperties: false
       required: [plant_ids, type]
       properties:
         plant_ids:
@@ -976,7 +1402,6 @@ components:
 
     MaintenanceEntryInput:
       type: object
-      additionalProperties: false
       required: [type, performed_at]
       properties:
         type:
@@ -1052,6 +1477,19 @@ components:
         The environment holds a plant, active or inactive. The type is
         `/problems/dev.maroid.jasmine/environment-occupied`, and `detail` names the
         count of plants. `GARDEN-FR-002`.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+
+    PhotoNotReady:
+      description: >
+        A file of the body is pending or processing. The type is
+        `/problems/dev.maroid.jasmine/photo-not-ready`, and `detail` names the count
+        of the files. `GARDEN-FR-048`.
       headers:
         X-Flow-ID:
           $ref: "../../api/components.yaml#/components/headers/FlowId"

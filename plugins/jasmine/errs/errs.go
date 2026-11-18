@@ -24,4 +24,9 @@ var (
 	ErrUnknownMaintenanceType = errors.New("maintenance entry: unknown type")
 	// ErrUnknownCareState is returned when a string does not name a care state.
 	ErrUnknownCareState = errors.New("care interval: unknown state")
+	// ErrFileTaken is returned when a photo names a file that is already the photo
+	// of a moment.
+	ErrFileTaken = errors.New("photo: the file is already a photo")
+	// ErrPhotoForeign is returned when a profile picture names no photo of its plant.
+	ErrPhotoForeign = errors.New("plant: the photo is not a photo of the plant")
 )

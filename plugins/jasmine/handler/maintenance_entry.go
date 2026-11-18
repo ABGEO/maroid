@@ -115,7 +115,7 @@ func (h *MaintenanceEntryHandler) List(w http.ResponseWriter, r *http.Request) {
 				List(ctx, seek, entryOrder(asked.Sort), filter)
 		},
 		func(row model.MaintenanceEntry) string { return row.ID },
-		dto.NewMaintenanceEntryResponseList,
+		plain(dto.NewMaintenanceEntryResponseList),
 	)
 }
 
@@ -132,7 +132,7 @@ func (h *MaintenanceEntryHandler) GetByID(w http.ResponseWriter, r *http.Request
 			return repository.NewMaintenanceEntry(tx).GetByID(ctx, id)
 		},
 		func(row *model.MaintenanceEntry) time.Time { return row.UpdatedAt },
-		dto.NewMaintenanceEntryResponse,
+		plain(dto.NewMaintenanceEntryResponse),
 	)
 }
 
@@ -204,7 +204,7 @@ func (h *MaintenanceEntryHandler) Update(w http.ResponseWriter, r *http.Request)
 		func(tx *sqlx.Tx) replacer[model.MaintenanceEntry] { return repository.NewMaintenanceEntry(tx) },
 		func(existing *model.MaintenanceEntry) { req.ApplyTo(existing) },
 		func(row *model.MaintenanceEntry) time.Time { return row.UpdatedAt },
-		dto.NewMaintenanceEntryResponse,
+		plain(dto.NewMaintenanceEntryResponse),
 	)
 }
 

@@ -5,6 +5,7 @@ package handler_test
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -121,5 +122,136 @@ func TestTheUpcomingListAnswersWithinOneSecond(t *testing.T) {
 	}
 
 	t.Logf("the slowest of 20 reads took %s", slowest)
+	assert.Less(t, slowest, time.Second)
+}
+
+type plantPage struct {
+	Items []plantAnswer `json:"items"`
+	Next  string        `json:"next"`
+}
+
+// seedPhotos gives each moment the count of photos, each of a new ready file of H,
+// and makes a photo of each plant its profile picture. The parent and the child rows
+// land in one statement, where the keys hold at its end.
+func seedPhotos(perMoment int) string {
+	return fmt.Sprintf(`
+WITH seed AS (
+    SELECT m.id AS moment_id, m.plant_id, uuidv7() AS file_id
+    FROM moments m
+    CROSS JOIN generate_series(1, %d)
+),
+files AS (
+    INSERT INTO public.workspace_files (id, workspace_id)
+    SELECT file_id, '%s' FROM seed
+)
+INSERT INTO photos (plant_id, moment_id, file_id)
+SELECT plant_id, moment_id, file_id FROM seed;
+
+UPDATE plants p
+SET profile_photo_id = (SELECT min(ph.id::text)::uuid FROM photos ph WHERE ph.plant_id = p.id)
+WHERE EXISTS (SELECT 1 FROM photos ph WHERE ph.plant_id = p.id);
+
+ANALYZE;`, perMoment, workspaceH)
+}
+
+// measuredGallery gives the plant number 1 of measuredGarden 100 moments.
+const measuredGallery = `
+INSERT INTO moments (plant_id, taken_on)
+SELECT p.id, current_date - n
+FROM plants p
+CROSS JOIN generate_series(1, 100) AS n
+WHERE p.number = 1;`
+
+// measuredMoments gives each plant of measuredGarden one moment.
+const measuredMoments = `
+INSERT INTO moments (plant_id, taken_on) SELECT id, current_date FROM plants;`
+
+// seed runs the statements in H.
+func seed(t *testing.T, fixture *garden, statements ...string) {
+	t.Helper()
+
+	require.NoError(t, fixture.inHome(t, func(tx *sqlx.Tx) error {
+		for _, statement := range statements {
+			if _, err := tx.Exec(statement); err != nil {
+				return fmt.Errorf("seeding the measured garden: %w", err)
+			}
+		}
+
+		return nil
+	}))
+}
+
+// GARDEN-SC-069: The gallery of a plant with 100 moments and 300 photos answers in
+// less than 1 second, from the call of the handler to the last byte.
+//
+//nolint:paralleltest // a measurement runs alone, so no other test takes its time
+func TestTheGalleryAnswersWithinOneSecond(t *testing.T) {
+	fixture := gardenUnderTest(t)
+	router := fixture.router(workspaceH)
+
+	seed(t, fixture, measuredGarden, measuredGallery, seedPhotos(3))
+
+	var plantID string
+
+	require.NoError(t, fixture.inHome(t, func(tx *sqlx.Tx) error {
+		return tx.Get(&plantID, `SELECT id FROM plants WHERE number = 1`)
+	}))
+
+	var slowest time.Duration
+
+	for range 20 {
+		start := time.Now()
+		recorder := send(t, router, http.MethodGet, momentsOf(plantID)+"?limit=100", "", "")
+		elapsed := time.Since(start)
+
+		require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+
+		moments := decode[momentPage](t, recorder).Items
+		require.Len(t, moments, 100, "the read answers every moment")
+		require.NotNil(t, moments[99].Photos[2].Thumbnail, "the read answers the addresses")
+
+		slowest = max(slowest, elapsed)
+	}
+
+	t.Logf("the slowest of 20 reads took %s", slowest)
+	assert.Less(t, slowest, time.Second)
+}
+
+// GARDEN-SC-070: Each page of the plants of a workspace with 500 plants, each with a
+// profile picture, answers in less than 1 second, from the call of the handler to the
+// last byte.
+//
+//nolint:paralleltest // a measurement runs alone, so no other test takes its time
+func TestThePlantPagesAnswerWithinOneSecond(t *testing.T) {
+	fixture := gardenUnderTest(t)
+	router := fixture.router(workspaceH)
+
+	seed(t, fixture, measuredGarden, measuredMoments, seedPhotos(1))
+
+	var (
+		slowest time.Duration
+		plants  int
+	)
+
+	for link := "/plants?limit=100"; link != ""; {
+		start := time.Now()
+		recorder := send(t, router, http.MethodGet, link, "", "")
+		elapsed := time.Since(start)
+
+		require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+
+		answered := decode[plantPage](t, recorder)
+		for _, plant := range answered.Items {
+			require.NotNil(t, plant.ProfilePhoto, "every plant answers its profile picture")
+			require.NotNil(t, plant.ProfilePhoto.Thumbnail, "every picture answers its address")
+		}
+
+		plants += len(answered.Items)
+		slowest = max(slowest, elapsed)
+		link = strings.TrimPrefix(answered.Next, externalURL)
+	}
+
+	require.Equal(t, 500, plants, "the pages answer every plant")
+	t.Logf("the slowest of %d pages took %s", plants/100, slowest)
 	assert.Less(t, slowest, time.Second)
 }

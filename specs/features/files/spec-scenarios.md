@@ -259,7 +259,7 @@ width, the height, the time of the start, and editor A as the uploader.
 **Layer:** integration
 
 **Given** a claimed file that no row references.
-**When** the probe calls `Delete`.
+**When** the probe calls `Delete` in its transaction, and commits.
 **Then** the row is absent, and a task `purge` is due.
 
 ## `FILES-SC-026`
@@ -268,7 +268,7 @@ width, the height, the time of the start, and editor A as the uploader.
 **Layer:** integration
 
 **Given** a row of the probe references a file.
-**When** the probe calls `Delete` with that file.
+**When** the probe calls `Delete` with that file in its transaction, before it deletes the row.
 **Then** the call answers `ErrFileReferenced`, and the row of the file stays.
 
 ## `FILES-SC-027`
@@ -443,6 +443,24 @@ holds a file.
 **Given** a file of the probe in workspace A.
 **When** a statement updates its `plugin_id`, its `kind`, or its `workspace_id`.
 **Then** the trigger `files_keep_identity` refuses each one.
+
+## `FILES-SC-045`
+
+**Verifies:** `FILES-FR-021`
+**Layer:** integration
+
+**Given** a row of the probe references a claimed file.
+**When** the probe deletes the row, calls `Delete` with the file in the same transaction, and commits.
+**Then** the row of the file is absent, `Get` omits it, and a task `purge` is due.
+
+## `FILES-SC-046`
+
+**Verifies:** `FILES-FR-021`
+**Layer:** integration
+
+**Given** a row of the probe references a claimed file.
+**When** the probe deletes the row, calls `Delete` with the file in the same transaction, then fails, so the transaction rolls back.
+**Then** the row of the probe and the row of the file stay, and no task `purge` exists.
 
 ## Retired identifiers
 

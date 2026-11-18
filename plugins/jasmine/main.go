@@ -13,6 +13,7 @@ import (
 	"github.com/abgeo/maroid/plugins/jasmine/db"
 	jasminehandler "github.com/abgeo/maroid/plugins/jasmine/handler"
 	"github.com/abgeo/maroid/plugins/jasmine/job"
+	"github.com/abgeo/maroid/plugins/jasmine/model"
 	"github.com/abgeo/maroid/plugins/jasmine/mqtt/subscriber"
 	"github.com/abgeo/maroid/plugins/jasmine/permission"
 	"github.com/abgeo/maroid/plugins/jasmine/telegram/command"
@@ -39,6 +40,7 @@ type JasminePlugin struct {
 	notifier    pluginapi.PluginNotifier
 	telegramBot pluginapi.TelegramBot
 	pages       pluginapi.PluginPages
+	files       pluginapi.PluginFiles
 }
 
 var (
@@ -51,6 +53,7 @@ var (
 	_ pluginapi.NotifyingPlugin       = (*JasminePlugin)(nil)
 	_ pluginapi.WidgetPlugin          = (*JasminePlugin)(nil)
 	_ pluginapi.TelegramCommandPlugin = (*JasminePlugin)(nil)
+	_ pluginapi.FilePlugin            = (*JasminePlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -82,6 +85,11 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host page linker: %w", err)
 	}
 
+	files, err := host.Files()
+	if err != nil {
+		return nil, fmt.Errorf("getting host files: %w", err)
+	}
+
 	return &JasminePlugin{
 		config:      pluginConfig,
 		logger:      host.Logger(),
@@ -89,6 +97,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		notifier:    notifier,
 		telegramBot: telegramBot,
 		pages:       pages,
+		files:       files,
 	}, nil
 }
 
@@ -137,6 +146,26 @@ func (p *JasminePlugin) Migrations() (fs.FS, error) {
 	}
 
 	return migrationsFS, nil
+}
+
+// FileKinds returns the photo of a plant.
+func (p *JasminePlugin) FileKinds() ([]pluginapi.FileKind, error) {
+	return []pluginapi.FileKind{
+		{
+			Key:   model.PhotoKind,
+			Scope: pluginapi.FileScopeWorkspace,
+			MediaTypes: []string{
+				"image/jpeg",
+				"image/png",
+				"image/webp",
+				"image/heic",
+				"image/heif",
+			},
+			MaxSize:    pluginapi.MaxFileSize,
+			Permission: permission.PlantsWrite,
+			Image:      true,
+		},
+	}, nil
 }
 
 // UIManifest returns the pages of the remote and its assets.
@@ -197,7 +226,8 @@ func (p *JasminePlugin) Permissions() ([]pluginapi.Permission, error) {
 func (p *JasminePlugin) Routes() ([]pluginapi.Route, error) {
 	return slices.Concat(
 		jasminehandler.NewEnvironmentHandler(p.logger, p.db).Routes(),
-		jasminehandler.NewPlantHandler(p.logger, p.db).Routes(),
+		jasminehandler.NewPlantHandler(p.logger, p.db, p.files).Routes(),
+		jasminehandler.NewMomentHandler(p.logger, p.db, p.files).Routes(),
 		jasminehandler.NewMaintenanceEntryHandler(p.logger, p.db).Routes(),
 		jasminehandler.NewCareIntervalHandler(p.logger, p.db).Routes(),
 	), nil

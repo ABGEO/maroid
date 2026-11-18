@@ -21,22 +21,28 @@ import (
 )
 
 const (
-	pathPlants    = "/plants"
-	pathPlantByID = "/plants/{id}"
+	pathPlants       = "/plants"
+	pathPlantByID    = "/plants/{id}"
+	pathPlantProfile = "/plants/{plantId}/profile-photo"
 
 	filterEnvironmentID = "environment_id"
 	filterStatus        = "status"
 )
 
-// PlantHandler provides HTTP handlers for plant CRUD.
+// PlantHandler provides HTTP handlers for plant CRUD and the profile picture.
 type PlantHandler struct {
 	logger *slog.Logger
 	db     pluginapi.PluginDB
+	files  pluginapi.PluginFiles
 }
 
 // NewPlantHandler creates a new PlantHandler.
-func NewPlantHandler(logger *slog.Logger, db pluginapi.PluginDB) *PlantHandler {
-	return &PlantHandler{logger: logger, db: db}
+func NewPlantHandler(
+	logger *slog.Logger,
+	db pluginapi.PluginDB,
+	files pluginapi.PluginFiles,
+) *PlantHandler {
+	return &PlantHandler{logger: logger, db: db, files: files}
 }
 
 // Routes returns the HTTP routes for plant management.
@@ -72,6 +78,12 @@ func (h *PlantHandler) Routes() []pluginapi.Route {
 			Handler:    h.Delete,
 			Permission: permission.PlantsWrite,
 		},
+		{
+			Method:     http.MethodPut,
+			Pattern:    pathPlantProfile,
+			Handler:    h.SetProfilePhoto,
+			Permission: permission.PlantsWrite,
+		},
 	}
 }
 
@@ -97,7 +109,7 @@ func (h *PlantHandler) List(w http.ResponseWriter, r *http.Request) {
 			return repository.NewPlant(tx).List(ctx, seek, plantFilter(asked.Filters))
 		},
 		func(row model.Plant) string { return row.ID },
-		dto.NewPlantResponseList,
+		h.presentAll,
 	)
 }
 
@@ -114,7 +126,7 @@ func (h *PlantHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 			return repository.NewPlant(tx).GetByID(ctx, id)
 		},
 		func(row *model.Plant) time.Time { return row.UpdatedAt },
-		dto.NewPlantResponse,
+		h.present,
 	)
 }
 
@@ -153,7 +165,7 @@ func (h *PlantHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set(precondition.ETagHeader, precondition.ETag(plant.UpdatedAt))
 	w.Header().Set("Location", location(r, plant.ID))
 	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, dto.NewPlantResponse(plant))
+	render.JSON(w, r, dto.NewPlantResponse(plant, nil))
 }
 
 // Update handles PUT /plants/{id}. The display identifier and the history stay
@@ -174,12 +186,12 @@ func (h *PlantHandler) Update(w http.ResponseWriter, r *http.Request) {
 		func(tx *sqlx.Tx) replacer[model.Plant] { return repository.NewPlant(tx) },
 		func(existing *model.Plant) { req.ApplyTo(existing) },
 		func(row *model.Plant) time.Time { return row.UpdatedAt },
-		dto.NewPlantResponse,
+		h.present,
 	)
 }
 
-// Delete handles DELETE /plants/{id}. The care intervals and the maintenance
-// entries of the plant go with it.
+// Delete handles DELETE /plants/{id}. The care intervals, the maintenance entries,
+// the moments, and the files of the photos go with it.
 func (h *PlantHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, ok := pathID(w, r, paramID)
 	if !ok {
@@ -193,7 +205,25 @@ func (h *PlantHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		h.db,
 		"deleting the plant "+id,
 		func(ctx context.Context, tx *sqlx.Tx) error {
-			return repository.NewPlant(tx).Delete(ctx, id, ifMatch)
+			plants := repository.NewPlant(tx)
+			if txErr := plants.LockForUpdate(ctx, id); txErr != nil {
+				return fmt.Errorf("locking the plant: %w", txErr)
+			}
+
+			fileIDs, txErr := repository.NewPhoto(tx).FileIDsOfPlant(ctx, id)
+			if txErr != nil {
+				return fmt.Errorf("reading the files of the photos: %w", txErr)
+			}
+
+			if txErr = plants.Delete(ctx, id, ifMatch); txErr != nil {
+				return fmt.Errorf("deleting the plant: %w", txErr)
+			}
+
+			if txErr = h.files.Delete(ctx, tx, fileIDs...); txErr != nil {
+				return fmt.Errorf("deleting the files of the photos: %w", txErr)
+			}
+
+			return nil
 		},
 	)
 	if err != nil {
@@ -203,6 +233,60 @@ func (h *PlantHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.NoContent(w, r)
+}
+
+// SetProfilePhoto handles PUT /plants/{plantId}/profile-photo. The photo stays in
+// its moment.
+func (h *PlantHandler) SetProfilePhoto(w http.ResponseWriter, r *http.Request) {
+	plantID, ok := pathID(w, r, paramPlantID)
+	if !ok {
+		return
+	}
+
+	var req dto.ProfilePhotoRequest
+	if !readBody(w, r, &req) {
+		return
+	}
+
+	plant, err := fetchInTx(
+		r.Context(),
+		h.db,
+		"setting the profile picture of the plant "+plantID,
+		func(ctx context.Context, tx *sqlx.Tx) (*model.Plant, error) {
+			return repository.NewPlant(tx).SetProfilePhoto(ctx, plantID, req.PhotoID)
+		},
+	)
+	if err != nil {
+		failWrite(w, r, h.logger, "failed to set the profile picture", err)
+
+		return
+	}
+
+	w.Header().Set(precondition.ETagHeader, precondition.ETag(plant.UpdatedAt))
+	render.Status(r, http.StatusOK)
+	render.JSON(w, r, h.present(r.Context(), plant))
+}
+
+func (h *PlantHandler) present(ctx context.Context, plant *model.Plant) dto.PlantResponse {
+	return dto.NewPlantResponse(plant, addressesOf(ctx, h.logger, h.files, profileFiles(plant)))
+}
+
+func (h *PlantHandler) presentAll(ctx context.Context, plants []model.Plant) []dto.PlantResponse {
+	ids := make([]string, 0, len(plants))
+	for i := range plants {
+		ids = append(ids, profileFiles(&plants[i])...)
+	}
+
+	return dto.NewPlantResponseList(plants, addressesOf(ctx, h.logger, h.files, ids))
+}
+
+// profileFiles answers the file of the profile picture of the plant, when it has one.
+func profileFiles(plant *model.Plant) []string {
+	if plant.ProfileFileID == nil {
+		return nil
+	}
+
+	return []string{*plant.ProfileFileID}
 }
 
 // checkPlantFilters refuses a filter value that names no environment identifier
