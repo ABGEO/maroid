@@ -103,12 +103,18 @@ var (
 	// ErrFileScopeAbsent reports that the unit of work carries no owner of the scope:
 	// no acting user for the user scope, or no acting workspace for the workspace scope.
 	ErrFileScopeAbsent = errors.New("file: no owner of the scope")
+	// ErrTooManyFiles reports a call of Get with more than MaxFilesPerGet identifiers.
+	ErrTooManyFiles = errors.New("file: too many identifiers")
 )
+
+// MaxFilesPerGet is the most identifiers that one call of PluginFiles.Get takes.
+const MaxFilesPerGet = 100
 
 // PluginFiles reads, claims, and deletes the files of one plugin in the acting scope.
 type PluginFiles interface {
 	// Get answers the files under the identifiers. It omits an identifier that the
-	// plugin and the acting scope do not hold.
+	// plugin and the acting scope do not hold. It answers ErrTooManyFiles past
+	// MaxFilesPerGet identifiers.
 	Get(ctx context.Context, ids ...string) ([]File, error)
 	// Claim marks the file as used by a row of the plugin, so the hub keeps it past
 	// the expiry of an unclaimed file. A file in any state takes a claim.
