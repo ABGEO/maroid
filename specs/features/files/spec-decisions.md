@@ -171,8 +171,9 @@ health-go keeps no answer that a handler reads.
 
 **Realizes:** `FILES-FR-026` to `FILES-FR-028`
 **Decision:** `@maroid/ui` gains `FileUpload`. It runs `@uppy/core` with `@uppy/aws-s3`,
-whose `getUploadParameters` calls `client.start` and answers the `PUT` with its headers,
-and `shouldUseMultipart: false`. It draws its own daisyUI markup over the
+whose `generateObjectKey` answers the Uppy file, and whose `signRequest` calls
+`client.start` for that file and answers the `PUT` with its headers. It sets
+`shouldUseMultipart: false`. It draws its own daisyUI markup over the
 `useDropzone` hook of `@uppy/svelte`, and loads no Uppy style sheet and no Dashboard.
 It shows the `upload-progress` events for each file. After `upload-success` it calls
 `client.complete`, then reads `client.get` every 2 seconds for at most 60 seconds, and
