@@ -73,7 +73,7 @@
 			case 'uploading':
 				return `Uploading ${entry.progress}%`;
 			case 'processing':
-				return 'Processing';
+				return entry.message ?? 'Processing';
 			case 'ready':
 				return 'Ready';
 			case 'failed':
@@ -108,10 +108,14 @@
 						</span>
 					</div>
 					{#if entry.phase === 'uploading'}
-						<progress class="progress progress-primary w-full" value={entry.progress} max="100"
+						<progress
+							class="progress progress-primary w-full"
+							value={entry.progress}
+							max="100"
+							aria-label={`Upload of ${entry.name}`}
 						></progress>
-					{:else if entry.phase === 'processing'}
-						<progress class="progress w-full"></progress>
+					{:else if entry.phase === 'processing' && !entry.message}
+						<progress class="progress w-full" aria-label={`Processing of ${entry.name}`}></progress>
 					{/if}
 				</li>
 			{/each}

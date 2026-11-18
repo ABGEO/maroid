@@ -18,7 +18,7 @@ export interface UploadEntry {
 	phase: UploadPhase;
 	/** The file as the hub last answered it. */
 	file?: FileRecord;
-	/** Why the browser or the hub refused the file. */
+	/** Why the browser or the hub refused the file, or why the result is not known yet. */
 	message?: string;
 }
 
@@ -166,7 +166,10 @@ export class Uploader {
 		await this.#follow(entryId, entry.file.id);
 	}
 
-	/** Reads the file every 2 seconds until it settles, for at most 60 seconds. */
+	/**
+	 * Reads the file every 2 seconds until it settles, for at most 60 seconds. A file
+	 * that is still processing then says so, and the page shows its state at the next read.
+	 */
 	async #follow(entryId: string, fileId: string): Promise<void> {
 		const deadline = Date.now() + POLL_LIMIT_MS;
 
@@ -191,6 +194,10 @@ export class Uploader {
 			}
 
 			this.#update(entryId, { file });
+		}
+
+		if (!this.#closed) {
+			this.#update(entryId, { message: 'Still processing. Check again later.' });
 		}
 	}
 
