@@ -3,6 +3,8 @@ package file
 import (
 	"context"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -21,7 +23,13 @@ func (s *Store) ClaimFile(ctx context.Context, pluginID *pluginapi.PluginID, id 
 	return s.Claim(ctx, pluginID.String(), id)
 }
 
-// DeleteFile removes the file of the plugin, for the host of the plugin.
-func (s *Store) DeleteFile(ctx context.Context, pluginID *pluginapi.PluginID, id string) error {
-	return s.Delete(ctx, pluginID.String(), id)
+// DeleteFiles removes the files of the plugin through its transaction, for the host of
+// the plugin.
+func (s *Store) DeleteFiles(
+	ctx context.Context,
+	tx *sqlx.Tx,
+	pluginID *pluginapi.PluginID,
+	ids ...string,
+) error {
+	return s.Delete(ctx, tx, pluginID.String(), ids...)
 }

@@ -132,8 +132,9 @@ sets `bytes_absent`. The file keeps the detected type.
 **Decision:** A plugin table references the file with
 `REFERENCES public.workspace_files (id) ON DELETE RESTRICT`, or the user table.
 `Claim` sets `claimed_at` on a file of the plugin in the acting scope, and answers
-`ErrFileAbsent` for any other. `Delete` deletes the row and writes a `purge` task in one
-transaction, and maps SQLSTATE `23503` to `ErrFileReferenced`. `expire` deletes an
+`ErrFileAbsent` for any other. `Delete` runs in the transaction of the plugin
+(`ADR-0023`): it deletes each row and writes a `purge` task, and maps SQLSTATE `23503`
+to `ErrFileReferenced`. The plugin deletes its own rows first. `expire` deletes an
 unclaimed row with a `purge` task. When the foreign key refuses it, `expire` sets
 `claimed_at`, because a row of the consumer references the file.
 **Rationale:** The database refuses a delete while a row references the file, in every
@@ -142,6 +143,8 @@ past row level security, so the reference needs no scope. `Claim` checks the sco
 the plugin, so a plugin learns at once of an identifier that it does not own.
 **Alternatives:** A list of references in the hub. The consumer then deletes its row
 and the reference in two transactions, and the hub cannot see a row that points at it.
+`Delete` in a transaction of the hub. The plugin then calls it after its commit, and a
+failure between the two leaves a claimed file that nothing deletes.
 
 ### `FILES-DD-010`
 

@@ -48,7 +48,7 @@ scenarios.
 | `FILES-FR-018`  | Section 4.1, `FILES-SC-021`                            |
 | `FILES-FR-019`  | `FILES-DD-009`, `FILES-SC-022`, `FILES-SC-023`         |
 | `FILES-FR-020`  | `FILES-DD-009`, `FILES-SC-024`                         |
-| `FILES-FR-021`  | `FILES-DD-009`, `FILES-SC-025`                         |
+| `FILES-FR-021`  | `FILES-DD-009`, `FILES-SC-025`, `FILES-SC-045`, `-046` |
 | `FILES-FR-022`  | `FILES-DD-009`, `FILES-SC-026`                         |
 | `FILES-FR-023`  | `FILES-DD-010`, `FILES-SC-027`, `-028`, `-029`         |
 | `FILES-FR-024`  | Section 4.5, `FILES-DD-012`, `FILES-SC-030`            |
@@ -214,7 +214,9 @@ type PluginFiles interface {
     // MaxFilesPerGet identifiers.
     Get(ctx context.Context, ids ...string) ([]File, error)
     Claim(ctx context.Context, id string) error
-    Delete(ctx context.Context, id string) error
+    // Delete removes the files and queues the purge of their bytes through the
+    // transaction of the plugin, after the plugin removes its rows. ADR-0023.
+    Delete(ctx context.Context, tx *sqlx.Tx, ids ...string) error
 }
 ```
 
@@ -359,7 +361,7 @@ read address for each variant of each ready file.
 | `Ping` fails or passes 1 second                            | 503, `/problems/hub/not-ready`, `file-store`                            | The dependency                                    |
 | The file is absent, of another plugin, or of another scope | 404, `not-found`; `ErrFileAbsent` on the host                           | None                                              |
 | A completion of a file that is not `pending`               | 202, no task                                                            | None                                              |
-| `Delete` of a file that a row references                   | `ErrFileReferenced` (SQLSTATE `23503`)                                  | None                                              |
+| `Delete` of a file that a row references                   | `ErrFileReferenced` (SQLSTATE `23503`), the plugin rolls back           | None                                              |
 | `Get` with more than `MaxFilesPerGet` identifiers          | `ErrTooManyFiles` on the host                                           | None                                              |
 | A task fails with an error of the file store               | `Retry` after 2 s times 2 to the attempts, at most 5 minutes            | `last_error` holds the error, without an address  |
 | A task passes 4 minutes                                    | The task stops, and `Retry` as above                                    | `last_error` holds the deadline                   |

@@ -452,7 +452,7 @@ func TestAPanicOfATaskStaysInTheTask(t *testing.T) {
 	require.Equal(t, pluginapi.FileStateFailed, state)
 	require.Equal(t, pluginapi.FileFailureDamaged, failure)
 
-	require.NoError(t, bench.store.Delete(bench.in(t), probePlugin, held.ID))
+	require.NoError(t, bench.deleteFiles(t, probePlugin, held.ID))
 	require.NoError(t, worker.Cycle(t.Context()))
 
 	purge := bench.taskOf(t, held.ID, model.FileTaskPurge)

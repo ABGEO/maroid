@@ -239,27 +239,32 @@ func (s *Store) Claim(ctx context.Context, pluginID string, id string) error {
 	return nil
 }
 
-// Delete removes the file of the plugin and queues the purge of its bytes in one
-// transaction. It answers pluginapi.ErrFileReferenced while a row references the file.
-func (s *Store) Delete(ctx context.Context, pluginID string, id string) error {
-	if !isUUID(id) {
-		return pluginapi.ErrFileAbsent
-	}
+// Delete removes the files of the plugin and queues the purge of their bytes through
+// the transaction of the plugin, so both commit with the rows that the plugin removed
+// first. It answers pluginapi.ErrFileReferenced while a row references a file, and
+// pluginapi.ErrFileAbsent for an identifier that the plugin and the acting scope do
+// not hold.
+func (s *Store) Delete(ctx context.Context, tx *sqlx.Tx, pluginID string, ids ...string) error {
+	files := repository.NewFile(tx)
+	tasks := repository.NewFileTask(tx)
 
-	err := database.WithScopeTx(ctx, s.db, func(tx *sqlx.Tx) error {
-		deleted, err := repository.NewFile(tx).Delete(ctx, pluginID, id)
+	for _, id := range ids {
+		if !isUUID(id) {
+			return fmt.Errorf("deleting the file %q: %w", id, pluginapi.ErrFileAbsent)
+		}
+
+		deleted, err := files.Delete(ctx, pluginID, id)
 		if err != nil {
-			return fmt.Errorf("deleting the file: %w", err)
+			return fmt.Errorf("deleting the file %q: %w", id, err)
 		}
 
 		if deleted == nil {
-			return pluginapi.ErrFileAbsent
+			return fmt.Errorf("deleting the file %q: %w", id, pluginapi.ErrFileAbsent)
 		}
 
-		return repository.NewFileTask(tx).Enqueue(ctx, taskOf(deleted, model.FileTaskPurge, 0))
-	})
-	if err != nil {
-		return fmt.Errorf("deleting a file: %w", err)
+		if err = tasks.Enqueue(ctx, taskOf(deleted, model.FileTaskPurge, 0)); err != nil {
+			return fmt.Errorf("queuing the purge of the file %q: %w", id, err)
+		}
 	}
 
 	return nil

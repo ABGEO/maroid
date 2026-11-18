@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 // FileScope names the owner of every file of a kind.
@@ -119,7 +121,11 @@ type PluginFiles interface {
 	// Claim marks the file as used by a row of the plugin, so the hub keeps it past
 	// the expiry of an unclaimed file. A file in any state takes a claim.
 	Claim(ctx context.Context, id string) error
-	// Delete removes the file and its bytes. It answers ErrFileReferenced while a row
-	// references the file.
-	Delete(ctx context.Context, id string) error
+	// Delete removes the files and queues the purge of their bytes through the
+	// transaction of the plugin, so they go when it commits and stay when it rolls
+	// back. The plugin removes its rows that reference the files first. Delete answers
+	// ErrFileReferenced while a row references a file, and ErrFileAbsent for an
+	// identifier that the plugin and the acting scope do not hold. After either
+	// refusal the plugin rolls back.
+	Delete(ctx context.Context, tx *sqlx.Tx, ids ...string) error
 }

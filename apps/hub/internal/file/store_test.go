@@ -2,6 +2,8 @@ package file_test
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"log/slog"
@@ -23,6 +25,8 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/testdb"
 )
+
+var errProbeFails = errors.New("the probe fails after the delete")
 
 const (
 	probePlugin   = "dev.maroid.probe"
@@ -122,6 +126,71 @@ func storeUnderTest(t *testing.T) *storeBench {
 	}
 }
 
+// deleteFiles deletes the files in a transaction of its own, as a plugin with no row of
+// them does.
+func (b *storeBench) deleteFiles(t *testing.T, pluginID string, ids ...string) error {
+	t.Helper()
+
+	err := database.WithScopeTx(b.in(t), b.db, func(tx *sqlx.Tx) error {
+		return b.store.Delete(b.in(t), tx, pluginID, ids...)
+	})
+	if err != nil {
+		return fmt.Errorf("deleting in a transaction of the probe: %w", err)
+	}
+
+	return nil
+}
+
+// reference gives the file a row of the probe that names it, and answers the row.
+func (b *storeBench) reference(t *testing.T, fileID string) string {
+	t.Helper()
+
+	_, err := b.db.ExecContext(t.Context(), `
+		CREATE SCHEMA IF NOT EXISTS dev_maroid_probe;
+		CREATE TABLE IF NOT EXISTS dev_maroid_probe.photos (
+			id UUID PRIMARY KEY DEFAULT uuidv7(),
+			file_id UUID NOT NULL REFERENCES public.workspace_files (id) ON DELETE RESTRICT);`)
+	require.NoError(t, err)
+
+	var row string
+
+	require.NoError(t, b.db.GetContext(t.Context(), &row,
+		`INSERT INTO dev_maroid_probe.photos (file_id) VALUES ($1) RETURNING id;`, fileID))
+
+	return row
+}
+
+// dropReferenceThenDelete deletes the row of the probe, then the file, in one
+// transaction of the probe, and answers the error of then.
+func (b *storeBench) dropReferenceThenDelete(t *testing.T, row, fileID string, then error) error {
+	t.Helper()
+
+	err := database.WithScopeTx(b.in(t), b.db, func(tx *sqlx.Tx) error {
+		_, err := tx.ExecContext(t.Context(),
+			`DELETE FROM dev_maroid_probe.photos WHERE id = $1;`, row)
+		require.NoError(t, err)
+		require.NoError(t, b.store.Delete(b.in(t), tx, probePlugin, fileID))
+
+		return then
+	})
+	if err != nil {
+		return fmt.Errorf("deleting the row and the file of the probe: %w", err)
+	}
+
+	return nil
+}
+
+func (b *storeBench) probeRows(t *testing.T, row string) int {
+	t.Helper()
+
+	var count int
+
+	require.NoError(t, b.db.GetContext(t.Context(), &count,
+		`SELECT count(*) FROM dev_maroid_probe.photos WHERE id = $1;`, row))
+
+	return count
+}
+
 func (b *storeBench) start(t *testing.T, pluginID, kind, name, mediaType string) pluginapi.File {
 	t.Helper()
 
@@ -217,7 +286,9 @@ func TestAPluginReachesNoFileOfAnotherPlugin(t *testing.T) {
 	require.Empty(t, listed)
 
 	require.ErrorIs(t, bench.store.ClaimFile(bench.in(t), probe, held.ID), pluginapi.ErrFileAbsent)
-	require.ErrorIs(t, bench.store.DeleteFile(bench.in(t), probe, held.ID), pluginapi.ErrFileAbsent)
+	require.ErrorIs(t, database.WithScopeTx(bench.in(t), bench.db, func(tx *sqlx.Tx) error {
+		return bench.store.DeleteFiles(bench.in(t), tx, probe, held.ID)
+	}), pluginapi.ErrFileAbsent)
 
 	require.Equal(t, held.ID, bench.get(t, secondPlugin, held.ID).ID)
 }
@@ -340,4 +411,38 @@ func TestAPendingFileHoldsOneProcessTask(t *testing.T) {
 	require.NoError(t, bench.db.Get(&count, `SELECT count(*) FROM public.file_tasks
 		WHERE file_id = $1 AND action = 'process';`, held.ID))
 	require.Equal(t, 1, count)
+}
+
+// FILES-SC-045: The probe deletes its row and the file in one transaction. The commit
+// removes the file and queues the purge of its bytes.
+func TestADeleteInTheTransactionOfThePluginRemovesTheFile(t *testing.T) {
+	t.Parallel()
+
+	bench := storeUnderTest(t)
+	held := bench.start(t, probePlugin, photoKind, "cat.jpg", jpegType)
+	require.NoError(t, bench.store.Claim(bench.in(t), probePlugin, held.ID))
+	row := bench.reference(t, held.ID)
+
+	require.NoError(t, bench.dropReferenceThenDelete(t, row, held.ID, nil))
+
+	listed, err := bench.store.Get(bench.in(t), probePlugin, held.ID)
+	require.NoError(t, err)
+	require.Empty(t, listed)
+	require.Contains(t, bench.actionsOf(t, held.ID), string(model.FileTaskPurge))
+}
+
+// FILES-SC-046: A rollback of the transaction of the probe keeps its row, the file,
+// and no purge.
+func TestARollbackOfThePluginKeepsTheFile(t *testing.T) {
+	t.Parallel()
+
+	bench := storeUnderTest(t)
+	held := bench.start(t, probePlugin, photoKind, "cat.jpg", jpegType)
+	require.NoError(t, bench.store.Claim(bench.in(t), probePlugin, held.ID))
+	row := bench.reference(t, held.ID)
+	require.ErrorIs(t, bench.dropReferenceThenDelete(t, row, held.ID, errProbeFails), errProbeFails)
+
+	require.Equal(t, 1, bench.probeRows(t, row))
+	require.Equal(t, held.ID, bench.get(t, probePlugin, held.ID).ID)
+	require.NotContains(t, bench.actionsOf(t, held.ID), string(model.FileTaskPurge))
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/plugin/host"
@@ -37,7 +38,12 @@ func (r *fileRecorder) ClaimFile(_ context.Context, pluginID *pluginapi.PluginID
 	return r.err
 }
 
-func (r *fileRecorder) DeleteFile(_ context.Context, pluginID *pluginapi.PluginID, _ string) error {
+func (r *fileRecorder) DeleteFiles(
+	_ context.Context,
+	_ *sqlx.Tx,
+	pluginID *pluginapi.PluginID,
+	_ ...string,
+) error {
 	r.plugins = append(r.plugins, pluginID.String())
 
 	return r.err
@@ -57,7 +63,7 @@ func TestTheFilesOfAHostActForItsPluginAlone(t *testing.T) {
 	_, err = files.Get(t.Context(), fileID)
 	require.NoError(t, err)
 	require.NoError(t, files.Claim(t.Context(), fileID))
-	require.NoError(t, files.Delete(t.Context(), fileID))
+	require.NoError(t, files.Delete(t.Context(), nil, fileID))
 
 	require.Equal(t, []string{filePlugin, filePlugin, filePlugin}, store.plugins)
 }
@@ -72,5 +78,5 @@ func TestTheFilesOfAHostKeepTheErrorOfTheStore(t *testing.T) {
 	files, err := bound.Files()
 	require.NoError(t, err)
 
-	require.ErrorIs(t, files.Delete(t.Context(), fileID), pluginapi.ErrFileReferenced)
+	require.ErrorIs(t, files.Delete(t.Context(), nil, fileID), pluginapi.ErrFileReferenced)
 }
