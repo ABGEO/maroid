@@ -4,7 +4,7 @@ title: The plants of a workspace, their environments, and their care
 type: spec
 status: approved
 created: 2026-10-10
-updated: 2026-10-16
+updated: 2026-11-18
 approved_by: Temuri
 approved_on: 2026-10-10
 constrained_by: [OWN, DAT, REP, SEC, RES, API, ERR, NTF, JOB, CFG, PKG, UI, TS, TST, TG]
@@ -15,7 +15,8 @@ requirements: features/garden/requirements.md
 
 `spec-scenarios.md` holds the scenarios. `api.yaml` holds the bodies and the status
 codes of every route. `spec-command.md` holds the bot command. `spec-upcoming.md`
-holds the care of the next three days.
+holds the care of the next three days. `spec-photos.md` holds the photos of a plant,
+and `spec-photos-scenarios.md` holds their scenarios.
 
 ## 1. Summary
 
@@ -77,6 +78,9 @@ answers the same list. The remote gets four pages.
 | `GARDEN-INV-001` | Section 4.2, `GARDEN-DD-002`, `GARDEN-SC-010`                                    |
 | `GARDEN-INV-002` | Section 4.2, `GARDEN-DD-004`, `GARDEN-SC-030`                                    |
 | `GARDEN-INV-003` | Section 4.2, `GARDEN-SC-020`                                                     |
+
+`spec-photos.md` section 2 covers `GARDEN-FR-045` to `GARDEN-FR-065`, `GARDEN-NFR-005`,
+`GARDEN-NFR-006`, and `GARDEN-INV-004` to `GARDEN-INV-007`.
 
 ## 3. Guideline compliance
 
@@ -421,22 +425,28 @@ shows a control that writes only when `host.can` holds its permission.
 
 ## 7. Build plan
 
-| #   | Step                                                                                                                   | Realizes                                                             | Done |
-| --- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | ---- |
-| 1   | The migration pair, and the integration test of every constraint.                                                      | `GARDEN-FR-031`, `GARDEN-INV-001` to `GARDEN-INV-003`                | [x]  |
-| 2   | `model/`, `errs/`, `permission/`, `config/`.                                                                           | `GARDEN-FR-011`, `GARDEN-FR-025`                                     | [x]  |
-| 3   | `repository/counter.go`, `environment.go`, `plant.go`, with their tests.                                               | `GARDEN-FR-001` to `GARDEN-FR-009`                                   | [x]  |
-| 4   | `repository/care_interval.go`, `maintenance_entry.go`, with the state tests.                                           | `GARDEN-FR-012` to `GARDEN-FR-021`                                   | [x]  |
-| 5   | `handler/body.go`, the DTOs, and the handlers. `api.yaml` matches.                                                     | `GARDEN-FR-001` to `GARDEN-FR-023`                                   | [x]  |
-| 6   | `job/`, and the wiring in `main.go`.                                                                                   | `GARDEN-FR-025`, `GARDEN-FR-026`, `GARDEN-FR-028`, `GARDEN-FR-032`   | [x]  |
-| 7   | The remote: the API clients and the four pages. Build it before the `.so`. `BLD-003`.                                  | `GARDEN-FR-010`, `GARDEN-FR-014`, `GARDEN-FR-022` to `GARDEN-FR-024` | [x]  |
-| 8   | The two measurements of `GARDEN-NFR-001` and `GARDEN-NFR-002`.                                                         | `GARDEN-NFR-001`, `GARDEN-NFR-002`                                   | [x]  |
-| 9   | `digest/`, the move of `job/digest.go`, and the row of `PKG-001`. `GARDEN-SC-027` and `GARDEN-SC-035` still pass.      | `GARDEN-FR-032`, `GARDEN-FR-035`                                     | [x]  |
-| 10  | `telegram/command/`, with `pack`, and the wiring in `main.go`.                                                         | `GARDEN-FR-034` to `GARDEN-FR-037`                                   | [x]  |
-| 11  | The cap of 3 messages, the measurement of `GARDEN-NFR-003`, and the manual check `GARDEN-SC-041`.                      | `GARDEN-FR-038`, `GARDEN-NFR-003`, `GARDEN-FR-034`                   | [x]  |
-| 12  | `due_in`, the filter `due_within`, and `api.yaml`, with `GARDEN-SC-043` to `GARDEN-SC-046`.                            | `GARDEN-FR-039`, `GARDEN-NFR-004`                                    | [x]  |
-| 13  | The API client and the section "Next 3 days" of `/attention`, then the manual checks `GARDEN-SC-047`, `GARDEN-SC-048`. | `GARDEN-FR-040` to `GARDEN-FR-043`                                   | [ ]  |
-| 14  | The link to the plant page on each line of `/attention`, then the manual check `GARDEN-SC-049`.                        | `GARDEN-FR-044`                                                      | [ ]  |
+| #   | Step                                                                                                                                                         | Realizes                                                                                 | Done |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ---- |
+| 1   | The migration pair, and the integration test of every constraint.                                                                                            | `GARDEN-FR-031`, `GARDEN-INV-001` to `GARDEN-INV-003`                                    | [x]  |
+| 2   | `model/`, `errs/`, `permission/`, `config/`.                                                                                                                 | `GARDEN-FR-011`, `GARDEN-FR-025`                                                         | [x]  |
+| 3   | `repository/counter.go`, `environment.go`, `plant.go`, with their tests.                                                                                     | `GARDEN-FR-001` to `GARDEN-FR-009`                                                       | [x]  |
+| 4   | `repository/care_interval.go`, `maintenance_entry.go`, with the state tests.                                                                                 | `GARDEN-FR-012` to `GARDEN-FR-021`                                                       | [x]  |
+| 5   | `handler/body.go`, the DTOs, and the handlers. `api.yaml` matches.                                                                                           | `GARDEN-FR-001` to `GARDEN-FR-023`                                                       | [x]  |
+| 6   | `job/`, and the wiring in `main.go`.                                                                                                                         | `GARDEN-FR-025`, `GARDEN-FR-026`, `GARDEN-FR-028`, `GARDEN-FR-032`                       | [x]  |
+| 7   | The remote: the API clients and the four pages. Build it before the `.so`. `BLD-003`.                                                                        | `GARDEN-FR-010`, `GARDEN-FR-014`, `GARDEN-FR-022` to `GARDEN-FR-024`                     | [x]  |
+| 8   | The two measurements of `GARDEN-NFR-001` and `GARDEN-NFR-002`.                                                                                               | `GARDEN-NFR-001`, `GARDEN-NFR-002`                                                       | [x]  |
+| 9   | `digest/`, the move of `job/digest.go`, and the row of `PKG-001`. `GARDEN-SC-027` and `GARDEN-SC-035` still pass.                                            | `GARDEN-FR-032`, `GARDEN-FR-035`                                                         | [x]  |
+| 10  | `telegram/command/`, with `pack`, and the wiring in `main.go`.                                                                                               | `GARDEN-FR-034` to `GARDEN-FR-037`                                                       | [x]  |
+| 11  | The cap of 3 messages, the measurement of `GARDEN-NFR-003`, and the manual check `GARDEN-SC-041`.                                                            | `GARDEN-FR-038`, `GARDEN-NFR-003`, `GARDEN-FR-034`                                       | [x]  |
+| 12  | `due_in`, the filter `due_within`, and `api.yaml`, with `GARDEN-SC-043` to `GARDEN-SC-046`.                                                                  | `GARDEN-FR-039`, `GARDEN-NFR-004`                                                        | [x]  |
+| 13  | The API client and the section "Next 3 days" of `/attention`, then the manual checks `GARDEN-SC-047`, `GARDEN-SC-048`.                                       | `GARDEN-FR-040` to `GARDEN-FR-043`                                                       | [ ]  |
+| 14  | The link to the plant page on each line of `/attention`, then the manual check `GARDEN-SC-049`.                                                              | `GARDEN-FR-044`                                                                          | [ ]  |
+| 15  | `ADR-0023` accepted, and the change of `FILES` it names: `PluginFiles.Delete` in the transaction. Every plugin builds.                                       | `GARDEN-FR-053`                                                                          | [ ]  |
+| 16  | The migration pair of the photos, and `GARDEN-SC-068`.                                                                                                       | `GARDEN-INV-005` to `GARDEN-INV-007`, `GARDEN-FR-064`                                    | [ ]  |
+| 17  | `model/moment.go`, `errs/`, `repository/moment.go`, `repository/photo.go`, and the change of `repository/plant.go`.                                          | `GARDEN-FR-045`, `GARDEN-FR-049` to `GARDEN-FR-054`, `GARDEN-FR-063`                     | [ ]  |
+| 18  | `FileKinds`, the DTOs, `handler/photo_file.go`, the handlers, and `main.go`. `api.yaml` matches. `GARDEN-SC-050` to `GARDEN-SC-067`.                         | `GARDEN-FR-045` to `GARDEN-FR-055`, `GARDEN-FR-061` to `GARDEN-FR-065`, `GARDEN-INV-004` | [ ]  |
+| 19  | The measurements `GARDEN-SC-069` and `GARDEN-SC-070`.                                                                                                        | `GARDEN-NFR-005`, `GARDEN-NFR-006`                                                       | [ ]  |
+| 20  | The remote: the API clients and the components of `spec-photos.md` 4.6, without the preview data. Then the manual checks `GARDEN-SC-071` to `GARDEN-SC-075`. | `GARDEN-FR-046`, `GARDEN-FR-048`, `GARDEN-FR-056` to `GARDEN-FR-060`, `GARDEN-FR-065`    | [ ]  |
 
 ## 8. Out of scope for this specification
 

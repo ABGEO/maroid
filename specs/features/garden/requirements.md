@@ -27,7 +27,7 @@ every plant. It holds no care history and no schedule.
 
 ## 3. Out of scope
 
-- Photos of a plant.
+- Photos of a plant. `requirements-photos.md` holds them.
 - Charts and statistics of the care history.
 - A bot command that records a care action.
 - An import of records from another system.
