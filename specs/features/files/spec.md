@@ -18,7 +18,7 @@ requirements: features/files/requirements.md
 A plugin declares its file kinds as a new capability. The hub answers the start of an
 upload with a row in one of two scoped tables and a signed address of one PUT, and the
 browser sends the bytes to the file store with Uppy. A `files` worker drains an outbox
-of tasks: it checks the content, derives two WebP variants of an image in pure Go,
+of tasks: it checks the content, derives two JPEG variants of an image in pure Go,
 deletes the upload, and removes unclaimed and deleted files. A plugin reads, claims, and
 deletes a file through `Host.Files`, and its table references the file with a foreign
 key. `spec-decisions.md` holds the design decisions, and `spec-scenarios.md` holds the
@@ -335,7 +335,7 @@ sequenceDiagram
     H-->>B: 202
     W->>D: lease process
     W->>S: read the first 3 KB, then the upload
-    W->>S: write thumbnail.webp, display.webp
+    W->>S: write thumbnail.jpg, display.jpg
     W->>D: file ready, task discard_upload
     W->>S: delete upload
     B->>H: GET .../files/{fileId}

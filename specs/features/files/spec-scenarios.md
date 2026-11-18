@@ -193,7 +193,7 @@ column of the stored pixels.
 
 **Given** the variants of `phone.heic`.
 **When** `mimetype` reads each one.
-**Then** each one is `image/webp`.
+**Then** each one is `image/jpeg`.
 
 ## `FILES-SC-019`
 
@@ -203,7 +203,7 @@ column of the stored pixels.
 **Given** the file of `FILES-SC-017` is `ready`.
 **When** the worker runs the task `discard_upload`, then a client repeats the `PUT`
 within `upload_ttl`, and the task `check` runs.
-**Then** after each task the file store holds `thumbnail.webp` and `display.webp`, and
+**Then** after each task the file store holds `thumbnail.jpg` and `display.jpg`, and
 no `upload`.
 
 ## `FILES-SC-020`
@@ -279,7 +279,7 @@ width, the height, the time of the start, and editor A as the uploader.
 **Given** the file of `FILES-SC-017` is `ready`.
 **When** the probe calls `Get`, and a client reads each address.
 **Then** the file holds an address for `thumbnail` and for `display`, and each read
-answers 200 with `image/webp`.
+answers 200 with `image/jpeg`.
 
 ## `FILES-SC-028`
 

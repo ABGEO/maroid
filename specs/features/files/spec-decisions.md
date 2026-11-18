@@ -42,7 +42,7 @@ hold both scopes under one policy.
 **Realizes:** `FILES-INV-001`, `FILES-INV-002`
 **Decision:** One bucket of the shared RustFS server holds every file. The key of each
 object is `plugins/<pluginId>/<workspaces|users>/<ownerId>/<fileId>/<object>`, and
-`<object>` is `upload`, `thumbnail.webp`, or `display.webp`. The key of the hub reaches
+`<object>` is `upload`, `thumbnail.jpg`, or `display.jpg`. The key of the hub reaches
 that bucket alone through a policy of the server. The bucket holds no anonymous policy.
 `repository.File` filters every read by `plugin_id`.
 **Rationale:** The owner runs one S3 server for several projects, with IAM. A prefix
@@ -105,11 +105,12 @@ no upload behind.
 decodes HEIC and HEIF, and applies their `irot` and `imir` properties. `orient` applies
 the EXIF orientation of a JPEG, of the `eXIf` chunk of a PNG, and of the `EXIF` chunk of
 a WebP. `golang.org/x/image/draw` resizes with `CatmullRom` to a long edge of at most
-480 and 2048 pixels, and never enlarges. `github.com/gen2brain/webp`, built with the tag `nodynamic`, encodes each
-variant from the pixels, so no variant carries a metadata block. A file whose
+480 and 2048 pixels, and never enlarges. A transparent pixel lands on white. `image/jpeg`
+encodes each variant from the pixels, so no variant carries a metadata block. A file whose
 `image.DecodeConfig` passes 100 megapixels is `damaged`. A file of a kind that is not
 an image stays as `upload` and gets the variant `original`.
-**Rationale:** The runtime image stays `distroless/base`. A variant written from
+**Rationale:** The runtime image stays `distroless/base`, and the variants need no
+encoder outside the standard library. A variant written from
 decoded pixels holds no EXIF, so `FILES-INV-004` needs no strip step. Step 1 of the
 build plan times the pipeline against `FILES-NFR-001` before any other step.
 **Alternatives:** libvips through cgo. The runtime image moves to Debian with libvips.
@@ -196,11 +197,14 @@ component library, so no foreign style and no mark of Uppy reaches a page.
 ### `FILES-DD-014`
 
 **Realizes:** `FILES-FR-015`, `FILES-NFR-002`
-**Decision:** Each variant is lossy WebP. The thumbnail takes quality 75 and the display
-image takes quality 82.
-**Rationale:** Chrome, Firefox, and Safari display WebP. A WebP of 480 by 360 pixels at
-quality 75 holds about 25 KB, a quarter of the limit.
-**Alternatives:** AVIF. It encodes several times slower. JPEG. It holds about a third more.
+**Decision:** Each variant is a baseline JPEG from `image/jpeg`. The thumbnail takes
+quality 75 and the display image takes quality 80.
+**Rationale:** Every browser displays JPEG, and the standard library encodes it with no
+dependency. On a phone photo of 12 megapixels the thumbnail holds 27 KB, about a quarter
+of the limit, against 24 KB as WebP. The display image holds about 420 KB.
+**Alternatives:** WebP through `github.com/gen2brain/webp`. It saves about 10 percent and
+runs libwebp in a WebAssembly runtime, a dependency that few projects use. AVIF. It
+encodes several times slower and needs the same kind of dependency.
 
 ## Retired identifiers
 
