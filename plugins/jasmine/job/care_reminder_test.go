@@ -38,7 +38,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TABLE public.workspaces (id UUID NOT NULL PRIMARY KEY);
-INSERT INTO public.workspaces (id) VALUES ('` + workspaceH + `'), ('` + workspaceG + `');`
+INSERT INTO public.workspaces (id) VALUES ('` + workspaceH + `'), ('` + workspaceG + `');
+CREATE TABLE public.workspace_files (id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7());`
 
 // gardenH holds, in H: P003 Gardenia in E001 Office, watering every 7 days,
 // latest 11 days ago; P001 Rose in E001, watering every 7 days, latest 7 days

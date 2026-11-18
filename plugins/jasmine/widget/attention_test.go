@@ -30,7 +30,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TABLE public.workspaces (id UUID NOT NULL PRIMARY KEY);
-INSERT INTO public.workspaces (id) VALUES ('` + workspaceW + `');`
+INSERT INTO public.workspaces (id) VALUES ('` + workspaceW + `');
+CREATE TABLE public.workspace_files (id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7());`
 
 // fernAndGardenia holds P001 Fern, watering every 7 days, latest 11 days ago, and
 // P002 Gardenia, watering every 7 days, latest 7 days ago, in E001 Office.

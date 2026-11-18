@@ -32,8 +32,8 @@ const (
 )
 
 // hubFixtures stands in for the core migrations of the hub, which a plugin test
-// does not own: the trigger function, and the workspaces that a scoped table
-// references.
+// does not own: the trigger function, the workspaces that a scoped table
+// references, and the files of a workspace that a photo references.
 const hubFixtures = `
 CREATE OR REPLACE FUNCTION set_updated_at() RETURNS TRIGGER AS $$
 BEGIN
@@ -43,7 +43,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 CREATE TABLE public.workspaces (id UUID NOT NULL PRIMARY KEY);
-INSERT INTO public.workspaces (id) VALUES ('` + workspaceH + `'), ('` + workspaceG + `');`
+INSERT INTO public.workspaces (id) VALUES ('` + workspaceH + `'), ('` + workspaceG + `');
+
+CREATE TABLE public.workspace_files (
+    id           UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    workspace_id UUID NOT NULL REFERENCES public.workspaces (id)
+);`
 
 // garden is a migrated database that holds the workspaces H and G.
 type garden struct {
@@ -104,9 +109,16 @@ func (g *garden) router(workspace string) http.Handler {
 func (g *garden) inHome(t *testing.T, fn func(tx *sqlx.Tx) error) error {
 	t.Helper()
 
-	ctx := pluginapi.ContextWithActingWorkspace(context.Background(), workspaceH)
+	return g.in(t, workspaceH, fn)
+}
+
+// in runs fn in a transaction that acts in the workspace.
+func (g *garden) in(t *testing.T, workspace string, fn func(tx *sqlx.Tx) error) error {
+	t.Helper()
+
+	ctx := pluginapi.ContextWithActingWorkspace(context.Background(), workspace)
 	if err := g.db.WithTx(ctx, fn); err != nil {
-		return fmt.Errorf("running the statement in H: %w", err)
+		return fmt.Errorf("running the statement in %s: %w", workspace, err)
 	}
 
 	return nil

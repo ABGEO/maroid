@@ -14,11 +14,13 @@ requirements: features/garden/requirements-photos.md
 # Specification: The scenarios of the photos of a plant
 
 `spec-photos.md` holds the design. The setup of `spec-scenarios.md` holds: the
-container of `testdb.Start`, the migrations of the hub and of jasmine, and workspaces H
-and G. The handler takes the `PluginFiles` of the hub over the same database, with a
-file store client that signs against `http://files.test`. A ready photo is a row of
-`public.workspace_files` of jasmine, kind `plant-photo`, state `ready`, that the setup
-inserts. Today is the UTC date of the run. Plant `P001` of H is active.
+container of `testdb.Start`, the stand-ins of the hub, the migrations of jasmine, and
+workspaces H and G. A plugin test cannot import the hub (`PLG-007`), so a stand-in of
+`public.workspace_files` holds the files, and a fake `PluginFiles` reads, claims, and
+deletes them: `Delete` removes the row through the transaction of the plugin and
+records a purge, as the hub does. `FILES-SC-045` and `FILES-SC-046` verify the hub. A
+ready photo is a row of the stand-in of jasmine, kind `plant-photo`, state `ready`, that
+the setup inserts. Today is the UTC date of the run. Plant `P001` of H is active.
 
 ### `GARDEN-SC-050`
 
@@ -108,7 +110,7 @@ inserts. Today is the UTC date of the run. Plant `P001` of H is active.
 
 **Given** a moment with the photos of A and B.
 **When** the editor deletes the moment.
-**Then** the answer is 204. No row of `photos` names A or B. `Get(A, B)` answers no file, and `public.file_tasks` holds a `purge` task for each.
+**Then** the answer is 204. No row of `photos` names A or B. `Get(A, B)` answers no file, and the fake records a purge for each.
 
 ### `GARDEN-SC-060`
 
@@ -117,7 +119,7 @@ inserts. Today is the UTC date of the run. Plant `P001` of H is active.
 
 **Given** `P003` with two moments, three photos, and a profile picture.
 **When** the editor deletes `P003` with an `If-Match` of an older version, then with none.
-**Then** the first answer is 412, and the moments, the photos, and the three files stay, with no `purge` task. The second is 204, and the moments, the photos, and the three files are gone, with three `purge` tasks.
+**Then** the first answer is 412, and the moments, the photos, and the three files stay, with no purge. The second is 204, and the moments, the photos, and the three files are gone, with three purges.
 
 ### `GARDEN-SC-061`
 
