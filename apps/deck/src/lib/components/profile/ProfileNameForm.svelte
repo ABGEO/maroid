@@ -1,19 +1,17 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
 	import { ApiError, PROBLEM_TYPE, api, type Tagged, type UserRecord } from '$lib/api';
 	import NameForm from '$lib/components/users/NameForm.svelte';
 	import { loadUser } from '$lib/state/user.svelte';
 
-	let record = $state<UserRecord | null>(null);
-	let etag = $state<string | undefined>(undefined);
+	interface Props {
+		self: Tagged<UserRecord> | null;
+		onchanged: (tagged: Tagged<UserRecord>) => void;
+	}
+
+	let { self, onchanged }: Props = $props();
+
 	let notice = $state<string | null>(null);
 	let failure = $state<string | null>(null);
-
-	function show(tagged: Tagged<UserRecord>): void {
-		record = tagged.value;
-		etag = tagged.etag;
-	}
 
 	function failureMessage(error: unknown): string {
 		if (error instanceof ApiError && error.is(PROBLEM_TYPE.preconditionFailed)) {
@@ -28,9 +26,9 @@
 		failure = null;
 
 		try {
-			const tagged = await api.users.changeSelf(names, etag);
+			const tagged = await api.users.changeSelf(names, self?.etag);
 			if (tagged !== null) {
-				show(tagged);
+				onchanged(tagged);
 			}
 
 			await loadUser();
@@ -39,18 +37,6 @@
 			failure = failureMessage(error);
 		}
 	}
-
-	onMount(async () => {
-		try {
-			const tagged = await api.users.self();
-			if (tagged !== null) {
-				show(tagged);
-			}
-		} catch (error) {
-			console.error('Failed to load the user record', error);
-			failure = 'Failed to load your name. Reload the page.';
-		}
-	});
 </script>
 
-<NameForm {record} own {notice} {failure} onsave={save} />
+<NameForm record={self?.value ?? null} own {notice} {failure} onsave={save} />

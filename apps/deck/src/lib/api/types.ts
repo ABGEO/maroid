@@ -8,6 +8,8 @@ export interface User {
 	provider: string;
 	/** Whether the person administers the instance. */
 	is_administrator: boolean;
+	/** The IANA time zone of the profile. Absent when the person chose none. */
+	time_zone?: string;
 }
 
 export type UserStatus = 'active' | 'blocked';
@@ -19,6 +21,7 @@ export interface UserRecord {
 	last_name?: string;
 	status: UserStatus;
 	is_administrator: boolean;
+	time_zone?: string;
 	created_at: string;
 	updated_at: string;
 }

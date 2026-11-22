@@ -31,10 +31,12 @@ export interface UserChange {
 	is_administrator?: boolean;
 }
 
-/** The names that a person changes on their own record. */
+/** The names and the time zone that a person changes on their own record. */
 export interface SelfChange {
 	first_name?: string;
 	last_name?: string;
+	/** An IANA name, or the empty string to clear the zone. */
+	time_zone?: string;
 }
 
 export const users = {
