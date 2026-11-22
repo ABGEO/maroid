@@ -9,6 +9,11 @@ export interface User {
 
 export interface PluginHost {
 	user: User | null;
+	/**
+	 * The IANA time zone of the person, for the helpers of time.ts. Undefined when the
+	 * profile holds none, which those helpers read as the zone of the browser.
+	 */
+	timeZone: string | undefined;
 	/** Client already scoped to the prefix /workspaces/{workspaceId}/plugins/{id}/api. */
 	api: ApiClient;
 	/** The uploads and the files of this plugin in the acting workspace. */
