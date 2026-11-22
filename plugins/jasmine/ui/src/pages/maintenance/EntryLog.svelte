@@ -15,9 +15,10 @@
 		api: JasmineApi;
 		filter: MaintenanceEntryFilter;
 		canWrite: boolean;
+		timeZone: string | undefined;
 	}
 
-	let { api, filter, canWrite }: Props = $props();
+	let { api, filter, canWrite, timeZone }: Props = $props();
 
 	const pager = createPager((link?: string) => api.maintenanceEntries.list(filter, link));
 
@@ -40,7 +41,7 @@
 
 			editing = { id: entry.id, etag: tagged.etag };
 			type = tagged.value.type;
-			performedAt = toLocalInput(tagged.value.performed_at);
+			performedAt = toLocalInput(tagged.value.performed_at, timeZone);
 			note = tagged.value.note ?? '';
 		} catch (error) {
 			failure = failureMessage(error, 'The entry could not be opened. Try again.');
@@ -70,7 +71,7 @@
 		event.preventDefault();
 
 		const target = editing;
-		const moment = toMoment(performedAt);
+		const moment = toMoment(performedAt, timeZone);
 		if (target === null || moment === undefined) {
 			return Promise.resolve();
 		}
@@ -90,7 +91,7 @@
 
 	async function remove(entry: MaintenanceEntry): Promise<void> {
 		const proceed = await confirmDialog?.ask(
-			`The ${typeLabel(entry.type).toLowerCase()} of ${entry.plant.display_id} ${entry.plant.common_name} on ${formatMoment(entry.performed_at)} goes.`,
+			`The ${typeLabel(entry.type).toLowerCase()} of ${entry.plant.display_id} ${entry.plant.common_name} on ${formatMoment(entry.performed_at, timeZone)} goes.`,
 			{ title: 'Delete this entry?', confirmLabel: 'Delete' }
 		);
 		if (proceed) {
@@ -143,7 +144,7 @@
 							class="input input-sm w-auto"
 							type="datetime-local"
 							aria-label="When"
-							max={localNow()}
+							max={localNow(timeZone)}
 							bind:value={performedAt}
 							disabled={busy}
 							required
@@ -168,7 +169,7 @@
 						</button>
 					</form>
 				{:else}
-					<span class="meta whitespace-nowrap">{formatMoment(entry.performed_at)}</span>
+					<span class="meta whitespace-nowrap">{formatMoment(entry.performed_at, timeZone)}</span>
 					<span class="whitespace-nowrap">
 						<span class="meta">{entry.plant.display_id}</span>
 						{entry.plant.common_name}

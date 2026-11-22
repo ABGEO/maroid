@@ -32,6 +32,7 @@ type User struct {
 	ID              string    `db:"id"`
 	FirstName       *string   `db:"first_name"`
 	LastName        *string   `db:"last_name"`
+	TimeZone        *string   `db:"time_zone"`
 	Status          Status    `db:"status"`
 	IsAdministrator bool      `db:"is_administrator"`
 	CreatedAt       time.Time `db:"created_at"`

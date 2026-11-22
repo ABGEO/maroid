@@ -20,6 +20,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/teststore"
+	"github.com/abgeo/maroid/apps/hub/internal/timezone"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -123,7 +124,7 @@ func filesUnderTest(t *testing.T) *fileBench {
 	handler.NewFile(
 		slog.New(slog.DiscardHandler),
 		workspaceVerifier(t, fixture.provider),
-		auth.NewResolver(fixture.database),
+		auth.NewResolver(fixture.database, timezone.New(slog.New(slog.DiscardHandler))),
 		noIdempotency{},
 		access,
 		file.NewStore(fixture.database, filestore.New(cfg), probeFileKinds(t), cfg.UploadTTL),

@@ -5,6 +5,7 @@ import (
 	"context"
 	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/mymmrac/telego"
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 const (
@@ -41,6 +43,16 @@ func (f *fakeResolver) ResolveByProvider(
 	return f.user, f.err
 }
 
+func (f *fakeResolver) TimeZone(_ context.Context, user *model.User) *time.Location {
+	if user.TimeZone == nil {
+		return time.UTC
+	}
+
+	location, _ := time.LoadLocation(*user.TimeZone)
+
+	return location
+}
+
 func updateFrom(id int64) telego.Update {
 	return telego.Update{
 		Message: &telego.Message{
@@ -63,7 +75,7 @@ func TestAnUpdateFromAPersonWithNoActiveRecordIsDropped(t *testing.T) {
 	)
 
 	require.False(t, ok, "the update must reach no handler")
-	require.Empty(t, acting)
+	require.Nil(t, acting)
 }
 
 // EXTID-FR-017: The bot resolves through the identity, so it reaches the record
@@ -84,7 +96,7 @@ func TestAnUpdateCarriesTheActingUser(t *testing.T) {
 	)
 
 	require.True(t, ok)
-	require.Equal(t, recordID, acting)
+	require.Equal(t, recordID, acting.ID)
 	require.Equal(t, auth.ProviderTelegram, resolver.gotProvider)
 	require.Equal(t, "722183546", resolver.gotProviderUID, "the sender is the external account")
 }
@@ -103,6 +115,28 @@ func TestAnUpdateWithNoSenderIsDropped(t *testing.T) {
 	)
 
 	require.False(t, ok)
-	require.Empty(t, acting)
+	require.Nil(t, acting)
 	require.Empty(t, resolver.gotProvider, "no sender means no resolution")
+}
+
+// PROFILE-SC-019: An update from Nina, who holds Asia/Tbilisi, reaches the next
+// handler with her record and her zone.
+func TestAnUpdateCarriesTheTimeZoneOfTheActingUser(t *testing.T) {
+	t.Parallel()
+
+	tbilisi := "Asia/Tbilisi"
+	resolver := &fakeResolver{
+		user: &model.User{ID: recordID, Status: model.StatusActive, TimeZone: &tbilisi},
+	}
+
+	ctx, ok := actingContext(
+		t.Context(),
+		slog.New(slog.DiscardHandler),
+		resolver,
+		updateFrom(telegramID),
+	)
+
+	require.True(t, ok)
+	require.Equal(t, recordID, pluginapi.ActingUserFromContext(ctx))
+	require.Equal(t, tbilisi, pluginapi.ActingTimeZone(ctx).String())
 }

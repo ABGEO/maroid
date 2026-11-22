@@ -163,7 +163,14 @@
 		{/if}
 
 		{#if editing}
-			<PlantForm {environments} {plant} {busy} onsave={save} oncancel={() => (editing = false)} />
+			<PlantForm
+				{environments}
+				{plant}
+				{busy}
+				timeZone={host.timeZone}
+				onsave={save}
+				oncancel={() => (editing = false)}
+			/>
 		{:else}
 			<dl class="panel grid gap-x-6 gap-y-2 p-5 sm:grid-cols-[auto_1fr]">
 				<dt class="meta">Scientific name</dt>
@@ -171,7 +178,7 @@
 				<dt class="meta">Acquired on</dt>
 				<dd>{plant.acquired_on ?? 'Not set'}</dd>
 				<dt class="meta">Added</dt>
-				<dd>{formatMoment(plant.created_at)}</dd>
+				<dd>{formatMoment(plant.created_at, host.timeZone)}</dd>
 				<dt class="meta">Care notes</dt>
 				<dd class="whitespace-pre-line">{plant.care_notes ?? 'Not set'}</dd>
 			</dl>
@@ -184,11 +191,11 @@
 		{#if canLog}
 			<section class="section">
 				<h2 class="section-title">Record care</h2>
-				<LogForm {api} plants={[plant]} onrecorded={() => revision++} />
+				<LogForm {api} plants={[plant]} timeZone={host.timeZone} onrecorded={() => revision++} />
 			</section>
 		{/if}
 
-		<PlantEntries {api} {plantId} {revision} />
+		<PlantEntries {api} {plantId} {revision} timeZone={host.timeZone} />
 	{/if}
 
 	<ConfirmDialog bind:this={confirmDialog} />

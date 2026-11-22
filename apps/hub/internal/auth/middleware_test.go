@@ -47,6 +47,16 @@ func (f *fakeResolver) ResolveByProvider(
 	return f.user, f.err
 }
 
+func (f *fakeResolver) TimeZone(_ context.Context, user *model.User) *time.Location {
+	if user.TimeZone == nil {
+		return time.UTC
+	}
+
+	location, _ := time.LoadLocation(*user.TimeZone)
+
+	return location
+}
+
 func activeRecord() *model.User {
 	return &model.User{ID: recordID, Status: model.StatusActive}
 }
@@ -303,4 +313,30 @@ func TestTheCookieOfTheOldNameGrantsNothing(t *testing.T) {
 
 	require.Equal(t, http.StatusUnauthorized, recorder.Code)
 	require.Zero(t, resolver.calls, "the middleware resolves nobody")
+}
+
+// PROFILE-SC-019: A request with the session of Nina, who holds Asia/Tbilisi, reaches
+// the next handler with her zone.
+func TestARequestCarriesTheTimeZoneOfTheActingUser(t *testing.T) {
+	t.Parallel()
+
+	dex := authtest.StartProvider(t)
+	tbilisi := "Asia/Tbilisi"
+	record := activeRecord()
+	record.TimeZone = &tbilisi
+
+	var zone string
+
+	recorder := serve(
+		t,
+		verifierFor(t, dex),
+		&fakeResolver{user: record},
+		dex.Sign(t, auth.ProviderTelegram, account),
+		http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+			zone = pluginapi.ActingTimeZone(r.Context()).String()
+		}),
+	)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Equal(t, tbilisi, zone)
 }

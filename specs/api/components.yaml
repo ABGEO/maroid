@@ -132,6 +132,12 @@ components:
         last_name:
           type: string
           description: Absent when the record holds none. `APIFMT-FR-009`.
+        time_zone:
+          type: string
+          example: Asia/Tbilisi
+          description: >
+            The name from the IANA time zone database that the person set. Absent
+            when the record holds none. `APIFMT-FR-009`, `PROFILE-DD-007`.
         status:
           type: string
           enum: [active, blocked]

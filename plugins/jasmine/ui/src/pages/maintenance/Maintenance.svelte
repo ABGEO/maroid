@@ -68,6 +68,6 @@
 	</div>
 
 	{#key `${plantId}|${type}`}
-		<EntryLog {api} {filter} {canWrite} />
+		<EntryLog {api} {filter} {canWrite} timeZone={host.timeZone} />
 	{/key}
 </div>

@@ -4,7 +4,7 @@ title: The REST conventions
 type: guideline
 status: active
 created: 2026-09-22
-updated: 2026-10-13
+updated: 2026-11-22
 scope:
   [
     apps/hub/internal/handler/,
@@ -39,8 +39,11 @@ over a Zalando rule only when `RES-002` names it.
 A member name, a path, and a description use U.S. English. `Z-103`.
 
 A point in time travels as UTC, in the `date-time` format of `Z-169`, with the
-`Z` suffix and never a numeric offset. The hub reads no zone of a person and
-renders no local time. A client converts for the reader that it serves.
+`Z` suffix and never a numeric offset. The hub renders no local time in a body. A
+client converts for the reader that it serves: in the time zone of the person
+(`GLO-time-zone`) when the record holds one, else in the zone of the browser. The
+hub reads the time zone of the acting user only to compute a local hour or a local
+day. `ADR-0024`.
 
 The event chapter does not bind. It governs an event that a service publishes,
 and Maroid publishes none. `MQT-001` gives a plugin a subscriber, and a device

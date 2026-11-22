@@ -40,11 +40,13 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
     patch:
       operationId: changeSelf
-      summary: Change the names of the acting user.
+      summary: Change the names and the time zone of the acting user.
       description: >
-        Realizes `PROFILE-FR-002` and `PROFILE-FR-003`. Any user who signed in. A
-        member other than `first_name` and `last_name` answers
+        Realizes `PROFILE-FR-002`, `PROFILE-FR-011`, `PROFILE-FR-013`,
+        `PROFILE-FR-014`, and `PROFILE-FR-015`. Any user who signed in. A member
+        other than `first_name`, `last_name`, and `time_zone` answers
         `/problems/http/member-unknown`, and the record does not change.
+        `PROFILE-DD-007`.
       parameters:
         - $ref: "../../api/components.yaml#/components/parameters/FlowId"
         - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
@@ -72,6 +74,8 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "412":
           $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
 
   /auth/identities/{provider}:
     parameters:
@@ -136,6 +140,13 @@ components:
         last_name:
           type: string
           description: A string sets the name, and an empty string clears it.
+        time_zone:
+          type: string
+          example: Asia/Tbilisi
+          description: >
+            A name from the IANA time zone database sets the zone, and an empty
+            string clears it. Any other name answers 422 at `/time_zone`.
+            `PROFILE-DD-006`.
 
     OwnPasswordChange:
       type: object

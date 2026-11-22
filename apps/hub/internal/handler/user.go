@@ -17,6 +17,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/problems"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/provider"
+	"github.com/abgeo/maroid/apps/hub/internal/timezone"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/libs/rest/address"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
@@ -116,6 +117,7 @@ type userBody struct {
 	ID              string       `json:"id"`
 	FirstName       *string      `json:"first_name,omitempty"`
 	LastName        *string      `json:"last_name,omitempty"`
+	TimeZone        *string      `json:"time_zone,omitempty"`
 	Status          model.Status `json:"status"`
 	IsAdministrator bool         `json:"is_administrator"`
 	CreatedAt       time.Time    `json:"created_at"`
@@ -154,6 +156,7 @@ type userChangeInput struct {
 type selfChangeInput struct {
 	FirstName *string `json:"first_name"`
 	LastName  *string `json:"last_name"`
+	TimeZone  *string `json:"time_zone"`
 }
 
 type pluginRefInput struct {
@@ -165,6 +168,7 @@ func toUserBody(record *model.User) userBody {
 		ID:              record.ID,
 		FirstName:       record.FirstName,
 		LastName:        record.LastName,
+		TimeZone:        record.TimeZone,
 		Status:          record.Status,
 		IsAdministrator: record.IsAdministrator,
 		CreatedAt:       record.CreatedAt.UTC(),
@@ -260,8 +264,9 @@ func (h *User) GetSelf(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// ChangeSelf changes the names of the acting user. The input declares no other field,
-// so the decoder refuses the fields that an administrator alone sets.
+// ChangeSelf changes the names and the time zone of the acting user. The input declares
+// no other field, so the decoder refuses the fields that an administrator alone sets.
+// An empty time zone clears it, so only a name that is not empty meets Parse.
 func (h *User) ChangeSelf(w http.ResponseWriter, r *http.Request) error {
 	var input selfChangeInput
 
@@ -271,10 +276,26 @@ func (h *User) ChangeSelf(w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}
 
+	zone := trimmed(input.TimeZone)
+	if zone != nil && *zone != "" {
+		if _, err := timezone.Parse(*zone); err != nil {
+			problem.Write(w, r, problem.NewValidationFailed(problem.FieldFailure{
+				Detail:  "the value is not a zone of the IANA time zone database",
+				Pointer: "/time_zone",
+			}))
+
+			return nil //nolint:nilerr // the handler answered the request.
+		}
+	}
+
 	changed, err := h.service.Change(
 		r.Context(),
 		auth.UserIDFromContext(r.Context()),
-		user.Change{FirstName: trimmed(input.FirstName), LastName: trimmed(input.LastName)},
+		user.Change{
+			FirstName: trimmed(input.FirstName),
+			LastName:  trimmed(input.LastName),
+			TimeZone:  zone,
+		},
 		precondition.IfMatchFromContext(r.Context()),
 	)
 	if err != nil {

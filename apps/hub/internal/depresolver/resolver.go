@@ -35,6 +35,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/conversation"
+	"github.com/abgeo/maroid/apps/hub/internal/timezone"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/rest/idempotency"
@@ -56,6 +57,7 @@ type Resolver interface {
 	EnablementService() (*workspace.Enablements, error)
 	UserService() (user.Service, error)
 	IdentityResolver() (auth.IdentityResolver, error)
+	TimeZones() *timezone.Cache
 	AuthService() (*auth.Service, error)
 	OpenBaoSession() (*openbao.Session, error)
 	DexClient() (*dex.GRPC, error)
@@ -152,6 +154,11 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance auth.IdentityResolver
+	}
+
+	timeZones struct {
+		once     sync.Once
+		instance *timezone.Cache
 	}
 
 	authService struct {

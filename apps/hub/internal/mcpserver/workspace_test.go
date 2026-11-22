@@ -253,6 +253,7 @@ func (scene *workspaceWorld) sessionAs(
 		scene.instance.DB,
 		workspace.NewEnablements(scene.instance.DB, registry.NewPluginRegistry()),
 		scene.authorizer(t),
+		&stubResolver{},
 	)
 	server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
 		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {

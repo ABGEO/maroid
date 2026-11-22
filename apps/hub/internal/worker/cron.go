@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/robfig/cron/v3"
 
@@ -25,6 +26,12 @@ type ActiveUsers interface {
 	ListActive(ctx context.Context) ([]model.User, error)
 }
 
+// TimeZones answers the location of the name of a time zone, or UTC for none.
+// timezone.Cache satisfies it.
+type TimeZones interface {
+	Of(ctx context.Context, name *string) *time.Location
+}
+
 // CronWorker runs registered cron jobs using the cron scheduler.
 type CronWorker struct {
 	logger       *slog.Logger
@@ -32,6 +39,7 @@ type CronWorker struct {
 	cronRegistry *registry.CronRegistry
 	users        ActiveUsers
 	workspaces   WorkspaceLister
+	zones        TimeZones
 }
 
 var _ Worker = (*CronWorker)(nil)
@@ -43,6 +51,7 @@ func NewCronWorker(
 	cronRegistry *registry.CronRegistry,
 	users ActiveUsers,
 	workspaces WorkspaceLister,
+	zones TimeZones,
 ) *CronWorker {
 	return &CronWorker{
 		logger: logger.With(
@@ -53,6 +62,7 @@ func NewCronWorker(
 		cronRegistry: cronRegistry,
 		users:        users,
 		workspaces:   workspaces,
+		zones:        zones,
 	}
 }
 
@@ -152,8 +162,8 @@ func (w *CronWorker) wrapCronJob(
 	}
 }
 
-// runForEachUser runs the job one time for each active user, with that user in
-// the context of the run.
+// runForEachUser runs the job one time for each active user, with that user and the
+// time zone of the record in the context of the run.
 func (w *CronWorker) runForEachUser(
 	ctx context.Context,
 	logger *slog.Logger,
@@ -167,11 +177,12 @@ func (w *CronWorker) runForEachUser(
 	}
 
 	for _, user := range users {
-		runOne(
+		acting := pluginapi.ContextWithActingTimeZone(
 			pluginapi.ContextWithActingUser(ctx, user.ID),
-			logger.With(slog.String("user_id", user.ID)),
-			job,
+			w.zones.Of(ctx, user.TimeZone),
 		)
+
+		runOne(acting, logger.With(slog.String("user_id", user.ID)), job)
 	}
 }
 

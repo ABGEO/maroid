@@ -194,7 +194,7 @@
 								<time class="font-medium" datetime={moment.taken_on}
 									>{formatDay(moment.taken_on)}</time
 								>
-								<span class="meta ml-1">{ageOf(moment.taken_on)}</span>
+								<span class="meta ml-1">{ageOf(moment.taken_on, host.timeZone)}</span>
 							</p>
 							{#if canWrite}
 								<div class="dropdown dropdown-end">
@@ -311,6 +311,7 @@
 	/>
 	<PhotoViewer
 		bind:this={viewer}
+		timeZone={host.timeZone}
 		photos={viewed}
 		{profileId}
 		{canWrite}

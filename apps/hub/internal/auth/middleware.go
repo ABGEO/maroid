@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/problem"
 )
 
@@ -57,7 +56,7 @@ func Middleware(
 			ctx = context.WithValue(ctx, tokenContextKey, tokenString)
 			ctx = context.WithValue(ctx, userIDKey, user.ID)
 			ctx = context.WithValue(ctx, claimsKey, claims)
-			ctx = pluginapi.ContextWithActingUser(ctx, user.ID)
+			ctx = WithActingUser(ctx, resolver, user)
 			ctx = ContextWithAdministrator(ctx, user.IsAdministrator)
 
 			next.ServeHTTP(w, r.WithContext(ctx))

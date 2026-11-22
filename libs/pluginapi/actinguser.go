@@ -1,10 +1,14 @@
 package pluginapi
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type (
 	actingUserKey      struct{}
 	actingWorkspaceKey struct{}
+	actingTimeZoneKey  struct{}
 )
 
 // ContextWithActingUser returns a context that carries the user that the unit of
@@ -35,4 +39,22 @@ func ActingWorkspaceFromContext(ctx context.Context) string {
 	workspaceID, _ := ctx.Value(actingWorkspaceKey{}).(string)
 
 	return workspaceID
+}
+
+// ContextWithActingTimeZone returns a context that carries the time zone of the
+// acting user. The hub sets it from the record of that user.
+func ContextWithActingTimeZone(ctx context.Context, location *time.Location) context.Context {
+	return context.WithValue(ctx, actingTimeZoneKey{}, location)
+}
+
+// ActingTimeZone returns the time zone of the acting user of the context, to compute
+// a local hour or a local day of that person. It returns UTC when the record holds
+// no zone, or when the unit of work has no acting user.
+func ActingTimeZone(ctx context.Context) *time.Location {
+	location, _ := ctx.Value(actingTimeZoneKey{}).(*time.Location)
+	if location == nil {
+		return time.UTC
+	}
+
+	return location
 }

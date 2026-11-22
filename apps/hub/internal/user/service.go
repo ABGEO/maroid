@@ -19,12 +19,13 @@ import (
 type Change struct {
 	FirstName     *string
 	LastName      *string
+	TimeZone      *string
 	Status        *model.Status
 	Administrator *bool
 }
 
 // touchesAdministrators reports whether the change can leave the instance with no
-// active administrator. A change of the names alone cannot.
+// active administrator. A change of the names or the time zone cannot.
 func (c Change) touchesAdministrators() bool {
 	return c.Status != nil || c.Administrator != nil
 }
@@ -277,6 +278,7 @@ func (m *Manager) Change(
 		changed, err = users.Change(ctx, userID, repository.UserChange{
 			FirstName:     change.FirstName,
 			LastName:      change.LastName,
+			TimeZone:      change.TimeZone,
 			Status:        change.Status,
 			Administrator: change.Administrator,
 			IfMatch:       version,

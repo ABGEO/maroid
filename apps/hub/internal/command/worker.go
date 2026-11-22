@@ -128,7 +128,9 @@ func (c *WorkerCommand) getWorkers() ([]worker.Worker, error) {
 	}
 
 	return []worker.Worker{
-		worker.NewCronWorker(c.logger, cronScheduler, cronRegistry, users, enablements),
+		worker.NewCronWorker(
+			c.logger, cronScheduler, cronRegistry, users, enablements, c.depResolver.TimeZones(),
+		),
 		worker.NewMQTTWorker(c.logger, cfg, mqttSubscriberRegistry),
 		files,
 	}, nil

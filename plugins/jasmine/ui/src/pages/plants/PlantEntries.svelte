@@ -10,9 +10,10 @@
 		plantId: string;
 		/** Changes when an entry of the plant lands, so the first page reads again. */
 		revision: number;
+		timeZone: string | undefined;
 	}
 
-	let { api, plantId, revision }: Props = $props();
+	let { api, plantId, revision, timeZone }: Props = $props();
 
 	const pager = createPager((link?: string) =>
 		api.maintenanceEntries.list({ plant_id: plantId }, link)
@@ -40,7 +41,7 @@
 		<ul class="list panel">
 			{#each pager.page?.items ?? [] as entry (entry.id)}
 				<li class="list-row items-center">
-					<span class="meta whitespace-nowrap">{formatMoment(entry.performed_at)}</span>
+					<span class="meta whitespace-nowrap">{formatMoment(entry.performed_at, timeZone)}</span>
 					<span class="font-medium">{typeLabel(entry.type)}</span>
 					<span class="list-col-grow">{entry.note ?? ''}</span>
 				</li>

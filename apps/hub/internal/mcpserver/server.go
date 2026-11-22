@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
@@ -26,6 +27,7 @@ func NewServer(
 	db *sqlx.DB,
 	enablements workspace.EnablementChecker,
 	authorizer authz.Authorizer,
+	zones auth.TimeZoneReader,
 ) *mcp.Server {
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    serverName,
@@ -37,7 +39,7 @@ func NewServer(
 
 	server.AddReceivingMiddleware(
 		loggingMiddleware(logger),
-		actingUserMiddleware(),
+		actingUserMiddleware(zones),
 		workspaceMiddleware(tools, db, enablements, authorizer),
 	)
 

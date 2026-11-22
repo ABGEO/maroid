@@ -16,6 +16,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/timezone"
 	"github.com/abgeo/maroid/apps/hub/internal/widget"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -118,7 +119,7 @@ func widgetsUnderTest(
 	handler.NewWidget(
 		logger,
 		workspaceVerifier(t, fixture.provider),
-		auth.NewResolver(fixture.database),
+		auth.NewResolver(fixture.database, timezone.New(slog.New(slog.DiscardHandler))),
 		handler.WorkspaceAccess{
 			DB:          fixture.database,
 			Enablements: enablements,
@@ -403,7 +404,7 @@ func TestTheWidgetRoutesMountBesideTheSettingsOfAPlugin(t *testing.T) {
 		handler.NewPlugin(
 			slog.New(slog.DiscardHandler),
 			workspaceVerifier(t, bench.provider),
-			auth.NewResolver(bench.database),
+			auth.NewResolver(bench.database, timezone.New(slog.New(slog.DiscardHandler))),
 			loadedCatalog(t), registry.NewUIRegistry(),
 			&stubSettings{}, noIdempotency{},
 			handler.WorkspaceAccess{DB: bench.database, Authorizer: widgetAuthorizer(t)},

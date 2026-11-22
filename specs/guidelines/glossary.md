@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-11-18
+updated: 2026-11-22
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -151,6 +151,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-photo`                      | photo                      | A file of the plant photo kind that one moment holds.                                                                                                                                                                                                  |
 | `GLO-gallery`                    | gallery                    | Every moment of one plant.                                                                                                                                                                                                                             |
 | `GLO-profile-picture`            | profile picture            | The one photo of the gallery that names the plant in the shell, when the editor set one.                                                                                                                                                               |
+| `GLO-time-zone`                  | time zone                  | The zone from the IANA time zone database that a person sets on their own record. It gives their local hour and their local day.                                                                                                                       |
 
 ## Retired identifiers
 

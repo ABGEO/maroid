@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { EnvironmentReference, Plant, PlantStatus, PlantUpdatePayload } from '../../api';
-	import { localNow } from '../../lib/format';
+	import { today } from '../../lib/format';
 
 	interface Props {
 		environments: EnvironmentReference[];
@@ -9,11 +9,12 @@
 		busy: boolean;
 		onsave: (payload: PlantUpdatePayload) => void;
 		oncancel: () => void;
+		timeZone: string | undefined;
 	}
 
-	let { environments, plant, busy, onsave, oncancel }: Props = $props();
+	let { environments, plant, busy, onsave, oncancel, timeZone }: Props = $props();
 
-	const today = localNow().slice(0, 10);
+	const latestDay = $derived(today(timeZone));
 
 	let commonName = $derived(plant?.common_name ?? '');
 	let scientificName = $derived(plant?.scientific_name ?? '');
@@ -67,7 +68,13 @@
 
 	<fieldset class="fieldset">
 		<legend class="fieldset-legend">Acquired on</legend>
-		<input class="input w-full" type="date" max={today} bind:value={acquiredOn} disabled={busy} />
+		<input
+			class="input w-full"
+			type="date"
+			max={latestDay}
+			bind:value={acquiredOn}
+			disabled={busy}
+		/>
 		<p class="label">Optional</p>
 	</fieldset>
 

@@ -40,6 +40,7 @@ type MCP struct {
 	db           *sqlx.DB
 	enablements  workspace.EnablementChecker
 	authorizer   authz.Authorizer
+	zones        auth.TimeZoneReader
 }
 
 var _ Handler = (*MCP)(nil)
@@ -83,6 +84,7 @@ func NewMCP(
 		db:           db,
 		enablements:  enablements,
 		authorizer:   authorizer,
+		zones:        resolver,
 	}
 }
 
@@ -90,7 +92,9 @@ func NewMCP(
 func (h *MCP) Register(router chi.Router) {
 	h.logger.Debug("registering routes")
 
-	server := mcpserver.NewServer(h.logger, h.toolRegistry, h.db, h.enablements, h.authorizer)
+	server := mcpserver.NewServer(
+		h.logger, h.toolRegistry, h.db, h.enablements, h.authorizer, h.zones,
+	)
 	discovery := mcpauth.ProtectedResourceMetadataHandler(h.metadata)
 
 	router.Method(http.MethodGet, discoveryPath, discovery)

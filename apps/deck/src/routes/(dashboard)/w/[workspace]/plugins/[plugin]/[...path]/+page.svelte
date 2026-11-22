@@ -10,7 +10,7 @@
 	import { uiOf } from '$lib/plugins/capabilities';
 	import { knownPlugin } from '$lib/state/plugins.svelte';
 	import { pageTitle } from '$lib/state/title.svelte';
-	import { displayName, userState } from '$lib/state/user.svelte';
+	import { displayName, timeZone, userState } from '$lib/state/user.svelte';
 
 	let { data }: PageProps = $props();
 
@@ -32,6 +32,9 @@
 			const user = userState.user;
 
 			return user ? { name: displayName(user), picture: user.picture ?? '' } : null;
+		},
+		get timeZone() {
+			return timeZone();
 		},
 		get api() {
 			return api;
