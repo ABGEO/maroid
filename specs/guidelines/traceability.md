@@ -268,36 +268,37 @@ Add a row before you create the file or the directory.
 
 ### Feature keys, four to eight characters
 
-| Key        | Directory            | Feature                                                                                                | Status   |
-| ---------- | -------------------- | ------------------------------------------------------------------------------------------------------ | -------- |
-| `IDENT`    | `features/ident/`    | The user record and the ownership of a row.                                                            | Approved |
-| `PSET`     | `features/pset/`     | The settings of a plugin.                                                                              | Approved |
-| `EXTID`    | `features/extid/`    | External identities and the delegated sign in.                                                         | Approved |
-| `THEMING`  | `features/theming/`  | The shared visual theme, and the identity provider's pages.                                            | Approved |
-| `MCPHUB`   | `features/mcphub/`   | The hub as a Model Context Protocol server.                                                            | Approved |
-| `PCAP`     | `features/pcap/`     | The capabilities that a plugin declares.                                                               | Approved |
-| `WEBSESS`  | `features/websess/`  | The session of a person at the web shell.                                                              | Approved |
-| `APIFMT`   | `features/apifmt/`   | The answer that a client reads, and the platform that carries it.                                      | Approved |
-| `UIKIT`    | `features/uikit/`    | The shared components and styling of every web user interface.                                         | Approved |
-| `HEALTH`   | `features/health/`   | The liveness and the readiness that the hub reports.                                                   | Approved |
-| `WSPACE`   | `features/wspace/`   | The workspaces, their members, and the workspace that a unit of work acts in.                          | Approved |
-| `PLUGACC`  | `features/plugacc/`  | The administrator, the plugin allowlist, and the enablement of a plugin.                               | Approved |
-| `PERMS`    | `features/perms/`    | The workspace roles, and the permission that every action needs.                                       | Approved |
-| `SSACCESS` | `features/ssaccess/` | The access of Maroid to the secret store while it runs.                                                | Approved |
-| `IDPROV`   | `features/idprov/`   | The providers of the instance and the local account.                                                   | Approved |
-| `PROFILE`  | `features/profile/`  | The profile that a person changes on their own record.                                                 | Approved |
-| `GARDEN`   | `features/garden/`   | The plants of a workspace, their environments, and their care.                                         | Approved |
-| `PLROUTE`  | `features/plroute/`  | The pages of a plugin, with the parameters of their address.                                           | Approved |
-| `NOTIF`    | `features/notif/`    | The notification providers of a workspace and the routes of a notification.                            | Approved |
-| `PSECRET`  | `features/psecret/`  | The secrets that a plugin writes.                                                                      | Approved |
-| `PARKACC`  | `features/parkacc/`  | The parking account of a user: the connection and the vehicle.                                         | Approved |
-| `WIDGET`   | `features/widget/`   | The widgets that the plugins show on the home page of a workspace.                                     | Approved |
-| `GWPACC`   | `features/gwpacc/`   | The water account of a workspace: the connection, the customer, and the readings.                      | Approved |
-| `GASACC`   | `features/gasacc/`   | The gas account of a workspace: the connection, the customer, and the transactions.                    | Approved |
-| `ELECACC`  | `features/elecacc/`  | The electricity account of a workspace: the connection, the customer, the transactions, and the bills. | Approved |
-| `PLGBIND`  | `features/plgbind/`  | The host services bound to one plugin.                                                                 | Approved |
-| `PLGINFO`  | `features/plginfo/`  | The detail page of a plugin in a workspace.                                                            | Approved |
-| `FILES`    | `features/files/`    | The files that a person uploads for the hub or a plugin, and the images that Maroid derives from them. | Approved |
+| Key        | Directory            | Feature                                                                                                   | Status   |
+| ---------- | -------------------- | --------------------------------------------------------------------------------------------------------- | -------- |
+| `IDENT`    | `features/ident/`    | The user record and the ownership of a row.                                                               | Approved |
+| `PSET`     | `features/pset/`     | The settings of a plugin.                                                                                 | Approved |
+| `EXTID`    | `features/extid/`    | External identities and the delegated sign in.                                                            | Approved |
+| `THEMING`  | `features/theming/`  | The shared visual theme, and the identity provider's pages.                                               | Approved |
+| `MCPHUB`   | `features/mcphub/`   | The hub as a Model Context Protocol server.                                                               | Approved |
+| `PCAP`     | `features/pcap/`     | The capabilities that a plugin declares.                                                                  | Approved |
+| `WEBSESS`  | `features/websess/`  | The session of a person at the web shell.                                                                 | Approved |
+| `APIFMT`   | `features/apifmt/`   | The answer that a client reads, and the platform that carries it.                                         | Approved |
+| `UIKIT`    | `features/uikit/`    | The shared components and styling of every web user interface.                                            | Approved |
+| `HEALTH`   | `features/health/`   | The liveness and the readiness that the hub reports.                                                      | Approved |
+| `WSPACE`   | `features/wspace/`   | The workspaces, their members, and the workspace that a unit of work acts in.                             | Approved |
+| `PLUGACC`  | `features/plugacc/`  | The administrator, the plugin allowlist, and the enablement of a plugin.                                  | Approved |
+| `PERMS`    | `features/perms/`    | The workspace roles, and the permission that every action needs.                                          | Approved |
+| `SSACCESS` | `features/ssaccess/` | The access of Maroid to the secret store while it runs.                                                   | Approved |
+| `IDPROV`   | `features/idprov/`   | The providers of the instance and the local account.                                                      | Approved |
+| `PROFILE`  | `features/profile/`  | The profile that a person changes on their own record.                                                    | Approved |
+| `GARDEN`   | `features/garden/`   | The plants of a workspace, their environments, and their care.                                            | Approved |
+| `PLROUTE`  | `features/plroute/`  | The pages of a plugin, with the parameters of their address.                                              | Approved |
+| `NOTIF`    | `features/notif/`    | The notification providers of a workspace and the routes of a notification.                               | Approved |
+| `PSECRET`  | `features/psecret/`  | The secrets that a plugin writes.                                                                         | Approved |
+| `PARKACC`  | `features/parkacc/`  | The parking account of a user: the connection and the vehicle.                                            | Approved |
+| `WIDGET`   | `features/widget/`   | The widgets that the plugins show on the home page of a workspace.                                        | Approved |
+| `GWPACC`   | `features/gwpacc/`   | The water account of a workspace: the connection, the customer, and the readings.                         | Approved |
+| `GASACC`   | `features/gasacc/`   | The gas account of a workspace: the connection, the customer, and the transactions.                       | Approved |
+| `ELECACC`  | `features/elecacc/`  | The electricity account of a workspace: the connection, the customer, the transactions, and the bills.    | Approved |
+| `PLGBIND`  | `features/plgbind/`  | The host services bound to one plugin.                                                                    | Approved |
+| `PLGINFO`  | `features/plginfo/`  | The detail page of a plugin in a workspace.                                                               | Approved |
+| `FILES`    | `features/files/`    | The files that a person uploads for the hub or a plugin, and the images that Maroid derives from them.    | Approved |
+| `TGMSG`    | `features/tgmsg/`    | The Telegram messages that a plugin sends to its acting user, and the presses and replies that come back. | Approved |
 
 ## Retired identifiers
 

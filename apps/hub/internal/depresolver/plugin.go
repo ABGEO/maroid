@@ -61,6 +61,11 @@ func (c *Container) newPluginBinder() (*pluginhost.Binder, error) {
 		return nil, err
 	}
 
+	telegramMessages, err := c.TelegramMessageService()
+	if err != nil {
+		return nil, err
+	}
+
 	settingsService, err := c.SettingsService()
 	if err != nil {
 		return nil, err
@@ -83,6 +88,7 @@ func (c *Container) newPluginBinder() (*pluginhost.Binder, error) {
 		Notifier:                   notifier,
 		TelegramBot:                telegramBot,
 		TelegramConversationEngine: telegramConversationEngine,
+		TelegramMessages:           telegramMessages,
 		Settings:                   settingsService,
 		Secrets:                    secretStore,
 		Files:                      files,
@@ -114,6 +120,7 @@ func (c *Container) PluginLoader() (*pluginloader.Loader, error) {
 	return c.pluginLoader.instance, nil
 }
 
+//nolint:funlen // one registry for each capability
 func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 	pluginBinder, err := c.PluginBinder()
 	if err != nil {
@@ -166,6 +173,7 @@ func (c *Container) buildPluginLoader() (*pluginloader.Loader, error) {
 		c.PluginRegistry(),
 		registries.telegramCommand,
 		registries.telegramConversation,
+		c.TelegramMessageRegistry(),
 		c.UIRegistry(),
 		c.SettingsRegistry(),
 		registries.mcpTool,

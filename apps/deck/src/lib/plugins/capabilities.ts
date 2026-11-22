@@ -14,6 +14,7 @@ const LABELS: Record<CapabilityName, string> = {
 	api: 'API',
 	telegram_commands: 'Bot commands',
 	telegram_conversations: 'Conversations',
+	telegram_messages: 'Bot messages',
 	mcp_tools: 'Agent tools',
 	cron: 'Scheduled jobs',
 	mqtt: 'MQTT',
@@ -73,7 +74,10 @@ export interface Column {
 	mono: boolean;
 }
 
-type ItemCapability = Exclude<CapabilityName, 'settings' | 'migrations' | 'ui'>;
+type ItemCapability = Exclude<
+	CapabilityName,
+	'settings' | 'migrations' | 'telegram_messages' | 'ui'
+>;
 
 const COLUMNS: Record<ItemCapability, Column[]> = {
 	api: [

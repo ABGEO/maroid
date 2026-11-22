@@ -103,6 +103,9 @@ components:
         migrations:
           const: true
           description: The plugin ships migrations for its own schema.
+        telegram_messages:
+          const: true
+          description: The plugin receives a press and a reply on its Telegram messages. `TGMSG-FR-021`.
         ui:
           $ref: "#/components/schemas/UIManifest"
         api:

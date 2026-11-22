@@ -35,6 +35,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/conversation"
+	"github.com/abgeo/maroid/apps/hub/internal/telegram/pluginmsg"
 	"github.com/abgeo/maroid/apps/hub/internal/timezone"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
@@ -401,6 +402,23 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *conversation.Engine
+	}
+
+	telegramMessageRegistry struct {
+		once     sync.Once
+		instance *registry.TelegramMessageRegistry
+	}
+
+	telegramMessageService struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *pluginmsg.Service
+	}
+
+	telegramMessageRouter struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *pluginmsg.Router
 	}
 }
 

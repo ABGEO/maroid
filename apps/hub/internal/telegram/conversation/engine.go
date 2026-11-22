@@ -37,6 +37,14 @@ func NewEngine(
 	}
 }
 
+// Holds reports whether the person with the Telegram identifier holds an open
+// conversation.
+func (e *Engine) Holds(telegramUserID string) bool {
+	state, _ := e.store.Get(telegramUserID)
+
+	return state != nil
+}
+
 // HandleMessage processes an incoming Telegram update, updates the conversation state accordingly,
 // and triggers the appropriate step handlers.
 // If there is no active conversation for the user, it simply returns without doing anything.

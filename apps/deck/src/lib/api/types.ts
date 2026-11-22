@@ -184,6 +184,7 @@ export interface CLICommand {
 export interface Capabilities {
 	settings?: true;
 	migrations?: true;
+	telegram_messages?: true;
 	ui?: UIManifest;
 	api?: APIRoute[];
 	cli?: CLICommand[];

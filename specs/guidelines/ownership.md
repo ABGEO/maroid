@@ -4,7 +4,7 @@ title: Record ownership
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-11-18
+updated: 2026-11-23
 scope: [apps/hub/, libs/pluginapi/, plugins/*/db/, plugins/*/repository/]
 related: [DAT, SEC, REP, TG, JOB, PLG]
 ---
@@ -36,14 +36,14 @@ Every unit of work carries one acting user, one acting workspace, or both. Work
 without an acting workspace reaches no table that a workspace scopes. Work without
 an acting user reaches no table that a user scopes.
 
-| Entry point           | Acting user                                                  | Acting workspace                                                                                 |
-| --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| An HTTP request       | The identity that `federated_claims` names. See `SEC-003`.   | The `{workspaceId}` segment of the path.                                                         |
-| A Telegram update     | The identity of the Telegram connector for the sender.       | The workspace that the chat selected.                                                            |
-| An MCP tool call      | The identity that `federated_claims` names. See `SEC-002`.   | The `workspace` argument of the call.                                                            |
-| A cron job            | The user of the run, for a job for each user. See `OWN-009`. | The workspace of the run, for a job for each workspace. See `OWN-009`.                           |
-| A command of a plugin | None.                                                        | The `--workspace` flag of the command, when the command reaches a table that a workspace scopes. |
-| A task of the outbox  | The owner of the task, when a user owns its file.            | The owner of the task, when a workspace owns its file.                                           |
+| Entry point           | Acting user                                                  | Acting workspace                                                                                                   |
+| --------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| An HTTP request       | The identity that `federated_claims` names. See `SEC-003`.   | The `{workspaceId}` segment of the path.                                                                           |
+| A Telegram update     | The identity of the Telegram connector for the sender.       | The workspace that the chat selected. A press on a plugin message and a reply to a claim carry none. See `TG-008`. |
+| An MCP tool call      | The identity that `federated_claims` names. See `SEC-002`.   | The `workspace` argument of the call.                                                                              |
+| A cron job            | The user of the run, for a job for each user. See `OWN-009`. | The workspace of the run, for a job for each workspace. See `OWN-009`.                                             |
+| A command of a plugin | None.                                                        | The `--workspace` flag of the command, when the command reaches a table that a workspace scopes.                   |
+| A task of the outbox  | The owner of the task, when a user owns its file.            | The owner of the task, when a workspace owns its file.                                                             |
 
 A task of the outbox names its owner. The worker sets it with `OWN-007` before the
 first statement of the task.

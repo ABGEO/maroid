@@ -253,7 +253,7 @@ func mountWebhook(
 	require.NoError(t, err)
 
 	_, err = telegram.NewUpdatesHandler(
-		cfg, logger, bot, router, registry.NewTelegramCommandRegistry(), nil, resolver, nil,
+		cfg, logger, bot, router, registry.NewTelegramCommandRegistry(), nil, resolver, nil, nil,
 	)
 	require.NoError(t, err)
 }

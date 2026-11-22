@@ -4,7 +4,7 @@ title: Telegram
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-01
+updated: 2026-11-23
 scope: [apps/hub/internal/telegram/, libs/pluginapi/telegram/]
 related: [PLG, SEC, API, OWN]
 ---
@@ -48,13 +48,33 @@ Conversation state lives in a `Store` and the key is the Telegram user identifie
 The store holds the state in memory today. A restart of the hub loses every open
 conversation. A conversation must not carry a state that the user cannot repeat.
 
+A reply claim (`GLO-reply-claim`) lives in the database, so a restart of the hub
+keeps it. The store of a conversation stays in memory. `ADR-0025`.
+
 ## TG-007
 
-A plugin sends a message through `pluginapi.TelegramBot`.
-The interface gives `SendMessage`, `AnswerCallbackQuery`, and `EditMessageText`.
-A plugin does not use the telego client directly.
+A plugin sends a message through the host. `pluginapi.TelegramBot` answers within
+an update: a command or a step of a conversation, with the chat of that update.
+`message.Messenger` sends a plugin message (`GLO-plugin-message`) to the
+acting user, and the plugin never names a chat. A plugin does not use the telego
+client directly. `ADR-0025`.
 
-**Why:** The narrow interface keeps the plugin free of the bot lifecycle.
+**Why:** The narrow interface keeps the plugin free of the bot lifecycle. The hub
+owns the chat of a person.
+
+## TG-008
+
+The hub routes one update to one receiver, in this order:
+
+1. A command goes to its command.
+2. A press on a button of a plugin message goes to the plugin that sent it.
+3. A reply to a plugin message goes to the plugin that holds an open claim on it.
+4. A plain message goes to the open conversation of the sender.
+5. A plain message with no conversation goes to the oldest open claim of the sender.
+6. Any other update goes to the handlers of the hub, as before.
+
+A press and a reply reach the plugin with the acting user and no acting workspace.
+`ADR-0025`.
 
 ## Retired identifiers
 

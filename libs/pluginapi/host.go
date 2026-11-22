@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
+	"github.com/abgeo/maroid/libs/pluginapi/telegram/message"
 )
 
 // Host represents the environment provided to a plugin by the host application.
@@ -13,6 +14,7 @@ type Host interface {
 	Database() (PluginDB, error)
 	Notifier() (PluginNotifier, error)
 	TelegramBot() (TelegramBot, error)
+	TelegramMessenger() (message.Messenger, error)
 	TelegramConversationEngine() conversation.Engine
 	Settings() (PluginSettings, error)
 	Secrets() (PluginSecrets, error)
