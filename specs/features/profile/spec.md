@@ -647,11 +647,11 @@ stores 00:30 UTC for the second, the first of the two moments at 02:30.
 | 3   | `dex.Client.VerifyPassword`, the fake, `LocalAccounts.ChangeOwn`       | `PROFILE-FR-007`, `PROFILE-NFR-001`                                      | [x]  |
 | 4   | `PATCH /auth/identities/{provider}`                                    | `PROFILE-FR-006` to `PROFILE-FR-010`                                     | [x]  |
 | 5   | The deck: the name form saves, the password section                    | `PROFILE-FR-001`, `PROFILE-FR-002`, `PROFILE-FR-004` to `PROFILE-FR-008` | [x]  |
-| 6   | The migration, `timezone`, `time/tzdata`, the field of the record      | `PROFILE-FR-013`, `PROFILE-FR-014`, `PROFILE-INV-002`, `PROFILE-INV-003` | [ ]  |
-| 7   | `time_zone` on `/users/self`, `/auth/sessions/self`, the API documents | `PROFILE-FR-011` to `PROFILE-FR-015`                                     | [ ]  |
-| 8   | `pluginapi`, the four entry points. Build every plugin. `BLD-004`      | `PROFILE-FR-019`, `PROFILE-FR-020`, `PROFILE-INV-004`                    | [ ]  |
-| 9   | The SDK helpers, `host.timeZone`, the deck, the time zone section      | `PROFILE-FR-012`, `PROFILE-FR-016` to `PROFILE-FR-018`                   | [ ]  |
-| 10  | The garden pages read `host.timeZone`. Build the UI before the `.so`   | `PROFILE-FR-016` to `PROFILE-FR-018`                                     | [ ]  |
+| 6   | The migration, `timezone`, `time/tzdata`, the field of the record      | `PROFILE-FR-013`, `PROFILE-FR-014`, `PROFILE-INV-002`, `PROFILE-INV-003` | [x]  |
+| 7   | `time_zone` on `/users/self`, `/auth/sessions/self`, the API documents | `PROFILE-FR-011` to `PROFILE-FR-015`                                     | [x]  |
+| 8   | `pluginapi`, the four entry points. Build every plugin. `BLD-004`      | `PROFILE-FR-019`, `PROFILE-FR-020`, `PROFILE-INV-004`                    | [x]  |
+| 9   | The SDK helpers, `host.timeZone`, the deck, the time zone section      | `PROFILE-FR-012`, `PROFILE-FR-016` to `PROFILE-FR-018`                   | [x]  |
+| 10  | The garden pages read `host.timeZone`. Build the UI before the `.so`   | `PROFILE-FR-016` to `PROFILE-FR-018`                                     | [x]  |
 
 ## 8. Out of scope for this specification
 
