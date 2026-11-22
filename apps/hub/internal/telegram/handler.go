@@ -18,6 +18,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram/command"
 	telegrammiddleware "github.com/abgeo/maroid/apps/hub/internal/telegram/middleware"
+	"github.com/abgeo/maroid/apps/hub/internal/telegram/pluginmsg"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 )
@@ -38,6 +39,7 @@ type ChannelHandler struct {
 	telegramConversationEngine conversation.Engine
 	identityResolver           auth.IdentityResolver
 	chats                      command.WorkspaceChats
+	pluginMessages             *pluginmsg.Router
 	allowedNetworksMiddleware  func(http.Handler) http.Handler
 
 	updates    <-chan telego.Update
@@ -61,6 +63,7 @@ func NewUpdatesHandler(
 	telegramConversationEngine conversation.Engine,
 	identityResolver auth.IdentityResolver,
 	chats command.WorkspaceChats,
+	pluginMessages *pluginmsg.Router,
 ) (*ChannelHandler, error) {
 	logger = logger.With(
 		slog.String("component", "telegram-updates-handler"),
@@ -85,6 +88,7 @@ func NewUpdatesHandler(
 		telegramConversationEngine: telegramConversationEngine,
 		identityResolver:           identityResolver,
 		chats:                      chats,
+		pluginMessages:             pluginMessages,
 		allowedNetworksMiddleware:  allowedNetworksMiddleware,
 	}
 
@@ -133,6 +137,8 @@ func (h *ChannelHandler) Handle(ctx context.Context) error {
 	h.botHandler.Use(telegrammiddleware.ActingUser(h.logger, h.identityResolver))
 	//nolint:contextcheck // th.Context is the context of the update.
 	h.botHandler.Use(telegrammiddleware.ActingWorkspace(h.logger, h.chats))
+	//nolint:contextcheck // th.Context is the context of the update.
+	h.botHandler.Use(h.pluginMessages.Middleware())
 	h.registerHandlers()
 
 	err := h.setCommands(ctx)
@@ -141,9 +147,11 @@ func (h *ChannelHandler) Handle(ctx context.Context) error {
 	}
 
 	//nolint:contextcheck // th.Context is the context of the update.
-	h.botHandler.Handle(func(ctx *th.Context, update telego.Update) error {
-		return h.telegramConversationEngine.HandleMessage(ctx, update)
-	})
+	h.botHandler.Handle(
+		h.pluginMessages.Fallback(func(ctx *th.Context, update telego.Update) error {
+			return h.telegramConversationEngine.HandleMessage(ctx, update)
+		}),
+	)
 
 	err = h.botHandler.Start()
 	if err != nil {

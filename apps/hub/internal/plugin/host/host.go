@@ -12,6 +12,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
+	messageapi "github.com/abgeo/maroid/libs/pluginapi/telegram/message"
 )
 
 // Dependencies holds what the host hands to a plugin. Config comes first, because
@@ -23,6 +24,7 @@ type Dependencies struct {
 	Notifier                   NotificationSender
 	TelegramBot                *telego.Bot
 	TelegramConversationEngine conversation.Engine
+	TelegramMessages           TelegramMessageSender
 	Settings                   SettingsReader
 	Secrets                    SecretStore
 	Files                      FileStore
@@ -63,9 +65,13 @@ func (b *Binder) Bind(meta pluginapi.Metadata) *Host {
 		notifier:                   &boundNotifier{sender: b.deps.Notifier, pluginID: &pluginID},
 		telegramBot:                b.deps.TelegramBot,
 		telegramConversationEngine: b.deps.TelegramConversationEngine,
-		settings:                   &boundSettings{reader: b.deps.Settings, pluginID: &pluginID},
-		secrets:                    &boundSecrets{store: b.deps.Secrets, pluginID: &pluginID},
-		files:                      &boundFiles{store: b.deps.Files, pluginID: &pluginID},
+		telegramMessenger: &boundMessenger{
+			sender:   b.deps.TelegramMessages,
+			pluginID: pluginID.String(),
+		},
+		settings: &boundSettings{reader: b.deps.Settings, pluginID: &pluginID},
+		secrets:  &boundSecrets{store: b.deps.Secrets, pluginID: &pluginID},
+		files:    &boundFiles{store: b.deps.Files, pluginID: &pluginID},
 		pages: &boundPages{
 			deckURL:  b.deps.Config.Auth.DeckURL,
 			pluginID: &pluginID,
@@ -80,6 +86,7 @@ type Host struct {
 	notifier                   *boundNotifier
 	telegramBot                *telego.Bot
 	telegramConversationEngine conversation.Engine
+	telegramMessenger          *boundMessenger
 	settings                   *boundSettings
 	secrets                    *boundSecrets
 	pages                      *boundPages
@@ -106,6 +113,14 @@ func (h *Host) Notifier() (pluginapi.PluginNotifier, error) {
 // TelegramBot returns the wrapped Telegram bot instance from the dependency container.
 func (h *Host) TelegramBot() (pluginapi.TelegramBot, error) {
 	return &telegramBotWrapper{bot: h.telegramBot}, nil
+}
+
+// TelegramMessenger returns the messenger that sends the plugin messages of the plugin
+// to the acting user.
+//
+//nolint:ireturn // pluginapi.Host declares the interface.
+func (h *Host) TelegramMessenger() (messageapi.Messenger, error) {
+	return h.telegramMessenger, nil
 }
 
 // TelegramConversationEngine returns the Telegram conversation engine instance from the dependency container.

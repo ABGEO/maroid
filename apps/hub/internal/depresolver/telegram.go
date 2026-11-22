@@ -84,6 +84,11 @@ func (c *Container) buildTelegramUpdatesHandler() (*telegram.ChannelHandler, err
 		return nil, err
 	}
 
+	pluginMessages, err := c.TelegramMessageRouter()
+	if err != nil {
+		return nil, err
+	}
+
 	handler, err := telegram.NewUpdatesHandler(
 		c.Config(),
 		c.Logger(),
@@ -93,6 +98,7 @@ func (c *Container) buildTelegramUpdatesHandler() (*telegram.ChannelHandler, err
 		conversationEngine,
 		identityResolver,
 		chats,
+		pluginMessages,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("building the telegram updates handler: %w", err)

@@ -20,6 +20,7 @@ const (
 	CapMQTT                  Capability = "mqtt"
 	CapTelegramCommands      Capability = "telegram_commands"
 	CapTelegramConversations Capability = "telegram_conversations"
+	CapTelegramMessages      Capability = "telegram_messages"
 	CapMCPTools              Capability = "mcp_tools"
 	CapPermissions           Capability = "permissions"
 	CapNotificationTopics    Capability = "notification_topics"
