@@ -12,6 +12,7 @@ import (
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/timezone"
 )
 
 // IDPROV-SC-023: Every route that takes a password or a client secret answers once,
@@ -87,7 +88,7 @@ func loggedAdministration(
 			slog.NewJSONHandler(lines, &slog.HandlerOptions{Level: slog.LevelDebug}),
 		),
 		verifier: workspaceVerifier(t, fixture.provider),
-		resolver: auth.NewResolver(fixture.database),
+		resolver: auth.NewResolver(fixture.database, timezone.New(slog.New(slog.DiscardHandler))),
 		users:    usersOf(t, fixture.database, fixture.authSvc),
 		idp:      fixture.idp,
 		database: fixture.database,

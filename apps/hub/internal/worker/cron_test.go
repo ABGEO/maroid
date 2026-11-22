@@ -7,12 +7,14 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/robfig/cron/v3"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/timezone"
 	"github.com/abgeo/maroid/apps/hub/internal/worker"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
@@ -40,6 +42,7 @@ type recordingJob struct {
 	mu         sync.Mutex
 	seen       []string
 	workspaces []string
+	zones      []string
 }
 
 func (j *recordingJob) Meta() pluginapi.CronJobMeta { return j.meta }
@@ -50,8 +53,16 @@ func (j *recordingJob) Run(ctx context.Context) error {
 
 	j.seen = append(j.seen, pluginapi.ActingUserFromContext(ctx))
 	j.workspaces = append(j.workspaces, pluginapi.ActingWorkspaceFromContext(ctx))
+	j.zones = append(j.zones, pluginapi.ActingTimeZone(ctx).String())
 
 	return j.err
+}
+
+func (j *recordingJob) actingZones() []string {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+
+	return append([]string(nil), j.zones...)
 }
 
 func (j *recordingJob) actingWorkspaces() []string {
@@ -139,7 +150,9 @@ func fireOf(
 
 	scheduler := cron.New()
 
-	instance := worker.NewCronWorker(logger, scheduler, registryInstance, users, enablements)
+	instance := worker.NewCronWorker(
+		logger, scheduler, registryInstance, users, enablements, zonesForTest(),
+	)
 	require.NoError(t, instance.Prepare())
 
 	entries := scheduler.Entries()
@@ -369,6 +382,7 @@ func TestJobsOfTwoPluginsWithOneNameRunForTheirOwnWorkspaces(t *testing.T) {
 		registryInstance,
 		twoActiveUsers(),
 		fakeEnablements{pluginP: {workspaceH}, pluginQ: {workspaceG}},
+		zonesForTest(),
 	)
 	require.NoError(t, instance.Prepare())
 
@@ -425,6 +439,7 @@ func TestAPerWorkspaceJobOfTheHubRunsForEveryWorkspace(t *testing.T) {
 		registryInstance,
 		twoActiveUsers(),
 		instanceWorkspaces{workspaceH, workspaceG, workspaceF},
+		zonesForTest(),
 	)
 	require.NoError(t, instance.Prepare())
 
@@ -458,4 +473,38 @@ func TestPerUserJobReportsNoFailureWhenTheSettingsAreAbsent(t *testing.T) {
 
 	require.Equal(t, []string{idOfA, idOfB}, job.actingUsers())
 	require.False(t, recorder.holds(slog.LevelError), "a skip is not a failure")
+}
+
+func zonesForTest() *timezone.Cache {
+	return timezone.New(slog.New(slog.DiscardHandler))
+}
+
+// PROFILE-SC-018: A job for each user reads the zone of each record, and a job for
+// each workspace reads UTC.
+func TestAJobReadsTheTimeZoneOfTheActingUser(t *testing.T) {
+	t.Parallel()
+
+	tbilisi := "Asia/Tbilisi"
+	users := fakeUsers{
+		users: []model.User{{ID: idOfA, TimeZone: &tbilisi}, {ID: idOfB}},
+		err:   nil,
+	}
+
+	perUser := &recordingJob{meta: pluginapi.CronJobMeta{
+		ID:       "per-user-zone",
+		Schedule: everyMorning,
+		Scope:    pluginapi.CronScopePerUser,
+	}}
+	fire(t, perUser, users)
+
+	utc := time.UTC.String()
+	require.Equal(t, []string{tbilisi, utc}, perUser.actingZones())
+
+	perWorkspace := &recordingJob{meta: pluginapi.CronJobMeta{
+		ID:       "per-workspace-zone",
+		Schedule: everyMorning,
+		Scope:    pluginapi.CronScopePerWorkspace,
+	}}
+	fireOf(t, slog.New(slog.DiscardHandler), perWorkspace, users, pAndBothWorkspaces())
+	require.Equal(t, []string{utc, utc}, perWorkspace.actingZones())
 }

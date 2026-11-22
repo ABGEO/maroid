@@ -9,8 +9,8 @@ import (
 	th "github.com/mymmrac/telego/telegohandler"
 
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
+	"github.com/abgeo/maroid/apps/hub/internal/model"
 	teleupdate "github.com/abgeo/maroid/apps/hub/internal/telegram/update"
-	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 // ActingUser returns a middleware that drops an update from a person that holds
@@ -18,25 +18,39 @@ import (
 // other update.
 func ActingUser(logger *slog.Logger, resolver auth.IdentityResolver) th.Handler {
 	return func(ctx *th.Context, update telego.Update) error {
-		actingUser, ok := resolveActingUser(ctx, logger, resolver, update)
+		acting, ok := actingContext(ctx.Context(), logger, resolver, update)
 		if !ok {
 			return nil
 		}
 
-		return ctx.WithContext(
-			pluginapi.ContextWithActingUser(ctx.Context(), actingUser),
-		).Next(update)
+		return ctx.WithContext(acting).Next(update)
 	}
 }
 
-// resolveActingUser returns the acting user of the update. It reports false when
-// the update reaches nothing, because no active record owns it.
+// actingContext returns a context that carries the acting user of the update and the
+// time zone of that record. It reports false when the update reaches nothing.
+func actingContext(
+	ctx context.Context,
+	logger *slog.Logger,
+	resolver auth.IdentityResolver,
+	update telego.Update,
+) (context.Context, bool) {
+	user, ok := resolveActingUser(ctx, logger, resolver, update)
+	if !ok {
+		return ctx, false
+	}
+
+	return auth.WithActingUser(ctx, resolver, user), true
+}
+
+// resolveActingUser returns the record of the acting user of the update. It reports
+// false when the update reaches nothing, because no active record owns it.
 func resolveActingUser(
 	ctx context.Context,
 	logger *slog.Logger,
 	resolver auth.IdentityResolver,
 	update telego.Update,
-) (string, bool) {
+) (*model.User, bool) {
 	sender := teleupdate.SentFrom(update)
 	if sender == nil {
 		logger.WarnContext(
@@ -45,7 +59,7 @@ func resolveActingUser(
 			slog.Any("update", update),
 		)
 
-		return "", false
+		return nil, false
 	}
 
 	user, err := resolver.ResolveByProvider(
@@ -62,8 +76,8 @@ func resolveActingUser(
 			slog.Any("error", err),
 		)
 
-		return "", false
+		return nil, false
 	}
 
-	return user.ID, true
+	return user, true
 }

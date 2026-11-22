@@ -105,7 +105,7 @@ func (c *Container) IdentityResolver() (auth.IdentityResolver, error) {
 			return
 		}
 
-		c.identityResolver.instance = auth.NewResolver(dbInstance)
+		c.identityResolver.instance = auth.NewResolver(dbInstance, c.TimeZones())
 	})
 
 	if err != nil {

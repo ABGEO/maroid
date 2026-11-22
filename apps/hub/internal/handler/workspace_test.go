@@ -27,6 +27,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	providers "github.com/abgeo/maroid/apps/hub/internal/provider"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/timezone"
 	"github.com/abgeo/maroid/apps/hub/internal/user"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -204,7 +205,7 @@ func workspaceRouter(
 
 	logger := slog.New(slog.DiscardHandler)
 	verifier := workspaceVerifier(t, provider)
-	resolver := auth.NewResolver(instance.DB)
+	resolver := auth.NewResolver(instance.DB, timezone.New(slog.New(slog.DiscardHandler)))
 
 	router := baseRouter()
 

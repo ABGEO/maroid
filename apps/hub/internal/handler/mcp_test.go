@@ -61,6 +61,10 @@ func (s *stubResolver) ResolveByProvider(
 	return s.user, s.err
 }
 
+func (s *stubResolver) TimeZone(context.Context, *model.User) *time.Location {
+	return time.UTC
+}
+
 // stubSettings declares a schema for the plugins that the test names.
 type stubSettings struct {
 	declared map[string]bool

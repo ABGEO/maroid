@@ -321,3 +321,99 @@ func TestASignInThroughTheLocalProviderKeepsTheAddress(t *testing.T) {
 	listed := byProvider(fixture.listIdentities(t, auth.ProviderLocal, nina))
 	assert.Equal(t, ninaEmail, listed[auth.ProviderLocal]["username"])
 }
+
+const (
+	timeZoneK = "time_zone"
+	tbilisi   = "Asia/Tbilisi"
+)
+
+// PROFILE-SC-013: A person sets a zone of the database, then UTC. The record and the
+// person of the session answer it, and a moment stays UTC.
+func TestAPersonSetsTheirOwnTimeZone(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+
+	for _, zone := range []string{tbilisi, "UTC"} {
+		changed := fixture.call(t, fixture.nino, http.MethodPatch, selfPath,
+			map[string]any{timeZoneK: zone}, "")
+		require.Equal(t, http.StatusOK, changed.Code, changed.Body.String())
+		assert.Equal(t, zone, decode(t, changed)[timeZoneK])
+	}
+
+	read := decode(t, fixture.call(t, fixture.nino, http.MethodGet, selfPath, nil, ""))
+	assert.Equal(t, "UTC", read[timeZoneK])
+	assert.True(t, strings.HasSuffix(stringOf(t, read["created_at"]), "Z"))
+}
+
+// PROFILE-SC-013: The person of the session carries the zone of the record.
+func TestThePersonOfTheSessionCarriesTheTimeZone(t *testing.T) {
+	t.Parallel()
+
+	fixture := profileUnderTest(t)
+	nina := stringOf(t, fixture.me(t, auth.ProviderTelegram, ninaAccount)["id"])
+
+	assert.NotContains(t, fixture.me(t, auth.ProviderTelegram, ninaAccount), timeZoneK)
+
+	_, err := fixture.database.ExecContext(t.Context(),
+		`UPDATE public.users SET time_zone = 'UTC' WHERE id = $1;`, nina)
+	require.NoError(t, err)
+
+	assert.Equal(t, "UTC", fixture.me(t, auth.ProviderTelegram, ninaAccount)[timeZoneK])
+}
+
+// PROFILE-SC-014: An offset, a misspelled name, and the zone of the server name
+// /time_zone, and the record keeps its zone.
+func TestAnUnknownTimeZoneIsRefused(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+
+	set := fixture.call(t, fixture.nino, http.MethodPatch, selfPath,
+		map[string]any{timeZoneK: tbilisi}, "")
+	require.Equal(t, http.StatusOK, set.Code, set.Body.String())
+
+	for _, zone := range []string{"+04:00", "Asia/Tbilsi", "Local"} {
+		requireFieldFailure(t, fixture.call(t, fixture.nino, http.MethodPatch, selfPath,
+			map[string]any{timeZoneK: zone}, ""), "/time_zone")
+	}
+
+	read := decode(t, fixture.call(t, fixture.nino, http.MethodGet, selfPath, nil, ""))
+	assert.Equal(t, tbilisi, read[timeZoneK])
+}
+
+// PROFILE-SC-015: An empty string clears the zone, and a record with no zone stays
+// with none.
+func TestAPersonClearsTheirOwnTimeZone(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+
+	set := fixture.call(t, fixture.nino, http.MethodPatch, selfPath,
+		map[string]any{timeZoneK: tbilisi}, "")
+	require.Equal(t, http.StatusOK, set.Code, set.Body.String())
+
+	for _, member := range []person{fixture.nino, fixture.beka} {
+		cleared := fixture.call(t, member, http.MethodPatch, selfPath,
+			map[string]any{timeZoneK: ""}, "")
+		require.Equal(t, http.StatusOK, cleared.Code, cleared.Body.String())
+		assert.NotContains(t, decode(t, cleared), timeZoneK)
+	}
+}
+
+// PROFILE-SC-016: A zone and the mark of an administrator in one change answer
+// member-unknown, and neither field changes.
+func TestATimeZoneDoesNotCarryAnotherField(t *testing.T) {
+	t.Parallel()
+
+	fixture := workspaceUnderTest(t)
+
+	refused := fixture.call(t, fixture.nino, http.MethodPatch, selfPath,
+		map[string]any{timeZoneK: "Europe/Berlin", "is_administrator": true}, "")
+	require.Equal(t, http.StatusBadRequest, refused.Code, refused.Body.String())
+	assert.Equal(t, problem.TypeMemberUnknown, decode(t, refused)["type"])
+
+	read := decode(t, fixture.call(t, fixture.nino, http.MethodGet, selfPath, nil, ""))
+	assert.NotContains(t, read, timeZoneK)
+	assert.Equal(t, false, read["is_administrator"])
+}

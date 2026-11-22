@@ -48,6 +48,10 @@ func (s *stubResolver) ResolveByProvider(
 	return s.user, s.err
 }
 
+func (s *stubResolver) TimeZone(context.Context, *model.User) *time.Location {
+	return time.UTC
+}
+
 func activeRecord() *model.User {
 	first, last := "Temuri", "Takalandze"
 

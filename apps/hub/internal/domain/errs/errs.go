@@ -56,6 +56,8 @@ var (
 	ErrUnknownStatus = errors.New("user: unknown status")
 	// ErrUserNotFound indicates that no active user record holds the given identity.
 	ErrUserNotFound = errors.New("user: not found")
+	// ErrTimeZoneUnknown indicates a name that the IANA time zone database does not hold.
+	ErrTimeZoneUnknown = errors.New("user: unknown time zone")
 	// ErrUnknownIntent indicates that an authorization flow carries an intent that
 	// Maroid does not recognize.
 	ErrUnknownIntent = errors.New("auth flow: unknown intent")

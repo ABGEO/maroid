@@ -479,12 +479,13 @@ type meResponse struct {
 	IsAdministrator bool    `json:"is_administrator"`
 	FirstName       *string `json:"first_name,omitempty"`
 	LastName        *string `json:"last_name,omitempty"`
+	TimeZone        *string `json:"time_zone,omitempty"`
 	Picture         string  `json:"picture,omitempty"`
 	Provider        string  `json:"provider"`
 }
 
-// Me returns the identifier and the name of the acting user, the picture of the
-// session, and the provider that authenticated it.
+// Me returns the identifier, the name, and the time zone of the acting user, the
+// picture of the session, and the provider that authenticated it.
 func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 	claims := auth.ClaimsFromContext(ctx)
@@ -501,6 +502,7 @@ func (h *Auth) Me(w http.ResponseWriter, r *http.Request) error {
 		IsAdministrator: user.IsAdministrator,
 		FirstName:       user.FirstName,
 		LastName:        user.LastName,
+		TimeZone:        user.TimeZone,
 		Picture:         claims.Picture,
 		Provider:        claims.Federated.ConnectorID,
 	})

@@ -99,3 +99,53 @@ func TestGetActiveByIDOfUnknownRecord(t *testing.T) {
 	_, err := activeUser(t, instance, "01998aa0-0000-7000-8000-000000000000")
 	require.ErrorIs(t, err, errs.ErrUserNotFound)
 }
+
+func changeUser(
+	t *testing.T,
+	instance *testdb.Instance,
+	id string,
+	change repository.UserChange,
+) (*model.User, error) {
+	t.Helper()
+
+	return fetch(t, instance, func(tx *sqlx.Tx) (*model.User, error) {
+		return repository.NewUser(tx).Change(t.Context(), id, change)
+	})
+}
+
+// PROFILE-SC-013: The record holds the zone that the person sets.
+// PROFILE-SC-015: An empty string clears the zone.
+// PROFILE-SC-023: A change of the zone keeps the moment of the record.
+func TestChangeSetsAndClearsTheTimeZone(t *testing.T) {
+	t.Parallel()
+
+	instance := startWithCoreMigrations(t)
+	id := insertUser(t, instance, nameOfA)
+
+	before, err := activeUser(t, instance, id)
+	require.NoError(t, err)
+	require.Nil(t, before.TimeZone, "a new record holds no zone")
+
+	tbilisi := "Asia/Tbilisi"
+	changed, err := changeUser(t, instance, id, repository.UserChange{TimeZone: &tbilisi})
+	require.NoError(t, err)
+	require.Equal(t, tbilisi, *changed.TimeZone)
+	require.Equal(t, nameOfA, *changed.FirstName, "a change of the zone keeps the names")
+	require.True(t, before.CreatedAt.Equal(changed.CreatedAt))
+
+	empty := ""
+	cleared, err := changeUser(t, instance, id, repository.UserChange{TimeZone: &empty})
+	require.NoError(t, err)
+	require.Nil(t, cleared.TimeZone)
+}
+
+// PROFILE-SC-015: The record never holds an empty zone, only a name or none.
+func TestTheRecordRefusesAnEmptyTimeZone(t *testing.T) {
+	t.Parallel()
+
+	instance := startWithCoreMigrations(t)
+	id := insertUser(t, instance, nameOfA)
+
+	_, err := instance.DB.Exec(`UPDATE public.users SET time_zone = '' WHERE id = $1;`, id)
+	require.Error(t, err)
+}

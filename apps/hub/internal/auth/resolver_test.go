@@ -1,6 +1,7 @@
 package auth_test
 
 import (
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -8,6 +9,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/timezone"
 )
 
 // EXTID-DD-012: One resolver serves both entry points, and it passes the provider
@@ -21,7 +23,7 @@ func TestResolverReadsTheIdentity(t *testing.T) {
 		t.Context(), userID, auth.ProviderTelegram, "722183546", model.Profile{},
 	))
 
-	resolver := auth.NewResolver(database)
+	resolver := auth.NewResolver(database, timezone.New(slog.New(slog.DiscardHandler)))
 
 	user, err := resolver.ResolveByProvider(t.Context(), auth.ProviderTelegram, "722183546")
 	require.NoError(t, err)
@@ -40,7 +42,7 @@ func TestResolverReportsAnUnknownAccount(t *testing.T) {
 	t.Parallel()
 
 	_, _, database := serviceUnderTest(t)
-	resolver := auth.NewResolver(database)
+	resolver := auth.NewResolver(database, timezone.New(slog.New(slog.DiscardHandler)))
 
 	user, err := resolver.ResolveByProvider(t.Context(), providerCloud, "nobody")
 	require.ErrorIs(t, err, errs.ErrUserNotFound)

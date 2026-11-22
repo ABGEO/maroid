@@ -30,6 +30,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/server"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
 	"github.com/abgeo/maroid/apps/hub/internal/telegram"
+	"github.com/abgeo/maroid/apps/hub/internal/timezone"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/rest/precondition"
@@ -88,7 +89,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	oidcSvc := oidcOf(t, cfg)
 	service := auth.NewService(instance.DB)
 	verifier := auth.NewTokenVerifier(oidcSvc)
-	resolver := auth.NewResolver(instance.DB)
+	resolver := auth.NewResolver(instance.DB, timezone.New(slog.New(slog.DiscardHandler)))
 	store := idempotency.NewStore(instance.DB)
 	workspaces := workspace.NewManager(instance.DB)
 	access, enablements := probeAccess(t, instance.DB)

@@ -26,6 +26,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	providers "github.com/abgeo/maroid/apps/hub/internal/provider"
+	"github.com/abgeo/maroid/apps/hub/internal/timezone"
 	"github.com/abgeo/maroid/libs/rest/address"
 	"github.com/abgeo/maroid/libs/rest/problem"
 	"github.com/abgeo/maroid/libs/testdb"
@@ -84,7 +85,7 @@ func authUnderTest(t *testing.T) *authFixture {
 		auth.NewTokenVerifier(oidcSvc),
 		auth.NewOIDCFlow(oidcSvc, instance.DB, cfg.Auth.FlowTTL),
 		instance.DB,
-		auth.NewResolver(instance.DB),
+		auth.NewResolver(instance.DB, timezone.New(slog.New(slog.DiscardHandler))),
 		service,
 		manager, accounts,
 	)

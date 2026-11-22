@@ -16,12 +16,13 @@ import (
 )
 
 const (
-	userColumns = `id, first_name, last_name, status, is_administrator, created_at, updated_at`
+	userColumns = `id, first_name, last_name, time_zone, status, is_administrator, ` +
+		`created_at, updated_at`
 
 	// userColumnsOfU repeats userColumns for a join, where a bare name is
 	// ambiguous. The two lists change together.
-	userColumnsOfU = `u.id, u.first_name, u.last_name, u.status, u.is_administrator, ` +
-		`u.created_at, u.updated_at`
+	userColumnsOfU = `u.id, u.first_name, u.last_name, u.time_zone, u.status, ` +
+		`u.is_administrator, u.created_at, u.updated_at`
 )
 
 // UserRepository defines the data access contract for the user record.
@@ -40,9 +41,10 @@ type UserRepository interface {
 // member keeps its column. A non-nil IfMatch changes the row only while the row
 // still carries it.
 type UserChange struct {
-	// FirstName and LastName set a name. An empty string clears it.
+	// FirstName, LastName, and TimeZone set their column. An empty string clears it.
 	FirstName     *string
 	LastName      *string
+	TimeZone      *string
 	Status        *model.Status
 	Administrator *bool
 	IfMatch       *time.Time
@@ -140,7 +142,8 @@ func (r *User) Change(
 		UPDATE public.users
 		SET status = COALESCE($2, status), is_administrator = COALESCE($3, is_administrator),
 			first_name = CASE WHEN $5::text IS NULL THEN first_name ELSE NULLIF($5, '') END,
-			last_name = CASE WHEN $6::text IS NULL THEN last_name ELSE NULLIF($6, '') END
+			last_name = CASE WHEN $6::text IS NULL THEN last_name ELSE NULLIF($6, '') END,
+			time_zone = CASE WHEN $7::text IS NULL THEN time_zone ELSE NULLIF($7, '') END
 		WHERE id = $1 AND ($4::timestamptz IS NULL OR updated_at = $4)
 		RETURNING ` + userColumns + `;`
 
@@ -154,6 +157,7 @@ func (r *User) Change(
 		change.IfMatch,
 		change.FirstName,
 		change.LastName,
+		change.TimeZone,
 	)
 	if errors.Is(err, sql.ErrNoRows) {
 		if change.IfMatch != nil {
