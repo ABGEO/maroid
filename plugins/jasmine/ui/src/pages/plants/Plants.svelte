@@ -106,7 +106,13 @@
 
 	{#if adding}
 		<div class="mb-6">
-			<PlantForm {environments} {busy} onsave={add} oncancel={() => (adding = false)} />
+			<PlantForm
+				{environments}
+				{busy}
+				timeZone={host.timeZone}
+				onsave={add}
+				oncancel={() => (adding = false)}
+			/>
 		</div>
 	{/if}
 
@@ -125,7 +131,12 @@
 
 	{#if canLog && selected.size > 0}
 		<div class="mb-4">
-			<LogForm {api} plants={[...selected.values()]} onrecorded={recorded} />
+			<LogForm
+				{api}
+				plants={[...selected.values()]}
+				timeZone={host.timeZone}
+				onrecorded={recorded}
+			/>
 			<button class="btn btn-ghost btn-xs mt-1" type="button" onclick={() => selected.clear()}>
 				Clear the selection
 			</button>

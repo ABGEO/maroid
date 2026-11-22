@@ -20,9 +20,18 @@
 		onprofile: (photo: Photo) => void;
 		/** Called when an image does not load, because its address expired. */
 		onexpired?: () => void;
+		timeZone: string | undefined;
 	}
 
-	let { photos, profileId, canWrite, busy = false, onprofile, onexpired }: Props = $props();
+	let {
+		photos,
+		profileId,
+		canWrite,
+		busy = false,
+		onprofile,
+		onexpired,
+		timeZone
+	}: Props = $props();
 
 	let dialog = $state<HTMLDialogElement>();
 	let index = $state(0);
@@ -109,7 +118,7 @@
 				<div class="min-w-0">
 					<p class="font-medium">
 						{formatDay(current.moment.taken_on)}
-						<span class="meta ml-1">{ageOf(current.moment.taken_on)}</span>
+						<span class="meta ml-1">{ageOf(current.moment.taken_on, timeZone)}</span>
 					</p>
 					{#if current.moment.note}
 						<p class="mt-1 text-sm whitespace-pre-line">{current.moment.note}</p>

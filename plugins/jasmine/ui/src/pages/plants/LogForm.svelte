@@ -10,9 +10,10 @@
 		/** The plants that each receive one entry. */
 		plants: PlantReference[];
 		onrecorded: () => void;
+		timeZone: string | undefined;
 	}
 
-	let { api, plants, onrecorded }: Props = $props();
+	let { api, plants, onrecorded, timeZone }: Props = $props();
 
 	const intent = createWriteIntent();
 	const missingPlant = /^#\/plant_ids\/(\d+)$/;
@@ -48,7 +49,7 @@
 		const payload = {
 			plant_ids: plants.map((plant) => plant.id),
 			type,
-			performed_at: toMoment(performedAt),
+			performed_at: toMoment(performedAt, timeZone),
 			note: trimmed === '' ? null : trimmed
 		};
 
@@ -87,7 +88,7 @@
 		<input
 			class="input input-sm"
 			type="datetime-local"
-			max={localNow()}
+			max={localNow(timeZone)}
 			bind:value={performedAt}
 			disabled={busy}
 		/>

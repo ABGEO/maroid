@@ -18,7 +18,7 @@
 
 	let dialog = $state<HTMLDialogElement>();
 	let editing = $state<Moment | null>(null);
-	let takenOn = $state(today());
+	let takenOn = $state('');
 	let note = $state('');
 	/** The uploaded files, in the order their bytes landed. */
 	let files = $state<FileRecord[]>([]);
@@ -31,7 +31,7 @@
 	const ready = $derived(files.filter((file) => file.state === 'ready').map((file) => file.id));
 	const canSave = $derived(
 		takenOn !== '' &&
-			takenOn <= today() &&
+			takenOn <= today(host.timeZone) &&
 			!uploading &&
 			!saving &&
 			(editing !== null || ready.length > 0)
@@ -40,7 +40,7 @@
 	/** Opens the dialog for a new moment, or for the moment to edit. */
 	export function open(moment?: Moment): void {
 		editing = moment ?? null;
-		takenOn = moment?.taken_on ?? today();
+		takenOn = moment?.taken_on ?? today(host.timeZone);
 		note = moment?.note ?? '';
 		files = [];
 		failure = null;
@@ -109,7 +109,13 @@
 		<div class="mt-4 flex flex-wrap gap-4">
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend">Day</legend>
-				<input class="input input-sm" type="date" max={today()} required bind:value={takenOn} />
+				<input
+					class="input input-sm"
+					type="date"
+					max={today(host.timeZone)}
+					required
+					bind:value={takenOn}
+				/>
 			</fieldset>
 
 			<fieldset class="fieldset grow">
