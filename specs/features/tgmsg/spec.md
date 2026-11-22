@@ -15,7 +15,7 @@ requirements: features/tgmsg/requirements.md
 
 ## 1. Summary
 
-The host gives each plugin a `TelegramMessenger`. It sends a plugin message to the
+The host gives each plugin a `message.Messenger`. It sends a plugin message to the
 acting user, changes it, and releases its reply claim. The hub records each plugin
 message in `public.telegram_messages`. A middleware of the bot routes a press and a
 claimed reply back to the plugin that sent the message, in the order of `TG-008`.
@@ -54,7 +54,7 @@ claimed reply back to the plugin that sent the message, in the order of `TG-008`
 | Rule      | Guideline    | How this specification obeys it                                                                    |
 | --------- | ------------ | -------------------------------------------------------------------------------------------------- |
 | `TG-006`  | Telegram     | A claim is a column of `public.telegram_messages`. The conversation store stays in memory.         |
-| `TG-007`  | Telegram     | `TelegramBot` stays as it is. `TelegramMessenger` is the second service. `TGMSG-DD-001`.           |
+| `TG-007`  | Telegram     | `TelegramBot` stays as it is. `message.Messenger` is the second service. `TGMSG-DD-001`.           |
 | `TG-008`  | Telegram     | The middleware of section 4.4 follows the order. `TGMSG-DD-005`.                                   |
 | `OWN-003` | Ownership    | The middleware clears the acting workspace before it calls a plugin. `TGMSG-DD-008`.               |
 | `OWN-004` | Ownership    | `public.telegram_messages` is scoped to a user.                                                    |
@@ -74,13 +74,14 @@ claimed reply back to the plugin that sent the message, in the order of `TG-008`
 
 | Path                                                                          | Change | Holds                                                                                 |
 | ----------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
-| `libs/pluginapi/telegram_message.go`                                          | create | The types, the two interfaces, the errors, and the limits of section 4.3              |
-| `libs/pluginapi/host.go`                                                      | change | `Host.TelegramMessenger() (TelegramMessenger, error)`                                 |
+| `libs/pluginapi/telegram/message/message.go`                                  | create | The types, `Messenger`, the errors, and the limits of section 4.3                     |
+| `libs/pluginapi/telegram.go`                                                  | change | `TelegramMessagePlugin`, beside the other capabilities of Telegram                    |
+| `libs/pluginapi/host.go`                                                      | change | `Host.TelegramMessenger() (message.Messenger, error)`                                 |
 | `apps/hub/db/migrations/<ts>_table_telegram_messages_create`                  | create | The table of section 4.2                                                              |
 | `apps/hub/internal/model/telegram_message.go`                                 | create | `TelegramMessage`, the row                                                            |
 | `apps/hub/internal/repository/telegram_message.go`                            | create | `Insert`, `ByTelegram`, `ByID`, `OpenClaims`, `Release`, `Purge`                      |
 | `apps/hub/internal/telegram/pluginmsg/service.go`                             | create | `Service.Send`, `Edit`, `Release` for one plugin identifier. `TGMSG-DD-002`, `DD-009` |
-| `apps/hub/internal/telegram/pluginmsg/markup.go`                              | create | `Validate`, and the markup of telego for a `TelegramMessage`. `TGMSG-DD-001`          |
+| `apps/hub/internal/telegram/pluginmsg/markup.go`                              | create | `Validate`, and the markup of telego for a `message.Message`. `TGMSG-DD-001`          |
 | `apps/hub/internal/telegram/pluginmsg/router.go`                              | create | `Router`, the middleware of the bot. `TGMSG-DD-005`, `DD-006`, `DD-008`               |
 | `apps/hub/internal/telegram/telegramtest/api.go`                              | create | A fake of the Bot API for tests. `TGMSG-DD-011`                                       |
 | `apps/hub/internal/telegram/conversation/engine.go`                           | change | `Holds(telegramUserID string) bool`                                                   |
@@ -135,64 +136,72 @@ Beka on a message of Nina finds no row (`TGMSG-INV-002`).
 
 ### 4.3 Declarations
 
-**The contract of a plugin.** `libs/pluginapi/telegram_message.go`:
+**The contract of a plugin.** `libs/pluginapi/telegram/message/message.go`, package
+`message`, beside `telegram/conversation`. The hub imports it as `messageapi`.
 
 ```go
+package message
+
 const (
-    TelegramMessageLifetime = 30 * 24 * time.Hour
-    TelegramButtonValueMax  = 64   // bytes
-    TelegramTextMax         = 4096 // characters
+    Lifetime       = 30 * 24 * time.Hour
+    ButtonValueMax = 64   // bytes
+    TextMax        = 4096 // characters
 )
 
-type TelegramMessageID string // the id of the row, a UUID
+type ID string // the id of the row, a UUID
 
-type TelegramMessage struct {
+type Message struct {
     Text            string
-    Buttons         [][]TelegramButton // inline rows under the text
-    Keyboard        [][]TelegramKey    // a reply keyboard, instead of Buttons
-    RemoveKeyboard  bool               // removes the reply keyboard of an earlier message
-    ClaimReplyUntil time.Time          // the zero value claims nothing
+    Buttons         [][]Button // inline rows under the text
+    Keyboard        [][]Key    // a reply keyboard, instead of Buttons
+    RemoveKeyboard  bool       // removes the reply keyboard of an earlier message
+    ClaimReplyUntil time.Time  // the zero value claims nothing
 }
 
-type TelegramButton struct{ Label, Value string }
-type TelegramKey struct {
+type Button struct{ Label, Value string }
+type Key struct {
     Label           string
     RequestLocation bool
 }
 
-type TelegramMessenger interface {
-    Send(ctx context.Context, msg TelegramMessage) (TelegramMessageID, error)
-    Edit(ctx context.Context, id TelegramMessageID, text string, buttons [][]TelegramButton) error
-    Release(ctx context.Context, id TelegramMessageID) error
+type Messenger interface {
+    Send(ctx context.Context, msg Message) (ID, error)
+    Edit(ctx context.Context, id ID, text string, buttons [][]Button) error
+    Release(ctx context.Context, id ID) error
 }
 
-type TelegramPress struct {
-    Message TelegramMessageID
+type Press struct {
+    Message ID
     Value   string
 }
 
-type TelegramReply struct {
-    Message  TelegramMessageID // the claimed message
+type Reply struct {
+    Message  ID        // the claimed message
     Text     string
-    Location *TelegramLocation // set for a shared location, with an empty Text
+    Location *Location // set for a shared location, with an empty Text
 }
 
-type TelegramLocation struct{ Latitude, Longitude float64 }
+type Location struct{ Latitude, Longitude float64 }
 
+var (
+    ErrNoActingUser = errors.New("telegram: the unit of work has no acting user")
+    ErrNoAccount    = errors.New("telegram: the acting user holds no Telegram account")
+    ErrUnreachable  = errors.New("telegram: Telegram refuses to deliver to the person")
+    ErrInvalid      = errors.New("telegram: the message is invalid")
+    ErrUnknown      = errors.New("telegram: the plugin sent no such message")
+)
+```
+
+The capability interface stays in `libs/pluginapi/telegram.go`, beside
+`TelegramCommandPlugin` and `TelegramConversationPlugin`:
+
+```go
 // TelegramMessagePlugin receives a press and a reply on its plugin messages.
 type TelegramMessagePlugin interface {
     // OnTelegramPress answers the notice that the client shows, or "" for none.
-    OnTelegramPress(ctx context.Context, press TelegramPress) (string, error)
-    OnTelegramReply(ctx context.Context, reply TelegramReply) error
+    OnTelegramPress(ctx context.Context, press message.Press) (string, error)
+    OnTelegramReply(ctx context.Context, reply message.Reply) error
 }
-
-var (
-    ErrTelegramNoActingUser   = errors.New("telegram: the unit of work has no acting user")
-    ErrTelegramNoAccount      = errors.New("telegram: the acting user holds no Telegram account")
-    ErrTelegramUnreachable    = errors.New("telegram: Telegram refuses to deliver to the person")
-    ErrTelegramMessageInvalid = errors.New("telegram: the message is invalid")
-    ErrTelegramMessageUnknown = errors.New("telegram: the plugin sent no such message")
-)
 ```
 
 Each error that the service answers wraps one of these, so a plugin tests it with
@@ -208,20 +217,20 @@ Each error that the service answers wraps one of these, so a plugin tests it wit
 
 **Send.** `Service.Send(ctx, pluginID, msg)`:
 
-1. Read the acting user. None answers `ErrTelegramNoActingUser`.
-2. `Validate(msg)`. A failure answers `ErrTelegramMessageInvalid`, before any call.
+1. Read the acting user. None answers `message.ErrNoActingUser`.
+2. `Validate(msg)`. A failure answers `message.ErrInvalid`, before any call.
 3. In a scoped transaction, read the Telegram identity of the acting user. None
-   answers `ErrTelegramNoAccount`. The chat is its `provider_user_id`.
+   answers `message.ErrNoAccount`. The chat is its `provider_user_id`.
 4. Call `sendMessage` with the markup of `TGMSG-DD-001`.
 5. In a scoped transaction, run `Purge`, then `Insert` the plugin, the chat, the
    message identifier of Telegram, and `claim_until`. Answer the `id`.
 
 **Edit.** `ByID(id, pluginID)`, then `editMessageText` with the text and the inline
-markup. No row answers `ErrTelegramMessageUnknown`. The answer "message is not
+markup. No row answers `message.ErrUnknown`. The answer "message is not
 modified" of Telegram is a success.
 
 **Release.** `Release(id, pluginID)` sets `claim_until` to `NULL`. No row answers
-`ErrTelegramMessageUnknown`. A second release is a success.
+`message.ErrUnknown`. A second release is a success.
 
 **Route.** `Router` runs after `ActingUser` and `ActingWorkspace`:
 
@@ -262,14 +271,14 @@ the hub, and no open conversation.
 
 | Condition                                                    | Behavior                                                | Message                            |
 | ------------------------------------------------------------ | ------------------------------------------------------- | ---------------------------------- |
-| A send with no acting user                                   | Answers the error. No call to Telegram.                 | `ErrTelegramNoActingUser`          |
-| An empty text, a text over 4096 characters                   | Answers the error. No call.                             | `ErrTelegramMessageInvalid`        |
-| A button with an empty label, a value empty or over 64 bytes | Answers the error. No call.                             | `ErrTelegramMessageInvalid`        |
-| Two of `Buttons`, `Keyboard`, `RemoveKeyboard`               | Answers the error. No call.                             | `ErrTelegramMessageInvalid`        |
-| A claim at or before now, or after now plus 30 days          | Answers the error. No call.                             | `ErrTelegramMessageInvalid`        |
-| An edit with an empty text or an invalid button              | Answers the error. No call.                             | `ErrTelegramMessageInvalid`        |
-| No Telegram identity                                         | Answers the error. No call.                             | `ErrTelegramNoAccount`             |
-| Telegram answers 403, or 400 "chat not found"                | Answers the error. Writes no row.                       | `ErrTelegramUnreachable`           |
+| A send with no acting user                                   | Answers the error. No call to Telegram.                 | `message.ErrNoActingUser`          |
+| An empty text, a text over 4096 characters                   | Answers the error. No call.                             | `message.ErrInvalid`               |
+| A button with an empty label, a value empty or over 64 bytes | Answers the error. No call.                             | `message.ErrInvalid`               |
+| Two of `Buttons`, `Keyboard`, `RemoveKeyboard`               | Answers the error. No call.                             | `message.ErrInvalid`               |
+| A claim at or before now, or after now plus 30 days          | Answers the error. No call.                             | `message.ErrInvalid`               |
+| An edit with an empty text or an invalid button              | Answers the error. No call.                             | `message.ErrInvalid`               |
+| No Telegram identity                                         | Answers the error. No call.                             | `message.ErrNoAccount`             |
+| Telegram answers 403, or 400 "chat not found"                | Answers the error. Writes no row.                       | `message.ErrUnreachable`           |
 | Any other failure of Telegram                                | Answers the wrapped error. Writes no row.               | the error of telego                |
 | The insert fails after the send                              | Logs an error with the plugin. Answers the error.       | the wrapped error                  |
 | `OnTelegramPress` answers an error                           | Logs it with the plugin and the row. Answers the press. | "Something went wrong. Try again." |
@@ -283,7 +292,7 @@ carries a text, a value, or a location.
 ### `TGMSG-DD-001`
 
 **Realizes:** `TGMSG-FR-005` to `TGMSG-FR-008`, `TGMSG-INV-001`
-**Decision:** `pluginapi` declares its own message types. The hub converts them:
+**Decision:** `pluginapi/telegram/message` declares its own message types. The hub converts them:
 `Buttons` to an `InlineKeyboardMarkup` with the value as `callback_data`, `Keyboard`
 to a `ReplyKeyboardMarkup` with `resize_keyboard` and `one_time_keyboard`, and
 `RemoveKeyboard` to a `ReplyKeyboardRemove`. The message names no chat.
@@ -302,7 +311,7 @@ overwrite, and every field that Telegram offers, which the hub would then test.
 that person in Telegram. The identity exists from the first sign in, and
 `telegram_chats` holds a row only after a workspace selection.
 **Alternatives:** The chat of `telegram_chats`: a person who never chose a workspace
-would get `ErrTelegramNoAccount` while the bot can reach them.
+would get `message.ErrNoAccount` while the bot can reach them.
 
 ### `TGMSG-DD-003`
 
@@ -375,7 +384,7 @@ middlewares would depend on the update.
 
 **Realizes:** `TGMSG-FR-004`
 **Decision:** A `telegoapi.Error` with the code 403, or the code 400 and a
-description that holds "chat not found", maps to `ErrTelegramUnreachable`.
+description that holds "chat not found", maps to `message.ErrUnreachable`.
 **Rationale:** Telegram answers 403 for a person who blocked the bot, and 400 "chat
 not found" for one who never opened it. The plugin acts the same on both.
 **Alternatives:** Pass the error of telego: the plugin would read a library that
@@ -429,7 +438,7 @@ identity `7002`. Zura holds a local account only. Plugin P implements
 
 **Given** a context with a workspace and no acting user.
 **When** P sends "Hi".
-**Then** the answer wraps `ErrTelegramNoActingUser`, and the fake records no call.
+**Then** the answer wraps `message.ErrNoActingUser`, and the fake records no call.
 
 ### `TGMSG-SC-004`
 
@@ -437,7 +446,7 @@ identity `7002`. Zura holds a local account only. Plugin P implements
 **Layer:** unit
 
 **When** P sends "Hi" for Zura.
-**Then** the answer wraps `ErrTelegramNoAccount`, and the fake records no call.
+**Then** the answer wraps `message.ErrNoAccount`, and the fake records no call.
 
 ### `TGMSG-SC-005`
 
@@ -446,7 +455,7 @@ identity `7002`. Zura holds a local account only. Plugin P implements
 
 **Given** the fake answers 403 for chat `7001`, and 400 "chat not found" for `7002`.
 **When** P sends to Nina, then to Beka.
-**Then** both answers wrap `ErrTelegramUnreachable`, and no row exists.
+**Then** both answers wrap `message.ErrUnreachable`, and no row exists.
 
 ### `TGMSG-SC-006`
 
@@ -466,7 +475,7 @@ whose first key requests the location, and a markup that removes the keyboard.
 
 **When** P sends an empty text, a button value of 65 bytes, buttons with a keyboard,
 `RemoveKeyboard` with buttons, and a claim 31 days away.
-**Then** each answer wraps `ErrTelegramMessageInvalid`, and the fake records no call.
+**Then** each answer wraps `message.ErrInvalid`, and the fake records no call.
 A claim 29 days away succeeds.
 
 ### `TGMSG-SC-008`
@@ -478,7 +487,7 @@ A claim 29 days away succeeds.
 **When** P edits M to "Mood: 4" with no button, P edits N, and P edits M after its
 `created_at` moved 31 days back.
 **Then** the first records `editMessageText` for M. The second and the third answer
-`ErrTelegramMessageUnknown`.
+`message.ErrUnknown`.
 
 ### `TGMSG-SC-009`
 
@@ -487,7 +496,7 @@ A claim 29 days away succeeds.
 
 **Given** P sent M to Nina with the button "4". Nina's chat selected a workspace.
 **When** Nina presses "4".
-**Then** P receives `TelegramPress{M, "4"}`, with Nina as the acting user and no
+**Then** P receives `message.Press{M, "4"}`, with Nina as the acting user and no
 acting workspace.
 
 ### `TGMSG-SC-010`
@@ -595,14 +604,14 @@ reports none. The plugin page of P shows the panel "Bot messages" (manual).
 
 ## 7. Build plan
 
-| #   | Step                                                                          | Realizes                                                           | Done |
-| --- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------ | ---- |
-| 1   | The guideline text of `ADR-0025`: `TG-006` to `TG-008`, `OWN-003`, glossary   | `TGMSG-FR-020`                                                     | [ ]  |
-| 2   | The migration, the model, the repository                                      | `TGMSG-FR-009`, `TGMSG-INV-002`, `TGMSG-INV-003`                   | [ ]  |
-| 3   | `pluginapi` types and `Host.TelegramMessenger`. Build every plugin. `BLD-004` | `TGMSG-INV-001`                                                    | [ ]  |
-| 4   | `telegramtest`, `Service`, the bound messenger                                | `TGMSG-FR-001` to `TGMSG-FR-009`, `TGMSG-FR-013`, `TGMSG-FR-014`   | [ ]  |
-| 5   | The registry, the registrar, the capability, `PCAP`, the deck label           | `TGMSG-FR-021`                                                     | [ ]  |
-| 6   | `Router`, `Engine.Holds`, the last handler                                    | `TGMSG-FR-010` to `TGMSG-FR-012`, `TGMSG-FR-015` to `TGMSG-FR-020` | [ ]  |
+| #   | Step                                                                        | Realizes                                                           | Done |
+| --- | --------------------------------------------------------------------------- | ------------------------------------------------------------------ | ---- |
+| 1   | The guideline text of `ADR-0025`: `TG-006` to `TG-008`, `OWN-003`, glossary | `TGMSG-FR-020`                                                     | [x]  |
+| 2   | The migration, the model, the repository                                    | `TGMSG-FR-009`, `TGMSG-INV-002`, `TGMSG-INV-003`                   | [x]  |
+| 3   | The `message` package, `Host.TelegramMessenger`. Every plugin. `BLD-004`    | `TGMSG-INV-001`                                                    | [x]  |
+| 4   | `telegramtest`, `Service`, the bound messenger                              | `TGMSG-FR-001` to `TGMSG-FR-009`, `TGMSG-FR-013`, `TGMSG-FR-014`   | [x]  |
+| 5   | The registry, the registrar, the capability, `PCAP`, the deck label         | `TGMSG-FR-021`                                                     | [x]  |
+| 6   | `Router`, `Engine.Holds`, the last handler                                  | `TGMSG-FR-010` to `TGMSG-FR-012`, `TGMSG-FR-015` to `TGMSG-FR-020` | [x]  |
 
 ## 8. Out of scope for this specification
 

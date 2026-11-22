@@ -55,7 +55,7 @@ keeps it. The store of a conversation stays in memory. `ADR-0025`.
 
 A plugin sends a message through the host. `pluginapi.TelegramBot` answers within
 an update: a command or a step of a conversation, with the chat of that update.
-`pluginapi.TelegramMessenger` sends a plugin message (`GLO-plugin-message`) to the
+`message.Messenger` sends a plugin message (`GLO-plugin-message`) to the
 acting user, and the plugin never names a chat. A plugin does not use the telego
 client directly. `ADR-0025`.
 

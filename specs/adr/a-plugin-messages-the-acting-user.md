@@ -39,7 +39,7 @@ needs it.
 
 ## Decision
 
-The host gives each plugin a `TelegramMessenger` that sends a message to the acting
+The host gives each plugin a `message.Messenger` that sends a message to the acting
 user of the context and to nobody else. The hub resolves the chat from the Telegram
 identity of that user. The hub records each message that a plugin sends, and routes
 a press on its buttons, and a reply that a plugin claimed, back to that plugin. The
@@ -88,7 +88,7 @@ message that another flow would take.
 
 > A plugin sends a message through the host. `pluginapi.TelegramBot` answers within
 > an update: a command or a step of a conversation, with the chat of that update.
-> `pluginapi.TelegramMessenger` sends a plugin message (`GLO-plugin-message`) to the
+> `message.Messenger` sends a plugin message (`GLO-plugin-message`) to the
 > acting user, and the plugin never names a chat. A plugin does not use the telego
 > client directly. `ADR-0025`.
 >
