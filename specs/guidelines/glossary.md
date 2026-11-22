@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-11-22
+updated: 2026-11-23
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -152,6 +152,8 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-gallery`                    | gallery                    | Every moment of one plant.                                                                                                                                                                                                                             |
 | `GLO-profile-picture`            | profile picture            | The one photo of the gallery that names the plant in the shell, when the editor set one.                                                                                                                                                               |
 | `GLO-time-zone`                  | time zone                  | The zone from the IANA time zone database that a person sets on their own record. It gives their local hour and their local day.                                                                                                                       |
+| `GLO-plugin-message`             | plugin message             | A Telegram message that a plugin sends to its acting user through the host. A press on it works 30 days.                                                                                                                                               |
+| `GLO-reply-claim`                | reply claim                | The mark of a plugin on one of its plugin messages that routes the next typed answer of the person to it.                                                                                                                                              |
 
 ## Retired identifiers
 
