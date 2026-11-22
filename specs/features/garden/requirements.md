@@ -4,9 +4,9 @@ title: The plants of a workspace, their environments, and their care
 type: requirements
 status: approved
 created: 2026-10-10
-updated: 2026-10-16
+updated: 2026-11-22
 approved_by: Temuri
-approved_on: 2026-10-10
+approved_on: 2026-11-22
 constrained_by: [OWN, DAT, SEC, NTF, JOB, CFG, RES, TG]
 ---
 
@@ -224,9 +224,12 @@ A viewer must read these views:
 
 Each line of the attention list must show the plant, the maintenance type, the days since the latest entry, the care interval, and the care state.
 
-### `GARDEN-FR-024`
+### `GARDEN-FR-066`
 
-A view must show each time and each date in the time zone of the browser.
+A view must show each moment in the zone that `PROFILE-FR-016` and `PROFILE-FR-017`
+give.
+
+**Why:** The garden shows the time of the person, as the rest of the web shell does.
 
 ### Reminder
 
@@ -363,8 +366,9 @@ A plant holds at most one care interval for each maintenance type.
 
 ## Retired identifiers
 
-| ID            | Retired    | Reason                                                              |
-| ------------- | ---------- | ------------------------------------------------------------------- |
-| GARDEN-FR-027 | 2026-10-10 | The reminder names no workspace. `GARDEN-FR-032` keeps its content. |
-| GARDEN-FR-029 | 2026-10-10 | The measurements left the scope of this feature.                    |
-| GARDEN-FR-030 | 2026-10-10 | The measurements left the scope of this feature.                    |
+| ID            | Retired    | Reason                                                                  |
+| ------------- | ---------- | ----------------------------------------------------------------------- |
+| GARDEN-FR-027 | 2026-10-10 | The reminder names no workspace. `GARDEN-FR-032` keeps its content.     |
+| GARDEN-FR-029 | 2026-10-10 | The measurements left the scope of this feature.                        |
+| GARDEN-FR-030 | 2026-10-10 | The measurements left the scope of this feature.                        |
+| GARDEN-FR-024 | 2026-11-22 | `ADR-0024` adds the time zone of a person. `GARDEN-FR-066` replaces it. |

@@ -4,9 +4,9 @@ title: The scenarios of the plants, their environments, and their care
 type: spec
 status: approved
 created: 2026-10-10
-updated: 2026-10-16
+updated: 2026-11-22
 approved_by: Temuri
-approved_on: 2026-10-10
+approved_on: 2026-11-22
 constrained_by: [TST, OWN, TRC]
 requirements: features/garden/requirements.md
 ---
@@ -317,10 +317,10 @@ first is `🌿 Plant care due`, and its body is:
 
 ### `GARDEN-SC-031`
 
-**Verifies:** `GARDEN-FR-010`, `GARDEN-FR-022`, `GARDEN-FR-024`
+**Verifies:** `GARDEN-FR-010`, `GARDEN-FR-022`, `GARDEN-FR-066`
 **Layer:** manual
 
-**Given** the browser runs at UTC+4, and an entry at 22:30 UTC yesterday.
+**Given** the browser runs at UTC+4, the record of the owner holds no time zone, and an entry at 22:30 UTC yesterday.
 **When** the owner opens the four pages.
 **Then** every plant and every environment shows its display identifier. The maintenance log shows the entry at 02:30 today.
 

@@ -291,6 +291,12 @@ components:
           description: >
             The last name that an administrator set on the record. The member is
             absent when the record holds none. `APIFMT-FR-009`.
+        time_zone:
+          type: string
+          description: >
+            The time zone that the person set on the record. The member is absent
+            when the record holds none, and the shell then uses the zone of the
+            browser. `APIFMT-FR-009`, `PROFILE-DD-007`.
         picture:
           type: string
           description: >
@@ -309,6 +315,7 @@ components:
         - id: 01998aa0-1111-7000-8000-000000000001
           first_name: Temuri
           last_name: Takalandze
+          time_zone: Asia/Tbilisi
           picture: https://example.com/a.jpg
           provider: telegram
           is_administrator: true

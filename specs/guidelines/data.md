@@ -4,7 +4,7 @@ title: Data
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-11-18
+updated: 2026-11-22
 scope: [apps/hub/db/, apps/hub/internal/migrator/, plugins/*/db/, plugins/*/repository/]
 related: [ARC, PLG, OWN, RES]
 ---
@@ -101,6 +101,11 @@ a second identity that no reader uses.
 
 A column that holds a point in time is `TIMESTAMPTZ`. It stores UTC, and no
 column stores a local time.
+
+A column that holds an hour of the day that a person names, the hour of a schedule
+for example, is `TIME`. It is no point in time. The time zone of the person gives
+its instant on each day. A column that holds a time zone holds the name from the
+IANA time zone database as `TEXT`. `ADR-0024`.
 
 The column that holds the time of the last write is `updated_at`. It carries the
 name that `Z-118` gives the member of the body, so no mapping stands between the

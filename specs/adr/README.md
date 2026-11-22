@@ -3,7 +3,7 @@ title: Architecture decision records
 type: index
 status: active
 created: 2026-09-11
-updated: 2026-11-18
+updated: 2026-11-22
 ---
 
 # Architecture decision records
@@ -66,3 +66,4 @@ The frontmatter holds the identifier.
 | `ADR-0021` | The worker runs the tasks of an outbox of the hub             | `a-hub-worker-runs-an-outbox.md`                 | accepted | 2026-11-18 | `ARC-010`, `OWN-003`, `OWN-004`                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `ADR-0022` | A table of a plugin references a file of the hub              | `a-plugin-table-references-a-hub-file.md`        | accepted | 2026-11-18 | `DAT-003`                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `ADR-0023` | A plugin deletes a file in its own transaction                | `a-plugin-deletes-a-file-in-its-transaction.md`  | accepted | 2026-11-18 | `DAT-003`                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `ADR-0024` | The time zone of a person                                     | `the-time-zone-of-a-person.md`                   | accepted | 2026-11-22 | `RES-001`, `DAT-010`, `GLO-time-zone`                                                                                                                                                                                                                                                                                                                                                                                                                                      |

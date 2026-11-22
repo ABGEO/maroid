@@ -4,9 +4,9 @@ title: The plants of a workspace, their environments, and their care
 type: spec
 status: approved
 created: 2026-10-10
-updated: 2026-11-18
+updated: 2026-11-22
 approved_by: Temuri
-approved_on: 2026-10-10
+approved_on: 2026-11-22
 constrained_by: [OWN, DAT, REP, SEC, RES, API, ERR, NTF, JOB, CFG, PKG, UI, TS, TST, TG]
 requirements: features/garden/requirements.md
 ---
@@ -53,7 +53,7 @@ answers the same list. The remote gets four pages.
 | `GARDEN-FR-021`  | `GARDEN-DD-005`, `GARDEN-SC-023`, `GARDEN-SC-024`                                |
 | `GARDEN-FR-022`  | Section 4.3, 4.6, `GARDEN-DD-008`, `GARDEN-SC-025`, `GARDEN-SC-031`              |
 | `GARDEN-FR-023`  | Section 4.3, `GARDEN-SC-026`                                                     |
-| `GARDEN-FR-024`  | Section 4.6, `GARDEN-SC-031`                                                     |
+| `GARDEN-FR-066`  | Section 4.6, `GARDEN-SC-031`                                                     |
 | `GARDEN-FR-025`  | Section 4.3                                                                      |
 | `GARDEN-FR-033`  | Section 4.3, `GARDEN-SC-034`                                                     |
 | `GARDEN-FR-026`  | Section 4.3, 4.4, `GARDEN-SC-027`, `GARDEN-SC-028`                               |
@@ -350,8 +350,9 @@ send. `GARDEN-FR-028`.
 | `/maintenance`  | Maintenance log              | The entries, newest first, with a filter by plant and by type. A line changes or deletes the entry.                                                                                   | `GARDEN-FR-015`, `GARDEN-FR-016`, `GARDEN-FR-022`                                     |
 
 The route `/environments/add` goes. Every page shows `display_id` before each name.
-A page renders a `date-time` value with `toLocaleString()` in the zone of the
-browser. It renders `acquired_on` as the date it holds, with no conversion. A page
+A page renders a `date-time` value with `formatMoment` of `@maroid/plugin-sdk` in
+`host.timeZone`, and reads a typed one with `toMoment` in the same zone. It renders
+`acquired_on` as the date it holds, with no conversion. A page
 shows a control that writes only when `host.can` holds its permission.
 
 ## 5. Design decisions
