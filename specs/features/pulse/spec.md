@@ -271,7 +271,7 @@ as `RES` asks, and a read writes nothing.
 
 | #   | Step                                                                        | Realizes                                                           | Done |
 | --- | --------------------------------------------------------------------------- | ------------------------------------------------------------------ | ---- |
-| 1   | The module, `Meta`, the migrations, the models, the repositories            | `PULSE-INV-001` to `PULSE-INV-004`                                 | [ ]  |
+| 1   | The module, `Meta`, the migrations, the models, the repositories            | `PULSE-INV-001` to `PULSE-INV-004`                                 | [x]  |
 | 2   | The catalog, the seed, and the settings service                             | `PULSE-FR-001`, `PULSE-FR-002`, `PULSE-FR-029`                     | [ ]  |
 | 3   | `schedule.Latest` and `Resolve`, with the unit tests first                  | `PULSE-FR-005` to `PULSE-FR-009`                                   | [ ]  |
 | 4   | `round.Service`, the receiver, and `job.Tick`                               | `PULSE-FR-010` to `PULSE-FR-022`, `PULSE-NFR-001`, `PULSE-NFR-002` | [ ]  |

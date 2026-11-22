@@ -33,7 +33,8 @@ workspace (`OWN-004`, `PULSE-INV-001`). Each migration states that reason in a
 comment, enables and forces row level security with the policy
 `<table>_user_isolation` on `user_id` (`OWN-006`), and adds the trigger
 `set_updated_at`. Each `user_id` is the column of `OWN-005`. A reference between two
-tables names `user_id` too, so both rows belong to one person. `<scope>` below stands
+tables names `user_id` too, so both rows belong to one person. Each unique key starts
+with `user_id` (`OWN-005`). `<scope>` below stands
 for that column.
 
 ```mermaid
@@ -89,7 +90,7 @@ CREATE TABLE choices
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT choices_user_id_key UNIQUE (user_id, id),
     -- A reorder swaps two positions inside one statement.
-    CONSTRAINT choices_position_key UNIQUE (question_id, position)
+    CONSTRAINT choices_position_key UNIQUE (user_id, question_id, position)
         DEFERRABLE INITIALLY DEFERRED,
     CONSTRAINT choices_question_fkey FOREIGN KEY (user_id, question_id)
         REFERENCES questions (user_id, id) ON DELETE CASCADE
@@ -119,8 +120,8 @@ CREATE TABLE checkin_questions
     position    SMALLINT    NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CONSTRAINT checkin_questions_position_key UNIQUE (checkin_id, position),
-    CONSTRAINT checkin_questions_question_key UNIQUE (checkin_id, question_id),
+    CONSTRAINT checkin_questions_position_key UNIQUE (user_id, checkin_id, position),
+    CONSTRAINT checkin_questions_question_key UNIQUE (user_id, checkin_id, question_id),
     CONSTRAINT checkin_questions_checkin_fkey FOREIGN KEY (user_id, checkin_id)
         REFERENCES checkins (user_id, id) ON DELETE CASCADE,
     CONSTRAINT checkin_questions_question_fkey FOREIGN KEY (user_id, question_id)
@@ -141,14 +142,14 @@ CREATE TABLE rounds
     updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT rounds_user_id_key UNIQUE (user_id, id),
     -- PULSE-INV-003: One occurrence fires at most one round.
-    CONSTRAINT rounds_occurrence_key UNIQUE (checkin_id, occurrence_at),
+    CONSTRAINT rounds_occurrence_key UNIQUE (user_id, checkin_id, occurrence_at),
     CONSTRAINT rounds_checkin_fkey FOREIGN KEY (user_id, checkin_id)
         REFERENCES checkins (user_id, id) ON DELETE SET NULL (checkin_id)
 );
 
 CREATE INDEX rounds_open_idx ON rounds (user_id, occurrence_at)
     WHERE state IN ('offered', 'started');
-CREATE UNIQUE INDEX rounds_start_message_idx ON rounds (start_message_id);
+CREATE UNIQUE INDEX rounds_start_message_idx ON rounds (user_id, start_message_id);
 
 CREATE TABLE prompts
 (
@@ -163,14 +164,14 @@ CREATE TABLE prompts
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     CONSTRAINT prompts_user_id_key UNIQUE (user_id, id),
-    CONSTRAINT prompts_position_key UNIQUE (round_id, position),
+    CONSTRAINT prompts_position_key UNIQUE (user_id, round_id, position),
     CONSTRAINT prompts_round_fkey FOREIGN KEY (user_id, round_id)
         REFERENCES rounds (user_id, id) ON DELETE CASCADE,
     CONSTRAINT prompts_question_fkey FOREIGN KEY (user_id, question_id)
         REFERENCES questions (user_id, id) ON DELETE CASCADE
 );
 
-CREATE UNIQUE INDEX prompts_message_idx ON prompts (message_id);
+CREATE UNIQUE INDEX prompts_message_idx ON prompts (user_id, message_id);
 
 CREATE TABLE question_values
 (
@@ -197,7 +198,7 @@ CREATE TABLE question_values
     CONSTRAINT question_values_choice_fkey FOREIGN KEY (user_id, choice_id)
         REFERENCES choices (user_id, id) ON DELETE RESTRICT,
     -- PULSE-INV-002: One question of one round holds at most one value.
-    CONSTRAINT question_values_prompt_key UNIQUE (prompt_id),
+    CONSTRAINT question_values_prompt_key UNIQUE (user_id, prompt_id),
     CONSTRAINT question_values_prompt_fkey FOREIGN KEY (user_id, prompt_id)
         REFERENCES prompts (user_id, id) ON DELETE SET NULL (prompt_id),
     -- The type chooses the one column that holds the value.
@@ -216,7 +217,7 @@ CREATE TABLE question_values
 
 CREATE INDEX question_values_series_idx
     ON question_values (user_id, question_id, occurred_at DESC, id DESC);
-CREATE INDEX question_values_choice_idx ON question_values (choice_id)
+CREATE INDEX question_values_choice_idx ON question_values (user_id, choice_id)
     WHERE choice_id IS NOT NULL;
 
 -- PULSE-INV-004: A value keeps its question and its type.
