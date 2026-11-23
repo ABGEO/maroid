@@ -31,6 +31,7 @@ type ValueRepository interface {
 		from, to time.Time,
 		zone *time.Location,
 	) ([]model.Day, error)
+	ListOfPrompts(ctx context.Context, promptIDs []string) ([]model.Value, error)
 }
 
 // Value reads and writes the values of the acting user. It never changes a value.
@@ -180,4 +181,22 @@ func (r *Value) Days(
 	}
 
 	return days, nil
+}
+
+// ListOfPrompts answers the values that the prompts recorded.
+func (r *Value) ListOfPrompts(ctx context.Context, promptIDs []string) ([]model.Value, error) {
+	if len(promptIDs) == 0 {
+		return nil, nil
+	}
+
+	var entities []model.Value
+
+	err := selectNamed(ctx, r.tx, &entities,
+		"SELECT "+valueColumns+" FROM question_values v WHERE v.prompt_id IN (:ids);",
+		map[string]any{paramIDs: promptIDs})
+	if err != nil {
+		return nil, fmt.Errorf("listing the Values of Prompts: %w", err)
+	}
+
+	return entities, nil
 }

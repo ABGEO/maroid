@@ -100,3 +100,30 @@ export interface Day {
 	max?: number;
 	yes_count?: number;
 }
+
+export type RoundState = 'offered' | 'started' | 'done' | 'declined' | 'expired';
+
+export type RoundQuestionState = 'pending' | 'waiting' | 'answered' | 'skipped' | 'expired';
+
+export interface RoundQuestion {
+	/** Names a question of the questions list, active or archived. */
+	question_id: string;
+	state: RoundQuestionState;
+	value?: Value;
+}
+
+export interface Round {
+	id: string;
+	/** Absent when the check-in was deleted. */
+	checkin_id?: string;
+	/** The name of the check-in when the round fired. */
+	checkin_name: string;
+	occurrence_at: string;
+	state: RoundState;
+	questions: RoundQuestion[];
+}
+
+export interface RoundFilter {
+	checkin_id?: string;
+	state?: RoundState;
+}

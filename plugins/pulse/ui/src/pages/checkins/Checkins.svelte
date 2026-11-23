@@ -88,6 +88,11 @@
 		}
 	}
 
+	function openHistory(event: MouseEvent, checkin: Checkin): void {
+		event.preventDefault();
+		host.navigate(`/history/${checkin.id}`);
+	}
+
 	function saved(): void {
 		form = null;
 		void pager.reload();
@@ -173,6 +178,13 @@
 					>
 						Edit
 					</button>
+					<a
+						class="btn btn-ghost btn-sm"
+						href={host.href(`/history/${checkin.id}`)}
+						onclick={(event) => openHistory(event, checkin)}
+					>
+						History
+					</a>
 					<button
 						type="button"
 						class="btn btn-ghost btn-sm text-error"

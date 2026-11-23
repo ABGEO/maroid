@@ -90,7 +90,7 @@ func TestAnotherPersonReadsNothingOfNina(t *testing.T) {
 	settings := app.send(t, beka, http.MethodGet, "/settings", "", "")
 	assert.False(t, decode[settingsBody](t, settings).Enabled)
 
-	for _, target := range []string{"/questions", "/questions?archived=true", "/checkins"} {
+	for _, target := range []string{"/questions", "/questions?archived=true", "/checkins", "/rounds"} {
 		recorder := app.send(t, beka, http.MethodGet, target, "", "")
 		assert.Equal(t, http.StatusOK, recorder.Code, target)
 		assert.Empty(t, decode[page[question]](t, recorder).Items, target)

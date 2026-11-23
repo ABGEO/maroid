@@ -6,6 +6,8 @@ import type {
 	Day,
 	Question,
 	QuestionPayload,
+	Round,
+	RoundFilter,
 	Settings,
 	SettingsPayload,
 	Value
@@ -61,11 +63,25 @@ function createCheckinsApi(api: ApiClient) {
 	};
 }
 
+function createRoundsApi(api: ApiClient) {
+	return {
+		list: (filter: RoundFilter, link?: string) =>
+			link
+				? api.follow<Page<Round>>(link)
+				: api.get<Page<Round>>('/rounds', {
+						params: Object.fromEntries(
+							Object.entries(filter).filter(([, value]) => value !== undefined)
+						)
+					})
+	};
+}
+
 export function createPulseApi(host: PluginHost) {
 	return {
 		settings: createSettingsApi(host.api),
 		questions: createQuestionsApi(host.api),
-		checkins: createCheckinsApi(host.api)
+		checkins: createCheckinsApi(host.api),
+		rounds: createRoundsApi(host.api)
 	};
 }
 

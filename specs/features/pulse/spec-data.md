@@ -24,8 +24,8 @@ requirements: features/pulse/requirements.md
 | `choices`           | `pulse` | scoped | `20261124100200_table_choices_create`           | `PULSE-FR-026`                                                     |
 | `checkins`          | `pulse` | scoped | `20261124100300_table_checkins_create`          | `PULSE-FR-005` to `PULSE-FR-008`, `PULSE-FR-027`                   |
 | `checkin_questions` | `pulse` | scoped | `20261124100400_table_checkin_questions_create` | `PULSE-FR-027`, `PULSE-FR-028`                                     |
-| `rounds`            | `pulse` | scoped | `20261124100500_table_rounds_create`            | `PULSE-FR-010` to `PULSE-FR-015`, `PULSE-INV-003`                  |
-| `prompts`           | `pulse` | scoped | `20261124100600_table_prompts_create`           | `PULSE-FR-013` to `PULSE-FR-022`                                   |
+| `rounds`            | `pulse` | scoped | `20261124100500_table_rounds_create`            | `PULSE-FR-010` to `PULSE-FR-015`, `PULSE-FR-035`, `PULSE-INV-003`  |
+| `prompts`           | `pulse` | scoped | `20261124100600_table_prompts_create`           | `PULSE-FR-013` to `PULSE-FR-022`, `PULSE-FR-036`                   |
 | `question_values`   | `pulse` | scoped | `20261124100700_table_question_values_create`   | `PULSE-FR-030` to `PULSE-FR-034`, `PULSE-INV-002`, `PULSE-INV-004` |
 
 Every table is scoped to a user, because each row belongs to one person in every
@@ -190,10 +190,10 @@ CREATE TABLE question_values
     longitude     DOUBLE PRECISION CHECK (longitude BETWEEN -180 AND 180),
     created_at    TIMESTAMPTZ      NOT NULL DEFAULT now(),
     updated_at    TIMESTAMPTZ      NOT NULL DEFAULT now(),
-    -- PULSE-FR-025: A question with a value is never deleted.
+    -- A question with a value is never deleted. Archive it instead.
     CONSTRAINT question_values_question_fkey FOREIGN KEY (user_id, question_id)
         REFERENCES questions (user_id, id) ON DELETE RESTRICT,
-    -- PULSE-FR-026: A choice that a value records is never removed.
+    -- A choice that a value records is never removed, so the series keeps its labels.
     CONSTRAINT question_values_choice_fkey FOREIGN KEY (user_id, choice_id)
         REFERENCES choices (user_id, id) ON DELETE RESTRICT,
     -- PULSE-INV-002: One question of one round holds at most one value.

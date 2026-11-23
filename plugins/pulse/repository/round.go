@@ -5,10 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/plugins/pulse/model"
 )
 
@@ -21,6 +23,7 @@ type RoundRepository interface {
 	Insert(ctx context.Context, entity *model.Round) (bool, error)
 	GetByID(ctx context.Context, id string) (*model.Round, error)
 	GetByStartMessage(ctx context.Context, messageID string) (*model.Round, error)
+	List(ctx context.Context, seek page.Seek, filter RoundFilter) ([]model.Round, error)
 	Move(
 		ctx context.Context,
 		id string,
@@ -150,4 +153,53 @@ func (r *Round) SetStartMessage(ctx context.Context, id string, messageID string
 	}
 
 	return nil
+}
+
+// RoundFilter narrows a list of rounds. An empty member narrows nothing.
+type RoundFilter struct {
+	CheckinID string
+	State     model.RoundState
+}
+
+// List answers one page of the rounds that the filter keeps, newest first.
+func (r *Round) List(
+	ctx context.Context,
+	seek page.Seek,
+	filter RoundFilter,
+) ([]model.Round, error) {
+	condition, order := everyRow, "occurrence_at DESC, id DESC"
+
+	const boundary = "(SELECT b.occurrence_at, b.id FROM rounds b WHERE b.id = CAST(:boundary AS uuid))"
+
+	switch {
+	case seek.Direction == page.DirectionBackward:
+		condition, order = "(occurrence_at, id) > "+boundary, "occurrence_at, id"
+	case seek.Boundary != "":
+		condition = "(occurrence_at, id) < " + boundary
+	}
+
+	var entities []model.Round
+
+	err := selectNamed(ctx, r.tx, &entities, `
+		SELECT `+roundColumns+` FROM rounds
+		WHERE (CAST(:checkin_id AS uuid) IS NULL OR checkin_id = CAST(:checkin_id AS uuid))
+		  AND (CAST(:state AS text) IS NULL OR state = CAST(:state AS text))
+		  AND `+condition+`
+		ORDER BY `+order+` LIMIT :limit;`,
+		map[string]any{
+			"checkin_id":  nullable(filter.CheckinID),
+			"state":       nullable(string(filter.State)),
+			paramBoundary: nullable(seek.Boundary),
+			paramLimit:    seek.Limit,
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("listing Rounds: %w", err)
+	}
+
+	if seek.Direction == page.DirectionBackward {
+		slices.Reverse(entities)
+	}
+
+	return entities, nil
 }

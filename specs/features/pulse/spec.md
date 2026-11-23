@@ -32,46 +32,48 @@ questions and the check-ins and show the values.
 
 ## 2. Coverage
 
-| Requirement                    | Where this specification realizes it                                         |
-| ------------------------------ | ---------------------------------------------------------------------------- |
-| `PULSE-FR-001`                 | `spec-schedule.md` turn-on, `PULSE-DD-001`, `PULSE-SC-001`                   |
-| `PULSE-FR-002`                 | `spec-schedule.md` turn-on, `spec-round.md` expiry, `PULSE-SC-003`           |
-| `PULSE-FR-003`                 | `spec-schedule.md` pause and tick step 3, `PULSE-SC-004`, `PULSE-SC-005`     |
-| `PULSE-FR-004`                 | Section 4.3 pages, `host.timeZone`, `PULSE-SC-006`                           |
-| `PULSE-FR-005`                 | `spec-schedule.md` time math, `PULSE-DD-003`, `PULSE-SC-007`, `PULSE-SC-008` |
-| `PULSE-FR-006`                 | Tick step 4, `PULSE-DD-004`, `PULSE-DD-005`, `PULSE-SC-009`, `PULSE-SC-010`  |
-| `PULSE-FR-007`                 | Tick step 3, `PULSE-DD-005`, `PULSE-SC-011`                                  |
-| `PULSE-FR-008`                 | `fires_after`, `PULSE-DD-004`, `PULSE-SC-012`                                |
-| `PULSE-FR-009`                 | `schedule.Resolve`, `PULSE-DD-006`, `PULSE-SC-013`                           |
-| `PULSE-FR-010`                 | Tick step 5, `spec-round.md` expiry, `PULSE-SC-014`                          |
-| `PULSE-FR-011`                 | `spec-round.md` messages, `PULSE-SC-017`                                     |
-| `PULSE-FR-012`                 | `spec-round.md` press, `PULSE-SC-018`                                        |
-| `PULSE-FR-013`, `PULSE-FR-014` | `spec-round.md` press, `PULSE-DD-008`, `PULSE-SC-019`                        |
-| `PULSE-FR-015`, `PULSE-FR-016` | `spec-round.md` press, `PULSE-SC-020`                                        |
-| `PULSE-FR-017`                 | `spec-round.md` messages, `PULSE-SC-021`                                     |
-| `PULSE-FR-018`                 | `spec-round.md` reply, `PULSE-DD-010`, `PULSE-SC-022`                        |
-| `PULSE-FR-019`                 | `spec-round.md` reply, `PULSE-SC-023`                                        |
-| `PULSE-FR-020`                 | `spec-round.md` reply, `PULSE-DD-011`, `PULSE-SC-024`                        |
-| `PULSE-FR-021`                 | `spec-round.md` press, `PULSE-DD-009`, `PULSE-SC-025`                        |
-| `PULSE-FR-022`                 | `PULSE-DD-010`, `PULSE-SC-026`                                               |
-| `PULSE-FR-023`                 | `questions`, `api.yaml` `QuestionInput`, `PULSE-SC-027`                      |
-| `PULSE-FR-024`                 | `PULSE-DD-014`, `PULSE-SC-028`                                               |
-| `PULSE-FR-025`                 | `archived_at`, `PULSE-DD-014`, `PULSE-SC-029`                                |
-| `PULSE-FR-026`                 | `choices`, `PULSE-DD-013`, `PULSE-SC-030`                                    |
-| `PULSE-FR-027`                 | `checkins`, `checkin_questions`, `PULSE-SC-031`                              |
-| `PULSE-FR-028`                 | `PULSE-DD-012`, `PULSE-SC-032`                                               |
-| `PULSE-FR-029`                 | `catalog/defaults.go`, `PULSE-SC-033`                                        |
-| `PULSE-FR-030`                 | `question_values`, `PULSE-SC-019`, `PULSE-SC-034`                            |
-| `PULSE-FR-031`                 | `GET /questions`, `PULSE-SC-035`                                             |
-| `PULSE-FR-032`                 | `GET /questions/{id}/values`, `PULSE-SC-036`                                 |
-| `PULSE-FR-033`                 | `GET /questions/{id}/days`, `PULSE-DD-015`, `PULSE-SC-037`                   |
-| `PULSE-FR-034`                 | The data page, `PULSE-DD-016`, `PULSE-SC-038`                                |
-| `PULSE-NFR-001`                | `PULSE-DD-003`, `PULSE-SC-016`                                               |
-| `PULSE-NFR-002`                | Tick step 1, `PULSE-SC-002`                                                  |
-| `PULSE-INV-001`                | Section 4.2 scope, `PULSE-SC-039`                                            |
-| `PULSE-INV-002`                | `question_values_prompt_key`, `PULSE-DD-009`, `PULSE-SC-025`                 |
-| `PULSE-INV-003`                | `rounds_occurrence_key`, `PULSE-DD-007`, `PULSE-SC-015`                      |
-| `PULSE-INV-004`                | `question_values_frozen`, `PULSE-DD-012`, `PULSE-SC-040`                     |
+| Requirement                    | Where this specification realizes it                                            |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| `PULSE-FR-001`                 | `spec-schedule.md` turn-on, `PULSE-DD-001`, `PULSE-SC-001`                      |
+| `PULSE-FR-002`                 | `spec-schedule.md` turn-on, `spec-round.md` expiry, `PULSE-SC-003`              |
+| `PULSE-FR-003`                 | `spec-schedule.md` pause and tick step 3, `PULSE-SC-004`, `PULSE-SC-005`        |
+| `PULSE-FR-004`                 | Section 4.3 pages, `host.timeZone`, `PULSE-SC-006`                              |
+| `PULSE-FR-005`                 | `spec-schedule.md` time math, `PULSE-DD-003`, `PULSE-SC-007`, `PULSE-SC-008`    |
+| `PULSE-FR-006`                 | Tick step 4, `PULSE-DD-004`, `PULSE-DD-005`, `PULSE-SC-009`, `PULSE-SC-010`     |
+| `PULSE-FR-007`                 | Tick step 3, `PULSE-DD-005`, `PULSE-SC-011`                                     |
+| `PULSE-FR-008`                 | `fires_after`, `PULSE-DD-004`, `PULSE-SC-012`                                   |
+| `PULSE-FR-009`                 | `schedule.Resolve`, `PULSE-DD-006`, `PULSE-SC-013`                              |
+| `PULSE-FR-010`                 | Tick step 5, `spec-round.md` expiry, `PULSE-SC-014`                             |
+| `PULSE-FR-011`                 | `spec-round.md` messages, `PULSE-SC-017`                                        |
+| `PULSE-FR-012`                 | `spec-round.md` press, `PULSE-SC-018`                                           |
+| `PULSE-FR-013`, `PULSE-FR-014` | `spec-round.md` press, `PULSE-DD-008`, `PULSE-SC-019`                           |
+| `PULSE-FR-015`, `PULSE-FR-016` | `spec-round.md` press, `PULSE-SC-020`                                           |
+| `PULSE-FR-017`                 | `spec-round.md` messages, `PULSE-SC-021`                                        |
+| `PULSE-FR-018`                 | `spec-round.md` reply, `PULSE-DD-010`, `PULSE-SC-022`                           |
+| `PULSE-FR-019`                 | `spec-round.md` reply, `PULSE-SC-023`                                           |
+| `PULSE-FR-020`                 | `spec-round.md` reply, `PULSE-DD-011`, `PULSE-SC-024`                           |
+| `PULSE-FR-021`                 | `spec-round.md` press, `PULSE-DD-009`, `PULSE-SC-025`                           |
+| `PULSE-FR-022`                 | `PULSE-DD-010`, `PULSE-SC-026`                                                  |
+| `PULSE-FR-023`                 | `questions`, `api.yaml` `QuestionInput`, `PULSE-SC-027`                         |
+| `PULSE-FR-024`                 | `PULSE-DD-014`, `PULSE-SC-028`                                                  |
+| `PULSE-FR-025`                 | `archived_at`, `PULSE-DD-014`, `PULSE-SC-029`                                   |
+| `PULSE-FR-026`                 | `choices`, `PULSE-DD-013`, `PULSE-SC-030`                                       |
+| `PULSE-FR-027`                 | `checkins`, `checkin_questions`, `PULSE-SC-031`                                 |
+| `PULSE-FR-028`                 | `PULSE-DD-012`, `PULSE-SC-032`                                                  |
+| `PULSE-FR-029`                 | `catalog/defaults.go`, `PULSE-SC-033`                                           |
+| `PULSE-FR-030`                 | `question_values`, `PULSE-SC-019`, `PULSE-SC-034`                               |
+| `PULSE-FR-031`                 | `GET /questions`, `PULSE-SC-035`                                                |
+| `PULSE-FR-032`                 | `GET /questions/{id}/values`, `PULSE-SC-036`                                    |
+| `PULSE-FR-033`                 | `GET /questions/{id}/days`, `PULSE-DD-015`, `PULSE-SC-037`                      |
+| `PULSE-FR-034`                 | The data page, `PULSE-DD-016`, `PULSE-SC-038`                                   |
+| `PULSE-FR-035`, `PULSE-FR-036` | `GET /rounds`, the history page, `PULSE-DD-019`, `PULSE-SC-042`, `PULSE-SC-044` |
+| `PULSE-FR-037`                 | `GET /rounds` filters, `PULSE-SC-043`                                           |
+| `PULSE-NFR-001`                | `PULSE-DD-003`, `PULSE-SC-016`                                                  |
+| `PULSE-NFR-002`                | Tick step 1, `PULSE-SC-002`                                                     |
+| `PULSE-INV-001`                | Section 4.2 scope, `PULSE-SC-039`                                               |
+| `PULSE-INV-002`                | `question_values_prompt_key`, `PULSE-DD-009`, `PULSE-SC-025`                    |
+| `PULSE-INV-003`                | `rounds_occurrence_key`, `PULSE-DD-007`, `PULSE-SC-015`                         |
+| `PULSE-INV-004`                | `question_values_frozen`, `PULSE-DD-012`, `PULSE-SC-040`                        |
 
 ## 3. Guideline compliance
 
@@ -108,7 +110,7 @@ Every path is under `plugins/pulse/`, unless it says otherwise. Every file is ne
 | `main.go`, `embed.go`, `go.mod`           | `Meta`, `New`, the capabilities of section 4.3, `uiAssets`                                             |
 | `db/migrations/`                          | The eight tables of `spec-data.md`                                                                     |
 | `model/`                                  | `Settings`, `Question`, `ScaleConfig`, `NumberConfig`, `Choice`, `Checkin`, `Round`, `Prompt`, `Value` |
-| `repository/`                             | One repository for each table, with its interface. `Value` also reads the latest value and the days    |
+| `repository/`                             | One repository for each table, with its interface. `Round.List` reads the history                      |
 | `catalog/defaults.go`, `catalog/seed.go`  | The defaults of `PULSE-FR-029`, `Seed(ctx, tx, now)` for the first turn-on                             |
 | `schedule/occurrence.go`                  | `Latest(c model.Checkin, zone *time.Location, floor, now time.Time) (time.Time, bool)`, `Resolve`      |
 | `settings/service.go`                     | `Service.Get`, `Service.Put`, `Service.Pause`, `Service.Resume`                                        |
@@ -117,11 +119,11 @@ Every path is under `plugins/pulse/`, unless it says otherwise. Every file is ne
 | `job/tick.go`                             | `Tick`, the `pluginapi.CronJob`                                                                        |
 | `telegram/receiver.go`                    | `Receiver`, the `pluginapi.TelegramMessagePlugin` over `round.Service`                                 |
 | `telegram/command/`                       | `/pause`, `/resume`, and the argument that both read                                                   |
-| `handler/`                                | `settings.go`, `question.go`, `checkin.go`, `value.go`, `page.go`, `problem.go`                        |
+| `handler/`                                | `settings.go`, `question.go`, `checkin.go`, `value.go`, `round.go`, `page.go`, `problem.go`            |
 | `errs/errs.go`                            | The sentinels and the typed errors that the packages share                                             |
 | `pulsetest/`                              | The harness of the tests: the database, the clock, the fake messenger                                  |
 | `permission/permission.go`                | `CheckinsUse = "checkins.use"`                                                                         |
-| `ui/`                                     | The remote: `src/pages/{data,checkins,questions,settings}`, `src/api/`                                 |
+| `ui/`                                     | The remote: `src/pages/{data,history,checkins,questions,settings}`, `src/api/`                         |
 | `go.work.example` (root)                  | `./plugins/pulse`                                                                                      |
 | `config.yaml`, `chart/values.yaml` (root) | The entry `pulse.so`, commented in the chart as jasmine is                                             |
 
@@ -152,6 +154,7 @@ permission `checkins.use`. `api.yaml` holds the bodies and the status codes.
 | `GET`    | `/checkins/{id}`         | `checkins.use` | `PULSE-FR-027`                                 |
 | `PUT`    | `/checkins/{id}`         | `checkins.use` | `PULSE-FR-027`, `PULSE-FR-008`                 |
 | `DELETE` | `/checkins/{id}`         | `checkins.use` | `PULSE-FR-027`                                 |
+| `GET`    | `/rounds`                | `checkins.use` | `PULSE-FR-035` to `PULSE-FR-037`               |
 
 **Cron jobs.**
 
@@ -183,6 +186,7 @@ A wrong argument answers `Send /pause with a date, 2026-12-01, or a duration, 3d
 | Path           | Label       | Shows                                                                        | Realizes                         |
 | -------------- | ----------- | ---------------------------------------------------------------------------- | -------------------------------- |
 | `/data`        | Data        | The questions, the values of one, and its chart over 7, 30, or 365 days      | `PULSE-FR-031` to `PULSE-FR-034` |
+| `/history`     | History     | The rounds, newest first, each with its questions and their answers          | `PULSE-FR-035` to `PULSE-FR-037` |
 | `/checkins`    | Check-ins   | The check-ins, and the form of one: name, times, weekdays, ordered questions | `PULSE-FR-027`                   |
 | `/questions`   | Questions   | The questions, the archive, and the form of one                              | `PULSE-FR-023` to `PULSE-FR-026` |
 | `/preferences` | Preferences | Turn on or off, pause until a date                                           | `PULSE-FR-001` to `PULSE-FR-003` |
@@ -192,7 +196,8 @@ Every page reads the zone of the schedule from `host.timeZone` of
 `undefined`, the header reads "The schedule uses UTC" and links to the profile
 (`PULSE-FR-004`). A page then passes `UTC` to the time helpers, not the zone of the
 browser, so a page and the schedule agree. While pulse is off, every page but
-Preferences shows a panel that links to Preferences. The deck owns the path
+Preferences shows a panel that links to Preferences. The page route `/history/:checkin`
+opens History narrowed to one check-in, and each check-in on Check-ins links to it. The deck owns the path
 `/settings` of every plugin for its configuration, so the page takes another path.
 The chart is `ColumnLineChart` of `@maroid/ui`: the columns are the count of each day, the line is the mean, or the
 count of yes for a yes or no. A time shows through `formatMoment` with that zone.
@@ -271,7 +276,22 @@ the entity tag `"0"`, and `PUT /settings` with `If-Match: "0"` creates the row.
 as `RES` asks, and a read writes nothing.
 **Alternatives:** A `POST` to create the row: a second route for one boolean.
 
-### `PULSE-DD-018`
+### `PULSE-DD-019`
+
+**Realizes:** `PULSE-FR-035`, `PULSE-FR-036`
+**Decision:** `GET /rounds` gives each round its questions in order, each as
+`question_id`, `state`, and the value when one exists. The page reads the prompt, the
+type, and the configuration of each question from `GET /questions`, active and
+archived, and renders a value with the function of the data page. A question shows
+`pending` as never asked.
+**Rationale:** One request reads one page of rounds, and a value reads the same on
+both pages. Every `question_id` resolves: a question with a value is never deleted
+(`PULSE-FR-025`), and the delete of a question removes its prompts.
+**Alternatives:** The question inside each round: the same configuration repeats in
+every round of a page. A route for the questions of one round: one request for each
+round that opens.
+
+### `PULSE-DD-020`
 
 **Realizes:** `PULSE-FR-003`, `PULSE-FR-023`, `PULSE-FR-027`
 **Decision:** The body of a write holds at most 64 KiB. A larger body answers 413
@@ -295,6 +315,7 @@ the hub, outside this feature.
 | 7   | The pages Preferences, Questions, and Check-ins                             | `PULSE-FR-001` to `PULSE-FR-004`, `PULSE-FR-023` to `PULSE-FR-028` | [x]  |
 | 8   | The page Data                                                               | `PULSE-FR-031` to `PULSE-FR-034`                                   | [x]  |
 | 9   | `go.work.example`, `config.yaml`, the chart, and a run on the compose stack | `PULSE-NFR-001`                                                    | [ ]  |
+| 10  | `GET /rounds` and the page History                                          | `PULSE-FR-035` to `PULSE-FR-037`                                   | [x]  |
 
 ## 8. Out of scope for this specification
 

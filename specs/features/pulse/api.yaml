@@ -84,7 +84,7 @@ paths:
         "413":
           description: >
             The body passes 64 KiB. The type is `/problems/http/content-too-large`.
-            `PULSE-DD-018`.
+            `PULSE-DD-020`.
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
@@ -177,7 +177,7 @@ paths:
         "413":
           description: >
             The body passes 64 KiB. The type is `/problems/http/content-too-large`.
-            `PULSE-DD-018`.
+            `PULSE-DD-020`.
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
@@ -258,7 +258,7 @@ paths:
         "413":
           description: >
             The body passes 64 KiB. The type is `/problems/http/content-too-large`.
-            `PULSE-DD-018`.
+            `PULSE-DD-020`.
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
@@ -364,7 +364,7 @@ paths:
         "413":
           description: >
             The body passes 64 KiB. The type is `/problems/http/content-too-large`.
-            `PULSE-DD-018`.
+            `PULSE-DD-020`.
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
@@ -441,7 +441,7 @@ paths:
         "413":
           description: >
             The body passes 64 KiB. The type is `/problems/http/content-too-large`.
-            `PULSE-DD-018`.
+            `PULSE-DD-020`.
           headers:
             X-Flow-ID:
               $ref: "../../api/components.yaml#/components/headers/FlowId"
@@ -544,6 +544,41 @@ paths:
         "422":
           $ref: "../../api/components.yaml#/components/responses/Invalid"
 
+  /workspaces/{workspaceId}/plugins/dev.maroid.pulse/api/rounds:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listRounds
+      summary: List the rounds of the acting user, each with its questions.
+      description: >
+        Realizes `PULSE-FR-035` to `PULSE-FR-037`. The page is sorted by
+        `occurrence_at`, newest first, then by `id`. Each round holds its questions in
+        the order of the round. `PULSE-DD-019`. The permission is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/CheckinFilter"
+        - $ref: "#/components/parameters/RoundStateFilter"
+      responses:
+        "200":
+          description: One page of rounds.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoundPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
 components:
   parameters:
     Id:
@@ -570,6 +605,24 @@ components:
       schema:
         type: string
         format: date
+
+    CheckinFilter:
+      name: checkin_id
+      in: query
+      required: false
+      description: >
+        Narrows the rounds to one check-in. A round of a deleted check-in has none.
+        `PULSE-FR-037`.
+      schema:
+        type: string
+        format: uuid
+    RoundStateFilter:
+      name: state
+      in: query
+      required: false
+      description: Narrows the rounds to one state. `PULSE-FR-037`.
+      schema:
+        $ref: "#/components/schemas/RoundState"
 
   schemas:
     QuestionType:
@@ -938,6 +991,67 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/Value"
+
+    RoundState:
+      type: string
+      description: >
+        The state of a round: `offered` until the person starts or declines it,
+        `started` while its questions run, then `done`, `declined`, or `expired`.
+      enum: [offered, started, done, declined, expired]
+
+    Round:
+      type: object
+      required: [id, checkin_name, occurrence_at, state, questions]
+      properties:
+        id:
+          type: string
+          format: uuid
+        checkin_id:
+          type: string
+          format: uuid
+          description: Absent when the check-in was deleted.
+        checkin_name:
+          type: string
+          description: The name of the check-in when the round fired. `PULSE-FR-035`.
+        occurrence_at:
+          type: string
+          format: date-time
+        state:
+          $ref: "#/components/schemas/RoundState"
+        questions:
+          type: array
+          maxItems: 20
+          description: The questions in the order of the round. `PULSE-FR-036`.
+          items:
+            $ref: "#/components/schemas/RoundQuestion"
+
+    RoundQuestion:
+      type: object
+      required: [question_id, state]
+      properties:
+        question_id:
+          type: string
+          format: uuid
+          description: >
+            Names a question of `GET /questions`, active or archived. `PULSE-DD-019`.
+        state:
+          type: string
+          description: >
+            `pending` was never asked, `waiting` waits for the answer, then
+            `answered`, `skipped`, or `expired`.
+          enum: [pending, waiting, answered, skipped, expired]
+        value:
+          $ref: "#/components/schemas/Value"
+
+    RoundPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Round"
 
   responses:
     MalformedBody:

@@ -421,7 +421,7 @@ point, which opens in a new tab.
 **Layer:** integration
 
 **Given** Nina holds rows in every table, and Beka acts in workspace H.
-**When** Beka reads each `GET` route, and a transaction with Beka as the acting user
+**When** Beka reads each `GET` route, `GET /rounds` too, and a transaction with Beka as the acting user
 counts the rows of each table.
 **Then** `GET /settings` answers `enabled` false, every other route answers an empty
 page or 404 for an `id` of Nina, and each count is 0.
@@ -436,12 +436,49 @@ page or 404 for an `id` of Nina, and each count is 0.
 
 ### `PULSE-SC-041`
 
-**Verifies:** `PULSE-DD-018`
+**Verifies:** `PULSE-DD-020`
 **Layer:** integration
 
 **When** Nina sends a body of 64 KiB and one byte to `PUT /settings`,
 `POST /questions`, and `POST /checkins`.
 **Then** each answers 413 `content-too-large`, and no row changes.
+
+### `PULSE-SC-042`
+
+**Verifies:** `PULSE-FR-035`, `PULSE-FR-036`
+**Layer:** integration
+
+**Given** the defaults of Nina in Asia/Tbilisi on 24 November. Morning fires at 09:00,
+and Nina answers 3, 7, and 4, then skips Weight. Midday fires at 13:00. Afternoon
+fires at 17:00, which expires Midday, and Nina declines Afternoon.
+**When** Nina reads `GET /rounds`.
+**Then** the page holds Afternoon `declined`, Midday `expired`, and Morning `done`, in
+that order. Morning holds its four questions in order: three with a value, and Weight
+`skipped`. The question of Midday is `expired`, and the question of Afternoon is
+`pending`.
+
+### `PULSE-SC-043`
+
+**Verifies:** `PULSE-FR-037`
+**Layer:** integration
+
+**Given** the rounds of `PULSE-SC-042`.
+**When** Nina reads `GET /rounds` with `checkin_id` of Morning, then with `state`
+`expired`, then with both, then with `state` `lost`, then with `checkin_id` `morning`.
+**Then** the answers hold Morning alone, Midday alone, and no round. The last two
+answer 400.
+
+### `PULSE-SC-044`
+
+**Verifies:** `PULSE-FR-035`, `PULSE-FR-036`
+**Layer:** manual
+
+**Given** the rounds of `PULSE-SC-042`.
+**When** Nina opens History, opens each round, and then opens History from Morning on
+Check-ins.
+**Then** Morning reads 3 of 4 answered, with "3 of 5", "7 h", "4 of 5", and
+"Skipped". Midday reads "Expired", and Afternoon reads "Not asked" with no count. The
+last page lists Morning alone, with Morning chosen in the filter.
 
 ## Retired identifiers
 

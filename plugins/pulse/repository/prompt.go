@@ -20,6 +20,7 @@ type PromptRepository interface {
 	WaitNext(ctx context.Context, roundID string) (*model.Prompt, error)
 	SetMessage(ctx context.Context, id string, messageID string) error
 	ExpireOf(ctx context.Context, roundIDs []string) ([]model.Prompt, error)
+	ListOf(ctx context.Context, roundIDs []string) ([]model.Prompt, error)
 }
 
 // Prompt reads and writes the questions of the rounds of the acting user.
@@ -149,4 +150,26 @@ func (r *Prompt) ExpireOf(ctx context.Context, roundIDs []string) ([]model.Promp
 	}
 
 	return waited, nil
+}
+
+// ListOf answers the prompts of the rounds, each round in its order.
+func (r *Prompt) ListOf(ctx context.Context, roundIDs []string) ([]model.Prompt, error) {
+	if len(roundIDs) == 0 {
+		return nil, nil
+	}
+
+	var entities []model.Prompt
+
+	err := selectNamed(
+		ctx,
+		r.tx,
+		&entities,
+		"SELECT "+promptColumns+" FROM prompts p WHERE p.round_id IN (:ids) ORDER BY p.round_id, p.position;",
+		map[string]any{paramIDs: roundIDs},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("listing Prompts: %w", err)
+	}
+
+	return entities, nil
 }

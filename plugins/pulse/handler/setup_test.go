@@ -46,6 +46,7 @@ func (app *api) router(user string) http.Handler {
 		handler.NewQuestionHandler(logger, app.DB, app.Clock.Now).Routes(),
 		handler.NewValueHandler(logger, app.DB).Routes(),
 		handler.NewCheckinHandler(logger, app.DB, app.Clock.Now).Routes(),
+		handler.NewRoundHandler(logger, app.DB).Routes(),
 	)
 
 	router := chi.NewRouter()

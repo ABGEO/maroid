@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { failureMessage, type PluginHost } from '@maroid/plugin-sdk';
 	import { ConfirmDialog, createPager, Pagination } from '@maroid/ui';
+	import { untrack } from 'svelte';
 
 	import '../../app.css';
 	import { createPulseApi, type Question } from '../../api';
@@ -22,7 +23,13 @@
 	let busy = $state(false);
 	let failure = $state<string | null>(null);
 
-	const pager = createPager((link?: string) => api.questions.list(archived, link));
+	function listQuestions() {
+		const shown = archived;
+
+		return createPager((link?: string) => api.questions.list(shown, link));
+	}
+
+	let pager = $state(listQuestions());
 
 	async function run(action: () => Promise<unknown>, fallback: string): Promise<void> {
 		if (busy) {
@@ -74,6 +81,7 @@
 
 	function show(next: boolean): void {
 		archived = next;
+		pager = listQuestions();
 		void pager.reload();
 	}
 
@@ -83,8 +91,10 @@
 	}
 
 	$effect(() => {
-		void pager.reload();
-		void pulse.load();
+		untrack(() => {
+			void pager.reload();
+			void pulse.load();
+		});
 	});
 </script>
 

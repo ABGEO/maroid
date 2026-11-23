@@ -14,6 +14,17 @@ const (
 	RoundStateExpired  RoundState = "expired"
 )
 
+// Known reports whether the state is one of the states of a round.
+func (s RoundState) Known() bool {
+	switch s {
+	case RoundStateOffered, RoundStateStarted, RoundStateDone, RoundStateDeclined,
+		RoundStateExpired:
+		return true
+	default:
+		return false
+	}
+}
+
 // Round is one firing of a check-in. It keeps the name of the check-in, because the
 // check-in may change or go while the round stands.
 type Round struct {

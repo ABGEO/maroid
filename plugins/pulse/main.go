@@ -116,6 +116,7 @@ func (p *PulsePlugin) UIManifest() (*pluginapi.UIManifest, error) {
 	return &pluginapi.UIManifest{
 		Routes: []pluginapi.UIRoute{
 			{Path: "/data", Label: "Data"},
+			{Path: "/history", Label: "History"},
 			{Path: "/checkins", Label: "Check-ins"},
 			{Path: "/questions", Label: "Questions"},
 			{Path: "/preferences", Label: "Preferences"},
@@ -130,6 +131,7 @@ func (p *PulsePlugin) Routes() ([]pluginapi.Route, error) {
 		handler.NewSettingsHandler(p.logger, p.settings, p.now).Routes(),
 		handler.NewQuestionHandler(p.logger, p.db, p.now).Routes(),
 		handler.NewValueHandler(p.logger, p.db).Routes(),
+		handler.NewRoundHandler(p.logger, p.db).Routes(),
 		handler.NewCheckinHandler(p.logger, p.db, p.now).Routes(),
 	), nil
 }

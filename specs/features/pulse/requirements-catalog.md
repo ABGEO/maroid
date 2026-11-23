@@ -121,6 +121,39 @@ follow the time zone of the person.
 The deck must show a location value as its latitude and longitude, with a link that
 opens the point on a map.
 
+### `PULSE-FR-035`
+
+The deck must list the rounds of the person, newest first. Each round shows the name
+of its check-in, the moment of its occurrence in the time zone of the person, and its
+state.
+
+**Why:** A declined or an expired round records no value, so only the list of rounds
+shows that a check-in went unanswered.
+
+- Normal case: Morning at 09:00 is done, and Midday at 13:00 expired. The list shows
+  Midday first, then Morning, each with its state.
+- Limit case: a check-in that was deleted, or renamed, keeps its rounds under the name
+  it had when they fired.
+
+### `PULSE-FR-036`
+
+The deck must show the questions of a round in the order of the round. Each question
+shows its value, or shows that it was skipped, that it expired, or that it was never
+asked.
+
+**Why:** A round is one moment. Its answers read together, as the person gave them.
+
+- Normal case: Morning holds five questions. Four show a value, and Weight shows
+  skipped.
+- Limit case: a round declined at its start prompt shows each question as never asked.
+
+### `PULSE-FR-037`
+
+The deck must narrow the list of rounds to one check-in, to one state, or to both.
+
+- Normal case: the filter Evening and expired lists only the expired rounds of Evening.
+- Unwanted case: a state that does not exist is refused, and the list stays as it was.
+
 ## Retired identifiers
 
 This file has no retired identifier.
