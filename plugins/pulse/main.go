@@ -19,6 +19,7 @@ import (
 	"github.com/abgeo/maroid/plugins/pulse/settings"
 	"github.com/abgeo/maroid/plugins/pulse/telegram"
 	"github.com/abgeo/maroid/plugins/pulse/telegram/command"
+	"github.com/abgeo/maroid/plugins/pulse/widget"
 )
 
 // Meta names the plugin. The hub reads it before it calls New.
@@ -51,6 +52,7 @@ var (
 	_ pluginapi.PermissionPlugin      = (*PulsePlugin)(nil)
 	_ pluginapi.TelegramCommandPlugin = (*PulsePlugin)(nil)
 	_ pluginapi.TelegramMessagePlugin = (*PulsePlugin)(nil)
+	_ pluginapi.WidgetPlugin          = (*PulsePlugin)(nil)
 )
 
 // New creates a plugin instance. Pulse reads no configuration, because a tick slower
@@ -156,6 +158,11 @@ func (p *PulsePlugin) TelegramCommands() ([]pluginapi.TelegramCommand, error) {
 		command.NewPause(p.settings, p.bot, p.now),
 		command.NewResume(p.settings, p.bot),
 	}, nil
+}
+
+// Widgets returns the widget of the check-ins of today, for the home page.
+func (p *PulsePlugin) Widgets() ([]pluginapi.Widget, error) {
+	return []pluginapi.Widget{widget.NewToday(p.db, p.now)}, nil
 }
 
 // OnTelegramPress answers a press on a message of a round.
