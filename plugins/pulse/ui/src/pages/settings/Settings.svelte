@@ -95,7 +95,7 @@
 </script>
 
 <div class="max-w-2xl">
-	<ZoneHeader {host} title="Settings" lead="Turn the check-ins on or off, or pause them." />
+	<ZoneHeader {host} title="Preferences" lead="Turn the check-ins on or off, or pause them." />
 
 	{#if failure}
 		<div role="alert" class="alert alert-error alert-soft mb-4">

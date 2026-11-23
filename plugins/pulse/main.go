@@ -118,7 +118,7 @@ func (p *PulsePlugin) UIManifest() (*pluginapi.UIManifest, error) {
 			{Path: "/data", Label: "Data"},
 			{Path: "/checkins", Label: "Check-ins"},
 			{Path: "/questions", Label: "Questions"},
-			{Path: "/settings", Label: "Settings"},
+			{Path: "/preferences", Label: "Preferences"},
 		},
 		Assets: assets,
 	}, nil

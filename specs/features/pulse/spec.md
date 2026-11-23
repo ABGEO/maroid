@@ -180,20 +180,21 @@ A wrong argument answers `Send /pause with a date, 2026-12-01, or a duration, 3d
 
 **Pages.** `UIManifest.Routes`, in this order:
 
-| Path         | Label     | Shows                                                                        | Realizes                         |
-| ------------ | --------- | ---------------------------------------------------------------------------- | -------------------------------- |
-| `/data`      | Data      | The questions, the values of one, and its chart over 7, 30, or 365 days      | `PULSE-FR-031` to `PULSE-FR-034` |
-| `/checkins`  | Check-ins | The check-ins, and the form of one: name, times, weekdays, ordered questions | `PULSE-FR-027`                   |
-| `/questions` | Questions | The questions, the archive, and the form of one                              | `PULSE-FR-023` to `PULSE-FR-026` |
-| `/settings`  | Settings  | Turn on or off, pause until a date                                           | `PULSE-FR-001` to `PULSE-FR-003` |
+| Path           | Label       | Shows                                                                        | Realizes                         |
+| -------------- | ----------- | ---------------------------------------------------------------------------- | -------------------------------- |
+| `/data`        | Data        | The questions, the values of one, and its chart over 7, 30, or 365 days      | `PULSE-FR-031` to `PULSE-FR-034` |
+| `/checkins`    | Check-ins   | The check-ins, and the form of one: name, times, weekdays, ordered questions | `PULSE-FR-027`                   |
+| `/questions`   | Questions   | The questions, the archive, and the form of one                              | `PULSE-FR-023` to `PULSE-FR-026` |
+| `/preferences` | Preferences | Turn on or off, pause until a date                                           | `PULSE-FR-001` to `PULSE-FR-003` |
 
 Every page reads the zone of the schedule from `host.timeZone` of
 `@maroid/plugin-sdk`, which the profile fills, and shows it in its header. With
 `undefined`, the header reads "The schedule uses UTC" and links to the profile
 (`PULSE-FR-004`). A page then passes `UTC` to the time helpers, not the zone of the
 browser, so a page and the schedule agree. While pulse is off, every page but
-Settings shows a panel that links to Settings. The chart is `ColumnLineChart` of
-`@maroid/ui`: the columns are the count of each day, the line is the mean, or the
+Preferences shows a panel that links to Preferences. The deck owns the path
+`/settings` of every plugin for its configuration, so the page takes another path.
+The chart is `ColumnLineChart` of `@maroid/ui`: the columns are the count of each day, the line is the mean, or the
 count of yes for a yes or no. A time shows through `formatMoment` with that zone.
 
 ### 4.5 Errors
@@ -291,7 +292,7 @@ the hub, outside this feature.
 | 4   | `round.Service`, the receiver, and `job.Tick`                               | `PULSE-FR-010` to `PULSE-FR-022`, `PULSE-NFR-001`, `PULSE-NFR-002` | [x]  |
 | 5   | `/pause` and `/resume`                                                      | `PULSE-FR-003`                                                     | [x]  |
 | 6   | The routes of `api.yaml`                                                    | `PULSE-FR-023` to `PULSE-FR-034`                                   | [x]  |
-| 7   | The pages Settings, Questions, and Check-ins                                | `PULSE-FR-001` to `PULSE-FR-004`, `PULSE-FR-023` to `PULSE-FR-028` | [x]  |
+| 7   | The pages Preferences, Questions, and Check-ins                             | `PULSE-FR-001` to `PULSE-FR-004`, `PULSE-FR-023` to `PULSE-FR-028` | [x]  |
 | 8   | The page Data                                                               | `PULSE-FR-031` to `PULSE-FR-034`                                   | [x]  |
 | 9   | `go.work.example`, `config.yaml`, the chart, and a run on the compose stack | `PULSE-NFR-001`                                                    | [ ]  |
 

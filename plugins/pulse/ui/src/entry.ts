@@ -4,5 +4,5 @@ export const routes = {
 	'/data': defineRoute(() => import('./pages/data/Data.svelte')),
 	'/checkins': defineRoute(() => import('./pages/checkins/Checkins.svelte')),
 	'/questions': defineRoute(() => import('./pages/questions/Questions.svelte')),
-	'/settings': defineRoute(() => import('./pages/settings/Settings.svelte'))
+	'/preferences': defineRoute(() => import('./pages/settings/Settings.svelte'))
 };
