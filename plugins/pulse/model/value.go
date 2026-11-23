@@ -24,3 +24,14 @@ type Value struct {
 	CreatedAt  time.Time    `db:"created_at"`
 	UpdatedAt  time.Time    `db:"updated_at"`
 }
+
+// Day holds the values of one question on one local day. Mean, Min, and Max hold for
+// a scale and a number, and YesCount for a yes or no.
+type Day struct {
+	Date     string   `db:"day"`
+	Count    int      `db:"count"`
+	Mean     *float64 `db:"mean"`
+	Min      *float64 `db:"min"`
+	Max      *float64 `db:"max"`
+	YesCount int      `db:"yes_count"`
+}

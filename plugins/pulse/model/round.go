@@ -23,6 +23,7 @@ type Round struct {
 	OccurrenceAt   time.Time  `db:"occurrence_at"`
 	State          RoundState `db:"state"`
 	StartMessageID *string    `db:"start_message_id"`
+	QuestionCount  int        `db:"question_count"`
 	CreatedAt      time.Time  `db:"created_at"`
 	UpdatedAt      time.Time  `db:"updated_at"`
 }

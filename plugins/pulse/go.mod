@@ -3,10 +3,15 @@ module github.com/abgeo/maroid/plugins/pulse
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261118181013-f75ac86f9c06
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261122212706-b88059b3adf4
+	github.com/abgeo/maroid/libs/rest v0.0.0-20261118181013-f75ac86f9c06
 	github.com/abgeo/maroid/libs/testdb v0.0.0-20261118181013-f75ac86f9c06
+	github.com/go-chi/chi/v5 v5.3.0
+	github.com/go-chi/render v1.0.3
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/mymmrac/telego v1.12.1
 	github.com/stretchr/testify v1.12.1
 )
 
@@ -14,6 +19,7 @@ require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20261013165250-51075c6ea6bc // indirect
 	github.com/Microsoft/go-winio v0.6.3 // indirect
+	github.com/ajg/form v1.5.1 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.4 // indirect
 	github.com/bytedance/sonic/loader v0.5.2 // indirect
@@ -34,7 +40,6 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.20.1 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/grbit/go-json v0.11.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6 // indirect
@@ -55,7 +60,6 @@ require (
 	github.com/moby/sys/userns v0.2.1 // indirect
 	github.com/moby/term v0.5.2 // indirect
 	github.com/molecule-man/go-brrr v1.3.0 // indirect
-	github.com/mymmrac/telego v1.12.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/power-devops/perfstat v0.0.0-20260916203055-22a1a467d9f0 // indirect
@@ -82,6 +86,6 @@ require (
 	golang.org/x/arch v0.32.0 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 )

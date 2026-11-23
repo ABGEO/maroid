@@ -13,6 +13,7 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/pulse/errs"
 	"github.com/abgeo/maroid/plugins/pulse/model"
+	"github.com/abgeo/maroid/plugins/pulse/pulsetest"
 	"github.com/abgeo/maroid/plugins/pulse/repository"
 )
 
@@ -22,14 +23,14 @@ const checkViolation = "23514"
 func TestOneOccurrenceFiresOneRound(t *testing.T) {
 	t.Parallel()
 
-	database := schemaUnderTest(t)
+	database := pulsetest.Schema(t)
 	fixture := seedNina(t, database)
 	occurrence := time.Date(2026, 11, 25, 5, 0, 0, 0, time.UTC)
 
 	var stored []bool
 
 	for range 2 {
-		require.NoError(t, database.WithTx(actingAs(nina), func(tx *sqlx.Tx) error {
+		require.NoError(t, database.WithTx(pulsetest.ActingAs(nina), func(tx *sqlx.Tx) error {
 			round := model.Round{
 				CheckinID:    &fixture.CheckinID,
 				CheckinName:  "Morning",
@@ -60,10 +61,10 @@ func TestOneOccurrenceFiresOneRound(t *testing.T) {
 func TestOnePromptHoldsOneValue(t *testing.T) {
 	t.Parallel()
 
-	database := schemaUnderTest(t)
+	database := pulsetest.Schema(t)
 	fixture := seedNina(t, database)
 
-	err := database.WithTx(actingAs(nina), func(tx *sqlx.Tx) error {
+	err := database.WithTx(pulsetest.ActingAs(nina), func(tx *sqlx.Tx) error {
 		four := 4.0
 
 		return repository.NewValue(tx).Insert(t.Context(), &model.Value{
@@ -86,12 +87,12 @@ func TestOnePromptHoldsOneValue(t *testing.T) {
 func TestAValueKeepsItsQuestionAndItsType(t *testing.T) {
 	t.Parallel()
 
-	database := schemaUnderTest(t)
+	database := pulsetest.Schema(t)
 	seedNina(t, database)
 
 	var otherQuestion string
 
-	require.NoError(t, database.WithTx(actingAs(nina), func(tx *sqlx.Tx) error {
+	require.NoError(t, database.WithTx(pulsetest.ActingAs(nina), func(tx *sqlx.Tx) error {
 		return tx.Get(&otherQuestion,
 			`INSERT INTO questions (type, prompt) VALUES ('choice', 'And now?') RETURNING id`)
 	}))
@@ -102,7 +103,7 @@ func TestAValueKeepsItsQuestionAndItsType(t *testing.T) {
 	}
 
 	for _, update := range updates {
-		err := database.WithTx(actingAs(nina), func(tx *sqlx.Tx) error {
+		err := database.WithTx(pulsetest.ActingAs(nina), func(tx *sqlx.Tx) error {
 			_, err := tx.Exec(update)
 
 			return err //nolint:wrapcheck // the test reads the code of the database error.
@@ -123,25 +124,18 @@ func TestAValueKeepsItsQuestionAndItsType(t *testing.T) {
 func TestAnotherPersonReadsNoRow(t *testing.T) {
 	t.Parallel()
 
-	database := schemaUnderTest(t)
+	database := pulsetest.Schema(t)
 	seedNina(t, database)
 
-	for _, table := range tables() {
+	for _, table := range pulsetest.Tables() {
 		query := `SELECT count(*) FROM ` + table
 		assert.Equal(t, 1, count(t, database, nina, query), table)
 		assert.Equal(t, 0, count(t, database, beka, query), table)
 	}
 }
 
-// count answers the single number that the query reads as the user.
 func count(t *testing.T, database pluginapi.PluginDB, user string, query string) int {
 	t.Helper()
 
-	var total int
-
-	require.NoError(t, database.WithTx(actingAs(user), func(tx *sqlx.Tx) error {
-		return tx.Get(&total, query)
-	}))
-
-	return total
+	return pulsetest.Count(t, database, user, query)
 }
