@@ -301,6 +301,7 @@ Add a row before you create the file or the directory.
 | `TGMSG`    | `features/tgmsg/`    | The Telegram messages that a plugin sends to its acting user, and the presses and replies that come back. | Approved |
 | `PULSE`    | `features/pulse/`    | The check-ins that ask a person about their day on Telegram, and the values that the answers record.      | Approved |
 | `WSREMOVE` | `features/wsremove/` | The removal of a workspace and of every record it holds.                                                  | Approved |
+| `OWNKEY`   | `features/ownkey/`   | The protection key of each user and each workspace.                                                       | Approved |
 
 ## Retired identifiers
 
