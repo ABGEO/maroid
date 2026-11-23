@@ -2,16 +2,24 @@ package auth_test
 
 import (
 	"io/fs"
+	"log/slog"
 	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/mcuadros/go-defaults"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/db"
 	"github.com/abgeo/maroid/apps/hub/internal/auth"
 	"github.com/abgeo/maroid/apps/hub/internal/authtest"
+	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/outbox"
+	"github.com/abgeo/maroid/apps/hub/internal/secret"
+	"github.com/abgeo/maroid/apps/hub/internal/testbao"
 	"github.com/abgeo/maroid/libs/testdb"
 )
 
@@ -160,4 +168,87 @@ func TestDetachRefusesTheLastIdentityOfARecord(t *testing.T) {
 	identities, err := identityRepo.ListByUser(ctx, userID)
 	require.NoError(t, err)
 	require.Len(t, identities, 1)
+}
+
+func runKeyTasks(t *testing.T, database *sqlx.DB, keys secret.Keys) {
+	t.Helper()
+
+	handlers := outbox.NewRegistry()
+	require.NoError(t, handlers.Register(
+		secret.NewCreateHandler(slog.New(slog.DiscardHandler), database, keys),
+	))
+
+	var cfg config.Outbox
+
+	defaults.SetDefaults(&cfg)
+
+	worker := outbox.NewWorker(slog.New(slog.DiscardHandler), database, handlers, cfg)
+	require.NoError(t, worker.Cycle(t.Context()))
+}
+
+func keyTasks(t *testing.T, database *sqlx.DB) int {
+	t.Helper()
+
+	var count int
+
+	require.NoError(t, database.GetContext(t.Context(), &count,
+		`SELECT count(*) FROM public.outbox_tasks WHERE type = $1;`, secret.TypeCreate))
+
+	return count
+}
+
+// OWNKEY-SC-001: An invite creates the protection key of the record and of its first
+// workspace, and each key allows its destruction.
+func TestAnInviteCreatesTheKeysOfTheRecordAndItsWorkspace(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping the integration test, it needs Docker")
+	}
+
+	service, _, database := serviceUnderTest(t)
+	server := testbao.Start(t)
+
+	result, err := service.Invite(t.Context(), auth.InviteRequest{FirstName: "Nina"}, time.Hour)
+	require.NoError(t, err)
+
+	var workspaceID string
+
+	require.NoError(t, database.GetContext(t.Context(), &workspaceID,
+		`SELECT workspace_id FROM public.workspace_members WHERE user_id = $1;`, result.UserID))
+
+	runKeyTasks(t, database, server.Cipher(t))
+
+	for _, key := range []secret.Key{secret.UserKey(result.UserID), secret.WorkspaceKey(workspaceID)} {
+		held, readErr := server.Root.Logical().
+			ReadWithContext(t.Context(), testbao.TransitMount+"/keys/"+string(key))
+		require.NoError(t, readErr)
+		require.NotNil(t, held, key)
+		assert.Equal(t, true, held.Data["deletion_allowed"], key)
+	}
+
+	assert.Zero(t, keyTasks(t, database))
+}
+
+// OWNKEY-SC-002: An invite that fails queues no creation of a key.
+func TestAFailedInviteQueuesNoKey(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping the integration test, it needs Docker")
+	}
+
+	service, _, database := serviceUnderTest(t)
+
+	_, err := database.ExecContext(t.Context(), `
+		CREATE FUNCTION public.refuse_member() RETURNS trigger LANGUAGE plpgsql AS $$
+		BEGIN RAISE EXCEPTION 'refused'; END $$;
+		CREATE TRIGGER refuse_member BEFORE INSERT ON public.workspace_members
+		FOR EACH ROW EXECUTE FUNCTION public.refuse_member();`)
+	require.NoError(t, err)
+
+	_, err = service.Invite(t.Context(), auth.InviteRequest{FirstName: "Nina"}, time.Hour)
+	require.Error(t, err)
+
+	assert.Zero(t, keyTasks(t, database))
 }

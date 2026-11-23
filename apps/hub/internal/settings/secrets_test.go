@@ -1,13 +1,20 @@
 package settings_test
 
 import (
+	"log/slog"
 	"testing"
 
+	"github.com/mcuadros/go-defaults"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+	"github.com/abgeo/maroid/apps/hub/internal/outbox"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
+	"github.com/abgeo/maroid/apps/hub/internal/secret"
 	"github.com/abgeo/maroid/apps/hub/internal/settings"
+	"github.com/abgeo/maroid/apps/hub/internal/testbao"
+	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -94,4 +101,53 @@ func TestChangedSecretsNamesNoFieldThatIsNoSecret(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Empty(t, changed)
+}
+
+// OWNKEY-SC-013: A save of a secret before the key of the workspace exists fails and
+// keeps no row. The save after the creation of the key succeeds.
+func TestASaveBeforeTheKeyExistsKeepsNothing(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping the integration test, it needs Docker")
+	}
+
+	instance := startPostgres(t)
+	server := testbao.Start(t)
+	cipher := server.Cipher(t)
+	nina := addUser(t, instance, "Nina")
+
+	garden, err := workspace.NewManager(instance.DB).
+		Create(pluginapi.ContextWithActingUser(t.Context(), nina), "Garden")
+	require.NoError(t, err)
+
+	schema, err := settings.Infer(&probeModel{})
+	require.NoError(t, err)
+
+	schemas := registry.NewSettingsRegistry()
+	require.NoError(t, schemas.Register(pluginapi.ParsePluginID(probeID), schema))
+
+	manager := settings.NewManager(instance.DB, schemas, cipher)
+	ctx := pluginapi.ContextWithActingWorkspace(
+		pluginapi.ContextWithActingUser(t.Context(), nina), garden.ID,
+	)
+	fields := map[string]any{keyEmail: valueEmail, keyPassword: valuePassword}
+	scoped := &world{instance: instance}
+
+	require.Error(t, errorOf(manager.Save(ctx, probeID, fields, nil)))
+	require.Zero(t, scoped.rowCount(ctx, t, workspaceTable))
+
+	handlers := outbox.NewRegistry()
+	require.NoError(t, handlers.Register(
+		secret.NewCreateHandler(slog.New(slog.DiscardHandler), instance.DB, cipher),
+	))
+
+	var cfg config.Outbox
+
+	defaults.SetDefaults(&cfg)
+	require.NoError(t, outbox.NewWorker(slog.New(slog.DiscardHandler), instance.DB, handlers, cfg).
+		Cycle(t.Context()))
+
+	require.NoError(t, errorOf(manager.Save(ctx, probeID, fields, nil)))
+	require.Equal(t, 1, scoped.rowCount(ctx, t, workspaceTable))
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/secret"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -215,7 +216,8 @@ func InviteAddress(deckURL string, token string) (string, error) {
 }
 
 // createWithWorkspace writes a new user record and its first workspace, with the
-// record as its member, so no record exists without a place to work.
+// record as its member, so no record exists without a place to work. It queues the
+// protection key of each one.
 func (s *Service) createWithWorkspace(
 	ctx context.Context,
 	tx *sqlx.Tx,
@@ -239,6 +241,14 @@ func (s *Service) createWithWorkspace(
 		pluginapi.RoleManager,
 	); err != nil {
 		return "", fmt.Errorf("adding the record to its first workspace: %w", err)
+	}
+
+	if err = repository.NewOutboxTask(tx).Enqueue(
+		ctx,
+		secret.CreateTask(secret.Owner{Kind: secret.OwnerUser, ID: user.ID}),
+		secret.CreateTask(secret.Owner{Kind: secret.OwnerWorkspace, ID: workspace.ID}),
+	); err != nil {
+		return "", fmt.Errorf("queuing the creation of the keys: %w", err)
 	}
 
 	return user.ID, nil
