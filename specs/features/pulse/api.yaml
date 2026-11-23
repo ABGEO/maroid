@@ -1,0 +1,1091 @@
+# The routes that PULSE adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The check-ins of a person
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/plugins/dev.maroid.pulse/api/settings:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: getSettings
+      summary: Read the settings of pulse for the acting user.
+      description: >
+        Realizes `PULSE-FR-001` to `PULSE-FR-003`. With no row, the answer holds
+        `enabled` false and the entity tag `"0"`. `PULSE-DD-017`. The permission is
+        `checkins.use`.
+      responses:
+        "200":
+          description: The settings.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    put:
+      operationId: replaceSettings
+      summary: Turn pulse on or off, or pause it.
+      description: >
+        Realizes `PULSE-FR-001` to `PULSE-FR-003`. The first turn-on copies the
+        defaults. A turn-off expires every open round. `If-Match: "0"` creates the
+        row. The permission is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsInput"
+      responses:
+        "200":
+          description: The changed settings.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Settings"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "413":
+          description: >
+            The body passes 64 KiB. The type is `/problems/http/content-too-large`.
+            `PULSE-DD-020`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pulse/api/questions:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listQuestions
+      summary: List the questions of the acting user.
+      description: >
+        Realizes `PULSE-FR-023`, `PULSE-FR-025`, and `PULSE-FR-031`. The page is
+        sorted by `id`. With no `archived`, it holds the questions that are not
+        archived. Each item holds its count of values and its latest value. The
+        permission is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+        - name: archived
+          in: query
+          required: false
+          description: True keeps the archived questions alone.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: One page of questions.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestionPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    post:
+      operationId: createQuestion
+      summary: Create a question.
+      description: >
+        Realizes `PULSE-FR-023` and `PULSE-FR-026`. The permission
+        is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionInput"
+      responses:
+        "201":
+          description: The created question.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+            Location:
+              description: The address of the new question.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "413":
+          description: >
+            The body passes 64 KiB. The type is `/problems/http/content-too-large`.
+            `PULSE-DD-020`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pulse/api/questions/{id}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getQuestion
+      summary: Read one question.
+      description: Realizes `PULSE-FR-023` and `PULSE-FR-031`. The permission is `checkins.use`.
+      responses:
+        "200":
+          description: The question.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    put:
+      operationId: replaceQuestion
+      summary: Change a question, archive it, or restore it from the archive.
+      description: >
+        Realizes `PULSE-FR-024` to `PULSE-FR-026`. A question with a value keeps its
+        type, and keeps each choice that a value records. A choice with an `id` keeps
+        that choice, a choice with no `id` is new, and a choice left out is deleted.
+        `PULSE-DD-013`, `PULSE-DD-014`. The permission is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestionInput"
+      responses:
+        "200":
+          description: The changed question.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Question"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/QuestionConflict"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "413":
+          description: >
+            The body passes 64 KiB. The type is `/problems/http/content-too-large`.
+            `PULSE-DD-020`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+    delete:
+      operationId: deleteQuestion
+      summary: Delete a question that holds no value.
+      description: Realizes `PULSE-FR-025`. The permission is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: The question is gone, and so is its place in each check-in.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/QuestionConflict"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pulse/api/checkins:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listCheckins
+      summary: List the check-ins of the acting user.
+      description: >
+        Realizes `PULSE-FR-027`. The page is sorted by the first local time, then
+        by `id`. The permission is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: One page of check-ins.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CheckinPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    post:
+      operationId: createCheckin
+      summary: Create a check-in.
+      description: >
+        Realizes `PULSE-FR-027` and `PULSE-FR-008`. The new check-in fires first at
+        its next occurrence. The permission is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckinInput"
+      responses:
+        "201":
+          description: The created check-in.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+            Location:
+              description: The address of the new check-in.
+              schema:
+                type: string
+                format: uri
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Checkin"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "413":
+          description: >
+            The body passes 64 KiB. The type is `/problems/http/content-too-large`.
+            `PULSE-DD-020`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pulse/api/checkins/{id}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getCheckin
+      summary: Read one check-in.
+      description: Realizes `PULSE-FR-027`. The permission is `checkins.use`.
+      responses:
+        "200":
+          description: The check-in.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Checkin"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+    put:
+      operationId: replaceCheckin
+      summary: Change a check-in.
+      description: >
+        Realizes `PULSE-FR-027` and `PULSE-FR-008`. A change of the times or a
+        turn-on fires first at the next occurrence. The permission is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckinInput"
+      responses:
+        "200":
+          description: The changed check-in.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+            ETag:
+              $ref: "../../api/components.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Checkin"
+        "400":
+          $ref: "#/components/responses/MalformedBody"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "413":
+          description: >
+            The body passes 64 KiB. The type is `/problems/http/content-too-large`.
+            `PULSE-DD-020`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+    delete:
+      operationId: deleteCheckin
+      summary: Delete a check-in. Its values stay.
+      description: Realizes `PULSE-FR-027`. The permission is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/IfMatch"
+      responses:
+        "204":
+          description: The check-in is gone.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "412":
+          $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pulse/api/questions/{id}/values:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: listValues
+      summary: List the values of one question over a range of local days.
+      description: >
+        Realizes `PULSE-FR-032` and `PULSE-FR-034`. The page is sorted by
+        `occurred_at`, newest first, then by `id`. A day follows the time zone of the
+        acting user. The permission is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          description: One page of values.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValuePage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pulse/api/questions/{id}/days:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: listDays
+      summary: Summarize one question for each local day of a range.
+      description: >
+        Realizes `PULSE-FR-033`. One item for each day that holds a value, oldest
+        first. The range holds at most 366 days. `PULSE-DD-015`. The permission is
+        `checkins.use`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          description: The days of the range.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DayList"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          $ref: "../../api/components.yaml#/components/responses/Invalid"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pulse/api/rounds:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listRounds
+      summary: List the rounds of the acting user, each with its questions.
+      description: >
+        Realizes `PULSE-FR-035` to `PULSE-FR-037`. The page is sorted by
+        `occurrence_at`, newest first, then by `id`. Each round holds its questions in
+        the order of the round. `PULSE-DD-019`. The permission is `checkins.use`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/CheckinFilter"
+        - $ref: "#/components/parameters/RoundStateFilter"
+      responses:
+        "200":
+          description: One page of rounds.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoundPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      description: The internal identifier of the record. `DAT-009`.
+      schema:
+        type: string
+        format: uuid
+    From:
+      name: from
+      in: query
+      required: true
+      description: The first local day of the range, in the time zone of the acting user.
+      schema:
+        type: string
+        format: date
+    To:
+      name: to
+      in: query
+      required: true
+      description: The last local day of the range. It is `from` or later.
+      schema:
+        type: string
+        format: date
+
+    CheckinFilter:
+      name: checkin_id
+      in: query
+      required: false
+      description: >
+        Narrows the rounds to one check-in. A round of a deleted check-in has none.
+        `PULSE-FR-037`.
+      schema:
+        type: string
+        format: uuid
+    RoundStateFilter:
+      name: state
+      in: query
+      required: false
+      description: Narrows the rounds to one state. `PULSE-FR-037`.
+      schema:
+        $ref: "#/components/schemas/RoundState"
+
+  schemas:
+    QuestionType:
+      type: string
+      description: The type of a question. `PULSE-FR-023`.
+      enum: [scale, boolean, number, choice, text, location]
+
+    Settings:
+      type: object
+      required: [enabled, paused_until]
+      properties:
+        enabled:
+          type: boolean
+        paused_until:
+          type: [string, "null"]
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    SettingsInput:
+      type: object
+      required: [enabled, paused_until]
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        paused_until:
+          type: [string, "null"]
+          format: date-time
+          description: A future moment at most 366 days ahead, or null for no pause.
+
+    Choice:
+      type: object
+      required: [label]
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: >
+            The identifier that a value records. Absent on a new choice, and the hub
+            assigns it. `PULSE-DD-013`.
+        label:
+          type: string
+          minLength: 1
+          maxLength: 32
+
+    QuestionInput:
+      description: >
+        The type chooses the schema of `config`. A yes or no, a text, and a location
+        hold no `config`. A member that the schema of the type does not declare
+        answers 400 `/problems/http/member-unknown`. `PULSE-DD-018`.
+      oneOf:
+        - $ref: "#/components/schemas/ScaleQuestionInput"
+        - $ref: "#/components/schemas/NumberQuestionInput"
+        - $ref: "#/components/schemas/ChoiceQuestionInput"
+        - $ref: "#/components/schemas/PlainQuestionInput"
+      discriminator:
+        propertyName: type
+        mapping:
+          scale: "#/components/schemas/ScaleQuestionInput"
+          number: "#/components/schemas/NumberQuestionInput"
+          choice: "#/components/schemas/ChoiceQuestionInput"
+          boolean: "#/components/schemas/PlainQuestionInput"
+          text: "#/components/schemas/PlainQuestionInput"
+          location: "#/components/schemas/PlainQuestionInput"
+
+    QuestionBase:
+      type: object
+      required: [type, prompt, archived]
+      properties:
+        type:
+          $ref: "#/components/schemas/QuestionType"
+        prompt:
+          type: string
+          minLength: 1
+          maxLength: 200
+        archived:
+          type: boolean
+
+    ScaleQuestionInput:
+      allOf:
+        - $ref: "#/components/schemas/QuestionBase"
+        - type: object
+          required: [config]
+          properties:
+            type:
+              const: scale
+            config:
+              $ref: "#/components/schemas/ScaleConfig"
+
+    NumberQuestionInput:
+      allOf:
+        - $ref: "#/components/schemas/QuestionBase"
+        - type: object
+          required: [config]
+          properties:
+            type:
+              const: number
+            config:
+              $ref: "#/components/schemas/NumberConfig"
+
+    ChoiceQuestionInput:
+      allOf:
+        - $ref: "#/components/schemas/QuestionBase"
+        - type: object
+          required: [config]
+          properties:
+            type:
+              const: choice
+            config:
+              $ref: "#/components/schemas/ChoiceConfig"
+
+    PlainQuestionInput:
+      allOf:
+        - $ref: "#/components/schemas/QuestionBase"
+        - type: object
+          properties:
+            type:
+              enum: [boolean, text, location]
+
+    ScaleConfig:
+      type: object
+      description: >
+        `max` less `min` runs from 1 to 9, so a scale holds 2 to 10 buttons.
+      required: [min, max]
+      additionalProperties: false
+      properties:
+        min:
+          type: integer
+          format: int32
+        max:
+          type: integer
+          format: int32
+        low_label:
+          type: string
+          minLength: 1
+          maxLength: 24
+        high_label:
+          type: string
+          minLength: 1
+          maxLength: 24
+
+    NumberConfig:
+      type: object
+      description: "`min` is less than `max`. Each quick value lies from `min` to `max`."
+      required: [min, max]
+      additionalProperties: false
+      properties:
+        min:
+          type: number
+        max:
+          type: number
+        unit:
+          type: string
+          minLength: 1
+          maxLength: 16
+        quick_values:
+          type: array
+          maxItems: 8
+          uniqueItems: true
+          items:
+            type: number
+
+    ChoiceConfig:
+      type: object
+      required: [choices]
+      additionalProperties: false
+      properties:
+        choices:
+          type: array
+          description: The choices in the order of the buttons. `PULSE-DD-013`.
+          minItems: 2
+          maxItems: 12
+          items:
+            $ref: "#/components/schemas/Choice"
+
+    Question:
+      allOf:
+        - $ref: "#/components/schemas/QuestionInput"
+        - type: object
+          required: [id, value_count, created_at, updated_at]
+          properties:
+            id:
+              type: string
+              format: uuid
+              readOnly: true
+            value_count:
+              type: integer
+              format: int64
+              minimum: 0
+              readOnly: true
+              description: >
+                The count of values. Above 0, the type is frozen. `PULSE-FR-024`,
+                `PULSE-FR-031`.
+            latest:
+              $ref: "#/components/schemas/Value"
+            created_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+
+    CheckinInput:
+      type: object
+      required: [name, local_times, weekdays, enabled, question_ids]
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+        local_times:
+          type: array
+          minItems: 1
+          maxItems: 6
+          uniqueItems: true
+          items:
+            type: string
+            pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+            examples: ["09:00"]
+        weekdays:
+          type: array
+          description: ISO weekdays, 1 for Monday. An empty list is every day.
+          maxItems: 7
+          uniqueItems: true
+          items:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 7
+        enabled:
+          type: boolean
+        question_ids:
+          type: array
+          description: The questions in the order of the round. Each one is not archived.
+          minItems: 1
+          maxItems: 20
+          uniqueItems: true
+          items:
+            type: string
+            format: uuid
+
+    Checkin:
+      allOf:
+        - $ref: "#/components/schemas/CheckinInput"
+        - type: object
+          required: [id, created_at, updated_at]
+          properties:
+            id:
+              type: string
+              format: uuid
+              readOnly: true
+            created_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+
+    Value:
+      type: object
+      description: >
+        One value. The type of the question chooses the member that holds it:
+        `number` for a scale and a number, `boolean` for a boolean, `choice_id` for
+        a choice, `text` for a text, `latitude` and `longitude` for a location.
+      required: [id, occurred_at, answered_at, source]
+      properties:
+        id:
+          type: string
+          format: uuid
+        occurred_at:
+          type: string
+          format: date-time
+          description: The moment of the occurrence. `PULSE-FR-030`.
+        answered_at:
+          type: string
+          format: date-time
+        source:
+          type: string
+          examples: [telegram]
+        number:
+          type: number
+        boolean:
+          type: boolean
+        choice_id:
+          type: string
+          format: uuid
+        text:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+
+    Day:
+      type: object
+      required: [date, count]
+      properties:
+        date:
+          type: string
+          format: date
+          description: The local day, in the time zone of the acting user.
+        count:
+          type: integer
+          format: int32
+          minimum: 1
+        mean:
+          type: number
+          description: Present for a scale and a number.
+        min:
+          type: number
+        max:
+          type: number
+        yes_count:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Present for a yes or no.
+
+    DayList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          maxItems: 366
+          items:
+            $ref: "#/components/schemas/Day"
+
+    QuestionPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Question"
+
+    CheckinPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Checkin"
+
+    ValuePage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Value"
+
+    RoundState:
+      type: string
+      description: >
+        The state of a round: `offered` until the person starts or declines it,
+        `started` while its questions run, then `done`, `declined`, or `expired`.
+      enum: [offered, started, done, declined, expired]
+
+    Round:
+      type: object
+      required: [id, checkin_name, occurrence_at, state, questions]
+      properties:
+        id:
+          type: string
+          format: uuid
+        checkin_id:
+          type: string
+          format: uuid
+          description: Absent when the check-in was deleted.
+        checkin_name:
+          type: string
+          description: The name of the check-in when the round fired. `PULSE-FR-035`.
+        occurrence_at:
+          type: string
+          format: date-time
+        state:
+          $ref: "#/components/schemas/RoundState"
+        questions:
+          type: array
+          maxItems: 20
+          description: The questions in the order of the round. `PULSE-FR-036`.
+          items:
+            $ref: "#/components/schemas/RoundQuestion"
+
+    RoundQuestion:
+      type: object
+      required: [question_id, state]
+      properties:
+        question_id:
+          type: string
+          format: uuid
+          description: >
+            Names a question of `GET /questions`, active or archived. `PULSE-DD-019`.
+        state:
+          type: string
+          description: >
+            `pending` was never asked, `waiting` waits for the answer, then
+            `answered`, `skipped`, or `expired`.
+          enum: [pending, waiting, answered, skipped, expired]
+        value:
+          $ref: "#/components/schemas/Value"
+
+    RoundPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Round"
+
+  responses:
+    MalformedBody:
+      description: >
+        The body is not a JSON object, with the type `/problems/http/body-invalid`,
+        or it names a member that the schema does not declare, with the type
+        `/problems/http/member-unknown`.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    QuestionConflict:
+      description: >
+        The question holds a value. A change of the type, and a delete, answer
+        `/problems/dev.maroid.pulse/question-has-values`. A change that leaves out a
+        choice that a value records answers
+        `/problems/dev.maroid.pulse/choice-in-use`, and `detail` names the choice.
+        `PULSE-DD-014`.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: >
+        The access token that Dex issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.
