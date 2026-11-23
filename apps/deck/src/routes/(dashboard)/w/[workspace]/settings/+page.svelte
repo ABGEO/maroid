@@ -1,4 +1,5 @@
 <script lang="ts">
+	import RemoveWorkspacePanel from '$lib/components/workspace/RemoveWorkspacePanel.svelte';
 	import RenameWorkspaceForm from '$lib/components/workspace/RenameWorkspaceForm.svelte';
 	import { PERMISSION, holds } from '$lib/permissions';
 
@@ -22,5 +23,9 @@
 		</div>
 	{:else}
 		<RenameWorkspaceForm workspace={data.workspace} etag={data.etag} />
+	{/if}
+
+	{#if holds(data.workspace, PERMISSION.workspaceRemove)}
+		<RemoveWorkspacePanel workspace={data.workspace} />
 	{/if}
 </div>

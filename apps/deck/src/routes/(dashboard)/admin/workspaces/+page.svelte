@@ -4,9 +4,12 @@
 	import { api, type InstanceWorkspace } from '$lib/api';
 	import Alert from '$lib/components/ui/Alert.svelte';
 	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
+	import RemoveWorkspaceDialog from '$lib/components/workspace/RemoveWorkspaceDialog.svelte';
+	import { loadWorkspaces } from '$lib/state/workspaces.svelte';
 
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let workspaces = $state<InstanceWorkspace[]>([]);
+	let removal = $state<ReturnType<typeof RemoveWorkspaceDialog>>();
 
 	async function load(): Promise<void> {
 		status = 'loading';
@@ -28,6 +31,10 @@
 	$effect(() => {
 		void load();
 	});
+
+	async function removed(): Promise<void> {
+		await Promise.all([load(), loadWorkspaces()]);
+	}
 </script>
 
 <div class="max-w-3xl">
@@ -71,8 +78,17 @@
 					>
 						Plugins
 					</a>
+					<button
+						type="button"
+						class="btn btn-ghost btn-sm text-error"
+						onclick={() => removal?.open(workspace)}
+					>
+						Remove
+					</button>
 				</li>
 			{/each}
 		</ul>
 	{/if}
 </div>
+
+<RemoveWorkspaceDialog bind:this={removal} onremoved={removed} />
