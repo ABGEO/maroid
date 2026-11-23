@@ -316,7 +316,7 @@ lists the check-in, the zone, the floor, `now`, and the moments it answers:
 | #   | Step                                                                 | Realizes                         | Done |
 | --- | -------------------------------------------------------------------- | -------------------------------- | ---- |
 | 1   | `schedule.Upcoming`, with `PULSE-SC-054` first                       | `PULSE-FR-040`                   | [x]  |
-| 2   | `Round.ListBetween`, `model.PauseLayout`, and `/pause` reads it      | `PULSE-FR-039`, `PULSE-FR-048`   | [ ]  |
+| 2   | `Round.ListBetween`, `model.PauseLayout`, and `/pause` reads it      | `PULSE-FR-039`, `PULSE-FR-048`   | [x]  |
 | 3   | `widget.NewToday`, with `PULSE-SC-045` to `PULSE-SC-052` first       | `PULSE-FR-038` to `PULSE-FR-049` | [ ]  |
 | 4   | `Widgets()` in `main.go`, the build of the `.so`, and `PULSE-SC-053` | `PULSE-FR-038`, `PULSE-FR-045`   | [ ]  |
 

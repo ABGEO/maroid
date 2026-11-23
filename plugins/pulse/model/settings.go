@@ -2,6 +2,10 @@ package model
 
 import "time"
 
+// PauseLayout shows the end of a pause to the person, with the year, because a pause
+// reaches 366 days ahead.
+const PauseLayout = "2 Jan 2006, 15:04"
+
 // Settings holds whether pulse serves a person, and until when it rests.
 type Settings struct {
 	ID          string     `db:"id"`

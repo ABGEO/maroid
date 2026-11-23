@@ -24,6 +24,7 @@ type RoundRepository interface {
 	GetByID(ctx context.Context, id string) (*model.Round, error)
 	GetByStartMessage(ctx context.Context, messageID string) (*model.Round, error)
 	List(ctx context.Context, seek page.Seek, filter RoundFilter) ([]model.Round, error)
+	ListBetween(ctx context.Context, from, to time.Time) ([]model.Round, error)
 	Move(
 		ctx context.Context,
 		id string,
@@ -95,6 +96,24 @@ func (r *Round) GetByStartMessage(ctx context.Context, messageID string) (*model
 	}
 
 	return &entity, nil
+}
+
+// ListBetween answers the rounds whose occurrence lies at from or later and before
+// to, oldest first, then by the name of the check-in.
+func (r *Round) ListBetween(ctx context.Context, from, to time.Time) ([]model.Round, error) {
+	var entities []model.Round
+
+	err := selectNamed(ctx, r.tx, &entities, `
+		SELECT `+roundColumns+` FROM rounds
+		WHERE occurrence_at >= :from AND occurrence_at < :to
+		ORDER BY occurrence_at, checkin_name;`,
+		map[string]any{paramFrom: from, "to": to},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("listing Rounds between two moments: %w", err)
+	}
+
+	return entities, nil
 }
 
 // Move changes the state of the round from one state to another, and answers the
