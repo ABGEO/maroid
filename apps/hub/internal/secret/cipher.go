@@ -1,13 +1,15 @@
 package secret
 
-import "context"
+import (
+	"context"
+
+	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
+)
 
 // UserKeyPrefix starts the name of the key that protects one user.
-// The owner creates each key under this prefix.
 const UserKeyPrefix = "maroid-user-"
 
 // WorkspaceKeyPrefix starts the name of the key that protects one workspace.
-// The owner creates each key under this prefix.
 const WorkspaceKeyPrefix = "maroid-workspace-"
 
 // Key names a key that a Cipher uses.
@@ -21,6 +23,37 @@ func UserKey(userID string) Key {
 // WorkspaceKey returns the Key that protects the secrets of one workspace.
 func WorkspaceKey(workspaceID string) Key {
 	return Key(WorkspaceKeyPrefix + workspaceID)
+}
+
+// OwnerKind names the kind of record that one protection key protects.
+type OwnerKind string
+
+// The kinds of record that hold a protection key.
+const (
+	OwnerUser      OwnerKind = "user"
+	OwnerWorkspace OwnerKind = "workspace"
+)
+
+// Owner is the user record or the workspace that one protection key protects.
+type Owner struct {
+	Kind OwnerKind `json:"kind"`
+	ID   string    `json:"id"`
+}
+
+// Key answers the Key that protects the secrets of the owner.
+func (o Owner) Key() (Key, error) {
+	if o.ID == "" {
+		return "", errs.ErrSecretKeyOwnerInvalid
+	}
+
+	switch o.Kind {
+	case OwnerUser:
+		return UserKey(o.ID), nil
+	case OwnerWorkspace:
+		return WorkspaceKey(o.ID), nil
+	default:
+		return "", errs.ErrSecretKeyOwnerInvalid
+	}
 }
 
 // Cipher protects a value under a Key.

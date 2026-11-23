@@ -34,7 +34,8 @@ path "transit/encrypt/maroid-user-*" { capabilities = ["update"] }
 path "transit/decrypt/maroid-user-*" { capabilities = ["update"] }
 path "transit/encrypt/maroid-workspace-*" { capabilities = ["update"] }
 path "transit/decrypt/maroid-workspace-*" { capabilities = ["update"] }
-path "transit/keys/maroid-workspace-*" { capabilities = ["read", "delete"] }
+path "transit/keys/maroid-user-*" { capabilities = ["update"] }
+path "transit/keys/maroid-workspace-*" { capabilities = ["read", "update", "delete"] }
 `
 
 // Server is a running OpenBao that one test owns.
@@ -112,8 +113,8 @@ func StartIn(t *testing.T, namespace string) *Server {
 	return &Server{Root: root}
 }
 
-// CreateKeys creates one transit key for each name, as the owner does, and allows its
-// deletion.
+// CreateKeys creates one transit key for each name with the root token, as an
+// administrator did before the hub created its keys, and allows its deletion.
 func (s *Server) CreateKeys(t *testing.T, keys ...secret.Key) {
 	t.Helper()
 

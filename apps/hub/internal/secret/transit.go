@@ -21,9 +21,21 @@ type KeyDestroyer interface {
 	DestroyKey(ctx context.Context, key Key) error
 }
 
+// KeyCreator creates a named key that allows its destruction. A key that exists keeps
+// every version and gains the permission to be destroyed.
+type KeyCreator interface {
+	CreateKey(ctx context.Context, key Key) error
+}
+
+// Keys creates and destroys the named keys.
+type Keys interface {
+	KeyCreator
+	KeyDestroyer
+}
+
 var (
-	_ Cipher       = (*Transit)(nil)
-	_ KeyDestroyer = (*Transit)(nil)
+	_ Cipher = (*Transit)(nil)
+	_ Keys   = (*Transit)(nil)
 )
 
 // NewTransit creates a new Transit cipher over a client that already logged in.
@@ -80,6 +92,24 @@ func (c *Transit) Decrypt(
 	}
 
 	return string(plaintext), nil
+}
+
+// CreateKey writes the key, then allows its destruction. The store answers a write of
+// a key that exists with success and keeps every version of it.
+func (c *Transit) CreateKey(ctx context.Context, key Key) error {
+	if _, err := c.client.Logical().WriteWithContext(ctx, c.path("keys", key), nil); err != nil {
+		return fmt.Errorf("creating the key %q: %w", key, err)
+	}
+
+	if _, err := c.client.Logical().WriteWithContext(
+		ctx,
+		c.path("keys", key)+"/config",
+		map[string]any{"deletion_allowed": true},
+	); err != nil {
+		return fmt.Errorf("allowing the destruction of the key %q: %w", key, err)
+	}
+
+	return nil
 }
 
 // DestroyKey deletes the key and every version of it, so no ciphertext under it reads
