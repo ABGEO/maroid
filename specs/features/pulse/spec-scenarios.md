@@ -327,11 +327,12 @@ of `weight` answers 409 `question-has-values`. The delete of "Coffee today?" ans
 
 **Given** "What did you drink?", a choice of "Coffee" with the `id` C and "Tea" with
 the `id` T, and one value that records C.
-**When** Nina puts the question with C labelled "Espresso" and T; then with T alone;
-then with C alone; then with C and a choice with no `id`; then with 13 choices.
+**When** Nina puts the question with C labelled "Espresso" and T; then with T and
+"Water" with no `id`; then with C and "Water" with no `id`; then with C alone; then
+with 13 choices.
 **Then** the rename answers 200, and the value still records C, shown as "Espresso".
-T alone answers 409 `choice-in-use` with C in `detail`. C alone answers 200 and
-deletes T. The choice with no `id` answers 200 with a new `id`. Thirteen answer 422.
+T and "Water" answer 409 `choice-in-use` with C in `detail`. C and "Water" answer 200,
+delete T, and give "Water" a new `id`. C alone and thirteen answer 422.
 
 ### `PULSE-SC-031`
 

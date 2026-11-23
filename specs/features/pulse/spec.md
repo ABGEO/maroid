@@ -108,16 +108,18 @@ Every path is under `plugins/pulse/`, unless it says otherwise. Every file is ne
 | `main.go`, `embed.go`, `go.mod`           | `Meta`, `New`, the capabilities of section 4.3, `uiAssets`                                             |
 | `db/migrations/`                          | The eight tables of `spec-data.md`                                                                     |
 | `model/`                                  | `Settings`, `Question`, `ScaleConfig`, `NumberConfig`, `Choice`, `Checkin`, `Round`, `Prompt`, `Value` |
-| `repository/`                             | One repository for each table, and `Values` for the summary and the days                               |
-| `catalog/defaults.go`, `catalog/seed.go`  | The defaults of `PULSE-FR-029`, `Seed(ctx, tx)` for the first turn-on                                  |
+| `repository/`                             | One repository for each table, with its interface. `Value` also reads the latest value and the days    |
+| `catalog/defaults.go`, `catalog/seed.go`  | The defaults of `PULSE-FR-029`, `Seed(ctx, tx, now)` for the first turn-on                             |
 | `schedule/occurrence.go`                  | `Latest(c model.Checkin, zone *time.Location, floor, now time.Time) (time.Time, bool)`, `Resolve`      |
 | `settings/service.go`                     | `Service.Get`, `Service.Put`, `Service.Pause`, `Service.Resume`                                        |
-| `round/service.go`                        | `Service.Fire`, `Start`, `Decline`, `Answer`, `Skip`, `Expire`                                         |
+| `round/service.go`                        | `Service.Fire`, `Press`, `Reply`, `Expire`, and `CloseOpen` for a turn-off                             |
 | `round/text.go`, `round/parse.go`         | The texts and the markup of `spec-round.md`, the parse of a reply                                      |
 | `job/tick.go`                             | `Tick`, the `pluginapi.CronJob`                                                                        |
 | `telegram/receiver.go`                    | `Receiver`, the `pluginapi.TelegramMessagePlugin` over `round.Service`                                 |
-| `telegram/command/pause.go`, `resume.go`  | `/pause` and `/resume`                                                                                 |
-| `handler/`                                | `settings.go`, `question.go`, `checkin.go`, `value.go`, `problem.go`                                   |
+| `telegram/command/`                       | `/pause`, `/resume`, and the argument that both read                                                   |
+| `handler/`                                | `settings.go`, `question.go`, `checkin.go`, `value.go`, `page.go`, `problem.go`                        |
+| `errs/errs.go`                            | The sentinels and the typed errors that the packages share                                             |
+| `pulsetest/`                              | The harness of the tests: the database, the clock, the fake messenger                                  |
 | `permission/permission.go`                | `CheckinsUse = "checkins.use"`                                                                         |
 | `ui/`                                     | The remote: `src/pages/{data,checkins,questions,settings}`, `src/api/`                                 |
 | `go.work.example` (root)                  | `./plugins/pulse`                                                                                      |
@@ -272,13 +274,13 @@ as `RES` asks, and a read writes nothing.
 | #   | Step                                                                        | Realizes                                                           | Done |
 | --- | --------------------------------------------------------------------------- | ------------------------------------------------------------------ | ---- |
 | 1   | The module, `Meta`, the migrations, the models, the repositories            | `PULSE-INV-001` to `PULSE-INV-004`                                 | [x]  |
-| 2   | The catalog, the seed, and the settings service                             | `PULSE-FR-001`, `PULSE-FR-002`, `PULSE-FR-029`                     | [ ]  |
-| 3   | `schedule.Latest` and `Resolve`, with the unit tests first                  | `PULSE-FR-005` to `PULSE-FR-009`                                   | [ ]  |
-| 4   | `round.Service`, the receiver, and `job.Tick`                               | `PULSE-FR-010` to `PULSE-FR-022`, `PULSE-NFR-001`, `PULSE-NFR-002` | [ ]  |
-| 5   | `/pause` and `/resume`                                                      | `PULSE-FR-003`                                                     | [ ]  |
-| 6   | The routes of `api.yaml`                                                    | `PULSE-FR-023` to `PULSE-FR-034`                                   | [ ]  |
-| 7   | The pages Settings, Questions, and Check-ins                                | `PULSE-FR-001` to `PULSE-FR-004`, `PULSE-FR-023` to `PULSE-FR-028` | [ ]  |
-| 8   | The page Data                                                               | `PULSE-FR-031` to `PULSE-FR-034`                                   | [ ]  |
+| 2   | The catalog, the seed, and the settings service                             | `PULSE-FR-001`, `PULSE-FR-002`, `PULSE-FR-029`                     | [x]  |
+| 3   | `schedule.Latest` and `Resolve`, with the unit tests first                  | `PULSE-FR-005` to `PULSE-FR-009`                                   | [x]  |
+| 4   | `round.Service`, the receiver, and `job.Tick`                               | `PULSE-FR-010` to `PULSE-FR-022`, `PULSE-NFR-001`, `PULSE-NFR-002` | [x]  |
+| 5   | `/pause` and `/resume`                                                      | `PULSE-FR-003`                                                     | [x]  |
+| 6   | The routes of `api.yaml`                                                    | `PULSE-FR-023` to `PULSE-FR-034`                                   | [x]  |
+| 7   | The pages Settings, Questions, and Check-ins                                | `PULSE-FR-001` to `PULSE-FR-004`, `PULSE-FR-023` to `PULSE-FR-028` | [x]  |
+| 8   | The page Data                                                               | `PULSE-FR-031` to `PULSE-FR-034`                                   | [x]  |
 | 9   | `go.work.example`, `config.yaml`, the chart, and a run on the compose stack | `PULSE-NFR-001`                                                    | [ ]  |
 
 ## 8. Out of scope for this specification
