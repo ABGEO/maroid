@@ -4,7 +4,7 @@ title: The check-ins of a person
 type: spec
 status: approved
 created: 2026-11-23
-updated: 2026-11-23
+updated: 2026-11-24
 approved_by: Temuri
 approved_on: 2026-11-23
 constrained_by: [PLG, DAT, OWN, JOB, TG, UI, RES, PERMS, TGMSG, BLD]
@@ -20,6 +20,7 @@ requirements: features/pulse/requirements.md
 | [`spec-schedule.md`](spec-schedule.md)   | The tick, the time math, the turn-on, and the pause       |
 | [`spec-round.md`](spec-round.md)         | The states of a round, its messages, a press, and a reply |
 | [`spec-scenarios.md`](spec-scenarios.md) | The scenarios                                             |
+| [`spec-widget.md`](spec-widget.md)       | The widget of today, its decisions, scenarios, and plan   |
 | [`api.yaml`](api.yaml)                   | The routes                                                |
 
 ## 1. Summary
@@ -179,7 +180,7 @@ A wrong argument answers `Send /pause with a date, 2026-12-01, or a duration, 3d
 | `checkins.use` | `viewer`    | `PULSE-INV-001` |
 
 **Capabilities.** `migrations`, `ui`, `api`, `cron`, `permissions`,
-`telegram_commands`, and `telegram_messages`.
+`telegram_commands`, `telegram_messages`, and `widgets` (`spec-widget.md`).
 
 **Pages.** `UIManifest.Routes`, in this order:
 

@@ -13,13 +13,13 @@ import (
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/pulse/errs"
+	"github.com/abgeo/maroid/plugins/pulse/model"
 	"github.com/abgeo/maroid/plugins/pulse/permission"
 )
 
 const (
-	pauseHelp   = "Send /pause with a date, 2026-12-01, or a duration, 3d or 12h."
-	pausedText  = "Check-ins paused until %s."
-	pausedShown = "2 Jan 2006, 15:04"
+	pauseHelp  = "Send /pause with a date, 2026-12-01, or a duration, 3d or 12h."
+	pausedText = "Check-ins paused until %s."
 
 	day        = 24 * time.Hour
 	daysMax    = 366
@@ -83,7 +83,7 @@ func (p *Pause) Reply(ctx context.Context, text string) (string, error) {
 		return offOr(err)
 	}
 
-	return fmt.Sprintf(pausedText, until.In(zone).Format(pausedShown)), nil
+	return fmt.Sprintf(pausedText, until.In(zone).Format(model.PauseLayout)), nil
 }
 
 // ParseUntil reads the end of a pause: YYYY-MM-DD, the start of that day in the zone,
