@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -43,6 +44,12 @@ type Workspace struct {
 	authorizer  authz.Authorizer
 	catalog     workspace.Catalog
 	plugins     WorkspacePlugins
+	remover     WorkspaceRemover
+}
+
+// WorkspaceRemover removes the acting workspace with every record it holds.
+type WorkspaceRemover interface {
+	Remove(ctx context.Context) error
 }
 
 // scopeAll names every workspace of the instance in the scope of the list.
@@ -70,6 +77,7 @@ func NewWorkspace(
 	authorizer authz.Authorizer,
 	catalog workspace.Catalog,
 	plugins WorkspacePlugins,
+	remover WorkspaceRemover,
 ) *Workspace {
 	return &Workspace{
 		logger: logger.With(
@@ -84,6 +92,7 @@ func NewWorkspace(
 		authorizer:  authorizer,
 		catalog:     catalog,
 		plugins:     plugins,
+		remover:     remover,
 	}
 }
 
@@ -409,6 +418,18 @@ func (h *Workspace) RemoveMember(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// Remove deletes the acting workspace with every record it holds. A second removal
+// answers not-found and changes nothing, so the method stays idempotent.
+func (h *Workspace) Remove(w http.ResponseWriter, r *http.Request) error {
+	if err := h.remover.Remove(r.Context()); err != nil {
+		return h.fail(w, r, err, "removing the workspace")
+	}
+
+	render.NoContent(w, r)
+
+	return nil
+}
+
 // Candidates answers every active user record that is no member of the acting
 // workspace.
 func (h *Workspace) Candidates(w http.ResponseWriter, r *http.Request) error {
@@ -438,10 +459,11 @@ func (h *Workspace) Candidates(w http.ResponseWriter, r *http.Request) error {
 }
 
 // registerAdmitting registers the routes of a workspace that an administrator who is
-// no member reaches as a manager: the read of the workspace, the members, and the
-// enablements.
+// no member reaches as a manager: the read and the removal of the workspace, the
+// members, and the enablements.
 func (h *Workspace) registerAdmitting(router chi.Router) {
 	workspaceRead := h.require(authz.PermissionWorkspaceRead)
+	workspaceRemove := h.require(authz.PermissionWorkspaceRemove)
 	membersWrite := h.require(authz.PermissionMembersWrite)
 	membersRemove := workspace.RequireOf(h.logger, h.authorizer, removalPermission)
 	pluginsWrite := h.require(authz.PermissionPluginsWrite)
@@ -450,6 +472,7 @@ func (h *Workspace) registerAdmitting(router chi.Router) {
 		r.Use(workspace.Middleware(h.logger, h.db, workspace.AdmitAdministrator()))
 
 		r.With(workspaceRead).Get("/", Wrap(h.logger, h.Get))
+		r.With(workspaceRemove).Delete("/", Wrap(h.logger, h.Remove))
 		r.With(workspaceRead).Get("/plugins", Wrap(h.logger, h.EnabledPlugins))
 		r.With(workspaceRead).Get("/plugins/{"+pluginIDParam+"}", Wrap(h.logger, h.EnabledPlugin))
 		r.With(pluginsWrite).Put("/plugins/{"+pluginIDParam+"}", Wrap(h.logger, h.EnablePlugin))
@@ -510,6 +533,8 @@ func (h *Workspace) listInstance(w http.ResponseWriter, r *http.Request) error {
 
 // fail answers the problem that the failure carries.
 func (h *Workspace) fail(w http.ResponseWriter, r *http.Request, err error, doing string) error {
+	var membersRemain *errs.MembersRemainError
+
 	switch {
 	case errors.Is(err, errs.ErrMemberNotFound), errors.Is(err, errs.ErrWorkspaceNotFound):
 		problem.Write(w, r, problem.NewNotFound())
@@ -517,6 +542,8 @@ func (h *Workspace) fail(w http.ResponseWriter, r *http.Request, err error, doin
 		problem.Write(w, r, problems.NewMemberExists())
 	case errors.Is(err, errs.ErrManagerLast):
 		problem.Write(w, r, problems.NewManagerLast())
+	case errors.As(err, &membersRemain):
+		problem.Write(w, r, problems.NewMembersRemain(membersRemain.Others))
 	case errors.Is(err, errs.ErrUserNotFound):
 		problem.Write(w, r, userFailure("no active user record holds this identifier"))
 	case errors.Is(err, precondition.ErrModified):

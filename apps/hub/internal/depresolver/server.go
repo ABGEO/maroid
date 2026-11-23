@@ -382,6 +382,11 @@ func (c *Container) buildWorkspaceHandler() (*handler.Workspace, error) {
 		return nil, err
 	}
 
+	remover, err := c.WorkspaceRemover()
+	if err != nil {
+		return nil, err
+	}
+
 	return handler.NewWorkspace(
 		c.Logger(),
 		verifier,
@@ -392,6 +397,7 @@ func (c *Container) buildWorkspaceHandler() (*handler.Workspace, error) {
 		authorizer,
 		service,
 		handler.WorkspacePlugins{Enablements: enablements, Catalog: c.PluginCatalog()},
+		remover,
 	), nil
 }
 

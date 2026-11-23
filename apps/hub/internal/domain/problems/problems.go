@@ -4,6 +4,7 @@
 package problems
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/abgeo/maroid/libs/rest/problem"
@@ -18,6 +19,7 @@ const (
 	TypeNotReady                = "/problems/hub/not-ready"
 	TypeMemberExists            = "/problems/hub/member-exists"
 	TypeManagerLast             = "/problems/hub/manager-last"
+	TypeMembersRemain           = "/problems/hub/members-remain"
 	TypeAdministratorLast       = "/problems/hub/administrator-last"
 	TypeAdministratorAllowlist  = "/problems/hub/administrator-allowlist"
 	TypeProviderExists          = "/problems/hub/provider-exists"
@@ -119,6 +121,33 @@ func NewManagerLast() *problem.Problem {
 		Type:   TypeManagerLast,
 		Title:  "The change leaves the workspace with no manager.",
 		Status: http.StatusConflict,
+	}
+}
+
+// MembersRemainProblem reports a removal of a workspace that other members share,
+// with the count of the members other than the acting user.
+type MembersRemainProblem struct {
+	problem.Problem
+
+	OtherMembers int `json:"other_members"`
+}
+
+// NewMembersRemain reports a removal of a workspace that other members share. The
+// detail names their count, so the person knows how many to remove first.
+func NewMembersRemain(others int) *MembersRemainProblem {
+	noun := "members"
+	if others == 1 {
+		noun = "member"
+	}
+
+	return &MembersRemainProblem{
+		Problem: problem.Problem{
+			Type:   TypeMembersRemain,
+			Title:  "The workspace holds other members.",
+			Status: http.StatusConflict,
+			Detail: fmt.Sprintf("The workspace holds %d other %s.", others, noun),
+		},
+		OtherMembers: others,
 	}
 }
 

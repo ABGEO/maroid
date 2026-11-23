@@ -23,6 +23,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	hubdatabase "github.com/abgeo/maroid/apps/hub/internal/database"
 	"github.com/abgeo/maroid/apps/hub/internal/dex/dextest"
+	"github.com/abgeo/maroid/apps/hub/internal/file"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	providers "github.com/abgeo/maroid/apps/hub/internal/provider"
@@ -43,7 +44,7 @@ CREATE TABLE public.workspace_test_notes (
     id           UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     workspace_id UUID NOT NULL
         DEFAULT NULLIF(current_setting('app.workspace_id', true), '')::uuid
-        REFERENCES public.workspaces (id),
+        REFERENCES public.workspaces (id) ON DELETE CASCADE,
     body         TEXT NOT NULL
 );
 
@@ -76,6 +77,7 @@ type person struct {
 // with Ana, Beka, and Gio as its members. Nino is a member of nothing.
 type workspaceFixture struct {
 	router   chi.Router
+	instance *testdb.Instance
 	database *sqlx.DB
 	provider *authtest.Provider
 	ana      person
@@ -93,9 +95,14 @@ type workspaceFixture struct {
 	// notifications holds the Telegram stub, the cipher, and the dispatcher that the
 	// routes of the notification providers reach.
 	notifications *notificationParts
+	// objects is the file store behind the removal of a workspace. It fails and counts
+	// every call.
+	objects *refusingObjects
 }
 
-func workspaceUnderTest(t *testing.T) *workspaceFixture {
+// workspaceDatabase starts the database with the migrations of the hub and the table
+// of the notes.
+func workspaceDatabase(t *testing.T) *testdb.Instance {
 	t.Helper()
 
 	instance := testdb.Start(t)
@@ -108,13 +115,22 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 	_, err = instance.DB.ExecContext(t.Context(), scopedNotes)
 	require.NoError(t, err)
 
+	return instance
+}
+
+func workspaceUnderTest(t *testing.T) *workspaceFixture {
+	t.Helper()
+
+	instance := workspaceDatabase(t)
 	provider := authtest.StartProvider(t)
 	authSvc := auth.NewService(instance.DB)
 
 	runs, writes := &atomic.Int32{}, &atomic.Int32{}
 	idp := dextest.New(dextest.Connector("mock", "mockCallback", "Mock", `{}`))
 	notifications := newNotificationParts(t, instance.DB)
+	objects := &refusingObjects{}
 	fixture := &workspaceFixture{
+		objects: objects,
 		router: workspaceRouter(
 			t,
 			instance,
@@ -124,9 +140,11 @@ func workspaceUnderTest(t *testing.T) *workspaceFixture {
 			writes,
 			idp,
 			notifications,
+			objects,
 		),
 		notifications: notifications,
 		idp:           idp,
+		instance:      instance,
 		database:      instance.DB,
 		provider:      provider,
 		probeRuns:     runs,
@@ -198,6 +216,7 @@ func workspaceRouter(
 	probeWrites *atomic.Int32,
 	idp *dextest.Memory,
 	notifications *notificationParts,
+	objects file.ObjectStore,
 ) *chi.Mux {
 	t.Helper()
 
@@ -233,6 +252,9 @@ func workspaceRouter(
 		access.Authorizer,
 		manager,
 		handler.WorkspacePlugins{Enablements: enablements, Catalog: loadedCatalog(t)},
+		workspace.NewRemover(logger, instance.DB, file.NewStore(
+			instance.DB, objects, registry.NewFileKindRegistry(), 15*time.Minute,
+		)),
 	).Register(router)
 
 	handler.NewNotification(
@@ -374,6 +396,29 @@ func (f *workspaceFixture) call(
 ) *httptest.ResponseRecorder {
 	t.Helper()
 
+	return f.serve(f.request(t, who, method, path, body, ifMatch))
+}
+
+// serve sends the request through the router. It asserts nothing, so a goroutine of
+// the test can call it.
+func (f *workspaceFixture) serve(request *http.Request) *httptest.ResponseRecorder {
+	recorder := httptest.NewRecorder()
+	f.router.ServeHTTP(recorder, request)
+
+	return recorder
+}
+
+// request builds one request as the person, with an optional body and If-Match.
+func (f *workspaceFixture) request(
+	t *testing.T,
+	who person,
+	method string,
+	path string,
+	body any,
+	ifMatch string,
+) *http.Request {
+	t.Helper()
+
 	var reader *bytes.Reader
 
 	if body != nil {
@@ -400,10 +445,7 @@ func (f *workspaceFixture) call(
 		request.Header.Set(precondition.IfMatchHeader, ifMatch)
 	}
 
-	recorder := httptest.NewRecorder()
-	f.router.ServeHTTP(recorder, request)
-
-	return recorder
+	return request
 }
 
 func (f *workspaceFixture) create(t *testing.T, who person, name string) string {

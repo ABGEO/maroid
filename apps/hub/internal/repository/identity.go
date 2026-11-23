@@ -347,6 +347,17 @@ func (r *Identity) refuseDetach(
 }
 
 // isUniqueViolation reports whether err is the unique violation of the constraint.
+func isForeignKeyViolation(err error, constraint string) bool {
+	const foreignKeyViolation = "23503"
+
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return false
+	}
+
+	return pgErr.Code == foreignKeyViolation && pgErr.ConstraintName == constraint
+}
+
 func isUniqueViolation(err error, constraint string) bool {
 	const uniqueViolation = "23505"
 

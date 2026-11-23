@@ -16,6 +16,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/filestore"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/outbox"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -267,6 +268,47 @@ func (s *Store) Delete(ctx context.Context, tx *sqlx.Tx, pluginID string, ids ..
 	}
 
 	return nil
+}
+
+// PurgeWorkspace queues a purge of every file of the acting workspace through the
+// transaction of the removal, and drops every other task of a file that the workspace
+// owns. Each purge waits until no upload address and no leased task can still write an
+// object of the file. It answers the count of the purges.
+func (s *Store) PurgeWorkspace(ctx context.Context, tx *sqlx.Tx) (int, error) {
+	files, err := repository.NewFile(tx).ListOfWorkspace(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("reading the files of the workspace: %w", err)
+	}
+
+	tasks := repository.NewOutboxTask(tx)
+	owner := model.OutboxOwner{
+		Scope: model.OutboxScopeWorkspace,
+		ID:    pluginapi.ActingWorkspaceFromContext(ctx),
+	}
+
+	if err = tasks.Drop(
+		ctx,
+		owner,
+		TaskProcess,
+		TaskCheck,
+		TaskDiscardUpload,
+		TaskExpire,
+	); err != nil {
+		return 0, fmt.Errorf("dropping the tasks of the files of the workspace: %w", err)
+	}
+
+	delay := max(s.uploadTTL+checkMargin, outbox.LeaseLength)
+
+	drafts := make([]model.OutboxDraft, 0, len(files))
+	for i := range files {
+		drafts = append(drafts, taskOf(&files[i], TaskPurge, delay))
+	}
+
+	if err = tasks.Enqueue(ctx, drafts...); err != nil {
+		return 0, fmt.Errorf("queuing the purges of the files of the workspace: %w", err)
+	}
+
+	return len(files), nil
 }
 
 // view answers the facts of the file, with a read address for each variant when it is

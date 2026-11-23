@@ -18,11 +18,13 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
+// LeaseLength holds a task away from another worker while one runs it. It passes the
+// longest processing of an image many times over. A task can still act until its
+// lease ends.
+const LeaseLength = 5 * time.Minute
+
 const (
 	workerName = "outbox"
-	// leaseLength holds a task away from another worker while one runs it. It passes
-	// the longest processing of an image many times over.
-	leaseLength = 5 * time.Minute
 	// defaultTaskTimeout ends a task before its lease lapses, so no other worker takes
 	// it while it still runs.
 	defaultTaskTimeout = 4 * time.Minute
@@ -165,7 +167,7 @@ func (w *Worker) cycle(ctx context.Context) (bool, error) {
 		var err error
 
 		if leased, err = repository.NewOutboxTask(tx).
-			Lease(ctx, w.concurrency, leaseLength); err != nil {
+			Lease(ctx, w.concurrency, LeaseLength); err != nil {
 			return fmt.Errorf("leasing: %w", err)
 		}
 

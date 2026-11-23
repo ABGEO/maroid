@@ -22,6 +22,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/authz"
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/dex/dextest"
+	"github.com/abgeo/maroid/apps/hub/internal/file"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/idempotency"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
@@ -94,8 +95,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 	workspaces := workspace.NewManager(instance.DB)
 	access, enablements := probeAccess(t, instance.DB)
 
-	router := routerOf(t, cfg, logger)
-	held := newGate()
+	router, held := routerOf(t, cfg, logger), newGate()
 
 	handler.RegisterHandlers(
 		router,
@@ -117,6 +117,7 @@ func hubUnderTest(t *testing.T) *hubFixture {
 			access.Authorizer,
 			workspaces,
 			handler.WorkspacePlugins{Enablements: enablements, Catalog: emptyCatalog()},
+			removerOver(logger, instance.DB),
 		),
 		handler.NewMCP(
 			cfg, logger, oidcSvc, resolver, registry.NewMCPToolRegistry(),
@@ -447,4 +448,12 @@ func createRecord(database *sqlx.DB) http.HandlerFunc {
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(map[string]int{"id": id})
 	}
+}
+
+// removerOver answers the removal of a workspace over the database, with a file store
+// that no test reaches.
+func removerOver(logger *slog.Logger, database *sqlx.DB) *workspace.Remover {
+	files := file.NewStore(database, nil, registry.NewFileKindRegistry(), time.Minute)
+
+	return workspace.NewRemover(logger, database, files)
 }

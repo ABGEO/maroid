@@ -34,6 +34,7 @@ path "transit/encrypt/maroid-user-*" { capabilities = ["update"] }
 path "transit/decrypt/maroid-user-*" { capabilities = ["update"] }
 path "transit/encrypt/maroid-workspace-*" { capabilities = ["update"] }
 path "transit/decrypt/maroid-workspace-*" { capabilities = ["update"] }
+path "transit/keys/maroid-workspace-*" { capabilities = ["read", "delete"] }
 `
 
 // Server is a running OpenBao that one test owns.
@@ -111,12 +112,20 @@ func StartIn(t *testing.T, namespace string) *Server {
 	return &Server{Root: root}
 }
 
-// CreateKeys creates one transit key for each name, as the owner does.
+// CreateKeys creates one transit key for each name, as the owner does, and allows its
+// deletion.
 func (s *Server) CreateKeys(t *testing.T, keys ...secret.Key) {
 	t.Helper()
 
 	for _, key := range keys {
-		_, err := s.Root.Logical().WriteWithContext(t.Context(), "transit/keys/"+string(key), nil)
+		path := TransitMount + "/keys/" + string(key)
+
+		_, err := s.Root.Logical().WriteWithContext(t.Context(), path, nil)
+		require.NoError(t, err)
+
+		_, err = s.Root.Logical().WriteWithContext(
+			t.Context(), path+"/config", map[string]any{"deletion_allowed": true},
+		)
 		require.NoError(t, err)
 	}
 }

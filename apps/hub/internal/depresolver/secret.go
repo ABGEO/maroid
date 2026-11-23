@@ -38,6 +38,16 @@ func (c *Container) OpenBaoSession() (*openbao.Session, error) {
 
 // SecretCipher initializes and returns the cipher that protects a secret.
 func (c *Container) SecretCipher() (secret.Cipher, error) {
+	return c.transit()
+}
+
+// SecretKeyDestroyer initializes and returns the destruction of a key, over the
+// client of the cipher.
+func (c *Container) SecretKeyDestroyer() (secret.KeyDestroyer, error) {
+	return c.transit()
+}
+
+func (c *Container) transit() (*secret.Transit, error) {
 	c.secretCipher.mu.Lock()
 	defer c.secretCipher.mu.Unlock()
 

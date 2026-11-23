@@ -6,6 +6,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/apps/hub/internal/file"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
 	"github.com/abgeo/maroid/apps/hub/internal/workspace"
 )
@@ -35,6 +36,38 @@ func (c *Container) WorkspaceService() (*workspace.Manager, error) {
 	}
 
 	return c.workspaceService.instance, nil
+}
+
+// WorkspaceRemover initializes and returns the removal of a workspace.
+func (c *Container) WorkspaceRemover() (*workspace.Remover, error) {
+	c.workspaceRemover.mu.Lock()
+	defer c.workspaceRemover.mu.Unlock()
+
+	var err error
+
+	c.workspaceRemover.once.Do(func() {
+		var dbInstance *sqlx.DB
+
+		if dbInstance, err = c.Database(); err != nil {
+			return
+		}
+
+		var files *file.Store
+
+		if files, err = c.Files(); err != nil {
+			return
+		}
+
+		c.workspaceRemover.instance = workspace.NewRemover(c.Logger(), dbInstance, files)
+	})
+
+	if err != nil {
+		c.workspaceRemover.once = sync.Once{}
+
+		return nil, fmt.Errorf("initializing the workspace remover: %w", err)
+	}
+
+	return c.workspaceRemover.instance, nil
 }
 
 // ChatSelection initializes and returns the selection of the workspace of each chat.
