@@ -29,7 +29,7 @@ WITH settings_row AS (
     INSERT INTO checkins (name, local_times) VALUES ('Morning', '{09:00}') RETURNING id
 ), checkin_question AS (
     INSERT INTO checkin_questions (checkin_id, question_id, position)
-    SELECT checkin.id, question.id, 1 FROM checkin, question RETURNING id
+    SELECT checkin.id, question.id, 1 FROM checkin, question RETURNING checkin_id
 ), round AS (
     INSERT INTO rounds (checkin_id, checkin_name, occurrence_at)
     SELECT id, 'Morning', '2026-11-24T05:00:00Z' FROM checkin RETURNING id
@@ -49,7 +49,7 @@ SELECT (SELECT id FROM question) AS question_id,
        (SELECT id FROM prompt) AS prompt_id,
        (SELECT id FROM checkin) AS checkin_id,
        (SELECT id FROM settings_row) IS NOT NULL
-           AND (SELECT id FROM checkin_question) IS NOT NULL
+           AND (SELECT checkin_id FROM checkin_question) IS NOT NULL
            AND (SELECT id FROM value_row) IS NOT NULL AS complete;`
 
 // ninaFixture names the rows that ninaRows gives Nina.

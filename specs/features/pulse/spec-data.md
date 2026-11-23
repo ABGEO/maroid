@@ -113,15 +113,14 @@ CREATE TABLE checkins
 
 CREATE TABLE checkin_questions
 (
-    id          UUID        NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     <scope>,
     checkin_id  UUID        NOT NULL,
     question_id UUID        NOT NULL,
     position    SMALLINT    NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, checkin_id, question_id),
     CONSTRAINT checkin_questions_position_key UNIQUE (user_id, checkin_id, position),
-    CONSTRAINT checkin_questions_question_key UNIQUE (user_id, checkin_id, question_id),
     CONSTRAINT checkin_questions_checkin_fkey FOREIGN KEY (user_id, checkin_id)
         REFERENCES checkins (user_id, id) ON DELETE CASCADE,
     CONSTRAINT checkin_questions_question_fkey FOREIGN KEY (user_id, question_id)
