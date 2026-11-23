@@ -4,7 +4,7 @@ title: The secrets that a plugin writes
 type: spec
 status: approved
 created: 2026-10-12
-updated: 2026-10-12
+updated: 2026-11-24
 approved_by: Temuri
 approved_on: 2026-10-12
 constrained_by: [PLG, ARC, OWN, DAT, CFG, EXT, LOG, JOB, PKG, GO, BLD]
@@ -273,9 +273,9 @@ cannot give.
 `secret.UserKey` of the acting user or `secret.WorkspaceKey` of the acting workspace.
 **Rationale:** `PSET-DD-004` already gives one transit key to each owner. An
 administrator who destroys one key makes the settings and the plugin secrets of that
-owner unreadable with one action. The hub creates no key.
-**Alternatives:** A key for each plugin secret. It needs a create permission at
-OpenBao that `PSET-DD-004` refuses to the hub. The key value engine of OpenBao. A plugin
+owner unreadable with one action. The hub creates each key under `ADR-0028`.
+**Alternatives:** A key for each plugin secret. It needs a key name outside the two
+prefixes that `ADR-0028` limits the hub to. The key value engine of OpenBao. A plugin
 secret then spans two stores, and the policy of `OWN-006` no longer isolates it.
 
 ### `PSECRET-DD-004`

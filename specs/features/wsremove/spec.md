@@ -334,16 +334,11 @@ the plugin, so no prefix holds every file of a workspace.
 **Realizes:** `WSREMOVE-FR-008`
 **Decision:** The handler of `secret_key.destroy` destroys the transit key
 `maroid-workspace-<id>`. The policy of
-Maroid gains `path "transit/keys/maroid-workspace-*" { capabilities = ["read",
-"delete"] }`. The person who creates a workspace key sets `deletion_allowed=true` on it,
-as they set every other property of the key under `PSET-DD-004`.
+Maroid grants `read` and `delete` on `transit/keys/maroid-workspace-*`. The hub sets
+`deletion_allowed=true` on each key that it creates or keeps under `ADR-0028`.
 **Rationale:** The rows of the secrets go with the cascade. A backup of the database
-still holds their ciphertext, and the destruction of the key makes it unreadable. A
-policy that also lets Maroid change the configuration needs `update` under the same
-prefix, because the glob outranks a path with `+`. That `update` also creates a key,
-which `PSET-DD-004` denies to the hub.
+still holds their ciphertext, and the destruction of the key makes it unreadable.
 **Alternatives:** Keep the key. A backup and the key still give every secret back.
-`update` on the prefix. The hub then creates keys.
 
 ### `WSREMOVE-DD-005`
 
@@ -375,7 +370,7 @@ lease and the retry stay in one place.
 | 7   | Write `WSREMOVE-SC-001` to `WSREMOVE-SC-012`, `WSREMOVE-SC-017`, `WSREMOVE-SC-022`, `WSREMOVE-SC-023`, then `Remover`, the route, and `api.yaml`.    | `WSREMOVE-FR-001` to `WSREMOVE-FR-006`, `WSREMOVE-FR-009`, `WSREMOVE-NFR-001` | [x]  |
 | 8   | Write `WSREMOVE-SC-015`, `WSREMOVE-SC-016`, `WSREMOVE-SC-018`, then `Transit.DestroyKey`, `DestroyHandler`, the policy of `testbao`, and the wiring. | `WSREMOVE-FR-008`, `WSREMOVE-FR-010`, `WSREMOVE-NFR-003`                      | [x]  |
 | 9   | Build the deck: the client, the permission, the dialog, the panel, and the list of the administrator. Run `WSREMOVE-SC-019` to `WSREMOVE-SC-021`.    | `WSREMOVE-FR-011` to `WSREMOVE-FR-014`                                        | [ ]  |
-| 10  | Before a release, set `deletion_allowed=true` on every workspace key of the instance, and add the policy of `WSREMOVE-DD-004`.                       | `WSREMOVE-FR-008`                                                             | [ ]  |
+| 10  | Before a release, apply the policy of section 4.3 of `OWNKEY`. Its backfill sets `deletion_allowed=true` on every workspace key of the instance.     | `WSREMOVE-FR-008`                                                             | [ ]  |
 
 ## Retired identifiers
 
