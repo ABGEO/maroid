@@ -11,6 +11,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
+	"github.com/abgeo/maroid/apps/hub/internal/secret"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
@@ -55,8 +56,9 @@ func NewManager(db *sqlx.DB) *Manager {
 	return &Manager{db: db}
 }
 
-// Create writes the workspace and the membership of the acting user in one
-// transaction, so no workspace exists without a member.
+// Create writes the workspace, the membership of the acting user, and the task that
+// creates its protection key in one transaction, so no workspace exists without a
+// member.
 func (m *Manager) Create(ctx context.Context, name string) (*model.Workspace, error) {
 	var created *model.Workspace
 
@@ -73,6 +75,13 @@ func (m *Manager) Create(ctx context.Context, name string) (*model.Workspace, er
 			pluginapi.RoleManager,
 		); err != nil {
 			return fmt.Errorf("adding the first member: %w", err)
+		}
+
+		if err = repository.NewOutboxTask(tx).Enqueue(
+			ctx,
+			secret.CreateTask(secret.Owner{Kind: secret.OwnerWorkspace, ID: workspace.ID}),
+		); err != nil {
+			return fmt.Errorf("queuing the creation of the key: %w", err)
 		}
 
 		created = workspace

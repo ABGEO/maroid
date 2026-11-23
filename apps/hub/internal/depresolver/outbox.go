@@ -11,8 +11,8 @@ import (
 )
 
 // OutboxWorker initializes and returns the worker that runs the tasks of the outbox.
-// The hub registers one handler for each type of its own: the tasks of the files and
-// the destruction of a key.
+// The hub registers one handler for each type of its own: the tasks of the files, and
+// the creation and the destruction of a key.
 func (c *Container) OutboxWorker() (*outbox.Worker, error) {
 	c.outboxWorker.mu.Lock()
 	defer c.outboxWorker.mu.Unlock()
@@ -34,8 +34,13 @@ func (c *Container) OutboxWorker() (*outbox.Worker, error) {
 			return
 		}
 
-		keys := secret.NewDestroyHandler(lazyKeyDestroyer{resolve: c.SecretKeyDestroyer})
-		if err = handlers.Register(keys); err != nil {
+		keys := lazyKeys{resolve: c.SecretKeys}
+
+		err = handlers.Register(
+			secret.NewCreateHandler(c.Logger(), db, keys),
+			secret.NewDestroyHandler(keys),
+		)
+		if err != nil {
 			return
 		}
 
@@ -51,14 +56,27 @@ func (c *Container) OutboxWorker() (*outbox.Worker, error) {
 	return c.outboxWorker.instance, nil
 }
 
-// lazyKeyDestroyer reaches OpenBao at the first destruction, so a store that is down
-// when the worker starts fails the tasks of the keys alone, and they retry. The tasks
-// of the files run as before.
-type lazyKeyDestroyer struct {
-	resolve func() (secret.KeyDestroyer, error)
+// lazyKeys reaches OpenBao at the first task of a key, so a store that is down when the
+// worker starts fails the tasks of the keys alone, and they retry. The tasks of the
+// files run as before.
+type lazyKeys struct {
+	resolve func() (secret.Keys, error)
 }
 
-func (l lazyKeyDestroyer) DestroyKey(ctx context.Context, key secret.Key) error {
+func (l lazyKeys) CreateKey(ctx context.Context, key secret.Key) error {
+	keys, err := l.resolve()
+	if err != nil {
+		return fmt.Errorf("reaching the secret store: %w", err)
+	}
+
+	if err = keys.CreateKey(ctx, key); err != nil {
+		return fmt.Errorf("creating through the secret store: %w", err)
+	}
+
+	return nil
+}
+
+func (l lazyKeys) DestroyKey(ctx context.Context, key secret.Key) error {
 	keys, err := l.resolve()
 	if err != nil {
 		return fmt.Errorf("reaching the secret store: %w", err)

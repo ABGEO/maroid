@@ -68,7 +68,7 @@ type Resolver interface {
 	ProviderService() (*provider.Manager, error)
 	LocalAccounts() (*provider.Accounts, error)
 	SecretCipher() (secret.Cipher, error)
-	SecretKeyDestroyer() (secret.KeyDestroyer, error)
+	SecretKeys() (secret.Keys, error)
 	HealthService() (*healthcheck.Service, error)
 	SettingsRegistry() *registry.SettingsRegistry
 	SettingsService() (settings.Service, error)

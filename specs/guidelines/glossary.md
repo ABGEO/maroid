@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-11-23
+updated: 2026-11-24
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -79,6 +79,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-secret-field`               | secret field               | A field whose value Maroid returns to nobody after the user stores it.                                                                                                                                                                                 |
 | `GLO-secret`                     | secret                     | The value of a secret field.                                                                                                                                                                                                                           |
 | `GLO-protection`                 | protection                 | The means that makes a secret unreadable to a reader of the database.                                                                                                                                                                                  |
+| `GLO-protection-key`             | protection key             | The key in the secret store that gives the protection to every secret of one user or one workspace. `ADR-0028` lets the hub create it.                                                                                                                 |
 | `GLO-plugin-secret`              | plugin secret              | A value that a plugin writes and reads under a name, in the scope of a user or of a workspace. No person reads it.                                                                                                                                     |
 | `GLO-expiry`                     | expiry                     | The time after which Maroid reports a plugin secret as absent.                                                                                                                                                                                         |
 | `GLO-parking-service`            | parking service            | The external service of the Tbilisi municipality that holds the parking accounts.                                                                                                                                                                      |

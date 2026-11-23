@@ -2,6 +2,7 @@ package secret_test
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"testing"
@@ -15,6 +16,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/config"
 	"github.com/abgeo/maroid/apps/hub/internal/openbao"
 	"github.com/abgeo/maroid/apps/hub/internal/secret"
+	"github.com/abgeo/maroid/apps/hub/internal/testbao"
 )
 
 const (
@@ -27,8 +29,8 @@ const (
 	workspaceB   = "44444444-4444-4444-4444-444444444444"
 )
 
-// policy holds the capabilities that PSET-DD-004 gives the hub. It grants no create,
-// because the owner creates every key by hand.
+// policy holds the capabilities of encrypt and decrypt that PSET-DD-004 gives the hub.
+// prepare creates each key with the root token.
 const policy = `
 path "transit/encrypt/maroid-user-*" { capabilities = ["update"] }
 path "transit/decrypt/maroid-user-*" { capabilities = ["update"] }
@@ -98,7 +100,8 @@ func rootClient(t *testing.T, endpoint string) *api.Client {
 	return client
 }
 
-// prepare does the work that the owner does by hand. See PSET-DD-004.
+// prepare mounts the transit engine, creates each key with the root token, and creates
+// the role that the hub logs in with.
 func prepare(t *testing.T, root *api.Client) {
 	t.Helper()
 
@@ -226,4 +229,29 @@ func TestASecretReadsAfterTheOwnerReplacedTheProtection(t *testing.T) {
 	plaintext, err := cipher.Decrypt(t.Context(), secret.UserKey(userA), ciphertext)
 	require.NoError(t, err)
 	require.Equal(t, "hunter2", plaintext)
+}
+
+// OWNKEY-SC-007: Two creations of one key both succeed, and the key holds one version
+// that allows its destruction.
+func TestASecondCreationOfAKeyChangesNothing(t *testing.T) {
+	t.Parallel()
+
+	if testing.Short() {
+		t.Skip("skipping the integration test, it needs Docker")
+	}
+
+	server := testbao.Start(t)
+	cipher := server.Cipher(t)
+	key := secret.WorkspaceKey(workspaceA)
+
+	require.NoError(t, cipher.CreateKey(t.Context(), key))
+	require.NoError(t, cipher.CreateKey(t.Context(), key))
+
+	held, err := server.Root.Logical().
+		ReadWithContext(t.Context(), testbao.TransitMount+"/keys/"+string(key))
+	require.NoError(t, err)
+	require.NotNil(t, held)
+
+	require.Equal(t, json.Number("1"), held.Data["latest_version"])
+	require.Equal(t, true, held.Data["deletion_allowed"])
 }

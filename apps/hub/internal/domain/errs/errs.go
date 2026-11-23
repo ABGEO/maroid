@@ -123,6 +123,9 @@ var (
 	ErrSettingsSchemaNotFound = errors.New("settings schema: not found")
 	// ErrSecretKeyMissing indicates a task to destroy a key that names no key.
 	ErrSecretKeyMissing = errors.New("secret key: the task names no key")
+	// ErrSecretKeyOwnerInvalid indicates a task to create a key that names no known
+	// kind of owner, or an identifier that is no UUID.
+	ErrSecretKeyOwnerInvalid = errors.New("secret key: the task names no valid owner")
 	// ErrProtectionUnavailable indicates that the service that protects a secret is
 	// unreachable, or that it answered with no usable data.
 	ErrProtectionUnavailable = errors.New("protection: unavailable")

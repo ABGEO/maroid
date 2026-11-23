@@ -52,7 +52,7 @@ linters:
         - idempotency.Store
         - auth.TokenVerifier
         - secret.Cipher
-        - secret.KeyDestroyer
+        - secret.Keys
         - settings.Service
         - repository.WorkspaceMemberRepository
         - authz.Authorizer

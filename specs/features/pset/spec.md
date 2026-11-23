@@ -4,7 +4,7 @@ title: The settings of a plugin
 type: spec
 status: approved
 created: 2026-09-14
-updated: 2026-10-08
+updated: 2026-11-24
 approved_by: Temuri
 approved_on: 2026-10-05
 constrained_by:
@@ -502,13 +502,15 @@ one workspace, and one named key protects one user. The name is the constant
 `secret.WorkspaceKeyPrefix` followed by the identifier of the workspace, or
 `secret.UserKeyPrefix` followed by the identifier of the user record. `settings.Manager`
 chooses the key from the scope of the field and the `Cipher` takes it, so the cipher
-holds no rule about a workspace or a user. An administrator creates each key. The hub
-calls encrypt and decrypt, and it creates no key.
+holds no rule about a workspace or a user. The hub calls encrypt and decrypt. It
+creates each key through the outbox under `ADR-0028`, and the paths of encrypt and
+decrypt create none.
 **Rationale:** Transit returns `vault:v<n>:<payload>`, and the version prefix selects
 the key version on decrypt. A rotation therefore needs no column of ours, and
 `PSET-FR-017` holds with no work. A key for each workspace and each user makes the
-destruction of one key the destruction of the secrets of one household or one person. A hub that creates no key needs no create
-permission, so a hub that an attacker reaches cannot mint a key.
+destruction of one key the destruction of the secrets of one household or one person.
+The policy limits the creation to the two prefixes, so a hub that an attacker reaches
+mints no other key.
 **Alternatives:** One key with `derived: true` and the identifier as the context.
 One key cannot be destroyed for one workspace or one person. Store the secret in KV v2. One settings
 record then spans two stores with no transaction. A data key for each record. A
