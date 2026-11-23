@@ -20,10 +20,10 @@ CREATE TABLE question_values
     longitude     DOUBLE PRECISION CHECK (longitude BETWEEN -180 AND 180),
     created_at    TIMESTAMPTZ      NOT NULL DEFAULT now(),
     updated_at    TIMESTAMPTZ      NOT NULL DEFAULT now(),
-    -- PULSE-FR-025: A question with a value is never deleted.
+    -- A question with a value is never deleted. Archive it instead.
     CONSTRAINT question_values_question_fkey FOREIGN KEY (user_id, question_id)
         REFERENCES questions (user_id, id) ON DELETE RESTRICT,
-    -- PULSE-FR-026: A choice that a value records is never removed.
+    -- A choice that a value records is never removed, so the series keeps its labels.
     CONSTRAINT question_values_choice_fkey FOREIGN KEY (user_id, choice_id)
         REFERENCES choices (user_id, id) ON DELETE RESTRICT,
     -- PULSE-INV-002: One question of one round holds at most one value.
