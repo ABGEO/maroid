@@ -3,8 +3,8 @@ module github.com/abgeo/maroid/plugins/telasi
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261118181013-f75ac86f9c06
-	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261118181013-f75ac86f9c06
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261123170333-39cdcb6cfdaf
+	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261123170333-39cdcb6cfdaf
 	github.com/jmoiron/sqlx v1.4.0
 	resty.dev/v3 v3.0.0-beta.3
 )

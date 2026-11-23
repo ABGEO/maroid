@@ -3,10 +3,10 @@ module github.com/abgeo/maroid/plugins/jasmine
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261118181013-f75ac86f9c06
-	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261118181013-f75ac86f9c06
-	github.com/abgeo/maroid/libs/rest v0.0.0-20261118181013-f75ac86f9c06
-	github.com/abgeo/maroid/libs/testdb v0.0.0-20261118181013-f75ac86f9c06
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261123170333-39cdcb6cfdaf
+	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261123170333-39cdcb6cfdaf
+	github.com/abgeo/maroid/libs/rest v0.0.0-20261123170333-39cdcb6cfdaf
+	github.com/abgeo/maroid/libs/testdb v0.0.0-20261123170333-39cdcb6cfdaf
 	github.com/go-chi/chi/v5 v5.3.0
 	github.com/go-chi/render v1.0.3
 	github.com/go-playground/validator/v10 v10.30.6

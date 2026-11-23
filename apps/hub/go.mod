@@ -3,10 +3,10 @@ module github.com/abgeo/maroid/apps/hub
 go 1.26.7
 
 require (
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261118181013-f75ac86f9c06
-	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261118181013-f75ac86f9c06
-	github.com/abgeo/maroid/libs/rest v0.0.0-20261118181013-f75ac86f9c06
-	github.com/abgeo/maroid/libs/testdb v0.0.0-20261118181013-f75ac86f9c06
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261123170333-39cdcb6cfdaf
+	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261123170333-39cdcb6cfdaf
+	github.com/abgeo/maroid/libs/rest v0.0.0-20261123170333-39cdcb6cfdaf
+	github.com/abgeo/maroid/libs/testdb v0.0.0-20261123170333-39cdcb6cfdaf
 	github.com/aws/aws-sdk-go-v2 v1.47.5
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.13
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.6
