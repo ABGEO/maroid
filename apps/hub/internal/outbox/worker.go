@@ -291,11 +291,13 @@ func (w *Worker) inTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	return nil
 }
 
-// retryDelay doubles from 2 seconds with each attempt, up to 5 minutes.
+// retryDelay answers 2 seconds after the first attempt, and twice as long after each
+// later one, up to 5 minutes. The lease counts an attempt before the task runs, so the
+// first failure holds 1.
 func retryDelay(attempts int) time.Duration {
 	delay := retryBase
 
-	for range attempts {
+	for range attempts - 1 {
 		delay *= 2
 		if delay >= retryLimit {
 			return retryLimit
