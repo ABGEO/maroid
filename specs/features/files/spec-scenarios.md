@@ -4,7 +4,7 @@ title: The scenarios of the files of the hub and of a plugin
 type: spec
 status: approved
 created: 2026-11-18
-updated: 2026-11-18
+updated: 2026-11-23
 approved_by: Temuri
 approved_on: 2026-11-18
 constrained_by: [TST, OWN, TRC]
@@ -353,7 +353,8 @@ its reason for the second.
 **Verifies:** `FILES-NFR-001`
 **Layer:** integration
 
-**Given** the worker runs with `concurrency` 2 and `poll_interval` 2 s.
+**Given** the `outbox` worker runs with `outbox.concurrency` 2 and `outbox.poll_interval`
+2 s.
 **When** editor A uploads `phone.heic` 20 times, one after the other, and the test
 measures from each completion to the state `ready`.
 **Then** the 95th percentile is less than 30 seconds.

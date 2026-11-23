@@ -4,7 +4,7 @@ title: The design decisions of the files of the hub and of a plugin
 type: spec
 status: approved
 created: 2026-11-18
-updated: 2026-11-18
+updated: 2026-11-23
 approved_by: Temuri
 approved_on: 2026-11-18
 constrained_by: [ARC, DAT, OWN, SEC, CFG, UI]
@@ -66,11 +66,10 @@ holds 2 GB until the worker runs.
 ### `FILES-DD-005`
 
 **Realizes:** `FILES-FR-009`, `FILES-NFR-001`, `FILES-NFR-005`
-**Decision:** An outbox. Each change of a file and the next task of that file commit
-in one transaction. The `files` worker of `maroid worker` leases due tasks every
-`files.poll_interval` with `FOR UPDATE SKIP LOCKED`, and leases again at once when a
-lease filled every slot of `files.concurrency`. It sets `locked_until` to 5 minutes
-ahead, and gives each task 4 minutes. Each step of a task writes in its own transaction
+**Decision:** The outbox of `JOB-009`. Each change of a file and the next task of that
+file commit in one transaction. The `outbox` worker leases again at once when a lease
+filled every slot of `outbox.concurrency`. It sets `locked_until` to 5 minutes ahead,
+and gives each task 4 minutes. Each step of a task writes in its own transaction
 that `database.WithScopeTx` scopes to the owner of the task, and the task goes away in
 a later transaction. A task therefore runs at least once, and every task is idempotent.
 **Rationale:** A task cannot exist without its change, and a change cannot lose its
