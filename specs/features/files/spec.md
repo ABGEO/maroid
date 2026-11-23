@@ -119,7 +119,7 @@ scenarios.
 | `apps/hub/internal/plugin/loader/loader.go`                                              | change         | Adds `FileKindRegistrar` to the list, after `PermissionRegistrar`                                                   |
 | `apps/hub/internal/filestore/{doc,client,presign}.go`                                    | create         | `Client`, `New`, `Head`, `ReadRange`, `Read`, `Write`, `Delete`, `DeletePrefix`, `Ping`, `PresignPut`, `PresignGet` |
 | `apps/hub/internal/file/{doc,store,key}.go`                                              | create         | `Store`, `NewStore`: `Start`, `Complete`, `Get`, `Claim`, `Delete`. `objectKey`                                     |
-| `apps/hub/internal/file/task.go`                                                         | create         | One handler of the outbox for each type of section 4.3                                                              |
+| `apps/hub/internal/file/{handlers,task}.go`                                              | create         | `Handlers`, `NewHandlers`, `All`: one handler of the outbox for each type of section 4.3                            |
 | `apps/hub/internal/file/{image,orient,sniff}.go`                                         | create         | `variantsOf`, `deriveVariants`, `orient`, `sniff`. `FILES-DD-007`, `FILES-DD-008`                                   |
 | `apps/hub/internal/plugin/host/file.go`                                                  | create         | `FileStore` interface, `boundFiles`                                                                                 |
 | `apps/hub/internal/plugin/host/host.go`                                                  | change         | `Dependencies.Files`, the `files` field, `Host.Files`                                                               |
@@ -388,7 +388,7 @@ No error, no log line, and no `last_error` holds an address or a key (`LOG-008`)
 | 15  | Add RustFS to `docker-compose.yaml` with the bucket, its CORS rule for the deck, and the policy of the key. | `FILES-INV-001`                                 | [x]  |
 | 16  | Rebuild and load every plugin (`BLD-004`).                                                                  | `FILES-FR-001`                                  | [x]  |
 | 17  | Run the manual scenarios against the running hub.                                                           | `FILES-SC-009`, `-032` to `-034`, `-040`        | [x]  |
-| 18  | Move the tasks of the files to the outbox of `ADR-0027`. Run every scenario of this feature.                | `JOB-009`, `JOB-010`                            | [ ]  |
+| 18  | Move the tasks of the files to the outbox of `ADR-0027`. Run every scenario of this feature.                | `JOB-009`, `JOB-010`                            | [x]  |
 
 ## 8. Out of scope for this specification
 
