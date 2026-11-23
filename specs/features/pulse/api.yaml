@@ -81,6 +81,17 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/NotFound"
         "412":
           $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "413":
+          description: >
+            The body passes 64 KiB. The type is `/problems/http/content-too-large`.
+            `PULSE-DD-018`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
         "422":
           $ref: "../../api/components.yaml#/components/responses/Invalid"
 
@@ -163,6 +174,17 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "413":
+          description: >
+            The body passes 64 KiB. The type is `/problems/http/content-too-large`.
+            `PULSE-DD-018`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
         "422":
           $ref: "../../api/components.yaml#/components/responses/Invalid"
 
@@ -233,6 +255,17 @@ paths:
           $ref: "#/components/responses/QuestionConflict"
         "412":
           $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "413":
+          description: >
+            The body passes 64 KiB. The type is `/problems/http/content-too-large`.
+            `PULSE-DD-018`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
         "422":
           $ref: "../../api/components.yaml#/components/responses/Invalid"
     delete:
@@ -328,6 +361,17 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/Forbidden"
         "404":
           $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "413":
+          description: >
+            The body passes 64 KiB. The type is `/problems/http/content-too-large`.
+            `PULSE-DD-018`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
         "422":
           $ref: "../../api/components.yaml#/components/responses/Invalid"
 
@@ -394,6 +438,17 @@ paths:
           $ref: "../../api/components.yaml#/components/responses/NotFound"
         "412":
           $ref: "../../api/components.yaml#/components/responses/PreconditionFailed"
+        "413":
+          description: >
+            The body passes 64 KiB. The type is `/problems/http/content-too-large`.
+            `PULSE-DD-018`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
         "422":
           $ref: "../../api/components.yaml#/components/responses/Invalid"
     delete:

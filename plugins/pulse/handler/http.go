@@ -31,6 +31,8 @@ const (
 
 	// canonicalUUIDLength is the length of a UUID in the form 8-4-4-4-12.
 	canonicalUUIDLength = 36
+
+	bodyMax = 64 << 10
 )
 
 // validatable is a request body that checks its own limits after it decodes.
@@ -41,8 +43,20 @@ type validatable interface {
 // readBody decodes the body into target and checks its limits. It writes the
 // problem and answers false when the body is refused.
 func readBody(w http.ResponseWriter, r *http.Request, target validatable) bool {
-	raw, err := io.ReadAll(r.Body)
-	if err != nil {
+	raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, bodyMax))
+
+	var tooLarge *http.MaxBytesError
+
+	switch {
+	case errors.As(err, &tooLarge):
+		problem.Write(
+			w,
+			r,
+			problem.NewContentTooLarge().WithDetail("The body holds at most 64 KiB."),
+		)
+
+		return false
+	case err != nil:
 		problem.Write(w, r, problem.NewBodyInvalid())
 
 		return false

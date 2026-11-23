@@ -200,6 +200,7 @@ count of yes for a yes or no. A time shows through `formatMoment` with that zone
 
 | Condition                                                      | Behavior                                     | Problem type, under `/problems/dev.maroid.pulse/` |
 | -------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------------- |
+| A body passes 64 KiB                                           | 413, before the body decodes                 | the shared `content-too-large`                    |
 | A body breaks a limit of `api.yaml`                            | 422, one item for each member                | the shared `invalid`                              |
 | A change of the type of a question with a value                | 409                                          | `question-has-values`                             |
 | A delete of a question with a value                            | 409                                          | `question-has-values`                             |
@@ -268,6 +269,17 @@ the entity tag `"0"`, and `PUT /settings` with `If-Match: "0"` creates the row.
 **Rationale:** The page reads and writes one resource, with `If-Match` on every write
 as `RES` asks, and a read writes nothing.
 **Alternatives:** A `POST` to create the row: a second route for one boolean.
+
+### `PULSE-DD-018`
+
+**Realizes:** `PULSE-FR-003`, `PULSE-FR-023`, `PULSE-FR-027`
+**Decision:** The body of a write holds at most 64 KiB. A larger body answers 413
+before it decodes.
+**Rationale:** The largest valid body, a question with 12 choices, holds less than
+2 KiB. The handler reads the whole body to refuse an unknown member, so a body with
+no bound holds the memory of the hub.
+**Alternatives:** One bound in the hub for every plugin: a change of the contract of
+the hub, outside this feature.
 
 ## 7. Build plan
 

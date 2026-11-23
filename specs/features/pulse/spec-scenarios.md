@@ -434,6 +434,15 @@ page or 404 for an `id` of Nina, and each count is 0.
 **When** a statement updates the `question_id` of a value of Nina, then its type.
 **Then** each raises `check_violation`, and the value keeps both.
 
+### `PULSE-SC-041`
+
+**Verifies:** `PULSE-DD-018`
+**Layer:** integration
+
+**When** Nina sends a body of 64 KiB and one byte to `PUT /settings`,
+`POST /questions`, and `POST /checkins`.
+**Then** each answers 413 `content-too-large`, and no row changes.
+
 ## Retired identifiers
 
 This file has no retired identifier.
