@@ -101,10 +101,24 @@
 </script>
 
 <div class="max-w-3xl">
-	<ZoneHeader {host} title="Check-ins" lead="When pulse asks, and which questions, on Telegram." />
+	<ZoneHeader {host} title="Check-ins" lead="When pulse asks, and which questions, on Telegram.">
+		{#snippet actions()}
+			{#if form === null}
+				<button type="button" class="btn btn-primary btn-sm" onclick={() => (form = {})}>
+					Add check-in
+				</button>
+			{/if}
+		{/snippet}
+	</ZoneHeader>
 
 	{#if pulse.enabled === false}
 		<OffPanel {host} />
+	{/if}
+
+	{#if failure}
+		<div role="alert" class="alert alert-error alert-soft mb-4">
+			<span>{failure}</span>
+		</div>
 	{/if}
 
 	{#if form}
@@ -116,16 +130,6 @@
 			onsaved={saved}
 			oncancel={() => (form = null)}
 		/>
-	{:else}
-		<button type="button" class="btn btn-primary btn-sm mb-4" onclick={() => (form = {})}>
-			New check-in
-		</button>
-	{/if}
-
-	{#if failure}
-		<div role="alert" class="alert alert-error alert-soft mb-4">
-			<span>{failure}</span>
-		</div>
 	{/if}
 
 	{#if pager.status === 'loading' && pager.page === null}
@@ -167,7 +171,7 @@
 						disabled={busy}
 						onclick={() => edit(checkin)}
 					>
-						Change
+						Edit
 					</button>
 					<button
 						type="button"

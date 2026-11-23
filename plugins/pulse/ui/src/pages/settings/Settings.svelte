@@ -152,7 +152,7 @@
 						<legend class="fieldset-legend">Until</legend>
 						<input
 							type="date"
-							class="input"
+							class="input input-sm"
 							min={addDays(today(zone), 1)}
 							bind:value={pauseDay}
 							disabled={busy || !settings.enabled}

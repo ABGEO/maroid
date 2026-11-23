@@ -93,10 +93,24 @@
 		{host}
 		title="Questions"
 		lead="What pulse asks. One question can sit in many check-ins."
-	/>
+	>
+		{#snippet actions()}
+			{#if form === null}
+				<button type="button" class="btn btn-primary btn-sm" onclick={() => (form = {})}>
+					Add question
+				</button>
+			{/if}
+		{/snippet}
+	</ZoneHeader>
 
 	{#if pulse.enabled === false}
 		<OffPanel {host} />
+	{/if}
+
+	{#if failure}
+		<div role="alert" class="alert alert-error alert-soft mb-4">
+			<span>{failure}</span>
+		</div>
 	{/if}
 
 	{#if form}
@@ -107,38 +121,19 @@
 			onsaved={saved}
 			oncancel={() => (form = null)}
 		/>
-	{:else}
-		<button type="button" class="btn btn-primary btn-sm mb-4" onclick={() => (form = {})}>
-			New question
-		</button>
 	{/if}
 
-	<div role="tablist" class="tabs tabs-border mb-4">
-		<button
-			type="button"
-			role="tab"
-			class={['tab', !archived && 'tab-active']}
-			aria-selected={!archived}
-			onclick={() => show(false)}
+	<div class="mb-4 flex flex-wrap gap-2">
+		<select
+			class="select select-sm w-auto"
+			aria-label="Status"
+			value={archived ? 'archived' : 'active'}
+			onchange={(event) => show(event.currentTarget.value === 'archived')}
 		>
-			Active
-		</button>
-		<button
-			type="button"
-			role="tab"
-			class={['tab', archived && 'tab-active']}
-			aria-selected={archived}
-			onclick={() => show(true)}
-		>
-			Archive
-		</button>
+			<option value="active">Active</option>
+			<option value="archived">Archived</option>
+		</select>
 	</div>
-
-	{#if failure}
-		<div role="alert" class="alert alert-error alert-soft mb-4">
-			<span>{failure}</span>
-		</div>
-	{/if}
 
 	{#if pager.status === 'loading' && pager.page === null}
 		<div class="flex flex-col gap-2" aria-hidden="true">
@@ -173,7 +168,7 @@
 						disabled={busy}
 						onclick={() => edit(question)}
 					>
-						Change
+						Edit
 					</button>
 					<button
 						type="button"

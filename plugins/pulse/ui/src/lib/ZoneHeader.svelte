@@ -1,7 +1,13 @@
 <script lang="ts">
 	import type { PluginHost } from '@maroid/plugin-sdk';
+	import type { Snippet } from 'svelte';
 
-	let { host, title, lead }: { host: PluginHost; title: string; lead: string } = $props();
+	let {
+		host,
+		title,
+		lead,
+		actions
+	}: { host: PluginHost; title: string; lead: string; actions?: Snippet } = $props();
 </script>
 
 <header class="page-header">
@@ -17,4 +23,5 @@
 			{/if}
 		</p>
 	</div>
+	{@render actions?.()}
 </header>

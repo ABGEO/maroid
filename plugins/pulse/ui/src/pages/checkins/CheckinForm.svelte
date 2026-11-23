@@ -98,7 +98,7 @@
 </script>
 
 <form class="panel mb-6 flex flex-col gap-3 p-4" onsubmit={submit}>
-	<h2 class="font-medium">{checkin ? 'Change the check-in' : 'New check-in'}</h2>
+	<h2 class="font-medium">{checkin ? 'Edit the check-in' : 'New check-in'}</h2>
 
 	{#if failure}
 		<div role="alert" class="alert alert-error alert-soft">
@@ -118,10 +118,18 @@
 				required
 			/>
 		</fieldset>
-		<label class="label mb-3 gap-2">
-			<input type="checkbox" class="toggle toggle-primary" bind:checked={enabled} disabled={busy} />
-			On
-		</label>
+		<fieldset class="fieldset">
+			<legend class="fieldset-legend">State</legend>
+			<label class="label h-10 gap-2">
+				<input
+					type="checkbox"
+					class="toggle toggle-primary"
+					bind:checked={enabled}
+					disabled={busy}
+				/>
+				On
+			</label>
+		</fieldset>
 	</div>
 
 	<fieldset class="fieldset">
@@ -150,7 +158,7 @@
 			{/each}
 			<button
 				type="button"
-				class="btn btn-sm self-center"
+				class="btn"
 				disabled={busy || times.length >= MAX_TIMES}
 				onclick={() => times.push('12:00')}
 			>
@@ -227,24 +235,19 @@
 					<option value={question.id}>{question.prompt}</option>
 				{/each}
 			</select>
-			<button
-				type="button"
-				class="btn btn-sm self-center"
-				disabled={busy || adding === ''}
-				onclick={add}
-			>
+			<button type="button" class="btn" disabled={busy || adding === ''} onclick={add}>
 				Add
 			</button>
 		</div>
 	</fieldset>
 
-	<div class="flex gap-2">
+	<div class="mt-1 flex items-center gap-2">
 		<button
 			type="submit"
 			class="btn btn-primary btn-sm"
 			disabled={busy || name.trim() === '' || chosen.length === 0}
 		>
-			Save
+			{busy ? 'Saving…' : 'Save'}
 		</button>
 		<button type="button" class="btn btn-ghost btn-sm" onclick={oncancel}>Cancel</button>
 	</div>

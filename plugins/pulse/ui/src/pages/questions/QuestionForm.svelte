@@ -121,7 +121,7 @@
 </script>
 
 <form class="panel mb-6 flex flex-col gap-3 p-4" onsubmit={submit}>
-	<h2 class="font-medium">{question ? 'Change the question' : 'New question'}</h2>
+	<h2 class="font-medium">{question ? 'Edit the question' : 'New question'}</h2>
 
 	{#if failure}
 		<div role="alert" class="alert alert-error alert-soft">
@@ -258,7 +258,7 @@
 					/>
 					<button
 						type="button"
-						class="btn btn-ghost btn-sm"
+						class="btn btn-ghost"
 						disabled={busy || choices.length <= 2}
 						onclick={() => choices.splice(index, 1)}
 					>
@@ -278,9 +278,9 @@
 		</fieldset>
 	{/if}
 
-	<div class="flex gap-2">
+	<div class="mt-1 flex items-center gap-2">
 		<button type="submit" class="btn btn-primary btn-sm" disabled={busy || prompt.trim() === ''}>
-			Save
+			{busy ? 'Saving…' : 'Save'}
 		</button>
 		<button type="button" class="btn btn-ghost btn-sm" onclick={oncancel}>Cancel</button>
 	</div>
