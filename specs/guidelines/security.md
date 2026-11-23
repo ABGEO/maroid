@@ -4,7 +4,7 @@ title: Authentication and authorization
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-12
+updated: 2026-11-23
 scope: [apps/hub/internal/auth/, apps/hub/internal/middleware/]
 related: [ARC, API, TG, CFG, OWN, RES]
 ---
@@ -158,8 +158,8 @@ ranges it sends from lets any caller inside those ranges past an allowlist.
 
 A user record is an administrator or not. An administrator creates and blocks a
 user record, and sets the plugin allowlist of a user. An administrator manages every
-workspace of the instance through the management API: its members and its
-enablements. An administrator manages the providers of the instance, and sets the
+workspace of the instance through the management API: its members, its
+enablements, and its removal. An administrator manages the providers of the instance, and sets the
 password of a local account. The plugin allowlist does not limit an administrator. An administrator
 reads the rows of a workspace only as a member of it. The CLI makes the first
 administrator, and gives it a local account.
