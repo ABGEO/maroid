@@ -34,7 +34,8 @@ record or the workspace. The handler creates the key when it is absent, then set
 
 The policy of the hub grants `update` on `transit/keys/maroid-user-*`, and `read`,
 `update`, and `delete` on `transit/keys/maroid-workspace-*`. A write of a key needs
-`update`, not `create`, as `OWNKEY-DD-002` records. The paths of encrypt and decrypt
+`update`, not `create`, as `OWNKEY-DD-002` records. Each path of the keys admits the
+parameter `deletion_allowed` with the value `true` alone. The paths of encrypt and decrypt
 keep `update` alone. An encrypt creates its key only with `create` on its path, so a
 save of a secret never creates a key.
 
@@ -46,9 +47,9 @@ idempotent, so the retry of `JOB-009` is safe.
 
 The reason of `PSET-DD-004` was that a hub that an attacker reaches mints no key. The
 prefix keeps that limit for every other name, and `OWNKEY-NFR-003` holds it. Inside the
-prefix, `update` also lets the hub rotate a key or change its configuration. The hub
-already destroys a key under `WSREMOVE-DD-004`, which is the larger harm. No path of
-export or backup enters the policy.
+prefix, `update` also lets the hub rotate a key. The allowed parameters refuse a trim
+and every other change of the configuration, so the hub cannot make an old version
+unreadable. No path of export or backup enters the policy.
 
 An encrypt that creates its key closes the gap between the commit and the task. It
 needs `create` on the path of encrypt, and a defect then mints a key for any name that
@@ -82,7 +83,7 @@ No guideline rule changes. The decisions below change.
 - Positive: an invite and a new workspace need no step at OpenBao.
 - Positive: every key allows its destruction, so `WSREMOVE-FR-008` holds for a key
   that an administrator created before.
-- Negative: the hub can create, rotate, and configure a key under the two prefixes.
+- Negative: the hub can create and rotate a key under the two prefixes.
 - Negative: a save of a secret in the first seconds after the creation fails.
 - Negative: an instance changes the policy of the hub before it runs this feature.
 - Work that follows: the type `secret_key.create`, its handler, the migration that

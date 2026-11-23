@@ -34,8 +34,14 @@ path "transit/encrypt/maroid-user-*" { capabilities = ["update"] }
 path "transit/decrypt/maroid-user-*" { capabilities = ["update"] }
 path "transit/encrypt/maroid-workspace-*" { capabilities = ["update"] }
 path "transit/decrypt/maroid-workspace-*" { capabilities = ["update"] }
-path "transit/keys/maroid-user-*" { capabilities = ["update"] }
-path "transit/keys/maroid-workspace-*" { capabilities = ["read", "update", "delete"] }
+path "transit/keys/maroid-user-*" {
+  capabilities = ["update"]
+  allowed_parameters = { "deletion_allowed" = [true] }
+}
+path "transit/keys/maroid-workspace-*" {
+  capabilities = ["read", "update", "delete"]
+  allowed_parameters = { "deletion_allowed" = [true] }
+}
 `
 
 // Server is a running OpenBao that one test owns.

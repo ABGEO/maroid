@@ -47,18 +47,23 @@ type CreateHandler struct {
 // NewCreateHandler creates a CreateHandler over the database and the store of the keys.
 func NewCreateHandler(logger *slog.Logger, db *sqlx.DB, keys Keys) *CreateHandler {
 	return &CreateHandler{
-		logger: logger.With(slog.String("component", "secret_key")),
-		db:     db,
-		keys:   keys,
+		logger: logger.With(
+			slog.String("component", "worker"),
+			slog.String("worker", "outbox"),
+			slog.String("type", TypeCreate),
+		),
+		db:   db,
+		keys: keys,
 	}
 }
 
 // Type answers TypeCreate.
 func (h *CreateHandler) Type() string { return TypeCreate }
 
-// Handle creates the key of the owner. It reads the owner before and after the
+// Handle creates the key of the owner. It reads a workspace before and after the
 // creation, because a removal that commits in between queues its destruction before
-// the key exists. The handler then destroys the key itself.
+// the key exists. The handler then destroys the key itself. A user record never ends,
+// so it needs no second read.
 func (h *CreateHandler) Handle(ctx context.Context, task model.OutboxTask) error {
 	var owner CreatePayload
 	if err := json.Unmarshal(task.Payload, &owner); err != nil {
@@ -72,7 +77,7 @@ func (h *CreateHandler) Handle(ctx context.Context, task model.OutboxTask) error
 
 	logger := h.logger.With(slog.String("key", string(key)))
 
-	present, err := h.holds(ctx, owner)
+	present, err := h.ownerExists(ctx, owner)
 	if err != nil {
 		return err
 	}
@@ -87,9 +92,10 @@ func (h *CreateHandler) Handle(ctx context.Context, task model.OutboxTask) error
 		return fmt.Errorf("creating a key: %w", err)
 	}
 
-	present, err = h.holds(ctx, owner)
-	if err != nil {
-		return err
+	if owner.Kind == OwnerWorkspace {
+		if present, err = h.ownerExists(ctx, owner); err != nil {
+			return err
+		}
 	}
 
 	if present {
@@ -107,8 +113,7 @@ func (h *CreateHandler) Handle(ctx context.Context, task model.OutboxTask) error
 	return nil
 }
 
-// holds answers whether the record of the owner exists.
-func (h *CreateHandler) holds(ctx context.Context, owner Owner) (bool, error) {
+func (h *CreateHandler) ownerExists(ctx context.Context, owner Owner) (bool, error) {
 	err := database.WithTx(ctx, h.db, func(tx *sqlx.Tx) error {
 		if owner.Kind == OwnerUser {
 			if _, err := repository.NewUser(tx).GetByID(ctx, owner.ID); err != nil {

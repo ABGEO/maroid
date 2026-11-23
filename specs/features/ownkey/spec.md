@@ -23,20 +23,20 @@ A migration queues the same task for every user record and every workspace that 
 
 ## 2. Coverage
 
-| Requirement      | Where this specification realizes it                           |
-| ---------------- | -------------------------------------------------------------- |
-| `OWNKEY-FR-001`  | Section 4.4, `OWNKEY-SC-001`, `OWNKEY-SC-002`                  |
-| `OWNKEY-FR-002`  | Section 4.4, `OWNKEY-SC-001`, `OWNKEY-SC-003`                  |
-| `OWNKEY-FR-003`  | Section 4.4, `OWNKEY-SC-004`                                   |
-| `OWNKEY-FR-004`  | Section 4.3, `OWNKEY-SC-005`                                   |
-| `OWNKEY-FR-005`  | `OWNKEY-DD-002`, `OWNKEY-SC-006`, `OWNKEY-SC-007`              |
-| `OWNKEY-FR-006`  | `OWNKEY-DD-002`, `OWNKEY-SC-001`, `OWNKEY-SC-006`              |
-| `OWNKEY-FR-007`  | Section 4.2, `OWNKEY-DD-004`, `OWNKEY-SC-008`, `OWNKEY-SC-009` |
-| `OWNKEY-FR-008`  | `OWNKEY-DD-003`, `OWNKEY-SC-010` to `OWNKEY-SC-012`            |
-| `OWNKEY-FR-009`  | `OWNKEY-DD-005`, `OWNKEY-SC-013`                               |
-| `OWNKEY-NFR-001` | `OWNKEY-SC-014`                                                |
-| `OWNKEY-NFR-002` | `OWNKEY-SC-005`, `OWNKEY-SC-015`                               |
-| `OWNKEY-NFR-003` | Section 4.3, `OWNKEY-DD-001`, `OWNKEY-DD-002`, `OWNKEY-SC-016` |
+| Requirement      | Where this specification realizes it                               |
+| ---------------- | ------------------------------------------------------------------ |
+| `OWNKEY-FR-001`  | Section 4.4, `OWNKEY-SC-001`, `OWNKEY-SC-002`                      |
+| `OWNKEY-FR-002`  | Section 4.4, `OWNKEY-SC-001`, `OWNKEY-SC-003`                      |
+| `OWNKEY-FR-003`  | Section 4.4, `OWNKEY-SC-004`                                       |
+| `OWNKEY-FR-004`  | Section 4.3, `OWNKEY-SC-005`                                       |
+| `OWNKEY-FR-005`  | `OWNKEY-DD-002`, `OWNKEY-SC-006`, `OWNKEY-SC-007`                  |
+| `OWNKEY-FR-006`  | `OWNKEY-DD-002`, `OWNKEY-SC-001`, `OWNKEY-SC-006`, `OWNKEY-SC-017` |
+| `OWNKEY-FR-007`  | Section 4.2, `OWNKEY-DD-004`, `OWNKEY-SC-008`, `OWNKEY-SC-009`     |
+| `OWNKEY-FR-008`  | `OWNKEY-DD-003`, `OWNKEY-SC-010` to `OWNKEY-SC-012`                |
+| `OWNKEY-FR-009`  | `OWNKEY-DD-005`, `OWNKEY-SC-013`                                   |
+| `OWNKEY-NFR-001` | `OWNKEY-SC-014`                                                    |
+| `OWNKEY-NFR-002` | `OWNKEY-SC-005`, `OWNKEY-SC-015`                                   |
+| `OWNKEY-NFR-003` | Section 4.3, `OWNKEY-DD-001`, `OWNKEY-DD-002`, `OWNKEY-SC-016`     |
 
 ## 3. Guideline compliance
 
@@ -75,13 +75,9 @@ A migration queues the same task for every user record and every workspace that 
 ```go
 // apps/hub/internal/secret/cipher.go
 
-// OwnerKind names the kind of record that one protection key protects.
+// OwnerKind names the kind of record that one protection key protects: OwnerUser
+// ("user") or OwnerWorkspace ("workspace").
 type OwnerKind string
-
-const (
-    OwnerUser      OwnerKind = "user"
-    OwnerWorkspace OwnerKind = "workspace"
-)
 
 // Owner is the user record or the workspace that one protection key protects.
 type Owner struct {
@@ -90,30 +86,19 @@ type Owner struct {
 }
 
 // Key answers UserKey or WorkspaceKey of the owner, and ErrSecretKeyOwnerInvalid for
-// an unknown kind or an empty identifier.
+// an unknown kind or an identifier that is no UUID.
 func (o Owner) Key() (Key, error)
 
 // apps/hub/internal/secret/transit.go
 
 // KeyCreator creates a named key that allows its destruction. A key that exists keeps
-// every version and gains the permission to be destroyed.
-type KeyCreator interface {
-    CreateKey(ctx context.Context, key Key) error
-}
-
-// Keys creates and destroys the named keys.
-type Keys interface {
-    KeyCreator
-    KeyDestroyer
-}
+// every version. Keys joins KeyCreator and KeyDestroyer.
+type KeyCreator interface { CreateKey(ctx context.Context, key Key) error }
 
 // apps/hub/internal/secret/create.go
 
 // TypeCreate names the task of the outbox that creates one protection key.
 const TypeCreate = "secret_key.create"
-
-// CreatePayload is the payload of a task of TypeCreate.
-type CreatePayload = Owner
 
 // CreateTask answers the task that creates the key of the owner. It acts for no
 // owner, and its dedupe key keeps one task for one key.
@@ -157,12 +142,13 @@ has no handler for it, and `JOB-010` keeps such a task forever.
 
 **Handlers of the outbox.** `JOB-010` gives the registry.
 
-| Type                | Handle does                                                                                                             | Realizes                                                             |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `secret_key.create` | Reads the owner. Absent: done. Present: `CreateKey`, then reads the owner again. Absent now: `DestroyKey`. Section 4.4. | `OWNKEY-FR-001`, `OWNKEY-FR-002`, `OWNKEY-FR-004` to `OWNKEY-FR-008` |
+| Type                | Handle does                                                                                                                  | Realizes                                                             |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `secret_key.create` | Reads the owner. Absent: done. Present: `CreateKey`. For a workspace, reads it again. Absent now: `DestroyKey`. Section 4.4. | `OWNKEY-FR-001`, `OWNKEY-FR-002`, `OWNKEY-FR-004` to `OWNKEY-FR-008` |
 
 **The policy of the secret store.** An instance applies it to the role of the hub
-before it runs this feature. `testbao.policy` holds the same text.
+before it runs this feature. `testbao.policy` holds the same text. Each path of the keys
+admits the parameter `deletion_allowed` with the value `true` alone.
 
 | Path                                 | Capabilities               | Realizes                                                                               |
 | ------------------------------------ | -------------------------- | -------------------------------------------------------------------------------------- |
@@ -173,8 +159,9 @@ before it runs this feature. `testbao.policy` holds the same text.
 | `transit/keys/maroid-user-*`         | `update`                   | `OWNKEY-FR-001`, `OWNKEY-FR-006`, `OWNKEY-NFR-003`                                     |
 | `transit/keys/maroid-workspace-*`    | `read`, `update`, `delete` | `OWNKEY-FR-002`, `OWNKEY-FR-006`, `OWNKEY-FR-008`, `WSREMOVE-FR-008`, `OWNKEY-NFR-003` |
 
-The glob covers `transit/keys/<name>/config` and `transit/keys/<name>/rotate`. The policy
-names no path of export and no path of backup.
+The glob covers `transit/keys/<name>/config`, `/rotate`, and `/trim`. The allowed
+parameters refuse a trim and every change of the configuration but `deletion_allowed`.
+The policy names no path of export and no path of backup.
 
 ### 4.4 Flow
 
@@ -200,8 +187,8 @@ sequenceDiagram
     else The owner is present
         H->>B: PUT keys/<key>
         H->>B: PUT keys/<key>/config deletion_allowed=true
-        H->>D: Read the owner again
-        opt The owner is absent now
+        H->>D: Read the workspace again
+        opt The workspace is absent now
             H->>B: DestroyKey(<key>)
         end
         H-->>W: Done
@@ -222,13 +209,13 @@ line at `info` when it skips or destroys the key of an absent owner.
 
 ### 4.5 Errors
 
-| Condition                                     | Behavior                                       |
-| --------------------------------------------- | ---------------------------------------------- |
-| The payload names an unknown kind or no `id`. | `ErrSecretKeyOwnerInvalid`. The task retries.  |
-| OpenBao refuses or does not answer.           | The error of `Transit`. The task retries.      |
-| The read of the owner fails.                  | The error of the repository. The task retries. |
-| The owner is absent at the first read.        | Done. No call to OpenBao.                      |
-| The owner is absent at the second read.       | `DestroyKey`, then done. A failure retries.    |
+| Condition                                                      | Behavior                                                                       |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| The payload names an unknown kind, or an `id` that is no UUID. | `ErrSecretKeyOwnerInvalid`. The task retries.                                  |
+| OpenBao refuses or does not answer.                            | The error of `Transit`. The task retries.                                      |
+| The read of the owner fails.                                   | The error of the repository. The task retries.                                 |
+| The owner is absent at the first read.                         | Done. No call to OpenBao.                                                      |
+| The workspace is absent at the second read.                    | `DestroyKey`, then done. A failure retries. A user record gets no second read. |
 
 A save of a secret before the task runs reaches `Transit.Encrypt`, which OpenBao
 refuses with `permission denied`. The save answers its error of today, and writes no
@@ -256,13 +243,17 @@ sets a scope that no read of the handler needs.
 **Decision:** `Transit.CreateKey` writes `transit/keys/<key>` with no body, then writes
 `transit/keys/<key>/config` with `deletion_allowed=true`. The policy grants `update` on
 the keys of a user, and `read`, `update`, and `delete` on the keys of a workspace.
+`Transit.DestroyKey` writes `deletion_allowed=true` before its delete.
 **Rationale:** A check on OpenBao 2.6.2 confirmed three facts. A write of
 `transit/keys/<name>` needs `update`, and `create` alone answers `permission denied`.
 A second write of a key that holds two versions keeps two versions and answers success.
 The write of the configuration needs `update`. Both writes are therefore idempotent,
 and a key that an administrator created keeps every version and gains the permission to
-be destroyed. The key of a user needs no `read` and no `delete`, because `OWN-002` ends
-no user record.
+be destroyed. A destruction that allows itself first ends a key that an administrator
+created without the permission, also for a workspace that a removal ended before this
+feature. The allowed parameters keep `update` from a trim and from any other
+configuration, which a check on OpenBao 2.6.2 confirmed with a JSON body. The key of a
+user needs no `read` and no `delete`, because `OWN-002` ends no user record.
 **Alternatives:** `create` on the keys. OpenBao refuses the write with it. A read before
 the write. It adds one call and changes no result. `deletion_allowed` in the body of the
 first write. OpenBao ignores it there.
@@ -470,9 +461,20 @@ seconds the next attempt starts within 6 minutes.
 
 **Given** a client of the hub, logged in with the role of `testbao`.
 **When** it writes `transit/keys/other-key`, encrypts under the absent
-`maroid-workspace-<random>`, and reads `transit/export/encryption-key/maroid-user-<id>`.
+`maroid-workspace-<random>`, reads `transit/export/encryption-key/maroid-user-<id>`,
+trims a key, and sets `min_decryption_version` or `deletion_allowed=false` on a key.
 **Then** each call answers `permission denied`, and the root token reads neither
 `other-key` nor `maroid-workspace-<random>`.
+
+### `OWNKEY-SC-017`
+
+**Verifies:** `OWNKEY-FR-006`
+**Layer:** integration
+
+**Given** a removed workspace whose key the root token created with
+`deletion_allowed=false`, and its due `secret_key.destroy`.
+**When** the `outbox` worker runs.
+**Then** no key of the workspace exists, and the table holds no task.
 
 ## 7. Build plan
 

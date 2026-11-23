@@ -101,20 +101,12 @@ func (c *Transit) CreateKey(ctx context.Context, key Key) error {
 		return fmt.Errorf("creating the key %q: %w", key, err)
 	}
 
-	if _, err := c.client.Logical().WriteWithContext(
-		ctx,
-		c.path("keys", key)+"/config",
-		map[string]any{"deletion_allowed": true},
-	); err != nil {
-		return fmt.Errorf("allowing the destruction of the key %q: %w", key, err)
-	}
-
-	return nil
+	return c.allowDestruction(ctx, key)
 }
 
 // DestroyKey deletes the key and every version of it, so no ciphertext under it reads
 // again. A read first tells an absent key, which counts as destroyed, from a key that
-// the store refuses to delete.
+// the store refuses to delete. The destruction allows itself before the delete.
 func (c *Transit) DestroyKey(ctx context.Context, key Key) error {
 	held, err := c.client.Logical().ReadWithContext(ctx, c.path("keys", key))
 	if err != nil {
@@ -125,8 +117,26 @@ func (c *Transit) DestroyKey(ctx context.Context, key Key) error {
 		return nil
 	}
 
+	if err = c.allowDestruction(ctx, key); err != nil {
+		return err
+	}
+
 	if _, err = c.client.Logical().DeleteWithContext(ctx, c.path("keys", key)); err != nil {
 		return fmt.Errorf("destroying the key %q: %w", key, err)
+	}
+
+	return nil
+}
+
+// allowDestruction sets deletion_allowed on the key. An administrator may have created
+// the key without it, and the store refuses to delete such a key.
+func (c *Transit) allowDestruction(ctx context.Context, key Key) error {
+	if _, err := c.client.Logical().WriteWithContext(
+		ctx,
+		c.path("keys", key)+"/config",
+		map[string]any{"deletion_allowed": true},
+	); err != nil {
+		return fmt.Errorf("allowing the destruction of the key %q: %w", key, err)
 	}
 
 	return nil

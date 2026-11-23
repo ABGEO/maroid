@@ -335,7 +335,8 @@ the plugin, so no prefix holds every file of a workspace.
 **Decision:** The handler of `secret_key.destroy` destroys the transit key
 `maroid-workspace-<id>`. The policy of
 Maroid grants `read` and `delete` on `transit/keys/maroid-workspace-*`. The hub sets
-`deletion_allowed=true` on each key that it creates or keeps under `ADR-0028`.
+`deletion_allowed=true` on each key that it creates or keeps under `ADR-0028`, and again
+before each destruction.
 **Rationale:** The rows of the secrets go with the cascade. A backup of the database
 still holds their ciphertext, and the destruction of the key makes it unreadable.
 **Alternatives:** Keep the key. A backup and the key still give every secret back.

@@ -24,6 +24,13 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/testbao"
 )
 
+// The package secret cannot import outbox without a cycle, so the test asserts both
+// handlers.
+var (
+	_ outbox.Handler = (*secret.CreateHandler)(nil)
+	_ outbox.Handler = (*secret.DestroyHandler)(nil)
+)
+
 const absentWorkspace = "55555555-5555-5555-5555-555555555555"
 
 func requireDenied(t *testing.T, err error) {
@@ -36,7 +43,8 @@ func requireDenied(t *testing.T, err error) {
 }
 
 // OWNKEY-SC-016: The role of the hub creates no key outside the two prefixes, creates
-// no key through an encrypt, and reads no export of a key.
+// no key through an encrypt, reads no export of a key, trims no key, and changes no
+// configuration but deletion_allowed=true.
 func TestTheHubMintsNoOtherKey(t *testing.T) {
 	t.Parallel()
 
@@ -67,6 +75,25 @@ func TestTheHubMintsNoOtherKey(t *testing.T) {
 		testbao.TransitMount+"/export/encryption-key/"+string(secret.UserKey(userA)),
 	)
 	requireDenied(t, err)
+
+	held := secret.WorkspaceKey(workspaceA)
+	require.NoError(t, secret.NewTransit(session.Client(), testbao.TransitMount).
+		CreateKey(t.Context(), held))
+
+	path := testbao.TransitMount + "/keys/" + string(held)
+
+	_, err = hub.WriteWithContext(t.Context(), path+"/trim", map[string]any{
+		"min_available_version": 1,
+	})
+	requireDenied(t, err)
+
+	for _, change := range []map[string]any{
+		{"min_decryption_version": 1},
+		{"deletion_allowed": false},
+	} {
+		_, err = hub.WriteWithContext(t.Context(), path+"/config", change)
+		requireDenied(t, err)
+	}
 
 	for _, name := range []string{"other-key", string(absent)} {
 		held, readErr := server.Root.Logical().
@@ -393,4 +420,25 @@ func TestAFailedCreationWaitsAtMostFiveMinutes(t *testing.T) {
 	assert.Equal(t, 21, attempts)
 	assert.LessOrEqual(t, wait, 5*time.Minute+slack)
 	assert.Less(t, wait+2*time.Second, 6*time.Minute)
+}
+
+// OWNKEY-SC-017: The destruction of a key that an administrator created without the
+// permission to destroy it still ends the key of a removed workspace.
+func TestTheDestructionAllowsAKeyThatRefusedIt(t *testing.T) {
+	t.Parallel()
+
+	bench := removalUnderTest(t)
+	server := testbao.Start(t)
+	key := secret.WorkspaceKey(bench.s)
+
+	_, err := server.Root.Logical().
+		WriteWithContext(t.Context(), testbao.TransitMount+"/keys/"+string(key), nil)
+	require.NoError(t, err)
+	assert.Equal(t, false, readKey(t, server, key)["deletion_allowed"])
+
+	bench.remove(t)
+	require.NoError(t, keyWorker(bench.db, server.Cipher(t)).Cycle(t.Context()))
+
+	assert.Nil(t, readKey(t, server, key))
+	assert.Zero(t, bench.tasks(t))
 }

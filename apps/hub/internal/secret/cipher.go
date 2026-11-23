@@ -3,6 +3,8 @@ package secret
 import (
 	"context"
 
+	"github.com/google/uuid"
+
 	"github.com/abgeo/maroid/apps/hub/internal/domain/errs"
 )
 
@@ -40,9 +42,10 @@ type Owner struct {
 	ID   string    `json:"id"`
 }
 
-// Key answers the Key that protects the secrets of the owner.
+// Key answers the Key that protects the secrets of the owner. An identifier that is no
+// UUID names no record, and it would reach a path of the store under the prefix.
 func (o Owner) Key() (Key, error) {
-	if o.ID == "" {
+	if uuid.Validate(o.ID) != nil {
 		return "", errs.ErrSecretKeyOwnerInvalid
 	}
 
