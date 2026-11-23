@@ -69,7 +69,7 @@ A migration queues the same task for every user record and every workspace that 
 | `apps/hub/internal/secret/transit_test.go`                               | change | `OWNKEY-SC-007`, the second write of a key                                                                              |
 | `apps/hub/internal/auth/service_test.go`                                 | change | `OWNKEY-SC-001`, `OWNKEY-SC-002`                                                                                        |
 | `apps/hub/internal/workspace/service_test.go`                            | create | `OWNKEY-SC-003`, `OWNKEY-SC-004`, `OWNKEY-SC-014`                                                                       |
-| `apps/hub/db/secret_key_backfill_test.go`                                | create | `OWNKEY-SC-008`, `OWNKEY-SC-009`                                                                                        |
+| `apps/hub/internal/repository/secret_key_backfill_migration_test.go`     | create | `OWNKEY-SC-008`, `OWNKEY-SC-009`                                                                                        |
 | `apps/hub/internal/settings/secrets_test.go`                             | change | `OWNKEY-SC-013`                                                                                                         |
 
 ```go
@@ -481,7 +481,7 @@ seconds the next attempt starts within 6 minutes.
 | 1   | The policy of `testbao`, `Owner`, `Transit.CreateKey`, and `OWNKEY-SC-007`, `OWNKEY-SC-016`                                          | `OWNKEY-FR-005`, `OWNKEY-FR-006`, `OWNKEY-NFR-003`                    | [x]  |
 | 2   | `CreateHandler`, the registry, `lazyKeys`, and `OWNKEY-SC-005`, `OWNKEY-SC-006`, `OWNKEY-SC-010` to `OWNKEY-SC-012`, `OWNKEY-SC-015` | `OWNKEY-FR-004` to `OWNKEY-FR-008`, `OWNKEY-NFR-002`                  | [x]  |
 | 3   | The queue in `createWithWorkspace` and `Manager.Create`, and `OWNKEY-SC-001` to `OWNKEY-SC-004`, `OWNKEY-SC-013`, `OWNKEY-SC-014`    | `OWNKEY-FR-001` to `OWNKEY-FR-003`, `OWNKEY-FR-009`, `OWNKEY-NFR-001` | [x]  |
-| 4   | The migration and `OWNKEY-SC-008`, `OWNKEY-SC-009`                                                                                   | `OWNKEY-FR-007`                                                       | [ ]  |
+| 4   | The migration and `OWNKEY-SC-008`, `OWNKEY-SC-009`                                                                                   | `OWNKEY-FR-007`                                                       | [x]  |
 | 5   | The changes of `ADR-0028` to `PSET-DD-004`, `PSECRET-DD-003`, and `WSREMOVE-DD-004`                                                  | `OWNKEY-NFR-003`                                                      | [ ]  |
 
 ## Retired identifiers
