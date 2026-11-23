@@ -4,7 +4,7 @@ title: The check-ins of a person
 type: requirements
 status: approved
 created: 2026-11-23
-updated: 2026-11-23
+updated: 2026-11-24
 approved_by: Temuri
 approved_on: 2026-11-23
 constrained_by: [OWN, JOB, TG, PLG, DAT, UI, SEC]
@@ -12,13 +12,14 @@ constrained_by: [OWN, JOB, TG, PLG, DAT, UI, SEC]
 
 # Requirements: The check-ins of a person
 
-The statements divide into three files:
+The statements divide into four files:
 
 | File                                                 | Holds                                                     |
 | ---------------------------------------------------- | --------------------------------------------------------- |
 | `requirements.md`                                    | The problem, the turn-on, the pause, and the schedule     |
 | [`requirements-round.md`](requirements-round.md)     | The round on Telegram: the start prompt and the questions |
 | [`requirements-catalog.md`](requirements-catalog.md) | The questions, the check-ins, the defaults, and the data  |
+| [`requirements-widget.md`](requirements-widget.md)   | The widget of today on the home page                      |
 
 ## 1. Problem
 
