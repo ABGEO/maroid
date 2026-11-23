@@ -26,6 +26,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/migrator"
 	"github.com/abgeo/maroid/apps/hub/internal/notification"
 	"github.com/abgeo/maroid/apps/hub/internal/openbao"
+	"github.com/abgeo/maroid/apps/hub/internal/outbox"
 	pluginhost "github.com/abgeo/maroid/apps/hub/internal/plugin/host"
 	pluginloader "github.com/abgeo/maroid/apps/hub/internal/plugin/loader"
 	"github.com/abgeo/maroid/apps/hub/internal/pluginsecret"
@@ -95,7 +96,7 @@ type Resolver interface {
 	FileKindRegistry() *registry.FileKindRegistry
 	FileStore() *filestore.Client
 	Files() (*file.Store, error)
-	FileWorker() (*file.Worker, error)
+	OutboxWorker() (*outbox.Worker, error)
 	NotificationKinds() (*notification.KindRegistry, error)
 	NotificationDispatcher() (*notification.Dispatcher, error)
 	NotificationService() (notification.Service, error)
@@ -362,10 +363,10 @@ type Container struct {
 		instance *file.Store
 	}
 
-	fileWorker struct {
+	outboxWorker struct {
 		mu       sync.Mutex
 		once     sync.Once
-		instance *file.Worker
+		instance *outbox.Worker
 	}
 
 	notificationKinds struct {

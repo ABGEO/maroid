@@ -4,8 +4,14 @@ title: Background jobs
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-10-01
-scope: [apps/hub/internal/worker/, apps/hub/internal/command/worker.go, plugins/*/job/]
+updated: 2026-11-23
+scope:
+  [
+    apps/hub/internal/worker/,
+    apps/hub/internal/outbox/,
+    apps/hub/internal/command/worker.go,
+    plugins/*/job/
+  ]
 related: [ARC, PLG, MQT, OWN]
 ---
 
@@ -54,6 +60,26 @@ and does not stop another job.
 ## JOB-008
 
 A registry rejects a second job with an identifier that it already holds.
+
+## JOB-009
+
+The hub runs a task that a change starts through one outbox, `public.outbox_tasks`.
+The change and its task commit in one transaction. A row names a type, a JSON payload,
+and the owner of the task: a workspace, a user, or none. A payload holds identifiers
+and no content. The `outbox` worker leases each due task with `FOR UPDATE SKIP LOCKED`
+every `outbox.poll_interval`, runs at most `outbox.concurrency` at one time, sets the
+owner as the acting scope, and calls the handler of the type. A task runs at least
+once, so every handler is idempotent. A failed task waits 2 seconds, then twice as
+long, up to 5 minutes, with no limit on the attempts. `ADR-0027`.
+
+**Why:** The change and its task cannot part, and the lease, the retry, and the scope
+live in one place for every kind of task.
+
+## JOB-010
+
+A type names a domain of the hub and an action, as `file.purge`. One handler serves
+one type, and the registry rejects a second handler of a type. A task whose type has no
+handler fails and retries, so a worker of an older build leaves it for a newer one.
 
 ## Retired identifiers
 

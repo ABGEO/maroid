@@ -53,7 +53,6 @@ func TestTheAddressesOfTheFilesStayWithinTheirLimits(t *testing.T) {
 		"an upload past 15m":       {change: func(f *config.Files) { f.UploadTTL = 16 * time.Minute }},
 		"a read past one hour":     {change: func(f *config.Files) { f.ReadTTL = 61 * time.Minute }},
 		"a read of zero":           {change: func(f *config.Files) { f.ReadTTL = 0 }},
-		"no worker":                {change: func(f *config.Files) { f.Concurrency = 0 }},
 		"a public endpoint absent": {change: func(f *config.Files) { f.PublicEndpoint = "" }},
 	} {
 		t.Run(name, func(t *testing.T) {

@@ -4,7 +4,7 @@ title: The files of the hub and of a plugin
 type: spec
 status: approved
 created: 2026-11-18
-updated: 2026-11-18
+updated: 2026-11-23
 approved_by: Temuri
 approved_on: 2026-11-18
 constrained_by: [ARC, PLG, DAT, OWN, SEC, API, RES, CFG, JOB, LOG, UI, PKG, GO, BLD]
@@ -17,8 +17,8 @@ requirements: features/files/requirements.md
 
 A plugin declares its file kinds as a new capability. The hub answers the start of an
 upload with a row in one of two scoped tables and a signed address of one PUT, and the
-browser sends the bytes to the file store with Uppy. A `files` worker drains an outbox
-of tasks: it checks the content, derives two JPEG variants of an image in pure Go,
+browser sends the bytes to the file store with Uppy. The `outbox` worker of `JOB-009` runs
+the tasks of the files: it checks the content, derives two JPEG variants of an image in pure Go,
 deletes the upload, and removes unclaimed and deleted files. A plugin reads, claims, and
 deletes a file through `Host.Files`, and its table references the file with a foreign
 key. `spec-decisions.md` holds the design decisions, and `spec-scenarios.md` holds the
@@ -81,7 +81,7 @@ scenarios.
 | `DAT-009` | Data             | Each `id` declares `DEFAULT uuidv7()`. Section 4.2.                                                                                                           |
 | `DAT-010` | Data             | Each point in time is `TIMESTAMPTZ`, and `updated_at` takes its trigger. Section 4.2.                                                                         |
 | `OWN-003` | Record ownership | A task of the outbox sets the owner of its file as the acting scope, as `ADR-0021` gives. `FILES-DD-005`.                                                     |
-| `OWN-004` | Record ownership | Two scoped tables, and `public.file_tasks` as a queue of the hub that `ADR-0021` makes a shared table. Each migration states its scope. Section 4.2.          |
+| `OWN-004` | Record ownership | Two scoped tables, and the tasks of the files in `public.outbox_tasks`, the shared queue of `JOB-009`. Each migration states its scope. Section 4.2.          |
 | `OWN-005` | Record ownership | Each scope column, and `uploaded_by`, takes its value from the session. No insert names it. Section 4.2.                                                      |
 | `OWN-006` | Record ownership | Both file tables force their policy. Section 4.2.                                                                                                             |
 | `OWN-008` | Record ownership | `repository.File` filters by `plugin_id` and never by a scope column. Section 4.1.                                                                            |
@@ -108,9 +108,9 @@ scenarios.
 | `apps/hub/db/migrations/20261118100000_table_workspace_files_create.{up,down}.sql`       | create         | `public.workspace_files`                                                                                            |
 | `apps/hub/db/migrations/20261118100100_table_user_files_create.{up,down}.sql`            | create         | `public.user_files`                                                                                                 |
 | `apps/hub/db/migrations/20261118100200_table_file_tasks_create.{up,down}.sql`            | create         | `public.file_tasks`                                                                                                 |
-| `apps/hub/internal/model/file.go`                                                        | create         | `File`, `FileTask`, `FileTaskAction`                                                                                |
+| `apps/hub/internal/model/file.go`                                                        | create         | `File`                                                                                                              |
 | `apps/hub/internal/repository/file.go`                                                   | create         | `FileRepository`, `File`, `NewFile`. One type over both scoped tables, as `repository.PluginSecret` does            |
-| `apps/hub/internal/repository/file_task.go`                                              | create         | `FileTaskRepository`, `FileTask`, `NewFileTask`: `Enqueue`, `EnqueueOnce`, `Lease`, `Done`, `Retry`                 |
+| `apps/hub/db/migrations/<timestamp>_table_outbox_tasks_create.{up,down}.sql`             | create         | `public.outbox_tasks`, and the move of every row of `public.file_tasks`. `ADR-0027`                                 |
 | `apps/hub/internal/registry/file_kind.go`                                                | create         | `FileKindRegistry`, `FileKind`. `Get(pluginID, key)`                                                                |
 | `apps/hub/internal/registry/capability.go`                                               | change         | `CapFiles Capability = "files"`                                                                                     |
 | `apps/hub/internal/registry/capability_item.go`                                          | change         | `FileKindItem`, the item of the capability report                                                                   |
@@ -119,7 +119,7 @@ scenarios.
 | `apps/hub/internal/plugin/loader/loader.go`                                              | change         | Adds `FileKindRegistrar` to the list, after `PermissionRegistrar`                                                   |
 | `apps/hub/internal/filestore/{doc,client,presign}.go`                                    | create         | `Client`, `New`, `Head`, `ReadRange`, `Read`, `Write`, `Delete`, `DeletePrefix`, `Ping`, `PresignPut`, `PresignGet` |
 | `apps/hub/internal/file/{doc,store,key}.go`                                              | create         | `Store`, `NewStore`: `Start`, `Complete`, `Get`, `Claim`, `Delete`. `objectKey`                                     |
-| `apps/hub/internal/file/{worker,task}.go`                                                | create         | `Worker`, `NewWorker`, and one function for each `model.FileTaskAction`                                             |
+| `apps/hub/internal/file/{handlers,task}.go`                                              | create         | `Handlers`, `NewHandlers`, `All`: one handler of the outbox for each type of section 4.3                            |
 | `apps/hub/internal/file/{image,orient,sniff}.go`                                         | create         | `variantsOf`, `deriveVariants`, `orient`, `sniff`. `FILES-DD-007`, `FILES-DD-008`                                   |
 | `apps/hub/internal/plugin/host/file.go`                                                  | create         | `FileStore` interface, `boundFiles`                                                                                 |
 | `apps/hub/internal/plugin/host/host.go`                                                  | change         | `Dependencies.Files`, the `files` field, `Host.Files`                                                               |
@@ -228,7 +228,6 @@ type PluginFiles interface {
 | ------------------------ | -------- | ---------------- | --------------------------------------------- | ----------------------------------------------- |
 | `public.workspace_files` | `public` | scoped workspace | `20261118100000_table_workspace_files_create` | `FILES-FR-008`, `-011`, `-018`, `FILES-INV-003` |
 | `public.user_files`      | `public` | scoped user      | `20261118100100_table_user_files_create`      | `FILES-FR-008`, `-011`, `-018`, `FILES-INV-003` |
-| `public.file_tasks`      | `public` | shared           | `20261118100200_table_file_tasks_create`      | `FILES-FR-009`, `-016`, `-019`, `FILES-NFR-005` |
 
 `public.workspace_files`:
 
@@ -257,24 +256,11 @@ update that changes `workspace_id`, `plugin_id`, or `kind` (`FILES-INV-005`).
 `public.user_files` holds the same columns with `user_id` in place of `workspace_id`,
 and no `uploaded_by`, because the owner is the uploader.
 
-`public.file_tasks` is shared. Its comment gives the reason: the worker runs with no
-acting user and no acting workspace, and a task holds identifiers and no content.
-
-| Column         | Type          | Rule                                                              |
-| -------------- | ------------- | ----------------------------------------------------------------- |
-| `id`           | `UUID`        | Primary key, `DEFAULT uuidv7()`                                   |
-| `file_id`      | `UUID`        | `NOT NULL`, no foreign key: a purge outlives the row of its file  |
-| `scope`        | `TEXT`        | `workspace` or `user`                                             |
-| `owner_id`     | `UUID`        | `NOT NULL`. The workspace or the user of the file                 |
-| `object_key`   | `TEXT`        | `NOT NULL`. The prefix of the objects of the file. `FILES-DD-003` |
-| `action`       | `TEXT`        | `process`, `check`, `discard_upload`, `expire`, or `purge`        |
-| `run_after`    | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()`                                          |
-| `locked_until` | `TIMESTAMPTZ` | Null when no worker holds the task                                |
-| `attempts`     | `INTEGER`     | `NOT NULL DEFAULT 0`                                              |
-| `last_error`   | `TEXT`        | The error of the last attempt. It holds no address. `LOG-008`     |
-| `created_at`   | `TIMESTAMPTZ` | `NOT NULL DEFAULT now()`                                          |
-
-An index on `(run_after)` serves `Lease`.
+The tasks of the files are rows of `public.outbox_tasks`, which `JOB-009` gives. The
+migration of `ADR-0027` moves each row of `public.file_tasks` there and drops the old
+table. A task of a file names the owner of the file. Its payload holds `file_id`, which
+has no foreign key, because a purge outlives the row of its file, and `object_key`, the
+prefix of the objects of the file (`FILES-DD-003`).
 
 ```mermaid
 stateDiagram-v2
@@ -297,11 +283,16 @@ stateDiagram-v2
 | `GET`  | `/workspaces/{workspaceId}/plugins/{id}/files/{fileId}`             | Member, enabled | The kind of the file | `FILES-FR-018`, `-023`, `-028`           |
 | `POST` | `/workspaces/{workspaceId}/plugins/{id}/files/{fileId}/completions` | Member, enabled | The kind of the file | `FILES-FR-009`                           |
 
-**Background worker.**
+**Handlers of the outbox.** `JOB-010` gives the registry. The handlers of the files
+share one `Prepare`: `filestore.Client.Ping` answers, and the codecs decode a fixture.
 
-| Name    | Prepare verifies                                                 | Start runs                                                                                 | Realizes                                                  |
-| ------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| `files` | `filestore.Client.Ping` answers, and the codecs decode a fixture | Leases due tasks every `files.poll_interval`, runs at most `files.concurrency` at one time | `FILES-FR-009` to `-017`, `-019`, `FILES-NFR-001`, `-005` |
+| Type                  | Dedupe key               | Handle does                                                     | Realizes                         |
+| --------------------- | ------------------------ | --------------------------------------------------------------- | -------------------------------- |
+| `file.process`        | `file.process:<file id>` | Checks the content and derives the variants. `FILES-DD-007`     | `FILES-FR-009` to `-015`, `-017` |
+| `file.check`          | None                     | Starts `file.process` for an upload that no completion reported | `FILES-FR-009`                   |
+| `file.discard_upload` | None                     | Deletes the upload that the variants replace                    | `FILES-FR-016`                   |
+| `file.expire`         | None                     | Deletes an unclaimed file and queues its `file.purge`           | `FILES-FR-019`                   |
+| `file.purge`          | None                     | Deletes every object under the key of the file                  | `FILES-FR-019`, `FILES-NFR-005`  |
 
 **Configuration scheme.** Section `files` of `config.yaml`.
 
@@ -315,8 +306,6 @@ stateDiagram-v2
 | `files.secret_key`      | string   | none        | Yes    | `FILES-INV-001`            |
 | `files.upload_ttl`      | duration | `15m`       | No     | `FILES-NFR-003`, `lte=15m` |
 | `files.read_ttl`        | duration | `1h`        | No     | `FILES-NFR-004`, `lte=1h`  |
-| `files.poll_interval`   | duration | `2s`        | No     | `FILES-NFR-001`            |
-| `files.concurrency`     | integer  | `2`         | No     | `FILES-NFR-001`, `gte=1`   |
 
 ### 4.4 Flow
 
@@ -326,7 +315,7 @@ sequenceDiagram
     participant H as Hub (handler.File)
     participant D as PostgreSQL
     participant S as File store
-    participant W as files worker
+    participant W as outbox worker
     B->>H: POST .../files {kind, name, media_type, size}
     H->>S: Ping
     H->>D: insert file (pending), tasks check and expire
@@ -399,6 +388,7 @@ No error, no log line, and no `last_error` holds an address or a key (`LOG-008`)
 | 15  | Add RustFS to `docker-compose.yaml` with the bucket, its CORS rule for the deck, and the policy of the key. | `FILES-INV-001`                                 | [x]  |
 | 16  | Rebuild and load every plugin (`BLD-004`).                                                                  | `FILES-FR-001`                                  | [x]  |
 | 17  | Run the manual scenarios against the running hub.                                                           | `FILES-SC-009`, `-032` to `-034`, `-040`        | [x]  |
+| 18  | Move the tasks of the files to the outbox of `ADR-0027`. Run every scenario of this feature.                | `JOB-009`, `JOB-010`                            | [x]  |
 
 ## 8. Out of scope for this specification
 

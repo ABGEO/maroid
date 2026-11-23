@@ -17,7 +17,6 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/file"
 	"github.com/abgeo/maroid/apps/hub/internal/filestore"
 	"github.com/abgeo/maroid/apps/hub/internal/handler"
-	"github.com/abgeo/maroid/apps/hub/internal/model"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/teststore"
 	"github.com/abgeo/maroid/apps/hub/internal/timezone"
@@ -37,9 +36,9 @@ const (
 	jpegType        = "image/jpeg"
 	pdfType         = "application/pdf"
 	statePending    = "pending"
-	taskCheck       = string(model.FileTaskCheck)
-	taskExpire      = string(model.FileTaskExpire)
-	taskProcess     = string(model.FileTaskProcess)
+	taskCheck       = file.TaskCheck
+	taskExpire      = file.TaskExpire
+	taskProcess     = file.TaskProcess
 )
 
 // fileBench holds workspace H with the routes of the files mounted over the file
@@ -212,8 +211,11 @@ func (b *fileBench) actionsOf(t *testing.T, fileID string) []string {
 
 	var actions []string
 
-	require.NoError(t, b.database.Select(&actions,
-		`SELECT action FROM public.file_tasks WHERE file_id = $1 ORDER BY action;`, fileID))
+	require.NoError(t, b.database.Select(
+		&actions,
+		`SELECT type FROM public.outbox_tasks WHERE payload ->> 'file_id' = $1 ORDER BY type;`,
+		fileID,
+	))
 
 	return actions
 }

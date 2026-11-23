@@ -96,36 +96,3 @@ func (c *Container) buildFileHandler() (*handler.File, error) {
 		files,
 	), nil
 }
-
-// FileWorker initializes and returns the worker that runs the tasks of the files.
-func (c *Container) FileWorker() (*file.Worker, error) {
-	c.fileWorker.mu.Lock()
-	defer c.fileWorker.mu.Unlock()
-
-	var err error
-
-	c.fileWorker.once.Do(func() {
-		db, dbErr := c.Database()
-		if dbErr != nil {
-			err = dbErr
-
-			return
-		}
-
-		c.fileWorker.instance = file.NewWorker(
-			c.Logger(),
-			db,
-			c.FileStore(),
-			c.FileKindRegistry(),
-			c.Config().Files,
-		)
-	})
-
-	if err != nil {
-		c.fileWorker.once = sync.Once{}
-
-		return nil, fmt.Errorf("initializing the files worker: %w", err)
-	}
-
-	return c.fileWorker.instance, nil
-}

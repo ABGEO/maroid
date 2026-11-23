@@ -43,7 +43,7 @@ an acting user reaches no table that a user scopes.
 | An MCP tool call      | The identity that `federated_claims` names. See `SEC-002`.   | The `workspace` argument of the call.                                                                              |
 | A cron job            | The user of the run, for a job for each user. See `OWN-009`. | The workspace of the run, for a job for each workspace. See `OWN-009`.                                             |
 | A command of a plugin | None.                                                        | The `--workspace` flag of the command, when the command reaches a table that a workspace scopes.                   |
-| A task of the outbox  | The owner of the task, when a user owns its file.            | The owner of the task, when a workspace owns its file.                                                             |
+| A task of the outbox  | The owner of the task, when a user owns it.                  | The owner of the task, when a workspace owns it.                                                                   |
 
 A task of the outbox names its owner. The worker sets it with `OWN-007` before the
 first statement of the task.

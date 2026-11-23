@@ -37,45 +37,6 @@ type FileDraft struct {
 	Size      int64
 }
 
-// FileTaskAction names the work that one task of the outbox does.
-type FileTaskAction string
-
-// The actions of a task.
-const (
-	FileTaskProcess       FileTaskAction = "process"
-	FileTaskCheck         FileTaskAction = "check"
-	FileTaskDiscardUpload FileTaskAction = "discard_upload"
-	FileTaskExpire        FileTaskAction = "expire"
-	FileTaskPurge         FileTaskAction = "purge"
-)
-
-// FileTask is one task of the outbox. It names the owner of its file, so the worker
-// runs it in the scope of that owner.
-type FileTask struct {
-	ID          string              `db:"id"`
-	FileID      string              `db:"file_id"`
-	Scope       pluginapi.FileScope `db:"scope"`
-	OwnerID     string              `db:"owner_id"`
-	ObjectKey   string              `db:"object_key"`
-	Action      FileTaskAction      `db:"action"`
-	RunAfter    time.Time           `db:"run_after"`
-	LockedUntil *time.Time          `db:"locked_until"`
-	Attempts    int                 `db:"attempts"`
-	LastError   *string             `db:"last_error"`
-	CreatedAt   time.Time           `db:"created_at"`
-}
-
-// FileTaskDraft holds a task to enqueue. Delay holds the time from the commit to the
-// first run.
-type FileTaskDraft struct {
-	FileID    string
-	Scope     pluginapi.FileScope
-	OwnerID   string
-	ObjectKey string
-	Action    FileTaskAction
-	Delay     time.Duration
-}
-
 // FileReady holds the facts of a ready file that the content gave. Width and Height
 // are nil for a file that is not an image.
 type FileReady struct {

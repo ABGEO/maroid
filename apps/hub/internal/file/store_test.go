@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log/slog"
 	"net/http"
 	"testing"
 
@@ -19,6 +18,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/file"
 	"github.com/abgeo/maroid/apps/hub/internal/filestore"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/outbox"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/teststore"
@@ -46,7 +46,7 @@ type storeBench struct {
 	store   *file.Store
 	objects *filestore.Client
 	server  *teststore.Server
-	worker  *file.Worker
+	worker  *outbox.Worker
 	db      *sqlx.DB
 	user    string
 	space   string
@@ -119,7 +119,7 @@ func storeUnderTest(t *testing.T) *storeBench {
 		store:   file.NewStore(instance.DB, objects, kinds, cfg.UploadTTL),
 		objects: objects,
 		server:  server,
-		worker:  file.NewWorker(slog.New(slog.DiscardHandler), instance.DB, objects, kinds, cfg),
+		worker:  workerOf(instance.DB, objects, kinds, outboxConfig()),
 		db:      instance.DB,
 		user:    user,
 		space:   workspace,
@@ -396,20 +396,20 @@ func TestAPendingFileHoldsOneProcessTask(t *testing.T) {
 
 	require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, held.ID))
 	require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, held.ID))
-	require.Equal(t, []string{string(model.FileTaskProcess)}, bench.actionsOf(t, held.ID))
+	require.Equal(t, []string{file.TaskProcess}, bench.actionsOf(t, held.ID))
 
 	_, err := bench.db.ExecContext(t.Context(),
-		`UPDATE public.file_tasks SET run_after = now() + interval '1 hour'
-		WHERE file_id = $1 AND action = 'process';`, held.ID)
+		`UPDATE public.outbox_tasks SET run_after = now() + interval '1 hour'
+		WHERE payload ->> 'file_id' = $1 AND type = 'file.process';`, held.ID)
 	require.NoError(t, err)
 
-	bench.due(t, held.ID, model.FileTaskCheck)
+	bench.due(t, held.ID, file.TaskCheck)
 	bench.cycle(t)
 
 	var count int
 
-	require.NoError(t, bench.db.Get(&count, `SELECT count(*) FROM public.file_tasks
-		WHERE file_id = $1 AND action = 'process';`, held.ID))
+	require.NoError(t, bench.db.Get(&count, `SELECT count(*) FROM public.outbox_tasks
+		WHERE payload ->> 'file_id' = $1 AND type = 'file.process';`, held.ID))
 	require.Equal(t, 1, count)
 }
 
@@ -428,7 +428,7 @@ func TestADeleteInTheTransactionOfThePluginRemovesTheFile(t *testing.T) {
 	listed, err := bench.store.Get(bench.in(t), probePlugin, held.ID)
 	require.NoError(t, err)
 	require.Empty(t, listed)
-	require.Contains(t, bench.actionsOf(t, held.ID), string(model.FileTaskPurge))
+	require.Contains(t, bench.actionsOf(t, held.ID), file.TaskPurge)
 }
 
 // FILES-SC-046: A rollback of the transaction of the probe keeps its row, the file,
@@ -444,5 +444,5 @@ func TestARollbackOfThePluginKeepsTheFile(t *testing.T) {
 
 	require.Equal(t, 1, bench.probeRows(t, row))
 	require.Equal(t, held.ID, bench.get(t, probePlugin, held.ID).ID)
-	require.NotContains(t, bench.actionsOf(t, held.ID), string(model.FileTaskPurge))
+	require.NotContains(t, bench.actionsOf(t, held.ID), file.TaskPurge)
 }
