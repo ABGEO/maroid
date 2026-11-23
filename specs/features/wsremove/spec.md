@@ -4,7 +4,7 @@ title: The removal of a workspace and of every record it holds
 type: spec
 status: approved
 created: 2026-11-23
-updated: 2026-11-23
+updated: 2026-11-24
 approved_by: Temuri
 approved_on: 2026-11-23
 constrained_by: [OWN, SEC, DAT, ERR, API, RES, JOB, ARC, REP, TST, SPC, LNG]
@@ -102,9 +102,10 @@ administrator.
 ```go
 // apps/hub/internal/workspace/remover.go
 
-// FilePurger queues the purge of every file of the acting workspace in a transaction.
+// FilePurger queues the purge of every file of the acting workspace in a transaction,
+// and answers the count of the purges.
 type FilePurger interface {
-    PurgeWorkspace(ctx context.Context, tx *sqlx.Tx) error
+    PurgeWorkspace(ctx context.Context, tx *sqlx.Tx) (int, error)
 }
 
 // Remover removes the acting workspace with every record it holds.
@@ -119,8 +120,8 @@ func (r *Remover) Remove(ctx context.Context) error
 // apps/hub/internal/file/store.go
 
 // PurgeWorkspace queues a file.purge for every file of the acting workspace, and
-// drops every other task of a file that the workspace owns.
-func (s *Store) PurgeWorkspace(ctx context.Context, tx *sqlx.Tx) error
+// drops every other task of a file that the workspace owns. It answers the count.
+func (s *Store) PurgeWorkspace(ctx context.Context, tx *sqlx.Tx) (int, error)
 
 // apps/hub/internal/secret/transit.go
 
@@ -368,11 +369,11 @@ lease and the retry stay in one place.
 | 1   | The owner accepts `ADR-0026` and `ADR-0027`. Apply the changes of `ADR-0026` to `OWN-005`, `OWN-010`, `SEC-011`, `ERR-003`, `WSPACE`, and `PERMS`.   | `ADR-0026`                                                                    | [x]  |
 | 2   | Write `RequireWorkspaceCascade` and `WSREMOVE-SC-024`. Write the migration of the hub. Run the scenario.                                             | `WSREMOVE-INV-001`, `WSREMOVE-FR-015`                                         | [x]  |
 | 3   | Write the migration of each plugin of section 4.2, each with `WSREMOVE-SC-024` for its schema. Build every plugin.                                   | `WSREMOVE-INV-001`                                                            | [x]  |
-| 4   | Add `workspace.remove`, `members-remain`, and `MembersRemainError`.                                                                                  | `WSREMOVE-FR-002`, `WSREMOVE-FR-003`                                          | [ ]  |
+| 4   | Add `workspace.remove`, `members-remain`, and `MembersRemainError`.                                                                                  | `WSREMOVE-FR-002`, `WSREMOVE-FR-003`                                          | [x]  |
 | 5   | Confirm that the refactor of `ADR-0027` is done: `public.outbox_tasks`, the `outbox` worker, and the handlers of the files.                          | `JOB-009`, `JOB-010`                                                          | [x]  |
-| 6   | Write `WSREMOVE-SC-013`, then `File.ListOfWorkspace`, `OutboxTask.Drop`, and `Store.PurgeWorkspace`.                                                 | `WSREMOVE-FR-007`, `WSREMOVE-NFR-002`                                         | [ ]  |
-| 7   | Write `WSREMOVE-SC-001` to `WSREMOVE-SC-012`, `WSREMOVE-SC-017`, `WSREMOVE-SC-022`, `WSREMOVE-SC-023`, then `Remover`, the route, and `api.yaml`.    | `WSREMOVE-FR-001` to `WSREMOVE-FR-006`, `WSREMOVE-FR-009`, `WSREMOVE-NFR-001` | [ ]  |
-| 8   | Write `WSREMOVE-SC-015`, `WSREMOVE-SC-016`, `WSREMOVE-SC-018`, then `Transit.DestroyKey`, `DestroyHandler`, the policy of `testbao`, and the wiring. | `WSREMOVE-FR-008`, `WSREMOVE-FR-010`, `WSREMOVE-NFR-003`                      | [ ]  |
+| 6   | Write `WSREMOVE-SC-013`, then `File.ListOfWorkspace`, `OutboxTask.Drop`, and `Store.PurgeWorkspace`.                                                 | `WSREMOVE-FR-007`, `WSREMOVE-NFR-002`                                         | [x]  |
+| 7   | Write `WSREMOVE-SC-001` to `WSREMOVE-SC-012`, `WSREMOVE-SC-017`, `WSREMOVE-SC-022`, `WSREMOVE-SC-023`, then `Remover`, the route, and `api.yaml`.    | `WSREMOVE-FR-001` to `WSREMOVE-FR-006`, `WSREMOVE-FR-009`, `WSREMOVE-NFR-001` | [x]  |
+| 8   | Write `WSREMOVE-SC-015`, `WSREMOVE-SC-016`, `WSREMOVE-SC-018`, then `Transit.DestroyKey`, `DestroyHandler`, the policy of `testbao`, and the wiring. | `WSREMOVE-FR-008`, `WSREMOVE-FR-010`, `WSREMOVE-NFR-003`                      | [x]  |
 | 9   | Build the deck: the client, the permission, the dialog, the panel, and the list of the administrator. Run `WSREMOVE-SC-019` to `WSREMOVE-SC-021`.    | `WSREMOVE-FR-011` to `WSREMOVE-FR-014`                                        | [ ]  |
 | 10  | Before a release, set `deletion_allowed=true` on every workspace key of the instance, and add the policy of `WSREMOVE-DD-004`.                       | `WSREMOVE-FR-008`                                                             | [ ]  |
 

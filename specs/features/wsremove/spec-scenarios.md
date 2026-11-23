@@ -4,7 +4,7 @@ title: The scenarios of the removal of a workspace
 type: spec
 status: approved
 created: 2026-11-23
-updated: 2026-11-23
+updated: 2026-11-24
 approved_by: Temuri
 approved_on: 2026-11-23
 constrained_by: [TST, OWN, TRC]
@@ -119,10 +119,12 @@ table stays.
 two tables that a workspace scopes under the cascade of `OWN-005`: `probe.places`, and
 `probe.photos`, which names `probe.places` with no action and a row of
 `public.workspace_files` with `ON DELETE RESTRICT`. Workspace S disables every plugin.
-S holds a place, a file, and a photo of the place that names the file.
-**When** Nino removes S, from a transaction that sets no `app.workspace_id`.
+S holds a place, a file, and a photo of the place that names the file. A second
+workspace of Nino holds the same rows.
+**When** Nino removes S. Then a transaction that sets no `app.workspace_id` deletes the
+second workspace.
 **Then** the answer is 204. `probe.places`, `probe.photos`, and
-`public.workspace_files` hold no row of S.
+`public.workspace_files` hold no row of either workspace.
 
 ## `WSREMOVE-SC-011`
 
@@ -161,7 +163,7 @@ by S, with the key of `keyOf` and a `run_after` of T plus 16 minutes. It holds n
 ## `WSREMOVE-SC-014`
 
 **Verifies:** `WSREMOVE-FR-010`, `WSREMOVE-NFR-002`
-**Layer:** unit
+**Layer:** integration
 
 **Given** a due `file.purge` of a file of a removed workspace, and a stub file store
 that fails the delete three times, then succeeds.
@@ -204,7 +206,7 @@ file and a secret.
 ## `WSREMOVE-SC-018`
 
 **Verifies:** `WSREMOVE-FR-010`, `WSREMOVE-NFR-003`
-**Layer:** unit
+**Layer:** integration
 
 **Given** a due `secret_key.destroy`, and a stub `KeyDestroyer` that fails two times,
 then succeeds.
