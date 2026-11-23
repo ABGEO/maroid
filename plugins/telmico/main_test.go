@@ -107,7 +107,7 @@ func TestThePermissionsNameTheirLowestRoleAndTheirEntries(t *testing.T) {
 }
 
 // ELECACC-SC-019: The plugin declares the backfill command, and the migrations of its
-// three tables.
+// three tables. WSREMOVE-SC-024: It declares the cascade of their scope.
 func TestThePluginDeclaresTheCommandAndTheMigrations(t *testing.T) {
 	t.Parallel()
 
@@ -122,7 +122,22 @@ func TestThePluginDeclaresTheCommandAndTheMigrations(t *testing.T) {
 
 	entries, err := fs.ReadDir(migrations, ".")
 	require.NoError(t, err)
-	require.Len(t, entries, 6)
+
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+	}
+
+	require.Equal(t, []string{
+		"20261014120000_table_customer_assignments_create.down.sql",
+		"20261014120000_table_customer_assignments_create.up.sql",
+		"20261014120100_table_transactions_create.down.sql",
+		"20261014120100_table_transactions_create.up.sql",
+		"20261014120200_table_bills_create.down.sql",
+		"20261014120200_table_bills_create.up.sql",
+		"20261125110000_workspace_references_cascade.down.sql",
+		"20261125110000_workspace_references_cascade.up.sql",
+	}, names)
 }
 
 // ELECACC-SC-031: The remote exports the account, the transactions, and the bills.
