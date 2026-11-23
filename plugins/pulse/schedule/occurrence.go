@@ -2,6 +2,7 @@
 package schedule
 
 import (
+	"slices"
 	"time"
 
 	"github.com/abgeo/maroid/plugins/pulse/model"
@@ -42,6 +43,35 @@ func Latest(
 	}
 
 	return latest, found
+}
+
+// Upcoming answers the occurrences of the check-in on the local day of now, in the
+// zone, that lie after both now and floor, oldest first.
+func Upcoming(
+	checkin model.Checkin,
+	zone *time.Location,
+	floor time.Time,
+	now time.Time,
+) []time.Time {
+	local := now.In(zone)
+	day := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, zone)
+
+	if !checkin.Weekdays.Holds(day) {
+		return nil
+	}
+
+	var moments []time.Time
+
+	for _, clock := range checkin.LocalTimes {
+		moment := Resolve(day, clock, zone)
+		if moment.After(now) && moment.After(floor) {
+			moments = append(moments, moment)
+		}
+	}
+
+	slices.SortFunc(moments, time.Time.Compare)
+
+	return moments
 }
 
 // Resolve answers the moment of the local time on the local day of date, in the zone.

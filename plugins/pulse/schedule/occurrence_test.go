@@ -122,3 +122,81 @@ func TestADaylightChangeFiresOneMoment(t *testing.T) {
 
 	assert.Equal(t, []time.Time{utc("2027-10-31T00:30:00Z")}, fired)
 }
+
+type upcomingCase struct {
+	name    string
+	checkin model.Checkin
+	zone    *time.Location
+	floor   time.Time
+	now     time.Time
+	want    []time.Time
+}
+
+func upcomingCases() []upcomingCase {
+	berlin := pulsetest.Berlin()
+	berlinAt := func(month time.Month, day int, hour int) time.Time {
+		return time.Date(2027, month, day, hour, 0, 0, 0, berlin)
+	}
+
+	return []upcomingCase{
+		{
+			name:    "an occurrence that fired is no longer upcoming",
+			checkin: checkin(nil, model.Clock{Hour: 9}, model.Clock{Hour: 22}),
+			zone:    pulsetest.Tbilisi(),
+			floor:   pulsetest.At(24, 9, 0),
+			now:     pulsetest.At(24, 14, 0),
+			want:    []time.Time{utc("2026-11-24T18:00:00Z")},
+		},
+		{
+			name:    "a weekday that the check-in excludes holds none",
+			checkin: checkin([]int{7}, model.Clock{Hour: 18}),
+			zone:    pulsetest.Tbilisi(),
+			floor:   pulsetest.At(24, 8, 0),
+			now:     pulsetest.At(24, 14, 0),
+			want:    nil,
+		},
+		{
+			name:    "a pause until 18:00 hides 17:00",
+			checkin: checkin(nil, model.Clock{Hour: 22}, model.Clock{Hour: 17}),
+			zone:    pulsetest.Tbilisi(),
+			floor:   pulsetest.At(24, 18, 0),
+			now:     pulsetest.At(24, 14, 0),
+			want:    []time.Time{utc("2026-11-24T18:00:00Z")},
+		},
+		{
+			name:    "a skipped hour moves the occurrence forward",
+			checkin: checkin(nil, model.Clock{Hour: 2, Minute: 30}),
+			zone:    berlin,
+			floor:   berlinAt(time.March, 28, 0),
+			now:     berlinAt(time.March, 28, 1),
+			want:    []time.Time{utc("2027-03-28T01:30:00Z")},
+		},
+		{
+			name:    "a repeated hour answers its first moment once",
+			checkin: checkin(nil, model.Clock{Hour: 2, Minute: 30}),
+			zone:    berlin,
+			floor:   berlinAt(time.October, 31, 0),
+			now:     berlinAt(time.October, 31, 1),
+			want:    []time.Time{utc("2027-10-31T00:30:00Z")},
+		},
+	}
+}
+
+// PULSE-SC-054: Upcoming answers the occurrences later today that the tick will
+// still fire, after the floor, on a weekday of the check-in, through Resolve.
+func TestUpcomingAnswersTheRestOfTheDay(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range upcomingCases() {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := schedule.Upcoming(tc.checkin, tc.zone, tc.floor, tc.now)
+			for i := range got {
+				got[i] = got[i].UTC()
+			}
+
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
