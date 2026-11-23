@@ -41,9 +41,9 @@ func (c *Container) SecretCipher() (secret.Cipher, error) {
 	return c.transit()
 }
 
-// SecretKeyDestroyer initializes and returns the destruction of a key, over the
-// client of the cipher.
-func (c *Container) SecretKeyDestroyer() (secret.KeyDestroyer, error) {
+// SecretKeys initializes and returns the creation and the destruction of a key, over
+// the client of the cipher.
+func (c *Container) SecretKeys() (secret.Keys, error) {
 	return c.transit()
 }
 
