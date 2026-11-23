@@ -1,62 +1,54 @@
-package file
+package outbox
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"image"
-	"image/png"
-	"io"
 	"log/slog"
 	"runtime/debug"
 	"sync"
 	"time"
 
-	"github.com/gen2brain/h265/heic"
 	"github.com/jmoiron/sqlx"
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
-	"github.com/abgeo/maroid/apps/hub/internal/filestore"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
-	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/apps/hub/internal/repository"
 	"github.com/abgeo/maroid/apps/hub/internal/worker"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
 const (
-	workerName = "files"
+	workerName = "outbox"
 	// leaseLength holds a task away from another worker while one runs it. It passes
 	// the longest processing of an image many times over.
 	leaseLength = 5 * time.Minute
-	// taskTimeout ends a task before its lease lapses, so no other worker takes it
-	// while it still runs.
-	taskTimeout = 4 * time.Minute
-	retryBase   = 2 * time.Second
-	retryLimit  = 5 * time.Minute
-	fixtureEdge = 16
+	// defaultTaskTimeout ends a task before its lease lapses, so no other worker takes
+	// it while it still runs.
+	defaultTaskTimeout = 4 * time.Minute
+	retryBase          = 2 * time.Second
+	retryLimit         = 5 * time.Minute
 )
 
-// Objects is the part of the file store that the worker calls.
-type Objects interface {
-	Ping(ctx context.Context) error
-	Head(ctx context.Context, key string) (filestore.Object, error)
-	ReadRange(ctx context.Context, key string, limit int64) ([]byte, error)
-	Read(ctx context.Context, key string) (io.ReadCloser, error)
-	Write(ctx context.Context, key string, data []byte, contentType string) error
-	Delete(ctx context.Context, key string) error
-	DeletePrefix(ctx context.Context, prefix string) error
+var (
+	errNoHandler = errors.New("outbox: no handler serves the type")
+	errPanicked  = errors.New("outbox: the task panicked")
+)
+
+// Option changes a Worker at its creation.
+type Option func(*Worker)
+
+// WithTaskTimeout replaces the deadline of each task.
+func WithTaskTimeout(timeout time.Duration) Option {
+	return func(w *Worker) { w.taskTimeout = timeout }
 }
 
-// Worker runs the due tasks of the files: it processes an upload, checks an upload
-// that no completion reported, removes an upload that the variants replace, expires an
-// unclaimed file, and purges the bytes of a deleted one.
+// Worker leases the due tasks of the outbox, and runs each one through the handler of
+// its type, in the scope of its owner.
 type Worker struct {
 	logger       *slog.Logger
 	db           *sqlx.DB
-	objects      Objects
-	kinds        *registry.FileKindRegistry
+	handlers     *Registry
 	pollInterval time.Duration
 	concurrency  int
 	taskTimeout  time.Duration
@@ -65,40 +57,48 @@ type Worker struct {
 
 var _ worker.Worker = (*Worker)(nil)
 
-// NewWorker creates a Worker over the database, the file store, and the file kinds.
+// NewWorker creates a Worker over the database and the handlers.
 func NewWorker(
 	logger *slog.Logger,
 	db *sqlx.DB,
-	objects Objects,
-	kinds *registry.FileKindRegistry,
-	cfg config.Files,
+	handlers *Registry,
+	cfg config.Outbox,
+	options ...Option,
 ) *Worker {
-	return &Worker{
+	outboxWorker := &Worker{
 		logger: logger.With(
 			slog.String("component", "worker"),
 			slog.String("worker", workerName),
 		),
 		db:           db,
-		objects:      objects,
-		kinds:        kinds,
+		handlers:     handlers,
 		pollInterval: cfg.PollInterval,
 		concurrency:  cfg.Concurrency,
-		taskTimeout:  taskTimeout,
+		taskTimeout:  defaultTaskTimeout,
 	}
+
+	for _, option := range options {
+		option(outboxWorker)
+	}
+
+	return outboxWorker
 }
 
 // Name returns the worker type identifier.
 func (w *Worker) Name() string { return workerName }
 
-// Prepare checks that the file store answers and that each codec decodes and encodes
-// an image, so a broken build fails at the start and not at the first upload.
+// Prepare runs the check of each handler that has one, so a broken dependency fails at
+// the start and not at the first task.
 func (w *Worker) Prepare() error {
-	if err := w.objects.Ping(context.Background()); err != nil {
-		return fmt.Errorf("preparing the files worker: %w", err)
-	}
+	for _, handler := range w.handlers.All() {
+		preparer, ok := handler.(Preparer)
+		if !ok {
+			continue
+		}
 
-	if err := checkCodecs(); err != nil {
-		return fmt.Errorf("preparing the files worker: %w", err)
+		if err := preparer.Prepare(); err != nil {
+			return fmt.Errorf("preparing the handler of %s: %w", handler.Type(), err)
+		}
 	}
 
 	return nil
@@ -113,7 +113,7 @@ func (w *Worker) Start(ctx context.Context) error {
 	for {
 		full, err := w.cycle(ctx)
 		if err != nil {
-			w.logger.ErrorContext(ctx, "leasing the tasks of the files", slog.Any("error", err))
+			w.logger.ErrorContext(ctx, "leasing the tasks", slog.Any("error", err))
 		}
 
 		if full && ctx.Err() == nil {
@@ -141,7 +141,7 @@ func (w *Worker) Stop(ctx context.Context) error {
 	case <-ended:
 		return nil
 	case <-ctx.Done():
-		return fmt.Errorf("stopping the files worker: %w", ctx.Err())
+		return fmt.Errorf("stopping the outbox worker: %w", ctx.Err())
 	}
 }
 
@@ -159,12 +159,12 @@ func (w *Worker) cycle(ctx context.Context) (bool, error) {
 	w.cycles.Add(1)
 	defer w.cycles.Done()
 
-	var leased []model.FileTask
+	var leased []Task
 
 	err := w.inTx(ctx, func(tx *sqlx.Tx) error {
 		var err error
 
-		if leased, err = repository.NewFileTask(tx).
+		if leased, err = repository.NewOutboxTask(tx).
 			Lease(ctx, w.concurrency, leaseLength); err != nil {
 			return fmt.Errorf("leasing: %w", err)
 		}
@@ -172,7 +172,7 @@ func (w *Worker) cycle(ctx context.Context) (bool, error) {
 		return nil
 	})
 	if err != nil {
-		return false, fmt.Errorf("leasing the tasks of the files: %w", err)
+		return false, fmt.Errorf("leasing the tasks of the outbox: %w", err)
 	}
 
 	running := context.WithoutCancel(ctx)
@@ -189,18 +189,17 @@ func (w *Worker) cycle(ctx context.Context) (bool, error) {
 }
 
 // run performs one task, then removes it or releases it for a retry.
-func (w *Worker) run(ctx context.Context, task model.FileTask) {
+func (w *Worker) run(ctx context.Context, task Task) {
 	logger := w.logger.With(
 		slog.String("task_id", task.ID),
-		slog.String("action", string(task.Action)),
-		slog.String("file_id", task.FileID),
+		slog.String("type", task.Type),
 		slog.Int("attempts", task.Attempts),
 	)
 
 	err := w.attempt(ctx, logger, task)
 	if err == nil {
 		if doneErr := w.inTx(ctx, func(tx *sqlx.Tx) error {
-			return repository.NewFileTask(tx).Done(ctx, task.ID)
+			return repository.NewOutboxTask(tx).Done(ctx, task.ID)
 		}); doneErr != nil {
 			logger.ErrorContext(ctx, "removing a done task", slog.Any("error", doneErr))
 		}
@@ -211,27 +210,27 @@ func (w *Worker) run(ctx context.Context, task model.FileTask) {
 	delay := retryDelay(task.Attempts)
 	logger.WarnContext(
 		ctx,
-		"a task of a file failed",
+		"a task of the outbox failed",
 		slog.Any("error", err),
 		slog.Duration("retry_in", delay),
 	)
 
 	if retryErr := w.inTx(ctx, func(tx *sqlx.Tx) error {
-		return repository.NewFileTask(tx).
-			Retry(ctx, task.ID, delay, err.Error())
+		return repository.NewOutboxTask(tx).Retry(ctx, task.ID, delay, err.Error())
 	}); retryErr != nil {
 		logger.ErrorContext(ctx, "releasing a failed task", slog.Any("error", retryErr))
 	}
 }
 
-// attempt performs the task within its deadline. A panic, as a decoder may raise on
-// hostile bytes, fails the file of a process task and releases any other task.
-func (w *Worker) attempt(
-	ctx context.Context,
-	logger *slog.Logger,
-	task model.FileTask,
-) (err error) {
-	bounded, cancel := context.WithTimeout(ctx, w.taskTimeout)
+// attempt calls the handler of the task within its deadline, as the owner of the task.
+// A panic of the handler fails the attempt and leaves the worker running.
+func (w *Worker) attempt(ctx context.Context, logger *slog.Logger, task Task) (err error) {
+	handler, found := w.handlers.Get(task.Type)
+	if !found {
+		return fmt.Errorf("%w: %s", errNoHandler, task.Type)
+	}
+
+	bounded, cancel := context.WithTimeout(scopeOf(ctx, task), w.taskTimeout)
 	defer cancel()
 
 	defer func() {
@@ -242,37 +241,34 @@ func (w *Worker) attempt(
 
 		logger.ErrorContext(
 			ctx,
-			"a task of a file panicked",
+			"a task of the outbox panicked",
 			slog.Any("panic", recovered),
 			slog.String("stack", string(debug.Stack())),
 		)
 
 		err = fmt.Errorf("%w: %v", errPanicked, recovered)
-		if task.Action == model.FileTaskProcess {
-			err = w.fail(scopeOf(ctx, task), task, pluginapi.FileFailureDamaged, "")
-		}
 	}()
 
-	return w.perform(bounded, task)
+	if err = handler.Handle(bounded, task); err != nil {
+		return fmt.Errorf("handling %s: %w", task.Type, err)
+	}
+
+	return nil
 }
 
-func (w *Worker) perform(ctx context.Context, task model.FileTask) error {
-	scoped := scopeOf(ctx, task)
-
-	switch task.Action {
-	case model.FileTaskProcess:
-		return w.process(scoped, task)
-	case model.FileTaskCheck:
-		return w.check(scoped, task)
-	case model.FileTaskDiscardUpload:
-		return w.discardUpload(scoped, task)
-	case model.FileTaskExpire:
-		return w.expire(scoped, task)
-	case model.FileTaskPurge:
-		return w.purge(scoped, task)
-	default:
-		return fmt.Errorf("%w: %s", errUnknownAction, task.Action)
+// scopeOf answers a context that acts as the owner of the task, so the policy of a
+// scoped table shows the rows of the owner.
+func scopeOf(ctx context.Context, task Task) context.Context {
+	owner, found := task.Owner()
+	if !found {
+		return ctx
 	}
+
+	if owner.Scope == model.OutboxScopeUser {
+		return pluginapi.ContextWithActingUser(ctx, owner.ID)
+	}
+
+	return pluginapi.ContextWithActingWorkspace(ctx, owner.ID)
 }
 
 // inTx runs fn in a transaction with no scope, as the shared table of the tasks needs.
@@ -308,31 +304,3 @@ func retryDelay(attempts int) time.Duration {
 
 	return delay
 }
-
-// checkCodecs runs a small PNG and a small HEIC through the pipeline.
-func checkCodecs() error {
-	fixture := image.NewNRGBA(image.Rect(0, 0, fixtureEdge, fixtureEdge))
-
-	var pngBytes, heicBytes bytes.Buffer
-
-	if err := png.Encode(&pngBytes, fixture); err != nil {
-		return fmt.Errorf("encoding the PNG fixture: %w", err)
-	}
-
-	if err := heic.Encode(&heicBytes, fixture); err != nil {
-		return fmt.Errorf("encoding the HEIC fixture: %w", err)
-	}
-
-	for mediaType, data := range map[string][]byte{pngType: pngBytes.Bytes(), heicType: heicBytes.Bytes()} {
-		if _, err := variantsOf(data, mediaType); err != nil {
-			return fmt.Errorf("deriving the variants of the %s fixture: %w", mediaType, err)
-		}
-	}
-
-	return nil
-}
-
-var (
-	errUnknownAction = errors.New("file: unknown task action")
-	errPanicked      = errors.New("file: the task panicked")
-)

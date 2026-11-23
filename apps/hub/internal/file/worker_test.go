@@ -15,6 +15,7 @@ import (
 
 	"github.com/gen2brain/h265/heic"
 	"github.com/jmoiron/sqlx"
+	"github.com/mcuadros/go-defaults"
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/apps/hub/internal/config"
@@ -22,6 +23,7 @@ import (
 	"github.com/abgeo/maroid/apps/hub/internal/file"
 	"github.com/abgeo/maroid/apps/hub/internal/filestore"
 	"github.com/abgeo/maroid/apps/hub/internal/model"
+	"github.com/abgeo/maroid/apps/hub/internal/outbox"
 	"github.com/abgeo/maroid/apps/hub/internal/registry"
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
@@ -90,12 +92,13 @@ func (b *storeBench) cycle(t *testing.T) {
 }
 
 // due makes the task of the file with the action due now, as a later clock would.
-func (b *storeBench) due(t *testing.T, fileID string, action model.FileTaskAction) {
+func (b *storeBench) due(t *testing.T, fileID, taskType string) {
 	t.Helper()
 
 	result, err := b.db.ExecContext(t.Context(),
-		`UPDATE public.file_tasks SET run_after = now() WHERE file_id = $1 AND action = $2;`,
-		fileID, action)
+		`UPDATE public.outbox_tasks SET run_after = now()
+		WHERE payload ->> 'file_id' = $1 AND type = $2;`,
+		fileID, taskType)
 	require.NoError(t, err)
 
 	count, err := result.RowsAffected()
@@ -110,7 +113,8 @@ func (b *storeBench) actionsOf(t *testing.T, fileID string) []string {
 
 	require.NoError(t, b.db.Select(
 		&actions,
-		`SELECT action FROM public.file_tasks WHERE file_id = $1 AND run_after <= now() ORDER BY action;`,
+		`SELECT type FROM public.outbox_tasks
+		WHERE payload ->> 'file_id' = $1 AND run_after <= now() ORDER BY type;`,
 		fileID,
 	))
 
@@ -164,7 +168,7 @@ func TestACompletedPhotoBecomesReady(t *testing.T) {
 	key := bench.workspaceKey(held.ID)
 	require.True(t, bench.holds(t, key+thumbnailObject))
 	require.True(t, bench.holds(t, key+displayObject))
-	require.Equal(t, []string{string(model.FileTaskDiscardUpload)}, bench.actionsOf(t, held.ID))
+	require.Equal(t, []string{file.TaskDiscardUpload}, bench.actionsOf(t, held.ID))
 
 	bench.cycle(t)
 	require.False(t, bench.holds(t, key+uploadObject))
@@ -178,9 +182,9 @@ func TestTheCheckProcessesAnUploadWithNoCompletion(t *testing.T) {
 	bench := storeUnderTest(t)
 	held := bench.uploaded(t, photoKind, "cat.jpg", jpegType, jpegWith(t, textured(640, 480), 1))
 
-	bench.due(t, held.ID, model.FileTaskCheck)
+	bench.due(t, held.ID, file.TaskCheck)
 	bench.cycle(t)
-	require.Equal(t, []string{string(model.FileTaskProcess)}, bench.actionsOf(t, held.ID))
+	require.Equal(t, []string{file.TaskProcess}, bench.actionsOf(t, held.ID))
 
 	bench.cycle(t)
 	require.Equal(t, pluginapi.FileStateReady, bench.get(t, probePlugin, held.ID).State)
@@ -226,7 +230,7 @@ func TestBrokenAndAbsentBytesFail(t *testing.T) {
 	require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, cut.ID))
 
 	never := bench.start(t, probePlugin, photoKind, "cat.jpg", jpegType)
-	bench.due(t, never.ID, model.FileTaskCheck)
+	bench.due(t, never.ID, file.TaskCheck)
 
 	bench.cycle(t)
 
@@ -281,7 +285,7 @@ func TestARepeatedUploadGoesAway(t *testing.T) {
 	require.False(t, bench.holds(t, key+uploadObject))
 
 	bench.put(t, started.Upload, data)
-	bench.due(t, started.File.ID, model.FileTaskCheck)
+	bench.due(t, started.File.ID, file.TaskCheck)
 	bench.cycle(t)
 	bench.cycle(t)
 
@@ -319,7 +323,7 @@ func TestAnUnclaimedFileExpires(t *testing.T) {
 	bench.cycle(t)
 	bench.cycle(t)
 
-	bench.due(t, held.ID, model.FileTaskExpire)
+	bench.due(t, held.ID, file.TaskExpire)
 	bench.cycle(t)
 	bench.cycle(t)
 
@@ -364,11 +368,7 @@ func TestAFailedTaskWaitsForARetry(t *testing.T) {
 	bench.server.Stop(t)
 	bench.cycle(t)
 
-	var task model.FileTask
-
-	require.NoError(t, bench.db.Get(&task, `SELECT id, file_id, scope, owner_id, object_key,
-		action, run_after, locked_until, attempts, last_error, created_at
-		FROM public.file_tasks WHERE file_id = $1 AND action = 'process';`, held.ID))
+	task := bench.taskOf(t, held.ID, file.TaskProcess)
 	require.Equal(t, 1, task.Attempts)
 	require.Nil(t, task.LockedUntil)
 	require.NotNil(t, task.LastError)
@@ -411,23 +411,51 @@ func (stallingObjects) Read(ctx context.Context, _ string) (io.ReadCloser, error
 func (b *storeBench) workerOver(
 	objects file.Objects,
 	kinds *registry.FileKindRegistry,
-	cfg config.Files,
-) *file.Worker {
-	return file.NewWorker(slog.New(slog.DiscardHandler), b.db, objects, kinds, cfg)
+	cfg config.Outbox,
+	options ...outbox.Option,
+) *outbox.Worker {
+	return workerOf(b.db, objects, kinds, cfg, options...)
+}
+
+// workerOf answers the worker of the outbox with the handlers of the files alone.
+func workerOf(
+	db *sqlx.DB,
+	objects file.Objects,
+	kinds *registry.FileKindRegistry,
+	cfg config.Outbox,
+	options ...outbox.Option,
+) *outbox.Worker {
+	logger := slog.New(slog.DiscardHandler)
+	handlers := outbox.NewRegistry()
+
+	if err := handlers.Register(file.NewHandlers(logger, db, objects, kinds).All()...); err != nil {
+		panic(err)
+	}
+
+	return outbox.NewWorker(logger, db, handlers, cfg, options...)
+}
+
+// outboxConfig answers the configuration of the outbox with its defaults.
+func outboxConfig() config.Outbox {
+	var cfg config.Outbox
+
+	defaults.SetDefaults(&cfg)
+
+	return cfg
 }
 
 func (b *storeBench) taskOf(
 	t *testing.T,
 	fileID string,
-	action model.FileTaskAction,
-) model.FileTask {
+	taskType string,
+) model.OutboxTask {
 	t.Helper()
 
-	var task model.FileTask
+	var task model.OutboxTask
 
-	require.NoError(t, b.db.Get(&task, `SELECT id, file_id, scope, owner_id, object_key,
-		action, run_after, locked_until, attempts, last_error, created_at
-		FROM public.file_tasks WHERE file_id = $1 AND action = $2;`, fileID, action))
+	require.NoError(t, b.db.Get(&task, `SELECT id, type, payload, owner_scope, owner_id,
+		dedupe_key, run_after, locked_until, attempts, last_error, created_at
+		FROM public.outbox_tasks WHERE payload ->> 'file_id' = $1 AND type = $2;`, fileID, taskType))
 
 	return task
 }
@@ -441,7 +469,7 @@ func TestAPanicOfATaskStaysInTheTask(t *testing.T) {
 	worker := bench.workerOver(
 		hostileObjects{bench.objects},
 		kindsUnderTest(t),
-		bench.server.Config(),
+		outboxConfig(),
 	)
 
 	held := bench.uploaded(t, photoKind, "cat.jpg", jpegType, jpegWith(t, textured(640, 480), 1))
@@ -455,7 +483,7 @@ func TestAPanicOfATaskStaysInTheTask(t *testing.T) {
 	require.NoError(t, bench.deleteFiles(t, probePlugin, held.ID))
 	require.NoError(t, worker.Cycle(t.Context()))
 
-	purge := bench.taskOf(t, held.ID, model.FileTaskPurge)
+	purge := bench.taskOf(t, held.ID, file.TaskPurge)
 	require.Equal(t, 1, purge.Attempts)
 	require.Nil(t, purge.LockedUntil)
 	require.NotNil(t, purge.LastError)
@@ -471,9 +499,9 @@ func TestATaskStopsAtItsDeadline(t *testing.T) {
 	worker := bench.workerOver(
 		stallingObjects{bench.objects},
 		kindsUnderTest(t),
-		bench.server.Config(),
+		outboxConfig(),
+		outbox.WithTaskTimeout(200*time.Millisecond),
 	)
-	worker.SetTaskTimeout(200 * time.Millisecond)
 
 	held := bench.uploaded(t, photoKind, "cat.jpg", jpegType, jpegWith(t, textured(640, 480), 1))
 	require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, held.ID))
@@ -483,7 +511,7 @@ func TestATaskStopsAtItsDeadline(t *testing.T) {
 	require.NoError(t, worker.Cycle(t.Context()))
 	require.Less(t, time.Since(began), 5*time.Second)
 
-	task := bench.taskOf(t, held.ID, model.FileTaskProcess)
+	task := bench.taskOf(t, held.ID, file.TaskProcess)
 	require.Equal(t, 1, task.Attempts)
 	require.Nil(t, task.LockedUntil)
 	require.NotNil(t, task.LastError)
@@ -496,7 +524,7 @@ func TestAFullLeaseLeasesAgainAtOnce(t *testing.T) {
 	t.Parallel()
 
 	bench := storeUnderTest(t)
-	cfg := bench.server.Config()
+	cfg := outboxConfig()
 	cfg.PollInterval = time.Hour
 	cfg.Concurrency = 1
 
@@ -535,14 +563,14 @@ func TestAFileOfAnAbsentKindFailsAtTheExpiry(t *testing.T) {
 	t.Parallel()
 
 	bench := storeUnderTest(t)
-	worker := bench.workerOver(bench.objects, registry.NewFileKindRegistry(), bench.server.Config())
+	worker := bench.workerOver(bench.objects, registry.NewFileKindRegistry(), outboxConfig())
 
 	held := bench.uploaded(t, photoKind, "cat.jpg", jpegType, jpegWith(t, textured(640, 480), 1))
 	require.NoError(t, bench.store.Complete(bench.in(t), probePlugin, held.ID))
 	require.NoError(t, worker.Cycle(t.Context()))
 
 	require.Equal(t, pluginapi.FileStatePending, bench.get(t, probePlugin, held.ID).State)
-	require.Equal(t, 1, bench.taskOf(t, held.ID, model.FileTaskProcess).Attempts)
+	require.Equal(t, 1, bench.taskOf(t, held.ID, file.TaskProcess).Attempts)
 
 	require.NoError(t, database.WithScopeTx(bench.in(t), bench.db, func(tx *sqlx.Tx) error {
 		_, err := tx.ExecContext(t.Context(), `UPDATE public.workspace_files
@@ -552,7 +580,7 @@ func TestAFileOfAnAbsentKindFailsAtTheExpiry(t *testing.T) {
 		return nil
 	}))
 
-	bench.due(t, held.ID, model.FileTaskProcess)
+	bench.due(t, held.ID, file.TaskProcess)
 	require.NoError(t, worker.Cycle(t.Context()))
 
 	state, failure, _ := bench.failure(t, held.ID)
@@ -573,7 +601,7 @@ func TestTwentyPhonePhotosReachReadyInTime(t *testing.T) {
 	)
 
 	bench := storeUnderTest(t)
-	cfg := bench.server.Config()
+	cfg := outboxConfig()
 	require.Equal(t, 2, cfg.Concurrency)
 	require.Equal(t, 2*time.Second, cfg.PollInterval)
 

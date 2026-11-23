@@ -21,36 +21,26 @@ import (
 // for a load of the plugin until the file is as old as an unclaimed file can be.
 var errKindAbsent = errors.New("file: the file kind is not registered")
 
-// scopeOf answers a context that acts as the owner of the file of the task, so the
-// policy of its table shows the row.
-func scopeOf(ctx context.Context, task model.FileTask) context.Context {
-	if task.Scope == pluginapi.FileScopeUser {
-		return pluginapi.ContextWithActingUser(ctx, task.OwnerID)
-	}
-
-	return pluginapi.ContextWithActingWorkspace(ctx, task.OwnerID)
-}
-
 // process checks the content of the upload against the kind, and makes the file
 // ready or failed. A ready image gets its variants, and its upload goes away.
-func (w *Worker) process(ctx context.Context, task model.FileTask) error {
-	file, err := w.find(ctx, task)
+func (h *Handlers) process(ctx context.Context, task fileTask) error {
+	file, err := h.find(ctx, task)
 	if err != nil || file == nil || isSettled(file) {
 		return err
 	}
 
-	held, found := w.kinds.Get(file.PluginID, file.Kind)
+	held, found := h.kinds.Get(file.PluginID, file.Kind)
 	if !found {
-		return w.kindAbsent(ctx, task, file)
+		return h.kindAbsent(ctx, task, file)
 	}
 
-	if err = w.startProcessing(ctx, task); err != nil {
+	if err = h.startProcessing(ctx, task); err != nil {
 		return err
 	}
 
-	head, err := w.objects.ReadRange(ctx, task.ObjectKey+uploadObject, sniffLength)
+	head, err := h.objects.ReadRange(ctx, task.ObjectKey+uploadObject, sniffLength)
 	if errors.Is(err, filestore.ErrObjectAbsent) {
-		return w.fail(ctx, task, pluginapi.FileFailureBytesAbsent, "")
+		return h.fail(ctx, task, pluginapi.FileFailureBytesAbsent, "")
 	}
 
 	if err != nil {
@@ -59,28 +49,28 @@ func (w *Worker) process(ctx context.Context, task model.FileTask) error {
 
 	mediaType, accepted := sniff(head, held.Kind.MediaTypes)
 	if !accepted {
-		return w.fail(ctx, task, pluginapi.FileFailureMediaType, mediaType)
+		return h.fail(ctx, task, pluginapi.FileFailureMediaType, mediaType)
 	}
 
 	if !held.Kind.Image {
-		return w.ready(ctx, file, model.FileReady{MediaType: mediaType}, false)
+		return h.ready(ctx, file, model.FileReady{MediaType: mediaType}, false)
 	}
 
-	return w.processImage(ctx, task, file, held, mediaType)
+	return h.processImage(ctx, task, file, held, mediaType)
 }
 
 // kindAbsent leaves the task for a retry while a load of the plugin may still declare
 // the kind, and fails the file once it is as old as an unclaimed file can be.
-func (w *Worker) kindAbsent(ctx context.Context, task model.FileTask, file *model.File) error {
+func (h *Handlers) kindAbsent(ctx context.Context, task fileTask, file *model.File) error {
 	if time.Since(file.CreatedAt) < unclaimedLife {
 		return fmt.Errorf("%w: %s", errKindAbsent, file.Kind)
 	}
 
-	return w.fail(ctx, task, pluginapi.FileFailureMediaType, "")
+	return h.fail(ctx, task, pluginapi.FileFailureMediaType, "")
 }
 
-func (w *Worker) startProcessing(ctx context.Context, task model.FileTask) error {
-	return w.inScope(ctx, func(files *repository.File, _ *repository.FileTask) error {
+func (h *Handlers) startProcessing(ctx context.Context, task fileTask) error {
+	return h.inScope(ctx, func(files *repository.File, _ *repository.OutboxTask) error {
 		if _, err := files.StartProcessing(ctx, task.Scope, task.FileID); err != nil {
 			return fmt.Errorf("moving the file to processing: %w", err)
 		}
@@ -89,23 +79,23 @@ func (w *Worker) startProcessing(ctx context.Context, task model.FileTask) error
 	})
 }
 
-func (w *Worker) processImage(
+func (h *Handlers) processImage(
 	ctx context.Context,
-	task model.FileTask,
+	task fileTask,
 	file *model.File,
 	held registry.FileKind,
 	mediaType string,
 ) error {
 	key := keyOf(file)
 
-	data, err := w.readUpload(ctx, key, held.Kind.MaxSize)
+	data, err := h.readUpload(ctx, key, held.Kind.MaxSize)
 	if err != nil {
 		return err
 	}
 
 	variants, err := variantsOf(data, mediaType)
 	if errors.Is(err, errDamaged) {
-		return w.fail(ctx, task, pluginapi.FileFailureDamaged, mediaType)
+		return h.fail(ctx, task, pluginapi.FileFailureDamaged, mediaType)
 	}
 
 	if err != nil {
@@ -116,20 +106,20 @@ func (w *Worker) processImage(
 		thumbnailObject: variants.thumbnail,
 		displayObject:   variants.display,
 	} {
-		if err = w.objects.Write(ctx, key+object, content, jpegType); err != nil {
+		if err = h.objects.Write(ctx, key+object, content, jpegType); err != nil {
 			return fmt.Errorf("writing a variant: %w", err)
 		}
 	}
 
-	return w.ready(ctx, file, model.FileReady{
+	return h.ready(ctx, file, model.FileReady{
 		MediaType: mediaType,
 		Width:     &variants.width,
 		Height:    &variants.height,
 	}, true)
 }
 
-func (w *Worker) readUpload(ctx context.Context, key string, maxSize int64) ([]byte, error) {
-	body, err := w.objects.Read(ctx, key+uploadObject)
+func (h *Handlers) readUpload(ctx context.Context, key string, maxSize int64) ([]byte, error) {
+	body, err := h.objects.Read(ctx, key+uploadObject)
 	if err != nil {
 		return nil, fmt.Errorf("reading the upload: %w", err)
 	}
@@ -146,17 +136,17 @@ func (w *Worker) readUpload(ctx context.Context, key string, maxSize int64) ([]b
 
 // check processes a pending file whose upload exists, and fails one whose upload never
 // came. It removes an upload that a client sent again after an image became ready.
-func (w *Worker) check(ctx context.Context, task model.FileTask) error {
-	file, err := w.find(ctx, task)
+func (h *Handlers) check(ctx context.Context, task fileTask) error {
+	file, err := h.find(ctx, task)
 	if err != nil || file == nil {
 		return err
 	}
 
 	switch file.State {
 	case pluginapi.FileStatePending:
-		return w.checkPending(ctx, task)
+		return h.checkPending(ctx, task)
 	case pluginapi.FileStateReady:
-		return w.checkReady(ctx, task, file)
+		return h.checkReady(ctx, task, file)
 	case pluginapi.FileStateProcessing, pluginapi.FileStateFailed:
 		return nil
 	default:
@@ -164,18 +154,18 @@ func (w *Worker) check(ctx context.Context, task model.FileTask) error {
 	}
 }
 
-func (w *Worker) checkPending(ctx context.Context, task model.FileTask) error {
-	present, err := w.uploadPresent(ctx, task)
+func (h *Handlers) checkPending(ctx context.Context, task fileTask) error {
+	present, err := h.uploadPresent(ctx, task)
 	if err != nil {
 		return err
 	}
 
 	if !present {
-		return w.fail(ctx, task, pluginapi.FileFailureBytesAbsent, "")
+		return h.fail(ctx, task, pluginapi.FileFailureBytesAbsent, "")
 	}
 
-	return w.inScope(ctx, func(_ *repository.File, tasks *repository.FileTask) error {
-		if err := tasks.EnqueueOnce(ctx, draftOf(task, model.FileTaskProcess)); err != nil {
+	return h.inScope(ctx, func(_ *repository.File, tasks *repository.OutboxTask) error {
+		if err := tasks.Enqueue(ctx, draftOf(task, TaskProcess)); err != nil {
 			return fmt.Errorf("queuing the processing: %w", err)
 		}
 
@@ -183,22 +173,22 @@ func (w *Worker) checkPending(ctx context.Context, task model.FileTask) error {
 	})
 }
 
-func (w *Worker) checkReady(ctx context.Context, task model.FileTask, file *model.File) error {
-	held, found := w.kinds.Get(file.PluginID, file.Kind)
+func (h *Handlers) checkReady(ctx context.Context, task fileTask, file *model.File) error {
+	held, found := h.kinds.Get(file.PluginID, file.Kind)
 	if !found || !held.Kind.Image {
 		return nil
 	}
 
-	present, err := w.uploadPresent(ctx, task)
+	present, err := h.uploadPresent(ctx, task)
 	if err != nil || !present {
 		return err
 	}
 
-	return w.enqueue(ctx, draftOf(task, model.FileTaskDiscardUpload))
+	return h.enqueue(ctx, draftOf(task, TaskDiscardUpload))
 }
 
-func (w *Worker) uploadPresent(ctx context.Context, task model.FileTask) (bool, error) {
-	_, err := w.objects.Head(ctx, task.ObjectKey+uploadObject)
+func (h *Handlers) uploadPresent(ctx context.Context, task fileTask) (bool, error) {
+	_, err := h.objects.Head(ctx, task.ObjectKey+uploadObject)
 
 	switch {
 	case errors.Is(err, filestore.ErrObjectAbsent):
@@ -210,18 +200,18 @@ func (w *Worker) uploadPresent(ctx context.Context, task model.FileTask) (bool, 
 	}
 }
 
-func (w *Worker) enqueue(ctx context.Context, draft model.FileTaskDraft) error {
-	return w.inScope(ctx, func(_ *repository.File, tasks *repository.FileTask) error {
+func (h *Handlers) enqueue(ctx context.Context, draft model.OutboxDraft) error {
+	return h.inScope(ctx, func(_ *repository.File, tasks *repository.OutboxTask) error {
 		if err := tasks.Enqueue(ctx, draft); err != nil {
-			return fmt.Errorf("queuing the task %s: %w", draft.Action, err)
+			return fmt.Errorf("queuing the task %s: %w", draft.Type, err)
 		}
 
 		return nil
 	})
 }
 
-func (w *Worker) discardUpload(ctx context.Context, task model.FileTask) error {
-	if err := w.objects.Delete(ctx, task.ObjectKey+uploadObject); err != nil {
+func (h *Handlers) discardUpload(ctx context.Context, task fileTask) error {
+	if err := h.objects.Delete(ctx, task.ObjectKey+uploadObject); err != nil {
 		return fmt.Errorf("removing the upload: %w", err)
 	}
 
@@ -230,8 +220,8 @@ func (w *Worker) discardUpload(ctx context.Context, task model.FileTask) error {
 
 // expire removes an unclaimed file and queues the purge of its bytes in one
 // transaction. A referenced file takes a claim and stays.
-func (w *Worker) expire(ctx context.Context, task model.FileTask) error {
-	return w.inScope(ctx, func(files *repository.File, tasks *repository.FileTask) error {
+func (h *Handlers) expire(ctx context.Context, task fileTask) error {
+	return h.inScope(ctx, func(files *repository.File, tasks *repository.OutboxTask) error {
 		removed, err := files.Expire(ctx, task.Scope, task.FileID)
 		if err != nil {
 			return fmt.Errorf("expiring the file: %w", err)
@@ -241,7 +231,7 @@ func (w *Worker) expire(ctx context.Context, task model.FileTask) error {
 			return nil
 		}
 
-		if err = tasks.Enqueue(ctx, draftOf(task, model.FileTaskPurge)); err != nil {
+		if err = tasks.Enqueue(ctx, draftOf(task, TaskPurge)); err != nil {
 			return fmt.Errorf("queuing the purge: %w", err)
 		}
 
@@ -249,18 +239,18 @@ func (w *Worker) expire(ctx context.Context, task model.FileTask) error {
 	})
 }
 
-func (w *Worker) purge(ctx context.Context, task model.FileTask) error {
-	if err := w.objects.DeletePrefix(ctx, task.ObjectKey); err != nil {
+func (h *Handlers) purge(ctx context.Context, task fileTask) error {
+	if err := h.objects.DeletePrefix(ctx, task.ObjectKey); err != nil {
 		return fmt.Errorf("purging the objects of a file: %w", err)
 	}
 
 	return nil
 }
 
-func (w *Worker) find(ctx context.Context, task model.FileTask) (*model.File, error) {
+func (h *Handlers) find(ctx context.Context, task fileTask) (*model.File, error) {
 	var file *model.File
 
-	err := w.inScope(ctx, func(files *repository.File, _ *repository.FileTask) error {
+	err := h.inScope(ctx, func(files *repository.File, _ *repository.OutboxTask) error {
 		var err error
 
 		if file, err = files.Find(ctx, task.Scope, task.FileID); err != nil {
@@ -276,13 +266,13 @@ func (w *Worker) find(ctx context.Context, task model.FileTask) (*model.File, er
 	return file, nil
 }
 
-func (w *Worker) fail(
+func (h *Handlers) fail(
 	ctx context.Context,
-	task model.FileTask,
+	task fileTask,
 	failure pluginapi.FileFailure,
 	mediaType string,
 ) error {
-	return w.inScope(ctx, func(files *repository.File, _ *repository.FileTask) error {
+	return h.inScope(ctx, func(files *repository.File, _ *repository.OutboxTask) error {
 		if _, err := files.MarkFailed(
 			ctx,
 			task.Scope,
@@ -299,13 +289,13 @@ func (w *Worker) fail(
 
 // ready marks the file ready, and queues the removal of its upload in the same
 // transaction when the variants replace it.
-func (w *Worker) ready(
+func (h *Handlers) ready(
 	ctx context.Context,
 	file *model.File,
 	facts model.FileReady,
 	discard bool,
 ) error {
-	return w.inScope(ctx, func(files *repository.File, tasks *repository.FileTask) error {
+	return h.inScope(ctx, func(files *repository.File, tasks *repository.OutboxTask) error {
 		moved, err := files.MarkReady(ctx, file.Scope, file.ID, facts)
 		if err != nil {
 			return fmt.Errorf("marking the file ready: %w", err)
@@ -315,7 +305,7 @@ func (w *Worker) ready(
 			return nil
 		}
 
-		if err = tasks.Enqueue(ctx, taskOf(file, model.FileTaskDiscardUpload, 0)); err != nil {
+		if err = tasks.Enqueue(ctx, taskOf(file, TaskDiscardUpload, 0)); err != nil {
 			return fmt.Errorf("queuing the removal of the upload: %w", err)
 		}
 
@@ -323,12 +313,12 @@ func (w *Worker) ready(
 	})
 }
 
-func (w *Worker) inScope(
+func (h *Handlers) inScope(
 	ctx context.Context,
-	fn func(files *repository.File, tasks *repository.FileTask) error,
+	fn func(files *repository.File, tasks *repository.OutboxTask) error,
 ) error {
-	err := database.WithScopeTx(ctx, w.db, func(tx *sqlx.Tx) error {
-		return fn(repository.NewFile(tx), repository.NewFileTask(tx))
+	err := database.WithScopeTx(ctx, h.db, func(tx *sqlx.Tx) error {
+		return fn(repository.NewFile(tx), repository.NewOutboxTask(tx))
 	})
 	if err != nil {
 		return fmt.Errorf("acting as the owner of the file: %w", err)
@@ -342,13 +332,7 @@ func isSettled(file *model.File) bool {
 	return file.State == pluginapi.FileStateReady || file.State == pluginapi.FileStateFailed
 }
 
-// draftOf answers a due task of the action for the file of the task.
-func draftOf(task model.FileTask, action model.FileTaskAction) model.FileTaskDraft {
-	return model.FileTaskDraft{
-		FileID:    task.FileID,
-		Scope:     task.Scope,
-		OwnerID:   task.OwnerID,
-		ObjectKey: task.ObjectKey,
-		Action:    action,
-	}
+// draftOf answers a due task of the type for the file of the task.
+func draftOf(task fileTask, taskType string) model.OutboxDraft {
+	return draftFor(task, taskType, 0)
 }

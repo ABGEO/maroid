@@ -114,9 +114,9 @@ func (s *Store) Start(ctx context.Context, pluginID string, input StartInput) (S
 			return fmt.Errorf("writing the file: %w", err)
 		}
 
-		return repository.NewFileTask(tx).Enqueue(ctx,
-			taskOf(created, model.FileTaskCheck, s.uploadTTL+checkMargin),
-			taskOf(created, model.FileTaskExpire, unclaimedLife),
+		return repository.NewOutboxTask(tx).Enqueue(ctx,
+			taskOf(created, TaskCheck, s.uploadTTL+checkMargin),
+			taskOf(created, TaskExpire, unclaimedLife),
 		)
 	})
 	if err != nil {
@@ -157,8 +157,7 @@ func (s *Store) Complete(ctx context.Context, pluginID string, id string) error 
 			return nil
 		}
 
-		return repository.NewFileTask(tx).
-			EnqueueOnce(ctx, taskOf(&listed[0], model.FileTaskProcess, 0))
+		return repository.NewOutboxTask(tx).Enqueue(ctx, taskOf(&listed[0], TaskProcess, 0))
 	})
 	if err != nil {
 		return fmt.Errorf("completing an upload: %w", err)
@@ -246,7 +245,7 @@ func (s *Store) Claim(ctx context.Context, pluginID string, id string) error {
 // not hold.
 func (s *Store) Delete(ctx context.Context, tx *sqlx.Tx, pluginID string, ids ...string) error {
 	files := repository.NewFile(tx)
-	tasks := repository.NewFileTask(tx)
+	tasks := repository.NewOutboxTask(tx)
 
 	for _, id := range ids {
 		if !isUUID(id) {
@@ -262,7 +261,7 @@ func (s *Store) Delete(ctx context.Context, tx *sqlx.Tx, pluginID string, ids ..
 			return fmt.Errorf("deleting the file %q: %w", id, pluginapi.ErrFileAbsent)
 		}
 
-		if err = tasks.Enqueue(ctx, taskOf(deleted, model.FileTaskPurge, 0)); err != nil {
+		if err = tasks.Enqueue(ctx, taskOf(deleted, TaskPurge, 0)); err != nil {
 			return fmt.Errorf("queuing the purge of the file %q: %w", id, err)
 		}
 	}
@@ -368,19 +367,13 @@ func keyOf(file *model.File) string {
 	return objectKey(file.PluginID, file.Scope, file.OwnerID, file.ID)
 }
 
-func taskOf(
-	file *model.File,
-	action model.FileTaskAction,
-	delay time.Duration,
-) model.FileTaskDraft {
-	return model.FileTaskDraft{
+func taskOf(file *model.File, taskType string, delay time.Duration) model.OutboxDraft {
+	return draftFor(fileTask{
 		FileID:    file.ID,
+		ObjectKey: keyOf(file),
 		Scope:     file.Scope,
 		OwnerID:   file.OwnerID,
-		ObjectKey: keyOf(file),
-		Action:    action,
-		Delay:     delay,
-	}
+	}, taskType, delay)
 }
 
 func isUUID(value string) bool {
