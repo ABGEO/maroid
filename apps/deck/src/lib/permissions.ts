@@ -3,6 +3,7 @@ import type { Role, Workspace } from '$lib/api';
 /** The permissions of the hub that a page of the deck checks. */
 export const PERMISSION = {
 	workspaceWrite: 'workspace.write',
+	workspaceRemove: 'workspace.remove',
 	membersWrite: 'members.write',
 	pluginsWrite: 'plugins.write',
 	settingsWrite: 'settings.write',

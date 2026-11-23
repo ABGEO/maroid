@@ -29,6 +29,9 @@ export const workspaces = {
 	rename: (workspaceId: string, name: string, ifMatch?: string): Promise<Workspace | null> =>
 		client.patch<Workspace>(path(workspaceId), { name }, { ifMatch }),
 
+	remove: (workspaceId: string): Promise<void> =>
+		client.del<void>(path(workspaceId)).then(() => undefined),
+
 	changeRole: (workspaceId: string, userId: string, role: Role): Promise<Member | null> =>
 		client.patch<Member>(`${path(workspaceId)}/members/${encodeURIComponent(userId)}`, { role }),
 

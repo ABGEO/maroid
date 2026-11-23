@@ -32,6 +32,7 @@ type FileRepository interface {
 		draft model.FileDraft,
 	) (*model.File, error)
 	List(ctx context.Context, pluginID string, ids []string) ([]model.File, error)
+	ListOfWorkspace(ctx context.Context) ([]model.File, error)
 	Claim(ctx context.Context, pluginID string, id string) (bool, error)
 	Delete(ctx context.Context, pluginID string, id string) (*model.File, error)
 	Find(ctx context.Context, scope pluginapi.FileScope, id string) (*model.File, error)
@@ -151,6 +152,23 @@ func (r *File) List(ctx context.Context, pluginID string, ids []string) ([]model
 
 	if err := r.tx.SelectContext(ctx, &entities, query, pluginID, ids); err != nil {
 		return nil, fmt.Errorf("listing the Files: %w", err)
+	}
+
+	return entities, nil
+}
+
+// ListOfWorkspace retrieves every file of the acting workspace, of every plugin.
+func (r *File) ListOfWorkspace(ctx context.Context) ([]model.File, error) {
+	table, err := fileTableOf(pluginapi.FileScopeWorkspace)
+	if err != nil {
+		return nil, err
+	}
+
+	entities := []model.File{}
+
+	if err = r.tx.SelectContext(ctx, &entities,
+		`SELECT `+table.columns()+` FROM `+table.name+` ORDER BY id;`); err != nil {
+		return nil, fmt.Errorf("listing the Files of the workspace: %w", err)
 	}
 
 	return entities, nil

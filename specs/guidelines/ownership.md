@@ -71,11 +71,14 @@ A table that a workspace scopes carries this column:
 ```sql
 workspace_id UUID NOT NULL
     DEFAULT NULLIF(current_setting('app.workspace_id', true), '')::uuid
-    REFERENCES public.workspaces (id)
+    REFERENCES public.workspaces (id) ON DELETE CASCADE
 ```
 
 A table that a user scopes carries the same column for `user_id`, with the setting
 `app.user_id` and the reference `public.users (id)`.
+
+A column of a workspace cascades, so the removal of a workspace deletes its rows. A
+column of a user cascades on nothing, because `OWN-002` deletes no user record.
 
 An insert names neither column. The session gives the value, and each reference is
 an exception to `DAT-003`. A unique constraint starts with the scope column.
@@ -140,8 +143,9 @@ A workspace is one row in `public.workspaces`. It holds the records of a plugin
 that its members share. Every workspace is of one kind. The hub creates the
 first workspace of a user in the same transaction as the user record, with that
 user as its manager. Any active user creates a further workspace and becomes its
-first manager. A user with no workspace reaches no plugin. The hub deletes no
-workspace, because a delete orphans every row that names it.
+first manager. A user with no workspace reaches no plugin. The hub deletes a
+workspace only when a manager or an administrator removes it, and the delete takes
+every row that names the workspace with it. See `OWN-005`.
 
 ## OWN-011
 

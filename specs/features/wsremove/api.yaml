@@ -1,0 +1,86 @@
+# The route that WSREMOVE adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The removal of a workspace
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+    delete:
+      operationId: removeWorkspace
+      summary: Remove the workspace with every record it holds.
+      description: >
+        Realizes `WSREMOVE-FR-001` to `WSREMOVE-FR-005`, `WSREMOVE-FR-007` to
+        `WSREMOVE-FR-009`, and `WSREMOVE-FR-015`. The permission is
+        `workspace.remove`, whose lowest role is manager. An administrator who is
+        no member reaches the route as a manager. A manager who is no
+        administrator removes a workspace only as its only member. The removal
+        cannot be undone. The files and the transit key of the workspace go after
+        the answer, within 1 hour.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      responses:
+        "204":
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          description: The workspace and every record of it are gone.
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/MembersRemain"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: >
+        The access token that the IdP issued. `SEC-005` gives this cookie as the one
+        path of a web request, and the hub reads no `Authorization` header on it.
+
+  schemas:
+    MembersRemainProblem:
+      description: >
+        A removal that other members block. The type is
+        `/problems/hub/members-remain`.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Problem"
+        - type: object
+          required: [other_members]
+          properties:
+            other_members:
+              type: integer
+              format: int32
+              minimum: 1
+              description: The count of the members other than the acting user.
+
+  responses:
+    MembersRemain:
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      description: >
+        The workspace holds other members, and the acting user is no
+        administrator. The hub removed nothing.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/MembersRemainProblem"

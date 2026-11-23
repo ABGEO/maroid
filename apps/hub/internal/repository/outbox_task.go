@@ -21,6 +21,7 @@ type OutboxTaskRepository interface {
 	Lease(ctx context.Context, limit int, lease time.Duration) ([]model.OutboxTask, error)
 	Done(ctx context.Context, id string) error
 	Retry(ctx context.Context, id string, delay time.Duration, lastError string) error
+	Drop(ctx context.Context, owner model.OutboxOwner, types ...string) error
 }
 
 // OutboxTask is a SQL based implementation of OutboxTaskRepository.
@@ -123,6 +124,20 @@ func (r *OutboxTask) Retry(
 		WHERE id = $1;`, id, delay.Seconds(), lastError)
 	if err != nil {
 		return fmt.Errorf("releasing an OutboxTask: %w", err)
+	}
+
+	return nil
+}
+
+// Drop removes every task of the owner whose type is one of types, leased or not. A
+// leased task that ends later finds no row, so its result changes nothing.
+func (r *OutboxTask) Drop(ctx context.Context, owner model.OutboxOwner, types ...string) error {
+	_, err := r.tx.ExecContext(ctx, `
+		DELETE FROM public.outbox_tasks
+		WHERE owner_scope = $1 AND owner_id = $2 AND type = ANY($3::text[]);`,
+		owner.Scope, owner.ID, types)
+	if err != nil {
+		return fmt.Errorf("dropping the OutboxTasks of an owner: %w", err)
 	}
 
 	return nil

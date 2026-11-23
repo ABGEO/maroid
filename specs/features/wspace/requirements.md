@@ -4,7 +4,7 @@ title: The workspaces, their members, and the workspace that a unit of work acts
 type: requirements
 status: approved
 created: 2026-10-01
-updated: 2026-10-02
+updated: 2026-11-23
 approved_by: Temuri
 approved_on: 2026-10-01
 constrained_by: [OWN, SEC, ERR, API, TG]
@@ -33,7 +33,6 @@ garden or an electricity bill each hold a copy today, or share nothing.
 - The workspace roles, every permission, and the rule that keeps a manager. `PERMS`
   gives them, and it releases together with this feature.
 - The first workspace of a new user record. `EXTID-FR-018` gives it.
-- Deleting or archiving a workspace. `OWN-010` keeps every workspace.
 - Moving a record from one workspace to another.
 - Adding a person who holds no user record.
 - A limit on the count of workspaces or of members.

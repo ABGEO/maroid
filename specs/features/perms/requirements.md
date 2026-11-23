@@ -4,7 +4,7 @@ title: The workspace roles, and the permission that every action needs
 type: requirements
 status: approved
 created: 2026-10-02
-updated: 2026-10-02
+updated: 2026-11-23
 approved_by: Temuri
 approved_on: 2026-10-02
 constrained_by: [OWN, SEC, ERR, PLG, ARC, TG]
@@ -77,6 +77,7 @@ The roles must reach these actions of the hub, and no role below the one named:
 | Rename the workspace                             | manager     |
 | List the user records to add                     | manager     |
 | Add a member, remove a member, or change a role  | manager     |
+| Remove the workspace                             | manager     |
 
 **Examples:**
 

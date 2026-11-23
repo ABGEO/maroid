@@ -55,6 +55,7 @@ type Resolver interface {
 	Database() (*sqlx.DB, error)
 	CloseDatabase() error
 	WorkspaceService() (*workspace.Manager, error)
+	WorkspaceRemover() (*workspace.Remover, error)
 	ChatSelection() (*workspace.ChatSelection, error)
 	EnablementService() (*workspace.Enablements, error)
 	UserService() (user.Service, error)
@@ -67,6 +68,7 @@ type Resolver interface {
 	ProviderService() (*provider.Manager, error)
 	LocalAccounts() (*provider.Accounts, error)
 	SecretCipher() (secret.Cipher, error)
+	SecretKeyDestroyer() (secret.KeyDestroyer, error)
 	HealthService() (*healthcheck.Service, error)
 	SettingsRegistry() *registry.SettingsRegistry
 	SettingsService() (settings.Service, error)
@@ -132,6 +134,12 @@ type Container struct {
 		mu       sync.Mutex
 		once     sync.Once
 		instance *workspace.Manager
+	}
+
+	workspaceRemover struct {
+		mu       sync.Mutex
+		once     sync.Once
+		instance *workspace.Remover
 	}
 
 	userService struct {
@@ -202,7 +210,7 @@ type Container struct {
 	secretCipher struct {
 		mu       sync.Mutex
 		once     sync.Once
-		instance secret.Cipher
+		instance *secret.Transit
 	}
 
 	pluginSecretStore struct {

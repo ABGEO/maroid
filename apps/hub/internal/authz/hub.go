@@ -11,6 +11,7 @@ import (
 const (
 	PermissionWorkspaceRead      = "workspace.read"
 	PermissionWorkspaceWrite     = "workspace.write"
+	PermissionWorkspaceRemove    = "workspace.remove"
 	PermissionMembersWrite       = "members.write"
 	PermissionMembershipLeave    = "membership.leave"
 	PermissionSettingsRead       = "settings.read"
@@ -34,6 +35,11 @@ func NewPermissionRegistry() (*registry.PermissionRegistry, error) {
 		registry.PermissionEntry{
 			Name:        PermissionWorkspaceWrite,
 			Description: "Rename the workspace",
+			Lowest:      pluginapi.RoleManager,
+		},
+		registry.PermissionEntry{
+			Name:        PermissionWorkspaceRemove,
+			Description: "Remove the workspace with every record it holds",
 			Lowest:      pluginapi.RoleManager,
 		},
 		registry.PermissionEntry{

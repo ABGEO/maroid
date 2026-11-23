@@ -4,7 +4,7 @@ title: The workspaces, their members, and the workspace that a unit of work acts
 type: spec
 status: approved
 created: 2026-10-01
-updated: 2026-10-09
+updated: 2026-11-23
 approved_by: Temuri
 approved_on: 2026-10-02
 constrained_by: [OWN, SEC, ERR, API, RES, DAT, REP, PKG, TG, UI, TST, SPC, LNG]
@@ -55,7 +55,7 @@ release together. A migration gives every existing user record one workspace.
 | `OWN-003` | Record ownership | `WSPACE-DD-001` resolves the acting workspace from the path and checks the membership.                                                               |
 | `OWN-004` | Record ownership | Section 4.2 gives the scope and the reason of each table.                                                                                            |
 | `OWN-007` | Record ownership | `database.WithScopeTx` and `PluginDB.WithTx` set `app.workspace_id`. Step 6 of the build plan.                                                       |
-| `OWN-010` | Record ownership | `POST /workspaces`. No route deletes a workspace.                                                                                                    |
+| `OWN-010` | Record ownership | `POST /workspaces`. `WSREMOVE` deletes a workspace, under `ADR-0026`.                                                                                |
 | `OWN-011` | Record ownership | A membership carries no role until `PERMS`. `WSPACE-DD-005` holds the release.                                                                       |
 | `SEC-004` | Security         | Every route sits behind `auth.Middleware`, which reads the user record.                                                                              |
 | `SEC-013` | Security         | No route of this feature declares a permission until `PERMS`. `WSPACE-DD-005`.                                                                       |
@@ -153,8 +153,8 @@ CREATE INDEX workspace_members_user_id_idx ON public.workspace_members (user_id)
 
 Each table takes the `set_updated_at` trigger. `workspace_members` relates two
 records and no table references it, so the pair is its primary key and it carries no
-`id`, as `DAT-009` gives. The primary key realizes `WSPACE-INV-002`. No foreign key cascades, because `OWN-002` and `OWN-010` delete no
-user record and no workspace. A removal deletes one membership row and touches no
+`id`, as `DAT-009` gives. The primary key realizes `WSPACE-INV-002`. The key on `public.users` cascades on nothing, because `OWN-002` deletes no user
+record. The key on `public.workspaces` cascades, as `ADR-0026` gives. A removal deletes one membership row and touches no
 record of the workspace, which realizes `WSPACE-FR-012`. The last member leaves like
 any other, and the workspace stays with no member.
 

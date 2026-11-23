@@ -35,6 +35,7 @@ export const PROBLEM_TYPE = {
 	settingsAbsent: '/problems/hub/settings-absent',
 	memberExists: '/problems/hub/member-exists',
 	managerLast: '/problems/hub/manager-last',
+	membersRemain: '/problems/hub/members-remain',
 	administratorLast: '/problems/hub/administrator-last',
 	administratorAllowlist: '/problems/hub/administrator-allowlist',
 	permissionDenied: '/problems/http/permission-denied',

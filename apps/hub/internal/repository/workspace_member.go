@@ -17,6 +17,7 @@ import (
 
 const (
 	workspaceMemberKey = "workspace_members_pkey"
+	memberWorkspaceKey = "workspace_members_workspace_id_fkey"
 	memberColumnsOfM   = `m.workspace_id, m.user_id, m.role, u.first_name, u.last_name, m.created_at, m.updated_at`
 )
 
@@ -39,6 +40,7 @@ type WorkspaceMemberRepository interface {
 		ifMatch *time.Time,
 	) (*model.Member, error)
 	CountManagers(ctx context.Context, workspaceID string) (int, error)
+	CountOthers(ctx context.Context, workspaceID string, userID string) (int, error)
 	Candidates(ctx context.Context, workspaceID string) ([]model.User, error)
 }
 
@@ -76,6 +78,12 @@ func (r *WorkspaceMember) Add(
 	if err := r.tx.GetContext(ctx, &entity, query, workspaceID, userID, role); err != nil {
 		if isUniqueViolation(err, workspaceMemberKey) {
 			return nil, fmt.Errorf("adding a Member: %w", errs.ErrMemberExists)
+		}
+
+		// A removal of the workspace that commits while the insert waits for its lock
+		// leaves the insert with no workspace to name.
+		if isForeignKeyViolation(err, memberWorkspaceKey) {
+			return nil, fmt.Errorf("adding a Member: %w", errs.ErrWorkspaceNotFound)
 		}
 
 		return nil, fmt.Errorf("adding a Member: %w", err)
@@ -238,6 +246,25 @@ func (r *WorkspaceMember) CountManagers(
 		workspaceID, pluginapi.RoleManager)
 	if err != nil {
 		return 0, fmt.Errorf("counting the managers of a Workspace: %w", err)
+	}
+
+	return count, nil
+}
+
+// CountOthers counts the members of the workspace other than the user record, as the
+// transaction sees them.
+func (r *WorkspaceMember) CountOthers(
+	ctx context.Context,
+	workspaceID string,
+	userID string,
+) (int, error) {
+	var count int
+
+	err := r.tx.GetContext(ctx, &count,
+		`SELECT count(*) FROM public.workspace_members WHERE workspace_id = $1 AND user_id <> $2;`,
+		workspaceID, userID)
+	if err != nil {
+		return 0, fmt.Errorf("counting the other members of a Workspace: %w", err)
 	}
 
 	return count, nil

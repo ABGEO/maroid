@@ -18,11 +18,13 @@ import (
 	"github.com/abgeo/maroid/libs/pluginapi"
 )
 
+// LeaseLength holds a task away from another worker while one runs it. It passes the
+// longest processing of an image many times over. A task can still act until its
+// lease ends.
+const LeaseLength = 5 * time.Minute
+
 const (
 	workerName = "outbox"
-	// leaseLength holds a task away from another worker while one runs it. It passes
-	// the longest processing of an image many times over.
-	leaseLength = 5 * time.Minute
 	// defaultTaskTimeout ends a task before its lease lapses, so no other worker takes
 	// it while it still runs.
 	defaultTaskTimeout = 4 * time.Minute
@@ -165,7 +167,7 @@ func (w *Worker) cycle(ctx context.Context) (bool, error) {
 		var err error
 
 		if leased, err = repository.NewOutboxTask(tx).
-			Lease(ctx, w.concurrency, leaseLength); err != nil {
+			Lease(ctx, w.concurrency, LeaseLength); err != nil {
 			return fmt.Errorf("leasing: %w", err)
 		}
 
@@ -291,11 +293,13 @@ func (w *Worker) inTx(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	return nil
 }
 
-// retryDelay doubles from 2 seconds with each attempt, up to 5 minutes.
+// retryDelay answers 2 seconds after the first attempt, and twice as long after each
+// later one, up to 5 minutes. The lease counts an attempt before the task runs, so the
+// first failure holds 1.
 func retryDelay(attempts int) time.Duration {
 	delay := retryBase
 
-	for range attempts {
+	for range attempts - 1 {
 		delay *= 2
 		if delay >= retryLimit {
 			return retryLimit

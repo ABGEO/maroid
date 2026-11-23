@@ -3,6 +3,7 @@ package errs
 
 import (
 	"errors"
+	"fmt"
 )
 
 var (
@@ -72,6 +73,9 @@ var (
 	ErrLastIdentity = errors.New("identity: the last external account cannot be detached")
 	// ErrWorkspaceNotFound indicates that no workspace holds the given identifier.
 	ErrWorkspaceNotFound = errors.New("workspace: not found")
+	// ErrMembersRemain indicates a removal of a workspace that other members still
+	// share. MembersRemainError carries their count.
+	ErrMembersRemain = errors.New("workspace: other members remain")
 	// ErrMemberNotFound indicates that the user record is no member of the workspace.
 	ErrMemberNotFound = errors.New("workspace member: not found")
 	// ErrAllowedPluginNotFound indicates a plugin that the allowlist does not hold.
@@ -117,6 +121,8 @@ var (
 	// ErrSettingsSchemaNotFound indicates that no loaded plugin holds a settings
 	// schema under the given identifier.
 	ErrSettingsSchemaNotFound = errors.New("settings schema: not found")
+	// ErrSecretKeyMissing indicates a task to destroy a key that names no key.
+	ErrSecretKeyMissing = errors.New("secret key: the task names no key")
 	// ErrProtectionUnavailable indicates that the service that protects a secret is
 	// unreachable, or that it answered with no usable data.
 	ErrProtectionUnavailable = errors.New("protection: unavailable")
@@ -229,3 +235,19 @@ var (
 	// ErrPasswordMissing indicates a standard input that holds no password.
 	ErrPasswordMissing = errors.New("password: the standard input holds none")
 )
+
+// MembersRemainError reports a removal of a workspace that other members block, with
+// the count of the members other than the acting user. It matches ErrMembersRemain
+// under errors.Is.
+type MembersRemainError struct {
+	Others int
+}
+
+func (e *MembersRemainError) Error() string {
+	return fmt.Sprintf("%s: %d", ErrMembersRemain, e.Others)
+}
+
+// Is reports whether the target is ErrMembersRemain.
+func (e *MembersRemainError) Is(target error) bool {
+	return target == ErrMembersRemain
+}

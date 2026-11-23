@@ -16,7 +16,15 @@ type Transit struct {
 	mount  string
 }
 
-var _ Cipher = (*Transit)(nil)
+// KeyDestroyer destroys a named key. An absent key counts as destroyed.
+type KeyDestroyer interface {
+	DestroyKey(ctx context.Context, key Key) error
+}
+
+var (
+	_ Cipher       = (*Transit)(nil)
+	_ KeyDestroyer = (*Transit)(nil)
+)
 
 // NewTransit creates a new Transit cipher over a client that already logged in.
 func NewTransit(client *api.Client, mount string) *Transit {
@@ -72,6 +80,26 @@ func (c *Transit) Decrypt(
 	}
 
 	return string(plaintext), nil
+}
+
+// DestroyKey deletes the key and every version of it, so no ciphertext under it reads
+// again. A read first tells an absent key, which counts as destroyed, from a key that
+// the store refuses to delete.
+func (c *Transit) DestroyKey(ctx context.Context, key Key) error {
+	held, err := c.client.Logical().ReadWithContext(ctx, c.path("keys", key))
+	if err != nil {
+		return fmt.Errorf("reading the key %q: %w", key, err)
+	}
+
+	if held == nil || held.Data == nil {
+		return nil
+	}
+
+	if _, err = c.client.Logical().DeleteWithContext(ctx, c.path("keys", key)); err != nil {
+		return fmt.Errorf("destroying the key %q: %w", key, err)
+	}
+
+	return nil
 }
 
 func (c *Transit) path(operation string, key Key) string {

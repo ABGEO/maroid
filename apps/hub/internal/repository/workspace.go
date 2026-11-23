@@ -31,6 +31,7 @@ type WorkspaceRepository interface {
 		ifMatch *time.Time,
 	) (*model.Workspace, error)
 	Lock(ctx context.Context, id string) error
+	Delete(ctx context.Context, id string) error
 	ListAll(ctx context.Context) ([]model.InstanceWorkspace, error)
 }
 
@@ -147,6 +148,26 @@ func (r *Workspace) Lock(ctx context.Context, id string) error {
 
 	if err != nil {
 		return fmt.Errorf("locking a Workspace: %w", err)
+	}
+
+	return nil
+}
+
+// Delete removes the workspace. The foreign keys cascade, so every row that the
+// workspace scopes goes in the same statement.
+func (r *Workspace) Delete(ctx context.Context, id string) error {
+	result, err := r.tx.ExecContext(ctx, `DELETE FROM public.workspaces WHERE id = $1;`, id)
+	if err != nil {
+		return fmt.Errorf("deleting a Workspace: %w", err)
+	}
+
+	deleted, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("deleting a Workspace: %w", err)
+	}
+
+	if deleted == 0 {
+		return fmt.Errorf("deleting a Workspace: %w", errs.ErrWorkspaceNotFound)
 	}
 
 	return nil
