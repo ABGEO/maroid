@@ -22,11 +22,15 @@ the money page.
 ### `MAGTIACC-DD-012`
 
 **Realizes:** `MAGTIACC-FR-003` to `MAGTIACC-FR-019`
-**Decision:** `Account.svelte` repeats the page of the electricity plugin. A subscriber row
-shows the number, the label, and the kind ("Mobile", "Home line", or "Other"). A row of kind
-`other` shows no assign button.
-**Rationale:** The two pages read alike. The route refuses kind `other` too (`MAGTIACC-FR-018`).
-**Alternatives:** Hide a subscriber of kind `other`. The holder then wonders where the domain went.
+**Decision:** `Account.svelte` repeats the page of the electricity plugin. It lists the
+subscribers of kind `mobile` and `home_line` that the connection answers, and drops kind
+`other`. A subscriber row shows the number, the label, and the kind ("Mobile" or "Home line").
+With no subscriber left, the page says that the account holds no subscriber.
+**Rationale:** The two pages read alike. A domain is out of scope, and no route takes it
+(`MAGTIACC-FR-018`). The connection still answers kind `other`, so the route can refuse it.
+**Alternatives:** Show a row of kind `other` with no assign button. The holder reads a row that
+offers nothing. Drop kind `other` from the answer of the connection. The refusal of
+`MAGTIACC-FR-018` then reads as an unknown number.
 
 ### `MAGTIACC-DD-013`
 

@@ -80,11 +80,17 @@ The connection page must name the settings that an editor must fill, when the se
 
 ### `MAGTIACC-FR-005`
 
-The connection page must list the subscribers of the account when Maroid holds a connection.
+The connection page must list the mobile subscribers and the home lines of the account when Maroid holds a connection.
 Each subscriber shows its number, the label that the holder gave it, and its kind.
 
 **Why:** A read of the subscribers proves that the connection still works. A new subscriber
-at the telecom service appears with no further step.
+at the telecom service appears with no further step. A domain is out of scope, so the page
+lists none.
+
+**Examples:**
+
+- Normal case: the account holds a mobile subscriber, a home line, and a domain. The page lists the mobile subscriber and the home line.
+- Limit case: the account holds a domain alone. The page reports that the account holds no subscriber.
 
 ### `MAGTIACC-FR-006`
 
@@ -106,7 +112,7 @@ The plugin must sign in to the telecom service with the stored credentials, and 
 
 **Examples:**
 
-- Normal case: the credentials are correct. The page lists three subscribers: a mobile subscriber, a home line, and a domain.
+- Normal case: the credentials are correct. The page lists two subscribers: a mobile subscriber and a home line.
 - Limit case: the workspace was connected before. The new connection replaces the old one. The assigned subscriber stays.
 - Unwanted case: the password is wrong. The page reports the credentials rejected. Maroid holds no connection.
 
