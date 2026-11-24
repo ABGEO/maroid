@@ -14,7 +14,7 @@
 		"@maroid/ui": "workspace:*"
 	},
 	"peerDependencies": {
-		"svelte": "^5.0.0"
+		"svelte": "^5.55.7"
 	},
 	"devDependencies": {
 		"@module-federation/vite": "^1.15.4",
