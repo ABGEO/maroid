@@ -27,7 +27,7 @@
 		"@sjsf/daisyui5-theme": "^3.8.1",
 		"@sjsf/form": "^3.8.1",
 		"@sveltejs/adapter-node": "^5.5.7",
-		"@sveltejs/kit": "^2.50.2",
+		"@sveltejs/kit": "^3.0.0",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/vite": "^4.1.18",
 		"@types/node": "^26.0.0",
