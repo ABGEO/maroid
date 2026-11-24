@@ -293,7 +293,9 @@ again after a call that changed its cookies. Every request sends a browser `User
 | `Usage`, `Money` | `POST /request/statistics.php` with `step=3`, `flow=statistics`, `mobile-number`, `csrf-token`, `key` (`MB`, `MIN`, `SMS`, or `GEL`), `date[from]` and `date[to]` as `DD/MM/YYYY`, and `charge-type` (`expense`, or `income` for the top ups). The answer is `{name, key, history[]}`                                                                                                                                                                     |
 
 The readers of `dto/` follow `MAGTIACC-DD-009`. A minute value `56:16` is 3376 seconds. A
-balance `"0.03"` parses as a number. A value that does not parse is `ErrRequestFailed`. An
+balance `"0.03"` parses as a number. A balance arrives as a string or as a JSON number. A price
+of a plan may carry markup after the number, as `17.30&nbsp;<span class="icon-gel"></span>`, and
+the reader keeps the number before the markup. A value that does not parse is `ErrRequestFailed`. An
 answer that holds no `BALANCE`, or no `ISP_BALANCE` for a home line, is `ErrRequestFailed`. An
 amount of money is a count of tetri, the hundredth of a lari, so a sum holds no error of a
 binary fraction. The database keeps lari as `NUMERIC`.

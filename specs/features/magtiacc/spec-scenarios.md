@@ -263,6 +263,8 @@ and `allowances` 2589.29 MB, 3376 seconds, and 100 SMS. The fake portal records 
 
 - Normal case: W assigns `322000001`. `accounts-isp.php` answers `package_sum` 40 and the balances
   `27.70` and `70 Mbps`, and `account-data.php` answers `daysRemaining` 20. The answer holds no `allowances`.
+- Limit case: `accounts.php` answers the balance `BALANCE` as the JSON number `0.03`, and
+  `cocktail-package.php` answers `price` `17.30&nbsp;<span class="icon-gel"></span>`. The answer is the same.
 - Limit case: `activeCocktail` holds no `cocktailId`. The answer holds no `plan`, and the fake portal records no call of `cocktail-package.php`.
 - Unwanted case: `accounts.php` answers no `BALANCE`. The answer is 502 `service-unavailable`.
 
