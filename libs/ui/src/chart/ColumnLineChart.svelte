@@ -12,6 +12,7 @@
 
 	let {
 		series,
+		dates: slots,
 		label,
 		lineFromZero = false,
 		tooltipWidth = 160,
@@ -19,6 +20,8 @@
 		tooltip
 	}: {
 		series: ChartSeries[];
+		/** Every date of the axis, YYYY-MM-DD, so a date with no value keeps its slot. */
+		dates?: string[];
 		/** The accessible name of the chart. */
 		label: string;
 		/** Start the right axis at zero instead of at the smallest line value. */
@@ -41,7 +44,9 @@
 	const dayLabel = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeZone: 'UTC' });
 
 	const dates = $derived(
-		[...new Set(series.flatMap((one) => [...one.columns.keys(), ...one.line.keys()]))].sort()
+		[
+			...new Set(slots ?? series.flatMap((one) => [...one.columns.keys(), ...one.line.keys()]))
+		].sort()
 	);
 	const columnValues = $derived(series.flatMap((one) => [...one.columns.values()]));
 	const lineValues = $derived(series.flatMap((one) => [...one.line.values()]));
@@ -150,7 +155,7 @@
 					</text>
 				{/each}
 
-				{#each yLine.ticks(TICKS) as tick (tick)}
+				{#each lineValues.length > 0 ? yLine.ticks(TICKS) : [] as tick (tick)}
 					<text
 						x={innerWidth + 8}
 						y={yLine(tick)}
