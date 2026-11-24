@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG NODE_VERSION=24.21.0
+ARG NODE_VERSION=26.13.1
 ARG PNPM_VERSION=12.11.2
 ARG DEX_BASE_IMAGE=ghcr.io/dexidp/dex:v2.46.0
 
