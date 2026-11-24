@@ -6,7 +6,7 @@ require (
 	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261123170333-39cdcb6cfdaf
 	github.com/abgeo/maroid/libs/rest v0.0.0-20261123170333-39cdcb6cfdaf
 	github.com/abgeo/maroid/libs/testdb v0.0.0-20261123170333-39cdcb6cfdaf
-	github.com/go-chi/chi/v5 v5.3.0
+	github.com/go-chi/chi/v5 v5.4.0
 	github.com/go-chi/render v1.0.3
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.11.0
