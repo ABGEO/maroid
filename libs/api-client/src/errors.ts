@@ -1,6 +1,18 @@
 import { isProblem, type FieldFailure, type Problem } from './problem';
 
+const API_ERROR: unique symbol = Symbol.for('maroid.api-client.ApiError');
+
 export class ApiError extends Error {
+	/**
+	 * A plugin bundles its own copy of this class, and the deck throws its copy, so
+	 * `instanceof` reads a brand that every copy shares instead of the class.
+	 */
+	static [Symbol.hasInstance](value: unknown): boolean {
+		return typeof value === 'object' && value !== null && API_ERROR in value;
+	}
+
+	readonly [API_ERROR] = true;
+
 	readonly status: number;
 	readonly statusText: string;
 	readonly body: unknown;
