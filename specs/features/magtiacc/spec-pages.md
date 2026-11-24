@@ -36,7 +36,7 @@ shows the number, the label, and the kind ("Mobile", "Home line", or "Other"). A
 `days_left`) when it holds one, and `allowances` (`data_mb`, `call_seconds`, `sms`). A home line
 adds `plan` (`price`, `days_left`) and `speed`, the text of the portal, for example `70 Mbps`.
 `Subscriber.svelte` shows one card for the balance and one for the plan, and for a mobile
-subscriber one meter for each allowance with no total, because the portal answers none. The
+subscriber one value for each allowance, because the portal answers no total to fill a meter. The
 call time shows as `mm:ss`. A 409 shows the setup prompt with a link to `/account`. A 502 shows
 "Magti is unavailable", with a button that reads again.
 **Rationale:** A member that a kind does not hold stays absent, as in the transactions of the
@@ -71,7 +71,9 @@ default `day` (`RES-005`). One subscriber holds one row of a day, so no tie occu
 `sms_sent`, and `sms_received` that it holds. `Traffic.svelte` offers 30, 90, and 365 days,
 reads `from` and `to` with `limit=100`, and follows `next` to the last page. It draws three
 `ColumnLineChart` of `@maroid/ui` with columns alone: the data in MB, the call minutes out and in
-as two series, and the SMS sent and received as two series. A day with no row draws no column.
+as two series, and the SMS sent and received as two series. Every day of the period keeps its
+slot on the axis, and a day with no row draws no column. A chart holds no line, so it draws no
+right axis.
 The totals sum the rows in the page.
 **Rationale:** 365 rows are four pages. The client sums at most 366 rows, so a route of totals
 adds no value. The axis names the month, as in the pulse plugin.

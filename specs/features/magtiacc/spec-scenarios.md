@@ -48,8 +48,8 @@ otherwise. The account holds `599000001` (mobile, label empty), `322000001` (hom
 **Given** a `session` secret, and the assignment of `322000001`.
 **When** V reads `GET /connections/self`.
 **Then** the answer lists three subscribers: `599000001` `mobile`, `322000001` `home_line` with
-the label "House" and `assigned: true`, and `d_example.ge` `other`. The fake portal records one
-selection of each of the first two numbers, and none of `d_example.ge`.
+the label "House" and `assigned: true`, and `d_example.ge` `other`. The fake portal starts with
+`599000001` selected, and records one selection of `322000001` and none of the other two numbers.
 
 ## `MAGTIACC-SC-004`
 
@@ -107,6 +107,8 @@ body `false` to the first `GET /request/accounts.php`.
 **Then** the plugin signs in once, writes the new `session`, repeats the read, and answers 200.
 
 - Unwanted case: the fake portal answers a redirect to the repeat too. The answer is 502 `service-unavailable`.
+- Limit case: the fake portal sets the cookie `PHPSESSID=K2` on the page of the menu, and accepts it.
+  After a read of `GET /connections/self`, the secret holds `PHPSESSID=K2`.
 
 ## `MAGTIACC-SC-009`
 
@@ -120,6 +122,10 @@ session, and answers `invalid-credentials` to the sign in.
 
 - Normal case: the job runs in W instead. `Run` answers an error that wraps `ErrCredentialsRejected`.
 - Limit case: the sign in answers `locked`. `Run` answers an error that wraps `ErrAccountLocked`.
+- Unwanted case: V reads `GET /subscriber-states/self`, or E assigns `599000001`. Each answer is
+  409 `not-connected`, and the session is gone.
+- Limit case: the settings are absent. `GET /connections/self` answers 200 `not_connected`, and
+  the session is gone.
 
 ## `MAGTIACC-SC-010`
 
@@ -258,6 +264,7 @@ and `allowances` 2589.29 MB, 3376 seconds, and 100 SMS. The fake portal records 
 - Normal case: W assigns `322000001`. `accounts-isp.php` answers `package_sum` 40 and the balances
   `27.70` and `70 Mbps`, and `account-data.php` answers `daysRemaining` 20. The answer holds no `allowances`.
 - Limit case: `activeCocktail` holds no `cocktailId`. The answer holds no `plan`, and the fake portal records no call of `cocktail-package.php`.
+- Unwanted case: `accounts.php` answers no `BALANCE`. The answer is 502 `service-unavailable`.
 
 ## `MAGTIACC-SC-022`
 
@@ -282,6 +289,7 @@ and `allowances` 2589.29 MB, 3376 seconds, and 100 SMS. The fake portal records 
 
 - Normal case: the home line. `Caption` is "40.00 ₾ plan, renews in 20 days".
 - Limit case: no assignment. It answers `not_set_up` with the link "/account".
+- Limit case: the session ended, and the sign in answers `invalid-credentials`. It answers `not_set_up`.
 - Unwanted case: the fake portal answers 503. `Load` answers an error.
 
 ## `MAGTIACC-SC-024`
@@ -365,12 +373,15 @@ and `allowances` 2589.29 MB, 3376 seconds, and 100 SMS. The fake portal records 
 
 ## `MAGTIACC-SC-031`
 
-**Verifies:** `MAGTIACC-FR-034`, `MAGTIACC-DD-007`
+**Verifies:** `MAGTIACC-FR-013`, `MAGTIACC-FR-034`, `MAGTIACC-DD-007`
 **Layer:** unit
 
 **Given** the assignment of `599000001`, and a fake portal that holds each selection for 100 milliseconds.
 **When** V reads `GET /connections/self` and `GET /subscriber-states/self` at the same time.
 **Then** the fake portal records the selection of `599000001` directly before the read of `accounts.php`, with no other selection between them.
+
+- Limit case: E ends the connection while a collection with an ended session signs in again. W
+  holds no `session` after both.
 
 ## Retired identifiers
 
