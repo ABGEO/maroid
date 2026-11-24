@@ -1,0 +1,77 @@
+{
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": [
+		"config:recommended",
+		"schedule:weekly",
+		":semanticCommits",
+		":semanticCommitTypeAll(chore)",
+		":semanticCommitScope(deps)",
+		"docker:pinDigests",
+		"security:minimumReleaseAgeNpm",
+		"group:allNonMajor"
+	],
+	"commitMessageTopic": "{{depName}}",
+	"osvVulnerabilityAlerts": true,
+	"postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "pnpmDedupe"],
+	"packageRules": [
+		{
+			"description": "A plugin loads only when it shares every package version with the hub, the indirect ones included.",
+			"matchDepTypes": ["indirect"],
+			"enabled": true
+		},
+		{
+			"description": "An indirect major is a new module path that only a direct dependency can adopt.",
+			"matchDepTypes": ["indirect"],
+			"matchUpdateTypes": ["major"],
+			"enabled": false
+		},
+		{
+			"description": "A pseudo-version of a Go module, the maroid libraries included, moves with the other non-major updates.",
+			"matchUpdateTypes": ["digest"],
+			"groupName": "all non-major dependencies",
+			"groupSlug": "all-minor-patch"
+		},
+		{
+			"description": "The go directive of every go.mod follows the Go version of the Dockerfiles.",
+			"matchDepNames": ["go"],
+			"rangeStrategy": "bump"
+		},
+		{
+			"description": "The FROM line builds these tags from ARGs that the custom managers update.",
+			"matchManagers": ["dockerfile"],
+			"matchPackageNames": ["golang", "node", "ghcr.io/abgeo/**"],
+			"enabled": false
+		},
+		{
+			"description": "docker-compose.yaml holds local edits, so a digest pin would only conflict.",
+			"matchManagers": ["docker-compose"],
+			"pinDigests": false
+		}
+	],
+	"customManagers": [
+		{
+			"customType": "regex",
+			"description": "The Go version of the Dockerfiles.",
+			"managerFilePatterns": ["/(^|/)Dockerfile$/"],
+			"matchStrings": ["ARG GO_VERSION=(?<currentValue>\\S+)"],
+			"datasourceTemplate": "golang-version",
+			"depNameTemplate": "go"
+		},
+		{
+			"customType": "regex",
+			"description": "The Node version of the Dockerfiles.",
+			"managerFilePatterns": ["/(^|/)Dockerfile$/"],
+			"matchStrings": ["ARG NODE_VERSION=(?<currentValue>\\S+)"],
+			"datasourceTemplate": "node-version",
+			"depNameTemplate": "node"
+		},
+		{
+			"customType": "regex",
+			"description": "The pnpm version of the Dockerfiles.",
+			"managerFilePatterns": ["/(^|/)Dockerfile$/"],
+			"matchStrings": ["ARG PNPM_VERSION=(?<currentValue>\\S+)"],
+			"datasourceTemplate": "npm",
+			"depNameTemplate": "pnpm"
+		}
+	]
+}
