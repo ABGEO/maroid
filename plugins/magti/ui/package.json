@@ -22,7 +22,7 @@
 		"@tailwindcss/vite": "^4.1.18",
 		"daisyui": "^5.5.19",
 		"prettier": "^3.8.1",
-		"prettier-plugin-svelte": "^3.4.1",
+		"prettier-plugin-svelte": "^4.0.0",
 		"prettier-plugin-tailwindcss": "^0.8.0",
 		"svelte": "^5.54.0",
 		"tailwindcss": "^4.1.18",
