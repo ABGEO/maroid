@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html"
 	"math"
 	"strconv"
 	"strings"
@@ -91,6 +92,54 @@ func (n Number) String() string {
 	return strconv.FormatFloat(float64(n), 'f', -1, 64)
 }
 
+// Price is an amount of the portal that may carry markup after the number, as
+// "17.30&nbsp;<span class=\"icon-gel\"></span>".
+type Price float64
+
+// UnmarshalJSON reads a number, or the number at the start of a string that holds markup.
+func (p *Price) UnmarshalJSON(raw []byte) error {
+	var text Text
+	if err := text.UnmarshalJSON(raw); err != nil {
+		return err
+	}
+
+	visible, _, _ := strings.Cut(html.UnescapeString(string(text)), "<")
+
+	var number Number
+	if err := number.UnmarshalJSON([]byte(strings.TrimSpace(visible))); err != nil {
+		return err
+	}
+
+	*p = Price(number)
+
+	return nil
+}
+
+// Text is a value of the portal that arrives as a JSON string or as a JSON number. A
+// number keeps the text the portal wrote.
+type Text string
+
+// UnmarshalJSON reads a string as it is, a number as its text, and null as "".
+func (t *Text) UnmarshalJSON(raw []byte) error {
+	trimmed := bytes.TrimSpace(raw)
+
+	switch {
+	case bytes.Equal(trimmed, []byte("null")):
+		*t = ""
+	case bytes.HasPrefix(trimmed, []byte(`"`)):
+		var text string
+		if err := json.Unmarshal(trimmed, &text); err != nil {
+			return fmt.Errorf("%w: reading a text: %w", errs.ErrRequestFailed, err)
+		}
+
+		*t = Text(text)
+	default:
+		*t = Text(trimmed)
+	}
+
+	return nil
+}
+
 // Flag is a truth value of the portal that arrives as a boolean, a number, or a string.
 type Flag bool
 
@@ -107,7 +156,7 @@ func (f *Flag) UnmarshalJSON(raw []byte) error {
 //
 //nolint:tagliatelle // the portal names its members in camelCase.
 type AccountBalance struct {
-	Balance                 string         `json:"balance"`
+	Balance                 Text           `json:"balance"`
 	GroupKey                string         `json:"groupKey"`
 	AccountGroupConfigItems []accountGroup `json:"accountGroupConfigItems"`
 }
@@ -154,7 +203,7 @@ func (a Accounts) HasPlan() bool {
 //nolint:tagliatelle // the portal names its members in camelCase.
 type CocktailPackage struct {
 	Name               string              `json:"name"`
-	Price              Number              `json:"price"`
+	Price              Price               `json:"price"`
 	CocktailAttributes []cocktailAttribute `json:"cocktailAttributes"`
 }
 
@@ -282,16 +331,16 @@ func readMobileBalance(state *model.State, balance AccountBalance) error {
 	case groupBalance:
 		var lari float64
 
-		lari, err = parseDecimal(balance.Balance)
+		lari, err = parseDecimal(string(balance.Balance))
 		state.Balance = model.TetriOf(lari)
 	case groupInternet:
-		state.Allowances.DataMB, err = parseDecimal(balance.Balance)
+		state.Allowances.DataMB, err = parseDecimal(string(balance.Balance))
 	case groupMinutes:
-		state.Allowances.CallSeconds, err = parseDuration(balance.Balance)
+		state.Allowances.CallSeconds, err = parseDuration(string(balance.Balance))
 	case groupSMS:
 		var count float64
 
-		count, err = parseDecimal(balance.Balance)
+		count, err = parseDecimal(string(balance.Balance))
 		state.Allowances.SMS = int(math.Round(count))
 	}
 
@@ -331,14 +380,14 @@ func HomeLineState(number string, accounts IspAccounts, data AccountData) (model
 	for _, balance := range accounts.Balances {
 		switch balance.Key() {
 		case groupISPBalance:
-			value, err := parseDecimal(balance.Balance)
+			value, err := parseDecimal(string(balance.Balance))
 			if err != nil {
 				return model.State{}, fmt.Errorf("reading the balance of a home line: %w", err)
 			}
 
 			state.Balance = model.TetriOf(value)
 		case groupISPInternet:
-			state.Speed = strings.TrimSpace(balance.Balance)
+			state.Speed = strings.TrimSpace(string(balance.Balance))
 		}
 	}
 

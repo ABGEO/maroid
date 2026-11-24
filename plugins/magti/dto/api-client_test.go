@@ -106,3 +106,36 @@ func TestAnAnswerWithNoBalanceFails(t *testing.T) {
 	_, err = dto.HomeLineState("322000001", homeLine, dto.AccountData{})
 	require.ErrorIs(t, err, errs.ErrRequestFailed)
 }
+
+// MAGTIACC-SC-021: A balance as a JSON number, and a price followed by markup, read as the
+// same state.
+func TestTheShapesOfThePortalReadAlike(t *testing.T) {
+	t.Parallel()
+
+	accounts := decode[dto.Accounts](t, `{"status": "Active", "balances": [
+		{"balance": 0.03, "accountGroupConfigItems": [{"accountGroupKey": "BALANCE"}]},
+		{"balance": 2589.29, "accountGroupConfigItems": [{"accountGroupKey": "INTERNET"}]},
+		{"balance": "56:16", "accountGroupConfigItems": [{"accountGroupKey": "MINUTES"}]}
+	], "activeCocktail": {"cocktailId": 77, "untilDate": "13/12/2026 01:50:47", "validityId": 3}}`)
+	plan := decode[dto.CocktailPackage](
+		t,
+		`{"name": "Cocktail 17", "price": "17.30&nbsp;<span class=\"icon-gel\"><\/span>"}`,
+	)
+
+	state, err := dto.MobileState("599000001", accounts, &plan)
+	require.NoError(t, err)
+	assert.Equal(t, model.Tetri(3), state.Balance)
+	assert.InDelta(t, 2589.29, state.Allowances.DataMB, 1e-9)
+	assert.Equal(t, 3376, state.Allowances.CallSeconds)
+	require.NotNil(t, state.Plan)
+	assert.Equal(t, model.Tetri(1730), state.Plan.Price)
+
+	homeLine := decode[dto.IspAccounts](t, `{"package_sum": 40, "balances": [
+		{"groupKey": "ISP_BALANCE", "balance": 27.7},
+		{"groupKey": "ISP_INTERNET", "balance": "70 Mbps"}
+	]}`)
+
+	state, err = dto.HomeLineState("322000001", homeLine, dto.AccountData{})
+	require.NoError(t, err)
+	assert.Equal(t, model.Tetri(2770), state.Balance)
+}
