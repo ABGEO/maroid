@@ -23,7 +23,7 @@
 		"daisyui": "^5.5.19",
 		"prettier": "^3.8.1",
 		"prettier-plugin-svelte": "^3.4.1",
-		"prettier-plugin-tailwindcss": "^0.7.2",
+		"prettier-plugin-tailwindcss": "^0.8.0",
 		"svelte": "^5.54.0",
 		"tailwindcss": "^4.1.18",
 		"typescript": "^5.9.3",

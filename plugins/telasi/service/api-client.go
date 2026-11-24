@@ -38,7 +38,7 @@ var _ APIClientService = (*APIClient)(nil)
 func NewAPIClient(cfg *config.Config) *APIClient {
 	client := resty.New().
 		SetBaseURL(cfg.BaseURL).
-		SetError(map[string]any{}).
+		SetResultError(map[string]any{}).
 		SetHeader("Accept", "application/json")
 
 	return &APIClient{
@@ -126,5 +126,10 @@ func statusFailure(resp *resty.Response) error {
 		return nil
 	}
 
-	return fmt.Errorf("%w: returned [%d] %v", ErrRequestFailed, resp.StatusCode(), resp.Error())
+	return fmt.Errorf(
+		"%w: returned [%d] %v",
+		ErrRequestFailed,
+		resp.StatusCode(),
+		resp.ResultError(),
+	)
 }

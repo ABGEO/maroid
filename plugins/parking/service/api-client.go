@@ -73,7 +73,7 @@ var _ APIClientService = (*APIClient)(nil)
 func NewAPIClient(cfg *config.Config, secrets pluginapi.PluginSecrets) *APIClient {
 	client := resty.New().
 		SetBaseURL(cfg.BaseURL).
-		SetError(map[string]any{}).
+		SetResultError(map[string]any{}).
 		SetHeaders(map[string]string{
 			"Accept":       "*/*",
 			"Content-Type": "application/json",
