@@ -302,6 +302,7 @@ Add a row before you create the file or the directory.
 | `PULSE`    | `features/pulse/`    | The check-ins that ask a person about their day on Telegram, and the values that the answers record.      | Approved |
 | `WSREMOVE` | `features/wsremove/` | The removal of a workspace and of every record it holds.                                                  | Approved |
 | `OWNKEY`   | `features/ownkey/`   | The protection key of each user and each workspace.                                                       | Approved |
+| `MAGTIACC` | `features/magtiacc/` | The telecom account of a workspace: the connection, the subscriber, its state, traffic, and money.        | Approved |
 
 ## Retired identifiers
 
