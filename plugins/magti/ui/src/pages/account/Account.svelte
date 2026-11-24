@@ -22,11 +22,12 @@
 	let confirmDialog = $state<ReturnType<typeof ConfirmDialog>>();
 
 	const connected = $derived(connection?.state === 'connected');
-	const subscribers = $derived(connection?.subscribers ?? []);
+	const subscribers = $derived(
+		(connection?.subscribers ?? []).filter((subscriber) => subscriber.kind !== 'other')
+	);
 	const assigned = $derived(
 		subscribers.find((subscriber) => subscriber.assigned)?.subscriber_number ?? ''
 	);
-	const assignable = $derived(subscribers.some((subscriber) => subscriber.kind !== 'other'));
 
 	function show(read: Connection): void {
 		connection = read;
@@ -145,25 +146,15 @@
 					<fieldset class="fieldset">
 						<legend class="fieldset-legend">Subscriber of this workspace</legend>
 						{#each subscribers as subscriber (subscriber.subscriber_number)}
-							<svelte:element
-								this={subscriber.kind === 'other' ? 'div' : 'label'}
-								class={[
-									'label w-full justify-start gap-3 py-1',
-									subscriber.kind === 'other' ? 'cursor-default' : 'cursor-pointer'
-								]}
-							>
-								{#if subscriber.kind === 'other'}
-									<span class="size-4 shrink-0" aria-hidden="true"></span>
-								{:else}
-									<input
-										type="radio"
-										class="radio radio-sm shrink-0"
-										name="subscriber"
-										value={subscriber.subscriber_number}
-										bind:group={selected}
-										disabled={busy || !canConnect}
-									/>
-								{/if}
+							<label class="label w-full cursor-pointer justify-start gap-3 py-1">
+								<input
+									type="radio"
+									class="radio radio-sm shrink-0"
+									name="subscriber"
+									value={subscriber.subscriber_number}
+									bind:group={selected}
+									disabled={busy || !canConnect}
+								/>
 								<span class="flex min-w-0 flex-1 flex-col">
 									<span class="text-base-content flex min-w-0 items-center gap-2">
 										<span class="shrink-0 font-mono">{subscriber.subscriber_number}</span>
@@ -178,10 +169,10 @@
 										<span class="meta truncate" title={subscriber.label}>{subscriber.label}</span>
 									{/if}
 								</span>
-							</svelte:element>
+							</label>
 						{/each}
 					</fieldset>
-					{#if canConnect && assignable}
+					{#if canConnect}
 						<div>
 							<button
 								type="submit"
