@@ -104,7 +104,7 @@ func NewAPIClient(cfg *config.Config) *APIClient {
 		SetHeader("Referer", cfg.BaseURL+"/").
 		SetTimeout(cfg.RequestTimeout).
 		SetResponseBodyLimit(maxResponseBody).
-		SetRedirectPolicy(resty.NoRedirectPolicy()).
+		SetRedirectPolicy(resty.RedirectNoPolicy()).
 		SetCookieJar(nil)
 
 	return &APIClient{client: client}
@@ -316,7 +316,7 @@ func (s *APIClient) post(
 		SetContext(ctx).
 		SetCookie(sessionCookie(session.Cookie)).
 		SetHeader(csrfHeader, session.CSRFToken).
-		SetForceResponseContentType("application/json").
+		SetResponseForceContentType("application/json").
 		SetResult(result)
 
 	if form != nil {

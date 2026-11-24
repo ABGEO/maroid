@@ -122,7 +122,7 @@ func NewAPIClient(cfg *config.Config) *APIClient {
 		SetHeader("Referer", cfg.BaseURL+pathHome).
 		SetTimeout(cfg.RequestTimeout).
 		SetResponseBodyLimit(maxResponseBody).
-		SetRedirectPolicy(resty.NoRedirectPolicy()).
+		SetRedirectPolicy(resty.RedirectNoPolicy()).
 		SetCookieJar(nil)
 
 	return &APIClient{client: client}

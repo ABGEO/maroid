@@ -154,7 +154,7 @@ func (s *APIClient) DownloadFile(ctx context.Context, token string, path string)
 	resp, err := s.client.R().
 		SetContext(ctx).
 		SetHeader(headerToken, token).
-		SetDoNotParseResponse(true).
+		SetResponseDoNotParse(true).
 		Get("/" + path)
 	if err != nil {
 		return nil, fmt.Errorf("%w: downloading a file: %w", errs.ErrRequestFailed, err)
@@ -235,7 +235,7 @@ func (s *APIClient) request(ctx context.Context) *resty.Request {
 	return s.client.R().
 		SetContext(ctx).
 		SetHeader("Content-Type", "application/json;charset=UTF-8").
-		SetForceResponseContentType("application/json")
+		SetResponseForceContentType("application/json")
 }
 
 // answerFailure answers the failure that a successful status carries in its body.

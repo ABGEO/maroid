@@ -164,7 +164,7 @@ func (s *APIClient) getWithToken(ctx context.Context, token string, path string,
 func (s *APIClient) request(ctx context.Context) *resty.Request {
 	return s.client.R().
 		SetContext(ctx).
-		SetForceResponseContentType("application/json")
+		SetResponseForceContentType("application/json")
 }
 
 func statusFailure(resp *resty.Response) error {
