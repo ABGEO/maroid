@@ -1,5 +1,0 @@
-BEGIN;
-
-DROP TABLE IF EXISTS log_entries;
-
-COMMIT;

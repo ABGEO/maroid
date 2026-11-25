@@ -23,37 +23,97 @@ type EntryReferences struct {
 	IncomeType    *string
 }
 
-// upsertEntryQuery stores a log entry, and keeps the identifier of a row that exists.
-const upsertEntryQuery = `
-	INSERT INTO log_entries (
-		vehicle_id, kind, source_id, occurred_at, odometer, amount, title, note,
-		station_id, place_id, payment_method_id, reason_id, income_type_id,
-		missed_refuel, battery_start_pct, battery_end_pct, charge_minutes
-	)
-	VALUES (
-		$1, $2, $3, $4, $5, $6, NULLIF($7, ''), NULLIF($8, ''),
-		$9, $10, $11, $12, $13, $14, $15, $16, $17
-	)
-	ON CONFLICT ON CONSTRAINT log_entries_source_key DO UPDATE
-	SET vehicle_id = excluded.vehicle_id,
-	    occurred_at = excluded.occurred_at,
-	    odometer = excluded.odometer,
-	    amount = excluded.amount,
-	    title = excluded.title,
-	    note = excluded.note,
-	    station_id = excluded.station_id,
-	    place_id = excluded.place_id,
-	    payment_method_id = excluded.payment_method_id,
-	    reason_id = excluded.reason_id,
-	    income_type_id = excluded.income_type_id,
-	    missed_refuel = excluded.missed_refuel,
-	    battery_start_pct = excluded.battery_start_pct,
-	    battery_end_pct = excluded.battery_end_pct,
-	    charge_minutes = excluded.charge_minutes,
-	    collected_at = now()
-	RETURNING id;`
+// The upsert of each kind stores the entry, and keeps the identifier of a row that exists.
+const (
+	upsertRefuelQuery = `
+		INSERT INTO refuels (
+			vehicle_id, source_id, occurred_at, odometer, amount, note, station_id,
+			payment_method_id, reason_id, missed_refuel, battery_start_pct, battery_end_pct,
+			charge_minutes
+		)
+		VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), $7, $8, $9, $10, $11, $12, $13)
+		ON CONFLICT ON CONSTRAINT refuels_source_key DO UPDATE
+		SET vehicle_id = excluded.vehicle_id,
+		    occurred_at = excluded.occurred_at,
+		    odometer = excluded.odometer,
+		    amount = excluded.amount,
+		    note = excluded.note,
+		    station_id = excluded.station_id,
+		    payment_method_id = excluded.payment_method_id,
+		    reason_id = excluded.reason_id,
+		    missed_refuel = excluded.missed_refuel,
+		    battery_start_pct = excluded.battery_start_pct,
+		    battery_end_pct = excluded.battery_end_pct,
+		    charge_minutes = excluded.charge_minutes,
+		    collected_at = now()
+		RETURNING id;`
+
+	upsertMaintenanceQuery = `
+		INSERT INTO maintenances (
+			vehicle_id, source_id, occurred_at, odometer, amount, note, title, place_id,
+			payment_method_id
+		)
+		VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), NULLIF($7, ''), $8, $9)
+		ON CONFLICT ON CONSTRAINT maintenances_source_key DO UPDATE
+		SET vehicle_id = excluded.vehicle_id,
+		    occurred_at = excluded.occurred_at,
+		    odometer = excluded.odometer,
+		    amount = excluded.amount,
+		    note = excluded.note,
+		    title = excluded.title,
+		    place_id = excluded.place_id,
+		    payment_method_id = excluded.payment_method_id,
+		    collected_at = now()
+		RETURNING id;`
+
+	upsertExpenseQuery = `
+		INSERT INTO expenses (
+			vehicle_id, source_id, occurred_at, odometer, amount, note, title, place_id,
+			payment_method_id, reason_id
+		)
+		VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), NULLIF($7, ''), $8, $9, $10)
+		ON CONFLICT ON CONSTRAINT expenses_source_key DO UPDATE
+		SET vehicle_id = excluded.vehicle_id,
+		    occurred_at = excluded.occurred_at,
+		    odometer = excluded.odometer,
+		    amount = excluded.amount,
+		    note = excluded.note,
+		    title = excluded.title,
+		    place_id = excluded.place_id,
+		    payment_method_id = excluded.payment_method_id,
+		    reason_id = excluded.reason_id,
+		    collected_at = now()
+		RETURNING id;`
+
+	upsertIncomeQuery = `
+		INSERT INTO incomes (
+			vehicle_id, source_id, occurred_at, odometer, amount, note, income_type_id
+		)
+		VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), $7)
+		ON CONFLICT ON CONSTRAINT incomes_source_key DO UPDATE
+		SET vehicle_id = excluded.vehicle_id,
+		    occurred_at = excluded.occurred_at,
+		    odometer = excluded.odometer,
+		    amount = excluded.amount,
+		    note = excluded.note,
+		    income_type_id = excluded.income_type_id,
+		    collected_at = now()
+		RETURNING id;`
+
+	upsertOdometerQuery = `
+		INSERT INTO odometer_entries (vehicle_id, source_id, occurred_at, odometer, note)
+		VALUES ($1, $2, $3, $4, NULLIF($5, ''))
+		ON CONFLICT ON CONSTRAINT odometer_entries_source_key DO UPDATE
+		SET vehicle_id = excluded.vehicle_id,
+		    occurred_at = excluded.occurred_at,
+		    odometer = excluded.odometer,
+		    note = excluded.note,
+		    collected_at = now()
+		RETURNING id;`
+)
 
 // Entries reads and writes the log entries of the acting workspace within one transaction.
+// Each kind has a table of its own. A read names the view that joins them.
 type Entries struct {
 	tx *sqlx.Tx
 }
@@ -63,39 +123,22 @@ func NewEntries(tx *sqlx.Tx) *Entries {
 	return &Entries{tx: tx}
 }
 
-// Upsert stores the entry of the vehicle by its kind and its identifier at the car log
-// service, and answers the identifier of its row. A row that exists keeps its identifier.
+// Upsert stores the entry of the vehicle in the table of its kind by its identifier at the
+// car log service, and answers the identifier of its row. A row that exists keeps its
+// identifier.
 func (r *Entries) Upsert(
 	ctx context.Context,
 	vehicleID string,
 	entry model.LogEntry,
 	refs EntryReferences,
 ) (string, error) {
-	var id string
-
-	err := r.tx.GetContext(
-		ctx,
-		&id,
-		upsertEntryQuery,
-		vehicleID,
-		string(entry.Kind),
-		entry.SourceID,
-		entry.OccurredAt,
-		entry.Odometer,
-		entry.Amount,
-		entry.Title,
-		entry.Note,
-		refs.Station,
-		refs.Place,
-		refs.PaymentMethod,
-		refs.Reason,
-		refs.IncomeType,
-		entry.MissedRefuel,
-		entry.BatteryStartPct,
-		entry.BatteryEndPct,
-		entry.ChargeMinutes,
-	)
+	query, arguments, err := upsertOf(vehicleID, entry, refs)
 	if err != nil {
+		return "", err
+	}
+
+	var id string
+	if err = r.tx.GetContext(ctx, &id, query, arguments...); err != nil {
 		return "", fmt.Errorf("upserting the %s %d: %w", entry.Kind, entry.SourceID, err)
 	}
 
@@ -105,29 +148,92 @@ func (r *Entries) Upsert(
 // DeleteAbsent deletes each entry of the kind whose identifier at the car log service is
 // not kept, with its lines and its instalments.
 func (r *Entries) DeleteAbsent(ctx context.Context, kind model.Kind, kept []int32) error {
-	const query = `DELETE FROM log_entries WHERE kind = $1 AND source_id <> ALL($2::integer[]);`
+	table, err := entryTable(kind)
+	if err != nil {
+		return err
+	}
 
-	if _, err := r.tx.ExecContext(ctx, query, string(kind), kept); err != nil {
+	query := `DELETE FROM ` + table + ` WHERE source_id <> ALL($1::integer[]);`
+
+	if _, err = r.tx.ExecContext(ctx, query, kept); err != nil {
 		return fmt.Errorf("deleting the absent entries of kind %s: %w", kind, err)
 	}
 
 	return nil
 }
 
-// entryColumns names the columns of a read of an entry, with the names of its references.
+func upsertOf(
+	vehicleID string,
+	entry model.LogEntry,
+	refs EntryReferences,
+) (string, []any, error) {
+	common := []any{vehicleID, entry.SourceID, entry.OccurredAt, entry.Odometer}
+
+	switch entry.Kind {
+	case model.KindRefuel:
+		return upsertRefuelQuery, append(
+			common,
+			entry.Amount,
+			entry.Note,
+			refs.Station,
+			refs.PaymentMethod,
+			refs.Reason,
+			entry.MissedRefuel,
+			entry.BatteryStartPct,
+			entry.BatteryEndPct,
+			entry.ChargeMinutes,
+		), nil
+	case model.KindMaintenance:
+		return upsertMaintenanceQuery, append(
+			common,
+			entry.Amount,
+			entry.Note,
+			entry.Title,
+			refs.Place,
+			refs.PaymentMethod,
+		), nil
+	case model.KindExpense:
+		return upsertExpenseQuery, append(
+			common,
+			entry.Amount,
+			entry.Note,
+			entry.Title,
+			refs.Place,
+			refs.PaymentMethod,
+			refs.Reason,
+		), nil
+	case model.KindIncome:
+		return upsertIncomeQuery, append(common, entry.Amount, entry.Note, refs.IncomeType), nil
+	case model.KindOdometer:
+		return upsertOdometerQuery, append(common, entry.Note), nil
+	}
+
+	return "", nil, fmt.Errorf("%w: %q", errs.ErrUnknownKind, entry.Kind)
+}
+
+func entryTable(kind model.Kind) (string, error) {
+	switch kind {
+	case model.KindRefuel:
+		return "refuels", nil
+	case model.KindMaintenance:
+		return "maintenances", nil
+	case model.KindExpense:
+		return "expenses", nil
+	case model.KindIncome:
+		return "incomes", nil
+	case model.KindOdometer:
+		return "odometer_entries", nil
+	}
+
+	return "", fmt.Errorf("%w: %q", errs.ErrUnknownKind, kind)
+}
+
+// entryColumns names the columns of a read of an entry from the view log_entries, which
+// answers the names of its references.
 const entryColumns = `
 	t.id, t.vehicle_id, t.kind, t.occurred_at, t.odometer, t.amount, t.title, t.note,
-	st.name AS station, pl.name AS place, pm.name AS payment_method, re.name AS reason,
-	it.name AS income_type, t.missed_refuel, t.battery_start_pct, t.battery_end_pct,
-	t.charge_minutes`
-
-// entryJoins joins the reference items that an entry names.
-const entryJoins = `
-	LEFT JOIN reference_items st ON st.id = t.station_id
-	LEFT JOIN reference_items pl ON pl.id = t.place_id
-	LEFT JOIN reference_items pm ON pm.id = t.payment_method_id
-	LEFT JOIN reference_items re ON re.id = t.reason_id
-	LEFT JOIN reference_items it ON it.id = t.income_type_id`
+	t.station, t.place, t.payment_method, t.reason, t.income_type, t.missed_refuel,
+	t.battery_start_pct, t.battery_end_pct, t.charge_minutes`
 
 // entryFilter names the entries of the vehicle of the kinds in the period. An empty list
 // of kinds names every kind.
@@ -149,7 +255,7 @@ func (r *Entries) List(
 	condition, sorting := keyset(seek, "log_entries", "occurred_at", order)
 	query := `
 		SELECT ` + entryColumns + `
-		FROM log_entries t` + entryJoins + `
+		FROM log_entries t
 		WHERE ` + entryFilter + `
 		  AND ` + condition + `
 		ORDER BY ` + sorting + `
@@ -200,7 +306,7 @@ func (r *Entries) Totals(
 func (r *Entries) OfVehicle(ctx context.Context, vehicleID string) ([]model.EntryRow, error) {
 	const query = `
 		SELECT ` + entryColumns + `
-		FROM log_entries t` + entryJoins + `
+		FROM log_entries t
 		WHERE t.vehicle_id = $1
 		ORDER BY t.occurred_at, t.id;`
 
@@ -217,7 +323,7 @@ func (r *Entries) OfVehicle(ctx context.Context, vehicleID string) ([]model.Entr
 func (r *Entries) Get(ctx context.Context, vehicleID, id string) (model.EntryRow, error) {
 	const query = `
 		SELECT ` + entryColumns + `
-		FROM log_entries t` + entryJoins + `
+		FROM log_entries t
 		WHERE t.vehicle_id = $1 AND t.id = $2;`
 
 	var entry model.EntryRow

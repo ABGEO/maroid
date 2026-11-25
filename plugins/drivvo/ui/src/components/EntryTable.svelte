@@ -1,9 +1,19 @@
 <script lang="ts">
 	import { formatMoment, type PluginHost } from '@maroid/plugin-sdk';
 	import { createPager, Pagination } from '@maroid/ui';
+	import { SvelteMap } from 'svelte/reactivity';
 
-	import { createCarLogApi, type Kind, type LogEntryItem, type Period, type Vehicle } from '../api';
+	import {
+		createCarLogApi,
+		type Kind,
+		type LogEntry,
+		type LogEntryItem,
+		type Period,
+		type Vehicle
+	} from '../api';
 	import { amount, consumption, distance, kindLabel, volume } from '../lib/format';
+	import { createReader, type Reader } from '../lib/reader.svelte';
+	import EntryDetails, { hasDetails } from './EntryDetails.svelte';
 
 	let {
 		host,
@@ -26,8 +36,11 @@
 
 	const api = $derived(createCarLogApi(host));
 	const units = $derived(vehicle.units);
+	const columns = $derived(list === undefined ? 6 : list === 'refuel' ? 7 : 5);
 
 	const pager = createPager((link?: string) => api.logEntries(vehicle.id, period, kinds, link));
+	const details = new SvelteMap<string, Reader<LogEntry>>();
+	let opened = $state<string | null>(null);
 
 	function entryHref(entry: LogEntryItem): string {
 		return host.href(`/${page}/${encodeURIComponent(vehicle.id)}/${encodeURIComponent(entry.id)}`);
@@ -40,22 +53,39 @@
 		});
 	}
 
+	function summary(entry: LogEntryItem): string {
+		return entry.kind === 'income' ? (entry.income_type ?? '') : entry.labels.join(', ');
+	}
+
+	function load(id: string): void {
+		const reader = details.get(id) ?? createReader<LogEntry>();
+		details.set(id, reader);
+		void reader.load(() => api.logEntry(vehicle.id, id));
+	}
+
+	function toggle(entry: LogEntryItem): void {
+		if (opened === entry.id) {
+			opened = null;
+			return;
+		}
+
+		opened = entry.id;
+		if (details.get(entry.id)?.status !== 'ready') {
+			load(entry.id);
+		}
+	}
+
+	/** A click on the row opens it too. A click on its button or a link acts alone. */
+	function rowClick(event: MouseEvent, entry: LogEntryItem): void {
+		if (!(event.target instanceof Element && event.target.closest('a, button'))) {
+			toggle(entry);
+		}
+	}
+
 	$effect(() => {
 		void pager.reload();
 	});
 </script>
-
-{#snippet money(entry: LogEntryItem)}
-	<td
-		class={['text-right whitespace-nowrap tabular-nums', entry.kind === 'income' && 'text-success']}
-	>
-		{entry.amount === undefined ? '' : amount(entry.amount)}
-	</td>
-{/snippet}
-
-{#snippet labels(entry: LogEntryItem)}
-	<td>{entry.labels.join(', ')}</td>
-{/snippet}
 
 {#if pager.status === 'loading' && pager.page === null}
 	<div class="flex flex-col gap-2" aria-hidden="true">
@@ -73,79 +103,128 @@
 {:else}
 	{@const currency = pager.page?.items.find((entry) => entry.amount)?.amount?.currency ?? ''}
 	<div class="panel overflow-x-auto">
-		<table class="table-zebra table">
+		<table class="table">
 			<thead>
 				<tr>
+					<th class="w-0"><span class="sr-only">Details</span></th>
 					<th>Time</th>
 					{#if list === undefined}
 						<th>Kind</th>
 					{/if}
 					<th class="text-right">Odometer</th>
-					{#if list === undefined}
-						<th>Types and fuels</th>
-					{:else if list === 'refuel'}
-						<th>Fuels</th>
-						<th class="text-right">Volume</th>
-						<th class="text-right">Unit price</th>
-					{:else if list === 'maintenance' || list === 'expense'}
-						<th>Title</th>
-						<th>Types</th>
-						{#if list === 'maintenance'}
-							<th>Place</th>
+					<th>
+						{#if list === 'refuel'}
+							Fuels
+						{:else if list === 'income'}
+							Income type
+						{:else if list === undefined}
+							Summary
+						{:else}
+							Title and types
 						{/if}
-					{:else if list === 'income'}
-						<th>Income type</th>
+					</th>
+					{#if list === 'refuel'}
+						<th class="text-right">Volume</th>
 					{/if}
 					<th class="text-right">Amount{currency ? `, ${currency}` : ''}</th>
 					{#if list === 'refuel'}
-						<th>Full tank</th>
 						<th class="text-right">Consumption</th>
 					{/if}
 				</tr>
 			</thead>
 			<tbody>
 				{#each pager.page?.items ?? [] as entry (entry.id)}
-					<tr>
-						<td class="whitespace-nowrap">
-							<a class="link link-hover" href={entryHref(entry)}>{moment(entry)}</a>
+					{@const open = opened === entry.id}
+					{@const reader = details.get(entry.id)}
+					<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
+					<tr
+						class={['hover:bg-base-200 cursor-pointer', open && 'bg-base-200']}
+						onclick={(event) => rowClick(event, entry)}
+					>
+						<td class="pr-0">
+							<button
+								type="button"
+								class="btn btn-ghost btn-xs btn-square"
+								aria-expanded={open}
+								aria-controls={open ? `entry-${entry.id}` : undefined}
+								aria-label="Details of the {kindLabel(entry.kind).toLowerCase()} of {moment(entry)}"
+								onclick={() => toggle(entry)}
+							>
+								<svg
+									class={['size-4 transition-transform', open && 'rotate-90']}
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									aria-hidden="true"
+								>
+									<path d="m9 18 6-6-6-6" />
+								</svg>
+							</button>
 						</td>
+						<td class="whitespace-nowrap">{moment(entry)}</td>
 						{#if list === undefined}
 							<td>{kindLabel(entry.kind)}</td>
 						{/if}
 						<td class="text-right whitespace-nowrap tabular-nums">
 							{distance(entry.odometer, units)}
 						</td>
-						{#if list === undefined}
-							{@render labels(entry)}
-						{:else if list === 'refuel'}
-							{@render labels(entry)}
+						<td>
+							{#if entry.title}
+								<div>{entry.title}</div>
+								{#if summary(entry)}
+									<div class="meta text-sm">{summary(entry)}</div>
+								{/if}
+							{:else}
+								{summary(entry)}
+							{/if}
+						</td>
+						{#if list === 'refuel'}
 							<td class="text-right whitespace-nowrap tabular-nums">
 								{entry.volume === undefined ? '' : volume(entry.volume, units)}
 							</td>
-							<td class="text-right whitespace-nowrap tabular-nums">
-								{entry.unit_price === undefined ? '' : amount(entry.unit_price)}
-							</td>
-						{:else if list === 'maintenance' || list === 'expense'}
-							<td>{entry.title ?? ''}</td>
-							{@render labels(entry)}
-							{#if list === 'maintenance'}
-								<td>{entry.place ?? ''}</td>
-							{/if}
-						{:else if list === 'income'}
-							<td>{entry.income_type ?? ''}</td>
 						{/if}
-						{@render money(entry)}
+						<td
+							class={[
+								'text-right whitespace-nowrap tabular-nums',
+								entry.kind === 'income' && 'text-success'
+							]}
+						>
+							{entry.amount === undefined ? '' : amount(entry.amount)}
+						</td>
 						{#if list === 'refuel'}
-							<td>
-								{#if entry.full_tank}
-									<span class="badge badge-soft badge-sm">Full</span>
-								{/if}
-							</td>
 							<td class="text-right whitespace-nowrap tabular-nums">
 								{entry.consumption === undefined ? '' : consumption(entry.consumption, units)}
 							</td>
 						{/if}
 					</tr>
+					{#if open}
+						<tr id="entry-{entry.id}" class="bg-base-200">
+							<td colspan={columns} class="px-4 pt-2 pb-4 sm:pl-14">
+								{#if reader?.status === 'error'}
+									<div role="alert" class="alert alert-error alert-soft">
+										<span>Failed to load the details.</span>
+										<button type="button" class="btn btn-sm" onclick={() => load(entry.id)}>
+											Retry
+										</button>
+									</div>
+								{:else if !reader?.value}
+									<span class="skeleton block h-20 w-full" aria-hidden="true"></span>
+								{:else}
+									{#if hasDetails(reader.value)}
+										<EntryDetails entry={reader.value} {units} />
+									{:else}
+										<p class="meta">No other detail.</p>
+									{/if}
+									<a class="btn btn-ghost btn-sm mt-3 -ml-3" href={entryHref(entry)}>
+										Open the {kindLabel(entry.kind).toLowerCase()}
+									</a>
+								{/if}
+							</td>
+						</tr>
+					{/if}
 				{/each}
 			</tbody>
 		</table>

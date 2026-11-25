@@ -23,7 +23,8 @@ hourly job reads the whole account of each connected workspace into memory, then
 one transaction: an upsert of each item by its identifier at the service, and a delete of each
 row that the read did not hold. Every page and the widget read the stored rows, and Go computes
 each figure over the rows of one vehicle. No change reaches the hub, `pluginapi`, or another
-plugin. `spec-pages.md` holds the decisions of the pages and the widget. `spec-scenarios.md`
+plugin. `spec-data.md` holds the tables and the views. `spec-pages.md` holds the decisions of the
+pages and the widget. `spec-scenarios.md`
 and `spec-scenarios-pages.md` hold the scenarios.
 
 ## 2. Coverage
@@ -44,7 +45,7 @@ and `spec-scenarios-pages.md` hold the scenarios.
 | `DRIVVO-FR-019`, `DRIVVO-FR-020`   | Section 4.2, `DRIVVO-DD-006`, `DRIVVO-SC-015`, `DRIVVO-SC-016`                  |
 | `DRIVVO-FR-021`                    | Section 4.5, `DRIVVO-SC-017`                                                    |
 | `DRIVVO-FR-022`                    | `DRIVVO-DD-007`, `DRIVVO-SC-018`                                                |
-| `DRIVVO-FR-023`, `DRIVVO-FR-024`   | Section 4.2, `DRIVVO-DD-008`, `DRIVVO-SC-019`, `DRIVVO-SC-020`                  |
+| `DRIVVO-FR-023`, `DRIVVO-FR-024`   | `DRIVVO-DD-018`, `DRIVVO-DD-008`, `DRIVVO-SC-019`, `DRIVVO-SC-020`              |
 | `DRIVVO-FR-025`, `DRIVVO-FR-026`   | Section 4.3, `DRIVVO-SC-021`                                                    |
 | `DRIVVO-FR-027` to `DRIVVO-FR-036` | `spec-pages.md`, `api.yaml`                                                     |
 | `DRIVVO-FR-037` to `DRIVVO-FR-047` | `DRIVVO-DD-009`, `DRIVVO-DD-010`, `spec-pages.md`                               |
@@ -55,7 +56,7 @@ and `spec-scenarios-pages.md` hold the scenarios.
 | `DRIVVO-NFR-002`                   | `DRIVVO-DD-009`, `DRIVVO-SC-023`                                                |
 | `DRIVVO-INV-001`                   | Section 4.2, `DRIVVO-SC-005`                                                    |
 | `DRIVVO-INV-002`                   | Section 4.2, `DRIVVO-SC-024`                                                    |
-| `DRIVVO-INV-003`, `DRIVVO-INV-004` | Section 4.2, `DRIVVO-SC-025`, `DRIVVO-SC-026`                                   |
+| `DRIVVO-INV-003`, `DRIVVO-INV-004` | `DRIVVO-DD-018`, `DRIVVO-SC-025`, `DRIVVO-SC-026`, `DRIVVO-SC-053`              |
 | `DRIVVO-INV-005`, `DRIVVO-INV-006` | `api.yaml`, `DRIVVO-DD-002`, `DRIVVO-SC-027`                                    |
 
 `DRIVVO-FR-010` is retired. A connection starts no collection.
@@ -67,9 +68,9 @@ and `spec-scenarios-pages.md` hold the scenarios.
 | `PLG-006`, `PLG-007`            | Plugin model      | The plugin adds each capability through the existing interfaces, and reaches every resource through the host.                                               |
 | `PLG-008`                       | Plugin model      | The plugin imports no other plugin. The keyset, the list helpers, and the sign in again repeat the telecom plugin.                                          |
 | `ARC-008`                       | Architecture      | No file of the hub changes.                                                                                                                                 |
-| `DAT-001`, `DAT-006`, `DAT-009` | Data              | Every table lives in `dev_maroid_drivvo`. Each `id` is `uuidv7()`.                                                                                          |
+| `DAT-001`, `DAT-006`, `DAT-009` | Data              | Every table and view lives in `dev_maroid_drivvo`. Each `id` is `uuidv7()`.                                                                                 |
 | `DAT-010`                       | Data              | Every moment is `TIMESTAMPTZ`. A due day of an instalment and of a reminder is `DATE`, because it names a day and no moment.                                |
-| `OWN-004` to `OWN-008`          | Ownership         | Every table carries `workspace_id` and forced row level security. No repository filters by workspace.                                                       |
+| `OWN-004` to `OWN-008`          | Ownership         | Every table carries `workspace_id` and forced row level security. Each view runs as its reader. No repository filters by workspace.                         |
 | `OWN-009`                       | Ownership         | The job runs with `CronScopePerWorkspace`.                                                                                                                  |
 | `CFG-007`                       | Configuration     | The credentials are workspace settings.                                                                                                                     |
 | `EXT-001` to `EXT-007`          | External services | `service/api-client.go` holds a resty client with `base_url`. A status that is not a success is an error with the status and at most 512 bytes of the body. |
@@ -91,36 +92,36 @@ and `spec-scenarios-pages.md` hold the scenarios.
 Every path is under `plugins/drivvo/`, and every path is "create". A file not named here
 follows the telecom plugin.
 
-| Path                                                                               | Holds                                                                                                                                                                                                                            |
-| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `go.mod`                                                                           | The module `github.com/abgeo/maroid/plugins/drivvo`, with resty. A row in `go.work`                                                                                                                                              |
-| `db/migrations/<ts>_table_<name>_create.{up,down}.sql`                             | One pair for each table of section 4.2, in the order of that section                                                                                                                                                             |
-| `errs/errs.go`                                                                     | `ErrRequestFailed`, `ErrSessionRejected`, `ErrNotConnected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrNewPasswordRequired`, `ErrVehicleNotFound`, `ErrLogEntryNotFound`, `ErrReversedPeriod`                        |
-| `config/config.go`                                                                 | `Config` (section 4.3), `WorkspaceSettings` with `Email`, `Password`                                                                                                                                                             |
-| `model/session.go`                                                                 | `Session` with `Token`, `ExpiresAt`. `MarshalSecret`, `ParseSession`, `Session.Expired(now)`                                                                                                                                     |
-| `model/account.go`                                                                 | `Snapshot` with `Settings`, `ReferenceItems`, `Vehicles`, `LogEntries`, `Reminders`: one read of the account                                                                                                                     |
-| `model/vehicle.go`, `model/settings.go`                                            | `Vehicle`, `DistanceUnit` (`km`, `mi`). `CarLogSettings` with `VolumeUnit` (`l`, `gal_us`, `gal_imp`), `ConsumptionFormat`, `Currency`                                                                                           |
-| `model/entry.go`                                                                   | `LogEntry`, `Kind` (`refuel`, `maintenance`, `expense`, `income`, `odometer`), `Line`, `Instalment`, `ReferenceItem`, `ReferenceKind`                                                                                            |
-| `model/reminder.go`                                                                | `Reminder`, `RepeatUnit` (`day`, `month`, `year`), `DuePoint`, `DueState`                                                                                                                                                        |
-| `model/period.go`                                                                  | `Tbilisi()`, `Period` with `From`, `To` (days), `Period.Bounds(loc)`, `Months(loc)`, `ParseDay`                                                                                                                                  |
-| `figures/`                                                                         | The pure functions of `DRIVVO-DD-009` to `DRIVVO-DD-011`: `Spend`, `Distance`, `Consumption`, `Parts`, `DueReminders`. No import of a store                                                                                      |
-| `dto/api-client.go`                                                                | `LogInRequest`, `LogInAnswer`, `ServiceError`, `Vehicle`, `Settings`, `Refuel`, `Maintenance`, `Expense`, `Income`, `OdometerEntry`, `Reminder`, `Instalment`, `NamedItem`, and their readers (`DRIVVO-DD-007`, `DRIVVO-DD-008`) |
-| `dto/{connection,vehicle,overview,entry,reminder}.go`                              | The bodies of `api.yaml`                                                                                                                                                                                                         |
-| `service/api-client.go`                                                            | `APIClient`: `SignIn`, `Vehicles`, `Settings`, `ReferenceItems`, `VehicleEntries`, `Reminders` (section 4.4)                                                                                                                     |
-| `service/account.go`                                                               | `Account`: `credentials`, `session`, `signIn`, `forgetSession`, and `call`, the sign in again of `DRIVVO-DD-003`                                                                                                                 |
-| `service/connection.go`                                                            | `Connections`: `Status`, `Connect`, `Disconnect`                                                                                                                                                                                 |
-| `service/collector.go`                                                             | `Collector.Collect(ctx) (model.Snapshot, error)` reads, then `Store.Replace`                                                                                                                                                     |
-| `service/store.go`                                                                 | `Store` over `PluginDB`: `Replace`, `Vehicles`, `VehicleRows`, `LogEntries`, `LogEntry`, `Settings`. One transaction for each call                                                                                               |
-| `service/figures.go`                                                               | `Figures`: `Overview`, `Totals`, `Reminders`, `Widget`. Each reads `VehicleRows` and calls `figures/`                                                                                                                            |
-| `repository/{settings,reference,vehicle,entry,line,instalment,reminder,keyset}.go` | One repository for each table, and the keyset of the telecom plugin                                                                                                                                                              |
-| `job/car_log_collector.go`                                                         | `CarLogCollector`                                                                                                                                                                                                                |
-| `handler/{doc,connection,vehicle,overview,entry,reminder,list,problem}.go`         | The handlers of section 4.3, and the problem types of section 4.5                                                                                                                                                                |
-| `permission/permission.go`                                                         | `AccountRead`, `AccountConnect`                                                                                                                                                                                                  |
-| `widget/{doc,car}.go`                                                              | `NewCar`                                                                                                                                                                                                                         |
-| `embed.go`, `main.go`                                                              | `uiAssets`. `DrivvoPlugin`: `Meta` (`Drivvo`, "Vehicles, refuels, maintenance, and costs from Drivvo.", version `0.1.0`), `SettingsModel`, `CronJobs`, `Migrations`, `Permissions`, `Routes`, `Widgets`, `UIManifest`            |
-| `internal/fakeservice/`, `internal/fakes/`                                         | The fake car log service, and the secrets, the settings, and the store in memory, of the tests. No production code imports them                                                                                                  |
-| `ui/`                                                                              | The UI of the telecom plugin with the pages of `spec-pages.md`                                                                                                                                                                   |
-| `config.yaml` at the repository root                                               | The block of `dev.maroid.drivvo` with the defaults of section 4.3                                                                                                                                                                |
+| Path                                                                               | Holds                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `go.mod`                                                                           | The module `github.com/abgeo/maroid/plugins/drivvo`, with resty. A row in `go.work`                                                                                                                                                                |
+| `db/migrations/<ts>_{table,view}_<name>_create.{up,down}.sql`                      | One pair for each table and each view of `spec-data.md`. A table precedes each table that references it, and the views follow the tables                                                                                                           |
+| `errs/errs.go`                                                                     | `ErrRequestFailed`, `ErrSessionRejected`, `ErrNotConnected`, `ErrCredentialsAbsent`, `ErrCredentialsRejected`, `ErrNewPasswordRequired`, `ErrVehicleNotFound`, `ErrLogEntryNotFound`, `ErrUnknownKind`, `ErrAmountUnreadable`, `ErrReversedPeriod` |
+| `config/config.go`                                                                 | `Config` (section 4.3), `WorkspaceSettings` with `Email`, `Password`                                                                                                                                                                               |
+| `model/session.go`                                                                 | `Session` with `Token`, `ExpiresAt`. `MarshalSecret`, `ParseSession`, `Session.Expired(now)`                                                                                                                                                       |
+| `model/account.go`                                                                 | `Snapshot` with `Settings`, `ReferenceItems`, `Vehicles`, `LogEntries`, `Reminders`: one read of the account                                                                                                                                       |
+| `model/vehicle.go`, `model/settings.go`                                            | `Vehicle`, `DistanceUnit` (`km`, `mi`). `CarLogSettings` with `VolumeUnit` (`l`, `gal_us`, `gal_imp`), `ConsumptionFormat`, `Currency`                                                                                                             |
+| `model/entry.go`                                                                   | `LogEntry`, `Kind` (`refuel`, `maintenance`, `expense`, `income`, `odometer`), `Line`, `Instalment`, `ReferenceItem`, `ReferenceKind`                                                                                                              |
+| `model/reminder.go`                                                                | `Reminder`, `RepeatUnit` (`day`, `month`, `year`), `DuePoint`, `DueState`                                                                                                                                                                          |
+| `model/period.go`                                                                  | `Tbilisi()`, `Period` with `From`, `To` (days), `Period.Bounds(loc)`, `Months(loc)`, `ParseDay`                                                                                                                                                    |
+| `figures/`                                                                         | The pure functions of `DRIVVO-DD-009` to `DRIVVO-DD-011`: `Spend`, `Distance`, `Consumption`, `Parts`, `DueReminders`. No import of a store                                                                                                        |
+| `dto/api-client.go`                                                                | `LogInRequest`, `LogInAnswer`, `ServiceError`, `Vehicle`, `Settings`, `Refuel`, `Maintenance`, `Expense`, `Income`, `OdometerEntry`, `Reminder`, `Instalment`, `NamedItem`, and their readers (`DRIVVO-DD-007`, `DRIVVO-DD-008`)                   |
+| `dto/{connection,vehicle,overview,entry,reminder}.go`                              | The bodies of `api.yaml`                                                                                                                                                                                                                           |
+| `service/api-client.go`                                                            | `APIClient`: `SignIn`, `Vehicles`, `Settings`, `ReferenceItems`, `VehicleEntries`, `Reminders` (section 4.4)                                                                                                                                       |
+| `service/account.go`                                                               | `Account`: `credentials`, `session`, `signIn`, `forgetSession`, and `call`, the sign in again of `DRIVVO-DD-003`                                                                                                                                   |
+| `service/connection.go`                                                            | `Connections`: `Status`, `Connect`, `Disconnect`                                                                                                                                                                                                   |
+| `service/collector.go`                                                             | `Collector.Collect(ctx) (model.Snapshot, error)` reads, then `Store.Replace`                                                                                                                                                                       |
+| `service/store.go`                                                                 | `Store` over `PluginDB`: `Replace`, `Vehicles`, `VehicleRows`, `LogEntries`, `LogEntry`, `Settings`. One transaction for each call                                                                                                                 |
+| `service/figures.go`                                                               | `Figures`: `Overview`, `Totals`, `Reminders`, `Widget`. Each reads `VehicleRows` and calls `figures/`                                                                                                                                              |
+| `repository/{settings,reference,vehicle,entry,line,instalment,reminder,keyset}.go` | One repository for each aggregate. Each writes the table of each kind, and reads the views. The keyset of the telecom plugin                                                                                                                       |
+| `job/car_log_collector.go`                                                         | `CarLogCollector`                                                                                                                                                                                                                                  |
+| `handler/{doc,connection,vehicle,overview,entry,reminder,list,problem}.go`         | The handlers of section 4.3, and the problem types of section 4.5                                                                                                                                                                                  |
+| `permission/permission.go`                                                         | `AccountRead`, `AccountConnect`                                                                                                                                                                                                                    |
+| `widget/{doc,car}.go`                                                              | `NewCar`                                                                                                                                                                                                                                           |
+| `embed.go`, `main.go`                                                              | `uiAssets`. `DrivvoPlugin`: `Meta` (`Drivvo`, "Vehicles, refuels, maintenance, and costs from Drivvo.", version `0.1.0`), `SettingsModel`, `CronJobs`, `Migrations`, `Permissions`, `Routes`, `Widgets`, `UIManifest`                              |
+| `internal/fakeservice/`, `internal/fakes/`                                         | The fake car log service, and the secrets, the settings, and the store in memory, of the tests. No production code imports them                                                                                                                    |
+| `ui/`                                                                              | The UI of the telecom plugin with the pages of `spec-pages.md`                                                                                                                                                                                     |
+| `config.yaml` at the repository root                                               | The block of `dev.maroid.drivvo` with the defaults of section 4.3                                                                                                                                                                                  |
 
 Each service, handler, and widget depends on an interface that it declares, and `Store` or
 the service meets it. The plugin declares no notification topic and no command.
@@ -131,67 +132,7 @@ The token lives in the workspace plugin secret `session`, with no expiry of the 
 object `{"token": "<value>", "expires_at": "<RFC 3339>"}`. The secret outlives the token, so
 the connection page reads "connected" until a sign in fails (`DRIVVO-DD-003`).
 
-Every table lives in `dev_maroid_drivvo`, carries `id UUID DEFAULT uuidv7()`, `workspace_id`
-with the default of the acting workspace, and the policy of `OWN-006`. `source_id` is the
-integer identifier at the car log service.
-
-| Table              | Scope     | Realizes                                                                              |
-| ------------------ | --------- | ------------------------------------------------------------------------------------- |
-| `car_log_settings` | Workspace | `DRIVVO-FR-015`, `DRIVVO-FR-034`                                                      |
-| `reference_items`  | Workspace | `DRIVVO-FR-015`, `DRIVVO-FR-058`                                                      |
-| `vehicles`         | Workspace | `DRIVVO-FR-018`, `DRIVVO-FR-027`, `DRIVVO-INV-003`                                    |
-| `log_entries`      | Workspace | `DRIVVO-FR-018`, `DRIVVO-FR-019`, `DRIVVO-FR-022`, `DRIVVO-INV-003`, `DRIVVO-INV-004` |
-| `log_entry_lines`  | Workspace | `DRIVVO-FR-023`, `DRIVVO-FR-037`                                                      |
-| `instalments`      | Workspace | `DRIVVO-FR-024`, `DRIVVO-FR-038`                                                      |
-| `reminders`        | Workspace | `DRIVVO-FR-060` to `DRIVVO-FR-062`, `DRIVVO-INV-004`                                  |
-
-```mermaid
-erDiagram
-    vehicles ||--o{ log_entries : holds
-    vehicles ||--o{ reminders : holds
-    log_entries ||--o{ log_entry_lines : holds
-    log_entries ||--o{ instalments : holds
-    reference_items |o--o{ log_entries : "station, place, payment method, reason, income type"
-    reference_items |o--o{ log_entry_lines : "fuel, maintenance type, expense type"
-    reference_items |o--o{ reminders : "maintenance type or expense type"
-```
-
-| Table and column                                                                             | Type                                    | Null              | Note                                                                                                                                                                 |
-| -------------------------------------------------------------------------------------------- | --------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `car_log_settings.volume_unit`                                                               | `TEXT`                                  | no                | `CHECK (volume_unit IN ('l', 'gal_us', 'gal_imp'))`. `UNIQUE (workspace_id)`                                                                                         |
-| `car_log_settings.consumption_format`                                                        | `SMALLINT`                              | no                | `CHECK (consumption_format BETWEEN 1 AND 12)`, the value of the service                                                                                              |
-| `car_log_settings.currency`                                                                  | `TEXT`                                  | no                | ISO 4217, three letters                                                                                                                                              |
-| `reference_items.kind`, `.source_id`, `.name`                                                | `TEXT`, `INTEGER`, `TEXT`               | no                | `kind` is one of `fuel`, `maintenance_type`, `expense_type`, `income_type`, `reason`, `payment_method`, `station`, `place`. `UNIQUE (workspace_id, kind, source_id)` |
-| `vehicles.source_id`                                                                         | `INTEGER`                               | no                | `UNIQUE (workspace_id, source_id)`                                                                                                                                   |
-| `vehicles.name`, `.make`, `.model`                                                           | `TEXT`                                  | no                | Empty when the service sends none                                                                                                                                    |
-| `vehicles.year`                                                                              | `SMALLINT`                              | yes               |                                                                                                                                                                      |
-| `vehicles.distance_unit`                                                                     | `TEXT`                                  | no                | `CHECK (distance_unit IN ('km', 'mi'))`                                                                                                                              |
-| `vehicles.principal`, `.active`                                                              | `BOOLEAN`                               | no                |                                                                                                                                                                      |
-| `log_entries.vehicle_id`                                                                     | `UUID`                                  | no                | `REFERENCES vehicles (id) ON DELETE CASCADE`                                                                                                                         |
-| `log_entries.kind`, `.source_id`                                                             | `TEXT`, `INTEGER`                       | no                | `kind` is one of `refuel`, `maintenance`, `expense`, `income`, `odometer`. `UNIQUE (workspace_id, kind, source_id)`                                                  |
-| `log_entries.occurred_at`                                                                    | `TIMESTAMPTZ`                           | no                | `DRIVVO-DD-007`                                                                                                                                                      |
-| `log_entries.odometer`                                                                       | `NUMERIC`                               | no                | Zero when the service sends none                                                                                                                                     |
-| `log_entries.amount`                                                                         | `NUMERIC`                               | yes               | `DRIVVO-DD-008`. Null for an odometer entry                                                                                                                          |
-| `log_entries.title`, `.note`                                                                 | `TEXT`                                  | yes               |                                                                                                                                                                      |
-| `log_entries.station_id`, `.place_id`, `.payment_method_id`, `.reason_id`, `.income_type_id` | `UUID`                                  | yes               | `REFERENCES reference_items (id) ON DELETE SET NULL`                                                                                                                 |
-| `log_entries.missed_refuel`                                                                  | `BOOLEAN`                               | no                | `esqueceu_anterior`. False for a kind that is not `refuel`                                                                                                           |
-| `log_entries.battery_start_pct`, `.battery_end_pct`, `.charge_minutes`                       | `NUMERIC`, `NUMERIC`, `INTEGER`         | yes               | Null when the service sends zero                                                                                                                                     |
-| `log_entry_lines.log_entry_id`, `.position`                                                  | `UUID`, `SMALLINT`                      | no                | `REFERENCES log_entries (id) ON DELETE CASCADE`. `UNIQUE (log_entry_id, position)`, from 1                                                                           |
-| `log_entry_lines.item_id`                                                                    | `UUID`                                  | yes               | The fuel, the maintenance type, or the expense type. `ON DELETE SET NULL`                                                                                            |
-| `log_entry_lines.amount`                                                                     | `NUMERIC`                               | no                | The amount as the service sends it                                                                                                                                   |
-| `log_entry_lines.unit_price`, `.volume`                                                      | `NUMERIC`                               | yes               | A fuel line only                                                                                                                                                     |
-| `log_entry_lines.full_tank`, `.free`                                                         | `BOOLEAN`                               | yes               | A fuel line only                                                                                                                                                     |
-| `instalments.log_entry_id`, `.number`, `.due_on`, `.amount`                                  | `UUID`, `SMALLINT`, `DATE`, `NUMERIC`   | no                | `ON DELETE CASCADE`. `UNIQUE (log_entry_id, number)`                                                                                                                 |
-| `reminders.vehicle_id`, `.source_id`                                                         | `UUID`, `INTEGER`                       | no                | `ON DELETE CASCADE`. `UNIQUE (workspace_id, source_id)`                                                                                                              |
-| `reminders.kind`, `.item_id`                                                                 | `TEXT`, `UUID`                          | no, yes           | `CHECK (kind IN ('maintenance', 'expense'))`. `item_id` names the type, `ON DELETE SET NULL`                                                                         |
-| `reminders.due_on`, `.due_odometer`                                                          | `DATE`, `NUMERIC`                       | yes               | The own due point of the reminder                                                                                                                                    |
-| `reminders.repeats`, `.repeat_every`, `.repeat_unit`, `.repeat_distance`                     | `BOOLEAN`, `INTEGER`, `TEXT`, `NUMERIC` | no, yes, yes, yes | `repeat_unit IN ('day', 'month', 'year')`                                                                                                                            |
-| `reminders.note`                                                                             | `TEXT`                                  | yes               |                                                                                                                                                                      |
-
-Every table also carries `collected_at TIMESTAMPTZ NOT NULL DEFAULT now()`, set again at each
-upsert. The index `log_entries_list_idx (workspace_id, vehicle_id, occurred_at DESC, id DESC)`
-serves the history, the lists, and `VehicleRows`. The end of a connection deletes no row
-(`DRIVVO-FR-014`).
+`spec-data.md` holds every table and every view (`DRIVVO-DD-018`).
 
 ### 4.3 Declarations
 
@@ -379,9 +320,10 @@ hand, and one failure needs its own handling to spare the next workspace.
 **Realizes:** `DRIVVO-FR-019`, `DRIVVO-FR-020`, `DRIVVO-NFR-001`
 **Decision:** `Collect` reads the whole account into a `model.Snapshot` first. Any failure answers
 before a write. `Store.Replace` then runs one transaction: upsert `car_log_settings`; upsert
-`reference_items`, then delete each one of the workspace that the snapshot does not hold; the
-same for `vehicles`, `log_entries` (by `kind` and `source_id`), and `reminders`; then delete every
-line and instalment of the workspace, and insert those of the snapshot. Each upsert runs
+the table of each list of reference items, then delete each one of the workspace that the snapshot
+does not hold; the same for `vehicles`, the table of each kind of log entry, and `reminders`; then
+delete every line and instalment of the workspace from each table that holds them, and insert those
+of the snapshot. Each upsert runs
 `ON CONFLICT ... DO UPDATE` and keeps `id`. Each delete names the kept `source_id` values with
 `<> ALL($1)`.
 **Rationale:** The snapshot keeps a failed read from the database. The kept `id` keeps the address
@@ -407,7 +349,7 @@ wrong day near midnight.
 `id_combustivel` is above zero, at positions 1 to 3: `preco`, `volume`, `valor_total`,
 `tanque_cheio`, and `sem_custo`. A maintenance holds a line for each item of `tipos_servico`, and
 an expense for each item of `tipos_despesa`, in the order of the service: the type and `valor`.
-`log_entries.amount` is the sum of the amounts of the lines, with zero for a line with `free`; an
+The amount of a log entry is the sum of the amounts of the lines, with zero for a line with `free`; an
 income takes `valor`. Each item of `parcelas` with a `numero` above zero is an instalment. The
 service sends no discount that the plugin reads (section 3 of the requirements).
 **Rationale:** The amount is stored at the collection, so a list and its total sum one column.
@@ -461,8 +403,10 @@ point.
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `DRIVVO-SC-001` to `DRIVVO-SC-028`: the connection and the collection.
-`spec-scenarios-pages.md` holds `DRIVVO-SC-029` to `DRIVVO-SC-052`: the pages and the widget.
+`spec-scenarios.md` holds `DRIVVO-SC-001` to `DRIVVO-SC-028` and `DRIVVO-SC-053`: the connection,
+the collection, and the data model.
+`spec-scenarios-pages.md` holds `DRIVVO-SC-029` to `DRIVVO-SC-052` and `DRIVVO-SC-054`: the pages and
+the widget.
 
 ## 7. Build plan
 
@@ -470,7 +414,7 @@ point.
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---- |
 | 1   | The module, `go.work`, `errs/`, `model/`, `config/`, `permission/`, and `config.yaml`                                                                         | `DRIVVO-FR-001`, `DRIVVO-FR-002`, `DRIVVO-FR-016`                      | [x]  |
 | 2   | `service/api-client.go` and `dto/api-client.go`, against an `httptest` service                                                                                | `DRIVVO-FR-008`, `DRIVVO-FR-009`, `DRIVVO-FR-022` to `DRIVVO-FR-024`   | [x]  |
-| 3   | The seven migrations and `repository/`                                                                                                                        | `DRIVVO-FR-019`, `DRIVVO-INV-001` to `DRIVVO-INV-004`                  | [x]  |
+| 3   | The migrations and `repository/`                                                                                                                              | `DRIVVO-FR-019`, `DRIVVO-INV-001` to `DRIVVO-INV-004`                  | [x]  |
 | 4   | `service/account.go`, `service/store.go`, `service/collector.go`, and the job                                                                                 | `DRIVVO-FR-012` to `DRIVVO-FR-021`, `DRIVVO-NFR-001`                   | [x]  |
 | 5   | `service/connection.go`, `handler/connection.go`, `dto/connection.go`                                                                                         | `DRIVVO-FR-003` to `DRIVVO-FR-014`                                     | [x]  |
 | 6   | `figures/` with its unit tests                                                                                                                                | `DRIVVO-FR-037` to `DRIVVO-FR-047`, `DRIVVO-FR-060` to `DRIVVO-FR-064` | [x]  |

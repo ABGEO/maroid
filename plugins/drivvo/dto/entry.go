@@ -17,10 +17,7 @@ type LogEntryItemResponse struct {
 	Title       string         `json:"title,omitempty"`
 	Labels      []string       `json:"labels"`
 	Volume      *float64       `json:"volume,omitempty"`
-	UnitPrice   *MoneyResponse `json:"unit_price,omitempty"`
-	FullTank    *bool          `json:"full_tank,omitempty"`
 	Consumption *float64       `json:"consumption,omitempty"`
-	Place       string         `json:"place,omitempty"`
 	IncomeType  string         `json:"income_type,omitempty"`
 }
 
@@ -46,12 +43,10 @@ func NewLogEntryItemResponseList(
 
 		switch entry.Kind {
 		case model.KindRefuel:
-			addRefuel(&item, entry, consumption, currency)
-		case model.KindMaintenance:
-			item.Place = text(entry.Place)
+			addRefuel(&item, entry, consumption)
 		case model.KindIncome:
 			item.IncomeType = text(entry.IncomeType)
-		case model.KindExpense, model.KindOdometer:
+		case model.KindMaintenance, model.KindExpense, model.KindOdometer:
 		}
 
 		answer = append(answer, item)
@@ -60,35 +55,16 @@ func NewLogEntryItemResponseList(
 	return answer
 }
 
-func addRefuel(
-	item *LogEntryItemResponse,
-	entry model.EntryRow,
-	consumption map[string]float64,
-	currency string,
-) {
-	var (
-		volume   float64
-		fullTank bool
-	)
+func addRefuel(item *LogEntryItemResponse, entry model.EntryRow, consumption map[string]float64) {
+	var volume float64
 
 	for _, line := range entry.Lines {
-		if !line.Fuel() {
-			continue
-		}
-
-		if item.UnitPrice == nil {
-			item.UnitPrice = moneyOf(line.UnitPrice, currency)
-		}
-
-		if line.Volume != nil {
+		if line.Fuel() && line.Volume != nil {
 			volume += *line.Volume
 		}
-
-		fullTank = fullTank || (line.FullTank != nil && *line.FullTank)
 	}
 
 	item.Volume = &volume
-	item.FullTank = &fullTank
 
 	if value, found := consumption[entry.ID]; found {
 		item.Consumption = &value

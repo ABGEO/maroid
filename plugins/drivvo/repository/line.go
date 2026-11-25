@@ -6,11 +6,13 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/plugins/drivvo/errs"
 	"github.com/abgeo/maroid/plugins/drivvo/model"
 )
 
 // Lines reads and writes the lines of the log entries of the acting workspace within one
-// transaction.
+// transaction: the fuels of a refuel, and the types of a maintenance or an expense. A read
+// names the view that joins them.
 type Lines struct {
 	tx *sqlx.Tx
 }
@@ -22,54 +24,81 @@ func NewLines(tx *sqlx.Tx) *Lines {
 
 // DeleteAll deletes every line of the workspace.
 func (r *Lines) DeleteAll(ctx context.Context) error {
-	if _, err := r.tx.ExecContext(ctx, `DELETE FROM log_entry_lines;`); err != nil {
-		return fmt.Errorf("deleting the lines: %w", err)
+	for _, table := range []string{"refuel_fuels", "maintenance_lines", "expense_lines"} {
+		if _, err := r.tx.ExecContext(ctx, `DELETE FROM `+table+`;`); err != nil {
+			return fmt.Errorf("deleting the lines of %s: %w", table, err)
+		}
 	}
 
 	return nil
 }
 
-// Insert stores the line of the entry. itemID names the row of its fuel or its type, nil
-// for none. A line that is not a fuel line stores no fuel value.
-func (r *Lines) Insert(ctx context.Context, entryID string, line model.Line, itemID *string) error {
-	const query = `
-		INSERT INTO log_entry_lines (
-			log_entry_id, position, item_id, amount, unit_price, volume, full_tank, free
-		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`
-
-	var (
-		unitPrice        *model.Amount
-		volume           *float64
-		fullTank, isFree *bool
-	)
-
-	if line.Fuel {
-		unitPrice, volume, fullTank, isFree = &line.UnitPrice, &line.Volume, &line.FullTank, &line.Free
+// Insert stores the line of the entry of the kind. itemID names the row of its fuel or its
+// type, nil for none.
+func (r *Lines) Insert(
+	ctx context.Context,
+	kind model.Kind,
+	entryID string,
+	line model.Line,
+	itemID *string,
+) error {
+	query, arguments, err := insertLineOf(kind, entryID, line, itemID)
+	if err != nil {
+		return err
 	}
 
-	_, err := r.tx.ExecContext(
-		ctx,
-		query,
-		entryID,
-		line.Position,
-		itemID,
-		line.Amount,
-		unitPrice,
-		volume,
-		fullTank,
-		isFree,
-	)
-	if err != nil {
+	if _, err = r.tx.ExecContext(ctx, query, arguments...); err != nil {
 		return fmt.Errorf("inserting line %d: %w", line.Position, err)
 	}
 
 	return nil
 }
 
-// lineColumns names the columns of a read of a line, with the name of its item.
+func insertLineOf(
+	kind model.Kind,
+	entryID string,
+	line model.Line,
+	itemID *string,
+) (string, []any, error) {
+	switch kind {
+	case model.KindRefuel:
+		const query = `
+			INSERT INTO refuel_fuels (
+				refuel_id, position, fuel_id, amount, unit_price, volume, full_tank, free
+			)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`
+
+		return query, []any{
+			entryID,
+			line.Position,
+			itemID,
+			line.Amount,
+			line.UnitPrice,
+			line.Volume,
+			line.FullTank,
+			line.Free,
+		}, nil
+	case model.KindMaintenance:
+		const query = `
+			INSERT INTO maintenance_lines (maintenance_id, position, maintenance_type_id, amount)
+			VALUES ($1, $2, $3, $4);`
+
+		return query, []any{entryID, line.Position, itemID, line.Amount}, nil
+	case model.KindExpense:
+		const query = `
+			INSERT INTO expense_lines (expense_id, position, expense_type_id, amount)
+			VALUES ($1, $2, $3, $4);`
+
+		return query, []any{entryID, line.Position, itemID, line.Amount}, nil
+	case model.KindIncome, model.KindOdometer:
+	}
+
+	return "", nil, fmt.Errorf("%w: no line of a %q", errs.ErrUnknownKind, kind)
+}
+
+// lineColumns names the columns of a read of a line from the view log_entry_lines.
 const lineColumns = `
-	l.log_entry_id, l.position, l.item_id, i.name AS item, l.amount, l.unit_price, l.volume,
+	l.log_entry_id, l.position, l.item_id, l.item, l.amount, l.unit_price, l.volume,
 	l.full_tank, l.free`
 
 // OfEntries answers the lines of the entries, in the order of their positions.
@@ -77,7 +106,6 @@ func (r *Lines) OfEntries(ctx context.Context, entryIDs []string) ([]model.LineR
 	const query = `
 		SELECT ` + lineColumns + `
 		FROM log_entry_lines l
-		LEFT JOIN reference_items i ON i.id = l.item_id
 		WHERE l.log_entry_id = ANY($1::uuid[])
 		ORDER BY l.log_entry_id, l.position;`
 
@@ -95,7 +123,6 @@ func (r *Lines) OfVehicle(ctx context.Context, vehicleID string) ([]model.LineRo
 		SELECT ` + lineColumns + `
 		FROM log_entry_lines l
 		JOIN log_entries e ON e.id = l.log_entry_id
-		LEFT JOIN reference_items i ON i.id = l.item_id
 		WHERE e.vehicle_id = $1
 		ORDER BY l.log_entry_id, l.position;`
 

@@ -563,17 +563,10 @@ components:
           type: number
           format: decimal
           description: A refuel. The sum of its fuel lines.
-        unit_price:
-          $ref: "#/components/schemas/Money"
-        full_tank:
-          type: boolean
         consumption:
           type: number
           format: decimal
           description: A refuel that ends a part with a value. The shape is the shape of the vehicle.
-        place:
-          type: string
-          description: A maintenance.
         income_type:
           type: string
           description: An income.

@@ -144,7 +144,7 @@ func (r *replacement) logEntries(ctx context.Context, snapshot model.Snapshot) e
 	for index, entry := range snapshot.LogEntries {
 		for _, line := range entry.Lines {
 			item := r.reference(lineItemKind(entry.Kind), line.Item)
-			if err = lines.Insert(ctx, entryIDs[index], line, item); err != nil {
+			if err = lines.Insert(ctx, entry.Kind, entryIDs[index], line, item); err != nil {
 				return fmt.Errorf(
 					"storing the lines of the %s %d: %w",
 					entry.Kind,
@@ -155,7 +155,7 @@ func (r *replacement) logEntries(ctx context.Context, snapshot model.Snapshot) e
 		}
 
 		for _, instalment := range entry.Instalments {
-			if err = instalments.Insert(ctx, entryIDs[index], instalment); err != nil {
+			if err = instalments.Insert(ctx, entry.Kind, entryIDs[index], instalment); err != nil {
 				return fmt.Errorf(
 					"storing the instalments of the %s %d: %w",
 					entry.Kind,

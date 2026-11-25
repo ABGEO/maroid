@@ -154,9 +154,14 @@ func entryID(
 ) string {
 	t.Helper()
 
+	table := map[model.Kind]string{
+		model.KindRefuel:      "refuels",
+		model.KindMaintenance: "maintenances",
+	}[kind]
+
 	return queryIn[string](ctx, t, database,
-		`SELECT coalesce(min(id::text), '') FROM log_entries WHERE kind = $1 AND source_id = $2;`,
-		string(kind), sourceID)
+		`SELECT coalesce(min(id::text), '') FROM `+table+` WHERE source_id = $1;`,
+		sourceID)
 }
 
 // DRIVVO-SC-015: A replace adds, changes, and removes rows as the snapshot holds them, and a
@@ -193,12 +198,16 @@ func TestAReplaceMirrorsTheSnapshot(t *testing.T) {
 	assert.Equal(t, "150.000", queryIn[string](ctx, t, database,
 		`SELECT amount::numeric(12,3)::text FROM log_entries WHERE id = $1;`, changed))
 	assert.Equal(t, 3, queryIn[int](ctx, t, database, `SELECT count(*) FROM log_entry_lines;`))
-	assert.Equal(t, 2, queryIn[int](ctx, t, database, `SELECT count(*) FROM instalments;`))
+	assert.Equal(
+		t,
+		2,
+		queryIn[int](ctx, t, database, `SELECT count(*) FROM log_entry_instalments;`),
+	)
 	assert.Equal(t, "Gulf", queryIn[string](
 		ctx,
 		t,
 		database,
-		`SELECT r.name FROM log_entries e JOIN reference_items r ON r.id = e.station_id WHERE e.id = $1;`,
+		`SELECT s.name FROM refuels r JOIN stations s ON s.id = r.station_id WHERE r.id = $1;`,
 		kept,
 	))
 
@@ -208,7 +217,11 @@ func TestAReplaceMirrorsTheSnapshot(t *testing.T) {
 
 	assert.Equal(t, 1, queryIn[int](ctx, t, database, `SELECT count(*) FROM vehicles;`))
 	assert.Equal(t, 0, queryIn[int](ctx, t, database, `SELECT count(*) FROM log_entries;`))
-	assert.Equal(t, 0, queryIn[int](ctx, t, database, `SELECT count(*) FROM instalments;`))
+	assert.Equal(
+		t,
+		0,
+		queryIn[int](ctx, t, database, `SELECT count(*) FROM log_entry_instalments;`),
+	)
 }
 
 // DRIVVO-SC-018: A moment stays the moment, and a due day stays its day.
@@ -225,7 +238,7 @@ func TestAMomentAndADayReadBack(t *testing.T) {
 	occurredAt := queryIn[time.Time](ctx, t, database, `SELECT occurred_at FROM log_entries;`)
 	assert.True(t, time.Date(2026, 11, 2, 8, 0, 0, 0, time.UTC).Equal(occurredAt))
 	assert.Equal(t, "2026-12-02", queryIn[string](ctx, t, database,
-		`SELECT due_on::text FROM instalments WHERE number = 2;`))
+		`SELECT due_on::text FROM maintenance_instalments WHERE number = 2;`))
 }
 
 // DRIVVO-SC-024: The copy of one workspace serves no other workspace, and a replace of one
@@ -264,15 +277,15 @@ func TestAnItemOfTheServiceIsOneRow(t *testing.T) {
 
 	err := database.WithTx(ctx, func(tx *sqlx.Tx) error {
 		_, err := tx.ExecContext(ctx, `
-			INSERT INTO log_entries (vehicle_id, kind, source_id, occurred_at, amount)
-			SELECT vehicle_id, kind, source_id, occurred_at, amount FROM log_entries;`)
+			INSERT INTO refuels (vehicle_id, source_id, occurred_at, amount, missed_refuel)
+			SELECT vehicle_id, source_id, occurred_at, amount, missed_refuel FROM refuels;`)
 		if err != nil {
 			return fmt.Errorf("inserting a second refuel 101: %w", err)
 		}
 
 		return nil
 	})
-	require.ErrorContains(t, err, "log_entries_source_key")
+	require.ErrorContains(t, err, "refuels_source_key")
 }
 
 // DRIVVO-SC-026: A deleted vehicle takes its entries, their lines and instalments, and its
@@ -316,8 +329,59 @@ func TestADeletedVehicleTakesWhatItHolds(t *testing.T) {
 
 	assert.Equal(t, 1, queryIn[int](ctx, t, database, `SELECT count(*) FROM log_entries;`))
 	assert.Equal(t, 1, queryIn[int](ctx, t, database, `SELECT count(*) FROM log_entry_lines;`))
-	assert.Equal(t, 0, queryIn[int](ctx, t, database, `SELECT count(*) FROM instalments;`))
+	assert.Equal(
+		t,
+		0,
+		queryIn[int](ctx, t, database, `SELECT count(*) FROM log_entry_instalments;`),
+	)
 	assert.Equal(t, 0, queryIn[int](ctx, t, database, `SELECT count(*) FROM reminders;`))
+}
+
+// DRIVVO-SC-053: A reminder names a type of its own kind alone, each view reads with the
+// rights of its reader, and a view of one workspace serves no other.
+func TestEachAggregateKeepsItsOwnRows(t *testing.T) {
+	t.Parallel()
+
+	store, database := storeUnderTest(t)
+	inW, inX := actingIn(t, fakes.WorkspaceW), actingIn(t, fakes.WorkspaceX)
+
+	snapshot := baseSnapshot()
+	snapshot.ReferenceItems = append(
+		snapshot.ReferenceItems,
+		model.ReferenceItem{Kind: model.ReferenceExpenseType, SourceID: 7, Name: "Insurance"},
+	)
+	snapshot.LogEntries = []model.LogEntry{refuel(101, 11, 1, 40), maintenance(201, 11, 120)}
+	require.NoError(t, store.Replace(inW, snapshot))
+
+	err := database.WithTx(inW, func(tx *sqlx.Tx) error {
+		_, err := tx.ExecContext(inW, `
+			INSERT INTO reminders (vehicle_id, source_id, kind, expense_type_id, repeats)
+			SELECT v.id, 401, 'maintenance', e.id, false
+			FROM vehicles v, expense_types e
+			WHERE v.source_id = 11 AND e.source_id = 7;`)
+		if err != nil {
+			return fmt.Errorf("inserting a maintenance reminder of an expense type: %w", err)
+		}
+
+		return nil
+	})
+	require.ErrorContains(t, err, "reminders_type_check")
+
+	for _, view := range []string{"log_entries", "log_entry_lines", "log_entry_instalments"} {
+		assert.True(t, queryIn[bool](inW, t, database, `
+			SELECT 'security_invoker=true' = ANY(c.reloptions)
+			FROM pg_class c
+			WHERE c.relname = $1 AND c.relkind = 'v';`, view), view)
+		assert.Equal(t, 0, queryIn[int](inX, t, database, `SELECT count(*) FROM `+view+`;`), view)
+	}
+
+	assert.Equal(t, 2, queryIn[int](inW, t, database, `SELECT count(*) FROM log_entries;`))
+	assert.Equal(t, 2, queryIn[int](inW, t, database, `SELECT count(*) FROM log_entry_lines;`))
+	assert.Equal(
+		t,
+		2,
+		queryIn[int](inW, t, database, `SELECT count(*) FROM log_entry_instalments;`),
+	)
 }
 
 // DRIVVO-SC-022: A collection of 3 vehicles and 2,000 entries, each answer 200 ms away,

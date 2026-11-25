@@ -28,10 +28,7 @@ type entryItem struct {
 	Amount      map[string]any `json:"amount"`
 	Labels      []string       `json:"labels"`
 	Volume      *float64       `json:"volume"`
-	UnitPrice   map[string]any `json:"unit_price"`
-	FullTank    *bool          `json:"full_tank"`
 	Consumption *float64       `json:"consumption"`
-	Place       string         `json:"place"`
 	IncomeType  string         `json:"income_type"`
 }
 
@@ -253,10 +250,6 @@ func checkLists(t *testing.T, rig *pageRig) {
 	first := rig.entryOfOdometer(t, 10000)
 	assert.Equal(t, []string{"Petrol", "LPG"}, first.Labels)
 	assert.InDelta(t, 35.0, *first.Volume, 0.001)
-	assert.Equal(t, map[string]any{memberAmount: 3.0, memberCurrency: currencyGEL}, first.UnitPrice)
-	assert.True(t, *first.FullTank)
-
-	assert.Equal(t, "Garage", rig.entryOfOdometer(t, 10600).Place)
 	assert.Equal(t, "Ride", rig.entryOfOdometer(t, 10750).IncomeType)
 
 	totals := decodeAs[map[string]any](t,

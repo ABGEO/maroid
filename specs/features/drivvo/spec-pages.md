@@ -81,17 +81,21 @@ five kinds, default every kind; `from`; `to`; `limit` (1 to 100, default 20); `c
 which takes `occurred_at` with the default `-occurred_at`. A tie sorts by `id` in the same
 direction, and the cursor of `RES-006` keys on both and carries `kind`, `from`, and `to`. An item answers `id`, `kind`, `occurred_at`,
 `odometer`, `amount` (absent for an odometer entry), `title`, `labels` (the names of the fuels or
-the types, in the order of the lines), and for a refuel `volume`, `unit_price` of the first line,
-`full_tank`, and `consumption` of the part that the refuel ends; for a maintenance `place`; for an
-income `income_type`. `GET /vehicles/{vehicleId}/log-entry-totals` takes one required `kind`,
+the types, in the order of the lines), and for a refuel `volume` and `consumption` of the part that
+the refuel ends; for an income `income_type`. `GET /vehicles/{vehicleId}/log-entry-totals` takes one required `kind`,
 `from`, and `to`, and answers `kind`, `count`, `amount`, and for a refuel `volume`. `History.svelte`
 shows a toggle for each kind, and a table with the columns of `DRIVVO-FR-048`. `EntryList.svelte`
 takes the kind from its route, shows the totals above the table, and the columns of
-`DRIVVO-FR-050` to `DRIVVO-FR-054`. Each table follows `next` and `prev`. A row opens
-`/<page>/<vehicle>/<id>`, under the page that lists it.
+`DRIVVO-FR-050` to `DRIVVO-FR-054`. Each table follows `next` and `prev`. A click on a row, or on the
+chevron button of its first cell, opens a details row under it that reads
+`GET /vehicles/{vehicleId}/log-entries/{logEntryId}` once and shows `EntryDetails.svelte`, with a link
+to `/<page>/<vehicle>/<id>`, under the page that lists it. One row is open at a time.
 **Rationale:** One route serves the history and the four lists. A page carries no total (`RES-005`),
-so the totals of a list take a route of their own.
-**Alternatives:** One route for each kind. Five routes repeat one query.
+so the totals of a list take a route of their own. A row shows only what every row of its table
+holds, so the table fits a phone, and the detail stays one click away.
+**Alternatives:** One route for each kind. Five routes repeat one query. A column for each member.
+The refuel table then holds nine columns. A side drawer for the detail. It covers the table on a
+phone, and repeats the detail page.
 
 ### `DRIVVO-DD-016`
 
@@ -102,8 +106,9 @@ holds: `amount`, `title`, `station`, `place`, `payment_method`, `reason`, and `i
 `missed_refuel`; `battery_start_pct`, `battery_end_pct`, and `charge_minutes` when stored; `lines`
 with `position`, `item`, `amount`, and for a fuel line `unit_price`, `volume`, `full_tank`, and
 `free`; and `instalments` with `number`, `due_on`, and `amount`. An entry of another vehicle answers
-404 `log-entry-not-found`. `Entry.svelte` calls `host.setTitle` with the kind and the day, and shows
-a link back to the page that lists it.
+404 `log-entry-not-found`. `Entry.svelte` calls `host.setTitle` with the kind and the day, shows the
+moment, the odometer value, and the amount, then `EntryDetails.svelte`, and a link back to the page
+that lists it.
 **Rationale:** A member that a kind does not hold stays absent, as in the telecom plugin
 (`MAGTIACC-DD-013`).
 **Alternatives:** One object with every member, null when absent. The page then checks the kind and

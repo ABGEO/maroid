@@ -4,7 +4,7 @@ title: The widget and the pages of the car log account
 type: requirements
 status: approved
 created: 2026-11-25
-updated: 2026-11-25
+updated: 2026-11-26
 approved_by: Temuri
 approved_on: 2026-11-25
 constrained_by: [UI, SEC]
@@ -169,7 +169,7 @@ A member must filter the history by one or more kinds of log entry.
 ### `DRIVVO-FR-050`
 
 The refuel list must list the refuels of the vehicle in the period, the latest moment first.
-Each row shows the moment, the odometer value, the fuels, the volume, the unit price, the amount, and the full tank mark.
+Each row shows the moment, the odometer value, the fuels, the volume, and the amount.
 
 ### `DRIVVO-FR-051`
 
@@ -178,7 +178,7 @@ A row of the refuel list must show the consumption of the part that the refuel e
 ### `DRIVVO-FR-052`
 
 The maintenance list must list the maintenances of the vehicle in the period, the latest moment first.
-Each row shows the moment, the odometer value, the title, the maintenance types, the place, and the amount.
+Each row shows the moment, the odometer value, the title, the maintenance types, and the amount.
 
 ### `DRIVVO-FR-053`
 
@@ -202,7 +202,13 @@ The history and each list must show at most 20 log entries at a time, with a way
 
 ### `DRIVVO-FR-057`
 
-A log entry in the history or in a list must open the detail of the log entry.
+A log entry in the history or in a list must open its detail under its row, on the same page.
+The detail links to the page of the log entry.
+
+**Examples:**
+
+- Normal case: a click on a refuel shows its fuels, its station, and its note under the row. A second click closes it.
+- Limit case: an odometer entry with no note shows that it holds no other value.
 
 ### `DRIVVO-FR-058`
 

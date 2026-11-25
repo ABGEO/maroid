@@ -22,6 +22,8 @@ var (
 	// ErrLogEntryNotFound reports a log entry that the car log copy does not hold for the
 	// vehicle.
 	ErrLogEntryNotFound = errors.New("drivvo: log entry not found")
+	// ErrUnknownKind reports a kind of a log entry or of a reference item that no table holds.
+	ErrUnknownKind = errors.New("drivvo: no table holds the kind")
 	// ErrAmountUnreadable reports a stored amount that does not read as a number.
 	ErrAmountUnreadable = errors.New("drivvo: an amount does not read")
 	// ErrReversedPeriod reports a period whose first day is after its last day.

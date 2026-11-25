@@ -7,11 +7,13 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/plugins/drivvo/errs"
 	"github.com/abgeo/maroid/plugins/drivvo/model"
 )
 
 // Instalments reads and writes the instalments of the log entries of the acting workspace
-// within one transaction.
+// within one transaction. A maintenance, an expense, and an income each have a table of
+// instalments. A read names the view that joins them.
 type Instalments struct {
 	tx *sqlx.Tx
 }
@@ -23,22 +25,42 @@ func NewInstalments(tx *sqlx.Tx) *Instalments {
 
 // DeleteAll deletes every instalment of the workspace.
 func (r *Instalments) DeleteAll(ctx context.Context) error {
-	if _, err := r.tx.ExecContext(ctx, `DELETE FROM instalments;`); err != nil {
-		return fmt.Errorf("deleting the instalments: %w", err)
+	tables := []string{"maintenance_instalments", "expense_instalments", "income_instalments"}
+
+	for _, table := range tables {
+		if _, err := r.tx.ExecContext(ctx, `DELETE FROM `+table+`;`); err != nil {
+			return fmt.Errorf("deleting the instalments of %s: %w", table, err)
+		}
 	}
 
 	return nil
 }
 
-// Insert stores the instalment of the entry.
+// Insert stores the instalment of the entry of the kind.
 func (r *Instalments) Insert(
 	ctx context.Context,
+	kind model.Kind,
 	entryID string,
 	instalment model.Instalment,
 ) error {
-	const query = `
-		INSERT INTO instalments (log_entry_id, number, due_on, amount)
-		VALUES ($1, $2, $3, $4);`
+	var query string
+
+	switch kind {
+	case model.KindMaintenance:
+		query = `
+			INSERT INTO maintenance_instalments (maintenance_id, number, due_on, amount)
+			VALUES ($1, $2, $3, $4);`
+	case model.KindExpense:
+		query = `
+			INSERT INTO expense_instalments (expense_id, number, due_on, amount)
+			VALUES ($1, $2, $3, $4);`
+	case model.KindIncome:
+		query = `
+			INSERT INTO income_instalments (income_id, number, due_on, amount)
+			VALUES ($1, $2, $3, $4);`
+	case model.KindRefuel, model.KindOdometer:
+		return fmt.Errorf("%w: no instalment of a %q", errs.ErrUnknownKind, kind)
+	}
 
 	_, err := r.tx.ExecContext(
 		ctx,
@@ -62,7 +84,7 @@ func (r *Instalments) OfEntries(
 ) ([]model.InstalmentRow, error) {
 	const query = `
 		SELECT log_entry_id, number, due_on, amount
-		FROM instalments
+		FROM log_entry_instalments
 		WHERE log_entry_id = ANY($1::uuid[])
 		ORDER BY log_entry_id, number;`
 
@@ -81,7 +103,7 @@ func (r *Instalments) OfVehicle(
 ) ([]model.InstalmentRow, error) {
 	const query = `
 		SELECT n.log_entry_id, n.number, n.due_on, n.amount
-		FROM instalments n
+		FROM log_entry_instalments n
 		JOIN log_entries e ON e.id = n.log_entry_id
 		WHERE e.vehicle_id = $1
 		ORDER BY n.log_entry_id, n.number;`

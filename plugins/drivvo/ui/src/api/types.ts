@@ -92,11 +92,8 @@ export interface LogEntryItem {
 	/** The names of the fuels or of the types, in the order of the lines. */
 	labels: string[];
 	volume?: number;
-	unit_price?: Money;
-	full_tank?: boolean;
 	/** The consumption of the part that the refuel ends. */
 	consumption?: number;
-	place?: string;
 	income_type?: string;
 }
 

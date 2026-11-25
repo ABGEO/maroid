@@ -4,7 +4,7 @@ title: The scenarios of the car log account of a workspace
 type: spec
 status: approved
 created: 2026-11-25
-updated: 2026-11-25
+updated: 2026-11-26
 approved_by: Temuri
 approved_on: 2026-11-25
 constrained_by: [TST, TRC]
@@ -268,7 +268,7 @@ each.
 
 **Given** a copy with the refuel 101.
 **When** a repository inserts a second refuel 101 for W.
-**Then** the insert fails on `UNIQUE (workspace_id, kind, source_id)`.
+**Then** the insert fails on `UNIQUE (workspace_id, source_id)` of `refuels`.
 
 ## `DRIVVO-SC-026`
 
@@ -297,6 +297,17 @@ each.
 **When** the owner connects, waits for an expired token, and runs the job.
 **Then** the sign in, the sign in again, and the collection succeed. A refuel shows at the time that
 the mobile application shows. The run ends in less than 60 seconds.
+
+## `DRIVVO-SC-053`
+
+**Verifies:** `DRIVVO-DD-018`
+**Layer:** integration
+
+**Given** a copy with the fuel 1, the maintenance type 5, and the expense type 7.
+**When** a transaction inserts a maintenance reminder that names the expense type 7, and reads the
+three views of `DRIVVO-DD-018` for X.
+**Then** the insert fails on `reminders_type_check`, each view declares `security_invoker`, and X
+reads no row of W.
 
 ## Retired identifiers
 

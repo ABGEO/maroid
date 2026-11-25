@@ -160,11 +160,10 @@ The second lists the refuel and the odometer entry.
 **Verifies:** `DRIVVO-FR-050`, `DRIVVO-FR-052` to `DRIVVO-FR-055`
 **Layer:** integration
 
-**Given** two refuels of 40 L for 120.00 and 30 L for 90.00, a maintenance at the place "Garage", and
-an income of the type "Ride".
+**Given** two refuels of 40 L for 120.00 and 30 L for 90.00, and an income of the type "Ride".
 **When** V reads the four lists and the totals of each kind.
-**Then** the refuel items answer volume, unit price, and full tank. The maintenance answers `place`
-"Garage", and the income `income_type` "Ride". The refuel totals answer count 2, 210.00, and 70 L.
+**Then** the refuel items answer the volume and the names of the fuels, and the income answers
+`income_type` "Ride". The refuel totals answer count 2, 210.00, and 70 L.
 
 ## `DRIVVO-SC-044`
 
@@ -254,6 +253,18 @@ oil change 1,200 km away.
 **Given** "Hatchback" with refuels and no reminder, and in a second case with no entry and no reminder.
 **When** the widget loads in each case.
 **Then** the first answers two items, the refuel and the consumption. The second answers empty.
+
+## `DRIVVO-SC-054`
+
+**Verifies:** `DRIVVO-FR-057`
+**Layer:** manual
+
+**Given** the refuel list of "Hatchback" in a window 375 px wide, and an odometer entry with no note.
+**When** the owner clicks a refuel, clicks it again, presses Enter on the chevron of the odometer
+entry, and follows "Open the odometer entry".
+**Then** the refuel shows its fuels, its station, and its note under the row, then closes. The
+odometer entry reads "No other detail.", and the link opens its page. No column scrolls out of the
+window.
 
 ## Retired identifiers
 
