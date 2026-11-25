@@ -311,7 +311,14 @@ func logInFailure(resp *resty.Response) error {
 	case code == http.StatusUnauthorized, code == http.StatusForbidden:
 		return errs.ErrCredentialsRejected
 	case !resp.IsStatusSuccess():
-		return statusFailure(pathLogIn, resp)
+		// The body of a failed sign in can repeat the email address, so the error names
+		// the status alone.
+		return fmt.Errorf(
+			"%w: %s returned [%d]",
+			errs.ErrRequestFailed,
+			pathLogIn,
+			resp.StatusCode(),
+		)
 	case decodeErr != nil:
 		return fmt.Errorf(
 			"%w: reading the answer of the sign in: %w",

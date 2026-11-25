@@ -148,6 +148,22 @@ func TestAFailedSignInIsNoRefusal(t *testing.T) {
 	}
 }
 
+// DRIVVO-SC-027: The error of a failed sign in names no email address, though the answer
+// repeats it, because the error reaches the log.
+func TestAFailedSignInNamesNoEmail(t *testing.T) {
+	t.Parallel()
+
+	client, fake := newClient(t)
+	fake.Set(func(state *fakeservice.Service) {
+		state.SignInStatus = http.StatusBadRequest
+		state.SignInBody = map[string]any{"message": "no account for " + email}
+	})
+
+	_, err := client.SignIn(context.Background(), email, spacedSecret)
+	require.ErrorIs(t, err, errs.ErrRequestFailed)
+	assert.NotContains(t, err.Error(), email)
+}
+
 // DRIVVO-SC-003: The vehicles come from /veiculo/web, read with the token.
 func TestTheVehiclesComeWithTheToken(t *testing.T) {
 	t.Parallel()
