@@ -306,7 +306,7 @@ func hatchbackReminders() []model.Reminder {
 			VehicleSource: 11,
 			Kind:          model.KindExpense,
 			Item:          7,
-			DueOn:         new(dayOn(2026, 12, 7)),
+			DueOn:         new(dayOn(2026, 11, 30)),
 		},
 		{
 			SourceID:      2,
@@ -320,7 +320,7 @@ func hatchbackReminders() []model.Reminder {
 			VehicleSource: 11,
 			Kind:          model.KindExpense,
 			Item:          7,
-			DueOdometer:   new(11800.0),
+			DueOdometer:   new(11900.0),
 		},
 		{
 			SourceID:      4,

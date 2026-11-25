@@ -13,22 +13,35 @@ function routeWith(
 
 const landing = () => import('./pages/Landing.svelte');
 const entryList = () => import('./pages/EntryList.svelte');
+const entry = () => import('./pages/Entry.svelte');
+
+/** The navigation entry, then its page for one vehicle, then the detail of a listed entry. */
+function vehiclePages(
+	page: string,
+	title: string,
+	load: () => Promise<{ default: Component<never> }>,
+	fixed: Record<string, unknown> = {},
+	listsEntries = true
+): Record<string, RouteMounter> {
+	const routes: Record<string, RouteMounter> = {
+		[`/${page}`]: routeWith(landing, { page, title }),
+		[`/${page}/:vehicle`]: routeWith(load, fixed)
+	};
+
+	if (listsEntries) {
+		routes[`/${page}/:vehicle/:entry`] = routeWith(entry, { page, title });
+	}
+
+	return routes;
+}
 
 export const routes = {
-	'/overview': routeWith(landing, { page: 'overview', title: 'Overview' }),
-	'/history': routeWith(landing, { page: 'history', title: 'History' }),
-	'/refuels': routeWith(landing, { page: 'refuels', title: 'Refuels' }),
-	'/maintenances': routeWith(landing, { page: 'maintenances', title: 'Maintenance' }),
-	'/expenses': routeWith(landing, { page: 'expenses', title: 'Expenses' }),
-	'/incomes': routeWith(landing, { page: 'incomes', title: 'Income' }),
-	'/reminders': routeWith(landing, { page: 'reminders', title: 'Reminders' }),
-	'/account': defineRoute(() => import('./pages/Account.svelte')),
-	'/vehicles/:vehicle/overview': defineRoute(() => import('./pages/Overview.svelte')),
-	'/vehicles/:vehicle/history': defineRoute(() => import('./pages/History.svelte')),
-	'/vehicles/:vehicle/refuels': routeWith(entryList, { kind: 'refuel' }),
-	'/vehicles/:vehicle/maintenances': routeWith(entryList, { kind: 'maintenance' }),
-	'/vehicles/:vehicle/expenses': routeWith(entryList, { kind: 'expense' }),
-	'/vehicles/:vehicle/incomes': routeWith(entryList, { kind: 'income' }),
-	'/vehicles/:vehicle/entries/:entry': defineRoute(() => import('./pages/Entry.svelte')),
-	'/vehicles/:vehicle/reminders': defineRoute(() => import('./pages/Reminders.svelte'))
+	...vehiclePages('overview', 'Overview', () => import('./pages/Overview.svelte'), {}, false),
+	...vehiclePages('history', 'History', () => import('./pages/History.svelte')),
+	...vehiclePages('refuels', 'Refuels', entryList, { kind: 'refuel' }),
+	...vehiclePages('maintenances', 'Maintenance', entryList, { kind: 'maintenance' }),
+	...vehiclePages('expenses', 'Expenses', entryList, { kind: 'expense' }),
+	...vehiclePages('incomes', 'Income', entryList, { kind: 'income' }),
+	...vehiclePages('reminders', 'Reminders', () => import('./pages/Reminders.svelte'), {}, false),
+	'/account': defineRoute(() => import('./pages/Account.svelte'))
 };

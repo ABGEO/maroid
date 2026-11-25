@@ -168,7 +168,7 @@ func ConsumptionUnit(distance model.DistanceUnit, settings model.CarLogSettings)
 }
 
 func vehiclePage(vehicle model.Vehicle, page string) string {
-	return "/vehicles/" + vehicle.ID + "/" + page
+	return "/" + page + "/" + vehicle.ID
 }
 
 // grouped writes the whole part of the value with a comma between each group of three

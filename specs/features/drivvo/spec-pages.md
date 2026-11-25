@@ -4,7 +4,7 @@ title: The widget and the pages of the car log account
 type: spec
 status: approved
 created: 2026-11-25
-updated: 2026-11-25
+updated: 2026-11-26
 approved_by: Temuri
 approved_on: 2026-11-25
 constrained_by: [UI, RES, SEC]
@@ -27,10 +27,11 @@ the widget.
 `model`, `year`, `active`, `principal`, `default`, and `units` (`distance`, `volume`,
 `consumption_shape`). `default` marks the one vehicle that a page with no vehicle opens: the
 principal vehicle, else the first active vehicle, else the first vehicle. A navigation entry page
-reads the list and calls `host.navigate` to `/vehicles/<default id>/<page>`. With an empty list it
+reads the list and calls `host.navigate` to `/<page>/<default id>`. With an empty list it
 shows "Maroid holds no vehicle yet. The collection runs at the start of each hour." and a link to
 `/account`. Every page with a vehicle shows a select of the list, with " (inactive)" after an
-inactive name, and a choice navigates to the same page of the chosen vehicle. A route under
+inactive name, and a choice navigates to the same page of the chosen vehicle. A page with a vehicle
+calls `host.setTitle` with the name of the vehicle, so the trail reads "Overview" then "Hatchback". A route under
 `/vehicles/{vehicleId}` that names no vehicle of the copy answers 404 `vehicle-not-found`, and the
 page shows "This vehicle is not in Maroid." with a link to `/overview`.
 **Rationale:** The server owns the rule of the default vehicle, so the widget and the pages agree
@@ -75,10 +76,10 @@ line for the income; and a table of the types.
 ### `DRIVVO-DD-015`
 
 **Realizes:** `DRIVVO-FR-048` to `DRIVVO-FR-056`
-**Decision:** `GET /vehicles/{vehicleId}/log-entries` takes `kind`, repeatable, one of the five
-kinds, default every kind; `from`; `to`; `limit` (1 to 100, default 20); `cursor`; and `sort`,
+**Decision:** `GET /vehicles/{vehicleId}/log-entries` takes `kind`, a comma-separated list of the
+five kinds, default every kind; `from`; `to`; `limit` (1 to 100, default 20); `cursor`; and `sort`,
 which takes `occurred_at` with the default `-occurred_at`. A tie sorts by `id` in the same
-direction, and the cursor of `RES-006` keys on both. An item answers `id`, `kind`, `occurred_at`,
+direction, and the cursor of `RES-006` keys on both and carries `kind`, `from`, and `to`. An item answers `id`, `kind`, `occurred_at`,
 `odometer`, `amount` (absent for an odometer entry), `title`, `labels` (the names of the fuels or
 the types, in the order of the lines), and for a refuel `volume`, `unit_price` of the first line,
 `full_tank`, and `consumption` of the part that the refuel ends; for a maintenance `place`; for an
@@ -87,7 +88,7 @@ income `income_type`. `GET /vehicles/{vehicleId}/log-entry-totals` takes one req
 shows a toggle for each kind, and a table with the columns of `DRIVVO-FR-048`. `EntryList.svelte`
 takes the kind from its route, shows the totals above the table, and the columns of
 `DRIVVO-FR-050` to `DRIVVO-FR-054`. Each table follows `next` and `prev`. A row opens
-`/vehicles/<vehicle>/entries/<id>`.
+`/<page>/<vehicle>/<id>`, under the page that lists it.
 **Rationale:** One route serves the history and the four lists. A page carries no total (`RES-005`),
 so the totals of a list take a route of their own.
 **Alternatives:** One route for each kind. Five routes repeat one query.
@@ -102,7 +103,7 @@ holds: `amount`, `title`, `station`, `place`, `payment_method`, `reason`, and `i
 with `position`, `item`, `amount`, and for a fuel line `unit_price`, `volume`, `full_tank`, and
 `free`; and `instalments` with `number`, `due_on`, and `amount`. An entry of another vehicle answers
 404 `log-entry-not-found`. `Entry.svelte` calls `host.setTitle` with the kind and the day, and shows
-a link back to the list of its kind.
+a link back to the page that lists it.
 **Rationale:** A member that a kind does not hold stays absent, as in the telecom plugin
 (`MAGTIACC-DD-013`).
 **Alternatives:** One object with every member, null when absent. The page then checks the kind and
@@ -117,13 +118,13 @@ the null.
 `Reminders.svelte` marks a due reminder, and writes "in 12 days", "in 1,200 km", or "250 km past".
 The widget `car` reads the vehicle of `default`, and answers a `ListAnswer` with up to three items:
 
-| Label           | Meta                                                   | Link                       |
-| --------------- | ------------------------------------------------------ | -------------------------- |
-| "Latest refuel" | `<day> · <volume> <unit> · <amount> <currency>`        | `/vehicles/<id>/refuels`   |
-| "Consumption"   | `<value, one decimal> <unit>`, over the last 12 months | `/vehicles/<id>/overview`  |
-| The type name   | "due", "in <n> days", or "in <n> <distance unit>"      | `/vehicles/<id>/reminders` |
+| Label           | Meta                                                   | Link              |
+| --------------- | ------------------------------------------------------ | ----------------- |
+| "Latest refuel" | `<day> · <volume> <unit> · <amount> <currency>`        | `/refuels/<id>`   |
+| "Consumption"   | `<value, one decimal> <unit>`, over the last 12 months | `/overview/<id>`  |
+| The type name   | "due", "in <n> days", or "in <n> <distance unit>"      | `/reminders/<id>` |
 
-An absent value drops its item. `More` is `/vehicles/<id>/overview`. No item answers
+An absent value drops its item. `More` is `/overview/<id>`. No item answers
 `EmptyAnswer("No refuel and no reminder yet.")`. No vehicle answers
 `NotSetUpAnswer("Connect the Drivvo account.", "/account")`. The day is the day of the member.
 **Rationale:** Each line has its own link, so a list widget fits three facts in size `s`.

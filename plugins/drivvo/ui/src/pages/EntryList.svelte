@@ -103,7 +103,7 @@
 
 			<section class="min-w-0" aria-label={about.title}>
 				{#key `${vehicle.id} ${period.from} ${period.to}`}
-					<EntryTable {host} {vehicle} {period} kinds={[kind]} list={kind} />
+					<EntryTable {host} {vehicle} {period} kinds={[kind]} list={kind} page={about.page} />
 				{/key}
 			</section>
 		</div>

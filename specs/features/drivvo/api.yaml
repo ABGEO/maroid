@@ -185,9 +185,9 @@ paths:
         - $ref: "../../api/components.yaml#/components/parameters/Sort"
         - name: kind
           in: query
-          description: The kinds to list. Repeat the parameter for each kind. Absent lists every kind.
+          description: The kinds to list, separated by commas. Absent lists every kind. A cursor carries it.
           style: form
-          explode: true
+          explode: false
           schema:
             type: array
             uniqueItems: true

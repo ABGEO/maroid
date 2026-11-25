@@ -4,7 +4,7 @@ title: The scenarios of the pages and the widget of the car log account
 type: spec
 status: approved
 created: 2026-11-25
-updated: 2026-11-25
+updated: 2026-11-26
 approved_by: Temuri
 approved_on: 2026-11-25
 constrained_by: [TST, TRC]
@@ -34,13 +34,13 @@ answer marks "Hatchback" as `default`, the first active by name.
 
 **Given** the deck with the plugin.
 **When** V opens the navigation entry "Overview", reloads the page, and picks "Old sedan".
-**Then** the address reads `/vehicles/<Hatchback>/overview`, the reload shows "Hatchback", and the
-choice moves the address to `/vehicles/<Old sedan>/overview`.
+**Then** the address reads `/overview/<Hatchback>`, the reload shows "Hatchback", and the
+choice moves the address to `/overview/<Old sedan>`.
 
 ## `DRIVVO-SC-031`
 
 **Verifies:** `DRIVVO-FR-031`
-**Layer:** unit
+**Layer:** integration
 
 **Given** an identifier that names no vehicle of W.
 **When** V reads its overview, its entries, and its reminders.
@@ -67,12 +67,12 @@ choice moves the address to `/vehicles/<Old sedan>/overview`.
 ## `DRIVVO-SC-034`
 
 **Verifies:** `DRIVVO-FR-034`
-**Layer:** unit
+**Layer:** integration
 
 **Given** the settings of the account.
 **When** V reads `GET /vehicles` and an entry.
 **Then** "Hatchback" answers `units` `km`, `l`, and `volume_per_100`, and the amount answers
-`{"amount": 120.0, "currency": "GEL"}`.
+`{"amount": 90.0, "currency": "GEL"}`.
 
 ## `DRIVVO-SC-035`
 
@@ -148,17 +148,17 @@ answers null for the distance and both values per distance.
 ## `DRIVVO-SC-042`
 
 **Verifies:** `DRIVVO-FR-048`, `DRIVVO-FR-049`, `DRIVVO-DD-015`
-**Layer:** unit
+**Layer:** integration
 
 **Given** one entry of each kind on five days.
-**When** V reads the history, then with `kind=refuel&kind=odometer`.
+**When** V reads the history, then with `kind=refuel,odometer`.
 **Then** the first answer lists five items, the latest first, and the odometer entry holds no amount.
 The second lists the refuel and the odometer entry.
 
 ## `DRIVVO-SC-043`
 
 **Verifies:** `DRIVVO-FR-050`, `DRIVVO-FR-052` to `DRIVVO-FR-055`
-**Layer:** unit
+**Layer:** integration
 
 **Given** two refuels of 40 L for 120.00 and 30 L for 90.00, a maintenance at the place "Garage", and
 an income of the type "Ride".
@@ -169,7 +169,7 @@ an income of the type "Ride".
 ## `DRIVVO-SC-044`
 
 **Verifies:** `DRIVVO-FR-056`
-**Layer:** unit
+**Layer:** integration
 
 **Given** 45 refuels.
 **When** V reads the history with no `limit`, then follows `next` two times.
@@ -178,7 +178,7 @@ an income of the type "Ride".
 ## `DRIVVO-SC-045`
 
 **Verifies:** `DRIVVO-FR-057`, `DRIVVO-FR-058`, `DRIVVO-DD-016`
-**Layer:** unit
+**Layer:** integration
 
 **Given** the refuel of `DRIVVO-SC-019` at the station "Gulf" paid by "Card", and an odometer entry.
 **When** V reads the detail of each.
@@ -188,7 +188,7 @@ charge. The odometer entry answers `odometer` and `note` alone.
 ## `DRIVVO-SC-046`
 
 **Verifies:** `DRIVVO-FR-059`
-**Layer:** unit
+**Layer:** integration
 
 **Given** an entry of "Old sedan".
 **When** V reads it under the path of "Hatchback", then under an identifier that the copy lacks.

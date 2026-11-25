@@ -25,7 +25,7 @@ func (h *CarLogHandler) LogEntries(w http.ResponseWriter, r *http.Request) {
 
 	asked, failure := page.ReadRequest(r, page.Options{
 		SortFields: []string{sortOccurredAt},
-		Filters:    []string{filterFrom, filterTo},
+		Filters:    []string{filterFrom, filterTo, filterKind},
 	})
 	if failure != nil {
 		problem.Write(w, r, failure)
@@ -74,16 +74,15 @@ func (h *CarLogHandler) LogEntryTotals(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	kinds := r.URL.Query()[filterKind]
-	if len(kinds) != 1 {
-		problem.Write(w, r, refuseParameter(filterKind, "it is required once"))
+	filter, failure := readFilter(r)
+	if failure != nil {
+		problem.Write(w, r, failure)
 
 		return
 	}
 
-	filter, failure := readFilter(r)
-	if failure != nil {
-		problem.Write(w, r, failure)
+	if len(filter.Kinds) != 1 {
+		problem.Write(w, r, refuseParameter(filterKind, "it must name one kind"))
 
 		return
 	}

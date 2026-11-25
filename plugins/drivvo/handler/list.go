@@ -84,16 +84,26 @@ func readDay(raw, name string) (*time.Time, *problem.Problem) {
 	return &day, nil
 }
 
-// readKinds reads the repeated kind parameter. Absent names every kind.
+// readKinds reads the kind parameter: the kinds separated by commas. Absent names every
+// kind. A repeat is refused, because a cursor carries one value of each filter.
 func readKinds(r *http.Request) ([]model.Kind, *problem.Problem) {
+	values := r.URL.Query()[filterKind]
+
+	switch {
+	case len(values) == 0:
+		return nil, nil
+	case len(values) > 1:
+		return nil, refuseParameter(filterKind, "name the kinds once, separated by commas")
+	}
+
 	var kinds []model.Kind
 
-	for _, raw := range r.URL.Query()[filterKind] {
-		kind, ok := parseKind(raw)
+	for raw := range strings.SplitSeq(values[0], ",") {
+		kind, ok := parseKind(strings.TrimSpace(raw))
 		if !ok {
 			return nil, refuseParameter(
 				filterKind,
-				"it must be one of "+strings.Join(kindNames(), ", "),
+				"each kind must be one of "+strings.Join(kindNames(), ", "),
 			)
 		}
 

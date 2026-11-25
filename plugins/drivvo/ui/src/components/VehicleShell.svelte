@@ -11,15 +11,18 @@
 		fleet,
 		page,
 		title,
+		crumb,
 		lead,
 		actions,
 		children
 	}: {
 		host: PluginHost;
 		fleet: Fleet;
-		/** The address of the page under the vehicle, kept when the member picks another one. */
+		/** The first segment of the address, kept when the member picks another vehicle. */
 		page: string;
 		title: string;
+		/** The last link of the trail. The name of the vehicle when absent. */
+		crumb?: string;
 		lead?: string;
 		actions?: Snippet;
 		children: Snippet<[Vehicle]>;
@@ -28,12 +31,15 @@
 	function choose(event: Event): void {
 		const chosen = (event.currentTarget as HTMLSelectElement).value;
 		if (chosen !== fleet.vehicle?.id) {
-			host.navigate(`/vehicles/${encodeURIComponent(chosen)}/${page}`);
+			host.navigate(`/${page}/${encodeURIComponent(chosen)}`);
 		}
 	}
 
 	$effect(() => {
-		host.setTitle(title);
+		const last = crumb ?? fleet.vehicle?.name;
+		if (last !== undefined) {
+			host.setTitle(last);
+		}
 	});
 
 	$effect(() => {
@@ -81,7 +87,7 @@
 	{:else if fleet.vehicle === undefined}
 		<div role="alert" class="alert alert-info alert-soft max-w-xl">
 			<span>This vehicle is not in Maroid.</span>
-			<a class="btn btn-sm" href={host.href('/overview')}>Open the overview</a>
+			<a class="btn btn-sm" href={host.href(`/${page}`)}>Open the principal vehicle</a>
 		</div>
 	{:else}
 		{@render children(fleet.vehicle)}

@@ -10,7 +10,8 @@
 		vehicle,
 		period,
 		kinds,
-		list
+		list,
+		page
 	}: {
 		host: PluginHost;
 		vehicle: Vehicle;
@@ -19,6 +20,8 @@
 		kinds: Kind[];
 		/** The kind of a list, whose columns the table shows. The history shows its own. */
 		list?: Kind;
+		/** The first segment of the address, under which a row opens its detail. */
+		page: string;
 	} = $props();
 
 	const api = $derived(createCarLogApi(host));
@@ -27,9 +30,7 @@
 	const pager = createPager((link?: string) => api.logEntries(vehicle.id, period, kinds, link));
 
 	function entryHref(entry: LogEntryItem): string {
-		return host.href(
-			`/vehicles/${encodeURIComponent(vehicle.id)}/entries/${encodeURIComponent(entry.id)}`
-		);
+		return host.href(`/${page}/${encodeURIComponent(vehicle.id)}/${encodeURIComponent(entry.id)}`);
 	}
 
 	function moment(entry: LogEntryItem): string {

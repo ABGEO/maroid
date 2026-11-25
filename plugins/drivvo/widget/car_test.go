@@ -70,17 +70,16 @@ func TestTheWidgetAnswersThreeFacts(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, answer.List)
 
-	base := "/vehicles/" + vehicleID
 	assert.Equal(t, []pluginapi.ListItem{
 		{
 			Label: "Latest refuel",
 			Meta:  "2026-11-20 · 40.00 L · 120.00 GEL",
-			Link:  base + "/refuels",
+			Link:  "/refuels/" + vehicleID,
 		},
-		{Label: "Consumption", Meta: "6.8 L/100 km", Link: base + "/overview"},
-		{Label: "Oil change", Meta: "in 1,200 km", Link: base + "/reminders"},
+		{Label: "Consumption", Meta: "6.8 L/100 km", Link: "/overview/" + vehicleID},
+		{Label: "Oil change", Meta: "in 1,200 km", Link: "/reminders/" + vehicleID},
 	}, answer.List.Items)
-	assert.Equal(t, base+"/overview", answer.List.More)
+	assert.Equal(t, "/overview/"+vehicleID, answer.List.More)
 }
 
 // DRIVVO-SC-052: An absent fact drops its item, and a vehicle with no fact answers empty.

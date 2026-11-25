@@ -1,22 +1,26 @@
 <script lang="ts">
 	import { formatMoment, type PluginHost, type RouteParams } from '@maroid/plugin-sdk';
 
-	import { createCarLogApi, type Kind, type LogEntry } from '../api';
+	import { createCarLogApi, type LogEntry } from '../api';
 	import VehicleShell from '../components/VehicleShell.svelte';
 	import { amount, day, distance, kindLabel, money, volume } from '../lib/format';
 	import { isProblem, LOG_ENTRY_NOT_FOUND } from '../lib/problems';
 	import { createReader } from '../lib/reader.svelte';
 	import { createFleet } from '../lib/vehicles.svelte';
 
-	const LIST_PAGES: Record<Kind, { page: string; label: string }> = {
-		refuel: { page: 'refuels', label: 'Refuels' },
-		maintenance: { page: 'maintenances', label: 'Maintenance' },
-		expense: { page: 'expenses', label: 'Expenses' },
-		income: { page: 'incomes', label: 'Income' },
-		odometer: { page: 'history', label: 'History' }
-	};
-
-	let { host, params }: { host: PluginHost; params: RouteParams } = $props();
+	let {
+		host,
+		params,
+		page,
+		title: pageTitle
+	}: {
+		host: PluginHost;
+		params: RouteParams;
+		/** The first segment of the address: the history or the list that opened the entry. */
+		page: string;
+		/** The title of that page. */
+		title: string;
+	} = $props();
 
 	const api = $derived(createCarLogApi(host));
 	const fleet = createFleet(
@@ -25,7 +29,6 @@
 	);
 	const entry = createReader<LogEntry>();
 
-	const list = $derived(LIST_PAGES[entry.value?.kind ?? 'odometer']);
 	const title = $derived(
 		entry.value === null
 			? 'Log entry'
@@ -46,7 +49,7 @@
 	$effect(load);
 
 	function listHref(vehicleId: string): string {
-		return host.href(`/vehicles/${encodeURIComponent(vehicleId)}/${list.page}`);
+		return host.href(`/${page}/${encodeURIComponent(vehicleId)}`);
 	}
 
 	function percent(value: number | undefined): string {
@@ -54,14 +57,14 @@
 	}
 </script>
 
-<VehicleShell {host} {fleet} page={list.page} {title}>
+<VehicleShell {host} {fleet} {page} {title} crumb={title}>
 	{#snippet children(vehicle)}
 		{@const units = vehicle.units}
 		{@const read = entry.value}
 		{#if notFound}
 			<div role="alert" class="alert alert-info alert-soft max-w-xl">
 				<span>This log entry is not in Maroid.</span>
-				<a class="btn btn-sm" href={listHref(vehicle.id)}>Open the history</a>
+				<a class="btn btn-sm" href={listHref(vehicle.id)}>Open {pageTitle.toLowerCase()}</a>
 			</div>
 		{:else if entry.status === 'error'}
 			<div role="alert" class="alert alert-error alert-soft max-w-xl">
@@ -74,7 +77,7 @@
 			<div class="flex max-w-3xl flex-col gap-6">
 				<div>
 					<a class="link link-hover text-sm" href={listHref(vehicle.id)}>
-						Back to {list.label.toLowerCase()}
+						Back to {pageTitle.toLowerCase()}
 					</a>
 				</div>
 

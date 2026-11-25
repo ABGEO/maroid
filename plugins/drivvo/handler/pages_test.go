@@ -2,11 +2,13 @@ package handler_test
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/libs/rest/problem"
 	"github.com/abgeo/maroid/plugins/drivvo/internal/fakes"
 	"github.com/abgeo/maroid/plugins/drivvo/internal/fakeservice"
 	"github.com/abgeo/maroid/plugins/drivvo/model"
@@ -230,18 +232,17 @@ func checkHistory(t *testing.T, rig *pageRig) {
 	assert.Equal(t, "odometer", all.Items[0].Kind)
 	assert.Nil(t, all.Items[0].Amount)
 
-	chosen := rig.entries(t, hatchback, "?kind=refuel&kind=odometer")
+	chosen := rig.entries(t, hatchback, "?kind=refuel,odometer")
 	require.Len(t, chosen.Items, 4)
 
 	for _, item := range chosen.Items {
 		assert.Contains(t, []string{"refuel", "odometer"}, item.Kind)
 	}
 
-	assert.Equal(
-		t,
-		http.StatusBadRequest,
-		rig.get(t, rig.vehiclePath(hatchback, "/log-entries?kind=trip")).Code,
-	)
+	for _, query := range []string{"?kind=trip", "?kind=refuel&kind=odometer"} {
+		assert.Equal(t, http.StatusBadRequest,
+			rig.get(t, rig.vehiclePath(hatchback, "/log-entries"+query)).Code, query)
+	}
 }
 
 // DRIVVO-SC-043: Each list answers the members of its kind, and the totals sum the
@@ -295,6 +296,11 @@ func checkPaging(t *testing.T, rig *pageRig) {
 
 	back := decodeAs[itemPage[entryItem]](t, rig.get(t, pathOf(t, third.Prev)))
 	assert.Equal(t, second.Items, back.Items)
+
+	refuels := rig.entries(t, zeta, "?kind=refuel")
+	stale := rig.get(t, strings.Replace(pathOf(t, refuels.Next), "kind=refuel", "kind=income", 1))
+	assert.Equal(t, http.StatusBadRequest, stale.Code)
+	assert.Equal(t, problem.TypeCursorStale, problemTypeOf(t, stale))
 }
 
 // DRIVVO-SC-045: The detail answers each value that the kind holds, and an odometer
@@ -355,12 +361,12 @@ func checkReminders(t *testing.T, rig *pageRig) {
 	assert.Equal(t, "Oil change", reminders[0]["type"])
 
 	assert.Equal(t, "Insurance", reminders[1]["type"])
-	assert.Equal(t, "2026-12-07", reminders[1]["due_on"])
-	assert.InDelta(t, 12.0, reminders[1]["days_left"], 0)
+	assert.Equal(t, "2026-11-30", reminders[1]["due_on"])
+	assert.InDelta(t, 5.0, reminders[1]["days_left"], 0)
 	assert.Equal(t, false, reminders[1]["due"])
 
 	assert.InDelta(t, 30.0, reminders[2]["days_left"], 0)
-	assert.InDelta(t, 900.0, reminders[3]["distance_left"], 0.001)
+	assert.InDelta(t, 1000.0, reminders[3]["distance_left"], 0.001)
 	assert.NotContains(t, reminders[3], "due_on")
 }
 
@@ -378,7 +384,7 @@ func checkWidget(t *testing.T, rig *pageRig) {
 	assert.Equal(t, "6.3 L/100 km", answer.List.Items[1].Meta)
 	assert.Equal(t, "Oil change", answer.List.Items[2].Label)
 	assert.Equal(t, "due", answer.List.Items[2].Meta)
-	assert.Equal(t, rig.vehiclePath(hatchback, "/overview"), answer.List.More)
+	assert.Equal(t, "/overview/"+rig.vehicles[hatchback], answer.List.More)
 }
 
 // readPaths answers a read of every route under /vehicles.

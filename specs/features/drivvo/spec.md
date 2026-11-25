@@ -241,19 +241,20 @@ serves the history, the lists, and `VehicleRows`. The end of a connection delete
 | `car_log_collector` | `CronScopePerWorkspace` | `Collect`. `ErrNotConnected` logs a skip at info and answers nil. Any other error returns | `DRIVVO-FR-015` to `DRIVVO-FR-021` |
 
 **UI routes.** Each navigation entry opens the principal vehicle at the address of its page
-(`DRIVVO-DD-012`).
+(`DRIVVO-DD-012`). The vehicle follows the entry in the address, so the deck marks the entry and
+leads the trail with it.
 
-| Page route                                         | Navigation entry | Page               | Realizes                                                             |
-| -------------------------------------------------- | ---------------- | ------------------ | -------------------------------------------------------------------- |
-| `/overview`, `/vehicles/:vehicle/overview`         | "Overview"       | `Overview.svelte`  | `DRIVVO-FR-027` to `DRIVVO-FR-047`                                   |
-| `/history`, `/vehicles/:vehicle/history`           | "History"        | `History.svelte`   | `DRIVVO-FR-048`, `DRIVVO-FR-049`, `DRIVVO-FR-056`, `DRIVVO-FR-057`   |
-| `/refuels`, `/vehicles/:vehicle/refuels`           | "Refuels"        | `EntryList.svelte` | `DRIVVO-FR-050`, `DRIVVO-FR-051`, `DRIVVO-FR-055` to `DRIVVO-FR-057` |
-| `/maintenances`, `/vehicles/:vehicle/maintenances` | "Maintenance"    | `EntryList.svelte` | `DRIVVO-FR-052`, `DRIVVO-FR-055` to `DRIVVO-FR-057`                  |
-| `/expenses`, `/vehicles/:vehicle/expenses`         | "Expenses"       | `EntryList.svelte` | `DRIVVO-FR-053`, `DRIVVO-FR-055` to `DRIVVO-FR-057`                  |
-| `/incomes`, `/vehicles/:vehicle/incomes`           | "Income"         | `EntryList.svelte` | `DRIVVO-FR-054` to `DRIVVO-FR-057`                                   |
-| `/vehicles/:vehicle/entries/:entry`                | none             | `Entry.svelte`     | `DRIVVO-FR-058`, `DRIVVO-FR-059`                                     |
-| `/reminders`, `/vehicles/:vehicle/reminders`       | "Reminders"      | `Reminders.svelte` | `DRIVVO-FR-060` to `DRIVVO-FR-064`                                   |
-| `/account`                                         | "Account"        | `Account.svelte`   | `DRIVVO-FR-003` to `DRIVVO-FR-014`                                   |
+| Page route                                | Navigation entry | Page               | Realizes                                                             |
+| ----------------------------------------- | ---------------- | ------------------ | -------------------------------------------------------------------- |
+| `/overview`, `/overview/:vehicle`         | "Overview"       | `Overview.svelte`  | `DRIVVO-FR-027` to `DRIVVO-FR-047`                                   |
+| `/history`, `/history/:vehicle`           | "History"        | `History.svelte`   | `DRIVVO-FR-048`, `DRIVVO-FR-049`, `DRIVVO-FR-056`, `DRIVVO-FR-057`   |
+| `/refuels`, `/refuels/:vehicle`           | "Refuels"        | `EntryList.svelte` | `DRIVVO-FR-050`, `DRIVVO-FR-051`, `DRIVVO-FR-055` to `DRIVVO-FR-057` |
+| `/maintenances`, `/maintenances/:vehicle` | "Maintenance"    | `EntryList.svelte` | `DRIVVO-FR-052`, `DRIVVO-FR-055` to `DRIVVO-FR-057`                  |
+| `/expenses`, `/expenses/:vehicle`         | "Expenses"       | `EntryList.svelte` | `DRIVVO-FR-053`, `DRIVVO-FR-055` to `DRIVVO-FR-057`                  |
+| `/incomes`, `/incomes/:vehicle`           | "Income"         | `EntryList.svelte` | `DRIVVO-FR-054` to `DRIVVO-FR-057`                                   |
+| `/<history or a list>/:vehicle/:entry`    | none             | `Entry.svelte`     | `DRIVVO-FR-058`, `DRIVVO-FR-059`                                     |
+| `/reminders`, `/reminders/:vehicle`       | "Reminders"      | `Reminders.svelte` | `DRIVVO-FR-060` to `DRIVVO-FR-064`                                   |
+| `/account`                                | "Account"        | `Account.svelte`   | `DRIVVO-FR-003` to `DRIVVO-FR-014`                                   |
 
 **Widget.**
 

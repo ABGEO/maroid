@@ -56,7 +56,7 @@
 		</div>
 
 		{#key `${vehicle.id} ${period.from} ${period.to} ${shown.join()}`}
-			<EntryTable {host} {vehicle} {period} kinds={shown} />
+			<EntryTable {host} {vehicle} {period} kinds={shown} page="history" />
 		{/key}
 	{/snippet}
 </VehicleShell>

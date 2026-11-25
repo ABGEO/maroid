@@ -26,7 +26,7 @@
 				return;
 			}
 
-			host.navigate(`/vehicles/${encodeURIComponent(chosen.id)}/${page}`);
+			host.navigate(`/${page}/${encodeURIComponent(chosen.id)}`);
 		} catch (error) {
 			console.error('Failed to load the vehicles', error);
 			status = 'error';
