@@ -53,7 +53,7 @@ func TestARefuelHoldsItsFuelLinesAndItsCharge(t *testing.T) {
 
 	refuel := decode[dto.Refuel](t, `{
 		"id_abastecimento": 101, "data": "2026-11-20 09:00:00", "odometro": 152300,
-		"id_combustivel": 1, "preco": 3, "volume": 30, "valor_total": 90, "tanque_cheio": true,
+		"id_combustivel": 1, "preco": 3, "volume": 0, "valor_total": 90, "tanque_cheio": true,
 		"id_combustivel_dois": 2, "preco_dois": 3, "volume_dois": 5, "valor_total_dois": 15,
 		"sem_custo_dois": true, "id_combustivel_tres": 0, "valor_total_tres": 99,
 		"bateria_inicial_pct": 20, "bateria_final_pct": 80, "duracao_minutos": 45,

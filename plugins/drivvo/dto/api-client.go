@@ -3,6 +3,7 @@ package dto
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -325,6 +326,21 @@ func (r Refuel) Read() (model.LogEntry, error) {
 	return entry, nil
 }
 
+// litres answers the volume of a fuel as the web site of the car log service reads it. The
+// service sends the volume of a free fuel alone, so a paid fuel takes its amount over its price.
+func litres(free bool, volume, total, price float64) float64 {
+	const decimals = 1000
+
+	switch {
+	case free:
+		return volume
+	case price > 0:
+		return math.Round(total/price*decimals) / decimals
+	default:
+		return 0
+	}
+}
+
 // fuelLines answers a line for each of the three fuels whose identifier is above zero.
 func (r Refuel) fuelLines() []model.Line {
 	fuels := []struct {
@@ -364,7 +380,7 @@ func (r Refuel) fuelLines() []model.Line {
 			Amount:    model.AmountOf(fuel.total),
 			Fuel:      true,
 			UnitPrice: model.AmountOf(fuel.price),
-			Volume:    fuel.volume,
+			Volume:    litres(fuel.free, fuel.volume, fuel.total, fuel.price),
 			FullTank:  fuel.fullTank,
 			Free:      fuel.free,
 		})

@@ -346,8 +346,10 @@ wrong day near midnight.
 
 **Realizes:** `DRIVVO-FR-023`, `DRIVVO-FR-024`, `DRIVVO-FR-037`
 **Decision:** A refuel holds a line for each of its first, `_dois`, and `_tres` fuels whose
-`id_combustivel` is above zero, at positions 1 to 3: `preco`, `volume`, `valor_total`,
-`tanque_cheio`, and `sem_custo`. A maintenance holds a line for each item of `tipos_servico`, and
+`id_combustivel` is above zero, at positions 1 to 3: `preco`, `valor_total`, `tanque_cheio`,
+`sem_custo`, and the volume. As the web site reads it, the volume of a line with `sem_custo` is
+`volume`, and of any other line `valor_total / preco`, rounded to 3 decimals, or zero when `preco`
+is zero. The service leaves `volume` at zero on a paid fuel. A maintenance holds a line for each item of `tipos_servico`, and
 an expense for each item of `tipos_despesa`, in the order of the service: the type and `valor`.
 The amount of a log entry is the sum of the amounts of the lines, with zero for a line with `free`; an
 income takes `valor`. Each item of `parcelas` with a `numero` above zero is an instalment. The

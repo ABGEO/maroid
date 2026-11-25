@@ -208,11 +208,11 @@ no token, no email address, and no password.
 **Verifies:** `DRIVVO-FR-023`, `DRIVVO-FR-037`, `DRIVVO-DD-008`
 **Layer:** unit
 
-**Given** a refuel with fuel 1 (30 L, 90.00, full), fuel 2 (5 L, 15.00, `sem_custo`), no fuel 3,
-`bateria_inicial_pct` 20, `bateria_final_pct` 80, and `duracao_minutos` 45.
+**Given** a refuel with fuel 1 (3.00 a litre, 90.00, `volume` 0, full), fuel 2 (5 L, 15.00,
+`sem_custo`), no fuel 3, `bateria_inicial_pct` 20, `bateria_final_pct` 80, and `duracao_minutos` 45.
 **When** the reader decodes it.
-**Then** the entry holds two lines at positions 1 and 2, the amount 90.00, and the three values of the
-charge.
+**Then** the entry holds two lines at positions 1 and 2, of 30 L and 5 L, the amount 90.00, and the
+three values of the charge.
 
 ## `DRIVVO-SC-020`
 
