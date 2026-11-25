@@ -1,11 +1,11 @@
-import { env } from '$env/dynamic/public';
+import { PUBLIC_HUB_BASE_URL } from '$app/env/public';
 
 import { createClient, type ApiClient } from '@maroid/api-client';
 import type { FileClient, FileRecord, UploadTicket } from '@maroid/plugin-sdk';
 
 import type { Handoff } from './types';
 
-const BASE_URL = (env.PUBLIC_HUB_BASE_URL ?? '').replace(/\/+$/, '');
+const BASE_URL = PUBLIC_HUB_BASE_URL.replace(/\/+$/, '');
 
 let isRedirecting = false;
 

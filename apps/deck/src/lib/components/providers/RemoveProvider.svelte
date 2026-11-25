@@ -72,7 +72,7 @@
 
 		try {
 			await api.providers.remove(provider.id);
-			await goto(resolve('/admin/providers'));
+			await goto(resolve('admin/providers'));
 		} catch (error) {
 			failure = failureMessage(error, 'The provider stays. Try again.');
 		} finally {

@@ -154,7 +154,7 @@
 	{:else if !localProvider}
 		<span class="label whitespace-normal">
 			Add the Email provider on the
-			<a class="link" href={resolve('/admin/providers')}>sign-in providers</a> page first.
+			<a class="link" href={resolve('admin/providers')}>sign-in providers</a> page first.
 		</span>
 	{:else}
 		<span class="label whitespace-normal">

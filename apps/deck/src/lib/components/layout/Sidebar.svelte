@@ -26,7 +26,7 @@
 	const workspaceId = $derived(actingWorkspaceId(page.params.workspace));
 	const overviewHref = $derived(
 		workspaceId === null
-			? resolve('/')
+			? resolve('')
 			: resolve('/(dashboard)/w/[workspace]', { workspace: workspaceId })
 	);
 
@@ -299,7 +299,7 @@
 						<ul>
 							<li>
 								<a
-									href={resolve('/admin/users')}
+									href={resolve('admin/users')}
 									class:menu-active={page.route.id?.startsWith('/(dashboard)/admin/users') === true}
 								>
 									Users
@@ -307,23 +307,23 @@
 							</li>
 							<li>
 								<a
-									href={resolve('/admin/workspaces')}
-									class:menu-active={isActive(resolve('/admin/workspaces'))}
+									href={resolve('admin/workspaces')}
+									class:menu-active={isActive(resolve('admin/workspaces'))}
 								>
 									Workspaces
 								</a>
 							</li>
 							<li>
 								<a
-									href={resolve('/admin/plugins')}
-									class:menu-active={isActive(resolve('/admin/plugins'))}
+									href={resolve('admin/plugins')}
+									class:menu-active={isActive(resolve('admin/plugins'))}
 								>
 									Plugins
 								</a>
 							</li>
 							<li>
 								<a
-									href={resolve('/admin/providers')}
+									href={resolve('admin/providers')}
 									class:menu-active={page.route.id?.startsWith('/(dashboard)/admin/providers') ===
 										true}
 								>

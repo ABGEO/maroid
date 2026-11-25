@@ -65,7 +65,7 @@
 
 		if (reason) {
 			banner = authFailureMessage(reason);
-			void goto(resolve('/profile'), { replaceState: true, keepFocus: true, noScroll: true });
+			void goto(resolve('profile'), { replace: true, reset: false });
 		}
 
 		void loadSelf();
@@ -87,9 +87,9 @@
 		<Alert kind="error" class="mb-6"><span>{banner}</span></Alert>
 	{/if}
 	{#if selfFailure}
-		<Alert kind="error" class="mb-6"
-			><span>Failed to load your profile. Reload the page.</span></Alert
-		>
+		<Alert kind="error" class="mb-6">
+			<span>Failed to load your profile. Reload the page.</span>
+		</Alert>
 	{/if}
 
 	<Section title="Name">

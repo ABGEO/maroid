@@ -48,7 +48,7 @@
 				</li>
 			{/each}
 			<li class="border-base-300 mt-1 border-t pt-1">
-				<a href={resolve('/workspaces/new')}>New workspace</a>
+				<a href={resolve('workspaces/new')}>New workspace</a>
 			</li>
 		</ul>
 	</div>

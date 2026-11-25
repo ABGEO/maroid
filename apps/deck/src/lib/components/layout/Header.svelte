@@ -24,7 +24,7 @@
 			</svg>
 		</label>
 
-		<a href={resolve('/')} class="flex shrink-0 items-center gap-2 pr-1 pl-1 sm:pr-3">
+		<a href={resolve('')} class="flex shrink-0 items-center gap-2 pr-1 pl-1 sm:pr-3">
 			<div class="bg-base-300 relative h-9 w-9 overflow-hidden rounded-full">
 				<img src="/maroid.png" alt="Maroid" class="h-full w-full object-cover" />
 			</div>

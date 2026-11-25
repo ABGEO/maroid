@@ -1,5 +1,5 @@
-import { browser } from '$app/environment';
-import { env } from '$env/dynamic/public';
+import { browser } from '$app/env';
+import { PUBLIC_HUB_BASE_URL } from '$app/env/public';
 
 import { createInstance, getInstance, type ModuleFederation } from '@module-federation/runtime';
 import type { RouteMounter, RouteParams } from '@maroid/plugin-sdk';
@@ -15,7 +15,7 @@ export interface PluginRoute {
 	parameterized: boolean;
 }
 
-const HUB = (env.PUBLIC_HUB_BASE_URL ?? '').replace(/\/+$/, '');
+const HUB = PUBLIC_HUB_BASE_URL.replace(/\/+$/, '');
 
 type RouteManifest = Record<string, RouteMounter>;
 
