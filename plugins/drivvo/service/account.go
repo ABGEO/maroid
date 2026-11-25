@@ -62,8 +62,15 @@ func (a *Account) Connect(ctx context.Context) (model.Session, error) {
 	return a.signIn(ctx)
 }
 
-// Disconnect removes the stored session. The car log copy stays.
+// Disconnect removes the stored session. It waits for a sign in that runs, so no session
+// stays after both. The car log copy stays.
 func (a *Account) Disconnect(ctx context.Context) error {
+	unlock, err := a.lock(ctx)
+	if err != nil {
+		return err
+	}
+	defer unlock()
+
 	return a.forgetSession(ctx)
 }
 

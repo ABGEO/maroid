@@ -1,13 +1,17 @@
 package main
 
 import (
+	"log/slog"
+	"net/http"
 	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/plugins/drivvo/config"
+	"github.com/abgeo/maroid/plugins/drivvo/permission"
 )
 
 // DRIVVO-SC-001: The settings hold the email address and the password as a secret, both
@@ -37,4 +41,39 @@ func TestTheSettingsHoldTheCredentialsAlone(t *testing.T) {
 		password.Tag.Get("jsonschema"),
 	)
 	assert.Equal(t, "x-maroid-scope=workspace", password.Tag.Get("jsonschema_extras"))
+}
+
+// DRIVVO-SC-021: account.read opens every read to a viewer, and account.connect opens the
+// connect and the end of the connection to an editor.
+func TestThePermissionsNameTheirLowestRoleAndTheirRoutes(t *testing.T) {
+	t.Parallel()
+
+	plugin := &DrivvoPlugin{logger: slog.New(slog.DiscardHandler)}
+
+	permissions, err := plugin.Permissions()
+	require.NoError(t, err)
+
+	lowest := map[string]pluginapi.Role{}
+	for _, declared := range permissions {
+		lowest[declared.Name] = declared.Lowest
+	}
+
+	require.Equal(t, map[string]pluginapi.Role{
+		permission.AccountRead:    pluginapi.RoleViewer,
+		permission.AccountConnect: pluginapi.RoleEditor,
+	}, lowest)
+
+	routes, err := plugin.Routes()
+	require.NoError(t, err)
+
+	guards := map[string]string{}
+	for _, route := range routes {
+		guards[route.Method+" "+route.Pattern] = route.Permission
+	}
+
+	require.Equal(t, map[string]string{
+		http.MethodGet + " /connections/self":    permission.AccountRead,
+		http.MethodPut + " /connections/self":    permission.AccountConnect,
+		http.MethodDelete + " /connections/self": permission.AccountConnect,
+	}, guards)
 }

@@ -11,7 +11,9 @@ import (
 	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/drivvo/config"
 	"github.com/abgeo/maroid/plugins/drivvo/db"
+	"github.com/abgeo/maroid/plugins/drivvo/handler"
 	"github.com/abgeo/maroid/plugins/drivvo/job"
+	"github.com/abgeo/maroid/plugins/drivvo/permission"
 	"github.com/abgeo/maroid/plugins/drivvo/service"
 )
 
@@ -29,15 +31,18 @@ var Meta = pluginapi.Metadata{
 // DrivvoPlugin keeps a copy of the car log account of a workspace, and shows its vehicles,
 // log entries, figures, and reminders.
 type DrivvoPlugin struct {
-	config    *config.Config
-	logger    *slog.Logger
-	collector *service.Collector
+	config      *config.Config
+	logger      *slog.Logger
+	collector   *service.Collector
+	connections *service.Connections
 }
 
 var (
 	_ pluginapi.ConfigurablePlugin = (*DrivvoPlugin)(nil)
 	_ pluginapi.CronPlugin         = (*DrivvoPlugin)(nil)
 	_ pluginapi.MigrationPlugin    = (*DrivvoPlugin)(nil)
+	_ pluginapi.PermissionPlugin   = (*DrivvoPlugin)(nil)
+	_ pluginapi.RoutePlugin        = (*DrivvoPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -71,9 +76,10 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 	)
 
 	return &DrivvoPlugin{
-		config:    pluginConfig,
-		logger:    host.Logger(),
-		collector: service.NewCollector(account, client, store),
+		config:      pluginConfig,
+		logger:      host.Logger(),
+		collector:   service.NewCollector(account, client, store),
+		connections: service.NewConnections(account, client),
 	}, nil
 }
 
@@ -95,4 +101,25 @@ func (p *DrivvoPlugin) Migrations() (fs.FS, error) {
 	}
 
 	return migrationsFS, nil
+}
+
+// Permissions returns the permissions that the routes name.
+func (p *DrivvoPlugin) Permissions() ([]pluginapi.Permission, error) {
+	return []pluginapi.Permission{
+		{
+			Name:        permission.AccountRead,
+			Description: "Read the car log account, its vehicles, entries, and reminders",
+			Lowest:      pluginapi.RoleViewer,
+		},
+		{
+			Name:        permission.AccountConnect,
+			Description: "Connect the car log account",
+			Lowest:      pluginapi.RoleEditor,
+		},
+	}, nil
+}
+
+// Routes returns the HTTP routes of the connection page.
+func (p *DrivvoPlugin) Routes() ([]pluginapi.Route, error) {
+	return handler.NewConnectionHandler(p.logger, p.connections).Routes(), nil
 }
