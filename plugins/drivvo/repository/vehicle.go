@@ -2,10 +2,13 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/plugins/drivvo/errs"
 	"github.com/abgeo/maroid/plugins/drivvo/model"
 )
 
@@ -68,4 +71,37 @@ func (r *Vehicles) DeleteAbsent(ctx context.Context, kept []int32) error {
 	}
 
 	return nil
+}
+
+// vehicleColumns names the columns of a read of a vehicle.
+const vehicleColumns = `id, source_id, name, make, model, year, distance_unit, principal, active`
+
+// List answers every vehicle, active first, then by name, then by identifier.
+func (r *Vehicles) List(ctx context.Context) ([]model.Vehicle, error) {
+	const query = `SELECT ` + vehicleColumns + ` FROM vehicles ORDER BY active DESC, name, id;`
+
+	var vehicles []model.Vehicle
+	if err := r.tx.SelectContext(ctx, &vehicles, query); err != nil {
+		return nil, fmt.Errorf("listing the vehicles: %w", err)
+	}
+
+	return vehicles, nil
+}
+
+// Get answers the vehicle of the identifier, or errs.ErrVehicleNotFound.
+func (r *Vehicles) Get(ctx context.Context, id string) (model.Vehicle, error) {
+	const query = `SELECT ` + vehicleColumns + ` FROM vehicles WHERE id = $1;`
+
+	var vehicle model.Vehicle
+
+	err := r.tx.GetContext(ctx, &vehicle, query, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return model.Vehicle{}, errs.ErrVehicleNotFound
+	}
+
+	if err != nil {
+		return model.Vehicle{}, fmt.Errorf("reading the vehicle: %w", err)
+	}
+
+	return vehicle, nil
 }

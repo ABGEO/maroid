@@ -54,3 +54,42 @@ func (r *Instalments) Insert(
 
 	return nil
 }
+
+// OfEntries answers the instalments of the entries, in the order of their numbers.
+func (r *Instalments) OfEntries(
+	ctx context.Context,
+	entryIDs []string,
+) ([]model.InstalmentRow, error) {
+	const query = `
+		SELECT log_entry_id, number, due_on, amount
+		FROM instalments
+		WHERE log_entry_id = ANY($1::uuid[])
+		ORDER BY log_entry_id, number;`
+
+	var instalments []model.InstalmentRow
+	if err := r.tx.SelectContext(ctx, &instalments, query, entryIDs); err != nil {
+		return nil, fmt.Errorf("listing the instalments: %w", err)
+	}
+
+	return instalments, nil
+}
+
+// OfVehicle answers the instalments of every entry of the vehicle.
+func (r *Instalments) OfVehicle(
+	ctx context.Context,
+	vehicleID string,
+) ([]model.InstalmentRow, error) {
+	const query = `
+		SELECT n.log_entry_id, n.number, n.due_on, n.amount
+		FROM instalments n
+		JOIN log_entries e ON e.id = n.log_entry_id
+		WHERE e.vehicle_id = $1
+		ORDER BY n.log_entry_id, n.number;`
+
+	var instalments []model.InstalmentRow
+	if err := r.tx.SelectContext(ctx, &instalments, query, vehicleID); err != nil {
+		return nil, fmt.Errorf("listing the instalments of the vehicle: %w", err)
+	}
+
+	return instalments, nil
+}

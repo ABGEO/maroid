@@ -94,3 +94,8 @@ type Instalment struct {
 	DueOn  time.Time
 	Amount Amount
 }
+
+// Kinds answers every kind of a log entry.
+func Kinds() []Kind {
+	return []Kind{KindRefuel, KindMaintenance, KindExpense, KindIncome, KindOdometer}
+}

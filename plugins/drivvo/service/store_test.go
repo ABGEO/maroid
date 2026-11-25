@@ -92,7 +92,7 @@ func baseSnapshot() model.Snapshot {
 		Vehicles: []model.Vehicle{
 			{
 				SourceID:     11,
-				Name:         "Hatchback",
+				Name:         nameHatchback,
 				DistanceUnit: model.DistanceKilometre,
 				Principal:    true,
 				Active:       true,

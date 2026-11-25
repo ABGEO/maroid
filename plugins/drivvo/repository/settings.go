@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -43,4 +45,22 @@ func (r *Settings) Put(ctx context.Context, settings model.CarLogSettings) error
 	}
 
 	return nil
+}
+
+// Get answers the settings of the acting workspace, and false when it holds none.
+func (r *Settings) Get(ctx context.Context) (model.CarLogSettings, bool, error) {
+	const query = `SELECT volume_unit, consumption_format, currency FROM car_log_settings;`
+
+	var settings model.CarLogSettings
+
+	err := r.tx.GetContext(ctx, &settings, query)
+	if errors.Is(err, sql.ErrNoRows) {
+		return model.CarLogSettings{}, false, nil
+	}
+
+	if err != nil {
+		return model.CarLogSettings{}, false, fmt.Errorf("reading the settings: %w", err)
+	}
+
+	return settings, true, nil
 }

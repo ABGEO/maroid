@@ -91,3 +91,21 @@ func (r *Reminders) DeleteAbsent(ctx context.Context, kept []int32) error {
 
 	return nil
 }
+
+// OfVehicle answers every reminder of the vehicle, with the name of its type.
+func (r *Reminders) OfVehicle(ctx context.Context, vehicleID string) ([]model.ReminderRow, error) {
+	const query = `
+		SELECT t.id, t.kind, t.item_id, i.name AS type, t.due_on, t.due_odometer, t.repeats,
+		       t.repeat_every, t.repeat_unit, t.repeat_distance, t.note
+		FROM reminders t
+		LEFT JOIN reference_items i ON i.id = t.item_id
+		WHERE t.vehicle_id = $1
+		ORDER BY t.id;`
+
+	var reminders []model.ReminderRow
+	if err := r.tx.SelectContext(ctx, &reminders, query, vehicleID); err != nil {
+		return nil, fmt.Errorf("listing the reminders: %w", err)
+	}
+
+	return reminders, nil
+}

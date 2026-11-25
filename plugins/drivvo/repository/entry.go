@@ -2,10 +2,14 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/libs/rest/page"
+	"github.com/abgeo/maroid/plugins/drivvo/errs"
 	"github.com/abgeo/maroid/plugins/drivvo/model"
 )
 
@@ -108,4 +112,138 @@ func (r *Entries) DeleteAbsent(ctx context.Context, kind model.Kind, kept []int3
 	}
 
 	return nil
+}
+
+// entryColumns names the columns of a read of an entry, with the names of its references.
+const entryColumns = `
+	t.id, t.vehicle_id, t.kind, t.occurred_at, t.odometer, t.amount, t.title, t.note,
+	st.name AS station, pl.name AS place, pm.name AS payment_method, re.name AS reason,
+	it.name AS income_type, t.missed_refuel, t.battery_start_pct, t.battery_end_pct,
+	t.charge_minutes`
+
+// entryJoins joins the reference items that an entry names.
+const entryJoins = `
+	LEFT JOIN reference_items st ON st.id = t.station_id
+	LEFT JOIN reference_items pl ON pl.id = t.place_id
+	LEFT JOIN reference_items pm ON pm.id = t.payment_method_id
+	LEFT JOIN reference_items re ON re.id = t.reason_id
+	LEFT JOIN reference_items it ON it.id = t.income_type_id`
+
+// entryFilter names the entries of the vehicle of the kinds in the period. An empty list
+// of kinds names every kind.
+const entryFilter = `
+	t.vehicle_id = CAST(:vehicle_id AS uuid)
+	AND (cardinality(CAST(:kinds AS text[])) = 0 OR t.kind = ANY(CAST(:kinds AS text[])))
+	AND (CAST(:start AS timestamptz) IS NULL OR t.occurred_at >= CAST(:start AS timestamptz))
+	AND (CAST(:end AS timestamptz) IS NULL OR t.occurred_at < CAST(:end AS timestamptz))`
+
+// List answers one keyset read of the entries of the vehicle that the filter names, by
+// moment.
+func (r *Entries) List(
+	ctx context.Context,
+	seek page.Seek,
+	vehicleID string,
+	filter model.EntryFilter,
+	order Order,
+) ([]model.EntryRow, error) {
+	condition, sorting := keyset(seek, "log_entries", "occurred_at", order)
+	query := `
+		SELECT ` + entryColumns + `
+		FROM log_entries t` + entryJoins + `
+		WHERE ` + entryFilter + `
+		  AND ` + condition + `
+		ORDER BY ` + sorting + `
+		LIMIT :limit;`
+
+	arguments := filterArguments(vehicleID, filter)
+	arguments["boundary"] = boundaryOf(seek)
+	arguments["limit"] = seek.Limit
+
+	entries, err := selectNamed[model.EntryRow](ctx, r.tx, query, arguments)
+	if err != nil {
+		return nil, fmt.Errorf("listing the log entries: %w", err)
+	}
+
+	return inOrder(seek, entries), nil
+}
+
+// Totals sums the entries of the vehicle that the filter names, and the volume of their
+// lines.
+func (r *Entries) Totals(
+	ctx context.Context,
+	vehicleID string,
+	filter model.EntryFilter,
+) (model.EntryTotals, error) {
+	query := `
+		WITH chosen AS (
+			SELECT t.id, t.amount FROM log_entries t WHERE ` + entryFilter + `
+		)
+		SELECT (SELECT count(*) FROM chosen) AS count,
+		       (SELECT COALESCE(sum(amount), 0) FROM chosen) AS amount,
+		       (SELECT COALESCE(sum(l.volume), 0) FROM log_entry_lines l
+		        WHERE l.log_entry_id IN (SELECT id FROM chosen)) AS volume;`
+
+	totals, err := selectNamed[model.EntryTotals](
+		ctx,
+		r.tx,
+		query,
+		filterArguments(vehicleID, filter),
+	)
+	if err != nil {
+		return model.EntryTotals{}, fmt.Errorf("summing the log entries: %w", err)
+	}
+
+	return totals[0], nil
+}
+
+// OfVehicle answers every entry of the vehicle, the earliest first.
+func (r *Entries) OfVehicle(ctx context.Context, vehicleID string) ([]model.EntryRow, error) {
+	const query = `
+		SELECT ` + entryColumns + `
+		FROM log_entries t` + entryJoins + `
+		WHERE t.vehicle_id = $1
+		ORDER BY t.occurred_at, t.id;`
+
+	var entries []model.EntryRow
+	if err := r.tx.SelectContext(ctx, &entries, query, vehicleID); err != nil {
+		return nil, fmt.Errorf("listing the log entries of the vehicle: %w", err)
+	}
+
+	return entries, nil
+}
+
+// Get answers the entry of the vehicle, or errs.ErrLogEntryNotFound when the vehicle holds
+// no such entry.
+func (r *Entries) Get(ctx context.Context, vehicleID, id string) (model.EntryRow, error) {
+	const query = `
+		SELECT ` + entryColumns + `
+		FROM log_entries t` + entryJoins + `
+		WHERE t.vehicle_id = $1 AND t.id = $2;`
+
+	var entry model.EntryRow
+
+	err := r.tx.GetContext(ctx, &entry, query, vehicleID, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return model.EntryRow{}, errs.ErrLogEntryNotFound
+	}
+
+	if err != nil {
+		return model.EntryRow{}, fmt.Errorf("reading the log entry: %w", err)
+	}
+
+	return entry, nil
+}
+
+func filterArguments(vehicleID string, filter model.EntryFilter) map[string]any {
+	kinds := make([]string, 0, len(filter.Kinds))
+	for _, kind := range filter.Kinds {
+		kinds = append(kinds, string(kind))
+	}
+
+	return map[string]any{
+		"vehicle_id": vehicleID,
+		"kinds":      kinds,
+		"start":      filter.Start,
+		"end":        filter.End,
+	}
 }

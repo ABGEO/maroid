@@ -43,8 +43,8 @@ func TestTheSettingsHoldTheCredentialsAlone(t *testing.T) {
 	assert.Equal(t, "x-maroid-scope=workspace", password.Tag.Get("jsonschema_extras"))
 }
 
-// DRIVVO-SC-021: account.read opens every read to a viewer, and account.connect opens the
-// connect and the end of the connection to an editor.
+// DRIVVO-SC-021: account.read opens every read and the widget to a viewer, and
+// account.connect opens the connect and the end of the connection to an editor.
 func TestThePermissionsNameTheirLowestRoleAndTheirRoutes(t *testing.T) {
 	t.Parallel()
 
@@ -72,8 +72,19 @@ func TestThePermissionsNameTheirLowestRoleAndTheirRoutes(t *testing.T) {
 	}
 
 	require.Equal(t, map[string]string{
-		http.MethodGet + " /connections/self":    permission.AccountRead,
-		http.MethodPut + " /connections/self":    permission.AccountConnect,
-		http.MethodDelete + " /connections/self": permission.AccountConnect,
+		http.MethodGet + " /connections/self":                              permission.AccountRead,
+		http.MethodPut + " /connections/self":                              permission.AccountConnect,
+		http.MethodDelete + " /connections/self":                           permission.AccountConnect,
+		http.MethodGet + " /vehicles":                                      permission.AccountRead,
+		http.MethodGet + " /vehicles/{vehicleId}/overview":                 permission.AccountRead,
+		http.MethodGet + " /vehicles/{vehicleId}/log-entries":              permission.AccountRead,
+		http.MethodGet + " /vehicles/{vehicleId}/log-entry-totals":         permission.AccountRead,
+		http.MethodGet + " /vehicles/{vehicleId}/log-entries/{logEntryId}": permission.AccountRead,
+		http.MethodGet + " /vehicles/{vehicleId}/reminders":                permission.AccountRead,
 	}, guards)
+
+	widgets, err := plugin.Widgets()
+	require.NoError(t, err)
+	require.Len(t, widgets, 1)
+	require.Equal(t, permission.AccountRead, widgets[0].Meta().Permission)
 }

@@ -17,6 +17,8 @@ const (
 	typeCredentialsRejected = "/problems/dev.maroid.drivvo/credentials-rejected"
 	typeNewPasswordRequired = "/problems/dev.maroid.drivvo/new-password-required"
 	typeServiceUnavailable  = "/problems/dev.maroid.drivvo/service-unavailable"
+	typeVehicleNotFound     = "/problems/dev.maroid.drivvo/vehicle-not-found"
+	typeLogEntryNotFound    = "/problems/dev.maroid.drivvo/log-entry-not-found"
 )
 
 const titleServiceUnavailable = "Drivvo is unavailable."
@@ -50,6 +52,18 @@ var failures = []failure{
 		errs.ErrNewPasswordRequired, typeNewPasswordRequired, http.StatusUnprocessableEntity,
 		"The Drivvo account asks for a new password.",
 		"Choose a new password at Drivvo, store it in the settings, then connect again.",
+	},
+	{
+		errs.ErrVehicleNotFound,
+		typeVehicleNotFound,
+		http.StatusNotFound,
+		"This vehicle is not in Maroid.",
+		"Choose a vehicle from the list. A vehicle that Drivvo no longer holds leaves Maroid at the next collection.",
+	},
+	{
+		errs.ErrLogEntryNotFound, typeLogEntryNotFound, http.StatusNotFound,
+		"This log entry is not in Maroid.",
+		"Open the log entry from the list of its vehicle.",
 	},
 }
 

@@ -95,3 +95,23 @@ func (p Period) Months(first, today time.Time) []time.Time {
 
 	return months
 }
+
+// Bounds answers the first moment of the period and the first moment after it, in the zone.
+// A nil bound leaves that end open.
+func (p Period) Bounds(loc *time.Location) (*time.Time, *time.Time) {
+	var start, end *time.Time
+
+	if p.From != nil {
+		start = new(startOfDay(*p.From, loc))
+	}
+
+	if p.To != nil {
+		end = new(startOfDay(p.To.AddDate(0, 0, 1), loc))
+	}
+
+	return start, end
+}
+
+func startOfDay(day time.Time, loc *time.Location) time.Time {
+	return time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, loc)
+}

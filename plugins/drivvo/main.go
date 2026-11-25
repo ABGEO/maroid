@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
@@ -15,6 +16,7 @@ import (
 	"github.com/abgeo/maroid/plugins/drivvo/job"
 	"github.com/abgeo/maroid/plugins/drivvo/permission"
 	"github.com/abgeo/maroid/plugins/drivvo/service"
+	"github.com/abgeo/maroid/plugins/drivvo/widget"
 )
 
 // Meta names the plugin. The hub reads it before it calls New.
@@ -35,6 +37,7 @@ type DrivvoPlugin struct {
 	logger      *slog.Logger
 	collector   *service.Collector
 	connections *service.Connections
+	figures     *service.Figures
 }
 
 var (
@@ -43,6 +46,7 @@ var (
 	_ pluginapi.MigrationPlugin    = (*DrivvoPlugin)(nil)
 	_ pluginapi.PermissionPlugin   = (*DrivvoPlugin)(nil)
 	_ pluginapi.RoutePlugin        = (*DrivvoPlugin)(nil)
+	_ pluginapi.WidgetPlugin       = (*DrivvoPlugin)(nil)
 )
 
 // New creates a plugin instance.
@@ -80,6 +84,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		logger:      host.Logger(),
 		collector:   service.NewCollector(account, client, store),
 		connections: service.NewConnections(account, client),
+		figures:     service.NewFigures(store, time.Now),
 	}, nil
 }
 
@@ -103,7 +108,7 @@ func (p *DrivvoPlugin) Migrations() (fs.FS, error) {
 	return migrationsFS, nil
 }
 
-// Permissions returns the permissions that the routes name.
+// Permissions returns the permissions that the routes and the widget name.
 func (p *DrivvoPlugin) Permissions() ([]pluginapi.Permission, error) {
 	return []pluginapi.Permission{
 		{
@@ -119,7 +124,16 @@ func (p *DrivvoPlugin) Permissions() ([]pluginapi.Permission, error) {
 	}, nil
 }
 
-// Routes returns the HTTP routes of the connection page.
+// Routes returns the HTTP routes of the connection page and of the pages of the car log
+// copy.
 func (p *DrivvoPlugin) Routes() ([]pluginapi.Route, error) {
-	return handler.NewConnectionHandler(p.logger, p.connections).Routes(), nil
+	return slices.Concat(
+		handler.NewConnectionHandler(p.logger, p.connections).Routes(),
+		handler.NewCarLogHandler(p.logger, p.figures).Routes(),
+	), nil
+}
+
+// Widgets returns the widget of the default vehicle, for the home page.
+func (p *DrivvoPlugin) Widgets() ([]pluginapi.Widget, error) {
+	return []pluginapi.Widget{widget.NewCar(p.figures)}, nil
 }

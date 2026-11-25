@@ -158,7 +158,7 @@ func TestTheVehiclesComeWithTheToken(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, vehicles, 2)
-	assert.Equal(t, "Hatchback", vehicles[0].Name)
+	assert.Equal(t, nameHatchback, vehicles[0].Name)
 	assert.True(t, vehicles[0].Active)
 	assert.True(t, vehicles[0].Principal)
 	assert.Equal(t, "Make Hatchback", vehicles[0].Make)

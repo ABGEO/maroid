@@ -66,3 +66,43 @@ func (r *Lines) Insert(ctx context.Context, entryID string, line model.Line, ite
 
 	return nil
 }
+
+// lineColumns names the columns of a read of a line, with the name of its item.
+const lineColumns = `
+	l.log_entry_id, l.position, l.item_id, i.name AS item, l.amount, l.unit_price, l.volume,
+	l.full_tank, l.free`
+
+// OfEntries answers the lines of the entries, in the order of their positions.
+func (r *Lines) OfEntries(ctx context.Context, entryIDs []string) ([]model.LineRow, error) {
+	const query = `
+		SELECT ` + lineColumns + `
+		FROM log_entry_lines l
+		LEFT JOIN reference_items i ON i.id = l.item_id
+		WHERE l.log_entry_id = ANY($1::uuid[])
+		ORDER BY l.log_entry_id, l.position;`
+
+	var lines []model.LineRow
+	if err := r.tx.SelectContext(ctx, &lines, query, entryIDs); err != nil {
+		return nil, fmt.Errorf("listing the lines: %w", err)
+	}
+
+	return lines, nil
+}
+
+// OfVehicle answers the lines of every entry of the vehicle.
+func (r *Lines) OfVehicle(ctx context.Context, vehicleID string) ([]model.LineRow, error) {
+	const query = `
+		SELECT ` + lineColumns + `
+		FROM log_entry_lines l
+		JOIN log_entries e ON e.id = l.log_entry_id
+		LEFT JOIN reference_items i ON i.id = l.item_id
+		WHERE e.vehicle_id = $1
+		ORDER BY l.log_entry_id, l.position;`
+
+	var lines []model.LineRow
+	if err := r.tx.SelectContext(ctx, &lines, query, vehicleID); err != nil {
+		return nil, fmt.Errorf("listing the lines of the vehicle: %w", err)
+	}
+
+	return lines, nil
+}

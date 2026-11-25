@@ -17,6 +17,7 @@ const (
 	memberOdometer        = "odometro"
 	memberMaintenanceType = "id_tipo_servico"
 	currencyGEL           = "GEL"
+	nameHatchback         = "Hatchback"
 )
 
 // testConfig answers the configuration of the tests over the fake service at the origin.
