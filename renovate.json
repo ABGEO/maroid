@@ -26,10 +26,16 @@
 			"enabled": false
 		},
 		{
-			"description": "A pseudo-version of a Go module, the maroid libraries included, moves with the other non-major updates.",
+			"description": "A pseudo-version of a Go module moves with the other non-major updates.",
 			"matchUpdateTypes": ["digest"],
 			"groupName": "all non-major dependencies",
 			"groupSlug": "all-minor-patch"
+		},
+		{
+			"description": "The maroid libraries move in their own pull request, apart from the third party updates.",
+			"matchPackageNames": ["github.com/abgeo/maroid/**"],
+			"groupName": "maroid libraries",
+			"groupSlug": "maroid-libraries"
 		},
 		{
 			"description": "The go directive of every go.mod follows the Go version of the Dockerfiles.",
