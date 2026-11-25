@@ -4,7 +4,7 @@ title: The car log account of a workspace
 type: spec
 status: approved
 created: 2026-11-25
-updated: 2026-11-25
+updated: 2026-11-26
 approved_by: Temuri
 approved_on: 2026-11-25
 constrained_by: [PLG, ARC, OWN, DAT, CFG, EXT, LOG, SEC, UI, JOB, API, ERR, RES, PKG, BLD, TST]
@@ -474,8 +474,8 @@ point.
 | 5   | `service/connection.go`, `handler/connection.go`, `dto/connection.go`                                                                                         | `DRIVVO-FR-003` to `DRIVVO-FR-014`                                     | [x]  |
 | 6   | `figures/` with its unit tests                                                                                                                                | `DRIVVO-FR-037` to `DRIVVO-FR-047`, `DRIVVO-FR-060` to `DRIVVO-FR-064` | [x]  |
 | 7   | `service/figures.go`, the other handlers, their DTOs, `api.yaml`, the widget, and `main.go`                                                                   | `DRIVVO-FR-025` to `DRIVVO-FR-067`, `DRIVVO-NFR-002`                   | [x]  |
-| 8   | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`)                                                                                 | `DRIVVO-FR-027` to `DRIVVO-FR-064`                                     | [ ]  |
-| 9   | The tests of both scenario files. Lint and build the plugin                                                                                                   | Every statement                                                        | [ ]  |
+| 8   | `ui/`, `embed.go`, and `UIManifest`. Build the UI, then the `.so` (`BLD-003`)                                                                                 | `DRIVVO-FR-027` to `DRIVVO-FR-064`                                     | [x]  |
+| 9   | The tests of both scenario files. Lint and build the plugin                                                                                                   | Every statement                                                        | [x]  |
 | 10  | Run against the service: a sign in, an expired token, a collection of the account. Correct section 4.4, `DRIVVO-DD-002`, `DRIVVO-DD-007`, and `DRIVVO-DD-008` | `DRIVVO-FR-008`, `DRIVVO-FR-012`, `DRIVVO-FR-022`, `DRIVVO-NFR-001`    | [ ]  |
 
 ## Retired identifiers

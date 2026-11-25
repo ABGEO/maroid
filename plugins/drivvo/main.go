@@ -46,6 +46,7 @@ var (
 	_ pluginapi.MigrationPlugin    = (*DrivvoPlugin)(nil)
 	_ pluginapi.PermissionPlugin   = (*DrivvoPlugin)(nil)
 	_ pluginapi.RoutePlugin        = (*DrivvoPlugin)(nil)
+	_ pluginapi.UIPlugin           = (*DrivvoPlugin)(nil)
 	_ pluginapi.WidgetPlugin       = (*DrivvoPlugin)(nil)
 )
 
@@ -136,4 +137,26 @@ func (p *DrivvoPlugin) Routes() ([]pluginapi.Route, error) {
 // Widgets returns the widget of the default vehicle, for the home page.
 func (p *DrivvoPlugin) Widgets() ([]pluginapi.Widget, error) {
 	return []pluginapi.Widget{widget.NewCar(p.figures)}, nil
+}
+
+// UIManifest returns the pages of the remote and its assets.
+func (p *DrivvoPlugin) UIManifest() (*pluginapi.UIManifest, error) {
+	assets, err := fs.Sub(uiAssets, "ui/dist")
+	if err != nil {
+		return nil, fmt.Errorf("getting UI manifest FS: %w", err)
+	}
+
+	return &pluginapi.UIManifest{
+		Routes: []pluginapi.UIRoute{
+			{Path: "/overview", Label: "Overview"},
+			{Path: "/history", Label: "History"},
+			{Path: "/refuels", Label: "Refuels"},
+			{Path: "/maintenances", Label: "Maintenance"},
+			{Path: "/expenses", Label: "Expenses"},
+			{Path: "/incomes", Label: "Income"},
+			{Path: "/reminders", Label: "Reminders"},
+			{Path: "/account", Label: "Account"},
+		},
+		Assets: assets,
+	}, nil
 }
