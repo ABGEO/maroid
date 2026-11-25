@@ -16,7 +16,7 @@
 
 	onMount(() => {
 		if (!reason) {
-			void goto(resolve('/'));
+			void goto(resolve(''));
 		}
 	});
 </script>

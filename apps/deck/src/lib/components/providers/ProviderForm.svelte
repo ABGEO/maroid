@@ -108,9 +108,9 @@
 		{#if failure}
 			<Alert kind="error"><span class="text-sm">{failure}</span></Alert>
 		{:else if saved}
-			<Alert kind="success"
-				><span class="text-sm">Saved. The next sign in reads the change.</span></Alert
-			>
+			<Alert kind="success">
+				<span class="text-sm">Saved. The next sign in reads the change.</span>
+			</Alert>
 		{/if}
 
 		<label class="flex flex-col gap-1">

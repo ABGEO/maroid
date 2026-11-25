@@ -73,11 +73,13 @@
 									<a
 										class="link link-hover font-medium"
 										href={hrefOf(plant)}
-										onclick={(event) => event.stopPropagation()}>{plant.common_name}</a
+										onclick={(event) => event.stopPropagation()}
 									>
-									{#if plant.scientific_name}<span class="meta ml-1 italic"
-											>{plant.scientific_name}</span
-										>{/if}
+										{plant.common_name}
+									</a>
+									{#if plant.scientific_name}<span class="meta ml-1 italic">
+											{plant.scientific_name}
+										</span>{/if}
 								</div>
 							</div>
 						</td>

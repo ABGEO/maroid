@@ -147,8 +147,9 @@
 					<label class="flex flex-col gap-1">
 						<span class="label">Name</span>
 						<input class="input input-sm w-full" bind:value={name} required />
-						<span class="label whitespace-normal">The label of the button on the sign in page.</span
-						>
+						<span class="label whitespace-normal">
+							The label of the button on the sign in page.
+						</span>
 						<FieldError {errors} pointer="/name" />
 					</label>
 				</div>

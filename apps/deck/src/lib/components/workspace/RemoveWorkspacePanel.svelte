@@ -18,7 +18,7 @@
 
 	async function removed(): Promise<void> {
 		await loadWorkspaces();
-		await goto(resolve('/'));
+		await goto(resolve(''));
 	}
 </script>
 

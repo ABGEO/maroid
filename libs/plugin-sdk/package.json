@@ -12,12 +12,13 @@
 		"@maroid/api-client": "workspace:*"
 	},
 	"peerDependencies": {
-		"svelte": "^5.0.0"
+		"svelte": "^5.55.7"
 	},
 	"devDependencies": {
-		"@sveltejs/package": "^2.0.0",
-		"svelte": "^5.54.0",
-		"typescript": "^5.9.3"
+		"@sveltejs/package": "^3.0.0",
+		"@sveltejs/vite-plugin-svelte": "^7.0.0",
+		"svelte": "^5.55.7",
+		"typescript": "~6.0.3"
 	},
 	"scripts": {
 		"build": "svelte-package -i src",

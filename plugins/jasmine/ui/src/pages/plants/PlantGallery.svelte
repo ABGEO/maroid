@@ -191,9 +191,9 @@
 					<div class="timeline-end mb-8 w-full pl-2">
 						<div class="flex items-start justify-between gap-2">
 							<p>
-								<time class="font-medium" datetime={moment.taken_on}
-									>{formatDay(moment.taken_on)}</time
-								>
+								<time class="font-medium" datetime={moment.taken_on}>
+									{formatDay(moment.taken_on)}
+								</time>
 								<span class="meta ml-1">{ageOf(moment.taken_on, host.timeZone)}</span>
 							</p>
 							{#if canWrite}
@@ -245,8 +245,9 @@
 												onerror={expired}
 											/>
 										{:else}
-											<span class="meta flex size-full items-center justify-center">No preview</span
-											>
+											<span class="meta flex size-full items-center justify-center">
+												No preview
+											</span>
 										{/if}
 									</button>
 
@@ -283,8 +284,10 @@
 													<button
 														class="text-error"
 														type="button"
-														onclick={() => deletePhoto(moment, photo)}>Delete photo</button
+														onclick={() => deletePhoto(moment, photo)}
 													>
+														Delete photo
+													</button>
 												</li>
 											</ul>
 										</div>

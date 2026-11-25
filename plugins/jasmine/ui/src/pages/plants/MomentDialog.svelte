@@ -125,8 +125,7 @@
 					rows="2"
 					maxlength="1000"
 					placeholder="Repotted, a new leaf, the first flower"
-					bind:value={note}
-				></textarea>
+					bind:value={note}></textarea>
 			</fieldset>
 		</div>
 

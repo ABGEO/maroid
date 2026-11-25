@@ -153,9 +153,9 @@
 										<td class="whitespace-nowrap">{shownDate(transaction.transaction_date)}</td>
 										<td>{transaction.operation}</td>
 										<td class="text-right tabular-nums">{transaction.usage?.toFixed(0) ?? ''}</td>
-										<td class="text-right tabular-nums"
-											>{transaction.meter_value?.toFixed(0) ?? ''}</td
-										>
+										<td class="text-right tabular-nums">
+											{transaction.meter_value?.toFixed(0) ?? ''}
+										</td>
 										<td class="text-right tabular-nums">{transaction.amount.amount.toFixed(2)}</td>
 										<td class="text-right tabular-nums">{transaction.balance.amount.toFixed(2)}</td>
 										<td class="whitespace-nowrap">
@@ -166,8 +166,9 @@
 													target="_blank"
 													rel="noopener noreferrer"
 													aria-label={`Bill of ${shownDate(transaction.transaction_date)} (opens in a new tab)`}
-													>Bill</a
 												>
+													Bill
+												</a>
 											{/if}
 											{#if transaction.meter_photo_url}
 												<a
@@ -176,8 +177,9 @@
 													target="_blank"
 													rel="noopener noreferrer"
 													aria-label={`Meter photo of ${shownDate(transaction.transaction_date)} (opens in a new tab)`}
-													>Photo</a
 												>
+													Photo
+												</a>
 											{/if}
 										</td>
 									</tr>

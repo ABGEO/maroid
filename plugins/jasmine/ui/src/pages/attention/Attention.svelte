@@ -164,9 +164,9 @@
 							<li class="list-row items-center">
 								<span class="meta">{care.plant.display_id}</span>
 								<span class="list-col-grow">
-									<a class="link link-hover font-medium" href={plantHref(care)}
-										>{care.plant.common_name}</a
-									>
+									<a class="link link-hover font-medium" href={plantHref(care)}>
+										{care.plant.common_name}
+									</a>
 									<span class="meta ml-2">
 										{typeLabel(care.type)}, {formatDays(care.days_since)}, every {formatDays(
 											care.days
@@ -205,9 +205,9 @@
 						<li class="list-row items-center">
 							<span class="meta">{care.plant.display_id}</span>
 							<span class="list-col-grow">
-								<a class="link link-hover font-medium" href={plantHref(care)}
-									>{care.plant.common_name}</a
-								>
+								<a class="link link-hover font-medium" href={plantHref(care)}>
+									{care.plant.common_name}
+								</a>
 								<span class="meta ml-2">
 									{typeLabel(care.type)}, every {formatDays(care.days)}
 								</span>

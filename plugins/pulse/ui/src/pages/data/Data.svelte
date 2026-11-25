@@ -124,8 +124,9 @@
 						<div class="list-col-grow">
 							<div class="font-medium">
 								{question.prompt}
-								{#if question.archived}<span class="badge badge-ghost badge-sm ml-1">Archived</span
-									>{/if}
+								{#if question.archived}<span class="badge badge-ghost badge-sm ml-1">
+										Archived
+									</span>{/if}
 							</div>
 							<div class="meta">
 								{TYPE_LABELS[question.type]},

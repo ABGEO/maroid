@@ -34,13 +34,13 @@ export interface CrumbParams {
 	workspace?: string;
 }
 
-const HOME: Crumb = { label: 'Home', href: resolve('/') };
+const HOME: Crumb = { label: 'Home', href: resolve('') };
 
 const ADMINISTRATION: Crumb = { label: 'Administration' };
 
-const USERS: Crumb = { label: 'Users', href: resolve('/admin/users') };
+const USERS: Crumb = { label: 'Users', href: resolve('admin/users') };
 
-const PROVIDERS: Crumb = { label: 'Sign-in providers', href: resolve('/admin/providers') };
+const PROVIDERS: Crumb = { label: 'Sign-in providers', href: resolve('admin/providers') };
 
 /**
  * Reports whether a trail needs the loaded plugins to read correctly. A caller
@@ -67,7 +67,7 @@ export function crumbsFor(
 ): Crumb[] {
 	switch (routeId) {
 		case '/(dashboard)/workspaces/new':
-			return [HOME, { label: 'New workspace', href: resolve('/workspaces/new') }];
+			return [HOME, { label: 'New workspace', href: resolve('workspaces/new') }];
 
 		case '/(dashboard)/w/[workspace]':
 			return [HOME, workspaceCrumb(params.workspace ?? '', workspaces)];
@@ -113,10 +113,10 @@ export function crumbsFor(
 			];
 
 		case '/(dashboard)/admin/workspaces':
-			return [HOME, ADMINISTRATION, { label: 'Workspaces', href: resolve('/admin/workspaces') }];
+			return [HOME, ADMINISTRATION, { label: 'Workspaces', href: resolve('admin/workspaces') }];
 
 		case '/(dashboard)/admin/plugins':
-			return [HOME, ADMINISTRATION, { label: 'Plugins', href: resolve('/admin/plugins') }];
+			return [HOME, ADMINISTRATION, { label: 'Plugins', href: resolve('admin/plugins') }];
 
 		case '/(dashboard)/admin/providers':
 			return [HOME, ADMINISTRATION, PROVIDERS];
@@ -167,7 +167,7 @@ export function crumbsFor(
 		}
 
 		case '/(dashboard)/profile':
-			return [HOME, { label: 'Profile', href: resolve('/profile') }];
+			return [HOME, { label: 'Profile', href: resolve('profile') }];
 
 		case '/(dashboard)/w/[workspace]/plugins/[plugin]': {
 			const workspaceId = params.workspace ?? '';

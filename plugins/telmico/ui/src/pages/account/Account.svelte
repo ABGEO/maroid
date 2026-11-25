@@ -179,9 +179,9 @@
 
 			{#if canConnect}
 				<div class="flex gap-2">
-					<button type="button" class="btn btn-sm" disabled={busy} onclick={connect}
-						>Connect again</button
-					>
+					<button type="button" class="btn btn-sm" disabled={busy} onclick={connect}>
+						Connect again
+					</button>
 					<button
 						type="button"
 						class="btn btn-ghost btn-sm text-error"
@@ -205,9 +205,9 @@
 				<p class="meta mb-4">
 					Maroid signs in to Telmico with the username and the password in the settings.
 				</p>
-				<button type="button" class="btn btn-primary btn-sm" disabled={busy} onclick={connect}
-					>Connect</button
-				>
+				<button type="button" class="btn btn-primary btn-sm" disabled={busy} onclick={connect}>
+					Connect
+				</button>
 			{:else}
 				<p class="meta">
 					Store the username and the password of the Telmico account in the

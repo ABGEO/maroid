@@ -12,7 +12,7 @@
 	$effect(() => {
 		if (landing) {
 			void goto(resolve('/(dashboard)/w/[workspace]', { workspace: landing.id }), {
-				replaceState: true
+				replace: true
 			});
 		}
 	});

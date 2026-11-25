@@ -32,7 +32,7 @@
 			</div>
 
 			<div class="flex flex-col gap-2">
-				<a class="btn btn-primary w-full" href={resolve('/')}>Go to the home page</a>
+				<a class="btn btn-primary w-full" href={resolve('')}>Go to the home page</a>
 				{#if !notFound}
 					<button class="btn btn-ghost w-full" onclick={() => window.location.reload()}>
 						Reload

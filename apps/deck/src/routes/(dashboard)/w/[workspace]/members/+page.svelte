@@ -90,7 +90,7 @@
 
 			if (member.user_id === selfId) {
 				await loadWorkspaces();
-				await goto(resolve('/'));
+				await goto(resolve(''));
 
 				return;
 			}

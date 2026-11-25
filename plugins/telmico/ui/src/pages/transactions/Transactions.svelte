@@ -161,12 +161,12 @@
 										<td class="text-right tabular-nums">{shownEnergy(transaction.usage)}</td>
 										<td class="text-right tabular-nums">{shownEnergy(transaction.meter_value)}</td>
 										<td class="text-right tabular-nums">{transaction.tariff?.toFixed(4) ?? ''}</td>
-										<td class="text-right tabular-nums"
-											>{transaction.amount?.amount.toFixed(2) ?? ''}</td
-										>
-										<td class="text-right tabular-nums"
-											>{transaction.balance?.amount.toFixed(2) ?? ''}</td
-										>
+										<td class="text-right tabular-nums">
+											{transaction.amount?.amount.toFixed(2) ?? ''}
+										</td>
+										<td class="text-right tabular-nums">
+											{transaction.balance?.amount.toFixed(2) ?? ''}
+										</td>
 									</tr>
 								{/each}
 							</tbody>
