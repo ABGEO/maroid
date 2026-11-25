@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { api, type Provider, type ProviderChange } from '$lib/api';
-	import FieldError from '$lib/components/providers/FieldError.svelte';
-	import OptionsField from '$lib/components/providers/OptionsField.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Panel from '$lib/components/ui/Panel.svelte';
+	import { api, type Provider, type ProviderChange } from '#lib/api/index.ts';
+	import FieldError from '#lib/components/providers/FieldError.svelte';
+	import OptionsField from '#lib/components/providers/OptionsField.svelte';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Panel from '#lib/components/ui/Panel.svelte';
 	import {
 		failureMessage,
 		fieldErrors,
@@ -11,7 +11,7 @@
 		optionsText,
 		parseOptions,
 		parseScopes
-	} from '$lib/providers/form';
+	} from '#lib/providers/form.ts';
 
 	interface Props {
 		provider: Provider;

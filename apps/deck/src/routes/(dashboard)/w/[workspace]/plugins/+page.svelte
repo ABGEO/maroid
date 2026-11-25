@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	import { api, type EnabledPlugin, type Plugin } from '$lib/api';
-	import PluginSummary from '$lib/components/plugins/PluginSummary.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Section from '$lib/components/ui/Section.svelte';
-	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
-	import { PERMISSION, holds } from '$lib/permissions';
-	import { displayNameOf, hasCapability } from '$lib/plugins/capabilities';
-	import { switchPlugin } from '$lib/plugins/switch';
-	import { fieldsOf, missingFields } from '$lib/settings/schema';
-	import { loadEnabled, pluginState } from '$lib/state/plugins.svelte';
-	import { isMember } from '$lib/state/workspaces.svelte';
+	import { api, type EnabledPlugin, type Plugin } from '#lib/api/index.ts';
+	import PluginSummary from '#lib/components/plugins/PluginSummary.svelte';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Section from '#lib/components/ui/Section.svelte';
+	import SkeletonList from '#lib/components/ui/SkeletonList.svelte';
+	import { PERMISSION, holds } from '#lib/permissions.ts';
+	import { displayNameOf, hasCapability } from '#lib/plugins/capabilities.ts';
+	import { switchPlugin } from '#lib/plugins/switch.ts';
+	import { fieldsOf, missingFields } from '#lib/settings/schema.ts';
+	import { loadEnabled, pluginState } from '#lib/state/plugins.svelte.ts';
+	import { isMember } from '#lib/state/workspaces.svelte.ts';
 
 	import type { PageProps } from './$types';
 

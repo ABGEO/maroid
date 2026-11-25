@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Panel from '$lib/components/ui/Panel.svelte';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Panel from '#lib/components/ui/Panel.svelte';
 
 	interface Names {
 		first_name: string;

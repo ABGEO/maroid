@@ -1,4 +1,4 @@
-import type { Crumb } from '$lib/navigation/breadcrumbs';
+import type { Crumb } from '#lib/navigation/breadcrumbs.ts';
 
 const BRAND = 'Maroid';
 

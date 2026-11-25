@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { displayNameOf } from '$lib/plugins/capabilities';
-	import { pluginState } from '$lib/state/plugins.svelte';
+	import { displayNameOf } from '#lib/plugins/capabilities.ts';
+	import { pluginState } from '#lib/state/plugins.svelte.ts';
 
 	interface Props {
 		selected: string[];

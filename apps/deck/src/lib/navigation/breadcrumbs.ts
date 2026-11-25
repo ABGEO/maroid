@@ -1,8 +1,8 @@
 import { resolve } from '$app/paths';
 import type { ResolvedPathname, RouteId } from '$app/types';
 
-import type { Plugin, Workspace } from '$lib/api/types';
-import { displayNameOf, uiOf } from '$lib/plugins/capabilities';
+import type { Plugin, Workspace } from '#lib/api/types.ts';
+import { displayNameOf, uiOf } from '#lib/plugins/capabilities.ts';
 
 /**
  * One step of the trail. A crumb without a target names a place that carries no

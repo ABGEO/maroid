@@ -11,14 +11,14 @@
 		type ProviderIdentity,
 		type Tagged,
 		type UserRecord
-	} from '$lib/api';
-	import { authFailureMessage } from '$lib/auth/messages';
-	import ChangePasswordForm from '$lib/components/profile/ChangePasswordForm.svelte';
-	import ConnectedAccounts from '$lib/components/profile/ConnectedAccounts.svelte';
-	import ProfileNameForm from '$lib/components/profile/ProfileNameForm.svelte';
-	import TimeZoneForm from '$lib/components/profile/TimeZoneForm.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Section from '$lib/components/ui/Section.svelte';
+	} from '#lib/api/index.ts';
+	import { authFailureMessage } from '#lib/auth/messages.ts';
+	import ChangePasswordForm from '#lib/components/profile/ChangePasswordForm.svelte';
+	import ConnectedAccounts from '#lib/components/profile/ConnectedAccounts.svelte';
+	import ProfileNameForm from '#lib/components/profile/ProfileNameForm.svelte';
+	import TimeZoneForm from '#lib/components/profile/TimeZoneForm.svelte';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Section from '#lib/components/ui/Section.svelte';
 
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let identities = $state<ProviderIdentity[]>([]);

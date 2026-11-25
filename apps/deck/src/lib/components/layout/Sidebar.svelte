@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { enabledState, loadEnabled } from '$lib/state/plugins.svelte';
-	import { userState } from '$lib/state/user.svelte';
-	import { actingWorkspaceId, isMember, workspaceState } from '$lib/state/workspaces.svelte';
-	import { uiOf } from '$lib/plugins/capabilities';
-	import { activeEntry } from '$lib/plugins/routes';
+	import { enabledState, loadEnabled } from '#lib/state/plugins.svelte.ts';
+	import { userState } from '#lib/state/user.svelte.ts';
+	import { actingWorkspaceId, isMember, workspaceState } from '#lib/state/workspaces.svelte.ts';
+	import { uiOf } from '#lib/plugins/capabilities.ts';
+	import { activeEntry } from '#lib/plugins/routes.ts';
 
 	function isActive(href: string) {
 		return page.url.pathname === href;

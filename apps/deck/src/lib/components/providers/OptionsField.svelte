@@ -1,5 +1,5 @@
 <script lang="ts">
-	import FieldError from '$lib/components/providers/FieldError.svelte';
+	import FieldError from '#lib/components/providers/FieldError.svelte';
 
 	interface Props {
 		value: string;

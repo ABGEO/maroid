@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/state';
 
-	import { ApiError, api, type Provider } from '$lib/api';
-	import ProviderForm from '$lib/components/providers/ProviderForm.svelte';
-	import RemoveProvider from '$lib/components/providers/RemoveProvider.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import CopyField from '$lib/components/ui/CopyField.svelte';
-	import Panel from '$lib/components/ui/Panel.svelte';
-	import Section from '$lib/components/ui/Section.svelte';
-	import { presetLabel } from '$lib/providers/form';
+	import { ApiError, api, type Provider } from '#lib/api/index.ts';
+	import ProviderForm from '#lib/components/providers/ProviderForm.svelte';
+	import RemoveProvider from '#lib/components/providers/RemoveProvider.svelte';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import CopyField from '#lib/components/ui/CopyField.svelte';
+	import Panel from '#lib/components/ui/Panel.svelte';
+	import Section from '#lib/components/ui/Section.svelte';
+	import { presetLabel } from '#lib/providers/form.ts';
 
 	const providerId = $derived(page.params.provider ?? '');
 

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	import type { Provider } from '$lib/api';
-	import { presetLabel } from '$lib/providers/form';
+	import type { Provider } from '#lib/api/index.ts';
+	import { presetLabel } from '#lib/providers/form.ts';
 
 	interface Props {
 		providers: Provider[];

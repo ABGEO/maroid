@@ -1,8 +1,8 @@
 import { error } from '@sveltejs/kit';
 
-import { ApiError, api, type EnabledPlugin } from '$lib/api';
-import { PERMISSION, holds } from '$lib/permissions';
-import { canTurnOn, pluginState } from '$lib/state/plugins.svelte';
+import { ApiError, api, type EnabledPlugin } from '#lib/api/index.ts';
+import { PERMISSION, holds } from '#lib/permissions.ts';
+import { canTurnOn, pluginState } from '#lib/state/plugins.svelte.ts';
 
 import type { PageLoad } from './$types';
 

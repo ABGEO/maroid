@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
 
-	import type { Workspace } from '$lib/api';
-	import { crumbsFor, needsPlugins } from '$lib/navigation/breadcrumbs';
-	import { documentTitle, trailTitle } from '$lib/navigation/title';
-	import type { PluginRoute } from '$lib/plugins/loader';
-	import { enabledState, pluginState } from '$lib/state/plugins.svelte';
-	import { pageTitle } from '$lib/state/title.svelte';
-	import { workspaceState } from '$lib/state/workspaces.svelte';
+	import type { Workspace } from '#lib/api/index.ts';
+	import { crumbsFor, needsPlugins } from '#lib/navigation/breadcrumbs.ts';
+	import { documentTitle, trailTitle } from '#lib/navigation/title.ts';
+	import type { PluginRoute } from '#lib/plugins/loader.ts';
+	import { enabledState, pluginState } from '#lib/state/plugins.svelte.ts';
+	import { pageTitle } from '#lib/state/title.svelte.ts';
+	import { workspaceState } from '#lib/state/workspaces.svelte.ts';
 
 	const loading = $derived(enabledState.status === 'idle' || enabledState.status === 'loading');
 	const pending = $derived(loading && needsPlugins(page.route.id));

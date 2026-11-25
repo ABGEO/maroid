@@ -3,8 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
-	import { startInvitationRedemption } from '$lib/api/client';
-	import { documentTitle } from '$lib/navigation/title';
+	import { startInvitationRedemption } from '#lib/api/client.ts';
+	import { documentTitle } from '#lib/navigation/title.ts';
 
 	onMount(() => {
 		const token = page.url.searchParams.get('token');

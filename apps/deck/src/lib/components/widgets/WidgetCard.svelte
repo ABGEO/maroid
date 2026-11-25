@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 
-	import { api } from '$lib/api';
-	import type { Widget } from '$lib/api/types';
-	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
+	import { api } from '#lib/api/index.ts';
+	import type { Widget } from '#lib/api/types.ts';
+	import SkeletonList from '#lib/components/ui/SkeletonList.svelte';
 
 	import ListWidget from './ListWidget.svelte';
 	import StatWidget from './StatWidget.svelte';

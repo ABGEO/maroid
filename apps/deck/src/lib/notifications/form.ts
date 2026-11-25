@@ -1,5 +1,5 @@
-import type { FieldFailure, NotificationProviderKind, SettingsValues } from '$lib/api';
-import { fieldsOf } from '$lib/settings/schema';
+import type { FieldFailure, NotificationProviderKind, SettingsValues } from '#lib/api/index.ts';
+import { fieldsOf } from '#lib/settings/schema.ts';
 
 /**
  * Keeps the failures that name a field of one member, and moves each pointer under that

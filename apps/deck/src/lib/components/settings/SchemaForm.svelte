@@ -20,8 +20,8 @@
 	import { resolver } from '@sjsf/form/resolvers/basic';
 	import { translation } from '@sjsf/form/translations/en';
 
-	import type { FieldFailure, SettingsValues } from '$lib/api';
-	import { pathOf } from '$lib/settings/pointer';
+	import type { FieldFailure, SettingsValues } from '#lib/api/index.ts';
+	import { pathOf } from '#lib/settings/pointer.ts';
 
 	interface Props {
 		schema: Schema;

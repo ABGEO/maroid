@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	import { api, type InstanceWorkspace } from '$lib/api';
-	import PluginSummary from '$lib/components/plugins/PluginSummary.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
-	import { pluginState } from '$lib/state/plugins.svelte';
+	import { api, type InstanceWorkspace } from '#lib/api/index.ts';
+	import PluginSummary from '#lib/components/plugins/PluginSummary.svelte';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import SkeletonList from '#lib/components/ui/SkeletonList.svelte';
+	import { pluginState } from '#lib/state/plugins.svelte.ts';
 
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let workspaces = $state<InstanceWorkspace[]>([]);

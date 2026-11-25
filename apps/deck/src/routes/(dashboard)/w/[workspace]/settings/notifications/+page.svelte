@@ -9,16 +9,16 @@
 		type NotificationProviderKind,
 		type NotificationRoute,
 		type NotificationTopic
-	} from '$lib/api';
-	import ProviderDialog from '$lib/components/notifications/ProviderDialog.svelte';
-	import RouteDialog from '$lib/components/notifications/RouteDialog.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Section from '$lib/components/ui/Section.svelte';
-	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
-	import { describeDestination } from '$lib/notifications/form';
-	import { PERMISSION, holds } from '$lib/permissions';
-	import { displayNameOf } from '$lib/plugins/capabilities';
-	import { knownPlugin } from '$lib/state/plugins.svelte';
+	} from '#lib/api/index.ts';
+	import ProviderDialog from '#lib/components/notifications/ProviderDialog.svelte';
+	import RouteDialog from '#lib/components/notifications/RouteDialog.svelte';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Section from '#lib/components/ui/Section.svelte';
+	import SkeletonList from '#lib/components/ui/SkeletonList.svelte';
+	import { describeDestination } from '#lib/notifications/form.ts';
+	import { PERMISSION, holds } from '#lib/permissions.ts';
+	import { displayNameOf } from '#lib/plugins/capabilities.ts';
+	import { knownPlugin } from '#lib/state/plugins.svelte.ts';
 
 	import type { PageProps } from './$types';
 

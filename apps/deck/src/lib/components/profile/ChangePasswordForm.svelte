@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { ApiError, PROBLEM_TYPE, api } from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Panel from '$lib/components/ui/Panel.svelte';
-	import PasswordFields from '$lib/components/users/PasswordFields.svelte';
-	import { fieldErrors, passwordProblem } from '$lib/providers/form';
+	import { ApiError, PROBLEM_TYPE, api } from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Panel from '#lib/components/ui/Panel.svelte';
+	import PasswordFields from '#lib/components/users/PasswordFields.svelte';
+	import { fieldErrors, passwordProblem } from '#lib/providers/form.ts';
 
 	interface Props {
 		username?: string;

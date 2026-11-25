@@ -5,9 +5,9 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 
-	import { startSignIn } from '$lib/api/client';
-	import { authFailureMessage } from '$lib/auth/messages';
-	import { documentTitle } from '$lib/navigation/title';
+	import { startSignIn } from '#lib/api/client.ts';
+	import { authFailureMessage } from '#lib/auth/messages.ts';
+	import { documentTitle } from '#lib/navigation/title.ts';
 
 	const reason = page.url.searchParams.get('error');
 	const message = reason ? authFailureMessage(reason) : '';

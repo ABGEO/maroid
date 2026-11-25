@@ -1,5 +1,5 @@
 <script lang="ts">
-	import CreateWorkspaceForm from '$lib/components/workspace/CreateWorkspaceForm.svelte';
+	import CreateWorkspaceForm from '#lib/components/workspace/CreateWorkspaceForm.svelte';
 </script>
 
 <div class="max-w-2xl">

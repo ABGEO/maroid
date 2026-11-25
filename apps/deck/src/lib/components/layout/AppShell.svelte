@@ -2,13 +2,13 @@
 	import { afterNavigate } from '$app/navigation';
 	import { MediaQuery } from 'svelte/reactivity';
 
-	import Breadcrumbs from '$lib/components/layout/Breadcrumbs.svelte';
-	import Footer from '$lib/components/layout/Footer.svelte';
-	import Sidebar from '$lib/components/layout/Sidebar.svelte';
-	import Header from '$lib/components/layout/Header.svelte';
+	import Breadcrumbs from '#lib/components/layout/Breadcrumbs.svelte';
+	import Footer from '#lib/components/layout/Footer.svelte';
+	import Sidebar from '#lib/components/layout/Sidebar.svelte';
+	import Header from '#lib/components/layout/Header.svelte';
 
-	import { loadPlugins, pluginState } from '$lib/state/plugins.svelte';
-	import { loadWorkspaces, workspaceState } from '$lib/state/workspaces.svelte';
+	import { loadPlugins, pluginState } from '#lib/state/plugins.svelte.ts';
+	import { loadWorkspaces, workspaceState } from '#lib/state/workspaces.svelte.ts';
 
 	let { children } = $props();
 

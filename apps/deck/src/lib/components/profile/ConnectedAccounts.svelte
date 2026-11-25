@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { ConfirmDialog } from '@maroid/ui';
 
-	import { ApiError, LOCAL_PROVIDER, api, type ProviderIdentity } from '$lib/api';
-	import { startAttach } from '$lib/api/client';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Panel from '$lib/components/ui/Panel.svelte';
-	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
-	import { userState } from '$lib/state/user.svelte';
+	import { ApiError, LOCAL_PROVIDER, api, type ProviderIdentity } from '#lib/api/index.ts';
+	import { startAttach } from '#lib/api/client.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Panel from '#lib/components/ui/Panel.svelte';
+	import SkeletonList from '#lib/components/ui/SkeletonList.svelte';
+	import { userState } from '#lib/state/user.svelte.ts';
 
 	interface Props {
 		identities: ProviderIdentity[];

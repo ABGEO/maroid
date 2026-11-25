@@ -1,4 +1,4 @@
-import type { Capabilities, Plugin, UIManifest } from '$lib/api/types';
+import type { Capabilities, Plugin, UIManifest } from '#lib/api/types.ts';
 
 /** The name of one capability, as the hub reports it. */
 export type CapabilityName = keyof Capabilities;

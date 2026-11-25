@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { pluginState } from '$lib/state/plugins.svelte';
+	import { pluginState } from '#lib/state/plugins.svelte.ts';
 
 	const pluginsCountLabel = $derived.by(() => {
 		if (pluginState.status !== 'ready') {

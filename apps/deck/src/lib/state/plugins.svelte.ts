@@ -1,4 +1,4 @@
-import { api, type Plugin } from '$lib/api';
+import { api, type Plugin } from '#lib/api/index.ts';
 
 export type PluginStatus = 'idle' | 'loading' | 'ready' | 'error';
 

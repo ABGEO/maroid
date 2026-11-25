@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { loadUser, userState } from '$lib/state/user.svelte';
+	import { loadUser, userState } from '#lib/state/user.svelte.ts';
 
 	let { children } = $props();
 	let loading = $state(true);

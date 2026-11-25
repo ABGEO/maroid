@@ -3,11 +3,11 @@
 
 	import { ConfirmDialog } from '@maroid/ui';
 
-	import { LOCAL_PROVIDER, api, createWriteIntent, type UserIdentity } from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Panel from '$lib/components/ui/Panel.svelte';
-	import PasswordFields from '$lib/components/users/PasswordFields.svelte';
-	import { failureMessage, passwordProblem } from '$lib/providers/form';
+	import { LOCAL_PROVIDER, api, createWriteIntent, type UserIdentity } from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Panel from '#lib/components/ui/Panel.svelte';
+	import PasswordFields from '#lib/components/users/PasswordFields.svelte';
+	import { failureMessage, passwordProblem } from '#lib/providers/form.ts';
 
 	interface Props {
 		userId: string;

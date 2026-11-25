@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { ApiError, PROBLEM_TYPE, api, type Tagged, type UserRecord } from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Panel from '$lib/components/ui/Panel.svelte';
-	import { loadUser } from '$lib/state/user.svelte';
+	import { ApiError, PROBLEM_TYPE, api, type Tagged, type UserRecord } from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Panel from '#lib/components/ui/Panel.svelte';
+	import { loadUser } from '#lib/state/user.svelte.ts';
 
 	interface Props {
 		self: Tagged<UserRecord> | null;

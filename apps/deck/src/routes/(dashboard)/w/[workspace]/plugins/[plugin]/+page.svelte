@@ -2,14 +2,14 @@
 	import { goto, invalidate } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
-	import CapabilityPanel from '$lib/components/plugins/CapabilityPanel.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Section from '$lib/components/ui/Section.svelte';
-	import { PERMISSION, holds } from '$lib/permissions';
-	import { capabilitiesOf, displayNameOf, hasCapability } from '$lib/plugins/capabilities';
-	import { switchPlugin } from '$lib/plugins/switch';
-	import { canTurnOn, loadEnabled, pluginState } from '$lib/state/plugins.svelte';
-	import { isMember } from '$lib/state/workspaces.svelte';
+	import CapabilityPanel from '#lib/components/plugins/CapabilityPanel.svelte';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Section from '#lib/components/ui/Section.svelte';
+	import { PERMISSION, holds } from '#lib/permissions.ts';
+	import { capabilitiesOf, displayNameOf, hasCapability } from '#lib/plugins/capabilities.ts';
+	import { switchPlugin } from '#lib/plugins/switch.ts';
+	import { canTurnOn, loadEnabled, pluginState } from '#lib/state/plugins.svelte.ts';
+	import { isMember } from '#lib/state/workspaces.svelte.ts';
 
 	import type { PageProps } from './$types';
 

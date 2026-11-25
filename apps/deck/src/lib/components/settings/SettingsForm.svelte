@@ -1,10 +1,10 @@
 <script lang="ts">
 	import type { Schema, UiSchemaRoot } from '@sjsf/form';
 
-	import { ApiError, PROBLEM_TYPE, api, type SettingsValues } from '$lib/api';
-	import SchemaForm from '$lib/components/settings/SchemaForm.svelte';
-	import { toInput, uiSchemaFor } from '$lib/settings/form';
-	import { fieldsOf, missingFields, type SettingsField } from '$lib/settings/schema';
+	import { ApiError, PROBLEM_TYPE, api, type SettingsValues } from '#lib/api/index.ts';
+	import SchemaForm from '#lib/components/settings/SchemaForm.svelte';
+	import { toInput, uiSchemaFor } from '#lib/settings/form.ts';
+	import { fieldsOf, missingFields, type SettingsField } from '#lib/settings/schema.ts';
 
 	interface Props {
 		workspaceId: string;

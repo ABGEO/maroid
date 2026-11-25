@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { ConfirmDialog } from '@maroid/ui';
 
-	import type { UserChange, UserRecord } from '$lib/api';
-	import Panel from '$lib/components/ui/Panel.svelte';
+	import type { UserChange, UserRecord } from '#lib/api/index.ts';
+	import Panel from '#lib/components/ui/Panel.svelte';
 
 	interface Props {
 		user: UserRecord;

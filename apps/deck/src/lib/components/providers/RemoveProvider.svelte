@@ -4,10 +4,10 @@
 
 	import { ConfirmDialog } from '@maroid/ui';
 
-	import { api, type Provider, type UserRef } from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Panel from '$lib/components/ui/Panel.svelte';
-	import { failureMessage } from '$lib/providers/form';
+	import { api, type Provider, type UserRef } from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Panel from '#lib/components/ui/Panel.svelte';
+	import { failureMessage } from '#lib/providers/form.ts';
 
 	interface Props {
 		provider: Provider;

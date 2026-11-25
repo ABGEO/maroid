@@ -6,16 +6,16 @@
 		type InvitedUser,
 		type UserChange,
 		type UserRecord
-	} from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Section from '$lib/components/ui/Section.svelte';
-	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
-	import CreateUserForm from '$lib/components/users/CreateUserForm.svelte';
-	import InvitationNotice from '$lib/components/users/InvitationNotice.svelte';
-	import UserRow from '$lib/components/users/UserRow.svelte';
-	import { loadUser, userState } from '$lib/state/user.svelte';
-	import { userFailureMessage } from '$lib/users/failure';
-	import { personName } from '$lib/users/name';
+	} from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Section from '#lib/components/ui/Section.svelte';
+	import SkeletonList from '#lib/components/ui/SkeletonList.svelte';
+	import CreateUserForm from '#lib/components/users/CreateUserForm.svelte';
+	import InvitationNotice from '#lib/components/users/InvitationNotice.svelte';
+	import UserRow from '#lib/components/users/UserRow.svelte';
+	import { loadUser, userState } from '#lib/state/user.svelte.ts';
+	import { userFailureMessage } from '#lib/users/failure.ts';
+	import { personName } from '#lib/users/name.ts';
 
 	const inviteIntent = createWriteIntent();
 

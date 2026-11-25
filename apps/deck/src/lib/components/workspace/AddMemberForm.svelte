@@ -6,10 +6,10 @@
 		createWriteIntent,
 		type Candidate,
 		type Role
-	} from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import { ROLES, roleLabel } from '$lib/permissions';
-	import { personName } from '$lib/users/name';
+	} from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import { ROLES, roleLabel } from '#lib/permissions.ts';
+	import { personName } from '#lib/users/name.ts';
 
 	interface Props {
 		workspaceId: string;

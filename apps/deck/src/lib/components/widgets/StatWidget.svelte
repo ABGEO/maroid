@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { StatData } from '$lib/api/types';
+	import type { StatData } from '#lib/api/types.ts';
 
 	interface Props {
 		stat: StatData;

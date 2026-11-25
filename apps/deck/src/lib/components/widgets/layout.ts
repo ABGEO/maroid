@@ -1,6 +1,6 @@
 import { resolve } from '$app/paths';
 
-import type { WidgetSize } from '$lib/api/types';
+import type { WidgetSize } from '#lib/api/types.ts';
 
 /**
  * The space of each size on a grid of one, two, or four columns. A remote ships its

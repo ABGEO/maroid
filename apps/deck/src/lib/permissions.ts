@@ -1,4 +1,4 @@
-import type { Role, Workspace } from '$lib/api';
+import type { Role, Workspace } from '#lib/api/index.ts';
 
 /** The permissions of the hub that a page of the deck checks. */
 export const PERMISSION = {

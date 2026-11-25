@@ -1,7 +1,7 @@
 <script lang="ts">
-	import RemoveWorkspacePanel from '$lib/components/workspace/RemoveWorkspacePanel.svelte';
-	import RenameWorkspaceForm from '$lib/components/workspace/RenameWorkspaceForm.svelte';
-	import { PERMISSION, holds } from '$lib/permissions';
+	import RemoveWorkspacePanel from '#lib/components/workspace/RemoveWorkspacePanel.svelte';
+	import RenameWorkspaceForm from '#lib/components/workspace/RenameWorkspaceForm.svelte';
+	import { PERMISSION, holds } from '#lib/permissions.ts';
 
 	import type { PageProps } from './$types';
 

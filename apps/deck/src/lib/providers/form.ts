@@ -1,6 +1,6 @@
 import { parse, stringify } from 'yaml';
 
-import { ApiError, PROBLEM_TYPE, type Provider, type ProviderPreset } from '$lib/api';
+import { ApiError, PROBLEM_TYPE, type Provider, type ProviderPreset } from '#lib/api/index.ts';
 
 /** The shortest local password, which the hub also checks. */
 export const MIN_PASSWORD_LENGTH = 12;

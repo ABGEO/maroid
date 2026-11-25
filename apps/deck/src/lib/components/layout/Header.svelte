@@ -1,8 +1,8 @@
 <script>
 	import { resolve } from '$app/paths';
 
-	import UserDropdown from '$lib/components/UserDropdown.svelte';
-	import WorkspaceSwitcher from '$lib/components/layout/WorkspaceSwitcher.svelte';
+	import UserDropdown from '#lib/components/UserDropdown.svelte';
+	import WorkspaceSwitcher from '#lib/components/layout/WorkspaceSwitcher.svelte';
 </script>
 
 <header

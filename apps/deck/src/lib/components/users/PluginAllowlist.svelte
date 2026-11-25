@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { api, createWriteIntent, type UserRecord } from '$lib/api';
-	import PluginSummary from '$lib/components/plugins/PluginSummary.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Panel from '$lib/components/ui/Panel.svelte';
-	import { displayNameOf } from '$lib/plugins/capabilities';
-	import { pluginState } from '$lib/state/plugins.svelte';
-	import { userFailureMessage } from '$lib/users/failure';
+	import { api, createWriteIntent, type UserRecord } from '#lib/api/index.ts';
+	import PluginSummary from '#lib/components/plugins/PluginSummary.svelte';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Panel from '#lib/components/ui/Panel.svelte';
+	import { displayNameOf } from '#lib/plugins/capabilities.ts';
+	import { pluginState } from '#lib/state/plugins.svelte.ts';
+	import { userFailureMessage } from '#lib/users/failure.ts';
 
 	interface Props {
 		user: UserRecord;

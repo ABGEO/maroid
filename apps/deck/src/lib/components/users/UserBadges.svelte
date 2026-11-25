@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { UserRecord } from '$lib/api';
+	import type { UserRecord } from '#lib/api/index.ts';
 
 	interface Props {
 		user: UserRecord;

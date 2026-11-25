@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { isMember, rememberWorkspace, workspaceState } from '$lib/state/workspaces.svelte';
+	import { isMember, rememberWorkspace, workspaceState } from '#lib/state/workspaces.svelte.ts';
 
 	import type { LayoutProps } from './$types';
 

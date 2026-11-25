@@ -1,4 +1,4 @@
-import type { SchemaProperty, SettingsSchema, SettingsValue } from '$lib/api';
+import type { SchemaProperty, SettingsSchema, SettingsValue } from '#lib/api/index.ts';
 
 export type FieldKind = 'text' | 'secret' | 'switch' | 'choice';
 
