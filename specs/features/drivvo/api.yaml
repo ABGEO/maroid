@@ -1,0 +1,784 @@
+# The routes that DRIVVO adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The car log account of a workspace
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: [uid]
+
+paths:
+  /workspaces/{workspaceId}/plugins/dev.maroid.drivvo/api/connections/self:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: getCarLogConnection
+      summary: Read the connection of the acting workspace.
+      description: >
+        Realizes `DRIVVO-FR-003` to `DRIVVO-FR-006`, `DRIVVO-FR-012`, `DRIVVO-FR-013`, and
+        `DRIVVO-DD-004`. A connected workspace reads the vehicles from the car log service on
+        each call. A rejected session signs in again once. A rejection of the sign in removes
+        the session, and the answer is `not_connected`. The permission is `account.read`.
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+    put:
+      operationId: connectCarLogAccount
+      summary: Sign in with the workspace settings, and store the connection.
+      description: >
+        Realizes `DRIVVO-FR-007` to `DRIVVO-FR-009`, `DRIVVO-INV-001`, `DRIVVO-DD-001`, and
+        `DRIVVO-DD-002`. A repeat replaces the session. The route starts no collection. The
+        permission is `account.connect`.
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          description: >
+            The type is `/problems/dev.maroid.drivvo/credentials-absent`,
+            `/problems/dev.maroid.drivvo/credentials-rejected`, or
+            `/problems/dev.maroid.drivvo/new-password-required`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "502":
+          $ref: "#/components/responses/ServiceUnavailable"
+    delete:
+      operationId: deleteCarLogConnection
+      summary: End the connection of the acting workspace.
+      description: >
+        Realizes `DRIVVO-FR-011` and `DRIVVO-FR-014`. The session goes. The settings and the
+        car log copy stay. A workspace with no connection gets 204 too. The permission is
+        `account.connect`.
+      responses:
+        "204":
+          description: No connection exists.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.drivvo/api/vehicles:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listCarLogVehicles
+      summary: List the vehicles of the car log copy.
+      description: >
+        Realizes `DRIVVO-FR-027` to `DRIVVO-FR-029`, `DRIVVO-FR-032` to `DRIVVO-FR-034`, and
+        `DRIVVO-DD-012`. The collection is bounded, so it answers one page, and `limit` and
+        `cursor` do not apply (`RES-005`). The order is fixed: active first, then by `name`,
+        then by `id`. The route reads no car log service. The permission is `account.read`.
+      responses:
+        "200":
+          description: Every vehicle. A copy with no vehicle answers an empty page.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VehiclePage"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.drivvo/api/vehicles/{vehicleId}/overview:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/VehicleId"
+    get:
+      operationId: getCarLogOverview
+      summary: Read the figures of one vehicle in a period.
+      description: >
+        Realizes `DRIVVO-FR-031`, `DRIVVO-FR-033` to `DRIVVO-FR-047`, `DRIVVO-NFR-002`,
+        `DRIVVO-DD-009`, `DRIVVO-DD-010`, `DRIVVO-DD-013`, and `DRIVVO-DD-014`. The days of the
+        period are days of the time zone of the member. The route reads no car log service.
+        The permission is `account.read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          description: The figures.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Overview"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/VehicleNotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.drivvo/api/vehicles/{vehicleId}/log-entries:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/VehicleId"
+    get:
+      operationId: listCarLogEntries
+      summary: List the log entries of one vehicle.
+      description: >
+        Realizes `DRIVVO-FR-031`, `DRIVVO-FR-048` to `DRIVVO-FR-054`, `DRIVVO-FR-056`, and
+        `DRIVVO-DD-015`. `sort` takes `occurred_at`, and the default is `-occurred_at`. A tie
+        on `occurred_at` sorts by `id` in the same direction. The route reads no car log
+        service. The permission is `account.read`.
+      parameters:
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+        - $ref: "../../api/components.yaml#/components/parameters/Sort"
+        - name: kind
+          in: query
+          description: The kinds to list. Repeat the parameter for each kind. Absent lists every kind.
+          style: form
+          explode: true
+          schema:
+            type: array
+            uniqueItems: true
+            items:
+              $ref: "#/components/schemas/Kind"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          description: One page of log entries. A vehicle with none answers an empty page.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogEntryItemPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/VehicleNotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.drivvo/api/vehicles/{vehicleId}/log-entry-totals:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/VehicleId"
+    get:
+      operationId: getCarLogEntryTotals
+      summary: Read the totals of the log entries of one kind in a period.
+      description: >
+        Realizes `DRIVVO-FR-055` and `DRIVVO-DD-015`. The amount sums the amount of each log
+        entry as `DRIVVO-FR-037` gives it, on the day of the entry. The route reads no car log
+        service. The permission is `account.read`.
+      parameters:
+        - name: kind
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/Kind"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          description: The totals.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogEntryTotals"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/VehicleNotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.drivvo/api/vehicles/{vehicleId}/log-entries/{logEntryId}:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/VehicleId"
+      - name: logEntryId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getCarLogEntry
+      summary: Read one log entry with each of its values.
+      description: >
+        Realizes `DRIVVO-FR-057` to `DRIVVO-FR-059` and `DRIVVO-DD-016`. The route reads no
+        car log service. The permission is `account.read`.
+      responses:
+        "200":
+          description: The log entry.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogEntry"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          description: >
+            The type is `/problems/dev.maroid.drivvo/vehicle-not-found`, or
+            `/problems/dev.maroid.drivvo/log-entry-not-found` for an entry that the copy lacks
+            or that belongs to another vehicle.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.drivvo/api/vehicles/{vehicleId}/reminders:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+      - $ref: "#/components/parameters/VehicleId"
+    get:
+      operationId: listCarLogReminders
+      summary: List the reminders of one vehicle with their due points.
+      description: >
+        Realizes `DRIVVO-FR-031`, `DRIVVO-FR-060` to `DRIVVO-FR-064`, `DRIVVO-DD-011`, and
+        `DRIVVO-DD-017`. The collection is bounded, so it answers one page, and `limit` and
+        `cursor` do not apply (`RES-005`). The order is fixed by `DRIVVO-DD-011`. The route
+        reads no car log service. The permission is `account.read`.
+      responses:
+        "200":
+          description: Every reminder. A vehicle with none answers an empty page.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReminderPage"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/VehicleNotFound"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: >
+        The session cookie. `SEC-005`. Every operation declares the pseudo permission
+        `uid`, because its caller is the acting user. `RES-009`.
+
+  parameters:
+    VehicleId:
+      name: vehicleId
+      in: path
+      required: true
+      description: The `id` of a vehicle of the car log copy.
+      schema:
+        type: string
+        format: uuid
+    From:
+      name: from
+      in: query
+      description: The first day of the period, in the time zone of the member. Absent leaves the start open.
+      schema:
+        type: string
+        format: date
+        examples: ["2025-12-01"]
+    To:
+      name: to
+      in: query
+      description: The last day of the period, on or after `from`. Absent leaves the end open.
+      schema:
+        type: string
+        format: date
+        examples: ["2026-11-25"]
+
+  schemas:
+    Connection:
+      type: object
+      required: [state, credentials_stored]
+      properties:
+        state:
+          type: string
+          enum: [not_connected, connected]
+        credentials_stored:
+          type: boolean
+          description: Whether the workspace settings hold an email address and a password.
+        vehicles:
+          type: array
+          description: >
+            Present when `state` is `connected`. Every vehicle of the account, read from the car
+            log service. No name, email address, phone number, or driver licence of the holder
+            appears. `DRIVVO-INV-006`.
+          items:
+            $ref: "#/components/schemas/ServiceVehicle"
+    ServiceVehicle:
+      type: object
+      required: [name, make, model, active]
+      properties:
+        name:
+          type: string
+          examples: ["Hatchback"]
+        make:
+          type: string
+        model:
+          type: string
+        active:
+          type: boolean
+    Vehicle:
+      type: object
+      required: [id, name, make, model, active, principal, default, units]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        make:
+          type: string
+        model:
+          type: string
+        year:
+          type: integer
+          format: int32
+          examples: [2019]
+        active:
+          type: boolean
+        principal:
+          type: boolean
+        default:
+          type: boolean
+          description: Marks the one vehicle that a page with no vehicle opens. `DRIVVO-DD-012`.
+        units:
+          $ref: "#/components/schemas/Units"
+    Units:
+      type: object
+      required: [distance, volume, consumption_shape]
+      properties:
+        distance:
+          type: string
+          enum: [km, mi]
+        volume:
+          type: string
+          enum: [l, gal_us, gal_imp]
+        consumption_shape:
+          $ref: "#/components/schemas/ConsumptionShape"
+    ConsumptionShape:
+      type: string
+      enum: [distance_per_volume, volume_per_100]
+    Kind:
+      type: string
+      enum: [refuel, maintenance, expense, income, odometer]
+    Overview:
+      type: object
+      required: [spend, income, months, types, distance, cost_per_distance, consumption]
+      properties:
+        from:
+          type: string
+          format: date
+          description: The first day, as applied. Absent for an open start.
+        to:
+          type: string
+          format: date
+          description: The last day, as applied. Absent for an open end.
+        spend:
+          type: object
+          required: [fuel, maintenance, expense, total]
+          properties:
+            fuel:
+              $ref: "#/components/schemas/Money"
+            maintenance:
+              $ref: "#/components/schemas/Money"
+            expense:
+              $ref: "#/components/schemas/Money"
+            total:
+              $ref: "#/components/schemas/Money"
+        income:
+          $ref: "#/components/schemas/Money"
+        months:
+          type: array
+          description: Each calendar month of the period, the earliest first. A month with no entry answers zero.
+          items:
+            $ref: "#/components/schemas/MonthFigures"
+        types:
+          type: array
+          description: Each maintenance type and expense type with spend in the period, the largest first.
+          items:
+            $ref: "#/components/schemas/TypeSpend"
+        distance:
+          type: [number, "null"]
+          format: decimal
+          description: Null with fewer than two odometer values, or no difference. `DRIVVO-FR-043`.
+          examples: [3000]
+        cost_per_distance:
+          type: object
+          required: [fuel, total]
+          properties:
+            fuel:
+              oneOf:
+                - $ref: "#/components/schemas/Money"
+                - type: "null"
+            total:
+              oneOf:
+                - $ref: "#/components/schemas/Money"
+                - type: "null"
+        consumption:
+          $ref: "#/components/schemas/Consumption"
+    MonthFigures:
+      type: object
+      required: [month, fuel, maintenance, expense, income]
+      properties:
+        month:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}$"
+          examples: ["2026-11"]
+        fuel:
+          $ref: "#/components/schemas/Money"
+        maintenance:
+          $ref: "#/components/schemas/Money"
+        expense:
+          $ref: "#/components/schemas/Money"
+        income:
+          $ref: "#/components/schemas/Money"
+    TypeSpend:
+      type: object
+      required: [kind, name, amount]
+      properties:
+        kind:
+          type: string
+          enum: [maintenance, expense]
+        name:
+          type: string
+          examples: ["Oil change"]
+        amount:
+          $ref: "#/components/schemas/Money"
+    Consumption:
+      type: object
+      required: [value, shape]
+      properties:
+        value:
+          type: [number, "null"]
+          format: decimal
+          description: Null when no part of the period has a value. `DRIVVO-DD-010`.
+          examples: [6.25]
+        shape:
+          $ref: "#/components/schemas/ConsumptionShape"
+    LogEntryItem:
+      type: object
+      description: A member that the kind does not hold is absent.
+      required: [id, kind, occurred_at, odometer, labels]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          $ref: "#/components/schemas/Kind"
+        occurred_at:
+          type: string
+          format: date-time
+          description: The moment, in UTC.
+        odometer:
+          type: number
+          format: decimal
+        amount:
+          $ref: "#/components/schemas/Money"
+        title:
+          type: string
+        labels:
+          type: array
+          description: The names of the fuels or the types, in the order of the lines.
+          items:
+            type: string
+        volume:
+          type: number
+          format: decimal
+          description: A refuel. The sum of its fuel lines.
+        unit_price:
+          $ref: "#/components/schemas/Money"
+        full_tank:
+          type: boolean
+        consumption:
+          type: number
+          format: decimal
+          description: A refuel that ends a part with a value. The shape is the shape of the vehicle.
+        place:
+          type: string
+          description: A maintenance.
+        income_type:
+          type: string
+          description: An income.
+    LogEntryTotals:
+      type: object
+      required: [kind, count, amount]
+      properties:
+        kind:
+          $ref: "#/components/schemas/Kind"
+        count:
+          type: integer
+          format: int32
+          minimum: 0
+        amount:
+          $ref: "#/components/schemas/Money"
+        volume:
+          type: number
+          format: decimal
+          description: A refuel alone.
+    LogEntry:
+      type: object
+      description: >
+        A member that the kind does not hold, or that the service did not send, is absent.
+        `DRIVVO-DD-016`.
+      required: [id, kind, occurred_at, odometer]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          $ref: "#/components/schemas/Kind"
+        occurred_at:
+          type: string
+          format: date-time
+          description: The moment, in UTC.
+        odometer:
+          type: number
+          format: decimal
+        note:
+          type: string
+        amount:
+          $ref: "#/components/schemas/Money"
+        title:
+          type: string
+        station:
+          type: string
+        place:
+          type: string
+        payment_method:
+          type: string
+        reason:
+          type: string
+        income_type:
+          type: string
+        missed_refuel:
+          type: boolean
+        battery_start_pct:
+          type: number
+          format: decimal
+        battery_end_pct:
+          type: number
+          format: decimal
+        charge_minutes:
+          type: integer
+          format: int32
+        lines:
+          type: array
+          items:
+            $ref: "#/components/schemas/Line"
+        instalments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Instalment"
+    Line:
+      type: object
+      required: [position, amount]
+      properties:
+        position:
+          type: integer
+          format: int32
+          minimum: 1
+        item:
+          type: string
+          description: The name of the fuel, the maintenance type, or the expense type.
+        amount:
+          $ref: "#/components/schemas/Money"
+        unit_price:
+          $ref: "#/components/schemas/Money"
+        volume:
+          type: number
+          format: decimal
+        full_tank:
+          type: boolean
+        free:
+          type: boolean
+    Instalment:
+      type: object
+      required: [number, due_on, amount]
+      properties:
+        number:
+          type: integer
+          format: int32
+          minimum: 1
+        due_on:
+          type: string
+          format: date
+        amount:
+          $ref: "#/components/schemas/Money"
+    Reminder:
+      type: object
+      description: A due point that the reminder does not hold is absent. A value past due is negative.
+      required: [id, kind, type, repeats, due]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [maintenance, expense]
+        type:
+          type: string
+          examples: ["Oil change"]
+        repeats:
+          type: boolean
+        note:
+          type: string
+        due:
+          type: boolean
+        due_on:
+          type: string
+          format: date
+        due_odometer:
+          type: number
+          format: decimal
+        days_left:
+          type: integer
+          format: int32
+          examples: [12]
+        distance_left:
+          type: number
+          format: decimal
+          examples: [-250]
+    Money:
+      type: object
+      description: An amount of money, the money object of `Z-173`.
+      required: [amount, currency]
+      properties:
+        amount:
+          type: number
+          format: decimal
+          examples: [120.0]
+        currency:
+          type: string
+          format: iso-4217
+          description: The currency of the car log settings.
+          examples: [GEL]
+    VehiclePage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Vehicle"
+    LogEntryItemPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/LogEntryItem"
+    ReminderPage:
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Reminder"
+
+  responses:
+    VehicleNotFound:
+      description: >
+        The vehicle of the path is not in the car log copy. The type is
+        `/problems/dev.maroid.drivvo/vehicle-not-found`.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
+    ServiceUnavailable:
+      description: >
+        The car log service failed, answered a body that does not decode, or answered nothing
+        within `request_timeout`. The type is `/problems/dev.maroid.drivvo/service-unavailable`.
+        A stored connection stays.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
