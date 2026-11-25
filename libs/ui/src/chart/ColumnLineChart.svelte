@@ -10,6 +10,15 @@
 	const TICKS = 5;
 	const MIN_LABEL_WIDTH = 56;
 
+	/** A scale over a single value draws every point at its middle, so the domain takes in zero. */
+	function spread(low: number, high: number): [number, number] {
+		if (low !== high) {
+			return [low, high];
+		}
+
+		return low === 0 ? [0, 1] : [Math.min(low, 0), Math.max(high, 0)];
+	}
+
 	let {
 		series,
 		dates: slots,
@@ -66,16 +75,18 @@
 
 	const yColumn = $derived(
 		scaleLinear()
-			.domain([Math.min(0, ...columnValues), Math.max(0, ...columnValues)])
+			.domain(spread(Math.min(0, ...columnValues), Math.max(0, ...columnValues)))
 			.nice(TICKS)
 			.range([innerHeight, 0])
 	);
 	const yLine = $derived(
 		scaleLinear()
-			.domain([
-				lineFromZero ? Math.min(0, ...lineValues) : Math.min(...lineValues),
-				lineFromZero ? Math.max(0, ...lineValues) : Math.max(...lineValues)
-			])
+			.domain(
+				spread(
+					lineFromZero ? Math.min(0, ...lineValues) : Math.min(...lineValues),
+					lineFromZero ? Math.max(0, ...lineValues) : Math.max(...lineValues)
+				)
+			)
 			.nice(TICKS)
 			.range([innerHeight, 0])
 	);
