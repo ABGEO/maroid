@@ -1,0 +1,78 @@
+global:
+  sendAnonymousUsage: false
+
+api:
+  dashboard: true
+
+providers:
+  docker:
+    exposedByDefault: false
+  file:
+    filename: "/etc/traefik/traefik.yaml"
+    watch: true
+
+log:
+  level: INFO
+
+entryPoints:
+  http:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: https
+          scheme: https
+  https:
+    address: ":443"
+  tunnel:
+    address: ":8000"
+
+tls:
+  certificates:
+    - certFile: "/etc/traefik/certs/maroid-localhost.pem"
+      keyFile: "/etc/traefik/certs/maroid-localhost-key.pem"
+
+http:
+  routers:
+    traefik:
+      rule: "Host(`traefik.maroid.localhost`)"
+      service: "api@internal"
+      tls: true
+    hub:
+      rule: "Host(`hub.maroid.localhost`)"
+      service: "hub"
+      tls: true
+    hub-tunnel:
+      entryPoints: ["tunnel"]
+      rule: "PathPrefix(`/`)"
+      service: "hub"
+    deck:
+      rule: "Host(`maroid.localhost`)"
+      service: "deck"
+      tls: true
+    dex:
+      rule: "Host(`auth.maroid.localhost`)"
+      service: "dex"
+      tls: true
+    openbao:
+      rule: "Host(`openbao.maroid.localhost`)"
+      service: "openbao"
+      tls: true
+
+  services:
+    hub:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8000"
+    deck:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:5173"
+    dex:
+      loadBalancer:
+        servers:
+          - url: "http://dex:5556"
+    openbao:
+      loadBalancer:
+        servers:
+          - url: "http://openbao:8200"

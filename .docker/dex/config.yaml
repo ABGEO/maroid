@@ -1,0 +1,44 @@
+issuer: https://auth.maroid.localhost
+
+logger:
+  level: debug
+
+storage:
+  type: postgres
+  config:
+    host: postgres
+    port: 5432
+    database: $DEX_DB_NAME
+    user: $DEX_DB_USER
+    password: $DEX_DB_PASSWORD
+    ssl:
+      mode: disable
+
+frontend:
+  issuer: Maroid
+
+web:
+  http: 0.0.0.0:5556
+
+telemetry:
+  http: 0.0.0.0:5558
+
+grpc:
+  addr: 0.0.0.0:5557
+  tlsCert: /etc/dex/certs/server.crt
+  tlsKey: /etc/dex/certs/server.key
+  tlsClientCA: /etc/dex/certs/ca.crt
+  reflection: true
+
+enablePasswordDB: true
+
+staticClients:
+  - id: hub
+    name: Hub
+    secretEnv: DEX_HUB_CLIENT_SECRET
+    redirectURIs:
+      - https://hub.maroid.localhost/auth/callback
+      - https://oauth.usebruno.com/callback
+  - id: mcp
+    name: MCP
+    public: true

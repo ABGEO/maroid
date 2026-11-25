@@ -1,21 +1,79 @@
 name: maroid
 
+x-healthcheck: &healthcheck
+  interval: 10s
+  timeout: 5s
+  retries: 5
+
 services:
-  postgres:
-    image: "timescale/timescaledb:2.32.1-pg17-oss"
+  traefik:
+    image: "traefik:v3.6"
+    ports:
+      - "127.0.0.1:80:80"
+      - "127.0.0.1:443:443"
     volumes:
-      - "postgres_data:/var/lib/postgresql/data"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./.docker/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro"
+      - "./.docker/traefik/certs:/etc/traefik/certs:ro"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  postgres:
+    image: "timescale/timescaledb:2.32.1-pg18-oss"
+    volumes:
+      - "postgres_data:/var/lib/postgresql"
+      - "./.docker/postgres/init.sh:/docker-entrypoint-initdb.d/10-roles.sh:ro"
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-maroid}
-      POSTGRES_USER: ${POSTGRES_USER:-maroid}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      MAROID_DB_NAME: ${MAROID_DB_NAME:-maroid}
+      MAROID_DB_USER: ${MAROID_DB_USER:-maroid}
+      MAROID_DB_PASSWORD: ${MAROID_DB_PASSWORD:-password}
+      DEX_DB_NAME: ${DEX_DB_NAME:-dex}
+      DEX_DB_USER: ${DEX_DB_USER:-dex}
+      DEX_DB_PASSWORD: ${DEX_DB_PASSWORD:-password}
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-maroid}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      <<: *healthcheck
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+
+  dex:
+    image: "ghcr.io/abgeo/maroid-gate:latest"
+    build:
+      context: .
+      dockerfile: apps/gate/Dockerfile
+    platform: "linux/amd64"
+    command: ["dex", "serve", "/etc/dex/config.yaml"]
+    environment:
+      DEX_API_CONNECTORS_CRUD: "true"
+      DEX_DB_NAME: ${DEX_DB_NAME:-dex}
+      DEX_DB_USER: ${DEX_DB_USER:-dex}
+      DEX_DB_PASSWORD: ${DEX_DB_PASSWORD:-password}
+      DEX_HUB_CLIENT_SECRET: ${DEX_HUB_CLIENT_SECRET:-ZXhhbXBsZS1hcHAtc2VjcmV0}
+    volumes:
+      - "./.docker/dex/config.yaml:/etc/dex/config.yaml:ro"
+      - "./.docker/dex/certs:/etc/dex/certs:ro"
+    ports:
+      - "127.0.0.1:5557:5557"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:5558/healthz"]
+
+  openbao:
+    image: "openbao/openbao:2.6.2"
+    command: ["server"]
+    environment:
+      BAO_ADDR: "http://127.0.0.1:8200"
+      BAO_STATIC_SEAL_KEY: ${OPENBAO_SEAL_KEY:-}
+    volumes:
+      - "openbao_data:/openbao/file"
+      - "./.docker/openbao/config.hcl:/openbao/config/config.hcl:ro"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8200/v1/sys/health"]
 
   emqx:
     image: "emqx/emqx:6.3.3"
@@ -25,21 +83,54 @@ services:
       - "127.0.0.1:1883:1883"
       - "127.0.0.1:18083:18083"
     healthcheck:
-      test: [ "CMD", "emqx", "ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      <<: *healthcheck
+      test: ["CMD", "emqx", "ping"]
 
+  rustfs:
+    image: "rustfs/rustfs:1.0.4"
+    environment:
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-rustfsadmin}
+    volumes:
+      - "rustfs_data:/data"
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.files.rule: "Host(`files.maroid.localhost`)"
+      traefik.http.routers.files.tls: "true"
+      traefik.http.services.files.loadbalancer.server.port: "9000"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "curl", "-fs", "http://127.0.0.1:9000/health"]
+
+  rustfs-setup:
+    image: "rustfs/rc:v0.1.37"
+    entrypoint: ["/setup/setup.sh"]
+    environment:
+      ROOT_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-rustfsadmin}
+      ROOT_SECRET_KEY: ${RUSTFS_SECRET_KEY:-rustfsadmin}
+      HUB_ACCESS_KEY: ${MAROID_FILES_ACCESS_KEY:-maroid-hub}
+      HUB_SECRET_KEY: ${MAROID_FILES_SECRET_KEY:-maroid-hub-secret}
+    volumes:
+      - "./.docker/rustfs:/setup:ro"
+    depends_on:
+      rustfs:
+        condition: service_healthy
+
+  # Forwards a public ngrok domain to the hub. Start it with the profile "tunnel".
   ngrok:
     image: "ngrok/ngrok:3.39.13-alpine"
-    command:
-      - "http"
-      - "http://host.docker.internal:8000"
+    profiles: ["tunnel"]
+    command: ["http", "http://traefik:8000", "--url=${NGROK_DOMAIN:-}"]
     environment:
-      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-}
     ports:
       - "127.0.0.1:4040:4040"
 
 volumes:
   postgres_data:
+  openbao_data:
   emqx_data:
+  rustfs_data:
