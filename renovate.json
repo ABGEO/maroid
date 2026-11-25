@@ -26,16 +26,51 @@
 			"enabled": false
 		},
 		{
-			"description": "A pseudo-version of a Go module moves with the other non-major updates.",
+			"description": "A digest update moves with the other non-major updates. The rules below take the Go pseudo-versions into their own groups.",
 			"matchUpdateTypes": ["digest"],
 			"groupName": "all non-major dependencies",
 			"groupSlug": "all-minor-patch"
+		},
+		{
+			"description": "The non-major updates of the Go modules move in their own pull request.",
+			"matchManagers": ["gomod"],
+			"matchDepTypes": ["require", "indirect"],
+			"matchUpdateTypes": ["minor", "patch", "digest"],
+			"groupName": "go modules",
+			"groupSlug": "go-modules"
+		},
+		{
+			"description": "The non-major updates of the npm packages move in their own pull request.",
+			"matchManagers": ["npm"],
+			"matchDepTypes": [
+				"dependencies",
+				"devDependencies",
+				"peerDependencies",
+				"optionalDependencies"
+			],
+			"matchUpdateTypes": ["minor", "patch"],
+			"groupName": "npm packages",
+			"groupSlug": "npm-packages"
 		},
 		{
 			"description": "The maroid libraries move in their own pull request, apart from the third party updates.",
 			"matchPackageNames": ["github.com/abgeo/maroid/**"],
 			"groupName": "maroid libraries",
 			"groupSlug": "maroid-libraries"
+		},
+		{
+			"description": "The non-major updates of the Dockerfile base images move in their own pull request.",
+			"matchManagers": ["dockerfile"],
+			"matchUpdateTypes": ["minor", "patch", "digest"],
+			"groupName": "dockerfile base images",
+			"groupSlug": "dockerfile-base-images"
+		},
+		{
+			"description": "The Go, Node, and pnpm versions of the Dockerfiles pick the golang and node base images, and the go.mod and package.json files follow them in the same pull request.",
+			"matchDepNames": ["go", "node", "pnpm"],
+			"matchUpdateTypes": ["minor", "patch"],
+			"groupName": "dockerfile base images",
+			"groupSlug": "dockerfile-base-images"
 		},
 		{
 			"description": "The go directive of every go.mod follows the Go version of the Dockerfiles.",
