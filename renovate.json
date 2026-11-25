@@ -49,9 +49,11 @@
 			"enabled": false
 		},
 		{
-			"description": "docker-compose.yaml holds local edits, so a digest pin would only conflict.",
+			"description": "The development images of docker-compose.yaml move in their own pull request, by tag and without a digest pin.",
 			"matchManagers": ["docker-compose"],
-			"pinDigests": false
+			"pinDigests": false,
+			"groupName": "docker compose images",
+			"groupSlug": "docker-compose-images"
 		}
 	],
 	"customManagers": [
