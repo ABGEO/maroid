@@ -1,6 +1,6 @@
 import type { UiSchemaRoot } from '@sjsf/form';
 
-import { SECRET_MASK, type SettingsInput, type SettingsValues } from '$lib/api';
+import { SECRET_MASK, type SettingsInput, type SettingsValues } from '#lib/api/index.ts';
 
 import type { SettingsField } from './schema';
 

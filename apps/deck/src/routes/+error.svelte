@@ -2,7 +2,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 
-	import { documentTitle } from '$lib/navigation/title';
+	import { documentTitle } from '#lib/navigation/title.ts';
 
 	const notFound = $derived(page.status === 404);
 	const title = $derived(notFound ? 'Not found' : 'Something went wrong');

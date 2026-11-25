@@ -2,8 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
-	import CreateWorkspaceForm from '$lib/components/workspace/CreateWorkspaceForm.svelte';
-	import { landingWorkspace, workspaceState } from '$lib/state/workspaces.svelte';
+	import CreateWorkspaceForm from '#lib/components/workspace/CreateWorkspaceForm.svelte';
+	import { landingWorkspace, workspaceState } from '#lib/state/workspaces.svelte.ts';
 
 	const landing = $derived(
 		workspaceState.status === 'ready' ? landingWorkspace(workspaceState.workspaces) : null

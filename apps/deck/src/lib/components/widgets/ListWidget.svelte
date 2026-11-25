@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ListData, WidgetSize } from '$lib/api/types';
+	import type { ListData, WidgetSize } from '#lib/api/types.ts';
 
 	import { itemsOf } from './layout';
 

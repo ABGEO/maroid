@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { api, createWriteIntent, type InvitedUser } from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Panel from '$lib/components/ui/Panel.svelte';
-	import PluginPicker from '$lib/components/users/PluginPicker.svelte';
-	import { pluginState } from '$lib/state/plugins.svelte';
-	import { userFailureMessage } from '$lib/users/failure';
+	import { api, createWriteIntent, type InvitedUser } from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Panel from '#lib/components/ui/Panel.svelte';
+	import PluginPicker from '#lib/components/users/PluginPicker.svelte';
+	import { pluginState } from '#lib/state/plugins.svelte.ts';
+	import { userFailureMessage } from '#lib/users/failure.ts';
 
 	interface Props {
 		oncreated: (created: InvitedUser) => Promise<void>;

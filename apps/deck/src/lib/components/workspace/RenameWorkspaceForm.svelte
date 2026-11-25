@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 
-	import { ApiError, PROBLEM_TYPE, api, type Workspace } from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import { loadWorkspaces } from '$lib/state/workspaces.svelte';
+	import { ApiError, PROBLEM_TYPE, api, type Workspace } from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import { loadWorkspaces } from '#lib/state/workspaces.svelte.ts';
 
 	interface Props {
 		workspace: Workspace;

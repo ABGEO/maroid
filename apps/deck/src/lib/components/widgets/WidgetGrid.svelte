@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	import { api } from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
+	import { api } from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
 
 	import WidgetCard from './WidgetCard.svelte';
 	import { GRID_COLUMNS, spanOf } from './layout';

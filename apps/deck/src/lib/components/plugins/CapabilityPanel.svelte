@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { ResolvedPathname } from '$app/types';
 
-	import type { Plugin } from '$lib/api';
+	import type { Plugin } from '#lib/api/index.ts';
 	import {
 		cellOf,
 		columnsOf,
@@ -10,7 +10,7 @@
 		partsOf,
 		uiOf,
 		type CapabilityName
-	} from '$lib/plugins/capabilities';
+	} from '#lib/plugins/capabilities.ts';
 
 	interface Props {
 		plugin: Plugin;

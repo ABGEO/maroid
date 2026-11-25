@@ -3,8 +3,8 @@
 
 	import type { ResolvedPathname } from '$app/types';
 
-	import type { Plugin } from '$lib/api';
-	import { capabilitiesOf, countOf, displayNameOf, labelOf } from '$lib/plugins/capabilities';
+	import type { Plugin } from '#lib/api/index.ts';
+	import { capabilitiesOf, countOf, displayNameOf, labelOf } from '#lib/plugins/capabilities.ts';
 
 	interface Props {
 		id: string;

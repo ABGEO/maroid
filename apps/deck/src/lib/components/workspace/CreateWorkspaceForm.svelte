@@ -2,8 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
-	import { ApiError, api, createWriteIntent, isProblem } from '$lib/api';
-	import { loadWorkspaces } from '$lib/state/workspaces.svelte';
+	import { ApiError, api, createWriteIntent, isProblem } from '#lib/api/index.ts';
+	import { loadWorkspaces } from '#lib/state/workspaces.svelte.ts';
 
 	const MAX_NAME = 64;
 

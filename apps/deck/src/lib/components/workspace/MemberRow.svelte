@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { ConfirmDialog } from '@maroid/ui';
 
-	import type { Member, Role } from '$lib/api';
-	import { ROLES, roleLabel } from '$lib/permissions';
-	import { personName } from '$lib/users/name';
+	import type { Member, Role } from '#lib/api/index.ts';
+	import { ROLES, roleLabel } from '#lib/permissions.ts';
+	import { personName } from '#lib/users/name.ts';
 
 	interface Props {
 		member: Member;

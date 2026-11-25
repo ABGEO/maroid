@@ -2,12 +2,12 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
-	import { api, createWriteIntent, type NewProvider, type ProviderPreset } from '$lib/api';
-	import FieldError from '$lib/components/providers/FieldError.svelte';
-	import OptionsField from '$lib/components/providers/OptionsField.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Panel from '$lib/components/ui/Panel.svelte';
-	import { failureMessage, fieldErrors, parseOptions, parseScopes } from '$lib/providers/form';
+	import { api, createWriteIntent, type NewProvider, type ProviderPreset } from '#lib/api/index.ts';
+	import FieldError from '#lib/components/providers/FieldError.svelte';
+	import OptionsField from '#lib/components/providers/OptionsField.svelte';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Panel from '#lib/components/ui/Panel.svelte';
+	import { failureMessage, fieldErrors, parseOptions, parseScopes } from '#lib/providers/form.ts';
 
 	interface Props {
 		taken: Set<string>;

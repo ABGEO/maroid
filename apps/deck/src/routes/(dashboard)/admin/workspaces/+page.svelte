@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	import { api, type InstanceWorkspace } from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
-	import RemoveWorkspaceDialog from '$lib/components/workspace/RemoveWorkspaceDialog.svelte';
-	import { loadWorkspaces } from '$lib/state/workspaces.svelte';
+	import { api, type InstanceWorkspace } from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import SkeletonList from '#lib/components/ui/SkeletonList.svelte';
+	import RemoveWorkspaceDialog from '#lib/components/workspace/RemoveWorkspaceDialog.svelte';
+	import { loadWorkspaces } from '#lib/state/workspaces.svelte.ts';
 
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let workspaces = $state<InstanceWorkspace[]>([]);

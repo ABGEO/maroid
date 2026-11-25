@@ -1,4 +1,4 @@
-import { ApiError, PROBLEM_TYPE } from '$lib/api';
+import { ApiError, PROBLEM_TYPE } from '#lib/api/index.ts';
 
 /** Answers the sentence that a failed write of a user record shows to the administrator. */
 export function userFailureMessage(error: unknown, fallback: string): string {

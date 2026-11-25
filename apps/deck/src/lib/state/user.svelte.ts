@@ -1,4 +1,4 @@
-import { api, type User } from '$lib/api';
+import { api, type User } from '#lib/api/index.ts';
 
 export const userState = $state<{ user: User | null }>({
 	user: null

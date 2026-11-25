@@ -2,8 +2,8 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 
-	import type { Workspace } from '$lib/api';
-	import { workspaceById, workspaceState } from '$lib/state/workspaces.svelte';
+	import type { Workspace } from '#lib/api/index.ts';
+	import { workspaceById, workspaceState } from '#lib/state/workspaces.svelte.ts';
 
 	const current = $derived(workspaceById(page.params.workspace));
 	const loaded = $derived(page.data.workspace as Workspace | undefined);

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	import { ApiError, PROBLEM_TYPE, api } from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
+	import { ApiError, PROBLEM_TYPE, api } from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
 
 	interface Target {
 		id: string;

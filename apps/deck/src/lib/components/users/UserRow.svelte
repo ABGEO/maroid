@@ -3,9 +3,9 @@
 
 	import { ConfirmDialog } from '@maroid/ui';
 
-	import type { UserChange, UserRecord } from '$lib/api';
-	import UserBadges from '$lib/components/users/UserBadges.svelte';
-	import { personName } from '$lib/users/name';
+	import type { UserChange, UserRecord } from '#lib/api/index.ts';
+	import UserBadges from '#lib/components/users/UserBadges.svelte';
+	import { personName } from '#lib/users/name.ts';
 
 	interface Props {
 		user: UserRecord;

@@ -1,6 +1,6 @@
 import { resolve } from '$app/paths';
 
-import { loadPluginRoute } from '$lib/plugins/loader';
+import { loadPluginRoute } from '#lib/plugins/loader.ts';
 
 import type { PageLoad } from './$types';
 

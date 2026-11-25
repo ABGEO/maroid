@@ -11,11 +11,11 @@
 		type NotificationRoute,
 		type NotificationTopic,
 		type SettingsValues
-	} from '$lib/api';
-	import SchemaForm from '$lib/components/settings/SchemaForm.svelte';
-	import { failuresUnder } from '$lib/notifications/form';
-	import { toInput, uiSchemaFor } from '$lib/settings/form';
-	import { fieldsOf } from '$lib/settings/schema';
+	} from '#lib/api/index.ts';
+	import SchemaForm from '#lib/components/settings/SchemaForm.svelte';
+	import { failuresUnder } from '#lib/notifications/form.ts';
+	import { toInput, uiSchemaFor } from '#lib/settings/form.ts';
+	import { fieldsOf } from '#lib/settings/schema.ts';
 
 	interface Props {
 		workspaceId: string;

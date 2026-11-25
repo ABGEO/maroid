@@ -1,9 +1,9 @@
 <script lang="ts">
 	import type { PageProps } from './$types';
-	import SettingsForm from '$lib/components/settings/SettingsForm.svelte';
-	import { knownPlugin } from '$lib/state/plugins.svelte';
-	import { PERMISSION, holds } from '$lib/permissions';
-	import { displayNameOf } from '$lib/plugins/capabilities';
+	import SettingsForm from '#lib/components/settings/SettingsForm.svelte';
+	import { knownPlugin } from '#lib/state/plugins.svelte.ts';
+	import { PERMISSION, holds } from '#lib/permissions.ts';
+	import { displayNameOf } from '#lib/plugins/capabilities.ts';
 
 	let { data }: PageProps = $props();
 

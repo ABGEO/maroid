@@ -1,6 +1,6 @@
 <script lang="ts">
-	import WidgetGrid from '$lib/components/widgets/WidgetGrid.svelte';
-	import { isMember, workspaceState } from '$lib/state/workspaces.svelte';
+	import WidgetGrid from '#lib/components/widgets/WidgetGrid.svelte';
+	import { isMember, workspaceState } from '#lib/state/workspaces.svelte.ts';
 
 	import type { PageProps } from './$types';
 

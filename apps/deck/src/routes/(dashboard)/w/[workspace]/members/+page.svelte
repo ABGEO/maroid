@@ -2,15 +2,22 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
-	import { ApiError, PROBLEM_TYPE, api, type Candidate, type Member, type Role } from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Section from '$lib/components/ui/Section.svelte';
-	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
-	import AddMemberForm from '$lib/components/workspace/AddMemberForm.svelte';
-	import MemberRow from '$lib/components/workspace/MemberRow.svelte';
-	import { PERMISSION, holds } from '$lib/permissions';
-	import { userState } from '$lib/state/user.svelte';
-	import { loadWorkspaces } from '$lib/state/workspaces.svelte';
+	import {
+		ApiError,
+		PROBLEM_TYPE,
+		api,
+		type Candidate,
+		type Member,
+		type Role
+	} from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Section from '#lib/components/ui/Section.svelte';
+	import SkeletonList from '#lib/components/ui/SkeletonList.svelte';
+	import AddMemberForm from '#lib/components/workspace/AddMemberForm.svelte';
+	import MemberRow from '#lib/components/workspace/MemberRow.svelte';
+	import { PERMISSION, holds } from '#lib/permissions.ts';
+	import { userState } from '#lib/state/user.svelte.ts';
+	import { loadWorkspaces } from '#lib/state/workspaces.svelte.ts';
 
 	import type { PageProps } from './$types';
 

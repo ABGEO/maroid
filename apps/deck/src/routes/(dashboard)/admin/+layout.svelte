@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { userState } from '$lib/state/user.svelte';
+	import { userState } from '#lib/state/user.svelte.ts';
 
 	let { children } = $props();
 </script>

@@ -1,4 +1,4 @@
-import { api, type Workspace } from '$lib/api';
+import { api, type Workspace } from '#lib/api/index.ts';
 
 const STORAGE_KEY = 'maroid.workspace';
 

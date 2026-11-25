@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { startSignIn } from '$lib/api/client';
-	import { documentTitle } from '$lib/navigation/title';
+	import { startSignIn } from '#lib/api/client.ts';
+	import { documentTitle } from '#lib/navigation/title.ts';
 </script>
 
 <svelte:head><title>{documentTitle('Signed out')}</title></svelte:head>

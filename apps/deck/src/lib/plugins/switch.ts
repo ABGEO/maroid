@@ -1,4 +1,4 @@
-import { ApiError, PROBLEM_TYPE, api } from '$lib/api';
+import { ApiError, PROBLEM_TYPE, api } from '#lib/api/index.ts';
 
 /**
  * Turns a plugin on or off in a workspace. Answers null when the hub accepts the

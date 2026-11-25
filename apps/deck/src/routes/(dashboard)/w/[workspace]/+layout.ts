@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 
-import { ApiError, api } from '$lib/api';
+import { ApiError, api } from '#lib/api/index.ts';
 
 import type { LayoutLoad } from './$types';
 

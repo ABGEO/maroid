@@ -5,12 +5,12 @@
 	import type { PluginHost } from '@maroid/plugin-sdk';
 
 	import type { PageProps } from './$types';
-	import { createFileClient, createPluginClient } from '$lib/api';
-	import { pluginCan } from '$lib/permissions';
-	import { uiOf } from '$lib/plugins/capabilities';
-	import { knownPlugin } from '$lib/state/plugins.svelte';
-	import { pageTitle } from '$lib/state/title.svelte';
-	import { displayName, timeZone, userState } from '$lib/state/user.svelte';
+	import { createFileClient, createPluginClient } from '#lib/api/index.ts';
+	import { pluginCan } from '#lib/permissions.ts';
+	import { uiOf } from '#lib/plugins/capabilities.ts';
+	import { knownPlugin } from '#lib/state/plugins.svelte.ts';
+	import { pageTitle } from '#lib/state/title.svelte.ts';
+	import { displayName, timeZone, userState } from '#lib/state/user.svelte.ts';
 
 	let { data }: PageProps = $props();
 

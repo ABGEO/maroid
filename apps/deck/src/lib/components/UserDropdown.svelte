@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 
-	import { api, signedOutUrl } from '$lib/api';
-	import { displayName, userState } from '$lib/state/user.svelte';
-	import { themeState, setTheme, type ThemePreference } from '$lib/state/theme.svelte';
+	import { api, signedOutUrl } from '#lib/api/index.ts';
+	import { displayName, userState } from '#lib/state/user.svelte.ts';
+	import { themeState, setTheme, type ThemePreference } from '#lib/state/theme.svelte.ts';
 
 	const name = $derived(displayName(userState.user));
 	const picture = $derived(userState.user?.picture ?? '');

@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { formatMoment } from '@maroid/plugin-sdk';
 
-	import type { Invitation } from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import CopyField from '$lib/components/ui/CopyField.svelte';
-	import { timeZone } from '$lib/state/user.svelte';
+	import type { Invitation } from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import CopyField from '#lib/components/ui/CopyField.svelte';
+	import { timeZone } from '#lib/state/user.svelte.ts';
 
 	interface Props {
 		name: string;

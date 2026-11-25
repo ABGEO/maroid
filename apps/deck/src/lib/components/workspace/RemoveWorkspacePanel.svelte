@@ -2,9 +2,9 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 
-	import type { Workspace } from '$lib/api';
-	import Panel from '$lib/components/ui/Panel.svelte';
-	import { loadWorkspaces } from '$lib/state/workspaces.svelte';
+	import type { Workspace } from '#lib/api/index.ts';
+	import Panel from '#lib/components/ui/Panel.svelte';
+	import { loadWorkspaces } from '#lib/state/workspaces.svelte.ts';
 
 	import RemoveWorkspaceDialog from './RemoveWorkspaceDialog.svelte';
 

@@ -8,17 +8,17 @@
 		type UserChange,
 		type UserIdentity,
 		type UserRecord
-	} from '$lib/api';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import Section from '$lib/components/ui/Section.svelte';
-	import LocalAccount from '$lib/components/users/LocalAccount.svelte';
-	import NameForm from '$lib/components/users/NameForm.svelte';
-	import PluginAllowlist from '$lib/components/users/PluginAllowlist.svelte';
-	import UserAccess from '$lib/components/users/UserAccess.svelte';
-	import UserBadges from '$lib/components/users/UserBadges.svelte';
-	import { loadUser, userState } from '$lib/state/user.svelte';
-	import { userFailureMessage } from '$lib/users/failure';
-	import { personName } from '$lib/users/name';
+	} from '#lib/api/index.ts';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import Section from '#lib/components/ui/Section.svelte';
+	import LocalAccount from '#lib/components/users/LocalAccount.svelte';
+	import NameForm from '#lib/components/users/NameForm.svelte';
+	import PluginAllowlist from '#lib/components/users/PluginAllowlist.svelte';
+	import UserAccess from '#lib/components/users/UserAccess.svelte';
+	import UserBadges from '#lib/components/users/UserBadges.svelte';
+	import { loadUser, userState } from '#lib/state/user.svelte.ts';
+	import { userFailureMessage } from '#lib/users/failure.ts';
+	import { personName } from '#lib/users/name.ts';
 
 	const userId = $derived(page.params.user ?? '');
 	const isSelf = $derived(userState.user?.id === userId);

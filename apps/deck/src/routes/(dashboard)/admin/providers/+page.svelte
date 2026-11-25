@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { api, type Provider } from '$lib/api';
-	import AddProviderForm from '$lib/components/providers/AddProviderForm.svelte';
-	import ProviderList from '$lib/components/providers/ProviderList.svelte';
-	import Alert from '$lib/components/ui/Alert.svelte';
-	import CopyField from '$lib/components/ui/CopyField.svelte';
-	import Section from '$lib/components/ui/Section.svelte';
-	import SkeletonList from '$lib/components/ui/SkeletonList.svelte';
+	import { api, type Provider } from '#lib/api/index.ts';
+	import AddProviderForm from '#lib/components/providers/AddProviderForm.svelte';
+	import ProviderList from '#lib/components/providers/ProviderList.svelte';
+	import Alert from '#lib/components/ui/Alert.svelte';
+	import CopyField from '#lib/components/ui/CopyField.svelte';
+	import Section from '#lib/components/ui/Section.svelte';
+	import SkeletonList from '#lib/components/ui/SkeletonList.svelte';
 
 	let status = $state<'loading' | 'ready' | 'error'>('loading');
 	let providers = $state<Provider[]>([]);
