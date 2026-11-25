@@ -31,8 +31,7 @@
 		{rows}
 		bind:value
 		{disabled}
-		{placeholder}
-	></textarea>
+		{placeholder}></textarea>
 	<span class="label whitespace-normal">{hint}</span>
 	<FieldError {errors} pointer="/options" />
 	{#each nested as [pointer, detail] (pointer)}

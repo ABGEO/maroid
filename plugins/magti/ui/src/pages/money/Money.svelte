@@ -135,9 +135,9 @@
 								{#each totals ?? [] as total (total.month)}
 									<tr>
 										<td class="whitespace-nowrap">{shownMonth(total.month)}</td>
-										<td class="text-success text-right tabular-nums"
-											>{total.top_ups.amount.toFixed(2)}</td
-										>
+										<td class="text-success text-right tabular-nums">
+											{total.top_ups.amount.toFixed(2)}
+										</td>
 										<td class="text-right tabular-nums">{total.charges.amount.toFixed(2)}</td>
 									</tr>
 								{/each}
@@ -174,19 +174,21 @@
 							<tbody>
 								{#each pager.page?.items ?? [] as entry (entry.id)}
 									<tr>
-										<td class="whitespace-nowrap"
-											>{formatMoment(entry.occurred_at, host.timeZone, {
+										<td class="whitespace-nowrap">
+											{formatMoment(entry.occurred_at, host.timeZone, {
 												dateStyle: 'medium',
 												timeStyle: 'short'
-											})}</td
-										>
+											})}
+										</td>
 										<td>{entry.kind}</td>
 										<td
 											class={[
 												'text-right whitespace-nowrap tabular-nums',
 												entry.direction === 'in' && 'text-success'
-											]}>{shownAmount(entry)}</td
+											]}
 										>
+											{shownAmount(entry)}
+										</td>
 									</tr>
 								{/each}
 							</tbody>

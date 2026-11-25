@@ -96,8 +96,7 @@
 			rows="4"
 			maxlength="10000"
 			bind:value={careNotes}
-			disabled={busy}
-		></textarea>
+			disabled={busy}></textarea>
 		<p class="label">Optional</p>
 	</fieldset>
 

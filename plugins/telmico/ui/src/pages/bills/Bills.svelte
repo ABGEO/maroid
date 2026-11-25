@@ -106,8 +106,10 @@
 									class="btn btn-ghost btn-sm"
 									href={bill.document}
 									download
-									aria-label={`Download the bill of ${shownMonth(bill.month)}`}>Download</a
+									aria-label={`Download the bill of ${shownMonth(bill.month)}`}
 								>
+									Download
+								</a>
 							</td>
 						</tr>
 					{/each}

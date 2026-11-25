@@ -145,9 +145,9 @@
 {:else if status === 'error'}
 	<div role="alert" class="alert alert-error alert-soft">
 		<span>Failed to load the settings.</span>
-		<button type="button" class="btn btn-sm" onclick={() => void load(workspaceId, pluginId)}
-			>Retry</button
-		>
+		<button type="button" class="btn btn-sm" onclick={() => void load(workspaceId, pluginId)}>
+			Retry
+		</button>
 	</div>
 {:else}
 	{#if missing.length > 0}

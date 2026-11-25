@@ -142,9 +142,9 @@
 		<div role="alert" class="alert alert-warning alert-soft">
 			<span>The parking service is unavailable. Your connection stays.</span>
 			<button type="button" class="btn btn-sm" onclick={load}>Retry</button>
-			<button type="button" class="btn btn-ghost btn-sm" disabled={busy} onclick={disconnect}
-				>Disconnect</button
-			>
+			<button type="button" class="btn btn-ghost btn-sm" disabled={busy} onclick={disconnect}>
+				Disconnect
+			</button>
 		</div>
 	{:else if status === 'error'}
 		<div role="alert" class="alert alert-error alert-soft">

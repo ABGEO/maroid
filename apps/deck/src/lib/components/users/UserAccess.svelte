@@ -61,9 +61,9 @@
 			onchange={(event) => setAdministrator(event.currentTarget)}
 		/>
 		<span class="text-sm">Administrator</span>
-		<span class="label whitespace-normal"
-			>Manages the users and the plugins of every workspace.</span
-		>
+		<span class="label whitespace-normal">
+			Manages the users and the plugins of every workspace.
+		</span>
 	</label>
 
 	<label class="mt-2 flex cursor-pointer flex-wrap items-center gap-2">

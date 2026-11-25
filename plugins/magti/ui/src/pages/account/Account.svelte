@@ -158,9 +158,9 @@
 								<span class="flex min-w-0 flex-1 flex-col">
 									<span class="text-base-content flex min-w-0 items-center gap-2">
 										<span class="shrink-0 font-mono">{subscriber.subscriber_number}</span>
-										<span class="badge badge-ghost badge-sm shrink-0"
-											>{kindLabel(subscriber.kind)}</span
-										>
+										<span class="badge badge-ghost badge-sm shrink-0">
+											{kindLabel(subscriber.kind)}
+										</span>
 										{#if subscriber.assigned}
 											<span class="badge badge-primary badge-soft badge-sm shrink-0">Assigned</span>
 										{/if}
@@ -188,9 +188,9 @@
 
 			{#if canConnect}
 				<div class="flex gap-2">
-					<button type="button" class="btn btn-sm" disabled={busy} onclick={connect}
-						>Connect again</button
-					>
+					<button type="button" class="btn btn-sm" disabled={busy} onclick={connect}>
+						Connect again
+					</button>
 					<button
 						type="button"
 						class="btn btn-ghost btn-sm text-error"
@@ -214,9 +214,9 @@
 				<p class="meta mb-4">
 					Maroid signs in to Magti with the phone number and the password in the settings.
 				</p>
-				<button type="button" class="btn btn-primary btn-sm" disabled={busy} onclick={connect}
-					>Connect</button
-				>
+				<button type="button" class="btn btn-primary btn-sm" disabled={busy} onclick={connect}>
+					Connect
+				</button>
 			{:else}
 				<p class="meta">
 					Store the phone number and the password of the Magti account in the
