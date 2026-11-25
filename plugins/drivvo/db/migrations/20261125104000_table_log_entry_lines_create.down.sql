@@ -1,0 +1,5 @@
+BEGIN;
+
+DROP TABLE IF EXISTS log_entry_lines;
+
+COMMIT;

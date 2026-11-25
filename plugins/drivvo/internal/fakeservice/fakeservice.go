@@ -12,11 +12,12 @@ import (
 	"net/http/httptest"
 	"sync"
 	"testing"
+	"time"
 )
 
 // The values that the fake service answers unless a test sets others.
 const (
-	Token         = "T"
+	Token         = "token-T1"
 	TokenSeconds  = 86400
 	Hatchback     = 11
 	OldSedan      = 12
@@ -56,6 +57,8 @@ type Service struct {
 	Answers map[string]any
 	// Status answers a path with a status in place of its answer.
 	Status map[string]int
+	// Delay holds each answer for the duration, as a distant service does.
+	Delay time.Duration
 
 	calls  []Call
 	server *httptest.Server
@@ -186,6 +189,12 @@ func (s *Service) CallsTo(path string) []Call {
 // ServeHTTP answers one request.
 func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
+
+	s.mu.Lock()
+	delay := s.Delay
+	s.mu.Unlock()
+
+	time.Sleep(delay)
 
 	s.mu.Lock()
 	defer s.mu.Unlock()

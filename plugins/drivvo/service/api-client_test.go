@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/abgeo/maroid/plugins/drivvo/config"
 	"github.com/abgeo/maroid/plugins/drivvo/errs"
 	"github.com/abgeo/maroid/plugins/drivvo/internal/fakeservice"
 	"github.com/abgeo/maroid/plugins/drivvo/model"
@@ -42,12 +41,7 @@ func newClient(t *testing.T) (*service.APIClient, *fakeservice.Service) {
 
 	fake := fakeservice.New(t)
 
-	return service.NewAPIClient(&config.Config{
-		BaseURL:        fake.URL(),
-		RequestTimeout: 5 * time.Second,
-		AppVersion:     "23",
-		AppVersionName: "14.2.3",
-	}, func() time.Time { return now }), fake
+	return service.NewAPIClient(testConfig(fake.URL()), func() time.Time { return now }), fake
 }
 
 // DRIVVO-SC-005: The sign in sends the email address and the MD5 of the trimmed password
@@ -80,7 +74,7 @@ func TestTheSignInSendsTheDigestAndKeepsTheToken(t *testing.T) {
 func TestTheSignInNamesARejection(t *testing.T) {
 	t.Parallel()
 
-	rejection := map[string]any{"result": false, "exception": map[string]any{"code": 1908}}
+	rejection := map[string]any{"result": false, memberException: map[string]any{memberCode: 1908}}
 	cases := map[string]struct {
 		status int
 		body   any
@@ -113,7 +107,7 @@ func TestTheSignInRefusesAnAccountThatAsksForANewPassword(t *testing.T) {
 
 	client, fake := newClient(t)
 	fake.Set(func(state *fakeservice.Service) {
-		state.SignInBody = map[string]any{"token": "T", "alterar_senha": true}
+		state.SignInBody = map[string]any{memberToken: "T", "alterar_senha": true}
 	})
 
 	_, err := client.SignIn(context.Background(), email, spacedSecret)
@@ -131,10 +125,10 @@ func TestAFailedSignInIsNoRefusal(t *testing.T) {
 		body   any
 	}{
 		"503":              {status: http.StatusServiceUnavailable, body: map[string]any{}},
-		"200 and no token": {status: http.StatusOK, body: map[string]any{"token": ""}},
+		"200 and no token": {status: http.StatusOK, body: map[string]any{memberToken: ""}},
 		"another code": {
 			status: http.StatusOK,
-			body:   map[string]any{"exception": map[string]any{"code": 7}},
+			body:   map[string]any{memberException: map[string]any{memberCode: 7}},
 		},
 	}
 
@@ -214,7 +208,7 @@ func TestAnUnknownUnitFailsTheRead(t *testing.T) {
 			map[string]any{
 				"unidade_medida":         9,
 				"eficiencia_combustivel": 4,
-				"formato_valor":          "GEL",
+				"formato_valor":          currencyGEL,
 			},
 		}
 	})
@@ -237,7 +231,7 @@ func TestTheSettingsNameTheUnitsAndTheCurrency(t *testing.T) {
 	assert.Equal(t, model.CarLogSettings{
 		VolumeUnit:        model.VolumeLitre,
 		ConsumptionFormat: 4,
-		Currency:          "GEL",
+		Currency:          currencyGEL,
 	}, settings)
 }
 
@@ -255,10 +249,10 @@ func TestEachVehicleIsReadOnSixPaths(t *testing.T) {
 		}
 		state.Answers["/veiculo/12/lembrete/web"] = []any{
 			map[string]any{
-				"id_lembrete":     401,
-				"id_tipo_servico": 5,
-				"odometro":        90000,
-				"unico_repetir":   true,
+				"id_lembrete":         401,
+				memberMaintenanceType: 5,
+				memberOdometer:        90000,
+				"unico_repetir":       true,
 			},
 		}
 	})
@@ -344,7 +338,7 @@ func TestTheSessionHoldsNoValueOfTheHolder(t *testing.T) {
 func petrolRefuel(id int, moment string) map[string]any {
 	return map[string]any{
 		"id_abastecimento": id,
-		"data":             moment,
+		memberDay:          moment,
 		"id_combustivel":   1,
 		"valor_total":      10,
 	}
