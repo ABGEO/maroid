@@ -1,0 +1,658 @@
+# The routes that PENSION adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The pension account of a user
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/plugins/dev.maroid.pensions/api/connections/self:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: getPensionConnection
+      summary: Read the connection of the acting user.
+      description: >
+        Realizes `PENSION-FR-003` to `PENSION-FR-006`, `PENSION-FR-010`, `PENSION-FR-011`, and
+        `PENSION-DD-004`. A connected user reads the participant from the pension service on each
+        call. A rejected session signs in again once. A rejection of the credentials removes the
+        session, and the answer is `not_connected`. The permission is `account.connect`.
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PensionConnection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "502":
+          $ref: "#/components/responses/PensionServiceUnavailable"
+    put:
+      operationId: connectPensionAccount
+      summary: Sign in with the settings of the acting user, and store the connection.
+      description: >
+        Realizes `PENSION-FR-007`, `PENSION-FR-008`, `PENSION-DD-001`, and `PENSION-DD-003`.
+        A repeat replaces the session. The call collects nothing. The permission is
+        `account.connect`.
+      responses:
+        "200":
+          description: The connection.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PensionConnection"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+        "422":
+          description: >
+            The type is `/problems/dev.maroid.pensions/credentials-absent` or
+            `/problems/dev.maroid.pensions/credentials-rejected`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "../../api/components.yaml#/components/schemas/Problem"
+        "502":
+          $ref: "#/components/responses/PensionServiceUnavailable"
+    delete:
+      operationId: deletePensionConnection
+      summary: End the connection of the acting user.
+      description: >
+        Realizes `PENSION-FR-009` and `PENSION-FR-012`. The settings and the collected data
+        stay. A user with no connection gets 204 too. The permission is `account.connect`.
+      responses:
+        "204":
+          description: No connection exists.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pensions/api/account-summaries/self:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: getPensionAccountSummary
+      summary: Read the account summary of the acting user, and whether a connection exists.
+      description: >
+        Realizes `PENSION-FR-032`, `PENSION-FR-033`, `PENSION-FR-044`, `PENSION-FR-045`, and
+        `PENSION-DD-013`. It calls no external service. The permission is `account.read`.
+      responses:
+        "200":
+          description: The summary view.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PensionSummaryView"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pensions/api/asset-values:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listPensionAssetValues
+      summary: List the asset values of the acting user from a date.
+      description: >
+        Realizes `PENSION-FR-034` and `PENSION-DD-016`. A bounded collection, the earliest date
+        first. The permission is `account.read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+      responses:
+        "200":
+          description: Every asset value from `from`.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PensionAssetValuePage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pensions/api/contribution-months:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listPensionContributionMonths
+      summary: List the sum of the contributions of each month from a date.
+      description: >
+        Realizes `PENSION-FR-034` and `PENSION-DD-017`. A bounded collection, the earliest month
+        first. A month with no contribution holds no item. The permission is `account.read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+      responses:
+        "200":
+          description: One item for each month that holds a contribution.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PensionContributionMonthPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pensions/api/contributions:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listPensionContributions
+      summary: List the contributions of the acting user, the latest date first.
+      description: >
+        Realizes `PENSION-FR-036` to `PENSION-FR-040`, `PENSION-DD-014`, and `PENSION-NFR-001`. The
+        order is `paid_on` then `id`, both descending, and fixed. The permission is `account.read`.
+      parameters:
+        - $ref: "#/components/parameters/Employer"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: One page of contributions.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PensionContributionPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pensions/api/contributions/total:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: getPensionContributionTotal
+      summary: Sum every contribution that the filter matches.
+      description: >
+        Realizes `PENSION-FR-041` and `PENSION-DD-015`. The filter is the filter of
+        `/contributions`. The permission is `account.read`.
+      parameters:
+        - $ref: "#/components/parameters/Employer"
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          description: The sum and the count.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PensionContributionTotal"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pensions/api/employers:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listPensionEmployers
+      summary: List the employers that a contribution of the acting user names.
+      description: >
+        Realizes `PENSION-FR-039` and `PENSION-DD-019`. A bounded collection, by name. The
+        permission is `account.read`.
+      responses:
+        "200":
+          description: Every employer of the contributions of the acting user.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PensionEmployerPage"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pensions/api/portfolio-shares:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listPensionPortfolioShares
+      summary: List the portfolio shares of the acting user.
+      description: >
+        Realizes `PENSION-FR-042` and `PENSION-DD-019`. A bounded collection, the largest amount
+        first. The permission is `account.read`.
+      responses:
+        "200":
+          description: Every portfolio share.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PensionPortfolioSharePage"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.pensions/api/portfolio-unit-prices:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listPensionPortfolioUnitPrices
+      summary: List the weekly unit prices of the portfolios of the acting user.
+      description: >
+        Realizes `PENSION-FR-043` and `PENSION-DD-018`. One item for each portfolio of the shares
+        and each ISO week from `from`: the last unit price of that week. The permission is
+        `account.read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+      responses:
+        "200":
+          description: The weekly unit prices.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PensionUnitPricePage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: The session cookie. `SEC-005`.
+
+  parameters:
+    From:
+      name: from
+      in: query
+      required: false
+      description: The first date, included, `YYYY-MM-DD`. Absent, the collection starts at its first row.
+      schema:
+        type: string
+        format: date
+    To:
+      name: to
+      in: query
+      required: false
+      description: The last date, included, `YYYY-MM-DD`. A `to` before `from` answers 400.
+      schema:
+        type: string
+        format: date
+    Employer:
+      name: employer
+      in: query
+      required: false
+      description: The code of one employer. An employer of no contribution answers no item.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+
+  schemas:
+    PensionConnection:
+      type: object
+      description: >
+        No member holds the token, the password, or the personal number of the account holder.
+        `PENSION-INV-003`, `PENSION-INV-004`.
+      required: [state, credentials_stored]
+      properties:
+        state:
+          type: string
+          enum: [not_connected, connected]
+        credentials_stored:
+          type: boolean
+          description: Whether the settings of the acting user hold a username and a password.
+        holder:
+          $ref: "#/components/schemas/PensionHolder"
+    PensionHolder:
+      type: object
+      description: >
+        Present when `state` is `connected` and the read of the participant succeeds.
+      required: [full_name, asset_value]
+      properties:
+        full_name:
+          type: string
+          description: The first name and the last name of the account holder, with one space.
+          examples: [Nino Beridze]
+        asset_value:
+          $ref: "#/components/schemas/PensionMoney"
+    PensionMoney:
+      type: object
+      description: An amount of money, the money object of `Z-173`.
+      required: [amount, currency]
+      properties:
+        amount:
+          type: number
+          format: decimal
+          examples: [12480.55]
+        currency:
+          type: string
+          format: iso-4217
+          description: The currency. The pension service reports in lari alone.
+          examples: [GEL]
+
+    PensionSummaryView:
+      type: object
+      required: [connected]
+      properties:
+        connected:
+          type: boolean
+          description: Whether Maroid holds a session of the acting user. No external call decides it.
+        summary:
+          $ref: "#/components/schemas/PensionSummary"
+    PensionSummary:
+      type: object
+      description: Present when a collection stored a summary. It stays after the end of a connection.
+      required: [asset_value, units, gain, withheld_amount, contributions, collected_at]
+      properties:
+        asset_value:
+          $ref: "#/components/schemas/PensionMoney"
+        units:
+          type: number
+          format: decimal
+        gain:
+          $ref: "#/components/schemas/PensionMoney"
+        withheld_amount:
+          $ref: "#/components/schemas/PensionMoney"
+        contributions:
+          type: object
+          required: [person, employer, state, total]
+          properties:
+            person:
+              $ref: "#/components/schemas/PensionMoney"
+            employer:
+              $ref: "#/components/schemas/PensionMoney"
+            state:
+              $ref: "#/components/schemas/PensionMoney"
+            total:
+              $ref: "#/components/schemas/PensionMoney"
+        collected_at:
+          type: string
+          format: date-time
+    PensionAssetValue:
+      type: object
+      required: [valued_on, asset_value, units, unit_price]
+      properties:
+        valued_on:
+          type: string
+          format: date
+        asset_value:
+          $ref: "#/components/schemas/PensionMoney"
+        units:
+          type: number
+          format: decimal
+        unit_price:
+          type: number
+          format: decimal
+    PensionContributionMonth:
+      type: object
+      required: [month, amount]
+      properties:
+        month:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}$"
+          examples: ["2026-10"]
+        amount:
+          $ref: "#/components/schemas/PensionMoney"
+    PensionContribution:
+      type: object
+      required: [id, paid_on, source, type, gross_salary]
+      properties:
+        id:
+          type: string
+          format: uuid
+        paid_on:
+          type: string
+          format: date
+        employer:
+          $ref: "#/components/schemas/PensionEmployer"
+        source:
+          type: string
+          description: The payer, as the pension service names it.
+        type:
+          type: string
+          description: The type of the contribution, as the pension service names it.
+        salary_month:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}$"
+          description: Absent when the pension service gives no year or no month.
+        gross_salary:
+          $ref: "#/components/schemas/PensionMoney"
+        amount:
+          $ref: "#/components/schemas/PensionMoney"
+    PensionContributionTotal:
+      type: object
+      required: [amount, count]
+      properties:
+        amount:
+          $ref: "#/components/schemas/PensionMoney"
+        count:
+          type: integer
+          minimum: 0
+    PensionEmployer:
+      type: object
+      required: [code, name]
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+    PensionPortfolioShare:
+      type: object
+      required:
+        [
+          portfolio_id,
+          portfolio_name,
+          asset_manager_name,
+          ticker,
+          risk_tier_name,
+          target_share,
+          current_share,
+          amount,
+          units,
+          unit_price
+        ]
+      properties:
+        portfolio_id:
+          type: integer
+          format: int64
+        portfolio_name:
+          type: string
+        asset_manager_name:
+          type: string
+        ticker:
+          type: string
+        risk_tier_name:
+          type: string
+        target_share:
+          type: number
+          format: decimal
+          description: The percentage that the person chose, 0 to 100.
+        current_share:
+          type: number
+          format: decimal
+          description: The current percentage, 0 to 100.
+        amount:
+          $ref: "#/components/schemas/PensionMoney"
+        units:
+          type: number
+          format: decimal
+        unit_price:
+          type: number
+          format: decimal
+    PensionUnitPrice:
+      type: object
+      required: [portfolio_id, priced_on, unit_price]
+      properties:
+        portfolio_id:
+          type: integer
+          format: int64
+        priced_on:
+          type: string
+          format: date
+        unit_price:
+          type: number
+          format: decimal
+    PensionAssetValuePage:
+      description: A bounded collection. `next` and `prev` stay absent.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/PensionAssetValue"
+    PensionContributionMonthPage:
+      description: A bounded collection. `next` and `prev` stay absent.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/PensionContributionMonth"
+    PensionContributionPage:
+      description: One page of at most `limit` contributions.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/PensionContribution"
+    PensionEmployerPage:
+      description: A bounded collection. `next` and `prev` stay absent.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/PensionEmployer"
+    PensionPortfolioSharePage:
+      description: A bounded collection. `next` and `prev` stay absent.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/PensionPortfolioShare"
+    PensionUnitPricePage:
+      description: A bounded collection. `next` and `prev` stay absent.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/PensionUnitPrice"
+
+  responses:
+    PensionServiceUnavailable:
+      description: >
+        The pension service failed or answered nothing. The type is
+        `/problems/dev.maroid.pensions/service-unavailable`. A stored connection stays.
+      headers:
+        X-Flow-ID:
+          $ref: "../../api/components.yaml#/components/headers/FlowId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "../../api/components.yaml#/components/schemas/Problem"
