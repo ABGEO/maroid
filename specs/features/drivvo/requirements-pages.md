@@ -279,6 +279,15 @@ The widget must answer "not set up", with a link to the connection page, when th
 
 The widget must link to the overview of the principal vehicle.
 
+### `DRIVVO-FR-068`
+
+The widget must show the latest odometer and the spend of the current month of the principal vehicle.
+
+**Examples:**
+
+- Normal case: "Odometer 128,450 km. This month 312.40 GEL."
+- Limit case: the current month holds no refuel, no maintenance, and no expense. The widget leaves the spend out.
+
 ## Retired identifiers
 
 This file has no retired identifier.

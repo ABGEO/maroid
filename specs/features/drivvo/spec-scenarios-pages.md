@@ -235,24 +235,24 @@ the reminder.
 
 ## `DRIVVO-SC-051`
 
-**Verifies:** `DRIVVO-FR-065`, `DRIVVO-FR-067`
+**Verifies:** `DRIVVO-FR-065`, `DRIVVO-FR-067`, `DRIVVO-FR-068`
 **Layer:** unit
 
-**Given** "Hatchback" with a refuel of 40 L for 120.00 on 2026-11-20, a consumption of 6.8, and an
-oil change 1,200 km away.
+**Given** "Hatchback" with a refuel of 40 L for 120.00 on 2026-11-20, a consumption of 6.8, a latest
+odometer of 128,450 km, a spend of 312.40 this month, and an oil change 1,200 km away.
 **When** the widget loads.
-**Then** it answers three items: "Latest refuel" with "2026-11-20 · 40.00 L · 120.00 GEL",
-"Consumption" with "6.8 L/100 km", and "Oil change" with "in 1,200 km". `More` is the overview of
-"Hatchback".
+**Then** it answers five items: "Latest refuel" with "2026-11-20 · 40.00 L · 120.00 GEL",
+"Consumption" with "6.8 L/100 km", "Odometer" with "128,450 km", "This month" with "312.40 GEL",
+and "Oil change" with "in 1,200 km". `More` is the overview of "Hatchback".
 
 ## `DRIVVO-SC-052`
 
-**Verifies:** `DRIVVO-FR-065`
+**Verifies:** `DRIVVO-FR-065`, `DRIVVO-FR-068`
 **Layer:** unit
 
-**Given** "Hatchback" with refuels and no reminder, and in a second case with no entry and no reminder.
+**Given** "Hatchback" with refuels, no spend this month, and no reminder, and in a second case with no entry and no reminder.
 **When** the widget loads in each case.
-**Then** the first answers two items, the refuel and the consumption. The second answers empty.
+**Then** the first answers the refuel, the consumption, and the odometer. The second answers empty.
 
 ## `DRIVVO-SC-054`
 

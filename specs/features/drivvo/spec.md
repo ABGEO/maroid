@@ -51,7 +51,7 @@ and `spec-scenarios-pages.md` hold the scenarios.
 | `DRIVVO-FR-037` to `DRIVVO-FR-047` | `DRIVVO-DD-009`, `DRIVVO-DD-010`, `spec-pages.md`                               |
 | `DRIVVO-FR-048` to `DRIVVO-FR-059` | `spec-pages.md`, `api.yaml`                                                     |
 | `DRIVVO-FR-060` to `DRIVVO-FR-064` | `DRIVVO-DD-011`, `spec-pages.md`                                                |
-| `DRIVVO-FR-065` to `DRIVVO-FR-067` | Section 4.3, `spec-pages.md`                                                    |
+| `DRIVVO-FR-065` to `DRIVVO-FR-068` | Section 4.3, `spec-pages.md`                                                    |
 | `DRIVVO-NFR-001`                   | `DRIVVO-DD-006`, `DRIVVO-SC-022`                                                |
 | `DRIVVO-NFR-002`                   | `DRIVVO-DD-009`, `DRIVVO-SC-023`                                                |
 | `DRIVVO-INV-001`                   | Section 4.2, `DRIVVO-SC-005`                                                    |
@@ -201,7 +201,7 @@ leads the trail with it.
 
 | Key   | Title | Kind   | Size | Permission     | Realizes                           |
 | ----- | ----- | ------ | ---- | -------------- | ---------------------------------- |
-| `car` | Car   | `list` | `s`  | `account.read` | `DRIVVO-FR-065` to `DRIVVO-FR-067` |
+| `car` | Car   | `list` | `m`  | `account.read` | `DRIVVO-FR-065` to `DRIVVO-FR-068` |
 
 ### 4.4 Flow
 

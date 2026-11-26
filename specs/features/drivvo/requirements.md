@@ -52,7 +52,7 @@ The glossary holds each term of this feature: `GLO-car-log-service`, `GLO-car-lo
 
 ## 5. Functional requirements
 
-`requirements-pages.md` holds `DRIVVO-FR-027` to `DRIVVO-FR-067`: the choice of the vehicle,
+`requirements-pages.md` holds `DRIVVO-FR-027` to `DRIVVO-FR-068`: the choice of the vehicle,
 the overview, the lists, the detail of a log entry, the reminders, and the widget.
 
 ### Credentials

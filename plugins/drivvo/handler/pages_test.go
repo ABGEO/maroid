@@ -363,20 +363,22 @@ func checkReminders(t *testing.T, rig *pageRig) {
 	assert.NotContains(t, reminders[3], "due_on")
 }
 
-// DRIVVO-SC-051: The widget answers the latest refuel, the consumption, and the first
-// reminder of the default vehicle.
+// DRIVVO-SC-051: The widget answers the latest refuel, the consumption, the odometer, the
+// spend of the month, and the first reminder of the default vehicle.
 func checkWidget(t *testing.T, rig *pageRig) {
 	t.Helper()
 
 	answer, err := widget.NewCar(rig.figures).Load(memberContext(t.Context()))
 	require.NoError(t, err)
 	require.NotNil(t, answer.List)
-	require.Len(t, answer.List.Items, 3)
+	require.Len(t, answer.List.Items, 5)
 
 	assert.Equal(t, "2026-11-15 · 20.00 L · 60.00 GEL", answer.List.Items[0].Meta)
 	assert.Equal(t, "6.3 L/100 km", answer.List.Items[1].Meta)
-	assert.Equal(t, "Oil change", answer.List.Items[2].Label)
-	assert.Equal(t, "due", answer.List.Items[2].Meta)
+	assert.Equal(t, "10,900 km", answer.List.Items[2].Meta)
+	assert.Equal(t, "540.00 GEL", answer.List.Items[3].Meta)
+	assert.Equal(t, "Oil change", answer.List.Items[4].Label)
+	assert.Equal(t, "due", answer.List.Items[4].Meta)
 	assert.Equal(t, "/overview/"+rig.vehicles[hatchback], answer.List.More)
 }
 

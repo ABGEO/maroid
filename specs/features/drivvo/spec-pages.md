@@ -116,23 +116,29 @@ the null.
 
 ### `DRIVVO-DD-017`
 
-**Realizes:** `DRIVVO-FR-060` to `DRIVVO-FR-067`
+**Realizes:** `DRIVVO-FR-060` to `DRIVVO-FR-068`
 **Decision:** `GET /vehicles/{vehicleId}/reminders` answers one page with no `limit`, in the order of
 `DRIVVO-DD-011`. An item answers `id`, `kind`, `type`, `repeats`, `note`, `due`, and when known
 `due_on`, `due_odometer`, `days_left`, and `distance_left`. A value past due is negative.
 `Reminders.svelte` marks a due reminder, and writes "in 12 days", "in 1,200 km", or "250 km past".
-The widget `car` reads the vehicle of `default`, and answers a `ListAnswer` with up to three items:
+The widget `car` reads the vehicle of `default`, and answers a `ListAnswer` with up to five items:
 
 | Label           | Meta                                                   | Link              |
 | --------------- | ------------------------------------------------------ | ----------------- |
 | "Latest refuel" | `<day> · <volume> <unit> · <amount> <currency>`        | `/refuels/<id>`   |
 | "Consumption"   | `<value, one decimal> <unit>`, over the last 12 months | `/overview/<id>`  |
+| "Odometer"      | `<latest odometer, grouped> <distance unit>`           | `/overview/<id>`  |
+| "This month"    | `<spend of the current month> <currency>`              | `/overview/<id>`  |
 | The type name   | "due", "in <n> days", or "in <n> <distance unit>"      | `/reminders/<id>` |
 
-An absent value drops its item. `More` is `/overview/<id>`. No item answers
-`EmptyAnswer("No refuel and no reminder yet.")`. No vehicle answers
-`NotSetUpAnswer("Connect the Drivvo account.", "/account")`. The day is the day of the member.
-**Rationale:** Each line has its own link, so a list widget fits three facts in size `s`.
+An absent value drops its item. A zero odometer and a zero spend are absent. `More` is
+`/overview/<id>`. No item answers `EmptyAnswer("No refuel and no reminder yet.")`. No vehicle
+answers `NotSetUpAnswer("Connect the Drivvo account.", "/account")`. The day is the day of the
+member.
+The spend is `Totals.Spend` of `figures.Summarize` from the first day of the current month to
+today, so it matches the overview of the month.
+**Rationale:** Each line has its own link, so each fact is one item of a list widget. Size `m`
+shows 5 items. The reminder closes the list, the next thing to do.
 **Alternatives:** A stat widget with the consumption as the value. The refuel and the reminder then
 share one caption line.
 

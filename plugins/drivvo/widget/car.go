@@ -27,14 +27,15 @@ type CarReader interface {
 }
 
 // NewCar builds the widget of the default vehicle: the latest refuel, the consumption of
-// the last 12 months, and the first reminder.
+// the last 12 months, the latest odometer, the spend of the current month, and the first
+// reminder.
 func NewCar(cars CarReader) *pluginapi.FuncWidget {
 	return pluginapi.NewWidget(
 		pluginapi.WidgetMeta{
 			Key:        "car",
 			Title:      "Drivvo",
 			Kind:       pluginapi.WidgetKindList,
-			Size:       pluginapi.WidgetSizeS,
+			Size:       pluginapi.WidgetSizeM,
 			Permission: permission.AccountRead,
 		},
 		func(ctx context.Context) (pluginapi.WidgetAnswer, error) {
@@ -88,6 +89,22 @@ func items(ctx context.Context, car service.CarSummary) []pluginapi.ListItem {
 		})
 	}
 
+	if car.Odometer != nil {
+		answer = append(answer, pluginapi.ListItem{
+			Label: "Odometer",
+			Meta:  grouped(*car.Odometer) + " " + string(car.Vehicle.DistanceUnit),
+			Link:  vehiclePage(car.Vehicle, "overview"),
+		})
+	}
+
+	if car.MonthSpend != nil {
+		answer = append(answer, pluginapi.ListItem{
+			Label: "This month",
+			Meta:  money(*car.MonthSpend, car.Settings.Currency),
+			Link:  vehiclePage(car.Vehicle, "overview"),
+		})
+	}
+
 	if reminder := car.Reminder; reminder != nil {
 		label := reminder.Type
 		if label == "" {
@@ -119,13 +136,14 @@ func refuelMeta(ctx context.Context, refuel model.EntryRow, settings model.CarLo
 	}
 
 	if refuel.Amount != nil {
-		parts = append(
-			parts,
-			strconv.FormatFloat(refuel.Amount.Float(), 'f', 2, 64)+" "+settings.Currency,
-		)
+		parts = append(parts, money(*refuel.Amount, settings.Currency))
 	}
 
 	return strings.Join(parts, separator)
+}
+
+func money(amount model.Amount, currency string) string {
+	return strconv.FormatFloat(amount.Float(), 'f', 2, 64) + " " + currency
 }
 
 func reminderMeta(reminder figures.DueReminder, unit model.DistanceUnit) string {

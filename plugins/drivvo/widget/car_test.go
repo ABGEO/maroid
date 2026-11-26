@@ -56,14 +56,17 @@ func refuel() *model.EntryRow {
 	}
 }
 
-// DRIVVO-SC-051: The widget answers the latest refuel, the consumption, and the first
-// reminder, each with its link, and links more to the overview.
-func TestTheWidgetAnswersThreeFacts(t *testing.T) {
+// DRIVVO-SC-051: The widget answers the latest refuel, the consumption, the odometer, the
+// spend of the month, and the first reminder, each with its link, and links more to the
+// overview.
+func TestTheWidgetAnswersFiveFacts(t *testing.T) {
 	t.Parallel()
 
 	car := hatchback()
 	car.LatestRefuel = refuel()
 	car.Consumption = new(6.8)
+	car.Odometer = new(128450.0)
+	car.MonthSpend = new(model.AmountOf(312.40))
 	car.Reminder = &figures.DueReminder{Type: "Oil change", DistanceLeft: new(1200.0)}
 
 	answer, err := widget.NewCar(fixedCar{summary: car, found: true}).Load(inTbilisi(t))
@@ -77,6 +80,8 @@ func TestTheWidgetAnswersThreeFacts(t *testing.T) {
 			Link:  "/refuels/" + vehicleID,
 		},
 		{Label: "Consumption", Meta: "6.8 L/100 km", Link: "/overview/" + vehicleID},
+		{Label: "Odometer", Meta: "128,450 km", Link: "/overview/" + vehicleID},
+		{Label: "This month", Meta: "312.40 GEL", Link: "/overview/" + vehicleID},
 		{Label: "Oil change", Meta: "in 1,200 km", Link: "/reminders/" + vehicleID},
 	}, answer.List.Items)
 	assert.Equal(t, "/overview/"+vehicleID, answer.List.More)
@@ -89,11 +94,18 @@ func TestTheWidgetDropsAnAbsentFact(t *testing.T) {
 	car := hatchback()
 	car.LatestRefuel = refuel()
 	car.Consumption = new(6.8)
+	car.Odometer = new(128450.0)
 
 	answer, err := widget.NewCar(fixedCar{summary: car, found: true}).Load(inTbilisi(t))
 	require.NoError(t, err)
 	require.NotNil(t, answer.List)
-	assert.Len(t, answer.List.Items, 2)
+
+	labels := make([]string, 0, len(answer.List.Items))
+	for _, item := range answer.List.Items {
+		labels = append(labels, item.Label)
+	}
+
+	assert.Equal(t, []string{"Latest refuel", "Consumption", "Odometer"}, labels)
 
 	empty, err := widget.NewCar(fixedCar{summary: hatchback(), found: true}).Load(inTbilisi(t))
 	require.NoError(t, err)

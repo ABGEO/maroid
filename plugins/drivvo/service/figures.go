@@ -80,6 +80,8 @@ type CarSummary struct {
 	Settings     model.CarLogSettings
 	LatestRefuel *model.EntryRow
 	Consumption  *float64
+	Odometer     *float64
+	MonthSpend   *model.Amount
 	Reminder     *figures.DueReminder
 }
 
@@ -232,7 +234,8 @@ func (f *Figures) Car(ctx context.Context) (CarSummary, bool, error) {
 
 	loc := pluginapi.ActingTimeZone(ctx)
 	today := model.DayOf(f.now(), loc)
-	from := model.MonthOf(today).AddDate(0, -widgetMonthsBack, 0)
+	month := model.MonthOf(today)
+	from := month.AddDate(0, -widgetMonthsBack, 0)
 	entries := FigureEntries(rows.Entries)
 
 	summary := CarSummary{
@@ -245,6 +248,21 @@ func (f *Figures) Car(ctx context.Context) (CarSummary, bool, error) {
 			loc,
 			rows.Settings.ConsumptionFormat,
 		),
+	}
+
+	if odometer := figures.LatestOdometer(entries); odometer > 0 {
+		summary.Odometer = &odometer
+	}
+
+	spend := figures.Summarize(
+		entries,
+		model.Period{From: &month, To: &today},
+		loc,
+		today,
+		rows.Settings.ConsumptionFormat,
+	).Totals.Spend()
+	if spend != 0 {
+		summary.MonthSpend = &spend
 	}
 
 	if due := f.dueReminders(ctx, rows); len(due) > 0 {
