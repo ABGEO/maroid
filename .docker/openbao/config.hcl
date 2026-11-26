@@ -2,9 +2,11 @@
 ui            = true
 disable_mlock = true
 api_addr      = "http://openbao:8200"
+cluster_addr  = "http://openbao:8201"
 
-storage "file" {
-  path = "/openbao/file/data"
+storage "raft" {
+  path    = "/openbao/file/raft"
+  node_id = "openbao-1"
 }
 
 listener "tcp" {
