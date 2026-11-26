@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
 
 ARG NODE_VERSION=26.13.1
-ARG PNPM_VERSION=12.22.0
+ARG PNPM_VERSION=12.23.0
 ARG DEX_BASE_IMAGE=ghcr.io/dexidp/dex:v2.46.1@sha256:65b72ca0f4b0bf6d4ada84ec21da8851782563404ac7b8f926923d27ceced9ab
 
 FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-alpine AS builder
