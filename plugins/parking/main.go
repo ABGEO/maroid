@@ -41,6 +41,7 @@ type ParkingPlugin struct {
 	telegramBot                pluginapi.TelegramBot
 	telegramConversationEngine telegramconversationapi.Engine
 	apiClientSvc               service.APIClientService
+	lots                       service.LotFinder
 	connections                service.ConnectionService
 	answers                    *command.Notice
 	collector                  *service.Collector
@@ -104,6 +105,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		telegramBot:                telegramBot,
 		telegramConversationEngine: host.TelegramConversationEngine(),
 		apiClientSvc:               apiClient,
+		lots:                       service.NewNearbyLots(apiClient, logger),
 		connections:                service.NewConnections(apiClient, settings, secrets),
 		answers:                    command.NewNotice(pages),
 		collector:                  service.NewCollector(apiClient, history, logger),
@@ -204,6 +206,6 @@ func (p *ParkingPlugin) TelegramCommands() ([]pluginapi.TelegramCommand, error) 
 
 func (p *ParkingPlugin) TelegramConversations() ([]telegramconversationapi.Conversation, error) {
 	return []telegramconversationapi.Conversation{
-		conversation.NewParkingConversation(p.telegramBot, p.apiClientSvc, p.answers),
+		conversation.NewParkingConversation(p.telegramBot, p.apiClientSvc, p.lots, p.answers),
 	}, nil
 }

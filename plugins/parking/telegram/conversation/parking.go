@@ -19,10 +19,11 @@ var _ conversation.Conversation = (*ParkingConversation)(nil)
 func NewParkingConversation(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
+	lots service.LotFinder,
 	answers *command.Notice,
 ) *ParkingConversation {
 	steps := []conversation.Step{
-		step.NewSelectLot(telegramBot, apiClientSvc, answers),
+		step.NewSelectLot(telegramBot, apiClientSvc, lots, answers),
 		step.NewAskLocation(telegramBot),
 		step.NewConfirm(telegramBot, apiClientSvc, answers),
 		step.NewEnterLot(telegramBot, apiClientSvc, answers),

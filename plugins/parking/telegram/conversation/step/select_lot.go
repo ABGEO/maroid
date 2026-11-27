@@ -9,19 +9,16 @@ import (
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
-	"github.com/abgeo/maroid/plugins/parking/dto"
+	"github.com/abgeo/maroid/plugins/parking/model"
 	"github.com/abgeo/maroid/plugins/parking/service"
 	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 )
-
-// bboxOffset defines the approximate bounding box offset in degrees
-// around the user's location (~10m).
-const bboxOffset = 0.0001
 
 // SelectLot is a conversation step that allows the user to select a parking lot from a list of nearby lots.
 type SelectLot struct {
 	telegramBot  pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
+	lots         service.LotFinder
 	answers      *command.Notice
 }
 
@@ -31,11 +28,13 @@ var _ conversationapi.Step = (*SelectLot)(nil)
 func NewSelectLot(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
+	lots service.LotFinder,
 	answers *command.Notice,
 ) *SelectLot {
 	return &SelectLot{
 		telegramBot:  telegramBot,
 		apiClientSvc: apiClientSvc,
+		lots:         lots,
 		answers:      answers,
 	}
 }
@@ -56,11 +55,7 @@ func (s *SelectLot) OnEnter(
 		return err
 	}
 
-	lots, err := s.apiClientSvc.GetParkingLots(
-		ctx,
-		lng-bboxOffset, lng+bboxOffset,
-		lat+bboxOffset, lat-bboxOffset,
-	)
+	lots, err := s.lots.FindNearby(ctx, lat, lng)
 	if err != nil {
 		return fmt.Errorf("fetching parking lots: %w", err)
 	}
@@ -148,7 +143,7 @@ func (s *SelectLot) dismissReplyKeyboard(
 }
 
 func buildLotKeyboard(
-	lots []dto.ParkingLot,
+	lots []model.NearbyLot,
 ) *telego.InlineKeyboardMarkup {
 	extraRows := 2
 	rows := make(
@@ -159,8 +154,8 @@ func buildLotKeyboard(
 	for _, lot := range lots {
 		rows = append(rows, tu.InlineKeyboardRow(
 			tu.InlineKeyboardButton(
-				lot.UniqueNumber,
-			).WithCallbackData(lot.UniqueNumber),
+				lot.Number,
+			).WithCallbackData(lot.Number),
 		))
 	}
 
@@ -178,7 +173,7 @@ func buildLotKeyboard(
 	return tu.InlineKeyboard(rows...)
 }
 
-func buildLotMessage(lots []dto.ParkingLot) string {
+func buildLotMessage(lots []model.NearbyLot) string {
 	if len(lots) == 0 {
 		return "No parking lots found near your location." +
 			"\n\nYou can <b>Enter manually</b> " +

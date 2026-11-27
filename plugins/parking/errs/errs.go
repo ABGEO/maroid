@@ -34,4 +34,6 @@ var (
 	ErrPageLimit = errors.New("parking: page limit reached")
 	// ErrInvalidUser reports a user identifier that is not a UUID.
 	ErrInvalidUser = errors.New("parking: invalid user")
+	// ErrMapSource reports a map tile that the map source did not give.
+	ErrMapSource = errors.New("parking: map source failed")
 )

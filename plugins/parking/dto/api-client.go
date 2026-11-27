@@ -3,6 +3,9 @@ package dto
 
 import (
 	"encoding/json"
+	"fmt"
+
+	"github.com/paulmach/orb/encoding/wkt"
 
 	"github.com/abgeo/maroid/plugins/parking/model"
 )
@@ -23,6 +26,17 @@ type ParkingLot struct {
 	Polygon      string `json:"polygon"`
 	Address      string `json:"address"`
 	UniqueNumber string `json:"uniqueNumber"`
+}
+
+// ToModel converts the parking lot to its domain entity. The parking service gives the
+// outline as well-known text.
+func (l ParkingLot) ToModel() (model.ParkingLot, error) {
+	outline, err := wkt.UnmarshalPolygon(l.Polygon)
+	if err != nil {
+		return model.ParkingLot{}, fmt.Errorf("reading the outline of %s: %w", l.UniqueNumber, err)
+	}
+
+	return model.ParkingLot{Number: l.UniqueNumber, Address: l.Address, Outline: outline}, nil
 }
 
 // ParkingPlace represents a single parking place returned from the API.
