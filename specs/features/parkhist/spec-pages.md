@@ -23,23 +23,23 @@ figures of `PARKHIST-FR-022`.
 
 Every path is under `plugins/parking/`.
 
-| Path                                                | Action | Holds                                                                                                                                                            |
-| --------------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `model/read.go`                                     | create | `SessionFilter` (`From`, `To`, `Plate`, `Free *bool`), `TransactionFilter` (`From`, `To`, `Kind`), `SessionTotal`, `TransactionTotal`, `ChargeMonth`, `LotUsage` |
-| `repository/session_read.go`                        | create | `Page`, `Total`, `Plates`, `LotUsages` of `Session`                                                                                                              |
-| `repository/transaction_read.go`                    | create | `Page`, `Total`, `ChargeMonths` of `Transaction`                                                                                                                 |
-| `repository/keyset.go`                              | create | The keyset condition and the order of a list, as the pensions plugin writes it                                                                                   |
-| `service/history_read.go`                           | create | The read methods of `HistoryStore`, each in one `WithTx`                                                                                                         |
-| `dto/{session,transaction,month,lot}.go`            | create | The answers of section 2. `MoneyResponse` of `dto/connection.go` stays the money object                                                                          |
-| `handler/{session,transaction,query}.go`            | create | `SessionHandler`, `TransactionHandler`, the parsers of `from`, `to`, `plate`, `free`, and `kind`                                                                 |
-| `widget/balance.go`                                 | change | `Link` of a connected answer is `/overview` (`PARKHIST-DD-010`)                                                                                                  |
-| `permission/permission.go`                          | change | `HistoryRead = "history.read"`                                                                                                                                   |
-| `main.go`                                           | change | The new routes, `history.read`, and the UI routes of section 2                                                                                                   |
-| `ui/src/entry.ts`                                   | change | The page routes of section 2                                                                                                                                     |
-| `ui/src/pages/{overview,sessions,transactions}/`    | create | `Overview.svelte`, `Sessions.svelte`, `Transactions.svelte`                                                                                                      |
-| `ui/src/components/`                                | create | `PeriodPicker.svelte`, `NoData.svelte`, `NoAccess.svelte`, `ChargeChart.svelte`, `BalanceCard.svelte`, `LotList.svelte`, `FilterBar.svelte`                      |
-| `ui/src/lib/{address,chart,format,pages,period}.ts` | create | The copies of the pensions plugin (`UI-006` forbids an import), with the filters and the kinds of this feature                                                   |
-| `ui/src/api/{session,transaction}.ts`               | create | One function for each route of section 2                                                                                                                         |
+| Path                                             | Action | Holds                                                                                                                                                            |
+| ------------------------------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model/read.go`                                  | create | `SessionFilter` (`From`, `To`, `Plate`, `Free *bool`), `TransactionFilter` (`From`, `To`, `Kind`), `SessionTotal`, `TransactionTotal`, `ChargeMonth`, `LotUsage` |
+| `repository/session_read.go`                     | create | `Page`, `Total`, `Plates`, `LotUsages` of `Session`                                                                                                              |
+| `repository/transaction_read.go`                 | create | `Page`, `Total`, `ChargeMonths` of `Transaction`                                                                                                                 |
+| `repository/keyset.go`                           | create | The keyset condition and the order of a list, as the pensions plugin writes it                                                                                   |
+| `service/history_read.go`                        | create | The read methods of `HistoryStore`, each in one `WithTx`                                                                                                         |
+| `dto/{session,transaction,month,lot}.go`         | create | The answers of section 2. `MoneyResponse` of `dto/connection.go` stays the money object                                                                          |
+| `handler/{session,transaction,query}.go`         | create | `SessionHandler`, `TransactionHandler`, the parsers of `from`, `to`, `plate`, `free`, and `kind`                                                                 |
+| `widget/balance.go`                              | change | `Link` of a connected answer is `/overview` (`PARKHIST-DD-010`)                                                                                                  |
+| `permission/permission.go`                       | change | `HistoryRead = "history.read"`                                                                                                                                   |
+| `main.go`                                        | change | The new routes, `history.read`, and the UI routes of section 2                                                                                                   |
+| `ui/src/entry.ts`                                | change | The page routes of section 2                                                                                                                                     |
+| `ui/src/pages/{overview,sessions,transactions}/` | create | `Overview.svelte`, `Sessions.svelte`, `Transactions.svelte`                                                                                                      |
+| `ui/src/components/`                             | create | `PeriodPicker.svelte`, `NoData.svelte`, `NoAccess.svelte`, `ChargeChart.svelte`, `BalanceCard.svelte`, `LotList.svelte`, `FilterBar.svelte`                      |
+| `ui/src/lib/{address,chart,format,period}.ts`    | create | The copies of the pensions plugin (`UI-006` forbids an import), with the filters and the kinds of this feature                                                   |
+| `ui/src/api/{session,transaction}.ts`            | create | One function for each route of section 2                                                                                                                         |
 
 Each handler depends on an interface that it declares, and `HistoryStore` meets it.
 
