@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/abgeo/maroid/plugins/parking/config"
+	"github.com/abgeo/maroid/plugins/parking/errs"
 	"github.com/abgeo/maroid/plugins/parking/model"
 )
 
@@ -164,9 +165,31 @@ func (m *LotMap) tile(ctx context.Context, key TileKey) ([]byte, error) {
 		return nil, fmt.Errorf("reading a map tile: %w", err)
 	}
 
+	if err = checkTile(data); err != nil {
+		return nil, fmt.Errorf("checking the tile %d/%d/%d: %w", key.Zoom, key.X, key.Y, err)
+	}
+
 	m.cache.Put(key, data)
 
 	return data, nil
+}
+
+// checkTile reads the header of the tile, so a header that declares a huge image never
+// reaches the decode.
+func checkTile(data []byte) error {
+	header, err := png.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("%w: the tile is not a PNG: %w", errs.ErrMapSource, err)
+	}
+
+	if header.Width != tileSize || header.Height != tileSize {
+		return fmt.Errorf(
+			"%w: the tile is %d by %d pixels",
+			errs.ErrMapSource, header.Width, header.Height,
+		)
+	}
+
+	return nil
 }
 
 // mapView places the image on the world of Web Mercator at one zoom. left and top

@@ -21,6 +21,7 @@ const (
 	labelPadY     = 3
 	labelBorder   = 1.5
 	labelGridStep = 2
+	labelReach    = 500
 	half          = 0.5
 	// bothSides doubles a padding that applies on each side of a box.
 	bothSides = 2
@@ -61,8 +62,45 @@ func (b box) overlaps(other box) bool {
 		b.y < other.y+other.h && other.y < b.y+b.h
 }
 
-func (b box) covers(point orb.Point) bool {
-	return point.X() >= b.x && point.X() <= b.x+b.w && point.Y() >= b.y && point.Y() <= b.y+b.h
+// touches answers whether the rectangle shares a point with the area of the ring: an
+// edge crosses the rectangle, or the ring holds its center.
+func (b box) touches(ring orb.Ring) bool {
+	for i := 1; i < len(ring); i++ {
+		if b.crosses(ring[i-1], ring[i]) {
+			return true
+		}
+	}
+
+	return planar.RingContains(ring, orb.Point{b.x + b.w*half, b.y + b.h*half})
+}
+
+// crosses answers whether the segment meets the rectangle, by the clip of Liang and
+// Barsky: each side of the rectangle narrows the part of the segment inside it.
+func (b box) crosses(from, to orb.Point) bool {
+	deltaX, deltaY := to.X()-from.X(), to.Y()-from.Y()
+	enter, leave := 0.0, 1.0
+
+	sides := [][2]float64{
+		{-deltaX, from.X() - b.x},
+		{deltaX, b.x + b.w - from.X()},
+		{-deltaY, from.Y() - b.y},
+		{deltaY, b.y + b.h - from.Y()},
+	}
+
+	for _, side := range sides {
+		direction, room := side[0], side[1]
+
+		switch {
+		case direction == 0 && room < 0:
+			return false
+		case direction < 0:
+			enter = max(enter, room/direction)
+		case direction > 0:
+			leave = min(leave, room/direction)
+		}
+	}
+
+	return enter <= leave
 }
 
 func boxAround(x, y, width, height float64) box {
@@ -141,9 +179,10 @@ func drawOutline(canvas *gg.Context, outline []orb.Point, stroke color.RGBA) {
 }
 
 // placeLabel answers the label nearest to the centroid of the outline, on a grid along
-// the longest edge and across it, that covers a point of the outline and meets no
-// blocked rectangle. Of two at the same distance, the one nearer the start of the edge
-// wins. With no clear position, the label sits at the centroid.
+// the longest edge and across it, that touches the outline and meets no blocked
+// rectangle. Of two at the same distance, the one nearer the start of the edge wins.
+// With no clear position, the label sits at the centroid. The grid reaches labelReach
+// on each axis, so a huge outline costs no more than one that fills the image.
 func placeLabel(outline []orb.Point, width, height float64, blocked []box) box {
 	center, _ := planar.CentroidArea(orb.Polygon{orb.Ring(outline)})
 	atCenter := boxAround(center.X(), center.Y(), width, height)
@@ -154,7 +193,7 @@ func placeLabel(outline []orb.Point, width, height float64, blocked []box) box {
 	}
 
 	acrossX, acrossY := -alongY, alongX
-	samples := sampleOutline(outline)
+	ring := orb.Ring(outline)
 
 	lowAlong, highAlong := extent(outline, center, alongX, alongY)
 	lowAcross, highAcross := extent(outline, center, acrossX, acrossY)
@@ -174,7 +213,7 @@ func placeLabel(outline []orb.Point, width, height float64, blocked []box) box {
 				width, height,
 			)
 
-			if overlapsAny(candidate, blocked) || !slices.ContainsFunc(samples, candidate.covers) {
+			if overlapsAny(candidate, blocked) || !candidate.touches(ring) {
 				continue
 			}
 
@@ -198,8 +237,13 @@ func extent(outline []orb.Point, center orb.Point, dirX, dirY float64) (float64,
 	return low, high
 }
 
-// gridSteps answers the multiples of labelGridStep from low to high.
+// gridSteps answers the multiples of labelGridStep from low to high, within labelReach.
 func gridSteps(low, high float64) []float64 {
+	low, high = max(low, -labelReach), min(high, labelReach)
+	if !(low <= high) {
+		return nil
+	}
+
 	steps := make([]float64, 0, int((high-low)/labelGridStep)+1)
 
 	for k := math.Ceil(low / labelGridStep); k*labelGridStep <= high; k++ {
@@ -207,27 +251,6 @@ func gridSteps(low, high float64) []float64 {
 	}
 
 	return steps
-}
-
-// sampleOutline answers the points along each edge of the outline, one for each step
-// of the grid.
-func sampleOutline(outline []orb.Point) []orb.Point {
-	samples := make([]orb.Point, 0, len(outline))
-
-	for i := 1; i < len(outline); i++ {
-		from, to := outline[i-1], outline[i]
-		count := max(1, int(math.Ceil(math.Hypot(to.X()-from.X(), to.Y()-from.Y())/labelGridStep)))
-
-		for step := range count {
-			fraction := float64(step) / float64(count)
-			samples = append(samples, orb.Point{
-				from.X() + fraction*(to.X()-from.X()),
-				from.Y() + fraction*(to.Y()-from.Y()),
-			})
-		}
-	}
-
-	return samples
 }
 
 func longestEdgeDirection(outline []orb.Point) (float64, float64) {

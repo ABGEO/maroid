@@ -423,3 +423,28 @@ func TestTileCacheHoldsAtMost50Megabytes(t *testing.T) {
 	_, second := cache.Get(service.TileKey{Zoom: 19, X: 1})
 	assert.False(t, second, "the second tile")
 }
+
+// PARKMAP-SC-033: The label search over a huge outline ends, near the centroid.
+func TestPlaceLabelBoundsTheSearch(t *testing.T) {
+	t.Parallel()
+
+	const halfLength, width, height = 500_000, 50, 22
+
+	outline := []orb.Point{
+		{400 - halfLength, 293.5},
+		{400 + halfLength, 293.5},
+		{400 + halfLength, 306.5},
+		{400 - halfLength, 306.5},
+		{400 - halfLength, 293.5},
+	}
+	pin := service.NewBox(390, 280, 20, 29)
+	start := time.Now()
+
+	placed := service.PlaceLabel(outline, width, height, []service.Box{pin})
+
+	assert.Less(t, time.Since(start), time.Second)
+	assert.False(t, placed.Overlaps(pin))
+
+	centerX, centerY := placed.Center()
+	assert.LessOrEqual(t, math.Hypot(centerX-400, centerY-300), 500.0)
+}

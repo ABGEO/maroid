@@ -39,7 +39,13 @@ var _ LotFinder = (*NearbyLots)(nil)
 
 // NewNearbyLots creates a NearbyLots.
 func NewNearbyLots(client APIClientService, logger *slog.Logger) *NearbyLots {
-	return &NearbyLots{client: client, logger: logger}
+	return &NearbyLots{
+		client: client,
+		logger: logger.With(
+			slog.String("component", "service"),
+			slog.String("service", "nearby-lots"),
+		),
+	}
 }
 
 // FindNearby answers the parking lots whose outline lies within 30 m of the location,

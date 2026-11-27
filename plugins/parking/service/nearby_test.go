@@ -24,6 +24,8 @@ const (
 	boxTolerance = 1e-7
 	// distanceTolerance bounds the error of a distance in meters.
 	distanceTolerance = 0.1
+
+	nearestLot = "A306"
 )
 
 // lotsClient plays the parking service for GetParkingLots, and records the box.
@@ -87,18 +89,18 @@ func TestFindNearbyOffersLotsWithin30Meters(t *testing.T) {
 	t.Parallel()
 
 	client := &lotsClient{lots: []dto.ParkingLot{
-		rectangle("A306", 8, 11, -1.5, 1.5),
+		rectangle(nearestLot, 8, 11, -1.5, 1.5),
 		rectangle("A302", -1.5, 1.5, 25, 40),
 	}}
 
-	assert.Equal(t, []string{"A306", "A302"}, findNearby(t, client))
+	assert.Equal(t, []string{nearestLot, "A302"}, findNearby(t, client))
 }
 
 // PARKMAP-SC-002: A lot whose outline contains the location lies at 0 m.
 func TestFindNearbyMeasuresZeroInsideTheOutline(t *testing.T) {
 	t.Parallel()
 
-	client := &lotsClient{lots: []dto.ParkingLot{rectangle("A306", -2, 20, -1.5, 1.5)}}
+	client := &lotsClient{lots: []dto.ParkingLot{rectangle(nearestLot, -2, 20, -1.5, 1.5)}}
 	finder := service.NewNearbyLots(client, slog.New(slog.DiscardHandler))
 
 	lots, err := finder.FindNearby(t.Context(), originLat, originLng)
@@ -166,9 +168,27 @@ func TestFindNearbyOrdersByDistanceThenNumber(t *testing.T) {
 		rectangle("B12", 12, 14, -1, 1),
 		rectangle("A302", -1, 1, 9, 11),
 		rectangle("A102", -14, -12, -1, 1),
-		rectangle("A306", -1, 1, -6, -4),
+		rectangle(nearestLot, -1, 1, -6, -4),
 		rectangle("A12", -1, 1, 12, 14),
 	}}
 
-	assert.Equal(t, []string{"A306", "A302", "A12", "A102", "B12"}, findNearby(t, client))
+	assert.Equal(t, []string{nearestLot, "A302", "A12", "A102", "B12"}, findNearby(t, client))
+}
+
+// PARKMAP-SC-032: A lot with a point outside the range of the map leaves the search.
+func TestFindNearbyDropsAnOutlineOutOfRange(t *testing.T) {
+	t.Parallel()
+
+	lat3m := originLat + 3/earthRadius*180/math.Pi
+	near := dto.ParkingLot{
+		Polygon: fmt.Sprintf(
+			"POLYGON ((%[1]f %[3]f, %[2]f %[3]f, %[4]f 90, %[1]f %[3]f))",
+			originLng-0.0001, originLng+0.0001, lat3m, originLng,
+		),
+		UniqueNumber: "A303",
+	}
+
+	client := &lotsClient{lots: []dto.ParkingLot{near, rectangle(nearestLot, -1, 1, -6, -4)}}
+
+	assert.Equal(t, []string{nearestLot}, findNearby(t, client))
 }

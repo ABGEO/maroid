@@ -46,7 +46,10 @@ func NewSelectLot(
 		maps:         maps,
 		mapTimeout:   mapTimeout,
 		answers:      answers,
-		logger:       logger,
+		logger: logger.With(
+			slog.String("component", "conversation"),
+			slog.String("conversation", "start_parking"),
+		),
 	}
 }
 
