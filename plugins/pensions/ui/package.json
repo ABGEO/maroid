@@ -1,0 +1,32 @@
+{
+	"name": "pensions-ui",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "vite build",
+		"dev": "vite build --watch",
+		"lint": "prettier --check .",
+		"format": "prettier --write ."
+	},
+	"dependencies": {
+		"@maroid/plugin-sdk": "workspace:*",
+		"@maroid/ui": "workspace:*"
+	},
+	"peerDependencies": {
+		"svelte": "^5.55.7"
+	},
+	"devDependencies": {
+		"@module-federation/vite": "^1.15.4",
+		"@sveltejs/vite-plugin-svelte": "^7.0.0",
+		"@tailwindcss/vite": "^4.1.18",
+		"daisyui": "^5.5.19",
+		"prettier": "^3.8.1",
+		"prettier-plugin-svelte": "^4.0.0",
+		"prettier-plugin-tailwindcss": "^0.8.0",
+		"svelte": "^5.55.7",
+		"tailwindcss": "^4.1.18",
+		"typescript": "~6.0.3",
+		"vite": "^8.0.0"
+	}
+}
