@@ -11,7 +11,10 @@ import (
 	"github.com/abgeo/maroid/plugins/parking/service"
 )
 
-const connectionPage = "/account"
+const (
+	connectionPage = "/account"
+	overviewPage   = "/overview"
+)
 
 // NewBalance builds the widget of the balance of the parking account of the acting
 // user, which also reads the free parkings left today.
@@ -48,7 +51,8 @@ func NewBalance(connections service.ConnectionService) *pluginapi.FuncWidget {
 				Value:   fmt.Sprintf("%.2f", connection.Account.Balance),
 				Unit:    "GEL",
 				Caption: freeParkingsLeft(connection.Account.FreeParkingsLeft),
-				Link:    connectionPage,
+				// PARKHIST-FR-021: A connected member opens the history.
+				Link: overviewPage,
 			}), nil
 		},
 	)

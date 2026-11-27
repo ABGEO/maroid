@@ -47,7 +47,9 @@ func connected(balance float64, freeLeft int) *model.Connection {
 }
 
 // WIDGET-SC-014: A connected account answers its balance in GEL, the free parkings
-// left today, and the connection page.
+// left today, and the overview page.
+// PARKHIST-SC-020: A connected answer links to the overview. No connection links to the
+// connection page.
 func TestTheBalanceWidgetAnswersTheBalance(t *testing.T) {
 	t.Parallel()
 
@@ -65,7 +67,7 @@ func TestTheBalanceWidgetAnswersTheBalance(t *testing.T) {
 		Value:   "4.50",
 		Unit:    "GEL",
 		Caption: "4 free parkings left today",
-		Link:    "/account",
+		Link:    "/overview",
 	}), first)
 	require.Equal(t, "1 free parking left today", second.Stat.Caption)
 

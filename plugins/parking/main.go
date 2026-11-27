@@ -44,6 +44,7 @@ type ParkingPlugin struct {
 	connections                service.ConnectionService
 	answers                    *command.Notice
 	collector                  *service.Collector
+	history                    *service.HistoryStore
 }
 
 var (
@@ -95,6 +96,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 
 	apiClient := service.NewAPIClient(pluginConfig, secrets)
 	logger := host.Logger()
+	history := service.NewHistoryStore(database)
 
 	return &ParkingPlugin{
 		config:                     pluginConfig,
@@ -104,11 +106,8 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		apiClientSvc:               apiClient,
 		connections:                service.NewConnections(apiClient, settings, secrets),
 		answers:                    command.NewNotice(pages),
-		collector: service.NewCollector(
-			apiClient,
-			service.NewHistoryStore(database),
-			logger,
-		),
+		collector:                  service.NewCollector(apiClient, history, logger),
+		history:                    history,
 	}, nil
 }
 
@@ -153,6 +152,11 @@ func (p *ParkingPlugin) Permissions() ([]pluginapi.Permission, error) {
 			Description: "Read, connect, and disconnect your own parking account",
 			Lowest:      pluginapi.RoleViewer,
 		},
+		{
+			Name:        permission.HistoryRead,
+			Description: "Read your own past sessions and transactions",
+			Lowest:      pluginapi.RoleViewer,
+		},
 	}, nil
 }
 
@@ -176,9 +180,13 @@ func (p *ParkingPlugin) Widgets() ([]pluginapi.Widget, error) {
 	return []pluginapi.Widget{widget.NewBalance(p.connections)}, nil
 }
 
-// Routes returns the HTTP routes of the connection page.
+// Routes returns the HTTP routes of the connection page and of the history pages.
 func (p *ParkingPlugin) Routes() ([]pluginapi.Route, error) {
-	return handler.NewConnectionHandler(p.logger, p.connections).Routes(), nil
+	routes := handler.NewConnectionHandler(p.logger, p.connections).Routes()
+	routes = append(routes, handler.NewSessionHandler(p.logger, p.history).Routes()...)
+	routes = append(routes, handler.NewTransactionHandler(p.logger, p.history).Routes()...)
+
+	return routes, nil
 }
 
 func (p *ParkingPlugin) TelegramCommands() ([]pluginapi.TelegramCommand, error) {

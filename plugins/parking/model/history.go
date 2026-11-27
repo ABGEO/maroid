@@ -39,6 +39,8 @@ type Transaction struct {
 	OccurredAt        time.Time       `db:"occurred_at"`
 	SessionExternalID *int64          `db:"session_external_id"`
 	Description       string          `db:"description"`
+	// Session is the parking lot of the linked session, when a read finds it.
+	Session *LotRef `db:"-"`
 }
 
 // fullReachPages is the most pages that a full collection reads of one list.

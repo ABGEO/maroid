@@ -69,7 +69,7 @@ func (r *Transaction) Upsert(ctx context.Context, transactions []model.Transacti
 		       EXCLUDED.occurred_at, EXCLUDED.session_external_id, EXCLUDED.description)
 		RETURNING (xmax = 0) AS inserted;`
 
-	flags, err := selectNamed[bool](ctx, r.tx, query, transactionArguments(transactions))
+	flags, err := selectNamed[bool](ctx, r.tx, query, upsertTransactionArguments(transactions))
 	if err != nil {
 		return 0, fmt.Errorf("upserting the transactions: %w", err)
 	}
@@ -77,7 +77,7 @@ func (r *Transaction) Upsert(ctx context.Context, transactions []model.Transacti
 	return insertedOf(flags), nil
 }
 
-func transactionArguments(transactions []model.Transaction) map[string]any {
+func upsertTransactionArguments(transactions []model.Transaction) map[string]any {
 	externalIDs := make([]int64, len(transactions))
 	kinds := make([]string, len(transactions))
 	serviceKinds := make([]string, len(transactions))

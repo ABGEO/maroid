@@ -6,4 +6,5 @@ const (
 	SessionsRead   = "sessions.read"
 	SessionsWrite  = "sessions.write"
 	AccountConnect = "account.connect"
+	HistoryRead    = "history.read"
 )

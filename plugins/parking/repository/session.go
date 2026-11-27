@@ -68,7 +68,7 @@ func (r *Session) Upsert(ctx context.Context, sessions []model.Session) (int, er
 		       EXCLUDED.started_at, EXCLUDED.ended_at, EXCLUDED.amount)
 		RETURNING (xmax = 0) AS inserted;`
 
-	flags, err := selectNamed[bool](ctx, r.tx, query, sessionArguments(sessions))
+	flags, err := selectNamed[bool](ctx, r.tx, query, upsertSessionArguments(sessions))
 	if err != nil {
 		return 0, fmt.Errorf("upserting the sessions: %w", err)
 	}
@@ -76,7 +76,7 @@ func (r *Session) Upsert(ctx context.Context, sessions []model.Session) (int, er
 	return insertedOf(flags), nil
 }
 
-func sessionArguments(sessions []model.Session) map[string]any {
+func upsertSessionArguments(sessions []model.Session) map[string]any {
 	externalIDs := make([]int64, len(sessions))
 	lotNumbers := make([]string, len(sessions))
 	addresses := make([]string, len(sessions))
