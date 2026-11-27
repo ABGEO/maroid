@@ -135,10 +135,12 @@ paths:
       operationId: listPensionAssetValues
       summary: List the asset values of the acting user from a date.
       description: >
-        Realizes `PENSION-FR-034` and `PENSION-DD-016`. A bounded collection, the earliest date
-        first. The permission is `account.read`.
+        Realizes `PENSION-FR-034` and `PENSION-DD-016`. A page of the asset values, the latest date
+        first, with the identifier as the tie. The permission is `account.read`.
       parameters:
         - $ref: "#/components/parameters/From"
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
       responses:
         "200":
           description: Every asset value from `from`.
@@ -277,6 +279,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PensionEmployerPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
@@ -304,6 +308,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PensionPortfolioSharePage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
@@ -320,10 +326,12 @@ paths:
       summary: List the weekly unit prices of the portfolios of the acting user.
       description: >
         Realizes `PENSION-FR-043` and `PENSION-DD-018`. One item for each portfolio of the shares
-        and each ISO week from `from`: the last unit price of that week. The permission is
-        `account.read`.
+        and each ISO week from `from`: the last unit price of that week. A page, the latest date
+        first, with the identifier as the tie. The permission is `account.read`.
       parameters:
         - $ref: "#/components/parameters/From"
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
       responses:
         "200":
           description: The weekly unit prices.
@@ -584,7 +592,7 @@ components:
           type: number
           format: decimal
     PensionAssetValuePage:
-      description: A bounded collection. `next` and `prev` stay absent.
+      description: One page of the asset values.
       allOf:
         - $ref: "../../api/components.yaml#/components/schemas/Page"
         - type: object
@@ -634,7 +642,7 @@ components:
               items:
                 $ref: "#/components/schemas/PensionPortfolioShare"
     PensionUnitPricePage:
-      description: A bounded collection. `next` and `prev` stay absent.
+      description: One page of the weekly unit prices.
       allOf:
         - $ref: "../../api/components.yaml#/components/schemas/Page"
         - type: object

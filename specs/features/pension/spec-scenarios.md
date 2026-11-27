@@ -324,6 +324,26 @@ user A name.
 **Then** the wrong password answers `credentials-rejected`. The old token answers 401, and the
 plugin signs in again. The record of the answers corrects `PENSION-DD-002` and `PENSION-DD-003`.
 
+## `PENSION-SC-046`
+
+**Verifies:** `PENSION-FR-011`
+**Layer:** unit
+
+**Given** a `session` secret, no settings for user A, and the fake service answers the participant
+read with 401.
+**When** user A reads `GET /connections/self`.
+**Then** the answer is 200 `not_connected`. No `session` secret exists. The fake service records no
+sign in.
+
+## `PENSION-SC-047`
+
+**Verifies:** `PENSION-FR-006`
+**Layer:** unit
+
+**Given** a configuration with `request_timeout: 0s`.
+**When** the plugin decodes it.
+**Then** the decoder refuses it, so no call to the pension service waits without an end.
+
 ## Retired identifiers
 
 This file has no retired identifier.

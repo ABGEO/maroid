@@ -25,60 +25,60 @@ decisions, and their scenarios. `spec-scenarios.md` holds the other scenarios.
 
 ## 2. Coverage
 
-| Requirement       | Where this specification realizes it                                   |
-| ----------------- | ---------------------------------------------------------------------- |
-| `PENSION-FR-001`  | Section 4.3, `PENSION-SC-001`                                          |
-| `PENSION-FR-002`  | Section 4.3, `PENSION-SC-001`                                          |
-| `PENSION-FR-003`  | `api.yaml`, `PENSION-SC-002`                                           |
-| `PENSION-FR-004`  | `api.yaml`, `PENSION-SC-003`                                           |
-| `PENSION-FR-005`  | `api.yaml`, `PENSION-DD-004`, `PENSION-SC-004`                         |
-| `PENSION-FR-006`  | Section 4.5, `PENSION-SC-005`                                          |
-| `PENSION-FR-007`  | Section 4.3, `PENSION-SC-006`                                          |
-| `PENSION-FR-008`  | `PENSION-DD-001`, `PENSION-SC-006` to `PENSION-SC-008`                 |
-| `PENSION-FR-009`  | Section 4.3, `PENSION-SC-009`                                          |
-| `PENSION-FR-010`  | `PENSION-DD-002`, `PENSION-SC-010`, `PENSION-SC-011`                   |
-| `PENSION-FR-011`  | `PENSION-DD-002`, `PENSION-SC-012`                                     |
-| `PENSION-FR-012`  | Section 4.2, `PENSION-SC-009`                                          |
-| `PENSION-FR-013`  | Section 4.3, `PENSION-SC-013`                                          |
-| `PENSION-FR-014`  | Section 4.3, `PENSION-SC-014`                                          |
-| `PENSION-FR-015`  | Section 4.3, `PENSION-SC-015`                                          |
-| `PENSION-FR-016`  | `PENSION-DD-005`, `PENSION-SC-016`, `PENSION-SC-017`                   |
-| `PENSION-FR-017`  | Section 4.4, `PENSION-SC-018`                                          |
-| `PENSION-FR-018`  | `PENSION-DD-008`, `PENSION-SC-019`                                     |
-| `PENSION-FR-019`  | `PENSION-DD-007`, `PENSION-SC-020`                                     |
-| `PENSION-FR-020`  | `PENSION-DD-006`, `PENSION-SC-021`, `PENSION-SC-022`                   |
-| `PENSION-FR-021`  | Section 4.2, `PENSION-DD-009`, `PENSION-SC-023`                        |
-| `PENSION-FR-022`  | Section 4.2, `PENSION-SC-024`                                          |
-| `PENSION-FR-023`  | Section 4.3, `PENSION-DD-010`, `PENSION-SC-025`                        |
-| `PENSION-FR-024`  | `PENSION-DD-010`, `PENSION-SC-026`                                     |
-| `PENSION-FR-025`  | Section 4.5, `PENSION-SC-027`                                          |
-| `PENSION-FR-026`  | Section 4.3, `PENSION-SC-028`                                          |
-| `PENSION-FR-027`  | `spec-pages.md`, `PENSION-DD-012`, `PENSION-SC-032`                    |
-| `PENSION-FR-028`  | `spec-pages.md`, `PENSION-DD-012`, `PENSION-SC-033`                    |
-| `PENSION-FR-029`  | `spec-pages.md`, `PENSION-DD-012`, `PENSION-SC-033`                    |
-| `PENSION-FR-030`  | `spec-pages.md`, `PENSION-DD-012`, `PENSION-SC-033`                    |
-| `PENSION-FR-031`  | `spec-pages.md`, `PENSION-DD-012`, `PENSION-SC-032`                    |
-| `PENSION-FR-032`  | `spec-pages.md`, `api.yaml`, `PENSION-SC-034`                          |
-| `PENSION-FR-033`  | `spec-pages.md`, `api.yaml`, `PENSION-SC-034`                          |
-| `PENSION-FR-034`  | `PENSION-DD-016`, `PENSION-DD-017`, `PENSION-SC-035`, `PENSION-SC-036` |
-| `PENSION-FR-035`  | `PENSION-DD-016`, `PENSION-SC-035`                                     |
-| `PENSION-FR-036`  | `PENSION-DD-014`, `PENSION-SC-037`                                     |
-| `PENSION-FR-037`  | `PENSION-DD-014`, `PENSION-SC-037`                                     |
-| `PENSION-FR-038`  | `PENSION-DD-014`, `PENSION-SC-037`                                     |
-| `PENSION-FR-039`  | `PENSION-DD-019`, `PENSION-SC-038`, `PENSION-SC-040`                   |
-| `PENSION-FR-040`  | `spec-pages.md`, section 2, `PENSION-SC-038`, `PENSION-SC-039`         |
-| `PENSION-FR-041`  | `PENSION-DD-015`, `PENSION-SC-038`                                     |
-| `PENSION-FR-042`  | `PENSION-DD-019`, `PENSION-SC-041`                                     |
-| `PENSION-FR-043`  | `PENSION-DD-018`, `PENSION-SC-042`                                     |
-| `PENSION-FR-044`  | `PENSION-DD-013`, `PENSION-SC-034`                                     |
-| `PENSION-FR-045`  | `PENSION-DD-013`, `PENSION-SC-034`                                     |
-| `PENSION-FR-046`  | `PENSION-DD-013`, `PENSION-SC-043`                                     |
-| `PENSION-FR-047`  | `spec-pages.md`, section 2, `PENSION-SC-044`                           |
-| `PENSION-NFR-001` | `PENSION-DD-015`, `PENSION-SC-045`                                     |
-| `PENSION-INV-001` | `PENSION-DD-001`, `PENSION-SC-007`                                     |
-| `PENSION-INV-002` | Section 4.2, `PENSION-SC-029`                                          |
-| `PENSION-INV-003` | `api.yaml`, `PENSION-DD-004`, `PENSION-SC-030`                         |
-| `PENSION-INV-004` | `PENSION-DD-004`, `PENSION-SC-030`                                     |
+| Requirement       | Where this specification realizes it                                             |
+| ----------------- | -------------------------------------------------------------------------------- |
+| `PENSION-FR-001`  | Section 4.3, `PENSION-SC-001`                                                    |
+| `PENSION-FR-002`  | Section 4.3, `PENSION-SC-001`                                                    |
+| `PENSION-FR-003`  | `api.yaml`, `PENSION-SC-002`                                                     |
+| `PENSION-FR-004`  | `api.yaml`, `PENSION-SC-003`                                                     |
+| `PENSION-FR-005`  | `api.yaml`, `PENSION-DD-004`, `PENSION-SC-004`                                   |
+| `PENSION-FR-006`  | Section 4.5, `PENSION-SC-005`, `PENSION-SC-047`                                  |
+| `PENSION-FR-007`  | Section 4.3, `PENSION-SC-006`                                                    |
+| `PENSION-FR-008`  | `PENSION-DD-001`, `PENSION-SC-006` to `PENSION-SC-008`                           |
+| `PENSION-FR-009`  | Section 4.3, `PENSION-SC-009`                                                    |
+| `PENSION-FR-010`  | `PENSION-DD-002`, `PENSION-SC-010`, `PENSION-SC-011`                             |
+| `PENSION-FR-011`  | `PENSION-DD-002`, `PENSION-SC-012`, `PENSION-SC-046`                             |
+| `PENSION-FR-012`  | Section 4.2, `PENSION-SC-009`                                                    |
+| `PENSION-FR-013`  | Section 4.3, `PENSION-SC-013`                                                    |
+| `PENSION-FR-014`  | Section 4.3, `PENSION-SC-014`                                                    |
+| `PENSION-FR-015`  | Section 4.3, `PENSION-SC-015`                                                    |
+| `PENSION-FR-016`  | `PENSION-DD-005`, `PENSION-SC-016`, `PENSION-SC-017`                             |
+| `PENSION-FR-017`  | Section 4.4, `PENSION-SC-018`                                                    |
+| `PENSION-FR-018`  | `PENSION-DD-008`, `PENSION-SC-019`                                               |
+| `PENSION-FR-019`  | `PENSION-DD-007`, `PENSION-SC-020`                                               |
+| `PENSION-FR-020`  | `PENSION-DD-006`, `PENSION-SC-021`, `PENSION-SC-022`                             |
+| `PENSION-FR-021`  | Section 4.2, `PENSION-DD-009`, `PENSION-SC-023`                                  |
+| `PENSION-FR-022`  | Section 4.2, `PENSION-SC-024`                                                    |
+| `PENSION-FR-023`  | Section 4.3, `PENSION-DD-010`, `PENSION-SC-025`                                  |
+| `PENSION-FR-024`  | `PENSION-DD-010`, `PENSION-SC-026`                                               |
+| `PENSION-FR-025`  | Section 4.5, `PENSION-SC-027`                                                    |
+| `PENSION-FR-026`  | Section 4.3, `PENSION-SC-028`                                                    |
+| `PENSION-FR-027`  | `spec-pages.md`, `PENSION-DD-012`, `PENSION-SC-032`                              |
+| `PENSION-FR-028`  | `spec-pages.md`, `PENSION-DD-012`, `PENSION-SC-033`                              |
+| `PENSION-FR-029`  | `spec-pages.md`, `PENSION-DD-012`, `PENSION-SC-033`                              |
+| `PENSION-FR-030`  | `spec-pages.md`, `PENSION-DD-012`, `PENSION-SC-033`                              |
+| `PENSION-FR-031`  | `spec-pages.md`, `PENSION-DD-012`, `PENSION-SC-032`                              |
+| `PENSION-FR-032`  | `spec-pages.md`, `api.yaml`, `PENSION-SC-034`                                    |
+| `PENSION-FR-033`  | `spec-pages.md`, `api.yaml`, `PENSION-SC-034`                                    |
+| `PENSION-FR-034`  | `PENSION-DD-016`, `PENSION-DD-017`, `PENSION-SC-035`, `PENSION-SC-036`           |
+| `PENSION-FR-035`  | `PENSION-DD-016`, `PENSION-SC-035`                                               |
+| `PENSION-FR-036`  | `PENSION-DD-014`, `PENSION-SC-037`                                               |
+| `PENSION-FR-037`  | `PENSION-DD-014`, `PENSION-SC-037`                                               |
+| `PENSION-FR-038`  | `PENSION-DD-014`, `PENSION-SC-037`                                               |
+| `PENSION-FR-039`  | `PENSION-DD-019`, `PENSION-DD-020`, `PENSION-SC-038`, `PENSION-SC-040`           |
+| `PENSION-FR-040`  | `spec-pages.md`, section 2, `PENSION-DD-020`, `PENSION-SC-038`, `PENSION-SC-039` |
+| `PENSION-FR-041`  | `PENSION-DD-015`, `PENSION-SC-038`                                               |
+| `PENSION-FR-042`  | `PENSION-DD-019`, `PENSION-SC-041`                                               |
+| `PENSION-FR-043`  | `PENSION-DD-018`, `PENSION-SC-042`                                               |
+| `PENSION-FR-044`  | `PENSION-DD-013`, `PENSION-SC-034`                                               |
+| `PENSION-FR-045`  | `PENSION-DD-013`, `PENSION-SC-034`                                               |
+| `PENSION-FR-046`  | `PENSION-DD-013`, `PENSION-SC-043`                                               |
+| `PENSION-FR-047`  | `spec-pages.md`, section 2, `PENSION-SC-044`                                     |
+| `PENSION-NFR-001` | `PENSION-DD-015`, `PENSION-SC-045`                                               |
+| `PENSION-INV-001` | `PENSION-DD-001`, `PENSION-SC-007`                                               |
+| `PENSION-INV-002` | Section 4.2, `PENSION-SC-029`                                                    |
+| `PENSION-INV-003` | `api.yaml`, `PENSION-DD-004`, `PENSION-SC-030`                                   |
+| `PENSION-INV-004` | `PENSION-DD-004`, `PENSION-SC-030`                                               |
 
 ## 3. Guideline compliance
 
@@ -176,10 +176,11 @@ The session lives in the user plugin secret `session`, with no expiry: the JSON 
 | `portfolio_shares`      | `dev_maroid_pensions` | User   | `PENSION-FR-019`                                     |
 
 Every table holds `id UUID PRIMARY KEY DEFAULT uuidv7()` and `collected_at TIMESTAMPTZ NOT
-NULL DEFAULT now()`. Each table of a user holds the `user_id` column of `OWN-005`, with
-`ON DELETE CASCADE`, and the policy `<table>_user_isolation` of `OWN-006`. Each money value and
+NULL DEFAULT now()`. Each table of a user holds the `user_id` column of `OWN-005`, which cascades on nothing,
+and the policy `<table>_user_isolation` of `OWN-006`. Each money value and
 each count of units is `NUMERIC`. Each upsert runs `ON CONFLICT ... DO UPDATE` on every value
-column, `WHERE (...) IS DISTINCT FROM (EXCLUDED...)`.
+column, `WHERE (...) IS DISTINCT FROM (EXCLUDED...)`. The write of `account_summaries` carries no
+`WHERE`, because `collected_at` dates the summary that the person reads and moves on each collection.
 
 | Table                   | Columns beside `id`, `user_id`, and `collected_at`                                                                                                                                                                                           | Unique key                      |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
@@ -233,7 +234,7 @@ erDiagram
 | Key                               | Type                   | Default                        | Secret | Realizes                           |
 | --------------------------------- | ---------------------- | ------------------------------ | ------ | ---------------------------------- |
 | `base_url`                        | URL, no trailing slash | `https://api7.pensions.ge/api` | No     | `PENSION-FR-008`                   |
-| `request_timeout`                 | duration               | `15s`                          | No     | `PENSION-FR-006`                   |
+| `request_timeout`                 | duration, above zero   | `15s`                          | No     | `PENSION-FR-006`                   |
 | `cron_schedule.account_collector` | cron                   | `0 10 1 * *`                   | No     | `PENSION-FR-013`, `PENSION-FR-014` |
 
 `cron_schedule.contributions_collector` goes. The decoder ignores the old key.
@@ -436,19 +437,19 @@ chunk of a few rows costs more than it saves.
 
 | #   | Step                                                                                                                                           | Realizes                                                                   | Done |
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---- |
-| 1   | The migrations of section 4.2, with the indexes of `spec-pages.md`. Run them up, down, and up                                                  | `PENSION-FR-012`, `PENSION-FR-021`, `PENSION-FR-022`, `PENSION-INV-002`    | [ ]  |
-| 2   | `errs/`, `model/`, `config/`, and `permission/`                                                                                                | `PENSION-FR-001`, `PENSION-FR-002`, `PENSION-FR-014`                       | [ ]  |
-| 3   | The DTOs and `service/api-client.go`                                                                                                           | `PENSION-FR-016` to `PENSION-FR-018`, `PENSION-INV-004`                    | [ ]  |
-| 4   | `service/account.go` and `service/connection.go`                                                                                               | `PENSION-FR-003` to `PENSION-FR-011`                                       | [ ]  |
-| 5   | `repository/`, `service/store.go`, and `service/collector.go`                                                                                  | `PENSION-FR-016` to `PENSION-FR-022`                                       | [ ]  |
-| 6   | `job/account_collector.go` and `cli/backfill.go`                                                                                               | `PENSION-FR-013` to `PENSION-FR-015`, `PENSION-FR-023` to `PENSION-FR-025` | [ ]  |
-| 7   | The connection handler and its part of `api.yaml`                                                                                              | `PENSION-FR-003` to `PENSION-FR-009`, `PENSION-FR-026`                     | [ ]  |
-| 8   | The reads of `spec-pages.md`: `repository/`, `service/store_read.go`, `service/reader.go`, the DTOs                                            | `PENSION-FR-032` to `PENSION-FR-043`, `PENSION-NFR-001`                    | [ ]  |
-| 9   | The read handlers, the widget, and their part of `api.yaml`                                                                                    | `PENSION-FR-027` to `PENSION-FR-047`                                       | [ ]  |
-| 10  | `ui/`: the account page and the three pages of `spec-pages.md`. `embed.go`, `main.go`, `config.yaml`. Build the UI, then the `.so` (`BLD-003`) | `PENSION-FR-003` to `PENSION-FR-009`, `PENSION-FR-032` to `PENSION-FR-045` | [ ]  |
+| 1   | The migrations of section 4.2, with the indexes of `spec-pages.md`. Run them up, down, and up                                                  | `PENSION-FR-012`, `PENSION-FR-021`, `PENSION-FR-022`, `PENSION-INV-002`    | [x]  |
+| 2   | `errs/`, `model/`, `config/`, and `permission/`                                                                                                | `PENSION-FR-001`, `PENSION-FR-002`, `PENSION-FR-014`                       | [x]  |
+| 3   | The DTOs and `service/api-client.go`                                                                                                           | `PENSION-FR-016` to `PENSION-FR-018`, `PENSION-INV-004`                    | [x]  |
+| 4   | `service/account.go` and `service/connection.go`                                                                                               | `PENSION-FR-003` to `PENSION-FR-011`                                       | [x]  |
+| 5   | `repository/`, `service/store.go`, and `service/collector.go`                                                                                  | `PENSION-FR-016` to `PENSION-FR-022`                                       | [x]  |
+| 6   | `job/account_collector.go` and `cli/backfill.go`                                                                                               | `PENSION-FR-013` to `PENSION-FR-015`, `PENSION-FR-023` to `PENSION-FR-025` | [x]  |
+| 7   | The connection handler and its part of `api.yaml`                                                                                              | `PENSION-FR-003` to `PENSION-FR-009`, `PENSION-FR-026`                     | [x]  |
+| 8   | The reads of `spec-pages.md`: `repository/`, `service/store_read.go`, `service/reader.go`, the DTOs                                            | `PENSION-FR-032` to `PENSION-FR-043`, `PENSION-NFR-001`                    | [x]  |
+| 9   | The read handlers, the widget, and their part of `api.yaml`                                                                                    | `PENSION-FR-027` to `PENSION-FR-047`                                       | [x]  |
+| 10  | `ui/`: the account page and the three pages of `spec-pages.md`. `embed.go`, `main.go`, `config.yaml`. Build the UI, then the `.so` (`BLD-003`) | `PENSION-FR-003` to `PENSION-FR-009`, `PENSION-FR-032` to `PENSION-FR-045` | [x]  |
 | 11  | `PENSION-SC-031` against the pension service, then `backfill` of the history. Correct `PENSION-DD-002` and `PENSION-DD-003`                    | `PENSION-FR-008`, `PENSION-FR-010`, `PENSION-FR-011`, `PENSION-FR-023`     | [ ]  |
-| 12  | The tests of `spec-scenarios.md` and of `spec-pages.md`, with `PENSION-SC-045`. Lint and build the plugin                                      | Every statement                                                            | [ ]  |
-| 13  | The entry of `pensions.so` in `chart/values.yaml`, with the schedule of section 4.3                                                            | `PENSION-FR-013`, `PENSION-FR-014`                                         | [ ]  |
+| 12  | The tests of `spec-scenarios.md` and of `spec-pages.md`, with `PENSION-SC-045`. Lint and build the plugin                                      | Every statement                                                            | [x]  |
+| 13  | The entry of `pensions.so` in `chart/values.yaml`, with the schedule of section 4.3                                                            | `PENSION-FR-013`, `PENSION-FR-014`                                         | [x]  |
 
 ## Retired identifiers
 
