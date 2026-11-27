@@ -16,7 +16,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm fetch --store-dir /pnpm/store
 
 COPY . .
-RUN pnpm install --store-dir /pnpm/store --offline --frozen-lockfile --filter '{./plugins/*/ui}...' \
+RUN pnpm install --store-dir /pnpm/store --prefer-offline --frozen-lockfile --filter '{./plugins/*/ui}...' \
   && pnpm --config.verify-deps-before-run=false --filter './plugins/*/ui' build \
   && mkdir /out \
   && for dist in plugins/*/ui/dist; do mkdir -p "/out/${dist%/dist}" && cp -R "$dist" "/out/$dist"; done
