@@ -14,7 +14,7 @@ const paramFrom = "from"
 // parameter :boundary names. A list runs the latest first, so a forward read goes toward
 // the earlier rows. The alias is t, and the identifier breaks a tie of the column.
 //
-// PARKHIST-DD-011: Two rows can share a time, so the time alone does not order a page.
+// Two rows can share a time, so the time alone does not order a page.
 func keyset(seek page.Seek, table string, column string) (string, string) {
 	operator, direction := "<", "DESC"
 	if seek.Direction == page.DirectionBackward {

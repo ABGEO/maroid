@@ -51,7 +51,7 @@ func NewBalance(connections service.ConnectionService) *pluginapi.FuncWidget {
 				Value:   fmt.Sprintf("%.2f", connection.Account.Balance),
 				Unit:    "GEL",
 				Caption: freeParkingsLeft(connection.Account.FreeParkingsLeft),
-				// PARKHIST-FR-021: A connected member opens the history.
+				// A connected member opens the history.
 				Link: overviewPage,
 			}), nil
 		},

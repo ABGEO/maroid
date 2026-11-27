@@ -15,7 +15,7 @@ import (
 
 // SessionsPage answers one page of the sessions of the filter, the latest start first.
 //
-// PARKHIST-FR-044: Every read answers from the database, with no call to the parking
+// Every read answers from the database, with no call to the parking
 // service.
 func (s *HistoryStore) SessionsPage(
 	ctx context.Context,

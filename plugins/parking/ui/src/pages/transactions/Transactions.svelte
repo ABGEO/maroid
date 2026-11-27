@@ -26,6 +26,7 @@
 	let filter = $state<TransactionFilter>(
 		filterOfAddress(window.location.search, KEYS) as TransactionFilter
 	);
+	let held = $state<boolean | null>(null);
 	let total = $state<TransactionTotal | null>(null);
 	let totalFailure = $state<string | null>(null);
 	let readsFirstPage = true;
@@ -45,6 +46,16 @@
 
 		return api.transactions.page($state.snapshot(filter), follow);
 	});
+
+	// The first read carries no filter, so a filter in the address cannot hide that Maroid
+	// holds no row yet.
+	async function loadHeld(): Promise<void> {
+		try {
+			held = await api.transactions.any();
+		} catch (error) {
+			console.error('Failed to read whether Maroid holds a transaction', error);
+		}
+	}
 
 	async function loadTotal(): Promise<void> {
 		totalFailure = null;
@@ -73,6 +84,12 @@
 	}
 
 	$effect(() => {
+		if (canRead) {
+			void loadHeld();
+		}
+	});
+
+	$effect(() => {
 		// Read every member, so that a change of any one of them reads again.
 		void [filter.from, filter.to, filter.kind];
 
@@ -96,6 +113,8 @@
 
 	{#if !canRead}
 		<NoAccess />
+	{:else if held === false}
+		<NoData {host} />
 	{:else}
 		<FilterBar {filtered} onclear={clear}>
 			<label class="flex flex-col gap-1">
@@ -159,11 +178,7 @@
 						<button type="button" class="btn btn-sm" onclick={retry}>Retry</button>
 					</div>
 				{:else if pager.page?.items.length === 0}
-					{#if filtered}
-						<div class="empty-state">No transaction matches the filter.</div>
-					{:else}
-						<NoData {host} />
-					{/if}
+					<div class="empty-state">No transaction matches the filter.</div>
 				{:else}
 					<div class="panel overflow-x-auto">
 						<table class="table-zebra table">

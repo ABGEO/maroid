@@ -8,7 +8,7 @@ import (
 
 // SessionResponse is one row of the sessions page.
 //
-// PARKHIST-INV-002: The answer holds no wallet number.
+// The answer holds no wallet number.
 type SessionResponse struct {
 	ID              string        `json:"id"`
 	LotNumber       string        `json:"lot_number"`
@@ -35,7 +35,7 @@ type PlateResponse struct {
 
 // NewSessionResponseList converts the sessions to their answers.
 //
-// PARKHIST-FR-030, PARKHIST-DD-005: A session with an amount of 0 is a free parking.
+// A session with an amount of 0 is a free parking.
 func NewSessionResponseList(sessions []model.Session) []SessionResponse {
 	responses := make([]SessionResponse, 0, len(sessions))
 

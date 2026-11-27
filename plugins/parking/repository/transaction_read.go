@@ -29,7 +29,7 @@ type transactionRow struct {
 // Page answers one keyset read of the transactions of the filter, the latest moment
 // first, each with the parking lot of its linked session.
 //
-// PARKHIST-FR-037, PARKHIST-DD-008: The join finds the session through the policy, so a
+// The join finds the session through the policy, so a
 // session of another user never links.
 func (r *Transaction) Page(
 	ctx context.Context,
@@ -70,8 +70,6 @@ func (r *Transaction) Page(
 
 // Total answers the count, the top ups, and the charges of every transaction of the
 // filter.
-//
-// PARKHIST-FR-042: The total holds every match, not only the shown page.
 func (r *Transaction) Total(
 	ctx context.Context,
 	filter model.TransactionFilter,
@@ -96,7 +94,7 @@ func (r *Transaction) Total(
 // ChargeMonths answers each month from the point in time that holds a transaction, the
 // earliest first. The month is the month of the zone.
 //
-// PARKHIST-FR-025, PARKHIST-DD-013: The balance of a month is the balance after its
+// The balance of a month is the balance after its
 // latest transaction.
 func (r *Transaction) ChargeMonths(
 	ctx context.Context,

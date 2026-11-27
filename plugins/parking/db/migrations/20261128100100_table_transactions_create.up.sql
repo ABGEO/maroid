@@ -16,7 +16,6 @@ CREATE TABLE transactions
     session_external_id BIGINT,
     description         TEXT           NOT NULL,
     collected_at        TIMESTAMPTZ    NOT NULL DEFAULT now(),
-    -- PARKHIST-FR-011: One transaction for one identifier of the parking service.
     CONSTRAINT transactions_user_external_id_key UNIQUE (user_id, external_id)
 );
 

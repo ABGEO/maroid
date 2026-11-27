@@ -24,7 +24,7 @@ const (
 	targetPhone          = "PHONE_VERIFICATION"
 	statusTwoFactor      = "REQUIRES_TWO_FA"
 	statusSuccess        = "SUCCESS"
-	headerSessionToken   = "session-token"
+	headerSessionToken   = "Session-Token"
 	pathSignIn           = "/v3/session/mobile"
 	pathCodeRequest      = "/um/v3/user/two-Fa/send"
 	pathCodeSubmit       = "/um/v3/user/two-Fa/submit"

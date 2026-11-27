@@ -16,7 +16,7 @@ const (
 
 	serviceZone = "Asia/Tbilisi"
 
-	// PARKHIST-DD-006: The sessions carry the local time of Tbilisi with no zone. The
+	// The sessions carry the local time of Tbilisi with no zone. The
 	// transactions carry UTC with an offset.
 	layoutSessionTime     = "2006-01-02T15:04:05.999999"
 	layoutTransactionTime = "2006-01-02T15:04:05.000-0700"
@@ -77,7 +77,7 @@ type HistoryPlace struct {
 
 // HistorySession is one row of the past sessions of the parking service.
 //
-// PARKHIST-INV-002: The type declares no member for the wallet number, so it never
+// The type declares no member for the wallet number, so it never
 // leaves the decoder.
 //
 //nolint:tagliatelle
@@ -94,7 +94,7 @@ type HistorySession struct {
 
 // Finished reports whether the parking service reports the end of the session.
 //
-// PARKHIST-DD-003: An active session has no end and a growing amount.
+// An active session has no end and a growing amount.
 func (s HistorySession) Finished() bool {
 	return s.Status == statusFinished && s.EndDate != nil
 }
@@ -102,7 +102,7 @@ func (s HistorySession) Finished() bool {
 // ToModel answers the session, with its times read in Asia/Tbilisi. A session that is
 // not finished, or holds a negative amount, answers errs.ErrUnexpectedAnswer.
 //
-// PARKHIST-FR-012, PARKHIST-FR-013: The parking service gives the local time of Tbilisi.
+// The parking service gives the local time of Tbilisi.
 func (s HistorySession) ToModel() (model.Session, error) {
 	if !s.Finished() {
 		return model.Session{}, fmt.Errorf(
@@ -159,7 +159,7 @@ func (s HistorySession) ToModel() (model.Session, error) {
 
 // PaymentEntry is one row of the ledger of the balance at the parking service.
 //
-// PARKHIST-INV-002: The type declares no member for the wallet number or the personal
+// The type declares no member for the wallet number or the personal
 // identifier, so neither leaves the decoder.
 //
 //nolint:tagliatelle
@@ -176,7 +176,7 @@ type PaymentEntry struct {
 // ToModel answers the transaction. A negative amount or a moment in an unknown layout
 // answers errs.ErrUnexpectedAnswer.
 //
-// PARKHIST-FR-014, PARKHIST-FR-016: The transaction keeps the session that it pays.
+// The transaction keeps the session that it pays.
 func (e PaymentEntry) ToModel() (model.Transaction, error) {
 	if e.Amount < 0 {
 		return model.Transaction{}, fmt.Errorf(
@@ -205,7 +205,7 @@ func (e PaymentEntry) ToModel() (model.Transaction, error) {
 
 // kindOf maps the kind that the parking service names.
 //
-// PARKHIST-FR-015, PARKHIST-DD-007: A kind that Maroid does not know is another kind.
+// A kind that Maroid does not know is another kind.
 func kindOf(operationType string) model.TransactionKind {
 	switch operationType {
 	case "FILL_BALANCE":

@@ -14,7 +14,7 @@ const lotUsageLimit = 5
 
 // matchesSessionFilter keeps the sessions of the filter. The alias is t.
 //
-// PARKHIST-DD-005, PARKHIST-DD-015: A free parking holds an amount of 0. From is included
+// A free parking holds an amount of 0. From is included
 // and to is excluded.
 const matchesSessionFilter = `
 	(CAST(:from AS timestamptz) IS NULL OR t.started_at >= CAST(:from AS timestamptz))
@@ -23,8 +23,6 @@ const matchesSessionFilter = `
 	AND (CAST(:free AS boolean) IS NULL OR (t.amount = 0) = CAST(:free AS boolean))`
 
 // Page answers one keyset read of the sessions of the filter, the latest start first.
-//
-// PARKHIST-FR-029, PARKHIST-FR-031: The latest start first, a page at a time.
 func (r *Session) Page(
 	ctx context.Context,
 	seek page.Seek,
@@ -51,8 +49,6 @@ func (r *Session) Page(
 }
 
 // Total answers the count, the durations, and the amounts of every session of the filter.
-//
-// PARKHIST-FR-035: The total holds every match, not only the shown page.
 func (r *Session) Total(
 	ctx context.Context,
 	filter model.SessionFilter,
@@ -86,7 +82,7 @@ func (r *Session) Plates(ctx context.Context) ([]string, error) {
 
 // LotUsages answers the 5 parking lots with the most sessions from the point in time.
 //
-// PARKHIST-FR-028, PARKHIST-DD-014: A tie of the count goes to the later last session, and
+// A tie of the count goes to the later last session, and
 // one lot keeps the address of its latest session.
 func (r *Session) LotUsages(ctx context.Context, from *time.Time) ([]model.LotUsage, error) {
 	const query = `

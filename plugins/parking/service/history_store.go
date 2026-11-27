@@ -41,7 +41,7 @@ func (s *HistoryStore) KnownTransactions(ctx context.Context, ids []int64) (map[
 // Save writes both lists in one database transaction, and answers the count of the new
 // rows of each.
 //
-// PARKHIST-FR-009, PARKHIST-DD-004: A failure leaves the data of the user as it was.
+// A failure leaves the data of the user as it was.
 func (s *HistoryStore) Save(
 	ctx context.Context,
 	sessions []model.Session,

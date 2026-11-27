@@ -70,7 +70,7 @@ func readPeriod(filters map[string]string) (period, *problem.Problem) {
 // points answers the period as points in time: the start of the first day, and the start
 // of the day after the last day.
 //
-// PARKHIST-DD-015: A day of a person begins at the midnight of their own time zone.
+// A day of a person begins at the midnight of their own time zone.
 func (p period) points(ctx context.Context) (*time.Time, *time.Time) {
 	zone := pluginapi.ActingTimeZone(ctx)
 
@@ -211,8 +211,6 @@ func loggerOf(logger *slog.Logger, name string) *slog.Logger {
 }
 
 // historyRoute answers a GET route that names history.read.
-//
-// PARKHIST-FR-045: Each route of the stored data names history.read.
 func historyRoute(pattern string, handle http.HandlerFunc) pluginapi.Route {
 	return pluginapi.Route{
 		Method:     http.MethodGet,

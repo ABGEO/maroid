@@ -47,9 +47,6 @@ func NewHistoryCollector(
 }
 
 // Meta returns the HistoryCollector metadata.
-//
-// PARKHIST-FR-001, PARKHIST-FR-002: The job runs for each user on the schedule of the
-// config.
 func (j *HistoryCollector) Meta() pluginapi.CronJobMeta {
 	return pluginapi.CronJobMeta{
 		ID:       "history_collector",
@@ -60,7 +57,7 @@ func (j *HistoryCollector) Meta() pluginapi.CronJobMeta {
 
 // Run collects the recent pages of the history of the acting user.
 //
-// PARKHIST-FR-003, PARKHIST-FR-010: A user with no connection, or whose connection the
+// A user with no connection, or whose connection the
 // parking service rejected, is skipped.
 func (j *HistoryCollector) Run(ctx context.Context) error {
 	user := slog.String("user_id", pluginapi.ActingUserFromContext(ctx))

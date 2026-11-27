@@ -7,14 +7,27 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/plugins/parking/model"
 )
+
+// SessionRepository defines the data access contract for the sessions of the acting user.
+type SessionRepository interface {
+	Known(ctx context.Context, ids []int64) (map[int64]bool, error)
+	Upsert(ctx context.Context, sessions []model.Session) (int, error)
+	Page(ctx context.Context, seek page.Seek, filter model.SessionFilter) ([]model.Session, error)
+	Total(ctx context.Context, filter model.SessionFilter) (model.SessionTotal, error)
+	Plates(ctx context.Context) ([]string, error)
+	LotUsages(ctx context.Context, from *time.Time) ([]model.LotUsage, error)
+}
 
 // Session reads and writes the sessions of the acting user within one database
 // transaction.
 type Session struct {
 	tx *sqlx.Tx
 }
+
+var _ SessionRepository = (*Session)(nil)
 
 // NewSession creates a new Session over the database transaction.
 func NewSession(tx *sqlx.Tx) *Session {
@@ -35,7 +48,7 @@ func (r *Session) Known(ctx context.Context, ids []int64) (map[int64]bool, error
 // held session takes the values of the parking service, and keeps its collected_at when
 // no value changed.
 //
-// PARKHIST-FR-011: One session for one identifier of the parking service.
+// One session for one identifier of the parking service.
 func (r *Session) Upsert(ctx context.Context, sessions []model.Session) (int, error) {
 	if len(sessions) == 0 {
 		return 0, nil

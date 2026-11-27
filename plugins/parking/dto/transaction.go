@@ -9,7 +9,7 @@ import (
 // TransactionResponse is one row of the transactions page. Amount carries no sign: the
 // kind gives the direction.
 //
-// PARKHIST-INV-002: The answer holds no wallet number and no personal identifier.
+// The answer holds no wallet number and no personal identifier.
 type TransactionResponse struct {
 	ID           string          `json:"id"`
 	OccurredAt   time.Time       `json:"occurred_at"`

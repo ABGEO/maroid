@@ -7,14 +7,35 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/abgeo/maroid/libs/rest/page"
 	"github.com/abgeo/maroid/plugins/parking/model"
 )
+
+// TransactionRepository defines the data access contract for the transactions of the
+// acting user.
+type TransactionRepository interface {
+	Known(ctx context.Context, ids []int64) (map[int64]bool, error)
+	Upsert(ctx context.Context, transactions []model.Transaction) (int, error)
+	Page(
+		ctx context.Context,
+		seek page.Seek,
+		filter model.TransactionFilter,
+	) ([]model.Transaction, error)
+	Total(ctx context.Context, filter model.TransactionFilter) (model.TransactionTotal, error)
+	ChargeMonths(
+		ctx context.Context,
+		from *time.Time,
+		zone *time.Location,
+	) ([]model.ChargeMonth, error)
+}
 
 // Transaction reads and writes the transactions of the acting user within one database
 // transaction.
 type Transaction struct {
 	tx *sqlx.Tx
 }
+
+var _ TransactionRepository = (*Transaction)(nil)
 
 // NewTransaction creates a new Transaction over the database transaction.
 func NewTransaction(tx *sqlx.Tx) *Transaction {
@@ -33,7 +54,7 @@ func (r *Transaction) Known(ctx context.Context, ids []int64) (map[int64]bool, e
 
 // Upsert stores the transactions in one statement and answers the count of the new rows.
 //
-// PARKHIST-FR-011: One transaction for one identifier of the parking service.
+// One transaction for one identifier of the parking service.
 func (r *Transaction) Upsert(ctx context.Context, transactions []model.Transaction) (int, error) {
 	if len(transactions) == 0 {
 		return 0, nil

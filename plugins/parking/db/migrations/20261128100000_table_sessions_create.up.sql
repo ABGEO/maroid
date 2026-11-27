@@ -16,7 +16,6 @@ CREATE TABLE sessions
     amount       NUMERIC(12, 2) NOT NULL CHECK (amount >= 0),
     collected_at TIMESTAMPTZ    NOT NULL DEFAULT now(),
     CONSTRAINT sessions_ended_after_start CHECK (ended_at >= started_at),
-    -- PARKHIST-FR-011: One session for one identifier of the parking service.
     CONSTRAINT sessions_user_external_id_key UNIQUE (user_id, external_id)
 );
 

@@ -21,6 +21,7 @@
 		filterOfAddress(window.location.search, KEYS) as SessionFilter
 	);
 	let plates = $state<string[]>([]);
+	let held = $state<boolean | null>(null);
 	let total = $state<SessionTotal | null>(null);
 	let totalFailure = $state<string | null>(null);
 	let readsFirstPage = true;
@@ -47,6 +48,16 @@
 			plates = (await api.sessions.plates()) ?? [];
 		} catch (error) {
 			console.error('Failed to load the plates', error);
+		}
+	}
+
+	// The first read carries no filter, so a filter in the address cannot hide that Maroid
+	// holds no row yet.
+	async function loadHeld(): Promise<void> {
+		try {
+			held = await api.sessions.any();
+		} catch (error) {
+			console.error('Failed to read whether Maroid holds a session', error);
 		}
 	}
 
@@ -78,6 +89,7 @@
 
 	$effect(() => {
 		if (canRead) {
+			void loadHeld();
 			void loadPlates();
 		}
 	});
@@ -106,6 +118,8 @@
 
 	{#if !canRead}
 		<NoAccess />
+	{:else if held === false}
+		<NoData {host} />
 	{:else}
 		<FilterBar {filtered} onclear={clear}>
 			<label class="flex flex-col gap-1">
@@ -184,11 +198,7 @@
 						<button type="button" class="btn btn-sm" onclick={retry}>Retry</button>
 					</div>
 				{:else if pager.page?.items.length === 0}
-					{#if filtered}
-						<div class="empty-state">No session matches the filter.</div>
-					{:else}
-						<NoData {host} />
-					{/if}
+					<div class="empty-state">No session matches the filter.</div>
 				{:else}
 					<div class="panel overflow-x-auto">
 						<table class="table-zebra table">

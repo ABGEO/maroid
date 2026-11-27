@@ -8,7 +8,7 @@
 {#if lots.length === 0}
 	<div class="empty-state">No session in the period.</div>
 {:else}
-	<ol class="flex flex-col divide-y">
+	<ol class="divide-base-300 flex flex-col divide-y">
 		{#each lots as lot (lot.lot_number)}
 			<li class="flex flex-wrap items-baseline justify-between gap-2 py-2">
 				<span>

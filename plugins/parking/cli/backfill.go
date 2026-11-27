@@ -41,7 +41,7 @@ func NewBackfill(logger *slog.Logger, collector Collector) *Backfill {
 
 // Command returns the cobra command of the backfill.
 //
-// PARKHIST-FR-018: An administrator collects every session and every transaction of one
+// An administrator collects every session and every transaction of one
 // user.
 func (b *Backfill) Command() *cobra.Command {
 	command := &cobra.Command{
@@ -73,7 +73,7 @@ func (b *Backfill) prepare(*cobra.Command, []string) error {
 // run collects as the user, with no acting workspace, because the session token is a
 // secret of the user.
 //
-// PARKHIST-FR-019, PARKHIST-FR-020, PARKHIST-DD-009: The command prints the new rows,
+// The command prints the new rows,
 // and fails for a user with no connection.
 func (b *Backfill) run(cmd *cobra.Command, _ []string) error {
 	ctx := pluginapi.ContextWithActingUser(cmd.Context(), b.user)

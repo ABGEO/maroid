@@ -35,7 +35,10 @@ func NewCollector(client HistoryClient, store CollectionStore, logger *slog.Logg
 	return &Collector{
 		client: client,
 		store:  store,
-		logger: logger.With(slog.String("component", "collector")),
+		logger: logger.With(
+			slog.String("component", "collector"),
+			slog.String("collector", "history"),
+		),
 	}
 }
 
@@ -43,7 +46,7 @@ func NewCollector(client HistoryClient, store CollectionStore, logger *slog.Logg
 // transaction. It answers errs.ErrNotConnected when the user holds no connection, or the
 // parking service rejects it.
 //
-// PARKHIST-FR-009, PARKHIST-DD-004: Nothing is written until both lists are read.
+// Nothing is written until both lists are read.
 func (c *Collector) Collect(ctx context.Context, reach model.Reach) (model.Collection, error) {
 	sessions, err := readList(ctx, c, reach, historyList[dto.HistorySession, model.Session]{
 		name:  "sessions",
@@ -93,7 +96,7 @@ type historyList[R, M any] struct {
 
 // readList reads the pages of one list from page 0, and answers the rows to store.
 //
-// PARKHIST-DD-002: The recent reach stops after a page with no new row, because the
+// The recent reach stops after a page with no new row, because the
 // ledger identifiers do not follow the dates. The full reach keeps every row, and the
 // upsert counts the new ones.
 func readList[R, M any](
@@ -130,7 +133,6 @@ func readList[R, M any](
 		rows = append(rows, fresh...)
 		newOnLast = len(fresh) > 0
 
-		// PARKHIST-FR-005: A page with no new row ends a scheduled collection.
 		if (reach.StopAtKnown && !newOnLast) || page.Meta.Last() {
 			return rows, nil
 		}
@@ -140,7 +142,7 @@ func readList[R, M any](
 // freshRows answers the rows of one page to store. The recent reach drops each row that
 // the user holds. A row that keep refuses counts as held.
 //
-// PARKHIST-FR-008: An active session is not stored.
+// An active session is not stored.
 func freshRows[R, M any](
 	ctx context.Context,
 	reach model.Reach,
@@ -186,7 +188,7 @@ func freshRows[R, M any](
 
 // atLimit ends a list at the most pages of the reach.
 //
-// PARKHIST-FR-007: A scheduled collection that stops with new rows on its last page
+// A scheduled collection that stops with new rows on its last page
 // leaves a gap that only the command line collection fills.
 func (c *Collector) atLimit(
 	ctx context.Context,
