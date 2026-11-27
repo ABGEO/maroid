@@ -24,56 +24,58 @@ gains `SendPhoto` (`ADR-0029`). `spec-scenarios.md` holds the scenarios.
 
 ## 2. Coverage
 
-| Requirement       | Where this specification realizes it                                |
-| ----------------- | ------------------------------------------------------------------- |
-| `PARKMAP-FR-001`  | `PARKMAP-DD-001`, `PARKMAP-SC-001` to `PARKMAP-SC-004`              |
-| `PARKMAP-FR-002`  | `PARKMAP-DD-002`, `PARKMAP-SC-002`, `PARKMAP-SC-005`                |
-| `PARKMAP-FR-003`  | `PARKMAP-DD-003`, `PARKMAP-SC-006`                                  |
-| `PARKMAP-FR-004`  | `PARKMAP-DD-003`, `PARKMAP-SC-007`                                  |
-| `PARKMAP-FR-005`  | Section 4.4, `PARKMAP-SC-008`, `PARKMAP-SC-009`                     |
-| `PARKMAP-FR-006`  | `PARKMAP-DD-007`, `PARKMAP-SC-016`                                  |
-| `PARKMAP-FR-007`  | `PARKMAP-DD-007`, `PARKMAP-DD-008`, `PARKMAP-SC-017`                |
-| `PARKMAP-FR-008`  | `PARKMAP-DD-007`, `PARKMAP-SC-016`                                  |
-| `PARKMAP-FR-009`  | `PARKMAP-DD-007`, `PARKMAP-SC-018`                                  |
-| `PARKMAP-FR-010`  | `PARKMAP-DD-006`, `PARKMAP-SC-019`                                  |
-| `PARKMAP-FR-011`  | `PARKMAP-DD-006`, `PARKMAP-SC-020`                                  |
-| `PARKMAP-FR-012`  | `PARKMAP-DD-007`, Section 4.3, `PARKMAP-SC-021`                     |
-| `PARKMAP-FR-013`  | Section 4.4, `PARKMAP-SC-010`                                       |
-| `PARKMAP-FR-014`  | `PARKMAP-DD-011`, Section 4.5, `PARKMAP-SC-011` to `PARKMAP-SC-014` |
-| `PARKMAP-FR-015`  | `PARKMAP-DD-013`, `PARKMAP-SC-015`                                  |
-| `PARKMAP-FR-016`  | `PARKMAP-DD-014`, Section 4.3, `PARKMAP-SC-022`                     |
-| `PARKMAP-FR-017`  | `PARKMAP-DD-009`, `PARKMAP-SC-023`                                  |
-| `PARKMAP-FR-018`  | `PARKMAP-DD-012`, `ADR-0029`, `PARKMAP-SC-024`                      |
-| `PARKMAP-FR-019`  | `PARKMAP-DD-012`, `PARKMAP-SC-025`                                  |
-| `PARKMAP-NFR-001` | `PARKMAP-DD-011`, `PARKMAP-SC-026`                                  |
-| `PARKMAP-NFR-002` | `PARKMAP-DD-010`, `PARKMAP-SC-027`                                  |
-| `PARKMAP-NFR-003` | `PARKMAP-DD-010`, `PARKMAP-SC-028`                                  |
-| `PARKMAP-NFR-004` | `PARKMAP-DD-010`, `PARKMAP-SC-029`                                  |
-| `PARKMAP-INV-001` | Section 4.4, `PARKMAP-SC-008`                                       |
-| `PARKMAP-INV-002` | `PARKMAP-DD-009`, `PARKMAP-SC-023`                                  |
+| Requirement       | Where this specification realizes it                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------- |
+| `PARKMAP-FR-001`  | `PARKMAP-DD-001`, `PARKMAP-DD-004`, `PARKMAP-SC-001` to `PARKMAP-SC-004`, `PARKMAP-SC-032`              |
+| `PARKMAP-FR-002`  | `PARKMAP-DD-002`, `PARKMAP-SC-002`, `PARKMAP-SC-005`                                                    |
+| `PARKMAP-FR-003`  | `PARKMAP-DD-003`, `PARKMAP-SC-006`                                                                      |
+| `PARKMAP-FR-004`  | `PARKMAP-DD-003`, `PARKMAP-SC-007`                                                                      |
+| `PARKMAP-FR-005`  | Section 4.4, `PARKMAP-SC-008`, `PARKMAP-SC-009`                                                         |
+| `PARKMAP-FR-006`  | `PARKMAP-DD-007`, `PARKMAP-SC-016`                                                                      |
+| `PARKMAP-FR-007`  | `PARKMAP-DD-007`, `PARKMAP-DD-008`, `PARKMAP-SC-017`, `PARKMAP-SC-033`                                  |
+| `PARKMAP-FR-008`  | `PARKMAP-DD-007`, `PARKMAP-SC-016`                                                                      |
+| `PARKMAP-FR-009`  | `PARKMAP-DD-007`, `PARKMAP-SC-018`                                                                      |
+| `PARKMAP-FR-010`  | `PARKMAP-DD-006`, `PARKMAP-SC-019`                                                                      |
+| `PARKMAP-FR-011`  | `PARKMAP-DD-006`, `PARKMAP-SC-020`                                                                      |
+| `PARKMAP-FR-012`  | `PARKMAP-DD-007`, Section 4.3, `PARKMAP-SC-021`                                                         |
+| `PARKMAP-FR-013`  | Section 4.4, `PARKMAP-SC-010`                                                                           |
+| `PARKMAP-FR-014`  | `PARKMAP-DD-009`, `PARKMAP-DD-011`, Section 4.5, `PARKMAP-SC-011` to `PARKMAP-SC-014`, `PARKMAP-SC-031` |
+| `PARKMAP-FR-015`  | `PARKMAP-DD-013`, `PARKMAP-SC-015`                                                                      |
+| `PARKMAP-FR-016`  | `PARKMAP-DD-014`, Section 4.3, `PARKMAP-SC-022`                                                         |
+| `PARKMAP-FR-017`  | `PARKMAP-DD-009`, `PARKMAP-SC-023`                                                                      |
+| `PARKMAP-FR-018`  | `PARKMAP-DD-012`, `ADR-0029`, `PARKMAP-SC-024`                                                          |
+| `PARKMAP-FR-019`  | `PARKMAP-DD-012`, `PARKMAP-SC-025`                                                                      |
+| `PARKMAP-NFR-001` | `PARKMAP-DD-011`, `PARKMAP-SC-026`                                                                      |
+| `PARKMAP-NFR-002` | `PARKMAP-DD-010`, `PARKMAP-SC-027`                                                                      |
+| `PARKMAP-NFR-003` | `PARKMAP-DD-010`, `PARKMAP-SC-028`                                                                      |
+| `PARKMAP-NFR-004` | `PARKMAP-DD-010`, `PARKMAP-SC-029`                                                                      |
+| `PARKMAP-INV-001` | Section 4.4, `PARKMAP-SC-008`                                                                           |
+| `PARKMAP-INV-002` | `PARKMAP-DD-009`, `PARKMAP-SC-023`, `PARKMAP-SC-034`                                                    |
 
 ## 3. Guideline compliance
 
-| Rule      | Guideline         | How this specification obeys it                                                                  |
-| --------- | ----------------- | ------------------------------------------------------------------------------------------------ |
-| `TG-005`  | Telegram          | The map is part of `select_lot`. The conversation keeps its steps. Section 4.3.                  |
-| `TG-007`  | Telegram          | The step sends the photo through `pluginapi.TelegramBot`. `PARKMAP-DD-012`.                      |
-| `ARC-008` | Architecture      | `SendPhoto` of the host wraps telego and names no plugin. `ADR-0029`.                            |
-| `BLD-002` | Build and release | `golang.org/x/image` and `golang.org/x/sync` take the versions of `apps/hub`. Section 4.1.       |
-| `BLD-004` | Build and release | Step 1 of the build plan builds every plugin and loads each one.                                 |
-| `PLG-009` | Plugin model      | The tile cache lives in memory. A restart drops it. `PARKMAP-DD-010`.                            |
-| `EXT-001` | External services | The tile client lives in `service/`. `PARKMAP-DD-009`.                                           |
-| `EXT-002` | External services | The tile client uses resty, and sets `Accept: image/png` once (`ADR-0030`).                      |
-| `EXT-004` | External services | Each tile request carries the context of the step, with the deadline of `PARKMAP-DD-011`.        |
-| `EXT-005` | External services | A tile status other than 200 is an error. No map goes out with a missing tile. `PARKMAP-DD-009`. |
-| `EXT-007` | External services | `errs.ErrMapSource` names a failure of the map source, wrapped with the status.                  |
-| `CFG-003` | Configuration     | `config.MapConfig` declares each default and each validation in a tag. Section 4.3.              |
-| `CFG-005` | Configuration     | The plugin reads the map source from its configuration map.                                      |
-| `LOG-005` | Logging           | The failure of a map is an `error` attribute. `PARKMAP-DD-013`.                                  |
-| `LOG-007` | Logging           | The message is lowercase and names the event. `PARKMAP-DD-013`.                                  |
-| `PKG-001` | Package layout    | The search, the tile client, the cache, and the drawing live in `service/` (`ADR-0017`).         |
-| `GO-007`  | Go style          | Each new service declares its interface and asserts the implementation.                          |
-| `TST-004` | Testing           | Each scenario names its layer. `spec-scenarios.md`.                                              |
+| Rule      | Guideline         | How this specification obeys it                                                                                 |
+| --------- | ----------------- | --------------------------------------------------------------------------------------------------------------- |
+| `TG-005`  | Telegram          | The map is part of `select_lot`. The conversation keeps its steps. Section 4.3.                                 |
+| `TG-007`  | Telegram          | The step sends the photo through `pluginapi.TelegramBot`. `PARKMAP-DD-012`.                                     |
+| `ARC-008` | Architecture      | `SendPhoto` of the host wraps telego and names no plugin. `ADR-0029`.                                           |
+| `BLD-002` | Build and release | `golang.org/x/image` and `golang.org/x/sync` take the versions of `apps/hub`. Section 4.1.                      |
+| `BLD-004` | Build and release | Step 1 of the build plan builds every plugin and loads each one.                                                |
+| `PLG-009` | Plugin model      | The tile cache lives in memory. A restart drops it. `PARKMAP-DD-010`.                                           |
+| `EXT-001` | External services | The tile client lives in `service/`. `PARKMAP-DD-009`.                                                          |
+| `EXT-002` | External services | The tile client uses resty, and sets `Accept: image/png` once (`ADR-0030`).                                     |
+| `EXT-004` | External services | Each tile request carries the context of the step, with the deadline of `PARKMAP-DD-011`.                       |
+| `EXT-005` | External services | A tile status other than 200 is an error. No map goes out with a missing tile. `PARKMAP-DD-009`.                |
+| `EXT-007` | External services | `errs.ErrMapSource` names a failure of the map source, wrapped with the status.                                 |
+| `CFG-003` | Configuration     | `config.MapConfig` declares each default and each validation in a tag. Section 4.3.                             |
+| `CFG-005` | Configuration     | The plugin reads the map source from its configuration map.                                                     |
+| `LOG-005` | Logging           | The failure of a map is an `error` attribute. `PARKMAP-DD-013`.                                                 |
+| `LOG-003` | Logging           | `NearbyLots` and `select_lot` add `component` and a second attribute that names the instance. `PARKMAP-DD-013`. |
+| `LOG-008` | Logging           | A tile error names no address of the map source, which can carry a key. `PARKMAP-DD-009`.                       |
+| `LOG-007` | Logging           | The message is lowercase and names the event. `PARKMAP-DD-013`.                                                 |
+| `PKG-001` | Package layout    | The search, the tile client, the cache, and the drawing live in `service/` (`ADR-0017`).                        |
+| `GO-007`  | Go style          | Each new service declares its interface and asserts the implementation.                                         |
+| `TST-004` | Testing           | Each scenario names its layer. `spec-scenarios.md`.                                                             |
 
 ## 4. Design
 
@@ -93,9 +95,9 @@ gains `SendPhoto` (`ADR-0029`). `spec-scenarios.md` holds the scenarios.
 | `plugins/parking/service/tile-cache.go`                      | Create | `TileCache`. `PARKMAP-DD-010`.                                                                                                                                                   |
 | `plugins/parking/service/lot-map.go`                         | Create | `LotMapRenderer` and `LotMap`: the zoom, the tiles, the encode. `PARKMAP-DD-006`.                                                                                                |
 | `plugins/parking/service/lot-map-draw.go`                    | Create | The outlines, the labels, the pin, and the attribution. `PARKMAP-DD-007`, `PARKMAP-DD-008`.                                                                                      |
-| `plugins/parking/telegram/conversation/step/select_lot.go`   | Change | `SelectLot` takes a `service.LotFinder`, a `service.LotMapRenderer`, and a `*slog.Logger`. Section 4.4.                                                                          |
+| `plugins/parking/telegram/conversation/step/select_lot.go`   | Change | `SelectLot` takes a `service.LotFinder`, a `service.LotMapRenderer`, the deadline of `map.timeout`, and a `*slog.Logger`. Section 4.4.                                           |
 | `plugins/parking/telegram/conversation/step/vehicle_test.go` | Change | `fakeBot` gains `SendPhoto`, and records each photo.                                                                                                                             |
-| `plugins/parking/telegram/conversation/parking.go`           | Change | `NewParkingConversation` passes the finder, the renderer, and the logger to `NewSelectLot`.                                                                                      |
+| `plugins/parking/telegram/conversation/parking.go`           | Change | `NewParkingConversation` passes the finder, the renderer, the deadline, and the logger to `NewSelectLot`.                                                                        |
 | `plugins/parking/main.go`                                    | Change | `New` builds `NearbyLots`, `TileClient`, `TileCache`, and `LotMap`.                                                                                                              |
 | `plugins/parking/go.mod`                                     | Change | Adds `github.com/paulmach/orb v0.14.0`, `github.com/fogleman/gg v1.3.0`, `github.com/golang/freetype`, and `golang.org/x/image v0.48.0`. Promotes `golang.org/x/sync` to direct. |
 
@@ -189,14 +191,15 @@ and calls `TelegramBot.SendPhoto`. The map and the keyboard read one slice, so
 
 ### 4.5 Errors
 
-| Condition                              | Behavior                                                                                | Message to the member                       |
-| -------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------- |
-| The parking service fails              | `OnEnter` returns the error, as today. No map.                                          | As today                                    |
-| One outline does not parse             | `NearbyLots` drops the lot and logs `parking lot outline not read` at warn, with `lot`. | None                                        |
-| A tile answers a status other than 200 | `ErrMapSource` with the status. The step logs it and sends the lot list.                | None                                        |
-| The deadline of `map.timeout` passes   | The step logs `context.DeadlineExceeded` and sends the lot list.                        | None                                        |
-| `SendPhoto` fails                      | The step logs the error and sends the lot list.                                         | None                                        |
-| The search offers no lot               | No map. The text of today.                                                              | "No parking lots found near your location." |
+| Condition                                                 | Behavior                                                                                | Message to the member                       |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------- |
+| The parking service fails                                 | `OnEnter` returns the error, as today. No map.                                          | As today                                    |
+| One outline does not parse, or holds a point out of range | `NearbyLots` drops the lot and logs `parking lot outline not read` at warn, with `lot`. | None                                        |
+| A tile answers a status other than 200                    | `ErrMapSource` with the status. The step logs it and sends the lot list.                | None                                        |
+| A tile is over 1 MB, or not a PNG of 256 by 256 pixels    | `ErrMapSource`. The cache does not hold it. The step logs it and sends the lot list.    | None                                        |
+| The deadline of `map.timeout` passes                      | The step logs `context.DeadlineExceeded` and sends the lot list.                        | None                                        |
+| `SendPhoto` fails                                         | The step logs the error and sends the lot list.                                         | None                                        |
+| The search offers no lot                                  | No map. The text of today.                                                              | "No parking lots found near your location." |
 
 ## 5. Design decisions
 
@@ -224,8 +227,8 @@ and calls `TelegramBot.SendPhoto`. The map and the keyboard read one slice, so
 ### `PARKMAP-DD-004`
 
 **Realizes:** `PARKMAP-FR-001`
-**Decision:** A lot whose outline does not parse leaves the search. `NearbyLots` logs it at warn and keeps the other lots.
-**Rationale:** The plugin cannot measure the distance of a lot with no outline. One bad row must not stop a parking session. "Enter manually" still reaches the lot.
+**Decision:** A lot whose outline does not parse, or holds a point that is not finite, a latitude outside ±85.05°, or a longitude outside ±180°, leaves the search. `NearbyLots` logs it at warn and keeps the other lots.
+**Rationale:** The plugin cannot measure the distance of a lot with no outline. A point outside the range of Web Mercator has no pixel, and the map cannot place it. One bad row must not stop a parking session. "Enter manually" still reaches the lot.
 **Alternatives:** Fail the step with `ErrUnexpectedAnswer`. One bad row then blocks every parking session on that street.
 
 ### `PARKMAP-DD-005`
@@ -261,15 +264,15 @@ and calls `TelegramBot.SendPhoto`. The map and the keyboard read one slice, so
 ### `PARKMAP-DD-008`
 
 **Realizes:** `PARKMAP-FR-007`
-**Decision:** Each label takes the position nearest to the centroid of the outline, on a grid of 2 pixels along the longest edge and across it, at which the label still covers a point of the outline and meets neither the rectangle of the pin nor an earlier label. Of two positions at the same distance, the one nearer the start of the edge wins. When no position is clear, the label takes the centroid.
+**Decision:** Each label takes the position nearest to the centroid of the outline, on a grid of 2 pixels along the longest edge and across it, at which the label still covers a point of the outline and meets neither the rectangle of the pin nor an earlier label. Of two positions at the same distance, the one nearer the start of the edge wins. When no position is clear, the label takes the centroid. The label covers a point of the outline when an edge crosses it or the outline holds its center. The search reaches at most 500 pixels from the centroid on each axis, so a huge outline costs no more than one that fills the image.
 **Rationale:** A lot is about 3 m wide and from 6 m to 60 m long. The pin stands at the curb, often on the nearest lot. On a lot of 6 m, three fixed points along it all fall under the pin, so the label must also move across the lot and past its ends. The condition "covers a point of the outline" keeps `PARKMAP-FR-007`.
 **Alternatives:** Three fixed points, at the centroid and at 25 % and 75 % of the length. A live map showed the label of a lot of 6 m under the pin. The centroid only. The owner rejected it.
 
 ### `PARKMAP-DD-009`
 
 **Realizes:** `PARKMAP-FR-017`, `PARKMAP-INV-002`
-**Decision:** `TileClient` is a resty client with no base URL. It replaces `{z}`, `{x}`, and `{y}` in `map.tile_url`. It sets `User-Agent: Maroid/1.0 (parking map)` and `Accept: image/png` once. It sends no cookie, no token, and no other header. A status other than 200 returns `ErrMapSource` with the status. `LotMap` fetches the missing tiles 2 at a time with `errgroup.SetLimit(2)`.
-**Rationale:** The usage policy of `tile.openstreetmap.org` demands a User-Agent that names the client and allows 2 parallel downloads. A map of 800 by 600 pixels needs at most 20 tiles. The client shares nothing with `APIClient`, so no session token reaches the map source.
+**Decision:** `TileClient` is a resty client with no base URL. It replaces `{z}`, `{x}`, and `{y}` in `map.tile_url`. It sets `User-Agent: Maroid/1.0 (parking map)` and `Accept: image/png` once. It sends no cookie, no token, and no other header. A status other than 200 returns `ErrMapSource` with the status. A body over 1 MB, or a tile that is not a PNG of 256 by 256 pixels, returns `ErrMapSource`, and the cache does not hold it. An error of the request names the tile, not the address of the map source. `LotMap` fetches the missing tiles 2 at a time with `errgroup.SetLimit(2)`.
+**Rationale:** The usage policy of `tile.openstreetmap.org` demands a User-Agent that names the client and allows 2 parallel downloads. A map of 800 by 600 pixels needs at most 20 tiles. The client shares nothing with `APIClient`, so no session token reaches the map source. The map source is a third party: a body with no bound, or a PNG header that declares a huge image, would take the memory of the hub. A `map.tile_url` of another map source can carry a key in its query, and `LOG-008` keeps it out of the log.
 **Alternatives:** The `a.`, `b.`, and `c.` hosts. The policy names them obsolete.
 
 ### `PARKMAP-DD-010`
@@ -296,7 +299,7 @@ and calls `TelegramBot.SendPhoto`. The map and the keyboard read one slice, so
 ### `PARKMAP-DD-013`
 
 **Realizes:** `PARKMAP-FR-015`
-**Decision:** The step logs `parking map not sent` at warn, with `slog.Any("error", err)` and `slog.Int("lots", n)`. The record holds no latitude and no longitude.
+**Decision:** The logger of the step carries `component` `conversation` and `conversation` `start_parking`. The step logs `parking map not sent` at warn, with `slog.Any("error", err)` and `slog.Int("lots", n)`. The record holds no latitude and no longitude.
 **Rationale:** The record names the failure for the owner. A location is personal data, and the failure needs none.
 **Alternatives:** A log at error. A map is optional, and the parking session goes on.
 
@@ -309,7 +312,7 @@ and calls `TelegramBot.SendPhoto`. The map and the keyboard read one slice, so
 
 ## 6. Scenarios
 
-`spec-scenarios.md` holds `PARKMAP-SC-001` to `PARKMAP-SC-030`.
+`spec-scenarios.md` holds `PARKMAP-SC-001` to `PARKMAP-SC-034`.
 
 ## 7. Build plan
 

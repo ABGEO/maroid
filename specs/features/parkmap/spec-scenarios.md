@@ -228,8 +228,9 @@ both fit, and the next value does not fit.
 
 **Given** the real `LotMap`, `map.attribution` of `© OpenStreetMap contributors`, and the fixture.
 **When** `Render` runs.
-**Then** the draw of the attribution received that text. The pixel 2 pixels above the bottom
-left corner differs from the pixel of the tile under it.
+**Then** the strip along the bottom, within 200 pixels of the left edge, holds a pixel whose
+red channel is below 128: the text. The pixel 10 pixels left of the bottom right corner
+stays the white of the tile.
 
 ## The map source
 
@@ -250,7 +251,7 @@ tile from the test server. With `map.timeout` of 5 s, the validation fails.
 **Layer:** unit
 
 **Given** a map source that records each request.
-**When** `Render` runs with the fixture, in a context that carries a session token for `APIClient`.
+**When** `Render` runs with the fixture.
 **Then** each request has `User-Agent: Maroid/1.0 (parking map)` and `Accept: image/png`. No
 request has `Authorization` or `Cookie`. Each path has the form `/{z}/{x}/{y}.png`, with no query.
 
@@ -292,8 +293,8 @@ and a map source that never answers.
 **Layer:** unit
 
 **Given** the real `LotMap` with a cache that holds every tile of the fixture map.
-**When** `Render` and the `SendPhoto` of `fakeBot` run.
-**Then** both end less than 1 s after the start of `Render`. The map source records no request.
+**When** `Render` runs.
+**Then** it ends less than 1 s after its start. The map source records no request.
 
 ### `PARKMAP-SC-028`
 
@@ -312,6 +313,46 @@ and a map source that never answers.
 **Given** a `TileCache` with the limit of 50 MB.
 **When** the test puts 55 tiles of 1 MB, and reads the first tile after the tenth put.
 **Then** the sum of the held bytes is at most 50 MB. The first tile stays. The second tile is gone.
+
+### `PARKMAP-SC-031`
+
+**Verifies:** `PARKMAP-FR-014`
+**Layer:** unit
+
+**Given** the real `LotMap` and a map source that answers each tile with one of: a body of
+2 MB, a PNG of 512 by 512 pixels, or bytes that are not a PNG.
+**When** `Render` runs with the fixture.
+**Then** `Render` returns an error that matches `ErrMapSource`. The cache holds no byte.
+
+### `PARKMAP-SC-032`
+
+**Verifies:** `PARKMAP-FR-001`
+**Layer:** unit
+
+**Given** the fake service answers `A306` at 4 m, and a lot at 3 m whose outline holds a point
+at latitude 90°.
+**When** `FindNearby` runs.
+**Then** it returns `A306` only, and no error.
+
+### `PARKMAP-SC-033`
+
+**Verifies:** `PARKMAP-FR-007`
+**Layer:** unit
+
+**Given** an outline of 1 000 000 by 13 pixels with its centroid at `(400, 300)`, a label of
+50 by 22 pixels, and a pin rectangle over the centroid.
+**When** the label placement runs.
+**Then** it ends in less than 1 second, with a label that meets no pin and lies within 500
+pixels of the centroid.
+
+### `PARKMAP-SC-034`
+
+**Verifies:** `PARKMAP-INV-002`
+**Layer:** unit
+
+**Given** `map.tile_url` with the query `?key=secret` on a server that closes each connection.
+**When** `TileClient.Tile` runs.
+**Then** the error matches `ErrMapSource`, and its text holds neither `secret` nor the address of the server.
 
 ## The live check
 
