@@ -30,6 +30,8 @@ const (
 	plateA   = "AB071EO"
 	plateB   = "CD123EF"
 	lotA1637 = "A1637"
+
+	parameterFree = "free"
 )
 
 // historyRig runs the history routes over a database that holds the migrations of the
@@ -72,12 +74,19 @@ func historyRoutes(store *service.HistoryStore) []pluginapi.Route {
 func actingIn(t *testing.T, user string) context.Context {
 	t.Helper()
 
+	return actingFrom(context.Background(), t, user)
+}
+
+// actingFrom adds the user in workspace W, in Asia/Tbilisi, to the context.
+func actingFrom(ctx context.Context, t *testing.T, user string) context.Context {
+	t.Helper()
+
 	zone, err := time.LoadLocation("Asia/Tbilisi")
 	require.NoError(t, err)
 
 	return pluginapi.ContextWithActingTimeZone(
 		pluginapi.ContextWithActingWorkspace(
-			pluginapi.ContextWithActingUser(context.Background(), user), workspaceW,
+			pluginapi.ContextWithActingUser(ctx, user), workspaceW,
 		),
 		zone,
 	)
@@ -440,8 +449,8 @@ func TestABadSessionFilterIsRefused(t *testing.T) {
 	for target, parameter := range map[string]string{
 		"/sessions?from=2026-11-30&to=2026-11-01": "from",
 		"/sessions?from=2026-13-01":               "from",
-		"/sessions?free=yes":                      "free",
-		"/sessions/total?free=yes":                "free",
+		"/sessions?free=yes":                      parameterFree,
+		"/sessions/total?free=yes":                parameterFree,
 		"/transactions?kind=refund":               "kind",
 	} {
 		recorder := serve(t, routes, target)

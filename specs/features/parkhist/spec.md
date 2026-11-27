@@ -343,9 +343,9 @@ then fails in place of a loop with no end.
 | 6   | The reads of `spec-pages.md`: `repository/`, `service/history_read.go`, the DTOs                                               | `PARKHIST-FR-025` to `PARKHIST-FR-042`, `PARKHIST-NFR-001`                     | [x]  |
 | 7   | The read handlers, the widget link, and `api.yaml`                                                                             | `PARKHIST-FR-021` to `PARKHIST-FR-045`                                         | [x]  |
 | 8   | `ui/`: the three pages of `spec-pages.md`. `main.go`, `config.yaml`. Build the UI, then the `.so` (`BLD-003`)                  | `PARKHIST-FR-022` to `PARKHIST-FR-044`                                         | [x]  |
-| 9   | The tests of `spec-scenarios.md` and of `spec-pages.md`, with `PARKHIST-SC-033`. Lint and build the plugin with `GOWORK=off`   | Every statement                                                                | [ ]  |
+| 9   | The tests of `spec-scenarios.md` and of `spec-pages.md`, with `PARKHIST-SC-033`. Lint and build the plugin with `GOWORK=off`   | Every statement                                                                | [x]  |
 | 10  | `PARKHIST-SC-019` against the parking service, then `backfill` of the history. Correct `PARKHIST-DD-002` and `PARKHIST-DD-006` | `PARKHIST-FR-005`, `PARKHIST-FR-013`, `PARKHIST-FR-018`                        | [ ]  |
-| 11  | The entry of `parking.so` in `chart/values.yaml`, with the schedule of section 4.3                                             | `PARKHIST-FR-001`, `PARKHIST-FR-002`                                           | [ ]  |
+| 11  | The entry of `parking.so` in `chart/values.yaml`, with the schedule of section 4.3                                             | `PARKHIST-FR-001`, `PARKHIST-FR-002`                                           | [x]  |
 
 ## Retired identifiers
 
