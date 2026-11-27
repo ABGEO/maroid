@@ -160,7 +160,8 @@ func (p *ParkingPlugin) Permissions() ([]pluginapi.Permission, error) {
 	}, nil
 }
 
-// UIManifest returns the account page of the remote and its assets.
+// UIManifest returns the pages of the remote and its assets. The first route is the
+// landing page of the plugin.
 func (p *ParkingPlugin) UIManifest() (*pluginapi.UIManifest, error) {
 	assets, err := fs.Sub(uiAssets, "ui/dist")
 	if err != nil {
@@ -169,6 +170,9 @@ func (p *ParkingPlugin) UIManifest() (*pluginapi.UIManifest, error) {
 
 	return &pluginapi.UIManifest{
 		Routes: []pluginapi.UIRoute{
+			{Path: "/overview", Label: "Overview"},
+			{Path: "/sessions", Label: "Sessions"},
+			{Path: "/transactions", Label: "Transactions"},
 			{Path: "/account", Label: "Account"},
 		},
 		Assets: assets,
