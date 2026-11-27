@@ -34,6 +34,11 @@ const (
 	pathParkingByID      = "/parking/{id}"
 	pathParkingPlace     = "/parking/place/zone/{zone}/place/{number}"
 	pathParkingForScreen = "/business-parking/parking/place/for-screen"
+	pathParkingHistory   = "/parking/history"
+	pathPaymentHistory   = "/parking/person/payment-history"
+
+	// historyPageSize is the page size of the mobile application of the parking service.
+	historyPageSize = "20"
 )
 
 // APIClientService defines the interface for interacting with the Parking API.
@@ -60,13 +65,22 @@ type APIClientService interface {
 	StopParking(ctx context.Context, id int) (*dto.ParkingSession, error)
 }
 
+// HistoryClient reads the two lists of the past of the parking account.
+type HistoryClient interface {
+	ParkingHistory(ctx context.Context, page int) (dto.Page[dto.HistorySession], error)
+	PaymentHistory(ctx context.Context, page int) (dto.Page[dto.PaymentEntry], error)
+}
+
 // APIClient implements APIClientService.
 type APIClient struct {
 	secrets pluginapi.PluginSecrets
 	client  *resty.Client
 }
 
-var _ APIClientService = (*APIClient)(nil)
+var (
+	_ APIClientService = (*APIClient)(nil)
+	_ HistoryClient    = (*APIClient)(nil)
+)
 
 // NewAPIClient creates a new APIClient. It reads the session token of the acting
 // user from the plugin secrets.
@@ -80,6 +94,10 @@ func NewAPIClient(cfg *config.Config, secrets pluginapi.PluginSecrets) *APIClien
 			"User-Agent":   "ttc-park/1.0",
 			"ttl":          "2592000000",
 		})
+
+	if cfg.RequestTimeout > 0 {
+		client.SetTimeout(cfg.RequestTimeout)
+	}
 
 	return &APIClient{
 		secrets: secrets,
@@ -347,6 +365,51 @@ func (s *APIClient) GetPerson(
 	}
 
 	return &response.Result.Data, nil
+}
+
+// ParkingHistory reads one page of the past sessions, the newest first. page counts
+// from 0.
+func (s *APIClient) ParkingHistory(
+	ctx context.Context,
+	page int,
+) (dto.Page[dto.HistorySession], error) {
+	return readPage[dto.HistorySession](
+		ctx,
+		s,
+		"reading the past sessions",
+		pathParkingHistory,
+		page,
+	)
+}
+
+// PaymentHistory reads one page of the transactions of the balance, the newest first.
+// page counts from 0.
+func (s *APIClient) PaymentHistory(
+	ctx context.Context,
+	page int,
+) (dto.Page[dto.PaymentEntry], error) {
+	return readPage[dto.PaymentEntry](ctx, s, "reading the transactions", pathPaymentHistory, page)
+}
+
+func readPage[T any](
+	ctx context.Context,
+	client *APIClient,
+	action, path string,
+	page int,
+) (dto.Page[T], error) {
+	var answer dto.Page[T]
+
+	err := client.send(ctx, action, func(req *resty.Request) (*resty.Response, error) {
+		return req.
+			SetResult(&answer).
+			SetQueryParams(map[string]string{"page": strconv.Itoa(page), "size": historyPageSize}).
+			Get(path)
+	})
+	if err != nil {
+		return dto.Page[T]{}, err
+	}
+
+	return answer, nil
 }
 
 // send runs one call with the session token of the acting user. A user with no token

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log/slog"
 	"reflect"
 	"testing"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
+	"github.com/abgeo/maroid/libs/pluginconfig"
 	"github.com/abgeo/maroid/plugins/parking/config"
 	"github.com/abgeo/maroid/plugins/parking/permission"
 )
@@ -57,4 +59,23 @@ func TestAccountConnectIsOpenToAViewer(t *testing.T) {
 	}
 
 	t.Fatal("the plugin declares no account.connect")
+}
+
+// PARKHIST-SC-001: An empty config gives one job of each user, each hour at minute 15.
+func TestTheHistoryCollectorRunsEachHour(t *testing.T) {
+	t.Parallel()
+
+	cfg := new(config.Config)
+	require.NoError(t, pluginconfig.DecodeAndValidateConfig(map[string]any{}, cfg))
+
+	jobs, err := (&ParkingPlugin{config: cfg, logger: slog.New(slog.DiscardHandler)}).CronJobs()
+	require.NoError(t, err)
+
+	require.Len(t, jobs, 1)
+	assert.Equal(t, pluginapi.CronJobMeta{
+		ID:       "history_collector",
+		Schedule: "15 * * * *",
+		Scope:    pluginapi.CronScopePerUser,
+	}, jobs[0].Meta())
+	assert.Equal(t, 5, cfg.CollectorPages)
 }

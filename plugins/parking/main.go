@@ -7,11 +7,16 @@ import (
 	"io/fs"
 	"log/slog"
 
+	"github.com/spf13/cobra"
+
 	"github.com/abgeo/maroid/libs/pluginapi"
 	telegramconversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/libs/pluginconfig"
+	"github.com/abgeo/maroid/plugins/parking/cli"
 	"github.com/abgeo/maroid/plugins/parking/config"
+	"github.com/abgeo/maroid/plugins/parking/db"
 	"github.com/abgeo/maroid/plugins/parking/handler"
+	"github.com/abgeo/maroid/plugins/parking/job"
 	"github.com/abgeo/maroid/plugins/parking/permission"
 	"github.com/abgeo/maroid/plugins/parking/service"
 	"github.com/abgeo/maroid/plugins/parking/telegram/command"
@@ -26,7 +31,7 @@ var Meta = pluginapi.Metadata{
 	ID:          pluginapi.ParsePluginID("dev.maroid.parking"),
 	Name:        "Tbilisi Parking",
 	Description: "Start and stop parking sessions, and check the balance.",
-	Version:     "0.1.0",
+	Version:     "0.2.0",
 	APIVersion:  pluginapi.APIVersion,
 }
 
@@ -38,10 +43,14 @@ type ParkingPlugin struct {
 	apiClientSvc               service.APIClientService
 	connections                service.ConnectionService
 	answers                    *command.Notice
+	collector                  *service.Collector
 }
 
 var (
 	_ pluginapi.ConfigurablePlugin         = (*ParkingPlugin)(nil)
+	_ pluginapi.CommandPlugin              = (*ParkingPlugin)(nil)
+	_ pluginapi.CronPlugin                 = (*ParkingPlugin)(nil)
+	_ pluginapi.MigrationPlugin            = (*ParkingPlugin)(nil)
 	_ pluginapi.TelegramCommandPlugin      = (*ParkingPlugin)(nil)
 	_ pluginapi.TelegramConversationPlugin = (*ParkingPlugin)(nil)
 	_ pluginapi.PermissionPlugin           = (*ParkingPlugin)(nil)
@@ -79,17 +88,48 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		return nil, fmt.Errorf("getting host secrets: %w", err)
 	}
 
+	database, err := host.Database()
+	if err != nil {
+		return nil, fmt.Errorf("getting host database: %w", err)
+	}
+
 	apiClient := service.NewAPIClient(pluginConfig, secrets)
+	logger := host.Logger()
 
 	return &ParkingPlugin{
 		config:                     pluginConfig,
-		logger:                     host.Logger(),
+		logger:                     logger,
 		telegramBot:                telegramBot,
 		telegramConversationEngine: host.TelegramConversationEngine(),
 		apiClientSvc:               apiClient,
 		connections:                service.NewConnections(apiClient, settings, secrets),
 		answers:                    command.NewNotice(pages),
+		collector: service.NewCollector(
+			apiClient,
+			service.NewHistoryStore(database),
+			logger,
+		),
 	}, nil
+}
+
+// CronJobs returns the hourly collection of the parking history of each user.
+func (p *ParkingPlugin) CronJobs() ([]pluginapi.CronJob, error) {
+	return []pluginapi.CronJob{job.NewHistoryCollector(p.config, p.logger, p.collector)}, nil
+}
+
+// Commands returns the collection of the full parking history of one user.
+func (p *ParkingPlugin) Commands() []*cobra.Command {
+	return []*cobra.Command{cli.NewBackfill(p.logger, p.collector).Command()}
+}
+
+// Migrations returns the migrations of the schema of the plugin.
+func (p *ParkingPlugin) Migrations() (fs.FS, error) {
+	migrations, err := fs.Sub(db.Migrations, "migrations")
+	if err != nil {
+		return nil, fmt.Errorf("getting the migrations FS: %w", err)
+	}
+
+	return migrations, nil
 }
 
 func (p *ParkingPlugin) SettingsModel() (any, error) {
