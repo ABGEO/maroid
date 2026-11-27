@@ -173,21 +173,25 @@ holds "No parking lots found near your location." and the two buttons of today.
 **Verifies:** `PARKMAP-FR-006`, `PARKMAP-FR-008`
 **Layer:** unit
 
-**Given** the real `LotMap` and the fixture.
+**Given** the real `LotMap`, and two lots of 40 m on an east and west axis, 6 m and 12 m north of the location.
 **When** `Render` runs.
-**Then** the pixel on the midpoint of the longest edge of `A306` carries `#2563EB`, and the
-one of `A302` carries `#16A34A`. A pixel inside each outline, clear of its label, differs from white.
+**Then** on the south edge of each lot, at 5 % of its length from the west end and half a
+pixel inside the outline, the first lot shows `#2563EB` and the second `#16A34A`, each within
+8 per channel. A pixel inside each outline, clear of its label, differs from white.
 
 ### `PARKMAP-SC-017`
 
 **Verifies:** `PARKMAP-FR-007`
 **Layer:** unit
 
-**Given** an outline of 40 m on an east and west axis, and a pin rectangle over its centroid.
+**Given** an outline of 180 by 13 pixels on an east and west axis, its centroid at
+`(190, 306.5)`, a label of 50 by 22 pixels, and a pin rectangle over the centroid from
+`x` 180 to 200.
 **When** the label placement runs.
-**Then** the label sits at 25 % of the axis, its text is the lot number, and its rectangle meets
-no pin. With no pin over the centroid, the label sits at the centroid. With a pin over all
-three points, the label sits at the centroid.
+**Then** the label center is `(154, 306.5)`: the clear position nearest to the centroid,
+on the west side. Its rectangle meets no pin and covers part of the outline. With no pin,
+the label sits at the centroid. With a rectangle over the whole image, the label sits at
+the centroid.
 
 ### `PARKMAP-SC-018`
 
@@ -306,7 +310,7 @@ and a map source that never answers.
 **Layer:** unit
 
 **Given** a `TileCache` with the limit of 50 MB.
-**When** the test puts 60 tiles of 1 MB, and reads the first tile after the tenth put.
+**When** the test puts 55 tiles of 1 MB, and reads the first tile after the tenth put.
 **Then** the sum of the held bytes is at most 50 MB. The first tile stays. The second tile is gone.
 
 ## The live check

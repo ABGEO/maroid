@@ -261,9 +261,9 @@ and calls `TelegramBot.SendPhoto`. The map and the keyboard read one slice, so
 ### `PARKMAP-DD-008`
 
 **Realizes:** `PARKMAP-FR-007`
-**Decision:** Each label tries three points in this order: the centroid of the outline, then the points at 25 % and at 75 % of the outline along its longest edge, through the centroid. The label takes the first point at which its rectangle meets neither the rectangle of the pin nor an earlier label. When every point fails, it takes the centroid.
-**Rationale:** A lot is about 3 m wide and up to 60 m long. The three points stay on the outline. The pin stands at the curb, often next to the centroid of the nearest lot.
-**Alternatives:** The centroid only. The owner rejected it: the label hides the pin.
+**Decision:** Each label takes the position nearest to the centroid of the outline, on a grid of 2 pixels along the longest edge and across it, at which the label still covers a point of the outline and meets neither the rectangle of the pin nor an earlier label. Of two positions at the same distance, the one nearer the start of the edge wins. When no position is clear, the label takes the centroid.
+**Rationale:** A lot is about 3 m wide and from 6 m to 60 m long. The pin stands at the curb, often on the nearest lot. On a lot of 6 m, three fixed points along it all fall under the pin, so the label must also move across the lot and past its ends. The condition "covers a point of the outline" keeps `PARKMAP-FR-007`.
+**Alternatives:** Three fixed points, at the centroid and at 25 % and 75 % of the length. A live map showed the label of a lot of 6 m under the pin. The centroid only. The owner rejected it.
 
 ### `PARKMAP-DD-009`
 
@@ -319,9 +319,9 @@ and calls `TelegramBot.SendPhoto`. The map and the keyboard read one slice, so
 | 2   | `ADR-0030`: correct `EXT-002`.                                                                                      | `PARKMAP-FR-017`                                                                                               | [x]  |
 | 3   | `config.MapConfig`, `errs.ErrMapSource`, `model.ParkingLot`, `model.NearbyLot`, and `dto.ParkingLot.ToModel`.       | `PARKMAP-FR-016`                                                                                               | [x]  |
 | 4   | `NearbyLots`: the box, the distance, the order, and the limit.                                                      | `PARKMAP-FR-001` to `PARKMAP-FR-004`                                                                           | [x]  |
-| 5   | `TileClient` and `TileCache`.                                                                                       | `PARKMAP-FR-017`, `PARKMAP-NFR-003`, `PARKMAP-NFR-004`, `PARKMAP-INV-002`                                      | [ ]  |
-| 6   | `LotMap`: the zoom, the draw, the labels, and the attribution.                                                      | `PARKMAP-FR-006` to `PARKMAP-FR-012`, `PARKMAP-NFR-002`                                                        | [ ]  |
-| 7   | `select_lot`, the conversation, and `main.go`.                                                                      | `PARKMAP-FR-005`, `PARKMAP-FR-013` to `PARKMAP-FR-015`, `PARKMAP-FR-019`, `PARKMAP-NFR-001`, `PARKMAP-INV-001` | [ ]  |
+| 5   | `TileClient` and `TileCache`.                                                                                       | `PARKMAP-FR-017`, `PARKMAP-NFR-003`, `PARKMAP-NFR-004`, `PARKMAP-INV-002`                                      | [x]  |
+| 6   | `LotMap`: the zoom, the draw, the labels, and the attribution.                                                      | `PARKMAP-FR-006` to `PARKMAP-FR-012`, `PARKMAP-NFR-002`                                                        | [x]  |
+| 7   | `select_lot`, the conversation, and `main.go`.                                                                      | `PARKMAP-FR-005`, `PARKMAP-FR-013` to `PARKMAP-FR-015`, `PARKMAP-FR-019`, `PARKMAP-NFR-001`, `PARKMAP-INV-001` | [x]  |
 | 8   | Lint and build the parking plugin, `apps/hub`, and `libs/pluginapi` (`BLD-001`). Run `PARKMAP-SC-030`.              | All                                                                                                            | [ ]  |
 
 ## Retired identifiers
