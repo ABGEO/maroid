@@ -90,6 +90,10 @@
 			.nice(TICKS)
 			.range([innerHeight, 0])
 	);
+	// A chart of lines alone draws its grid on the scale of the line, so no empty column
+	// scale labels the left axis.
+	const linesAlone = $derived(columnValues.length === 0 && lineValues.length > 0);
+	const yGrid = $derived(linesAlone ? yLine : yColumn);
 	const columnTick = $derived(yColumn.tickFormat(TICKS));
 	const lineTick = $derived(yLine.tickFormat(TICKS));
 
@@ -146,24 +150,26 @@
 			onpointerleave={() => (active = null)}
 		>
 			<g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
-				{#each yColumn.ticks(TICKS) as tick (tick)}
+				{#each yGrid.ticks(TICKS) as tick (tick)}
 					<line
 						x1="0"
 						x2={innerWidth}
-						y1={yColumn(tick)}
-						y2={yColumn(tick)}
+						y1={yGrid(tick)}
+						y2={yGrid(tick)}
 						class={tick === 0 ? 'stroke-base-content/40' : 'stroke-base-300'}
 						stroke-dasharray={tick === 0 ? undefined : '4 4'}
 					/>
-					<text
-						x="-8"
-						y={yColumn(tick)}
-						text-anchor="end"
-						dominant-baseline="middle"
-						class="fill-base-content/70 text-xs"
-					>
-						{columnTick(tick)}
-					</text>
+					{#if !linesAlone}
+						<text
+							x="-8"
+							y={yColumn(tick)}
+							text-anchor="end"
+							dominant-baseline="middle"
+							class="fill-base-content/70 text-xs"
+						>
+							{columnTick(tick)}
+						</text>
+					{/if}
 				{/each}
 
 				{#each lineValues.length > 0 ? yLine.ticks(TICKS) : [] as tick (tick)}

@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-11-25
+updated: 2026-11-27
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -190,6 +190,20 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-car-log-copy`               | car log copy               | The vehicles, the log entries, the reminders, the reference items, and the car log settings that Maroid holds for one workspace.                                                                                                                       |
 | `GLO-spend`                      | spend                      | The amounts of the refuels, the maintenances, and the expenses. An instalment counts on its due day. A log entry with no instalment counts on its day.                                                                                                 |
 | `GLO-consumption`                | consumption                | The volume of the fuel lines from one full tank mark to the next, per distance between the two.                                                                                                                                                        |
+| `GLO-pension-service`            | pension service            | The external service of the Pension Agency of Georgia that holds the pension accounts.                                                                                                                                                                 |
+| `GLO-pension-account`            | pension account            | The account of one person at the pension service.                                                                                                                                                                                                      |
+| `GLO-contribution`               | contribution               | One payment into a pension account on one date, as the pension service reports it, with its employer and its source.                                                                                                                                   |
+| `GLO-source`                     | source                     | The payer of a contribution: the person, the employer, or the state.                                                                                                                                                                                   |
+| `GLO-basis`                      | basis                      | The record of the pension service that one to three contributions share, one for each source.                                                                                                                                                          |
+| `GLO-employer`                   | employer                   | The organization that pays a contribution for a person, with the code that the pension service gives it.                                                                                                                                               |
+| `GLO-asset-value`                | asset value                | The value of the savings of a pension account on one day, in lari, as the pension service reports it.                                                                                                                                                  |
+| `GLO-gain`                       | gain                       | The part of the asset value that the investment earned, as the pension service reports it.                                                                                                                                                             |
+| `GLO-withheld-amount`            | withheld amount            | The part of the asset value that the pension service blocks, as it reports it.                                                                                                                                                                         |
+| `GLO-portfolio`                  | portfolio                  | An investment fund that an asset manager runs for the pension service, with a name and a ticker.                                                                                                                                                       |
+| `GLO-asset-manager`              | asset manager              | The company that runs a portfolio.                                                                                                                                                                                                                     |
+| `GLO-portfolio-share`            | portfolio share            | The part of a pension account in one portfolio: the percentage that the person chose, the current percentage, and the amount.                                                                                                                          |
+| `GLO-unit-price`                 | unit price                 | The price of one unit of a pension account or of one portfolio on one day, in lari. A fuel line uses the words for the price of one volume unit of fuel.                                                                                               |
+| `GLO-account-summary`            | account summary            | The asset value, the units, the gain, the withheld amount, the sum of the contributions of each source and of all sources, and the portfolio shares of a pension account.                                                                              |
 
 ## Retired identifiers
 
