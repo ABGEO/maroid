@@ -105,6 +105,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ParkingPlatePage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
         "401":
           $ref: "../../api/components.yaml#/components/responses/Unauthorized"
         "403":
