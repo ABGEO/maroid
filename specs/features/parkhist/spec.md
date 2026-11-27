@@ -105,26 +105,26 @@ command reads every page for one user. Three pages and the read routes behind th
 
 Every path is under `plugins/parking/`. A file not named here follows the pensions plugin.
 
-| Path                                      | Action | Holds                                                                                                                                                                                                                                              |
-| ----------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `db/doc.go`, `db/migrations.go`           | create | `Migrations`, the embedded `migrations/*.sql`                                                                                                                                                                                                      |
-| `db/migrations/20261128100000_*`          | create | `table_sessions_create`                                                                                                                                                                                                                            |
-| `db/migrations/20261128100100_*`          | create | `table_transactions_create`                                                                                                                                                                                                                        |
-| `config/config.go`                        | change | `Config` gains `RequestTimeout`, `CollectorPages`, and `CronSchedule` with `HistoryCollector` (section 4.3)                                                                                                                                        |
-| `errs/errs.go`                            | change | `ErrUnexpectedAnswer`, `ErrPageLimit`, `ErrInvalidUser`                                                                                                                                                                                            |
-| `model/history.go`                        | create | `Session`, `Transaction`, `TransactionKind` with its four values, `Reach` (`ReachRecent`, `ReachFull`), `Collection`                                                                                                                               |
-| `dto/history.go`                          | create | `Page[T]`, `HistorySession`, `PaymentEntry`, `PageMeta`, and `ToModel` of each (`PARKHIST-DD-006`)                                                                                                                                                 |
-| `service/api-client.go`                   | change | `APIClientService` gains `ParkingHistory` and `PaymentHistory`. `NewAPIClient` sets the timeout                                                                                                                                                    |
-| `repository/{doc,session,transaction}.go` | create | `Session.Known`, `Session.Upsert`, `Transaction.Known`, `Transaction.Upsert`                                                                                                                                                                       |
-| `service/history_store.go`                | create | `HistoryStore` over `PluginDB`: `Known` and `Save(ctx context.Context, sessions []model.Session, transactions []model.Transaction) (model.Collection, error)`, one transaction. `Collection` counts the inserted rows, from `RETURNING (xmax = 0)` |
-| `service/collector.go`                    | create | `Collector.Collect(ctx context.Context, reach model.Reach) (model.Collection, error)`                                                                                                                                                              |
-| `job/{doc,history_collector}.go`          | create | `HistoryCollector`, `NewHistoryCollector`                                                                                                                                                                                                          |
-| `cli/{doc,backfill}.go`                   | create | `Backfill`, `NewBackfill`, `Command() *cobra.Command`                                                                                                                                                                                              |
-| `main.go`                                 | change | `ParkingPlugin`: `Meta` (version `0.2.0`), `host.Database`, `CronJobs`, `Commands`, `Migrations`, and the parts of `spec-pages.md`                                                                                                                 |
-| `config.yaml` at the repository root      | change | The block of `parking.so` gains the defaults of section 4.3, as comments                                                                                                                                                                           |
-| `chart/values.yaml`                       | change | The entry of `parking.so` gains `cron_schedule.history_collector`                                                                                                                                                                                  |
+| Path                                      | Action | Holds                                                                                                                                                                                                                                                                            |
+| ----------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `db/doc.go`, `db/migrations.go`           | create | `Migrations`, the embedded `migrations/*.sql`                                                                                                                                                                                                                                    |
+| `db/migrations/20261128100000_*`          | create | `table_sessions_create`                                                                                                                                                                                                                                                          |
+| `db/migrations/20261128100100_*`          | create | `table_transactions_create`                                                                                                                                                                                                                                                      |
+| `config/config.go`                        | change | `Config` gains `RequestTimeout`, `CollectorPages`, and `CronSchedule` with `HistoryCollector` (section 4.3)                                                                                                                                                                      |
+| `errs/errs.go`                            | change | `ErrUnexpectedAnswer`, `ErrPageLimit`, `ErrInvalidUser`                                                                                                                                                                                                                          |
+| `model/history.go`                        | create | `Session`, `Transaction`, `TransactionKind` with its four values, `Reach` (`ReachRecent`, `ReachFull`), `Collection`                                                                                                                                                             |
+| `dto/history.go`                          | create | `Page[T]`, `HistorySession`, `PaymentEntry`, `PageMeta`, and `ToModel` of each (`PARKHIST-DD-006`)                                                                                                                                                                               |
+| `service/api-client.go`                   | change | `HistoryClient` holds `ParkingHistory` and `PaymentHistory`, and `APIClient` implements it. `NewAPIClient` sets the timeout                                                                                                                                                      |
+| `repository/{doc,session,transaction}.go` | create | `Session.Known`, `Session.Upsert`, `Transaction.Known`, `Transaction.Upsert`                                                                                                                                                                                                     |
+| `service/history_store.go`                | create | `HistoryStore` over `PluginDB`: `KnownSessions`, `KnownTransactions`, and `Save(ctx context.Context, sessions []model.Session, transactions []model.Transaction) (model.Collection, error)`, one transaction. `Collection` counts the inserted rows, from `RETURNING (xmax = 0)` |
+| `service/collector.go`                    | create | `Collector.Collect(ctx context.Context, reach model.Reach) (model.Collection, error)`                                                                                                                                                                                            |
+| `job/{doc,history_collector}.go`          | create | `HistoryCollector`, `NewHistoryCollector`                                                                                                                                                                                                                                        |
+| `cli/{doc,backfill}.go`                   | create | `Backfill`, `NewBackfill`, `Command() *cobra.Command`                                                                                                                                                                                                                            |
+| `main.go`                                 | change | `ParkingPlugin`: `Meta` (version `0.2.0`), `host.Database`, `CronJobs`, `Commands`, `Migrations`, and the parts of `spec-pages.md`                                                                                                                                               |
+| `config.yaml` at the repository root      | change | The block of `parking.so` gains the defaults of section 4.3, as comments                                                                                                                                                                                                         |
+| `chart/values.yaml`                       | change | The entry of `parking.so` gains `cron_schedule.history_collector`                                                                                                                                                                                                                |
 
-The new methods of `service.APIClientService`. Each one sends through `send`, so a 401 removes
+The methods of the new `service.HistoryClient`. `APIClientService` already holds 10 methods, the limit of the linter. Each one sends through `send`, so a 401 removes
 the session token and answers `errs.ErrNotConnected`, as `PARKACC-DD-003` gives:
 
 ```go
@@ -200,11 +200,11 @@ sequenceDiagram
     C->>C: read the session token, or ErrNotConnected
     loop each page of sessions, from 0
         C->>P: GET /parking/history?page=n&size=20
-        C->>D: Known(external ids of the finished rows)
+        C->>D: KnownSessions(external ids of the finished rows)
     end
     loop each page of transactions, from 0
         C->>P: GET /parking/person/payment-history?page=n&size=20
-        C->>D: Known(external ids)
+        C->>D: KnownTransactions(external ids)
     end
     P-->>C: 401 on any call: the token goes, ErrNotConnected
     C->>D: Save(new sessions, new transactions), one database transaction
@@ -267,7 +267,7 @@ held row with a changed amount, and must compare values on each page.
 ### `PARKHIST-DD-004`
 
 **Realizes:** `PARKHIST-FR-009`
-**Decision:** `Collect` calls `HistoryStore.Known` in its own `WithTx` for each page, and writes
+**Decision:** `Collect` calls `HistoryStore.KnownSessions` or `KnownTransactions` in its own `WithTx` for each page, and writes
 nothing until both lists are read. `HistoryStore.Save` writes both lists in one `WithTx`. Any
 error rolls it back.
 **Rationale:** A partial write leaves page 0 held, so the next run stops there and never reads the
@@ -335,11 +335,11 @@ then fails in place of a loop with no end.
 
 | #   | Step                                                                                                                           | Realizes                                                                       | Done |
 | --- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------ | ---- |
-| 1   | The migrations of section 4.2, with the indexes of `spec-pages.md`. Run them up, down, and up                                  | `PARKHIST-FR-011`, `PARKHIST-INV-001`                                          | [ ]  |
-| 2   | `errs/`, `model/history.go`, `config/`                                                                                         | `PARKHIST-FR-002`, `PARKHIST-FR-006`, `PARKHIST-FR-015`                        | [ ]  |
-| 3   | `dto/history.go` and the two methods of `service/api-client.go`                                                                | `PARKHIST-FR-012` to `PARKHIST-FR-016`, `PARKHIST-INV-002`                     | [ ]  |
-| 4   | `repository/`, `service/history_store.go`, and `service/collector.go`                                                          | `PARKHIST-FR-005` to `PARKHIST-FR-011`                                         | [ ]  |
-| 5   | `job/history_collector.go` and `cli/backfill.go`                                                                               | `PARKHIST-FR-001` to `PARKHIST-FR-004`, `PARKHIST-FR-018` to `PARKHIST-FR-020` | [ ]  |
+| 1   | The migrations of section 4.2, with the indexes of `spec-pages.md`. Run them up, down, and up                                  | `PARKHIST-FR-011`, `PARKHIST-INV-001`                                          | [x]  |
+| 2   | `errs/`, `model/history.go`, `config/`                                                                                         | `PARKHIST-FR-002`, `PARKHIST-FR-006`, `PARKHIST-FR-015`                        | [x]  |
+| 3   | `dto/history.go` and the two methods of `service/api-client.go`                                                                | `PARKHIST-FR-012` to `PARKHIST-FR-016`, `PARKHIST-INV-002`                     | [x]  |
+| 4   | `repository/`, `service/history_store.go`, and `service/collector.go`                                                          | `PARKHIST-FR-005` to `PARKHIST-FR-011`                                         | [x]  |
+| 5   | `job/history_collector.go` and `cli/backfill.go`                                                                               | `PARKHIST-FR-001` to `PARKHIST-FR-004`, `PARKHIST-FR-018` to `PARKHIST-FR-020` | [x]  |
 | 6   | The reads of `spec-pages.md`: `repository/`, `service/history_read.go`, the DTOs                                               | `PARKHIST-FR-025` to `PARKHIST-FR-042`, `PARKHIST-NFR-001`                     | [ ]  |
 | 7   | The read handlers, the widget link, and `api.yaml`                                                                             | `PARKHIST-FR-021` to `PARKHIST-FR-045`                                         | [ ]  |
 | 8   | `ui/`: the three pages of `spec-pages.md`. `main.go`, `config.yaml`. Build the UI, then the `.so` (`BLD-003`)                  | `PARKHIST-FR-022` to `PARKHIST-FR-044`                                         | [ ]  |
