@@ -3,6 +3,7 @@ package step_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/mymmrac/telego"
 	"github.com/stretchr/testify/require"
@@ -24,18 +25,37 @@ const (
 	accountURL     = "https://deck.example/w/W/plugins/dev.maroid.parking/account"
 )
 
-// fakeBot records the text and the keyboard of each edit of the control message.
+// fakeBot records the text and the keyboard of each edit of the control message, and
+// each message and photo that the step sends, in their order.
 type fakeBot struct {
 	texts     []string
 	keyboards []*telego.InlineKeyboardMarkup
+	calls     []string
+	messages  []*telego.SendMessageParams
+	sentAt    []time.Time
+	photos    []*telego.SendPhotoParams
+	photoErr  error
 }
 
-func (b *fakeBot) SendMessage(context.Context, *telego.SendMessageParams) (*telego.Message, error) {
-	return &telego.Message{}, nil
+func (b *fakeBot) SendMessage(
+	_ context.Context,
+	params *telego.SendMessageParams,
+) (*telego.Message, error) {
+	b.calls = append(b.calls, "SendMessage")
+	b.messages = append(b.messages, params)
+	b.sentAt = append(b.sentAt, time.Now())
+
+	return &telego.Message{Chat: telego.Chat{ID: params.ChatID.ID}}, nil
 }
 
-func (b *fakeBot) SendPhoto(context.Context, *telego.SendPhotoParams) (*telego.Message, error) {
-	return &telego.Message{}, nil
+func (b *fakeBot) SendPhoto(
+	_ context.Context,
+	params *telego.SendPhotoParams,
+) (*telego.Message, error) {
+	b.calls = append(b.calls, "SendPhoto")
+	b.photos = append(b.photos, params)
+
+	return &telego.Message{}, b.photoErr
 }
 
 func (b *fakeBot) AnswerCallbackQuery(context.Context, *telego.AnswerCallbackQueryParams) error {

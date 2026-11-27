@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -22,6 +23,11 @@ import (
 	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 	"github.com/abgeo/maroid/plugins/parking/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/widget"
+)
+
+const (
+	tileCacheBytes = 50 << 20
+	tileCacheTTL   = 7 * 24 * time.Hour
 )
 
 // Meta names the plugin. The hub reads it before it calls New.
@@ -42,6 +48,7 @@ type ParkingPlugin struct {
 	telegramConversationEngine telegramconversationapi.Engine
 	apiClientSvc               service.APIClientService
 	lots                       service.LotFinder
+	maps                       service.LotMapRenderer
 	connections                service.ConnectionService
 	answers                    *command.Notice
 	collector                  *service.Collector
@@ -99,6 +106,15 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 	logger := host.Logger()
 	history := service.NewHistoryStore(database)
 
+	maps, err := service.NewLotMap(
+		service.NewTileClient(pluginConfig.Map),
+		service.NewTileCache(tileCacheBytes, tileCacheTTL),
+		pluginConfig.Map,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("building the parking map: %w", err)
+	}
+
 	return &ParkingPlugin{
 		config:                     pluginConfig,
 		logger:                     logger,
@@ -106,6 +122,7 @@ var New pluginapi.Constructor = func(host pluginapi.Host, cfg map[string]any) (p
 		telegramConversationEngine: host.TelegramConversationEngine(),
 		apiClientSvc:               apiClient,
 		lots:                       service.NewNearbyLots(apiClient, logger),
+		maps:                       maps,
 		connections:                service.NewConnections(apiClient, settings, secrets),
 		answers:                    command.NewNotice(pages),
 		collector:                  service.NewCollector(apiClient, history, logger),
@@ -206,6 +223,14 @@ func (p *ParkingPlugin) TelegramCommands() ([]pluginapi.TelegramCommand, error) 
 
 func (p *ParkingPlugin) TelegramConversations() ([]telegramconversationapi.Conversation, error) {
 	return []telegramconversationapi.Conversation{
-		conversation.NewParkingConversation(p.telegramBot, p.apiClientSvc, p.lots, p.answers),
+		conversation.NewParkingConversation(
+			p.telegramBot,
+			p.apiClientSvc,
+			p.lots,
+			p.maps,
+			p.config.Map.Timeout,
+			p.answers,
+			p.logger,
+		),
 	}, nil
 }

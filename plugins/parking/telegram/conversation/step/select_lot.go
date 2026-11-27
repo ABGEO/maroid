@@ -3,6 +3,8 @@ package step
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
@@ -19,7 +21,10 @@ type SelectLot struct {
 	telegramBot  pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
 	lots         service.LotFinder
+	maps         service.LotMapRenderer
+	mapTimeout   time.Duration
 	answers      *command.Notice
+	logger       *slog.Logger
 }
 
 var _ conversationapi.Step = (*SelectLot)(nil)
@@ -29,13 +34,19 @@ func NewSelectLot(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
 	lots service.LotFinder,
+	maps service.LotMapRenderer,
+	mapTimeout time.Duration,
 	answers *command.Notice,
+	logger *slog.Logger,
 ) *SelectLot {
 	return &SelectLot{
 		telegramBot:  telegramBot,
 		apiClientSvc: apiClientSvc,
 		lots:         lots,
+		maps:         maps,
+		mapTimeout:   mapTimeout,
 		answers:      answers,
+		logger:       logger,
 	}
 }
 
@@ -58,6 +69,10 @@ func (s *SelectLot) OnEnter(
 	lots, err := s.lots.FindNearby(ctx, lat, lng)
 	if err != nil {
 		return fmt.Errorf("fetching parking lots: %w", err)
+	}
+
+	if len(lots) > 0 {
+		s.sendMap(ctx, update, lat, lng, lots)
 	}
 
 	keyboard := buildLotKeyboard(lots)
@@ -137,6 +152,53 @@ func (s *SelectLot) dismissReplyKeyboard(
 		context.Background(), msg,
 	); err != nil {
 		return fmt.Errorf("removing reply keyboard: %w", err)
+	}
+
+	return nil
+}
+
+// sendMap sends the map of the lots. A failure leaves a warning and no note to the
+// member, because the lot list that follows is the choice.
+func (s *SelectLot) sendMap(
+	ctx context.Context,
+	update telego.Update,
+	lat, lng float64,
+	lots []model.NearbyLot,
+) {
+	mapCtx, cancel := context.WithTimeout(ctx, s.mapTimeout)
+	defer cancel()
+
+	err := s.renderAndSend(mapCtx, update, lat, lng, lots)
+	if err != nil {
+		s.logger.WarnContext(
+			ctx,
+			"parking map not sent",
+			slog.Any("error", err),
+			slog.Int("lots", len(lots)),
+		)
+	}
+}
+
+func (s *SelectLot) renderAndSend(
+	ctx context.Context,
+	update telego.Update,
+	lat, lng float64,
+	lots []model.NearbyLot,
+) error {
+	mapImage, err := s.maps.Render(ctx, lat, lng, lots)
+	if err != nil {
+		return fmt.Errorf("drawing the parking map: %w", err)
+	}
+
+	photo := tu.Photo(tu.ID(update.Message.Chat.ID), tu.FileFromBytes(mapImage, mapFileName)).
+		WithMessageThreadID(update.Message.MessageThreadID)
+
+	if update.Message.DirectMessagesTopic != nil {
+		photo.WithDirectMessagesTopicID(update.Message.DirectMessagesTopic.TopicID)
+	}
+
+	if _, err = s.telegramBot.SendPhoto(ctx, photo); err != nil {
+		return fmt.Errorf("sending the parking map: %w", err)
 	}
 
 	return nil

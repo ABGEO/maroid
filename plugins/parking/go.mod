@@ -7,13 +7,17 @@ require (
 	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261124200309-a243563e108e
 	github.com/abgeo/maroid/libs/rest v0.0.0-20261124200309-a243563e108e
 	github.com/abgeo/maroid/libs/testdb v0.0.0-20261126193422-600c1b858e0f
+	github.com/fogleman/gg v1.3.0
 	github.com/golang-migrate/migrate/v4 v4.20.1
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/google/uuid v1.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/mymmrac/telego v1.14.0
 	github.com/paulmach/orb v0.14.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
+	golang.org/x/image v0.48.0
+	golang.org/x/sync v0.25.0
 	resty.dev/v3 v3.0.0-rc.4
 )
 
@@ -94,7 +98,6 @@ require (
 	golang.org/x/arch v0.33.0 // indirect
 	golang.org/x/crypto v0.59.0 // indirect
 	golang.org/x/net v0.63.0 // indirect
-	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
 )
