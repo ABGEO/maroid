@@ -1,0 +1,466 @@
+# The routes that PARKHIST adds. See `SPC-002`.
+openapi: 3.1.0
+
+x-maroid-document: hub
+
+info:
+  title: The parking history of a user
+  version: 0.1.0
+
+servers:
+  - url: /
+    description: The hub.
+
+security:
+  - sessionCookie: []
+
+paths:
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/sessions:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listParkingSessions
+      summary: List the sessions of the acting user, the latest start first.
+      description: >
+        Realizes `PARKHIST-FR-029` to `PARKHIST-FR-034`, `PARKHIST-DD-011`, and `PARKHIST-NFR-001`.
+        The order is `started_at` then `id`, both descending, and fixed. The permission is
+        `history.read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+        - $ref: "#/components/parameters/Plate"
+        - $ref: "#/components/parameters/Free"
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: One page of sessions.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingSessionPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/sessions/total:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: getParkingSessionTotal
+      summary: Sum every session that the filter matches.
+      description: >
+        Realizes `PARKHIST-FR-027`, `PARKHIST-FR-035`, and `PARKHIST-DD-012`. The filter is the
+        filter of `/sessions`. The permission is `history.read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+        - $ref: "#/components/parameters/Plate"
+        - $ref: "#/components/parameters/Free"
+      responses:
+        "200":
+          description: The count, the duration, and the amount.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingSessionTotal"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/plates:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listParkingPlates
+      summary: List the plates of the stored sessions of the acting user.
+      description: >
+        Realizes `PARKHIST-FR-033`. A bounded collection. The permission is `history.read`.
+      responses:
+        "200":
+          description: Every plate.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingPlatePage"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/lot-usages:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listParkingLotUsages
+      summary: List the 5 parking lots with the most sessions.
+      description: >
+        Realizes `PARKHIST-FR-028` and `PARKHIST-DD-014`. A bounded collection of at most 5 items.
+        The permission is `history.read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+      responses:
+        "200":
+          description: At most 5 parking lots.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingLotUsagePage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/transactions:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listParkingTransactions
+      summary: List the transactions of the acting user, the latest moment first.
+      description: >
+        Realizes `PARKHIST-FR-016`, `PARKHIST-FR-036` to `PARKHIST-FR-041`, `PARKHIST-DD-011`, and
+        `PARKHIST-NFR-001`. The order is `occurred_at` then `id`, both descending, and fixed. The
+        permission is `history.read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+        - $ref: "#/components/parameters/Kind"
+        - $ref: "../../api/components.yaml#/components/parameters/Limit"
+        - $ref: "../../api/components.yaml#/components/parameters/Cursor"
+      responses:
+        "200":
+          description: One page of transactions.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingTransactionPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/transactions/total:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: getParkingTransactionTotal
+      summary: Sum every transaction that the filter matches.
+      description: >
+        Realizes `PARKHIST-FR-042` and `PARKHIST-DD-012`. The filter is the filter of
+        `/transactions`. The permission is `history.read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+        - $ref: "#/components/parameters/Kind"
+      responses:
+        "200":
+          description: The count, the top ups, and the charges.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingTransactionTotal"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+  /workspaces/{workspaceId}/plugins/dev.maroid.parking/api/charge-months:
+    parameters:
+      - $ref: "../../api/components.yaml#/components/parameters/WorkspaceId"
+      - $ref: "../../api/components.yaml#/components/parameters/FlowId"
+    get:
+      operationId: listParkingChargeMonths
+      summary: List the charges and the closing balance of each month.
+      description: >
+        Realizes `PARKHIST-FR-025`, `PARKHIST-FR-026`, and `PARKHIST-DD-013`. A month is a month of
+        the time zone of the acting user. A bounded collection. The permission is `history.read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+      responses:
+        "200":
+          description: One item for each month that holds a transaction.
+          headers:
+            X-Flow-ID:
+              $ref: "../../api/components.yaml#/components/headers/FlowId"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingChargeMonthPage"
+        "400":
+          $ref: "../../api/components.yaml#/components/responses/RequestInvalid"
+        "401":
+          $ref: "../../api/components.yaml#/components/responses/Unauthorized"
+        "403":
+          $ref: "../../api/components.yaml#/components/responses/Forbidden"
+        "404":
+          $ref: "../../api/components.yaml#/components/responses/NotFound"
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-maroid_session
+      description: The session cookie. `SEC-005`.
+
+  parameters:
+    From:
+      name: from
+      in: query
+      required: false
+      description: >
+        The first date, included, `YYYY-MM-DD`, in the time zone of the acting user. Absent, the
+        collection starts at its first row. `PARKHIST-DD-015`.
+      schema:
+        type: string
+        format: date
+    To:
+      name: to
+      in: query
+      required: false
+      description: The last date, included, `YYYY-MM-DD`. A `to` before `from` answers 400.
+      schema:
+        type: string
+        format: date
+    Plate:
+      name: plate
+      in: query
+      required: false
+      description: One plate. A plate of no stored session answers no item.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 16
+    Free:
+      name: free
+      in: query
+      required: false
+      description: "`true` reads the free parkings alone, `false` the other sessions alone."
+      schema:
+        type: boolean
+    Kind:
+      name: kind
+      in: query
+      required: false
+      description: One kind of transaction. `PARKHIST-DD-007`.
+      schema:
+        $ref: "#/components/schemas/ParkingTransactionKind"
+
+  schemas:
+    ParkingLotRef:
+      type: object
+      required: [lot_number, address]
+      properties:
+        lot_number:
+          type: string
+          examples: [A1637]
+        address:
+          type: string
+    ParkingSession:
+      type: object
+      description: A stored session. No member holds the wallet number. `PARKHIST-INV-002`.
+      required:
+        [id, lot_number, address, plate, started_at, ended_at, duration_seconds, amount, free]
+      properties:
+        id:
+          type: string
+          format: uuid
+        lot_number:
+          type: string
+        address:
+          type: string
+        plate:
+          type: string
+          examples: [AB071EO]
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        duration_seconds:
+          type: integer
+          minimum: 0
+        amount:
+          $ref: "../parkacc/api.yaml#/components/schemas/Money"
+        free:
+          type: boolean
+          description: Whether the amount is 0. `PARKHIST-DD-005`.
+    ParkingSessionTotal:
+      type: object
+      required: [count, duration_seconds, amount]
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        duration_seconds:
+          type: integer
+          minimum: 0
+        amount:
+          $ref: "../parkacc/api.yaml#/components/schemas/Money"
+    ParkingPlate:
+      type: object
+      required: [plate]
+      properties:
+        plate:
+          type: string
+    ParkingLotUsage:
+      type: object
+      required: [lot_number, address, count, amount]
+      properties:
+        lot_number:
+          type: string
+        address:
+          type: string
+          description: The address of the latest session of the lot.
+        count:
+          type: integer
+          minimum: 1
+        amount:
+          $ref: "../parkacc/api.yaml#/components/schemas/Money"
+    ParkingTransactionKind:
+      type: string
+      enum: [top_up, parking_payment, permit_purchase, other]
+    ParkingTransaction:
+      type: object
+      description: A stored transaction. No member holds the personal identifier. `PARKHIST-INV-002`.
+      required: [id, occurred_at, kind, description, amount, balance_after]
+      properties:
+        id:
+          type: string
+          format: uuid
+        occurred_at:
+          type: string
+          format: date-time
+        kind:
+          $ref: "#/components/schemas/ParkingTransactionKind"
+        description:
+          type: string
+          description: The English description of the parking service.
+          examples: [Zone Parking]
+        amount:
+          $ref: "../parkacc/api.yaml#/components/schemas/Money"
+        balance_after:
+          $ref: "../parkacc/api.yaml#/components/schemas/Money"
+        session:
+          $ref: "#/components/schemas/ParkingLotRef"
+    ParkingTransactionTotal:
+      type: object
+      required: [count, top_ups, charges]
+      properties:
+        count:
+          type: integer
+          minimum: 0
+        top_ups:
+          $ref: "../parkacc/api.yaml#/components/schemas/Money"
+        charges:
+          $ref: "../parkacc/api.yaml#/components/schemas/Money"
+    ParkingChargeMonth:
+      type: object
+      required: [month, charges, balance]
+      properties:
+        month:
+          type: string
+          pattern: "^[0-9]{4}-[0-9]{2}$"
+        charges:
+          $ref: "../parkacc/api.yaml#/components/schemas/Money"
+        balance:
+          $ref: "../parkacc/api.yaml#/components/schemas/Money"
+    ParkingSessionPage:
+      description: One page of at most `limit` sessions.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ParkingSession"
+    ParkingPlatePage:
+      description: A bounded collection. `next` and `prev` stay absent.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ParkingPlate"
+    ParkingLotUsagePage:
+      description: A bounded collection of at most 5 items. `next` and `prev` stay absent.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ParkingLotUsage"
+    ParkingTransactionPage:
+      description: One page of at most `limit` transactions.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ParkingTransaction"
+    ParkingChargeMonthPage:
+      description: A bounded collection. `next` and `prev` stay absent.
+      allOf:
+        - $ref: "../../api/components.yaml#/components/schemas/Page"
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/ParkingChargeMonth"

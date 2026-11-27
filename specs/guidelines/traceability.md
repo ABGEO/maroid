@@ -305,6 +305,7 @@ Add a row before you create the file or the directory.
 | `MAGTIACC` | `features/magtiacc/` | The telecom account of a workspace: the connection, the subscriber, its state, traffic, and money.        | Approved |
 | `DRIVVO`   | `features/drivvo/`   | The car log account of a workspace: the connection, the copy of its vehicles and log entries, and pages.  | Approved |
 | `PENSION`  | `features/pension/`  | The pension account of a user: the connection, the contributions, the asset value, and the portfolios.    | Approved |
+| `PARKHIST` | `features/parkhist/` | The parking history of a user: the sessions, the transactions, and their pages.                           | Approved |
 
 ## Retired identifiers
 
