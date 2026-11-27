@@ -4,7 +4,7 @@ title: The scenarios of the widgets of the home page
 type: spec
 status: approved
 created: 2026-10-12
-updated: 2026-10-12
+updated: 2026-11-27
 approved_by: Temuri
 approved_on: 2026-10-12
 constrained_by: [TST, TRC]
@@ -176,7 +176,7 @@ A `ready` `list` with no item, and each answer of the helpers with its members s
 **Given** a fake `ConnectionService` that answers `connected` with the balance 4.5 and 4 free parkings, then 1 free parking.
 **When** the balance widget loads twice.
 **Then** the first answers `ready` with `4.50`, `GEL`, "4 free parkings left today", and
-`/account`. The second carries "1 free parking left today". The meta holds `balance`,
+`/overview`, as `PARKHIST-FR-021` gives. The second carries "1 free parking left today". The meta holds `balance`,
 `stat`, `s`, and `sessions.read`.
 
 ## `WIDGET-SC-015`
