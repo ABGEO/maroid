@@ -26,4 +26,12 @@ var (
 	ErrCodeWait = errors.New("parking: the wait for a new code has not ended")
 	// ErrNoAccount reports a connection that the parking service answered with no account.
 	ErrNoAccount = errors.New("parking: connection with no account")
+	// ErrUnexpectedAnswer reports a row of the parking service that does not decode: a
+	// time in an unknown layout, or a negative amount.
+	ErrUnexpectedAnswer = errors.New("parking: unexpected answer")
+	// ErrPageLimit reports a list of the parking service that passes the most pages that a
+	// full collection reads.
+	ErrPageLimit = errors.New("parking: page limit reached")
+	// ErrInvalidUser reports a user identifier that is not a UUID.
+	ErrInvalidUser = errors.New("parking: invalid user")
 )

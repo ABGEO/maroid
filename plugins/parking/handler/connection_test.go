@@ -518,3 +518,25 @@ func TestVerifyConnectsWhenTheReadOfTheAccountFails(t *testing.T) {
 	require.True(t, found)
 	require.Equal(t, sessionT1, session.value)
 }
+
+// PARKHIST-SC-003: A verified connection reads no page of the history.
+func TestAVerifiedConnectionCollectsNothing(t *testing.T) {
+	t.Parallel()
+
+	parking := newRig(t, storedCredentials())
+	parking.pending(time.Now())
+	parking.service.on(http.MethodPost, pathSubmit, answer{
+		status:  http.StatusOK,
+		body:    data(`{"status":"SUCCESS"}`),
+		headers: map[string]string{tokenHeader: sessionT1},
+	})
+	parking.service.on(http.MethodGet, pathPerson, ok(personAnswer))
+
+	recorder := parking.do(t, http.MethodPost, pathVerification, `{"code":"`+codeCorrect+`"}`)
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+
+	for _, call := range parking.service.recorded() {
+		require.NotContains(t, call.path, "/parking/history")
+		require.NotContains(t, call.path, "/payment-history")
+	}
+}
