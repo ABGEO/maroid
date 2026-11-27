@@ -118,6 +118,10 @@ func (b *bot) SendMessage(
 	return &telego.Message{}, nil
 }
 
+func (b *bot) SendPhoto(context.Context, *telego.SendPhotoParams) (*telego.Message, error) {
+	return &telego.Message{}, nil
+}
+
 func (b *bot) AnswerCallbackQuery(context.Context, *telego.AnswerCallbackQueryParams) error {
 	return nil
 }

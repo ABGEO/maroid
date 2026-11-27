@@ -34,6 +34,10 @@ func (b *fakeBot) SendMessage(context.Context, *telego.SendMessageParams) (*tele
 	return &telego.Message{}, nil
 }
 
+func (b *fakeBot) SendPhoto(context.Context, *telego.SendPhotoParams) (*telego.Message, error) {
+	return &telego.Message{}, nil
+}
+
 func (b *fakeBot) AnswerCallbackQuery(context.Context, *telego.AnswerCallbackQueryParams) error {
 	return nil
 }

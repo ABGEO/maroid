@@ -34,6 +34,7 @@ type TelegramMessagePlugin interface {
 // TelegramBot defines the interface for a Telegram bot.
 type TelegramBot interface {
 	SendMessage(ctx context.Context, params *telego.SendMessageParams) (*telego.Message, error)
+	SendPhoto(ctx context.Context, params *telego.SendPhotoParams) (*telego.Message, error)
 	AnswerCallbackQuery(ctx context.Context, params *telego.AnswerCallbackQueryParams) error
 	EditMessageText(
 		ctx context.Context,
