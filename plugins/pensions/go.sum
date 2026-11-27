@@ -12,6 +12,8 @@ github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261124200309-a243563e108e h1:xdt
 github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261124200309-a243563e108e/go.mod h1:TdV0NZZmtZgZk0rzn+P4WnpIoXqT2yhqOKUzkU7M15E=
 github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261124200309-a243563e108e h1:SaV5UMBTSEb96QrMtDx4hQPhd0KHP3aYbFUlwRq842c=
 github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261124200309-a243563e108e/go.mod h1:OSkXoG298/rFXFC7JktdpBGhJ0ibiCKsft1zUpnbP20=
+github.com/abgeo/maroid/libs/rest v0.0.0-20261124200309-a243563e108e h1:s2OZY+qzSmKCOU3OgDzl2eivhahVPHLw6MUgYbATsBY=
+github.com/abgeo/maroid/libs/rest v0.0.0-20261124200309-a243563e108e/go.mod h1:Yw1QSc28rGaeWU2PLxJDQQOUbifhEkJgVlcXUW7TFXk=
 github.com/abgeo/maroid/libs/testdb v0.0.0-20261126193422-600c1b858e0f h1:SDi5jSxywwXqQqrjY5cg923WLwnN4n1UC9sCMj85tuY=
 github.com/abgeo/maroid/libs/testdb v0.0.0-20261126193422-600c1b858e0f/go.mod h1:bRLOANrwQWqVuubNn6jZubCDXyDSaWxDrlhSNapB0Ek=
 github.com/bytedance/gopkg v0.1.4 h1:oZnQwnX82KAIWb7033bEwtxvTqXcYMxDBaQxo5JJHWM=

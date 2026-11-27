@@ -5,6 +5,7 @@ go 1.27.4
 require (
 	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261124200309-a243563e108e
 	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261124200309-a243563e108e
+	github.com/abgeo/maroid/libs/rest v0.0.0-20261124200309-a243563e108e
 	github.com/abgeo/maroid/libs/testdb v0.0.0-20261126193422-600c1b858e0f
 	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/google/uuid v1.6.0
