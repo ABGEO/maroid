@@ -3,10 +3,10 @@ module github.com/abgeo/maroid/plugins/gwp
 go 1.27.4
 
 require (
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261124200309-a243563e108e
-	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261124200309-a243563e108e
-	github.com/abgeo/maroid/libs/rest v0.0.0-20261124200309-a243563e108e
-	github.com/abgeo/maroid/libs/testdb v0.0.0-20261124200309-a243563e108e
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261128084558-de4f3e4ee421
+	github.com/abgeo/maroid/libs/pluginconfig v0.0.0-20261128084558-de4f3e4ee421
+	github.com/abgeo/maroid/libs/rest v0.0.0-20261128084558-de4f3e4ee421
+	github.com/abgeo/maroid/libs/testdb v0.0.0-20261128084558-de4f3e4ee421
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/stretchr/testify v1.12.1
 	resty.dev/v3 v3.0.0-rc.4

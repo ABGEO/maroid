@@ -3,7 +3,7 @@ module github.com/abgeo/maroid/libs/testdb
 go 1.27.4
 
 require (
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261124200309-a243563e108e
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261128084558-de4f3e4ee421
 	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/jackc/pgx/v5 v5.13.0
 	github.com/jmoiron/sqlx v1.4.0
