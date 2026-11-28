@@ -3,9 +3,9 @@ module github.com/abgeo/maroid/plugins/pulse
 go 1.27.4
 
 require (
-	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261128084558-de4f3e4ee421
-	github.com/abgeo/maroid/libs/rest v0.0.0-20261128084558-de4f3e4ee421
-	github.com/abgeo/maroid/libs/testdb v0.0.0-20261128084558-de4f3e4ee421
+	github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261128085301-3a6a0304034c
+	github.com/abgeo/maroid/libs/rest v0.0.0-20261128085301-3a6a0304034c
+	github.com/abgeo/maroid/libs/testdb v0.0.0-20261128085301-3a6a0304034c
 	github.com/go-chi/chi/v5 v5.5.0
 	github.com/go-chi/render v1.0.3
 	github.com/google/uuid v1.6.0
