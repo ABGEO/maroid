@@ -3,26 +3,28 @@ package step
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"time"
 
 	"github.com/mymmrac/telego"
 	tu "github.com/mymmrac/telego/telegoutil"
 
 	"github.com/abgeo/maroid/libs/pluginapi"
 	conversationapi "github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
-	"github.com/abgeo/maroid/plugins/parking/dto"
+	"github.com/abgeo/maroid/plugins/parking/model"
 	"github.com/abgeo/maroid/plugins/parking/service"
 	"github.com/abgeo/maroid/plugins/parking/telegram/command"
 )
-
-// bboxOffset defines the approximate bounding box offset in degrees
-// around the user's location (~10m).
-const bboxOffset = 0.0001
 
 // SelectLot is a conversation step that allows the user to select a parking lot from a list of nearby lots.
 type SelectLot struct {
 	telegramBot  pluginapi.TelegramBot
 	apiClientSvc service.APIClientService
+	lots         service.LotFinder
+	maps         service.LotMapRenderer
+	mapTimeout   time.Duration
 	answers      *command.Notice
+	logger       *slog.Logger
 }
 
 var _ conversationapi.Step = (*SelectLot)(nil)
@@ -31,12 +33,23 @@ var _ conversationapi.Step = (*SelectLot)(nil)
 func NewSelectLot(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
+	lots service.LotFinder,
+	maps service.LotMapRenderer,
+	mapTimeout time.Duration,
 	answers *command.Notice,
+	logger *slog.Logger,
 ) *SelectLot {
 	return &SelectLot{
 		telegramBot:  telegramBot,
 		apiClientSvc: apiClientSvc,
+		lots:         lots,
+		maps:         maps,
+		mapTimeout:   mapTimeout,
 		answers:      answers,
+		logger: logger.With(
+			slog.String("component", "conversation"),
+			slog.String("conversation", "start_parking"),
+		),
 	}
 }
 
@@ -56,13 +69,13 @@ func (s *SelectLot) OnEnter(
 		return err
 	}
 
-	lots, err := s.apiClientSvc.GetParkingLots(
-		ctx,
-		lng-bboxOffset, lng+bboxOffset,
-		lat+bboxOffset, lat-bboxOffset,
-	)
+	lots, err := s.lots.FindNearby(ctx, lat, lng)
 	if err != nil {
 		return fmt.Errorf("fetching parking lots: %w", err)
+	}
+
+	if len(lots) > 0 {
+		s.sendMap(ctx, update, lat, lng, lots)
 	}
 
 	keyboard := buildLotKeyboard(lots)
@@ -147,8 +160,55 @@ func (s *SelectLot) dismissReplyKeyboard(
 	return nil
 }
 
+// sendMap sends the map of the lots. A failure leaves a warning and no note to the
+// member, because the lot list that follows is the choice.
+func (s *SelectLot) sendMap(
+	ctx context.Context,
+	update telego.Update,
+	lat, lng float64,
+	lots []model.NearbyLot,
+) {
+	mapCtx, cancel := context.WithTimeout(ctx, s.mapTimeout)
+	defer cancel()
+
+	err := s.renderAndSend(mapCtx, update, lat, lng, lots)
+	if err != nil {
+		s.logger.WarnContext(
+			ctx,
+			"parking map not sent",
+			slog.Any("error", err),
+			slog.Int("lots", len(lots)),
+		)
+	}
+}
+
+func (s *SelectLot) renderAndSend(
+	ctx context.Context,
+	update telego.Update,
+	lat, lng float64,
+	lots []model.NearbyLot,
+) error {
+	mapImage, err := s.maps.Render(ctx, lat, lng, lots)
+	if err != nil {
+		return fmt.Errorf("drawing the parking map: %w", err)
+	}
+
+	photo := tu.Photo(tu.ID(update.Message.Chat.ID), tu.FileFromBytes(mapImage, mapFileName)).
+		WithMessageThreadID(update.Message.MessageThreadID)
+
+	if update.Message.DirectMessagesTopic != nil {
+		photo.WithDirectMessagesTopicID(update.Message.DirectMessagesTopic.TopicID)
+	}
+
+	if _, err = s.telegramBot.SendPhoto(ctx, photo); err != nil {
+		return fmt.Errorf("sending the parking map: %w", err)
+	}
+
+	return nil
+}
+
 func buildLotKeyboard(
-	lots []dto.ParkingLot,
+	lots []model.NearbyLot,
 ) *telego.InlineKeyboardMarkup {
 	extraRows := 2
 	rows := make(
@@ -159,8 +219,8 @@ func buildLotKeyboard(
 	for _, lot := range lots {
 		rows = append(rows, tu.InlineKeyboardRow(
 			tu.InlineKeyboardButton(
-				lot.UniqueNumber,
-			).WithCallbackData(lot.UniqueNumber),
+				lot.Number,
+			).WithCallbackData(lot.Number),
 		))
 	}
 
@@ -178,7 +238,7 @@ func buildLotKeyboard(
 	return tu.InlineKeyboard(rows...)
 }
 
-func buildLotMessage(lots []dto.ParkingLot) string {
+func buildLotMessage(lots []model.NearbyLot) string {
 	if len(lots) == 0 {
 		return "No parking lots found near your location." +
 			"\n\nYou can <b>Enter manually</b> " +

@@ -4,7 +4,7 @@ title: External services
 type: guideline
 status: active
 created: 2026-09-11
-updated: 2026-09-11
+updated: 2026-11-28
 scope: [plugins/*/service/, plugins/*/dto/]
 related: [PKG, GO, LOG, CFG]
 ---
@@ -21,7 +21,8 @@ The file name is `api-client.go`.
 ## EXT-002
 
 The HTTP client is resty. The base URL comes from the configuration of the plugin.
-The client sets `Accept: application/json` once, at construction.
+The client sets the `Accept` header to the media type that it reads, once, at
+construction. `ADR-0030`.
 
 ## EXT-003
 

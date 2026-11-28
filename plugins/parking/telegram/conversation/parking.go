@@ -1,6 +1,9 @@
 package conversation
 
 import (
+	"log/slog"
+	"time"
+
 	"github.com/abgeo/maroid/libs/pluginapi"
 	"github.com/abgeo/maroid/libs/pluginapi/telegram/conversation"
 	"github.com/abgeo/maroid/plugins/parking/service"
@@ -19,10 +22,14 @@ var _ conversation.Conversation = (*ParkingConversation)(nil)
 func NewParkingConversation(
 	telegramBot pluginapi.TelegramBot,
 	apiClientSvc service.APIClientService,
+	lots service.LotFinder,
+	maps service.LotMapRenderer,
+	mapTimeout time.Duration,
 	answers *command.Notice,
+	logger *slog.Logger,
 ) *ParkingConversation {
 	steps := []conversation.Step{
-		step.NewSelectLot(telegramBot, apiClientSvc, answers),
+		step.NewSelectLot(telegramBot, apiClientSvc, lots, maps, mapTimeout, answers, logger),
 		step.NewAskLocation(telegramBot),
 		step.NewConfirm(telegramBot, apiClientSvc, answers),
 		step.NewEnterLot(telegramBot, apiClientSvc, answers),

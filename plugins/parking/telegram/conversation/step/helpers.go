@@ -16,6 +16,7 @@ import (
 
 const (
 	callbackCancel = "cancel"
+	mapFileName    = "parking-map.png"
 
 	stepAskLocation = "ask_location"
 	stepSelectLot   = "select_lot"

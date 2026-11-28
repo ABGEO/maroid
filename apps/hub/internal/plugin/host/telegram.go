@@ -17,6 +17,13 @@ func (t *telegramBotWrapper) SendMessage(
 	return t.bot.SendMessage(ctx, params) //nolint:wrapcheck
 }
 
+func (t *telegramBotWrapper) SendPhoto(
+	ctx context.Context,
+	params *telego.SendPhotoParams,
+) (*telego.Message, error) {
+	return t.bot.SendPhoto(ctx, params) //nolint:wrapcheck
+}
+
 func (t *telegramBotWrapper) AnswerCallbackQuery(
 	ctx context.Context,
 	params *telego.AnswerCallbackQueryParams,

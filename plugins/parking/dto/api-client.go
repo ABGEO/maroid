@@ -3,8 +3,21 @@ package dto
 
 import (
 	"encoding/json"
+	"fmt"
+	"math"
+	"slices"
 
+	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/encoding/wkt"
+
+	"github.com/abgeo/maroid/plugins/parking/errs"
 	"github.com/abgeo/maroid/plugins/parking/model"
+)
+
+const (
+	// maxMercatorLatitude bounds the latitude that a map of Web Mercator can draw.
+	maxMercatorLatitude = 85.05112878
+	maxLongitude        = 180
 )
 
 // APIResponse is a generic API response wrapper.
@@ -23,6 +36,37 @@ type ParkingLot struct {
 	Polygon      string `json:"polygon"`
 	Address      string `json:"address"`
 	UniqueNumber string `json:"uniqueNumber"`
+}
+
+// ToModel converts the parking lot to its domain entity. The parking service gives the
+// outline as well-known text.
+func (l ParkingLot) ToModel() (model.ParkingLot, error) {
+	outline, err := wkt.UnmarshalPolygon(l.Polygon)
+	if err != nil {
+		return model.ParkingLot{}, fmt.Errorf("reading the outline of %s: %w", l.UniqueNumber, err)
+	}
+
+	for _, ring := range outline {
+		if !slices.ContainsFunc(ring, outOfRange) {
+			continue
+		}
+
+		return model.ParkingLot{}, fmt.Errorf(
+			"%w: the outline of %s holds a point out of range",
+			errs.ErrUnexpectedAnswer,
+			l.UniqueNumber,
+		)
+	}
+
+	return model.ParkingLot{Number: l.UniqueNumber, Address: l.Address, Outline: outline}, nil
+}
+
+func outOfRange(point orb.Point) bool {
+	finite := !math.IsNaN(point.Lat()) && !math.IsInf(point.Lat(), 0) &&
+		!math.IsNaN(point.Lon()) && !math.IsInf(point.Lon(), 0)
+
+	return !finite || math.Abs(point.Lat()) > maxMercatorLatitude ||
+		math.Abs(point.Lon()) > maxLongitude
 }
 
 // ParkingPlace represents a single parking place returned from the API.
