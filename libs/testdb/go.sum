@@ -8,8 +8,8 @@ github.com/Azure/go-ansiterm v0.0.0-20261013165250-51075c6ea6bc h1:58s5YzGPNAP7+
 github.com/Azure/go-ansiterm v0.0.0-20261013165250-51075c6ea6bc/go.mod h1:DMNF6Kxv+EcuUvVuNkvC3f+BjEEmc/Fn9aU+qiD8zpU=
 github.com/Microsoft/go-winio v0.6.4 h1:kJF2pamtYCWXf0xAT8sAkwKC0pMl2HYBrRPHAqyUc+g=
 github.com/Microsoft/go-winio v0.6.4/go.mod h1:1xl5JXG4ze/m74GH6Dc4Mwxfc3VL5siRVQjIAlHH07U=
-github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261128084558-de4f3e4ee421 h1:RejmXG8U8aW4oEgeLZ4Ln9WPow99sFof3JLcw6zvqhg=
-github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261128084558-de4f3e4ee421/go.mod h1:8/XqGEzH7IHhaymBSagkGGs9l5eOjdRrefGEQzjT9NM=
+github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261128085301-3a6a0304034c h1:H+CZcCuhkfj7IysVp5eZWjr5mhbu9bU+jP4z6Qs5fbk=
+github.com/abgeo/maroid/libs/pluginapi v0.0.0-20261128085301-3a6a0304034c/go.mod h1:8/XqGEzH7IHhaymBSagkGGs9l5eOjdRrefGEQzjT9NM=
 github.com/bytedance/gopkg v0.1.4 h1:oZnQwnX82KAIWb7033bEwtxvTqXcYMxDBaQxo5JJHWM=
 github.com/bytedance/gopkg v0.1.4/go.mod h1:v1zWfPm21Fb+OsyXN2VAHdL6TBb2L88anLQgdyje6R4=
 github.com/bytedance/sonic v1.15.5 h1:gKWTBfYCIQpQHZ7LpwGf9Gj3N88ZN0G/GaB3EQhiGXE=
