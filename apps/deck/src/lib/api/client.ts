@@ -1,7 +1,10 @@
 import { PUBLIC_HUB_BASE_URL } from '$app/env/public';
+import { navigating } from '$app/state';
 
 import { createClient, type ApiClient } from '@maroid/api-client';
 import type { FileClient, FileRecord, UploadTicket } from '@maroid/plugin-sdk';
+
+import { RETURN_ADDRESS_PARAMETER, returnAddressOf } from '#lib/auth/return-address.ts';
 
 import type { Handoff } from './types';
 
@@ -9,8 +12,13 @@ const BASE_URL = PUBLIC_HUB_BASE_URL.replace(/\/+$/, '');
 
 let isRedirecting = false;
 
-function landingUrl(): string {
-	return `${window.location.origin}/auth/callback`;
+function landingUrl(returnAddress?: string): string {
+	const landing = new URL('/auth/callback', window.location.origin);
+	if (returnAddress) {
+		landing.searchParams.set(RETURN_ADDRESS_PARAMETER, returnAddress);
+	}
+
+	return landing.toString();
 }
 
 function profileUrl(): string {
@@ -35,8 +43,8 @@ async function startFlow(path: string, params: Record<string, string>): Promise<
 	return handoff.authorization_url;
 }
 
-export function startSignIn(): Promise<string> {
-	return startFlow('/auth/sessions', { redirect: landingUrl() });
+export function startSignIn(returnAddress?: string): Promise<string> {
+	return startFlow('/auth/sessions', { redirect: landingUrl(returnAddress) });
 }
 
 export function startInvitationRedemption(token: string): Promise<string> {
@@ -53,7 +61,11 @@ function redirectToAuth(): void {
 	}
 
 	isRedirecting = true;
-	void startSignIn().then((address) => {
+
+	// The router runs the load of a route before it changes the address of the
+	// window, so a 401 in a load fires while the window shows the previous page.
+	const open = navigating.to?.url ?? new URL(window.location.href);
+	void startSignIn(returnAddressOf(open)).then((address) => {
 		window.location.href = address;
 	});
 }
