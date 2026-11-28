@@ -4,7 +4,7 @@ title: Glossary
 type: glossary
 status: active
 created: 2026-09-11
-updated: 2026-11-27
+updated: 2026-11-28
 related: [LNG, ERR, RES, SPC]
 ---
 
@@ -60,6 +60,7 @@ A term identifier has the form `GLO-<term>`. The identifier is permanent.
 | `GLO-session-cookie`             | session cookie             | The cookie that carries the credential of a session.                                                                                                                                                                                                   |
 | `GLO-access-token`               | access token               | The value that the IdP issues for a call to Maroid.                                                                                                                                                                                                    |
 | `GLO-identity-token`             | identity token             | The value that the IdP issues to describe a person to the client that signed them in.                                                                                                                                                                  |
+| `GLO-return-address`             | return address             | The address of the deck that a person had open, or was opening, when a sign in started. The deck opens it after the sign in.                                                                                                                           |
 | `GLO-acting-user`                | acting user                | The user that one unit of work runs for. A request, an update, a tool call, and the run of a job for each user each have exactly one. Any other cron run has none.                                                                                     |
 | `GLO-workspace`                  | workspace                  | The place that owns the records of a plugin. Its members share them. `OWN-010` gives it.                                                                                                                                                               |
 | `GLO-member`                     | member                     | A user who belongs to a workspace, with one workspace role. `OWN-011` gives it.                                                                                                                                                                        |

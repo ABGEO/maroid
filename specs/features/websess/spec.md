@@ -4,7 +4,7 @@ title: The session of a person at the web shell
 type: spec
 status: approved
 created: 2026-09-21
-updated: 2026-09-22
+updated: 2026-11-28
 approved_by: Temuri
 approved_on: 2026-09-21
 constrained_by: [SEC, API, ERR, UI, CFG, GO, TS, TST]
@@ -22,23 +22,26 @@ header. `POST /auth/logout` clears the cookie and names the target that the brow
 goes to.
 
 This specification succeeds `EXTID-DD-006`, which `ADR-0004` retired.
+`spec-return.md` holds the return address of a sign in.
 
 ## 2. Coverage
 
-| Requirement       | Where this specification realizes it                                                |
-| ----------------- | ----------------------------------------------------------------------------------- |
-| `WEBSESS-FR-001`  | Section 4.4, `WEBSESS-DD-003`, `WEBSESS-SC-001`                                     |
-| `WEBSESS-FR-002`  | Section 4.1, `WEBSESS-DD-001`, `WEBSESS-DD-002`, `WEBSESS-SC-003`, `WEBSESS-SC-004` |
-| `WEBSESS-FR-003`  | `WEBSESS-DD-001`, `WEBSESS-SC-005`                                                  |
-| `WEBSESS-FR-004`  | `WEBSESS-DD-001`, `WEBSESS-SC-005`                                                  |
-| `WEBSESS-FR-005`  | Section 4.1, `WEBSESS-DD-006`, `WEBSESS-SC-006`, `WEBSESS-SC-007`                   |
-| `WEBSESS-FR-006`  | Section 4.3, Section 4.4, `WEBSESS-DD-005`, `WEBSESS-SC-008`, `WEBSESS-SC-009`      |
-| `WEBSESS-FR-007`  | Section 4.5, `WEBSESS-DD-005`, `WEBSESS-SC-010`                                     |
-| `WEBSESS-FR-008`  | Section 4.1, `WEBSESS-DD-008`, `WEBSESS-SC-011`                                     |
-| `WEBSESS-NFR-001` | `WEBSESS-DD-005`, `WEBSESS-SC-012`                                                  |
-| `WEBSESS-NFR-002` | `WEBSESS-DD-002`, `WEBSESS-SC-013`                                                  |
-| `WEBSESS-INV-001` | `WEBSESS-DD-002`, `WEBSESS-SC-014`                                                  |
-| `WEBSESS-INV-002` | `WEBSESS-DD-003`, `WEBSESS-SC-015`                                                  |
+| Requirement       | Where this specification realizes it                                                                                                   |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `WEBSESS-FR-001`  | Section 4.4, `WEBSESS-DD-003`, `WEBSESS-SC-001`                                                                                        |
+| `WEBSESS-FR-002`  | Section 4.1, `WEBSESS-DD-001`, `WEBSESS-DD-002`, `WEBSESS-SC-003`, `WEBSESS-SC-004`                                                    |
+| `WEBSESS-FR-003`  | `WEBSESS-DD-001`, `WEBSESS-SC-005`                                                                                                     |
+| `WEBSESS-FR-004`  | `WEBSESS-DD-001`, `WEBSESS-SC-005`                                                                                                     |
+| `WEBSESS-FR-005`  | Section 4.1, `WEBSESS-DD-006`, `WEBSESS-SC-006`, `WEBSESS-SC-007`                                                                      |
+| `WEBSESS-FR-006`  | Section 4.3, Section 4.4, `WEBSESS-DD-005`, `WEBSESS-SC-008`, `WEBSESS-SC-009`                                                         |
+| `WEBSESS-FR-007`  | Section 4.5, `WEBSESS-DD-005`, `WEBSESS-SC-010`                                                                                        |
+| `WEBSESS-FR-008`  | Section 4.1, `WEBSESS-DD-008`, `WEBSESS-SC-011`                                                                                        |
+| `WEBSESS-FR-009`  | `spec-return.md`, `WEBSESS-DD-009`, `WEBSESS-DD-011`, `WEBSESS-DD-012`, `WEBSESS-SC-017` to `-020`, `WEBSESS-SC-023`, `WEBSESS-SC-024` |
+| `WEBSESS-FR-010`  | `spec-return.md`, `WEBSESS-DD-010`, `WEBSESS-SC-021`, `WEBSESS-SC-022`                                                                 |
+| `WEBSESS-NFR-001` | `WEBSESS-DD-005`, `WEBSESS-SC-012`                                                                                                     |
+| `WEBSESS-NFR-002` | `WEBSESS-DD-002`, `WEBSESS-SC-013`                                                                                                     |
+| `WEBSESS-INV-001` | `WEBSESS-DD-002`, `WEBSESS-SC-014`                                                                                                     |
+| `WEBSESS-INV-002` | `WEBSESS-DD-003`, `WEBSESS-SC-015`                                                                                                     |
 
 ## 3. Guideline compliance
 
@@ -470,6 +473,13 @@ correction.
 | 9   | Add the `/signed-out` route and wire the control in `UserDropdown.svelte`. | `WEBSESS-FR-008`                    | [x]  |
 | 10  | Correct `features/extid/api.yaml` for the cookie name and the header.      | `WEBSESS-FR-001`, `-005`            | [x]  |
 | 11  | Run `WEBSESS-SC-011` and `WEBSESS-SC-016` against the running hub.         | `WEBSESS-FR-008`, `WEBSESS-FR-001`  | [ ]  |
+| 12  | Write `apps/deck/src/lib/auth/return-address.ts`.                          | `WEBSESS-FR-009`, `-010`            | [x]  |
+| 13  | Carry the open address in `startSignIn` and `redirectToAuth`.              | `WEBSESS-FR-009`                    | [x]  |
+| 14  | Open the checked return address at the landing. Keep it on Try Again.      | `WEBSESS-FR-009`, `-010`            | [x]  |
+| 15  | Add `WEBSESS-SC-017` and `WEBSESS-SC-018` to `websess_test.go`.            | `WEBSESS-FR-009`                    | [x]  |
+| 16  | Compare the path as the router reads it in `return-address.ts`.            | `WEBSESS-FR-010`                    | [x]  |
+| 17  | Take the target of a navigation in flight in `redirectToAuth`.             | `WEBSESS-FR-009`                    | [x]  |
+| 18  | Run `WEBSESS-SC-019` to `WEBSESS-SC-024` against the running deck.         | `WEBSESS-FR-009`, `-010`            | [ ]  |
 
 Step 6 ends every live session, so step 9 must ship with it. A person who signs
 out before step 10 reaches the loop that `WEBSESS-DD-008` describes.

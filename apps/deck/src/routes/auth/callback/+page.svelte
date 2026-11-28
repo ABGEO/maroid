@@ -1,12 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { resolve } from '$app/paths';
 
 	import { startSignIn } from '#lib/api/client.ts';
 	import { authFailureMessage } from '#lib/auth/messages.ts';
+	import { addressAfterSignIn, RETURN_ADDRESS_PARAMETER } from '#lib/auth/return-address.ts';
 	import { documentTitle } from '#lib/navigation/title.ts';
 
 	const reason = page.url.searchParams.get('error');
@@ -14,9 +13,15 @@
 
 	const canRetry = reason === 'auth_failed';
 
+	const returnAddress = addressAfterSignIn(
+		page.url.searchParams.get(RETURN_ADDRESS_PARAMETER),
+		page.url.origin
+	);
+
 	onMount(() => {
 		if (!reason) {
-			void goto(resolve(''));
+			// A replace keeps the landing out of the history, so Back does not reopen it.
+			window.location.replace(returnAddress);
 		}
 	});
 </script>
@@ -35,7 +40,7 @@
 					<button
 						class="btn btn-primary w-full"
 						onclick={() => {
-							void startSignIn().then((address) => {
+							void startSignIn(returnAddress).then((address) => {
 								window.location.href = address;
 							});
 						}}

@@ -530,11 +530,23 @@ func (f *authFixture) signInWith(
 ) *httptest.ResponseRecorder {
 	t.Helper()
 
+	return f.signInTo(t, shellTarget, accountID, claims)
+}
+
+// signInTo finishes a sign in that names the target the test gives.
+func (f *authFixture) signInTo(
+	t *testing.T,
+	target string,
+	accountID string,
+	claims jwt.MapClaims,
+) *httptest.ResponseRecorder {
+	t.Helper()
+
 	started := httptest.NewRecorder()
 	f.router.ServeHTTP(started, httptest.NewRequestWithContext(
 		t.Context(),
 		http.MethodPost,
-		"/auth/sessions?redirect="+url.QueryEscape(shellTarget),
+		"/auth/sessions?redirect="+url.QueryEscape(target),
 		nil,
 	))
 	require.Equal(t, http.StatusAccepted, started.Code)

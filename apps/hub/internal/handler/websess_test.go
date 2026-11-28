@@ -124,6 +124,52 @@ func TestABrokenAccessTokenBindingSetsNoSession(t *testing.T) {
 	require.Empty(t, cookieOf(t, finished, auth.SessionCookieName))
 }
 
+// landingWithReturnAddress is the landing of the deck with a return address that
+// holds a path and a query.
+const landingWithReturnAddress = shellTarget +
+	"/auth/callback?next=%2Fw%2Fw1%2Fplugins%2Fp%2Fhistory%3Fplate%3DAA001AA"
+
+// WEBSESS-SC-017: The hub sends the browser back to the landing address that the
+// sign in named, with the return address in its query unchanged.
+func TestASignInReturnsToTheWholeLandingAddress(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+	record := addUserRecord(t, fixture.database, "Temuri")
+	require.NoError(t, fixture.service.Attach(
+		t.Context(), record, auth.ProviderTelegram, "111", model.Profile{},
+	))
+
+	finished := fixture.signInTo(
+		t, landingWithReturnAddress, "111", fixture.provider.Claims(auth.ProviderTelegram, "111"),
+	)
+
+	require.Equal(t, http.StatusFound, finished.Code)
+	require.Equal(t, landingWithReturnAddress, finished.Header().Get("Location"))
+}
+
+// WEBSESS-SC-018: A failed sign in keeps the return address beside the reason.
+func TestAFailedSignInKeepsTheReturnAddress(t *testing.T) {
+	t.Parallel()
+
+	fixture := authUnderTest(t)
+
+	finished := fixture.signInTo(
+		t,
+		landingWithReturnAddress,
+		"an-account-that-nobody-holds",
+		fixture.provider.Claims(providerCloud, "an-account-that-nobody-holds"),
+	)
+
+	require.Equal(t, http.StatusFound, finished.Code)
+
+	location, err := url.Parse(finished.Header().Get("Location"))
+	require.NoError(t, err)
+	require.Equal(t, "/auth/callback", location.Path)
+	require.Equal(t, "/w/w1/plugins/p/history?plate=AA001AA", location.Query().Get("next"))
+	require.Equal(t, "no_identity", location.Query().Get("error"))
+}
+
 // WEBSESS-SC-014: A second sign in replaces the session cookie of the first.
 func TestASecondSignInReplacesTheSessionCookie(t *testing.T) {
 	t.Parallel()
