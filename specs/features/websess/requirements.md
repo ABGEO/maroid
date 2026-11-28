@@ -4,7 +4,7 @@ title: The session of a person at the web shell
 type: requirements
 status: approved
 created: 2026-09-21
-updated: 2026-09-21
+updated: 2026-11-28
 approved_by: Temuri
 approved_on: 2026-09-21
 constrained_by: [SEC, API, UI, CFG]
@@ -29,13 +29,18 @@ A person cannot sign out. The deck offers no control, and the hub offers no addr
 The credential stays in the browser until it expires. A second person at the same
 machine opens the deck and reads the records of the first person.
 
+A session also ends when its token expires. The next call answers 401, the deck
+sends the person to the IdP, and the IdP signs them in with no question while its
+own session lives. The deck then opens its home. A person who followed a link to one
+record, or who worked on one page, finds it again by hand.
+
 ## 2. Users
 
-| Person               | Need                                                                 |
-| -------------------- | -------------------------------------------------------------------- |
-| A person at the deck | Sign in one time, work, and sign out at the end. Read no credential. |
-| The owner            | A person who leaves a shared machine stops reaching the records.     |
-| A plugin author      | One acting user for each request, with no change to a plugin.        |
+| Person               | Need                                                                                                             |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| A person at the deck | Sign in one time, work, and sign out at the end. Return to the open address after a sign in. Read no credential. |
+| The owner            | A person who leaves a shared machine stops reaching the records.                                                 |
+| A plugin author      | One acting user for each request, with no change to a plugin.                                                    |
 
 ## 3. Out of scope
 
@@ -46,6 +51,8 @@ machine opens the deck and reads the records of the first person.
 - The refusal of a credential that a person held before a sign out. Nothing
   records the sign out, so the credential works until it expires.
 - The bearer token of an MCP client. `/mcp` keeps the path that `API-003` gives it.
+- The input of a form that the person did not save before the session ended.
+- The address after the redemption of an invitation. The person had no address open.
 
 ## 4. Functional requirements
 
@@ -139,6 +146,50 @@ The deck must offer a control that signs the person out.
 
 **Why:** `WEBSESS-FR-006` gives the operation. Nothing reaches it without a control.
 
+### `WEBSESS-FR-009`
+
+After a sign in that a refused request started, the deck must open the address that
+the person had open, or was opening, when the hub refused the request. This address is
+the return address.
+
+**Why:** The person did not ask for the sign in. The token expired. The deck opens
+its home today, and the person finds the record again by hand.
+
+**Examples:**
+
+- Normal case: a person opens a saved link to one record, and the session has
+  expired. They sign in, and the deck opens that address, with its query.
+- Limit case: the session ends while the person opens a second address of the deck.
+  The sign in opens the second address, not the first.
+- Limit case: the first sign in fails, and the person selects Try Again. The second
+  sign in opens the return address of the first.
+- Limit case: the person signs in from the page that follows a sign out. No request
+  was refused, and the deck opens its home.
+
+### `WEBSESS-FR-010`
+
+After a sign in, the deck must open its home in place of a return address that names
+another origin or an address of the sign in.
+
+The addresses of the sign in are the landing of the sign in, the page that follows a
+sign out, and the page of an invitation.
+
+**Why:** The return address arrives in a link that anyone can write. A deck that
+opens it sends the person to a foreign host from an address with the name of Maroid
+in it. An address of the sign in starts a second sign in, or tells a person who just
+signed in that they signed out.
+
+**Examples:**
+
+- Unwanted case: a link carries a return address at a foreign host. After the sign
+  in, the deck opens its home.
+- Unwanted case: a return address starts with two slashes, which a browser reads as
+  a foreign host. The deck opens its home.
+- Limit case: the return address is the page that follows a sign out. The deck opens
+  its home.
+- Limit case: the return address names that page with a trailing slash or with an
+  encoded character. The deck reads it as the page itself and opens its home.
+
 ## 5. Non-functional requirements
 
 ### `WEBSESS-NFR-001`
@@ -176,7 +227,7 @@ in it.
 | `SEC-004` | Security               | A sign out does not change the user record. The record stays the allowlist.                                                                                                                  |
 | `SEC-005` | Security               | The rule names the cookie and gives the header as a second path. `WEBSESS-FR-001`, `WEBSESS-FR-002`, and `WEBSESS-FR-005` all contradict it. The rule changes, so this feature needs an ADR. |
 | `API-003` | The HTTP API           | The prefix table gains the address of the sign out.                                                                                                                                          |
-| `UI-001`  | The web user interface | The deck carries the control that `WEBSESS-FR-008` gives. A plugin serves no full page.                                                                                                      |
+| `UI-001`  | The web user interface | The deck carries the control that `WEBSESS-FR-008` gives and the check that `WEBSESS-FR-010` gives. A plugin serves no full page.                                                            |
 | `CFG-003` | Configuration          | The hub validates the configuration at the start. The name of a cookie that fails `WEBSESS-FR-002` stops the hub there.                                                                      |
 | `CFG-007` | Configuration          | The list of the targets that `WEBSESS-FR-007` checks is a value of the installation.                                                                                                         |
 
